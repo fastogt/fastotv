@@ -27,3 +27,8 @@
 *.exe
 *.out
 *.app
+
+# other
+*.pyc
+CMakeLists.txt.user
+*~
