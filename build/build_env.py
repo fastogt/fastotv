@@ -96,9 +96,9 @@ if __name__ == "__main__":
 
     distr = get_dist()
     if distr  == 'DEBIAN':
-        dep_libs = ['gcc', 'g++', 'pkg-config', 'gettext', 'libmount-dev', 'libpcre3-dev']
+        dep_libs = ['gcc', 'g++', 'pkg-config', 'gettext', 'libmount-dev', 'libpcre3-dev', 'yasm']
     elif distr == 'RHEL':
-        dep_libs = ['gcc', 'gcc-c++', 'pkgconfig', 'gettext', 'libmount-devel', 'pcre-devel']
+        dep_libs = ['gcc', 'gcc-c++', 'pkgconfig', 'gettext', 'libmount-devel', 'pcre-devel', 'yasm']
 
     for lib in dep_libs:
         if distr  == 'DEBIAN':
