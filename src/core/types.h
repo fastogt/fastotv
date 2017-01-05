@@ -1,3 +1,5 @@
-#pragma once
+#ifndef CORE_TYPES_H
+#define CORE_TYPES_H
+#endif
 
-namespace gpu_player {}  // namespace gpu_player
+
