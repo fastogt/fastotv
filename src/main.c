@@ -1,16 +1,14 @@
-#include "config.h"
-
 #include <inttypes.h>
 #include <math.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "cmdutils.h"
+
 #include "core/types.h"
 #include "core/threads.h"
-
-#include <assert.h>
 
 #if CONFIG_AVFILTER
 static int opt_add_vfilter(void* optctx, const char* opt, const char* arg) {

@@ -1,7 +1,7 @@
 #ifndef CORE_TYPES_H
 #define CORE_TYPES_H
 
-#include "config.h"
+#include "ffmpeg_config.h"
 
 #include <libavutil/avstring.h>
 #include <libavutil/eval.h>

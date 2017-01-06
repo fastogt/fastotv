@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 
-#include "config.h"
+#include "ffmpeg_config.h"
 #include "libavcodec/avcodec.h"
 #include "libavfilter/avfilter.h"
 #include "libavformat/avformat.h"
@@ -38,11 +38,6 @@
  * program name, defined by the program for show_version().
  */
 extern const char program_name[];
-
-/**
- * program birth year, defined by the program for show_banner()
- */
-extern const int program_birth_year;
 
 extern AVCodecContext *avcodec_opts[AVMEDIA_TYPE_NB];
 extern AVFormatContext *avformat_opts;
@@ -210,7 +205,7 @@ void show_help_options(const OptionDef *options, const char *msg, int req_flags,
  * Show help for all options with given flags in class and all its
  * children.
  */
-void show_help_children(const AVClass *cl, int flags);
+void show_help_children(const AVClass *class, int flags);
 
 /**
  * Per-fftool specific help handler. Implemented in each

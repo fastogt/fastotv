@@ -5,8 +5,6 @@
 
 #include <SDL2/SDL.h>
 
-#include "config.h"
-
 #define FF_ALLOC_EVENT (SDL_USEREVENT)
 #define FF_QUIT_EVENT (SDL_USEREVENT + 2)
 

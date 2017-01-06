@@ -89,7 +89,7 @@ def build_ffmpeg(url):
     file = download_file(url)
     folder = extract_file(file)
     os.chdir(folder)
-    subprocess.call(['./configure', '--disable-xcb'])
+    subprocess.call(['./configure', '--disable-libxcb'])
     subprocess.call(['make', 'install'])
     os.chdir(pwd)
     shutil.rmtree(folder)

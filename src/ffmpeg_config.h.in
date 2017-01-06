@@ -1,0 +1,20 @@
+#ifndef FFMPEG_CONFIG_H
+#define FFMPEG_CONFIG_H
+#cmakedefine01 CONFIG_AVFILTER
+#cmakedefine01 CONFIG_AVDEVICE
+#cmakedefine01 CONFIG_AVUTIL
+#cmakedefine01 CONFIG_AVCODEC
+#cmakedefine01 CONFIG_OPENCL
+#cmakedefine01 CONFIG_AVFORMAT
+#cmakedefine01 CONFIG_SWSCALE
+#cmakedefine01 CONFIG_SWRESAMPLE
+#cmakedefine01 CONFIG_AVRESAMPLE
+#cmakedefine01 CONFIG_POSTPROC
+
+#cmakedefine01 HAVE_SYS_RESOURCE_H
+#cmakedefine01 HAVE_COMMANDLINETOARGVW
+
+#define FFMPEG_CONFIGURATION "--disable-libxcb"
+#define CC_IDENT "gcc 4.9.2 (Debian 4.9.2-10)"
+#define FFMPEG_DATADIR "/usr/local/share/ffmpeg"
+#endif /* GPU_PLAYER_CONFIG_H */

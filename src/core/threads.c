@@ -1,3 +1,5 @@
+#include "ffmpeg_config.h"
+
 #include "core/threads.h"
 
 #include "core/types.h"
