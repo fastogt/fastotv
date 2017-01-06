@@ -5,13 +5,18 @@ import subprocess
 import os
 import shutil
 import platform
+from pybuild_utils.base import system_info
 
-GLIB_SRC_ROOT = "http://ftp.acc.umu.se/pub/gnome/sources/glib/"
 VAAPI_ROOT = "https://www.freedesktop.org/software/vaapi/releases/"
-ARCH_COMP = "xz"
-ARCH_EXT = "tar." + ARCH_COMP
+SDL_SRC_ROOT = "https://www.libsdl.org/release/"
+FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
+
 ARCH_VAAPI_COMP = "bz2"
 ARCH_VAAPI_EXT = "tar." + ARCH_VAAPI_COMP
+ARCH_SDL_COMP = "gz"
+ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
+ARCH_FFMPEG_COMP = "bz2"
+ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 
 def get_dist():
     """
@@ -36,8 +41,9 @@ def splitext(path):
 
 def print_usage():
     print("Usage:\n"
-        "[required] argv[1] glib version(2.51)\n"
-        "[optional] argv[2] vaapi version(1.7.3)\n")
+        "[required] argv[1] vaapi version(1.7.3)\n"
+        "[required] argv[2] sdl2 version(2.0.5)\n"
+        "[required] argv[3] ffmpeg version(3.2.2)\n")
 
 def print_message(progress, message):
     print message.message()
@@ -78,21 +84,24 @@ def extract_file(file):
     subprocess.call(['tar', '-xvf', file])
     return splitext(file)
 
-if __name__ == "__main__":
-    argc = len(sys.argv)
+def build_ffmpeg(url):
+    pwd = os.getcwd()
+    file = download_file(url)
+    folder = extract_file(file)
+    os.chdir(folder)
+    subprocess.call(['./configure', '--disable-xcb'])
+    subprocess.call(['make', 'install'])
+    os.chdir(pwd)
+    shutil.rmtree(folder)
 
-    if argc > 1:
-        glib_version = sys.argv[1]
-    else:
-        print_usage()
-        sys.exit(1)
-
-    if argc > 2:
-        vaapi_version = sys.argv[2]
-    else:
-        vaapi_version = None
+def build(dir_path):
+    abs_dir_path = os.path.abspath(dir_path)
+    if os.path.exists(abs_dir_path):
+        shutil.rmtree(abs_dir_path)
 
     pwd = os.getcwd()
+    os.mkdir(abs_dir_path)
+    os.chdir(abs_dir_path)
 
     distr = get_dist()
     if distr  == 'DEBIAN':
@@ -105,31 +114,44 @@ if __name__ == "__main__":
             subprocess.call(['apt-get', '-y', '--force-yes', 'install', lib])
         elif distr == 'RHEL':
             subprocess.call(['yum', '-y', 'install', lib])
-	
-    source_urls = []
+
+    # build from sources
+    source_urls = ['{0}libva/libva-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT),
+                   '{0}libva-intel-driver/libva-intel-driver-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT),
+                   '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)
+                   ]
+
     for url in source_urls:
         file = download_file(url)
         folder = extract_file(file)
         os.chdir(folder)
-        subprocess.call(['./configure', '--enable-shared', '--enable-pic'])
+        subprocess.call(['./configure'])
         subprocess.call(['make', 'install'])
-        os.chdir(pwd)
+        os.chdir(abs_dir_path)
         shutil.rmtree(folder)
 
-    download_urls = ['{0}{1}/glib-{1}.0.{2}'.format(GLIB_SRC_ROOT, glib_version, ARCH_EXT)
-                     ]
+    build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT))
 
-    if vaapi_version:
-        download_urls.append('{0}libva/libva-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT))
-        download_urls.append('{0}libva-intel-driver/libva-intel-driver-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT))
+if __name__ == "__main__":
+    argc = len(sys.argv)
 
-    for url in download_urls:
-        file = download_file(url)
-        folder = extract_file(file)
-        os.chdir(folder)
-        subprocess.call(['./configure', '--disable-debug']) #'--disable-gst-debug'
-        subprocess.call(['make', 'install'])
-        os.chdir(pwd)
-        shutil.rmtree(folder)
+    if argc > 1:
+        vaapi_version = sys.argv[1]
+    else:
+        print_usage()
+        sys.exit(1)
 
+    if argc > 2:
+        sdl_version = sys.argv[2]
+    else:
+        print_usage()
+        sys.exit(1)
 
+    if argc > 3:
+        ffmpeg_version = sys.argv[3]
+    else:
+        print_usage()
+        sys.exit(1)
+
+    platform_str = system_info.get_os()
+    build('build_' + platform_str + '_env')
