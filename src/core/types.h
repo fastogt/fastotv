@@ -26,129 +26,19 @@
 #include <libavfilter/buffersrc.h>
 #endif
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_thread.h>
+#include "core/frame_queue.h"
+#include "core/decoder.h"
 
-#define MAX_QUEUE_SIZE (15 * 1024 * 1024)
-#define MIN_FRAMES 25
-#define EXTERNAL_CLOCK_MIN_FRAMES 2
-#define EXTERNAL_CLOCK_MAX_FRAMES 10
-
-/* Minimum SDL audio buffer size, in samples. */
-#define SDL_AUDIO_MIN_BUFFER_SIZE 512
-/* Calculate actual buffer size keeping in mind not cause too frequent audio callbacks */
-#define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30
-
-/* Step size for volume control */
-#define SDL_VOLUME_STEP (SDL_MIX_MAXVOLUME / 50)
-
+#define SAMPLE_ARRAY_SIZE (8 * 65536)
 /* no AV sync correction is done if below the minimum AV sync threshold */
 #define AV_SYNC_THRESHOLD_MIN 0.04
 /* AV sync correction is done if above the maximum AV sync threshold */
 #define AV_SYNC_THRESHOLD_MAX 0.1
 /* If a frame duration is longer than this, it will not be duplicated to compensate AV sync */
 #define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
-/* no AV correction is done if too big error */
-#define AV_NOSYNC_THRESHOLD 10.0
-
-/* maximum audio speed change to get correct sync */
-#define SAMPLE_CORRECTION_PERCENT_MAX 10
-
-/* external clock speed adjustment constants for realtime sources based on buffer fullness */
-#define EXTERNAL_CLOCK_SPEED_MIN 0.900
-#define EXTERNAL_CLOCK_SPEED_MAX 1.010
-#define EXTERNAL_CLOCK_SPEED_STEP 0.001
-
-/* we use about AUDIO_DIFF_AVG_NB A-V differences to make the average */
-#define AUDIO_DIFF_AVG_NB 20
-
-/* polls for possible required screen refresh at least this often, should be less than 1/fps */
-#define REFRESH_RATE 0.01
-
-/* NOTE: the size must be big enough to compensate the hardware audio buffersize size */
-/* TODO: We assume that a decoded and resampled frame fits into this buffer */
-#define SAMPLE_ARRAY_SIZE (8 * 65536)
-
-#define CURSOR_HIDE_DELAY 1000000
-
-#define USE_ONEPASS_SUBTITLE_RENDER 1
 
 static unsigned sws_flags = SWS_BICUBIC;
 static int autorotate = 1;
-
-typedef struct MyAVPacketList {
-  AVPacket pkt;
-  struct MyAVPacketList* next;
-  int serial;
-} MyAVPacketList;
-
-typedef struct PacketQueue {
-  MyAVPacketList *first_pkt, *last_pkt;
-  int nb_packets;
-  int size;
-  int64_t duration;
-  int abort_request;
-  int serial;
-  SDL_mutex* mutex;
-  SDL_cond* cond;
-} PacketQueue;
-
-#define VIDEO_PICTURE_QUEUE_SIZE 3
-#define SUBPICTURE_QUEUE_SIZE 16
-#define SAMPLE_QUEUE_SIZE 9
-#define FRAME_QUEUE_SIZE \
-  FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
-
-typedef struct AudioParams {
-  int freq;
-  int channels;
-  int64_t channel_layout;
-  enum AVSampleFormat fmt;
-  int frame_size;
-  int bytes_per_sec;
-} AudioParams;
-
-typedef struct Clock {
-  double pts;       /* clock base */
-  double pts_drift; /* clock base minus time at which we updated the clock */
-  double last_updated;
-  double speed;
-  int serial; /* clock is based on a packet with this serial */
-  int paused;
-  int* queue_serial; /* pointer to the current packet queue serial, used for obsolete clock
-                        detection */
-} Clock;
-
-/* Common struct for handling all types of decoded data and allocated render buffers. */
-typedef struct Frame {
-  AVFrame* frame;
-  AVSubtitle sub;
-  int serial;
-  double pts;      /* presentation timestamp for the frame */
-  double duration; /* estimated duration of the frame */
-  int64_t pos;     /* byte position of the frame in the input file */
-  SDL_Texture* bmp;
-  int allocated;
-  int width;
-  int height;
-  int format;
-  AVRational sar;
-  int uploaded;
-  int flip_v;
-} Frame;
-
-typedef struct FrameQueue {
-  Frame queue[FRAME_QUEUE_SIZE];
-  int rindex;
-  int windex;
-  int size;
-  int max_size;
-  int keep_last;
-  int rindex_shown;
-  SDL_mutex* mutex;
-  SDL_cond* cond;
-  PacketQueue* pktq;
-} FrameQueue;
 
 enum {
   AV_SYNC_AUDIO_MASTER, /* default choice */
@@ -156,24 +46,16 @@ enum {
   AV_SYNC_EXTERNAL_CLOCK, /* synchronize to an external clock */
 };
 
-
-typedef struct Decoder {
-  AVPacket pkt;
-  AVPacket pkt_temp;
-  PacketQueue* queue;
-  AVCodecContext* avctx;
-  int pkt_serial;
-  int finished;
-  int packet_pending;
-  SDL_cond* empty_queue_cond;
-  int64_t start_pts;
-  AVRational start_pts_tb;
-  int64_t next_pts;
-  AVRational next_pts_tb;
-  SDL_Thread* decoder_tid;
-} Decoder;
+typedef struct AppOptions {
+  AVDictionary* sws_dict;
+  AVDictionary* swr_opts;
+  AVDictionary* format_opts;
+  AVDictionary* codec_opts;
+} AppOptions;
 
 typedef struct VideoState {
+  AppOptions opt;
+
   SDL_Thread* read_tid;
   AVInputFormat* iformat;
   int abort_request;
@@ -285,24 +167,16 @@ typedef struct VideoState {
 
 #if CONFIG_AVFILTER
 int configure_filtergraph(AVFilterGraph* graph,
-                                 const char* filtergraph,
-                                 AVFilterContext* source_ctx,
-                                 AVFilterContext* sink_ctx);
+                          const char* filtergraph,
+                          AVFilterContext* source_ctx,
+                          AVFilterContext* sink_ctx);
 int configure_video_filters(AVFilterGraph* graph,
-                                   VideoState* is,
-                                   const char* vfilters,
-                                   AVFrame* frame);
+                            VideoState* is,
+                            const char* vfilters,
+                            AVFrame* frame);
 int configure_audio_filters(VideoState* is, const char* afilters, int force_output_format);
 #endif
 
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels);
-void set_clock_at(Clock* c, double pts, int serial, double time);
-void set_clock(Clock* c, double pts, int serial);
-double get_clock(Clock* c);
-int get_master_sync_type(VideoState* is);
-double compute_target_delay(double delay, VideoState* is);
-double get_master_clock(VideoState* is) ;
 
 #endif
-
-

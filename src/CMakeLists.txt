@@ -3,11 +3,19 @@ INCLUDE (CheckIncludeFiles)
 SET(HEADERS_CORE
   core/types.h
   core/threads.h
+  core/stream_helper.h
+  core/cmd_utils.h
+  core/frame_queue.h
+  core/decoder.h
 )
 
 SET(SOURCES_CORE
   core/types.c
   core/threads.c
+  core/stream_helper.c
+  core/cmd_utils.c
+  core/frame_queue.c
+  core/decoder.c
 )
 
 SET_DESKTOP_TARGET()

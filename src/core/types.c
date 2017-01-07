@@ -1,12 +1,10 @@
 #include "core/types.h"
 
-#include "cmdutils.h"
-
 #if CONFIG_AVFILTER
 int configure_filtergraph(AVFilterGraph* graph,
-                                 const char* filtergraph,
-                                 AVFilterContext* source_ctx,
-                                 AVFilterContext* sink_ctx) {
+                          const char* filtergraph,
+                          AVFilterContext* source_ctx,
+                          AVFilterContext* sink_ctx) {
   int ret, i;
   int nb_filters = graph->nb_filters;
   AVFilterInOut *outputs = NULL, *inputs = NULL;
@@ -48,9 +46,10 @@ fail:
 }
 
 int configure_video_filters(AVFilterGraph* graph,
-                                   VideoState* is,
-                                   const char* vfilters,
-                                   AVFrame* frame) {
+                            VideoState* is,
+                            const char* vfilters,
+                            AVFrame* frame) {
+  AVDictionary* sws_dict = is->opt.sws_dict;
   static const enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_YUV420P, AV_PIX_FMT_BGRA,
                                                 AV_PIX_FMT_NONE};
   char sws_flags_str[512] = "";
@@ -140,6 +139,7 @@ fail:
 }
 
 int configure_audio_filters(VideoState* is, const char* afilters, int force_output_format) {
+  AVDictionary* swr_opts = is->opt.swr_opts;
   static const enum AVSampleFormat sample_fmts[] = {AV_SAMPLE_FMT_S16, AV_SAMPLE_FMT_NONE};
   int sample_rates[2] = {0, -1};
   int64_t channel_layouts[2] = {0, -1};
@@ -219,90 +219,4 @@ int64_t get_valid_channel_layout(int64_t channel_layout, int channels) {
     return channel_layout;
   else
     return 0;
-}
-
-void set_clock_at(Clock* c, double pts, int serial, double time) {
-  c->pts = pts;
-  c->last_updated = time;
-  c->pts_drift = c->pts - time;
-  c->serial = serial;
-}
-
-void set_clock(Clock* c, double pts, int serial) {
-  double time = av_gettime_relative() / 1000000.0;
-  set_clock_at(c, pts, serial, time);
-}
-
-double get_clock(Clock* c) {
-  if (*c->queue_serial != c->serial)
-    return NAN;
-  if (c->paused) {
-    return c->pts;
-  } else {
-    double time = av_gettime_relative() / 1000000.0;
-    return c->pts_drift + time - (time - c->last_updated) * (1.0 - c->speed);
-  }
-}
-
-
-int get_master_sync_type(VideoState* is) {
-  if (is->av_sync_type == AV_SYNC_VIDEO_MASTER) {
-    if (is->video_st)
-      return AV_SYNC_VIDEO_MASTER;
-    else
-      return AV_SYNC_AUDIO_MASTER;
-  } else if (is->av_sync_type == AV_SYNC_AUDIO_MASTER) {
-    if (is->audio_st)
-      return AV_SYNC_AUDIO_MASTER;
-    else
-      return AV_SYNC_EXTERNAL_CLOCK;
-  } else {
-    return AV_SYNC_EXTERNAL_CLOCK;
-  }
-}
-
-double compute_target_delay(double delay, VideoState* is) {
-  double sync_threshold, diff = 0;
-
-  /* update delay to follow master synchronisation source */
-  if (get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER) {
-    /* if video is slave, we try to correct big delays by
-       duplicating or deleting a frame */
-    diff = get_clock(&is->vidclk) - get_master_clock(is);
-
-    /* skip or repeat frame. We take into account the
-       delay to compute the threshold. I still don't know
-       if it is the best guess */
-    sync_threshold = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(AV_SYNC_THRESHOLD_MAX, delay));
-    if (!isnan(diff) && fabs(diff) < is->max_frame_duration) {
-      if (diff <= -sync_threshold)
-        delay = FFMAX(0, delay + diff);
-      else if (diff >= sync_threshold && delay > AV_SYNC_FRAMEDUP_THRESHOLD)
-        delay = delay + diff;
-      else if (diff >= sync_threshold)
-        delay = 2 * delay;
-    }
-  }
-
-  av_log(NULL, AV_LOG_TRACE, "video: delay=%0.3f A-V=%f\n", delay, -diff);
-
-  return delay;
-}
-
-/* get the current master clock value */
-double get_master_clock(VideoState* is) {
-  double val;
-
-  switch (get_master_sync_type(is)) {
-    case AV_SYNC_VIDEO_MASTER:
-      val = get_clock(&is->vidclk);
-      break;
-    case AV_SYNC_AUDIO_MASTER:
-      val = get_clock(&is->audclk);
-      break;
-    default:
-      val = get_clock(&is->extclk);
-      break;
-  }
-  return val;
 }
