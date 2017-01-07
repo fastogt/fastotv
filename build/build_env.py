@@ -43,7 +43,10 @@ def print_usage():
     print("Usage:\n"
         "[required] argv[1] vaapi version(1.7.3)\n"
         "[required] argv[2] sdl2 version(2.0.5)\n"
-        "[required] argv[3] ffmpeg version(3.2.2)\n")
+        "[required] argv[3] ffmpeg version(3.2.2)\n"
+        "[optional] argv[4] platform\n"
+        "[optional] argv[5] architecture\n"
+        "[optional] argv[6] prefix path\n")
 
 def print_message(progress, message):
     print message.message()
@@ -84,53 +87,82 @@ def extract_file(file):
     subprocess.call(['tar', '-xvf', file])
     return splitext(file)
 
-def build_ffmpeg(url):
+def build_ffmpeg(url, prefix_path):
     pwd = os.getcwd()
     file = download_file(url)
     folder = extract_file(file)
     os.chdir(folder)
-    subprocess.call(['./configure', '--disable-libxcb'])
+    subprocess.call(['./configure', '--prefix={0}'.format(prefix_path), '--disable-libxcb'])
     subprocess.call(['make', 'install'])
     os.chdir(pwd)
     shutil.rmtree(folder)
 
-def build(dir_path):
-    abs_dir_path = os.path.abspath(dir_path)
-    if os.path.exists(abs_dir_path):
-        shutil.rmtree(abs_dir_path)
+class BuildRequest(object):
+    def __init__(self, platform, arch_bit):
+        platform_or_none = system_info.get_supported_platform_by_name(platform)
 
-    pwd = os.getcwd()
-    os.mkdir(abs_dir_path)
-    os.chdir(abs_dir_path)
+        if platform_or_none == None:
+            raise utils.BuildError('invalid platform')
 
-    distr = get_dist()
-    if distr  == 'DEBIAN':
-        dep_libs = ['gcc', 'g++', 'pkg-config', 'gettext', 'libmount-dev', 'libpcre3-dev', 'yasm']
-    elif distr == 'RHEL':
-        dep_libs = ['gcc', 'gcc-c++', 'pkgconfig', 'gettext', 'libmount-devel', 'pcre-devel', 'yasm']
+        arch = platform_or_none.architecture_by_bit(arch_bit)
+        if arch == None:
+            raise utils.BuildError('invalid arch')
 
-    for lib in dep_libs:
-        if distr  == 'DEBIAN':
-            subprocess.call(['apt-get', '-y', '--force-yes', 'install', lib])
-        elif distr == 'RHEL':
-            subprocess.call(['yum', '-y', 'install', lib])
+        self.platform_ = system_info.Platform(platform_or_none.name(), arch, platform_or_none.package_types())
+        print("Build request for platform: {0}, arch: {1} created".format(platform, arch.name()))
 
-    # build from sources
-    source_urls = ['{0}libva/libva-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT),
-                   '{0}libva-intel-driver/libva-intel-driver-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT),
-                   '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)
-                   ]
+    def build(self, dir_path, prefix_path):
+        if prefix_path == None:
+            prefix_path = self.platform_.arch().default_install_prefix_path()
 
-    for url in source_urls:
-        file = download_file(url)
-        folder = extract_file(file)
-        os.chdir(folder)
-        subprocess.call(['./configure'])
-        subprocess.call(['make', 'install'])
+        abs_dir_path = os.path.abspath(dir_path)
+        if os.path.exists(abs_dir_path):
+            shutil.rmtree(abs_dir_path)
+
+        pwd = os.getcwd()
+        os.mkdir(abs_dir_path)
         os.chdir(abs_dir_path)
-        shutil.rmtree(folder)
 
-    build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT))
+        platform_name = self.platform_.name()
+        arch = self.platform_.arch()
+
+        if platform_name == 'linux':
+            distr = get_dist()
+            if distr  == 'DEBIAN':
+                dep_libs = ['gcc', 'g++', 'pkg-config', 'gettext', 'libmount-dev', 'libpcre3-dev', 'yasm']
+            elif distr == 'RHEL':
+                dep_libs = ['gcc', 'gcc-c++', 'pkgconfig', 'gettext', 'libmount-devel', 'pcre-devel', 'yasm']
+
+            for lib in dep_libs:
+                if distr  == 'DEBIAN':
+                    subprocess.call(['apt-get', '-y', '--force-yes', 'install', lib])
+                elif distr == 'RHEL':
+                    subprocess.call(['yum', '-y', 'install', lib])
+        elif platform_name == 'windows':
+            if  arch.bit() == 64:
+                dep_libs = ['mingw-w64-x86_64-toolchain', 'mingw-w64-x86_64-yasm']
+            elif arch.bit() == 32:
+                dep_libs = ['mingw-w64-i686-toolchain', 'mingw-w64-i686-yasm']
+
+            for lib in dep_libs:
+                subprocess.call(['pacman', '-S', lib])
+
+        # build from sources
+        source_urls = ['{0}libva/libva-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT),
+                       '{0}libva-intel-driver/libva-intel-driver-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT),
+                       '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)
+                       ]
+
+        for url in source_urls:
+            file = download_file(url)
+            folder = extract_file(file)
+            os.chdir(folder)
+            subprocess.call(['./configure','--prefix={0}'.format(prefix_path)])
+            subprocess.call(['make', 'install'])
+            os.chdir(abs_dir_path)
+            shutil.rmtree(folder)
+
+        build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT), prefix_path)
 
 if __name__ == "__main__":
     argc = len(sys.argv)
@@ -153,5 +185,20 @@ if __name__ == "__main__":
         print_usage()
         sys.exit(1)
 
-    platform_str = system_info.get_os()
-    build('build_' + platform_str + '_env')
+    if argc > 4:
+        platform_str = sys.argv[4]
+    else:
+        platform_str = system_info.get_os()
+
+    if argc > 5:
+        arch_bit_str = sys.argv[5]
+    else:
+        arch_bit_str = system_info.get_arch_bit()
+
+    if argc > 6:
+        prefix_path = sys.argv[6]
+    else:
+        prefix_path = None
+
+    request = BuildRequest(platform_str, int(arch_bit_str))
+    request.build('build_' + platform_str + '_env', prefix_path)
