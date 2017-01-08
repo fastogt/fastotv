@@ -1,10 +1,11 @@
-#ifndef FRAME_QUEUE_H
-#define FRAME_QUEUE_H
+#pragma once
 
+extern "C" {
 #include <libavcodec/avcodec.h>
 
 #include <SDL2/SDL_mutex.h>
 #include <SDL2/SDL_render.h>
+}
 
 /* no AV correction is done if too big error */
 #define AV_NOSYNC_THRESHOLD 10.0
@@ -115,5 +116,3 @@ void frame_queue_signal(FrameQueue* f);
 void frame_queue_next(FrameQueue* f);
 int64_t frame_queue_last_pos(FrameQueue* f);
 void frame_queue_destory(FrameQueue* f);
-
-#endif

@@ -3,19 +3,21 @@ INCLUDE (CheckIncludeFiles)
 SET(HEADERS_CORE
   core/types.h
   core/threads.h
-  core/stream_helper.h
   core/cmd_utils.h
   core/frame_queue.h
   core/decoder.h
+  core/app_options.h
+  core/video_state.h
 )
 
 SET(SOURCES_CORE
-  core/types.c
-  core/threads.c
-  core/stream_helper.c
-  core/cmd_utils.c
-  core/frame_queue.c
-  core/decoder.c
+  core/types.cpp
+  core/threads.cpp
+  core/cmd_utils.cpp
+  core/frame_queue.cpp
+  core/decoder.cpp
+  core/app_options.cpp
+  core/video_state.cpp
 )
 
 SET_DESKTOP_TARGET()
@@ -118,7 +120,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}
   ${DEPENDENS_LIBRARIES}
 )
 
-SET(EXE_SOURCES main.c cmdutils.c ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
+SET(EXE_SOURCES main.cpp cmdutils.c ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
 
 IF(MINGW OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGCXX)
   IF(OS_ANDROID)

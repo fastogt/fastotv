@@ -182,7 +182,7 @@ void show_help_options(const OptionDef* options,
  * Show help for all options with given flags in class and all its
  * children.
  */
-void show_help_children(const AVClass* class, int flags);
+void show_help_children(const AVClass* cl, int flags);
 
 /**
  * Per-fftool specific help handler. Implemented in each

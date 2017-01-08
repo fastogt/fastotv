@@ -1,9 +1,10 @@
-#ifndef DECODER_H
-#define DECODER_H
+#pragma once
+
+extern "C" {
+#include <SDL2/SDL_thread.h>
+}
 
 #include "core/frame_queue.h"
-
-#include <SDL2/SDL_thread.h>
 
 static int decoder_reorder_pts = -1;
 
@@ -31,5 +32,3 @@ int decoder_start(Decoder* d, int (*fn)(void*), void* arg);
 void decoder_abort(Decoder* d, FrameQueue* fq);
 void decoder_destroy(Decoder* d);
 int decoder_decode_frame(Decoder* d, AVFrame* frame, AVSubtitle* sub);
-
-#endif

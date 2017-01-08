@@ -1,12 +1,23 @@
 #include "core/threads.h"
 
+#include "core/video_state.h"
 #include "core/cmd_utils.h"
+#include "core/types.h"
 
 #define MAX_QUEUE_SIZE (15 * 1024 * 1024)
 #define MIN_FRAMES 25
 
-static int decode_interrupt_cb(void* ctx) {
-  VideoState* is = ctx;
+static void print_error(const char* filename, int err) {
+  char errbuf[128];
+  const char* errbuf_ptr = errbuf;
+
+  if (av_strerror(err, errbuf, sizeof(errbuf)) < 0)
+    errbuf_ptr = strerror(AVUNERROR(err));
+  av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, errbuf_ptr);
+}
+
+static int decode_interrupt_cb(void* user_data) {
+  VideoState* is = static_cast<VideoState*>(user_data);
   return is->abort_request;
 }
 
@@ -69,8 +80,8 @@ static int stream_has_enough_packets(AVStream* st, int stream_id, PacketQueue* q
 }
 
 /* this thread gets the stream from the disk or the network */
-int read_thread(void* arg) {
-  VideoState* is = arg;
+int read_thread(void* user_data) {
+  VideoState* is = static_cast<VideoState*>(user_data);
   AVFormatContext* ic = NULL;
   int err, i, ret;
   int st_index[AVMEDIA_TYPE_NB];
@@ -184,10 +195,10 @@ int read_thread(void* arg) {
       if (avformat_match_stream_specifier(ic, st, wanted_stream_spec[type]) > 0)
         st_index[type] = i;
   }
-  for (i = 0; i < AVMEDIA_TYPE_NB; i++) {
+  for (i = 0; i < static_cast<int>(AVMEDIA_TYPE_NB); i++) {
     if (wanted_stream_spec[i] && st_index[i] == -1) {
       av_log(NULL, AV_LOG_ERROR, "Stream specifier %s does not match any %s stream\n",
-             wanted_stream_spec[i], av_get_media_type_string(i));
+             wanted_stream_spec[i], av_get_media_type_string(static_cast<AVMediaType>(i)));
       st_index[i] = INT_MAX;
     }
   }
@@ -217,18 +228,18 @@ int read_thread(void* arg) {
 
   /* open the streams */
   if (st_index[AVMEDIA_TYPE_AUDIO] >= 0) {
-    stream_component_open(is, st_index[AVMEDIA_TYPE_AUDIO]);
+    is->stream_component_open(st_index[AVMEDIA_TYPE_AUDIO]);
   }
 
   ret = -1;
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
-    ret = stream_component_open(is, st_index[AVMEDIA_TYPE_VIDEO]);
+    ret = is->stream_component_open(st_index[AVMEDIA_TYPE_VIDEO]);
   }
   if (is->show_mode == SHOW_MODE_NONE)
     is->show_mode = ret >= 0 ? SHOW_MODE_VIDEO : SHOW_MODE_RDFT;
 
   if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
-    stream_component_open(is, st_index[AVMEDIA_TYPE_SUBTITLE]);
+    is->stream_component_open(st_index[AVMEDIA_TYPE_SUBTITLE]);
   }
 
   if (is->video_stream < 0 && is->audio_stream < 0) {
@@ -291,8 +302,9 @@ int read_thread(void* arg) {
       is->seek_req = 0;
       is->queue_attachments_req = 1;
       is->eof = 0;
-      if (is->paused)
-        step_to_next_frame(is);
+      if (is->paused) {
+        is->step_to_next_frame();
+      }
     }
     if (is->queue_attachments_req) {
       if (is->video_st && is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC) {
@@ -322,7 +334,7 @@ int read_thread(void* arg) {
         (!is->video_st ||
          (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
       if (loop != 1 && (!loop || --loop)) {
-        stream_seek(is, start_time != AV_NOPTS_VALUE ? start_time : 0, 0, 0);
+        is->stream_seek(start_time != AV_NOPTS_VALUE ? start_time : 0, 0, 0);
       } else if (autoexit) {
         ret = AVERROR_EOF;
         goto fail;
@@ -475,9 +487,9 @@ static int get_video_frame(VideoState* is, AVFrame* frame) {
 
     frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(is->ic, is->video_st, frame);
 
-    if (framedrop > 0 || (framedrop && get_master_sync_type(is) != AV_SYNC_VIDEO_MASTER)) {
+    if (framedrop > 0 || (framedrop && is->get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) {
       if (frame->pts != AV_NOPTS_VALUE) {
-        double diff = dpts - get_master_clock(is);
+        double diff = dpts - is->get_master_clock();
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
             diff - is->frame_last_filter_delay < 0 && is->viddec.pkt_serial == is->vidclk.serial &&
             is->videoq.nb_packets) {
@@ -492,8 +504,8 @@ static int get_video_frame(VideoState* is, AVFrame* frame) {
   return got_picture;
 }
 
-int audio_thread(void* arg) {
-  VideoState* is = arg;
+int audio_thread(void* user_data) {
+  VideoState* is = static_cast<VideoState*>(user_data);
   AVFrame* frame = av_frame_alloc();
   Frame* af;
 #if CONFIG_AVFILTER
@@ -520,7 +532,7 @@ int audio_thread(void* arg) {
           get_valid_channel_layout(frame->channel_layout, av_frame_get_channels(frame));
 
       reconfigure = cmp_audio_fmts(is->audio_filter_src.fmt, is->audio_filter_src.channels,
-                                   frame->format, av_frame_get_channels(frame)) ||
+                                   (AVSampleFormat)frame->format, av_frame_get_channels(frame)) ||
                     is->audio_filter_src.channel_layout != dec_channel_layout ||
                     is->audio_filter_src.freq != frame->sample_rate ||
                     is->auddec.pkt_serial != last_serial;
@@ -535,9 +547,9 @@ int audio_thread(void* arg) {
                is->audio_filter_src.freq, is->audio_filter_src.channels,
                av_get_sample_fmt_name(is->audio_filter_src.fmt), buf1, last_serial,
                frame->sample_rate, av_frame_get_channels(frame),
-               av_get_sample_fmt_name(frame->format), buf2, is->auddec.pkt_serial);
+               av_get_sample_fmt_name((AVSampleFormat)frame->format), buf2, is->auddec.pkt_serial);
 
-        is->audio_filter_src.fmt = frame->format;
+        is->audio_filter_src.fmt = (AVSampleFormat)frame->format;
         is->audio_filter_src.channels = av_frame_get_channels(frame);
         is->audio_filter_src.channel_layout = dec_channel_layout;
         is->audio_filter_src.freq = frame->sample_rate;
@@ -581,8 +593,8 @@ the_end:
   return ret;
 }
 
-int video_thread(void* arg) {
-  VideoState* is = arg;
+int video_thread(void* user_data) {
+  VideoState* is = static_cast<VideoState*>(user_data);
   AVFrame* frame = av_frame_alloc();
   double pts;
   double duration;
@@ -595,7 +607,7 @@ int video_thread(void* arg) {
   AVFilterContext *filt_out = NULL, *filt_in = NULL;
   int last_w = 0;
   int last_h = 0;
-  enum AVPixelFormat last_format = -2;
+  enum AVPixelFormat last_format = AV_PIX_FMT_NONE;  //-2
   int last_serial = -1;
   int last_vfilter_idx = 0;
   if (!graph) {
@@ -627,7 +639,7 @@ int video_thread(void* arg) {
              "serial:%d\n",
              last_w, last_h, (const char*)av_x_if_null(av_get_pix_fmt_name(last_format), "none"),
              last_serial, frame->width, frame->height,
-             (const char*)av_x_if_null(av_get_pix_fmt_name(frame->format), "none"),
+             (const char*)av_x_if_null(av_get_pix_fmt_name((AVPixelFormat)frame->format), "none"),
              is->viddec.pkt_serial);
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
@@ -643,7 +655,7 @@ int video_thread(void* arg) {
       filt_out = is->out_video_filter;
       last_w = frame->width;
       last_h = frame->height;
-      last_format = frame->format;
+      last_format = (AVPixelFormat)frame->format;
       last_serial = is->viddec.pkt_serial;
       last_vfilter_idx = is->vfilter_idx;
       frame_rate = filt_out->inputs[0]->frame_rate;
@@ -692,8 +704,8 @@ the_end:
   return 0;
 }
 
-int subtitle_thread(void* arg) {
-  VideoState* is = arg;
+int subtitle_thread(void* user_data) {
+  VideoState* is = static_cast<VideoState*>(user_data);
   Frame* sp;
   int got_subtitle;
   double pts;

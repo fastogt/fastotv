@@ -1,13 +1,14 @@
-#ifndef CORE_THREADS_H
-#define CORE_THREADS_H
+#pragma once
 
 #include "ffmpeg_config.h"
 
+extern "C" {
 #include <libavcodec/avcodec.h>
 
 #include <SDL2/SDL.h>
+}
 
-#include "core/types.h"
+#include "core/video_state.h"
 
 #define FF_ALLOC_EVENT (SDL_USEREVENT)
 #define FF_QUIT_EVENT (SDL_USEREVENT + 2)
@@ -65,9 +66,7 @@ void calculate_display_rect(SDL_Rect* rect,
                             AVRational pic_sar);
 void set_default_window_size(int width, int height, AVRational sar);
 
-int read_thread(void* arg);
-int video_thread(void* arg);
-int audio_thread(void* arg);
-int subtitle_thread(void* arg);
-
-#endif
+int read_thread(void* user_data);
+int video_thread(void* user_data);
+int audio_thread(void* user_data);
+int subtitle_thread(void* user_data);

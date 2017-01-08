@@ -1,5 +1,9 @@
 #include "core/frame_queue.h"
 
+extern "C" {
+#include <libavutil/time.h>
+}
+
 int packet_queue_init(PacketQueue* q) {
   memset(q, 0, sizeof(PacketQueue));
   q->mutex = SDL_CreateMutex();
@@ -17,14 +21,14 @@ int packet_queue_init(PacketQueue* q) {
 }
 
 static int packet_queue_put_private(PacketQueue* q, AVPacket* pkt) {
-  MyAVPacketList* pkt1;
-
-  if (q->abort_request)
+  if (q->abort_request) {
     return -1;
+  }
 
-  pkt1 = av_malloc(sizeof(MyAVPacketList));
-  if (!pkt1)
+  MyAVPacketList* pkt1 = static_cast<MyAVPacketList*>(av_malloc(sizeof(MyAVPacketList)));
+  if (!pkt1) {
     return -1;
+  }
   pkt1->pkt = *pkt;
   pkt1->next = NULL;
   if (pkt == &flush_pkt)

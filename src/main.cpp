@@ -2,16 +2,20 @@
 #include <math.h>
 #include <limits.h>
 #include <signal.h>
-
+extern "C" {
 #include "cmdutils.h"
+}
 
-#include "core/types.h"
 #include "core/threads.h"
-#include "core/stream_helper.h"
+#include "core/video_state.h"
+
+AppOptions g_options;
 
 #if CONFIG_AVFILTER
 static int opt_add_vfilter(void* optctx, const char* opt, const char* arg) {
-  GROW_ARRAY(vfilters_list, nb_vfilters);
+  // GROW_ARRAY(vfilters_list, nb_vfilters);
+  vfilters_list = (const char**)grow_array(vfilters_list, sizeof(*vfilters_list), &nb_vfilters,
+                                           nb_vfilters + 1);
   vfilters_list[nb_vfilters - 1] = arg;
   return 0;
 }
@@ -79,9 +83,9 @@ static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
                   ? SHOW_MODE_VIDEO
                   : !strcmp(arg, "waves")
                         ? SHOW_MODE_WAVES
-                        : !strcmp(arg, "rdft")
-                              ? SHOW_MODE_RDFT
-                              : parse_number_or_die(opt, arg, OPT_INT, 0, SHOW_MODE_NB - 1);
+                        : !strcmp(arg, "rdft") ? SHOW_MODE_RDFT
+                                               : (ShowMode)parse_number_or_die(opt, arg, OPT_INT, 0,
+                                                                               SHOW_MODE_NB - 1);
   return 0;
 }
 
@@ -92,8 +96,10 @@ static void opt_input_file(void* optctx, const char* filename) {
            input_filename);
     exit(1);
   }
-  if (!strcmp(filename, "-"))
+
+  if (strcmp(filename, "-") == 0) {
     filename = "pipe:";
+  }
   input_filename = filename;
 }
 
@@ -240,8 +246,8 @@ static const OptionDef options[] = {
      "set audio-video sync. type (type=audio/video/ext)",
      "type"},
     {"autoexit", OPT_BOOL | OPT_EXPERT, {&autoexit}, "exit at the end", ""},
-    {"exitonkeydown", OPT_BOOL | OPT_EXPERT, {&exit_on_keydown}, "exit on key down", ""},
-    {"exitonmousedown", OPT_BOOL | OPT_EXPERT, {&exit_on_mousedown}, "exit on mouse down", ""},
+    {"exitonkeydown", OPT_BOOL | OPT_EXPERT, {&g_options.exit_on_keydown}, "exit on key down", ""},
+    {"exitonmousedown", OPT_BOOL | OPT_EXPERT, {&g_options.exit_on_mousedown}, "exit on mouse down", ""},
     {"loop",
      OPT_INT | HAS_ARG | OPT_EXPERT,
      {&loop},
@@ -290,7 +296,7 @@ static const OptionDef options[] = {
      {&video_codec_name},
      "force video decoder",
      "decoder_name"},
-    {"autorotate", OPT_BOOL, {&autorotate}, "automatically rotate video", ""},
+    {"autorotate", OPT_BOOL, {&g_options.autorotate}, "automatically rotate video", ""},
     {
         NULL,
     },
@@ -337,6 +343,7 @@ void show_help_default(const char* opt, const char* arg) {
 }
 
 static int lockmgr(void** mtx, enum AVLockOp op) {
+  SDL_mutex* lmtx = (SDL_mutex*)*mtx;
   switch (op) {
     case AV_LOCK_CREATE:
       *mtx = SDL_CreateMutex();
@@ -346,18 +353,42 @@ static int lockmgr(void** mtx, enum AVLockOp op) {
       }
       return 0;
     case AV_LOCK_OBTAIN:
-      return !!SDL_LockMutex(*mtx);
+      return !!SDL_LockMutex(lmtx);
     case AV_LOCK_RELEASE:
-      return !!SDL_UnlockMutex(*mtx);
+      return !!SDL_UnlockMutex(lmtx);
     case AV_LOCK_DESTROY:
-      SDL_DestroyMutex(*mtx);
+      SDL_DestroyMutex(lmtx);
       return 0;
   }
   return 1;
 }
 
+/* handle an event sent by the GUI */
+void do_exit(VideoState* is) {
+  delete is;
+
+  if (renderer) {
+    SDL_DestroyRenderer(renderer);
+  }
+  if (window) {
+    SDL_DestroyWindow(window);
+  }
+  av_lockmgr_register(NULL);
+  uninit_opts();
+#if CONFIG_AVFILTER
+  av_freep(&vfilters_list);
+#endif
+  avformat_network_deinit();
+  if (show_status)
+    printf("\n");
+  SDL_Quit();
+  av_log(NULL, AV_LOG_QUIET, "%s", "");
+}
+
 /* Called from the main */
 int main(int argc, char** argv) {
+  g_options.autorotate = 1;
+
   init_dynload();
 
   av_log_set_flags(AV_LOG_SKIP_REPEATED);
@@ -387,27 +418,29 @@ int main(int argc, char** argv) {
     av_log(NULL, AV_LOG_FATAL, "An input file must be specified\n");
     av_log(NULL, AV_LOG_FATAL, "Use -h to get full help or, even better, run 'man %s'\n",
            PROJECT_NAME_TITLE);
-    exit(1);
+    return EXIT_FAILURE;
   }
 
   if (display_disable) {
     video_disable = 1;
   }
   int flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
-  if (audio_disable)
+  if (audio_disable) {
     flags &= ~SDL_INIT_AUDIO;
-  else {
+  } else {
     /* Try to work around an occasional ALSA buffer underflow issue when the
      * period size is NPOT due to ALSA resampling by forcing the buffer size. */
-    if (!SDL_getenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE"))
+    if (!SDL_getenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE")) {
       SDL_setenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE", "1", 1);
+    }
   }
-  if (display_disable)
+  if (display_disable) {
     flags &= ~SDL_INIT_VIDEO;
+  }
   if (SDL_Init(flags)) {
     av_log(NULL, AV_LOG_FATAL, "Could not initialize SDL - %s\n", SDL_GetError());
     av_log(NULL, AV_LOG_FATAL, "(Did you set the DISPLAY variable?)\n");
-    exit(1);
+    return EXIT_FAILURE;
   }
 
   SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
@@ -421,20 +454,12 @@ int main(int argc, char** argv) {
   av_init_packet(&flush_pkt);
   flush_pkt.data = (uint8_t*)&flush_pkt;
 
-  AppOptions opt;
-  opt.swr_opts = swr_opts;
-  opt.sws_dict = sws_dict;
-  opt.format_opts = format_opts;
-  opt.codec_opts = codec_opts;
-  VideoState* is = stream_open(input_filename, file_iformat, opt);
-  if (!is) {
-    av_log(NULL, AV_LOG_FATAL, "Failed to initialize VideoState!\n");
-    do_exit(NULL);
-  }
-
-  event_loop(is);
-
-  /* never returns */
-
-  return 0;
+  g_options.swr_opts = swr_opts;
+  g_options.sws_dict = sws_dict;
+  g_options.format_opts = format_opts;
+  g_options.codec_opts = codec_opts;
+  VideoState* is = new VideoState(input_filename, file_iformat, g_options);
+  int res = is->exec();
+  do_exit(is);
+  return res;
 }

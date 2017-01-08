@@ -1,10 +1,11 @@
-#ifndef CMD_UTILS_H
-#define CMD_UTILS_H
+#pragma once
 
 #include "ffmpeg_config.h"
 
+extern "C" {
 #include <libavutil/dict.h>
 #include <libavformat/avformat.h>
+}
 
 /**
  * Filter out options for given codec.
@@ -39,4 +40,20 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
  */
 AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* codec_opts);
 
-#endif /* CMDUTILS_H */
+/**
+ * Check if the given stream matches a stream specifier.
+ *
+ * @param s  Corresponding format context.
+ * @param st Stream from s to be checked.
+ * @param spec A stream specifier of the [v|a|s|d]:[\<stream index\>] form.
+ *
+ * @return 1 if the stream matches, 0 if it doesn't, <0 on error
+ */
+int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec);
+
+double get_rotation(AVStream* st);
+
+/**
+ * Wraps exit with a program-specific cleanup routine.
+ */
+void exit_program(int ret) av_noreturn;
