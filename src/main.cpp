@@ -2,6 +2,9 @@
 #include <math.h>
 #include <limits.h>
 #include <signal.h>
+
+#include <common/macros.h>
+
 extern "C" {
 #include "cmdutils.h"
 }
@@ -12,37 +15,50 @@ extern "C" {
 // http://csm.fastbroad.com/i/nickelodeon_gre142p1_1@383943/master.m3u8
 
 AppOptions g_options;
+AVInputFormat* file_iformat = NULL;
 
 #if CONFIG_AVFILTER
 static int opt_add_vfilter(void* optctx, const char* opt, const char* arg) {
-  // GROW_ARRAY(vfilters_list, nb_vfilters);
-  vfilters_list = (const char**)grow_array(vfilters_list, sizeof(*vfilters_list), &nb_vfilters,
-                                           nb_vfilters + 1);
-  vfilters_list[nb_vfilters - 1] = arg;
+  UNUSED(optctx);
+  UNUSED(opt);
+
+  g_options.initAvFilters(arg);
   return 0;
 }
 #endif
 
 static void sigterm_handler(int sig) {
+  UNUSED(sig);
+
   exit(123);
 }
 
 static int opt_frame_size(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+  UNUSED(opt);
+
   av_log(NULL, AV_LOG_WARNING, "Option -s is deprecated, use -video_size.\n");
   return opt_default(NULL, "video_size", arg);
 }
 
 static int opt_width(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+
   g_options.screen_width = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
   return 0;
 }
 
 static int opt_height(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+
   g_options.screen_height = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
   return 0;
 }
 
 static int opt_format(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+  UNUSED(opt);
+
   file_iformat = av_find_input_format(arg);
   if (!file_iformat) {
     av_log(NULL, AV_LOG_FATAL, "Unknown input format: %s\n", arg);
@@ -52,17 +68,22 @@ static int opt_format(void* optctx, const char* opt, const char* arg) {
 }
 
 static int opt_frame_pix_fmt(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+  UNUSED(opt);
+
   av_log(NULL, AV_LOG_WARNING, "Option -pix_fmt is deprecated, use -pixel_format.\n");
   return opt_default(NULL, "pixel_format", arg);
 }
 
 static int opt_sync(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+
   if (!strcmp(arg, "audio"))
-    av_sync_type = AV_SYNC_AUDIO_MASTER;
+    g_options.av_sync_type = AV_SYNC_AUDIO_MASTER;
   else if (!strcmp(arg, "video"))
-    av_sync_type = AV_SYNC_VIDEO_MASTER;
+    g_options.av_sync_type = AV_SYNC_VIDEO_MASTER;
   else if (!strcmp(arg, "ext"))
-    av_sync_type = AV_SYNC_EXTERNAL_CLOCK;
+    g_options.av_sync_type = AV_SYNC_EXTERNAL_CLOCK;
   else {
     av_log(NULL, AV_LOG_ERROR, "Unknown value for %s: %s\n", opt, arg);
     exit(1);
@@ -71,16 +92,22 @@ static int opt_sync(void* optctx, const char* opt, const char* arg) {
 }
 
 static int opt_seek(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+
   g_options.start_time = parse_time_or_die(opt, arg, 1);
   return 0;
 }
 
 static int opt_duration(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+
   g_options.duration = parse_time_or_die(opt, arg, 1);
   return 0;
 }
 
 static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+
   g_options.show_mode =
       !strcmp(arg, "video")
           ? SHOW_MODE_VIDEO
@@ -93,20 +120,24 @@ static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
 }
 
 static void opt_input_file(void* optctx, const char* filename) {
-  if (input_filename) {
+  UNUSED(optctx);
+
+  if (g_options.input_filename) {
     av_log(NULL, AV_LOG_FATAL,
            "Argument '%s' provided as input filename, but '%s' was already specified.\n", filename,
-           input_filename);
+           g_options.input_filename);
     exit(1);
   }
 
   if (strcmp(filename, "-") == 0) {
     filename = "pipe:";
   }
-  input_filename = filename;
+  g_options.input_filename = filename;
 }
 
 static int opt_codec(void* optctx, const char* opt, const char* arg) {
+  UNUSED(optctx);
+
   const char* spec = strchr(opt, ':');
   if (!spec) {
     av_log(NULL, AV_LOG_ERROR, "No media specifier was specified in '%s' in option '%s'\n", arg,
@@ -116,13 +147,13 @@ static int opt_codec(void* optctx, const char* opt, const char* arg) {
   spec++;
   switch (spec[0]) {
     case 'a':
-      audio_codec_name = arg;
+      g_options.audio_codec_name = arg;
       break;
     case 's':
-      subtitle_codec_name = arg;
+      g_options.subtitle_codec_name = arg;
       break;
     case 'v':
-      video_codec_name = arg;
+      g_options.video_codec_name = arg;
       break;
     default:
       av_log(NULL, AV_LOG_ERROR, "Invalid media specifier '%s' in option '%s'\n", spec, opt);
@@ -200,23 +231,23 @@ static const OptionDef options[] = {
      {.func_arg = opt_frame_size},
      "set frame size (WxH or abbreviation)",
      "size"},
-    {"fs", OPT_BOOL, {&is_full_screen}, "force full screen"},
+    {"fs", OPT_BOOL, {&g_options.is_full_screen}, "force full screen"},
     {"an", OPT_BOOL, {&g_options.audio_disable}, "disable audio"},
     {"vn", OPT_BOOL, {&g_options.video_disable}, "disable video"},
     {"sn", OPT_BOOL, {&g_options.subtitle_disable}, "disable subtitling"},
     {"ast",
      OPT_STRING | HAS_ARG | OPT_EXPERT,
-     {&wanted_stream_spec[AVMEDIA_TYPE_AUDIO]},
+     {&g_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO]},
      "select desired audio stream",
      "stream_specifier"},
     {"vst",
      OPT_STRING | HAS_ARG | OPT_EXPERT,
-     {&wanted_stream_spec[AVMEDIA_TYPE_VIDEO]},
+     {&g_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO]},
      "select desired video stream",
      "stream_specifier"},
     {"sst",
      OPT_STRING | HAS_ARG | OPT_EXPERT,
-     {&wanted_stream_spec[AVMEDIA_TYPE_SUBTITLE]},
+     {&g_options.wanted_stream_spec[AVMEDIA_TYPE_SUBTITLE]},
      "select desired subtitle stream",
      "stream_specifier"},
     {"ss", HAS_ARG, {.func_arg = opt_seek}, "seek to a given position in seconds", "pos"},
@@ -225,30 +256,38 @@ static const OptionDef options[] = {
      {.func_arg = opt_duration},
      "play  \"duration\" seconds of audio/video",
      "duration"},
-    {"bytes", OPT_INT | HAS_ARG, {&seek_by_bytes}, "seek by bytes 0=off 1=on -1=auto", "val"},
-    {"nodisp", OPT_BOOL, {&display_disable}, "disable graphical display"},
-    {"volume", OPT_INT | HAS_ARG, {&startup_volume}, "set startup volume 0=min 100=max", "volume"},
+    {"bytes",
+     OPT_INT | HAS_ARG,
+     {&g_options.seek_by_bytes},
+     "seek by bytes 0=off 1=on -1=auto",
+     "val"},
+    {"nodisp", OPT_BOOL, {&g_options.display_disable}, "disable graphical display"},
+    {"volume",
+     OPT_INT | HAS_ARG,
+     {&g_options.startup_volume},
+     "set startup volume 0=min 100=max",
+     "volume"},
     {"f", HAS_ARG, {.func_arg = opt_format}, "force format", "fmt"},
     {"pix_fmt",
      HAS_ARG | OPT_EXPERT | OPT_VIDEO,
      {.func_arg = opt_frame_pix_fmt},
      "set pixel format",
      "format"},
-    {"stats", OPT_BOOL | OPT_EXPERT, {&show_status}, "show status", ""},
-    {"fast", OPT_BOOL | OPT_EXPERT, {&fast}, "non spec compliant optimizations", ""},
-    {"genpts", OPT_BOOL | OPT_EXPERT, {&genpts}, "generate pts", ""},
+    {"stats", OPT_BOOL | OPT_EXPERT, {&g_options.show_status}, "show status", ""},
+    {"fast", OPT_BOOL | OPT_EXPERT, {&g_options.fast}, "non spec compliant optimizations", ""},
+    {"genpts", OPT_BOOL | OPT_EXPERT, {&g_options.genpts}, "generate pts", ""},
     {"drp",
      OPT_INT | HAS_ARG | OPT_EXPERT,
-     {&decoder_reorder_pts},
+     {&g_options.decoder_reorder_pts},
      "let decoder reorder pts 0=off 1=on -1=auto",
      ""},
-    {"lowres", OPT_INT | HAS_ARG | OPT_EXPERT, {&lowres}, "", ""},
+    {"lowres", OPT_INT | HAS_ARG | OPT_EXPERT, {&g_options.lowres}, "", ""},
     {"sync",
      HAS_ARG | OPT_EXPERT,
      {.func_arg = opt_sync},
      "set audio-video sync. type (type=audio/video/ext)",
      "type"},
-    {"autoexit", OPT_BOOL | OPT_EXPERT, {&autoexit}, "exit at the end", ""},
+    {"autoexit", OPT_BOOL | OPT_EXPERT, {&g_options.autoexit}, "exit at the end", ""},
     {"exitonkeydown", OPT_BOOL | OPT_EXPERT, {&g_options.exit_on_keydown}, "exit on key down", ""},
     {"exitonmousedown",
      OPT_BOOL | OPT_EXPERT,
@@ -257,13 +296,17 @@ static const OptionDef options[] = {
      ""},
     {"loop",
      OPT_INT | HAS_ARG | OPT_EXPERT,
-     {&loop},
+     {&g_options.loop},
      "set number of times the playback shall be looped",
      "loop count"},
-    {"framedrop", OPT_BOOL | OPT_EXPERT, {&framedrop}, "drop frames when cpu is too slow", ""},
+    {"framedrop",
+     OPT_BOOL | OPT_EXPERT,
+     {&g_options.framedrop},
+     "drop frames when cpu is too slow",
+     ""},
     {"infbuf",
      OPT_BOOL | OPT_EXPERT,
-     {&infinite_buffer},
+     {&g_options.infinite_buffer},
      "don't limit the input buffer size (useful with realtime streams)",
      ""},
     {"window_title",
@@ -277,9 +320,13 @@ static const OptionDef options[] = {
      {.func_arg = opt_add_vfilter},
      "set video filters",
      "filter_graph"},
-    {"af", OPT_STRING | HAS_ARG, {&afilters}, "set audio filters", "filter_graph"},
+    {"af", OPT_STRING | HAS_ARG, {&g_options.afilters}, "set audio filters", "filter_graph"},
 #endif
-    {"rdftspeed", OPT_INT | HAS_ARG | OPT_AUDIO | OPT_EXPERT, {&rdftspeed}, "rdft speed", "msecs"},
+    {"rdftspeed",
+     OPT_INT | HAS_ARG | OPT_AUDIO | OPT_EXPERT,
+     {&g_options.rdftspeed},
+     "rdft speed",
+     "msecs"},
     {"showmode",
      HAS_ARG,
      {.func_arg = opt_show_mode},
@@ -294,17 +341,17 @@ static const OptionDef options[] = {
     {"codec", HAS_ARG, {.func_arg = opt_codec}, "force decoder", "decoder_name"},
     {"acodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
-     {&audio_codec_name},
+     {&g_options.audio_codec_name},
      "force audio decoder",
      "decoder_name"},
     {"scodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
-     {&subtitle_codec_name},
+     {&g_options.subtitle_codec_name},
      "force subtitle decoder",
      "decoder_name"},
     {"vcodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
-     {&video_codec_name},
+     {&g_options.video_codec_name},
      "force video decoder",
      "decoder_name"},
     {"autorotate", OPT_BOOL, {&g_options.autorotate}, "automatically rotate video", ""},
@@ -320,6 +367,9 @@ static void show_usage(void) {
 }
 
 void show_help_default(const char* opt, const char* arg) {
+  UNUSED(opt);
+  UNUSED(arg);
+
   av_log_set_callback(log_callback_help);
   show_usage();
   show_help_options(options, "Main options:", 0, OPT_EXPERT, 0);
@@ -354,7 +404,7 @@ void show_help_default(const char* opt, const char* arg) {
 }
 
 static int lockmgr(void** mtx, enum AVLockOp op) {
-  SDL_mutex* lmtx = (SDL_mutex*)*mtx;
+  SDL_mutex* lmtx = static_cast<SDL_mutex*>(*mtx);
   switch (op) {
     case AV_LOCK_CREATE:
       *mtx = SDL_CreateMutex();
@@ -380,12 +430,10 @@ void do_exit(VideoState* is) {
 
   av_lockmgr_register(NULL);
   uninit_opts();
-#if CONFIG_AVFILTER
-  av_freep(&vfilters_list);
-#endif
   avformat_network_deinit();
-  if (show_status)
+  if (g_options.show_status) {
     printf("\n");
+  }
   SDL_Quit();
   av_log(NULL, AV_LOG_QUIET, "%s", "");
 }
@@ -418,7 +466,7 @@ int main(int argc, char** argv) {
 
   parse_options(NULL, argc, argv, options, opt_input_file);
 
-  if (!input_filename) {
+  if (!g_options.input_filename) {
     show_usage();
     av_log(NULL, AV_LOG_FATAL, "An input file must be specified\n");
     av_log(NULL, AV_LOG_FATAL, "Use -h to get full help or, even better, run 'man %s'\n",
@@ -426,7 +474,7 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
-  if (display_disable) {
+  if (g_options.display_disable) {
     g_options.video_disable = 1;
   }
   int flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
@@ -439,7 +487,7 @@ int main(int argc, char** argv) {
       SDL_setenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE", "1", 1);
     }
   }
-  if (display_disable) {
+  if (g_options.display_disable) {
     flags &= ~SDL_INIT_VIDEO;
   }
   if (SDL_Init(flags)) {
@@ -456,14 +504,11 @@ int main(int argc, char** argv) {
     do_exit(NULL);
   }
 
-  av_init_packet(&flush_pkt);
-  flush_pkt.data = (uint8_t*)&flush_pkt;
-
   g_options.swr_opts = swr_opts;
   g_options.sws_dict = sws_dict;
   g_options.format_opts = format_opts;
   g_options.codec_opts = codec_opts;
-  VideoState* is = new VideoState(input_filename, file_iformat, g_options);
+  VideoState* is = new VideoState(file_iformat, &g_options);
   int res = is->exec();
   do_exit(is);
   return res;

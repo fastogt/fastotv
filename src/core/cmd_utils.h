@@ -57,3 +57,15 @@ double get_rotation(AVStream* st);
  * Wraps exit with a program-specific cleanup routine.
  */
 void exit_program(int ret) av_noreturn;
+
+/**
+ * Realloc array to hold new_size elements of elem_size.
+ * Calls exit() on failure.
+ *
+ * @param array array to reallocate
+ * @param elem_size size in bytes of each element
+ * @param size new element count will be written here
+ * @param new_size number of elements to place in reallocated array
+ * @return reallocated array
+ */
+void* grow_array(void* array, int elem_size, int* size, int new_size);

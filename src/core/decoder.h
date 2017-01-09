@@ -6,8 +6,6 @@ extern "C" {
 
 #include "core/frame_queue.h"
 
-static int decoder_reorder_pts = -1;
-
 typedef struct Decoder {
   AVPacket pkt;
   AVPacket pkt_temp;
@@ -22,12 +20,13 @@ typedef struct Decoder {
   int64_t next_pts;
   AVRational next_pts_tb;
   SDL_Thread* decoder_tid;
+  int decoder_reorder_pts;
 } Decoder;
 
 void decoder_init(Decoder* d,
                   AVCodecContext* avctx,
                   PacketQueue* queue,
-                  SDL_cond* empty_queue_cond);
+                  SDL_cond* empty_queue_cond, int decoder_reorder_pts);
 int decoder_start(Decoder* d, int (*fn)(void*), void* arg);
 void decoder_abort(Decoder* d, FrameQueue* fq);
 void decoder_destroy(Decoder* d);

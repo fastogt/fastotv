@@ -28,6 +28,8 @@ extern "C" {
 #include <SDL2/SDL_events.h>
 }
 
+#include <common/macros.h>
+
 #include "core/frame_queue.h"
 #include "core/decoder.h"
 #include "core/app_options.h"
@@ -40,19 +42,13 @@ extern "C" {
 /* If a frame duration is longer than this, it will not be duplicated to compensate AV sync */
 #define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
 
-enum {
-  AV_SYNC_AUDIO_MASTER, /* default choice */
-  AV_SYNC_VIDEO_MASTER,
-  AV_SYNC_EXTERNAL_CLOCK, /* synchronize to an external clock */
-};
-
 struct VideoState {
-  VideoState(const char* filename, AVInputFormat* iformat, AppOptions opt);
+  VideoState(AVInputFormat* iformat, AppOptions* opt);
   int exec();
 
   ~VideoState();
 
-  AppOptions opt;
+  AppOptions* opt;
 
   SDL_Thread* read_tid;
   AVInputFormat* iformat;
@@ -174,6 +170,8 @@ struct VideoState {
 #endif
 
  private:
+  DISALLOW_COPY_AND_ASSIGN(VideoState);
+
   void refresh_loop_wait_event(SDL_Event* event);
   int video_open(Frame* vp);
   /* allocate a picture (needs to do that in main thread to avoid

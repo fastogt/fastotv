@@ -4,6 +4,8 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
+static const AVPacket& flush_pkt() {}
+
 int packet_queue_init(PacketQueue* q) {
   memset(q, 0, sizeof(PacketQueue));
   q->mutex = SDL_CreateMutex();
@@ -31,7 +33,7 @@ static int packet_queue_put_private(PacketQueue* q, AVPacket* pkt) {
   }
   pkt1->pkt = *pkt;
   pkt1->next = NULL;
-  if (pkt == &flush_pkt)
+  if (pkt == PacketQueue::flush_pkt())
     q->serial++;
   pkt1->serial = q->serial;
 
@@ -94,10 +96,17 @@ int packet_queue_get(PacketQueue* q, AVPacket* pkt, int block, int* serial) {
   return ret;
 }
 
+AVPacket* PacketQueue::flush_pkt() {
+  static AVPacket fls;
+  av_init_packet(&fls);
+  fls.data = (uint8_t*)&fls;
+  return &fls;
+}
+
 void packet_queue_start(PacketQueue* q) {
   SDL_LockMutex(q->mutex);
   q->abort_request = 0;
-  packet_queue_put_private(q, &flush_pkt);
+  packet_queue_put_private(q, PacketQueue::flush_pkt());
   SDL_UnlockMutex(q->mutex);
 }
 
@@ -108,7 +117,7 @@ int packet_queue_put(PacketQueue* q, AVPacket* pkt) {
   ret = packet_queue_put_private(q, pkt);
   SDL_UnlockMutex(q->mutex);
 
-  if (pkt != &flush_pkt && ret < 0)
+  if (pkt != PacketQueue::flush_pkt() && ret < 0)
     av_packet_unref(pkt);
 
   return ret;

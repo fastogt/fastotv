@@ -10,4 +10,10 @@ enum ShowMode {
   SHOW_MODE_NB
 };
 
+enum AvSyncType {
+  AV_SYNC_AUDIO_MASTER, /* default choice */
+  AV_SYNC_VIDEO_MASTER,
+  AV_SYNC_EXTERNAL_CLOCK, /* synchronize to an external clock */
+};
+
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels);

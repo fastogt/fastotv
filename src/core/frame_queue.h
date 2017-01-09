@@ -30,6 +30,7 @@ typedef struct PacketQueue {
   int serial;
   SDL_mutex* mutex;
   SDL_cond* cond;
+  static AVPacket* flush_pkt();
 } PacketQueue;
 
 /* packet queue handling */
@@ -42,7 +43,6 @@ int packet_queue_put_nullpacket(PacketQueue* q, int stream_index);
 int packet_queue_get(PacketQueue* q, AVPacket* pkt, int block, int* serial);
 void packet_queue_start(PacketQueue* q);
 void packet_queue_destroy(PacketQueue* q);
-static AVPacket flush_pkt;
 
 typedef struct AudioParams {
   int freq;

@@ -73,32 +73,32 @@ int read_thread(void* user_data) {
   }
   ic->interrupt_callback.callback = decode_interrupt_cb;
   ic->interrupt_callback.opaque = is;
-  if (!av_dict_get(is->opt.format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
-    av_dict_set(&is->opt.format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
+  if (!av_dict_get(is->opt->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
+    av_dict_set(&is->opt->format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
     scan_all_pmts_set = 1;
   }
-  err = avformat_open_input(&ic, is->filename, is->iformat, &is->opt.format_opts);
+  err = avformat_open_input(&ic, is->filename, is->iformat, &is->opt->format_opts);
   if (err < 0) {
     print_error(is->filename, err);
     ret = -1;
     goto fail;
   }
   if (scan_all_pmts_set)
-    av_dict_set(&is->opt.format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
+    av_dict_set(&is->opt->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
 
-  if ((t = av_dict_get(is->opt.format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX))) {
+  if ((t = av_dict_get(is->opt->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX))) {
     av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
     ret = AVERROR_OPTION_NOT_FOUND;
     goto fail;
   }
   is->ic = ic;
 
-  if (genpts)
+  if (is->opt->genpts)
     ic->flags |= AVFMT_FLAG_GENPTS;
 
   av_format_inject_global_side_data(ic);
 
-  opts = setup_find_stream_info_opts(ic, is->opt.codec_opts);
+  opts = setup_find_stream_info_opts(ic, is->opt->codec_opts);
   orig_nb_streams = ic->nb_streams;
 
   err = avformat_find_stream_info(ic, opts);
@@ -117,20 +117,22 @@ int read_thread(void* user_data) {
     ic->pb->eof_reached =
         0;  // FIXME hack, ffplay maybe should not use avio_feof() to test for the end
 
-  if (seek_by_bytes < 0)
-    seek_by_bytes = !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
+  if (is->opt->seek_by_bytes < 0) {
+    is->opt->seek_by_bytes =
+        !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
+  }
 
   is->max_frame_duration = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
 
-  if (!is->opt.window_title && (t = av_dict_get(ic->metadata, "title", NULL, 0))) {
-    is->opt.window_title = av_asprintf("%s - %s", t->value, input_filename);
+  if (!is->opt->window_title && (t = av_dict_get(ic->metadata, "title", NULL, 0))) {
+    is->opt->window_title = av_asprintf("%s - %s", t->value, is->opt->input_filename);
   }
 
   /* if seeking requested, we execute it */
-  if (is->opt.start_time != AV_NOPTS_VALUE) {
+  if (is->opt->start_time != AV_NOPTS_VALUE) {
     int64_t timestamp;
 
-    timestamp = is->opt.start_time;
+    timestamp = is->opt->start_time;
     /* add the stream start time */
     if (ic->start_time != AV_NOPTS_VALUE)
       timestamp += ic->start_time;
@@ -143,35 +145,36 @@ int read_thread(void* user_data) {
 
   is->realtime = is_realtime(ic);
 
-  if (show_status)
+  if (is->opt->show_status) {
     av_dump_format(ic, 0, is->filename, 0);
+  }
 
   for (i = 0; i < ic->nb_streams; i++) {
     AVStream* st = ic->streams[i];
     enum AVMediaType type = st->codecpar->codec_type;
     st->discard = AVDISCARD_ALL;
-    if (type >= 0 && wanted_stream_spec[type] && st_index[type] == -1)
-      if (avformat_match_stream_specifier(ic, st, wanted_stream_spec[type]) > 0)
+    if (type >= 0 && is->opt->wanted_stream_spec[type] && st_index[type] == -1)
+      if (avformat_match_stream_specifier(ic, st, is->opt->wanted_stream_spec[type]) > 0)
         st_index[type] = i;
   }
   for (i = 0; i < static_cast<int>(AVMEDIA_TYPE_NB); i++) {
-    if (wanted_stream_spec[i] && st_index[i] == -1) {
+    if (is->opt->wanted_stream_spec[i] && st_index[i] == -1) {
       av_log(NULL, AV_LOG_ERROR, "Stream specifier %s does not match any %s stream\n",
-             wanted_stream_spec[i], av_get_media_type_string(static_cast<AVMediaType>(i)));
+             is->opt->wanted_stream_spec[i], av_get_media_type_string(static_cast<AVMediaType>(i)));
       st_index[i] = INT_MAX;
     }
   }
 
-  if (!is->opt.video_disable) {
+  if (!is->opt->video_disable) {
     st_index[AVMEDIA_TYPE_VIDEO] =
         av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
   }
-  if (!is->opt.audio_disable) {
+  if (!is->opt->audio_disable) {
     st_index[AVMEDIA_TYPE_AUDIO] =
         av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO],
                             st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
   }
-  if (!is->opt.video_disable && !is->opt.subtitle_disable) {
+  if (!is->opt->video_disable && !is->opt->subtitle_disable) {
     st_index[AVMEDIA_TYPE_SUBTITLE] =
         av_find_best_stream(ic, AVMEDIA_TYPE_SUBTITLE, st_index[AVMEDIA_TYPE_SUBTITLE],
                             (st_index[AVMEDIA_TYPE_AUDIO] >= 0 ? st_index[AVMEDIA_TYPE_AUDIO]
@@ -179,7 +182,7 @@ int read_thread(void* user_data) {
                             NULL, 0);
   }
 
-  is->show_mode = is->opt.show_mode;
+  is->show_mode = is->opt->show_mode;
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
     AVStream* st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
     AVCodecParameters* codecpar = st->codecpar;
@@ -212,8 +215,8 @@ int read_thread(void* user_data) {
     goto fail;
   }
 
-  if (infinite_buffer < 0 && is->realtime) {
-    infinite_buffer = 1;
+  if (is->opt->infinite_buffer < 0 && is->realtime) {
+    is->opt->infinite_buffer = 1;
   }
 
   for (;;) {
@@ -248,15 +251,15 @@ int read_thread(void* user_data) {
       } else {
         if (is->audio_stream >= 0) {
           packet_queue_flush(&is->audioq);
-          packet_queue_put(&is->audioq, &flush_pkt);
+          packet_queue_put(&is->audioq, PacketQueue::flush_pkt());
         }
         if (is->subtitle_stream >= 0) {
           packet_queue_flush(&is->subtitleq);
-          packet_queue_put(&is->subtitleq, &flush_pkt);
+          packet_queue_put(&is->subtitleq, PacketQueue::flush_pkt());
         }
         if (is->video_stream >= 0) {
           packet_queue_flush(&is->videoq);
-          packet_queue_put(&is->videoq, &flush_pkt);
+          packet_queue_put(&is->videoq, PacketQueue::flush_pkt());
         }
         if (is->seek_flags & AVSEEK_FLAG_BYTE) {
           set_clock(&is->extclk, NAN, 0);
@@ -283,7 +286,7 @@ int read_thread(void* user_data) {
     }
 
     /* if the queue are full, no need to read more */
-    if (infinite_buffer < 1 &&
+    if (is->opt->infinite_buffer < 1 &&
         (is->audioq.size + is->videoq.size + is->subtitleq.size > MAX_QUEUE_SIZE ||
          (stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq) &&
           stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq) &&
@@ -298,9 +301,9 @@ int read_thread(void* user_data) {
                                           frame_queue_nb_remaining(&is->sampq) == 0)) &&
         (!is->video_st ||
          (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
-      if (loop != 1 && (!loop || --loop)) {
-        is->stream_seek(is->opt.start_time != AV_NOPTS_VALUE ? is->opt.start_time : 0, 0, 0);
-      } else if (autoexit) {
+      if (is->opt->loop != 1 && (!is->opt->loop || --is->opt->loop)) {
+        is->stream_seek(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0, 0, 0);
+      } else if (is->opt->autoexit) {
         ret = AVERROR_EOF;
         goto fail;
       }
@@ -329,11 +332,11 @@ int read_thread(void* user_data) {
     stream_start_time = ic->streams[pkt->stream_index]->start_time;
     pkt_ts = pkt->pts == AV_NOPTS_VALUE ? pkt->dts : pkt->pts;
     pkt_in_play_range =
-        is->opt.duration == AV_NOPTS_VALUE ||
+        is->opt->duration == AV_NOPTS_VALUE ||
         (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
                     av_q2d(ic->streams[pkt->stream_index]->time_base) -
-                (double)(is->opt.start_time != AV_NOPTS_VALUE ? is->opt.start_time : 0) / 1000000 <=
-            ((double)is->opt.duration / 1000000);
+                (double)(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0) / 1000000 <=
+            ((double)is->opt->duration / 1000000);
     if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
       packet_queue_put(&is->audioq, pkt);
     } else if (pkt->stream_index == is->video_stream && pkt_in_play_range &&
@@ -453,7 +456,8 @@ static int get_video_frame(VideoState* is, AVFrame* frame) {
 
     frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(is->ic, is->video_st, frame);
 
-    if (framedrop > 0 || (framedrop && is->get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) {
+    if (is->opt->framedrop > 0 ||
+        (is->opt->framedrop && is->get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) {
       if (frame->pts != AV_NOPTS_VALUE) {
         double diff = dpts - is->get_master_clock();
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
@@ -521,12 +525,14 @@ int audio_thread(void* user_data) {
         is->audio_filter_src.freq = frame->sample_rate;
         last_serial = is->auddec.pkt_serial;
 
-        if ((ret = is->configure_audio_filters(afilters, 1)) < 0)
+        if ((ret = is->configure_audio_filters(is->opt->afilters, 1)) < 0) {
           goto the_end;
+        }
       }
 
-      if ((ret = av_buffersrc_add_frame(is->in_audio_filter, frame)) < 0)
+      if ((ret = av_buffersrc_add_frame(is->in_audio_filter, frame)) < 0) {
         goto the_end;
+      }
 
       while ((ret = av_buffersink_get_frame_flags(is->out_audio_filter, frame, 0)) >= 0) {
         tb = is->out_audio_filter->inputs[0]->time_base;
@@ -610,7 +616,8 @@ int video_thread(void* user_data) {
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
       if ((ret = is->configure_video_filters(
-               graph, vfilters_list ? vfilters_list[is->vfilter_idx] : NULL, frame)) < 0) {
+               graph, is->opt->vfilters_list ? is->opt->vfilters_list[is->vfilter_idx] : NULL,
+               frame)) < 0) {
         SDL_Event event;
         event.type = FF_QUIT_EVENT;
         event.user.data1 = is;

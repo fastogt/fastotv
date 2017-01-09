@@ -3,12 +3,14 @@
 void decoder_init(Decoder* d,
                   AVCodecContext* avctx,
                   PacketQueue* queue,
-                  SDL_cond* empty_queue_cond) {
+                  SDL_cond* empty_queue_cond,
+                  int decoder_reorder_pts) {
   memset(d, 0, sizeof(Decoder));
   d->avctx = avctx;
   d->queue = queue;
   d->empty_queue_cond = empty_queue_cond;
   d->start_pts = AV_NOPTS_VALUE;
+  d->decoder_reorder_pts = decoder_reorder_pts;
 }
 
 int decoder_start(Decoder* d, int (*fn)(void*), void* arg) {
@@ -45,18 +47,19 @@ int decoder_decode_frame(Decoder* d, AVFrame* frame, AVSubtitle* sub) {
 
     if (!d->packet_pending || d->queue->serial != d->pkt_serial) {
       AVPacket pkt;
+      static AVPacket* fls = PacketQueue::flush_pkt();
       do {
         if (d->queue->nb_packets == 0)
           SDL_CondSignal(d->empty_queue_cond);
         if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0)
           return -1;
-        if (pkt.data == flush_pkt.data) {
+        if (pkt.data == fls->data) {
           avcodec_flush_buffers(d->avctx);
           d->finished = 0;
           d->next_pts = d->start_pts;
           d->next_pts_tb = d->start_pts_tb;
         }
-      } while (pkt.data == flush_pkt.data || d->queue->serial != d->pkt_serial);
+      } while (pkt.data == fls->data || d->queue->serial != d->pkt_serial);
       av_packet_unref(&d->pkt);
       d->pkt_temp = d->pkt = pkt;
       d->packet_pending = 1;
@@ -66,9 +69,9 @@ int decoder_decode_frame(Decoder* d, AVFrame* frame, AVSubtitle* sub) {
       case AVMEDIA_TYPE_VIDEO:
         ret = avcodec_decode_video2(d->avctx, frame, &got_frame, &d->pkt_temp);
         if (got_frame) {
-          if (decoder_reorder_pts == -1) {
+          if (d->decoder_reorder_pts == -1) {
             frame->pts = av_frame_get_best_effort_timestamp(frame);
-          } else if (!decoder_reorder_pts) {
+          } else if (!d->decoder_reorder_pts) {
             frame->pts = frame->pkt_dts;
           }
         }
