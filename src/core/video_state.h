@@ -24,6 +24,8 @@ extern "C" {
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>
 #endif
+
+#include <SDL2/SDL_events.h>
 }
 
 #include "core/frame_queue.h"
@@ -173,6 +175,31 @@ struct VideoState {
   int get_master_sync_type();
   double compute_target_delay(double delay);
   double get_master_clock();
+
+ private:
+  void refresh_loop_wait_event(SDL_Event* event);
+  int video_open(Frame* vp);
+  /* allocate a picture (needs to do that in main thread to avoid
+     potential locking problems */
+  int alloc_picture();
+  void video_display();
+  /* called to display each frame */
+  void video_refresh(double* remaining_time);
+  void toggle_full_screen();
+  void fill_rectangle(int x, int y, int w, int h);
+  int realloc_texture(SDL_Texture** texture,
+                      Uint32 new_format,
+                      int new_width,
+                      int new_height,
+                      SDL_BlendMode blendmode,
+                      int init_texture);
+  void video_audio_display();
+  void video_image_display();
+
+  bool cursor_hidden_;
+  int64_t cursor_last_shown_;
+  SDL_Renderer* renderer;
+  SDL_Window* window;
 };
 
 #if CONFIG_AVFILTER
@@ -186,8 +213,3 @@ int configure_video_filters(AVFilterGraph* graph,
                             AVFrame* frame);
 int configure_audio_filters(VideoState* is, const char* afilters, int force_output_format);
 #endif
-
-static int64_t cursor_last_shown;
-static int cursor_hidden = 0;
-static SDL_Renderer* renderer;
-static SDL_Window* window;

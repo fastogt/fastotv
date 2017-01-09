@@ -369,12 +369,6 @@ static int lockmgr(void** mtx, enum AVLockOp op) {
 void do_exit(VideoState* is) {
   delete is;
 
-  if (renderer) {
-    SDL_DestroyRenderer(renderer);
-  }
-  if (window) {
-    SDL_DestroyWindow(window);
-  }
   av_lockmgr_register(NULL);
   uninit_opts();
 #if CONFIG_AVFILTER
