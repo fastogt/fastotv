@@ -33,12 +33,12 @@ static int opt_frame_size(void* optctx, const char* opt, const char* arg) {
 }
 
 static int opt_width(void* optctx, const char* opt, const char* arg) {
-  screen_width = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
+  g_options.screen_width = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
   return 0;
 }
 
 static int opt_height(void* optctx, const char* opt, const char* arg) {
-  screen_height = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
+  g_options.screen_height = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
   return 0;
 }
 
@@ -71,23 +71,24 @@ static int opt_sync(void* optctx, const char* opt, const char* arg) {
 }
 
 static int opt_seek(void* optctx, const char* opt, const char* arg) {
-  start_time = parse_time_or_die(opt, arg, 1);
+  g_options.start_time = parse_time_or_die(opt, arg, 1);
   return 0;
 }
 
 static int opt_duration(void* optctx, const char* opt, const char* arg) {
-  duration = parse_time_or_die(opt, arg, 1);
+  g_options.duration = parse_time_or_die(opt, arg, 1);
   return 0;
 }
 
 static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
-  show_mode = !strcmp(arg, "video")
-                  ? SHOW_MODE_VIDEO
-                  : !strcmp(arg, "waves")
-                        ? SHOW_MODE_WAVES
-                        : !strcmp(arg, "rdft") ? SHOW_MODE_RDFT
-                                               : (ShowMode)parse_number_or_die(opt, arg, OPT_INT, 0,
-                                                                               SHOW_MODE_NB - 1);
+  g_options.show_mode =
+      !strcmp(arg, "video")
+          ? SHOW_MODE_VIDEO
+          : !strcmp(arg, "waves")
+                ? SHOW_MODE_WAVES
+                : !strcmp(arg, "rdft")
+                      ? SHOW_MODE_RDFT
+                      : (ShowMode)parse_number_or_die(opt, arg, OPT_INT, 0, SHOW_MODE_NB - 1);
   return 0;
 }
 
@@ -200,9 +201,9 @@ static const OptionDef options[] = {
      "set frame size (WxH or abbreviation)",
      "size"},
     {"fs", OPT_BOOL, {&is_full_screen}, "force full screen"},
-    {"an", OPT_BOOL, {&audio_disable}, "disable audio"},
-    {"vn", OPT_BOOL, {&video_disable}, "disable video"},
-    {"sn", OPT_BOOL, {&subtitle_disable}, "disable subtitling"},
+    {"an", OPT_BOOL, {&g_options.audio_disable}, "disable audio"},
+    {"vn", OPT_BOOL, {&g_options.video_disable}, "disable video"},
+    {"sn", OPT_BOOL, {&g_options.subtitle_disable}, "disable subtitling"},
     {"ast",
      OPT_STRING | HAS_ARG | OPT_EXPERT,
      {&wanted_stream_spec[AVMEDIA_TYPE_AUDIO]},
@@ -249,7 +250,11 @@ static const OptionDef options[] = {
      "type"},
     {"autoexit", OPT_BOOL | OPT_EXPERT, {&autoexit}, "exit at the end", ""},
     {"exitonkeydown", OPT_BOOL | OPT_EXPERT, {&g_options.exit_on_keydown}, "exit on key down", ""},
-    {"exitonmousedown", OPT_BOOL | OPT_EXPERT, {&g_options.exit_on_mousedown}, "exit on mouse down", ""},
+    {"exitonmousedown",
+     OPT_BOOL | OPT_EXPERT,
+     {&g_options.exit_on_mousedown},
+     "exit on mouse down",
+     ""},
     {"loop",
      OPT_INT | HAS_ARG | OPT_EXPERT,
      {&loop},
@@ -261,7 +266,11 @@ static const OptionDef options[] = {
      {&infinite_buffer},
      "don't limit the input buffer size (useful with realtime streams)",
      ""},
-    {"window_title", OPT_STRING | HAS_ARG, {&window_title}, "set window title", "window title"},
+    {"window_title",
+     OPT_STRING | HAS_ARG,
+     {&g_options.window_title},
+     "set window title",
+     "window title"},
 #if CONFIG_AVFILTER
     {"vf",
      OPT_EXPERT | HAS_ARG,
@@ -418,10 +427,10 @@ int main(int argc, char** argv) {
   }
 
   if (display_disable) {
-    video_disable = 1;
+    g_options.video_disable = 1;
   }
   int flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
-  if (audio_disable) {
+  if (g_options.audio_disable) {
     flags &= ~SDL_INIT_AUDIO;
   } else {
     /* Try to work around an occasional ALSA buffer underflow issue when the

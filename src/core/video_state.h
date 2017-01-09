@@ -46,14 +46,6 @@ enum {
   AV_SYNC_EXTERNAL_CLOCK, /* synchronize to an external clock */
 };
 
-enum ShowMode {
-  SHOW_MODE_NONE = -1,
-  SHOW_MODE_VIDEO = 0,
-  SHOW_MODE_WAVES,
-  SHOW_MODE_RDFT,
-  SHOW_MODE_NB
-};
-
 struct VideoState {
   VideoState(const char* filename, AVInputFormat* iformat, AppOptions opt);
   int exec();
@@ -175,6 +167,11 @@ struct VideoState {
   int get_master_sync_type();
   double compute_target_delay(double delay);
   double get_master_clock();
+  void set_default_window_size(int width, int height, AVRational sar);
+#if CONFIG_AVFILTER
+  int configure_video_filters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame);
+  int configure_audio_filters(const char* afilters, int force_output_format);
+#endif
 
  private:
   void refresh_loop_wait_event(SDL_Event* event);
@@ -186,7 +183,6 @@ struct VideoState {
   /* called to display each frame */
   void video_refresh(double* remaining_time);
   void toggle_full_screen();
-  void fill_rectangle(int x, int y, int w, int h);
   int realloc_texture(SDL_Texture** texture,
                       Uint32 new_format,
                       int new_width,
@@ -201,15 +197,3 @@ struct VideoState {
   SDL_Renderer* renderer;
   SDL_Window* window;
 };
-
-#if CONFIG_AVFILTER
-int configure_filtergraph(AVFilterGraph* graph,
-                          const char* filtergraph,
-                          AVFilterContext* source_ctx,
-                          AVFilterContext* sink_ctx);
-int configure_video_filters(AVFilterGraph* graph,
-                            VideoState* is,
-                            const char* vfilters,
-                            AVFrame* frame);
-int configure_audio_filters(VideoState* is, const char* afilters, int force_output_format);
-#endif

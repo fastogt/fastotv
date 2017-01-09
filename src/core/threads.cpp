@@ -31,52 +31,10 @@ static int is_realtime(AVFormatContext* s) {
   return 0;
 }
 
-void calculate_display_rect(SDL_Rect* rect,
-                            int scr_xleft,
-                            int scr_ytop,
-                            int scr_width,
-                            int scr_height,
-                            int pic_width,
-                            int pic_height,
-                            AVRational pic_sar) {
-  float aspect_ratio;
-  int width, height, x, y;
-
-  if (pic_sar.num == 0)
-    aspect_ratio = 0;
-  else
-    aspect_ratio = av_q2d(pic_sar);
-
-  if (aspect_ratio <= 0.0)
-    aspect_ratio = 1.0;
-  aspect_ratio *= (float)pic_width / (float)pic_height;
-
-  /* XXX: we suppose the screen has a 1.0 pixel ratio */
-  height = scr_height;
-  width = lrint(height * aspect_ratio) & ~1;
-  if (width > scr_width) {
-    width = scr_width;
-    height = lrint(width / aspect_ratio) & ~1;
-  }
-  x = (scr_width - width) / 2;
-  y = (scr_height - height) / 2;
-  rect->x = scr_xleft + x;
-  rect->y = scr_ytop + y;
-  rect->w = FFMAX(width, 1);
-  rect->h = FFMAX(height, 1);
-}
-
-void set_default_window_size(int width, int height, AVRational sar) {
-  SDL_Rect rect;
-  calculate_display_rect(&rect, 0, 0, INT_MAX, height, width, height, sar);
-  default_width = rect.w;
-  default_height = rect.h;
-}
-
 static int stream_has_enough_packets(AVStream* st, int stream_id, PacketQueue* queue) {
   return stream_id < 0 || queue->abort_request || (st->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
-         queue->nb_packets > MIN_FRAMES &&
-             (!queue->duration || av_q2d(st->time_base) * queue->duration > 1.0);
+         (queue->nb_packets > MIN_FRAMES &&
+          (!queue->duration || av_q2d(st->time_base) * queue->duration > 1.0));
 }
 
 /* this thread gets the stream from the disk or the network */
@@ -164,14 +122,15 @@ int read_thread(void* user_data) {
 
   is->max_frame_duration = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
 
-  if (!window_title && (t = av_dict_get(ic->metadata, "title", NULL, 0)))
-    window_title = av_asprintf("%s - %s", t->value, input_filename);
+  if (!is->opt.window_title && (t = av_dict_get(ic->metadata, "title", NULL, 0))) {
+    is->opt.window_title = av_asprintf("%s - %s", t->value, input_filename);
+  }
 
   /* if seeking requested, we execute it */
-  if (start_time != AV_NOPTS_VALUE) {
+  if (is->opt.start_time != AV_NOPTS_VALUE) {
     int64_t timestamp;
 
-    timestamp = start_time;
+    timestamp = is->opt.start_time;
     /* add the stream start time */
     if (ic->start_time != AV_NOPTS_VALUE)
       timestamp += ic->start_time;
@@ -203,27 +162,31 @@ int read_thread(void* user_data) {
     }
   }
 
-  if (!video_disable)
+  if (!is->opt.video_disable) {
     st_index[AVMEDIA_TYPE_VIDEO] =
         av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
-  if (!audio_disable)
+  }
+  if (!is->opt.audio_disable) {
     st_index[AVMEDIA_TYPE_AUDIO] =
         av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO],
                             st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
-  if (!video_disable && !subtitle_disable)
+  }
+  if (!is->opt.video_disable && !is->opt.subtitle_disable) {
     st_index[AVMEDIA_TYPE_SUBTITLE] =
         av_find_best_stream(ic, AVMEDIA_TYPE_SUBTITLE, st_index[AVMEDIA_TYPE_SUBTITLE],
                             (st_index[AVMEDIA_TYPE_AUDIO] >= 0 ? st_index[AVMEDIA_TYPE_AUDIO]
                                                                : st_index[AVMEDIA_TYPE_VIDEO]),
                             NULL, 0);
+  }
 
-  is->show_mode = show_mode;
+  is->show_mode = is->opt.show_mode;
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
     AVStream* st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
     AVCodecParameters* codecpar = st->codecpar;
     AVRational sar = av_guess_sample_aspect_ratio(ic, st, NULL);
-    if (codecpar->width)
-      set_default_window_size(codecpar->width, codecpar->height, sar);
+    if (codecpar->width) {
+      is->set_default_window_size(codecpar->width, codecpar->height, sar);
+    }
   }
 
   /* open the streams */
@@ -235,8 +198,9 @@ int read_thread(void* user_data) {
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
     ret = is->stream_component_open(st_index[AVMEDIA_TYPE_VIDEO]);
   }
-  if (is->show_mode == SHOW_MODE_NONE)
+  if (is->show_mode == SHOW_MODE_NONE) {
     is->show_mode = ret >= 0 ? SHOW_MODE_VIDEO : SHOW_MODE_RDFT;
+  }
 
   if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
     is->stream_component_open(st_index[AVMEDIA_TYPE_SUBTITLE]);
@@ -248,8 +212,9 @@ int read_thread(void* user_data) {
     goto fail;
   }
 
-  if (infinite_buffer < 0 && is->realtime)
+  if (infinite_buffer < 0 && is->realtime) {
     infinite_buffer = 1;
+  }
 
   for (;;) {
     if (is->abort_request)
@@ -334,7 +299,7 @@ int read_thread(void* user_data) {
         (!is->video_st ||
          (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
       if (loop != 1 && (!loop || --loop)) {
-        is->stream_seek(start_time != AV_NOPTS_VALUE ? start_time : 0, 0, 0);
+        is->stream_seek(is->opt.start_time != AV_NOPTS_VALUE ? is->opt.start_time : 0, 0, 0);
       } else if (autoexit) {
         ret = AVERROR_EOF;
         goto fail;
@@ -363,11 +328,12 @@ int read_thread(void* user_data) {
     /* check if packet is in play range specified by user, then queue, otherwise discard */
     stream_start_time = ic->streams[pkt->stream_index]->start_time;
     pkt_ts = pkt->pts == AV_NOPTS_VALUE ? pkt->dts : pkt->pts;
-    pkt_in_play_range = duration == AV_NOPTS_VALUE ||
-                        (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
-                                    av_q2d(ic->streams[pkt->stream_index]->time_base) -
-                                (double)(start_time != AV_NOPTS_VALUE ? start_time : 0) / 1000000 <=
-                            ((double)duration / 1000000);
+    pkt_in_play_range =
+        is->opt.duration == AV_NOPTS_VALUE ||
+        (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
+                    av_q2d(ic->streams[pkt->stream_index]->time_base) -
+                (double)(is->opt.start_time != AV_NOPTS_VALUE ? is->opt.start_time : 0) / 1000000 <=
+            ((double)is->opt.duration / 1000000);
     if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
       packet_queue_put(&is->audioq, pkt);
     } else if (pkt->stream_index == is->video_stream && pkt_in_play_range &&
@@ -555,7 +521,7 @@ int audio_thread(void* user_data) {
         is->audio_filter_src.freq = frame->sample_rate;
         last_serial = is->auddec.pkt_serial;
 
-        if ((ret = configure_audio_filters(is, afilters, 1)) < 0)
+        if ((ret = is->configure_audio_filters(afilters, 1)) < 0)
           goto the_end;
       }
 
@@ -643,8 +609,8 @@ int video_thread(void* user_data) {
              is->viddec.pkt_serial);
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
-      if ((ret = configure_video_filters(
-               graph, is, vfilters_list ? vfilters_list[is->vfilter_idx] : NULL, frame)) < 0) {
+      if ((ret = is->configure_video_filters(
+               graph, vfilters_list ? vfilters_list[is->vfilter_idx] : NULL, frame)) < 0) {
         SDL_Event event;
         event.type = FF_QUIT_EVENT;
         event.user.data1 = is;
