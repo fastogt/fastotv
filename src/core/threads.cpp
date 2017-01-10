@@ -9,34 +9,149 @@
 #define MAX_QUEUE_SIZE (15 * 1024 * 1024)
 #define MIN_FRAMES 25
 
-static void print_error(const char* filename, int err) {
+namespace {
+void print_error(const char* filename, int err) {
   char errbuf[128];
   const char* errbuf_ptr = errbuf;
 
-  if (av_strerror(err, errbuf, sizeof(errbuf)) < 0)
+  if (av_strerror(err, errbuf, sizeof(errbuf)) < 0) {
     errbuf_ptr = strerror(AVUNERROR(err));
+  }
   av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, errbuf_ptr);
 }
 
-static int decode_interrupt_cb(void* user_data) {
+int decode_interrupt_cb(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
   return is->abort_request;
 }
 
-static int is_realtime(AVFormatContext* s) {
+int is_realtime(AVFormatContext* s) {
   if (!strcmp(s->iformat->name, "rtp") || !strcmp(s->iformat->name, "rtsp") ||
-      !strcmp(s->iformat->name, "sdp"))
+      !strcmp(s->iformat->name, "sdp")) {
     return 1;
+  }
 
-  if (s->pb && (!strncmp(s->filename, "rtp:", 4) || !strncmp(s->filename, "udp:", 4)))
+  if (s->pb && (!strncmp(s->filename, "rtp:", 4) || !strncmp(s->filename, "udp:", 4))) {
     return 1;
+  }
   return 0;
 }
 
-static int stream_has_enough_packets(AVStream* st, int stream_id, PacketQueue* queue) {
+int stream_has_enough_packets(AVStream* st, int stream_id, PacketQueue* queue) {
   return stream_id < 0 || queue->abort_request || (st->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
          (queue->nb_packets > MIN_FRAMES &&
           (!queue->duration || av_q2d(st->time_base) * queue->duration > 1.0));
+}
+
+int queue_picture(VideoState* is,
+                  AVFrame* src_frame,
+                  double pts,
+                  double duration,
+                  int64_t pos,
+                  int serial) {
+  Frame* vp;
+
+#if defined(DEBUG_SYNC)
+  printf("frame_type=%c pts=%0.3f\n", av_get_picture_type_char(src_frame->pict_type), pts);
+#endif
+
+  if (!(vp = frame_queue_peek_writable(&is->pictq)))
+    return -1;
+
+  vp->sar = src_frame->sample_aspect_ratio;
+  vp->uploaded = 0;
+
+  /* alloc or resize hardware picture buffer */
+  if (!vp->bmp || !vp->allocated || vp->width != src_frame->width ||
+      vp->height != src_frame->height || vp->format != src_frame->format) {
+    SDL_Event event;
+
+    vp->allocated = 0;
+    vp->width = src_frame->width;
+    vp->height = src_frame->height;
+    vp->format = src_frame->format;
+
+    /* the allocation must be done in the main thread to avoid
+       locking problems. */
+    event.type = FF_ALLOC_EVENT;
+    event.user.data1 = is;
+    SDL_PushEvent(&event);
+
+    /* wait until the picture is allocated */
+    SDL_LockMutex(is->pictq.mutex);
+    while (!vp->allocated && !is->videoq.abort_request) {
+      SDL_CondWait(is->pictq.cond, is->pictq.mutex);
+    }
+    /* if the queue is aborted, we have to pop the pending ALLOC event or wait for the allocation to
+     * complete */
+    if (is->videoq.abort_request &&
+        SDL_PeepEvents(&event, 1, SDL_GETEVENT, FF_ALLOC_EVENT, FF_ALLOC_EVENT) != 1) {
+      while (!vp->allocated && !is->abort_request) {
+        SDL_CondWait(is->pictq.cond, is->pictq.mutex);
+      }
+    }
+    SDL_UnlockMutex(is->pictq.mutex);
+
+    if (is->videoq.abort_request)
+      return -1;
+  }
+
+  /* if the frame is not skipped, then display it */
+  if (vp->bmp) {
+    vp->pts = pts;
+    vp->duration = duration;
+    vp->pos = pos;
+    vp->serial = serial;
+
+    av_frame_move_ref(vp->frame, src_frame);
+    frame_queue_push(&is->pictq);
+  }
+  return 0;
+}
+
+int cmp_audio_fmts(enum AVSampleFormat fmt1,
+                   int64_t channel_count1,
+                   enum AVSampleFormat fmt2,
+                   int64_t channel_count2) {
+  /* If channel count == 1, planar and non-planar formats are the same */
+  if (channel_count1 == 1 && channel_count2 == 1)
+    return av_get_packed_sample_fmt(fmt1) != av_get_packed_sample_fmt(fmt2);
+  else
+    return channel_count1 != channel_count2 || fmt1 != fmt2;
+}
+
+int get_video_frame(VideoState* is, AVFrame* frame) {
+  int got_picture;
+
+  if ((got_picture = decoder_decode_frame(&is->viddec, frame, NULL)) < 0) {
+    return -1;
+  }
+
+  if (got_picture) {
+    double dpts = NAN;
+
+    if (frame->pts != AV_NOPTS_VALUE)
+      dpts = av_q2d(is->video_st->time_base) * frame->pts;
+
+    frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(is->ic, is->video_st, frame);
+
+    if (is->opt->framedrop > 0 ||
+        (is->opt->framedrop && is->get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) {
+      if (frame->pts != AV_NOPTS_VALUE) {
+        double diff = dpts - is->get_master_clock();
+        if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
+            diff - is->frame_last_filter_delay < 0 && is->viddec.pkt_serial == is->vidclk.serial &&
+            is->videoq.nb_packets) {
+          is->frame_drops_early++;
+          av_frame_unref(frame);
+          got_picture = 0;
+        }
+      }
+    }
+  }
+
+  return got_picture;
+}
 }
 
 /* this thread gets the stream from the disk or the network */
@@ -76,20 +191,20 @@ int read_thread(void* user_data) {
   }
   ic->interrupt_callback.callback = decode_interrupt_cb;
   ic->interrupt_callback.opaque = is;
-  if (!av_dict_get(is->opt->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
-    av_dict_set(&is->opt->format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
+  if (!av_dict_get(is->copt->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
+    av_dict_set(&is->copt->format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
     scan_all_pmts_set = 1;
   }
-  err = avformat_open_input(&ic, in_filename, is->iformat, &is->opt->format_opts);
+  err = avformat_open_input(&ic, in_filename, is->iformat, &is->copt->format_opts);
   if (err < 0) {
     print_error(in_filename, err);
     ret = -1;
     goto fail;
   }
   if (scan_all_pmts_set)
-    av_dict_set(&is->opt->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
+    av_dict_set(&is->copt->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
 
-  if ((t = av_dict_get(is->opt->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX))) {
+  if ((t = av_dict_get(is->copt->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX))) {
     av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
     ret = AVERROR_OPTION_NOT_FOUND;
     goto fail;
@@ -101,7 +216,7 @@ int read_thread(void* user_data) {
 
   av_format_inject_global_side_data(ic);
 
-  opts = setup_find_stream_info_opts(ic, is->opt->codec_opts);
+  opts = setup_find_stream_info_opts(ic, is->copt->codec_opts);
   orig_nb_streams = ic->nb_streams;
 
   err = avformat_find_stream_info(ic, opts);
@@ -166,8 +281,8 @@ int read_thread(void* user_data) {
   for (i = 0; i < static_cast<int>(AVMEDIA_TYPE_NB); i++) {
     const char* want_spec = common::utils::c_strornull(is->opt->wanted_stream_spec[i]);
     if (want_spec && st_index[i] == -1) {
-      av_log(NULL, AV_LOG_ERROR, "Stream specifier %s does not match any %s stream\n",
-             want_spec, av_get_media_type_string(static_cast<AVMediaType>(i)));
+      av_log(NULL, AV_LOG_ERROR, "Stream specifier %s does not match any %s stream\n", want_spec,
+             av_get_media_type_string(static_cast<AVMediaType>(i)));
       st_index[i] = INT_MAX;
     }
   }
@@ -372,118 +487,8 @@ fail:
   return 0;
 }
 
-static int queue_picture(VideoState* is,
-                         AVFrame* src_frame,
-                         double pts,
-                         double duration,
-                         int64_t pos,
-                         int serial) {
-  Frame* vp;
-
-#if defined(DEBUG_SYNC)
-  printf("frame_type=%c pts=%0.3f\n", av_get_picture_type_char(src_frame->pict_type), pts);
-#endif
-
-  if (!(vp = frame_queue_peek_writable(&is->pictq)))
-    return -1;
-
-  vp->sar = src_frame->sample_aspect_ratio;
-  vp->uploaded = 0;
-
-  /* alloc or resize hardware picture buffer */
-  if (!vp->bmp || !vp->allocated || vp->width != src_frame->width ||
-      vp->height != src_frame->height || vp->format != src_frame->format) {
-    SDL_Event event;
-
-    vp->allocated = 0;
-    vp->width = src_frame->width;
-    vp->height = src_frame->height;
-    vp->format = src_frame->format;
-
-    /* the allocation must be done in the main thread to avoid
-       locking problems. */
-    event.type = FF_ALLOC_EVENT;
-    event.user.data1 = is;
-    SDL_PushEvent(&event);
-
-    /* wait until the picture is allocated */
-    SDL_LockMutex(is->pictq.mutex);
-    while (!vp->allocated && !is->videoq.abort_request) {
-      SDL_CondWait(is->pictq.cond, is->pictq.mutex);
-    }
-    /* if the queue is aborted, we have to pop the pending ALLOC event or wait for the allocation to
-     * complete */
-    if (is->videoq.abort_request &&
-        SDL_PeepEvents(&event, 1, SDL_GETEVENT, FF_ALLOC_EVENT, FF_ALLOC_EVENT) != 1) {
-      while (!vp->allocated && !is->abort_request) {
-        SDL_CondWait(is->pictq.cond, is->pictq.mutex);
-      }
-    }
-    SDL_UnlockMutex(is->pictq.mutex);
-
-    if (is->videoq.abort_request)
-      return -1;
-  }
-
-  /* if the frame is not skipped, then display it */
-  if (vp->bmp) {
-    vp->pts = pts;
-    vp->duration = duration;
-    vp->pos = pos;
-    vp->serial = serial;
-
-    av_frame_move_ref(vp->frame, src_frame);
-    frame_queue_push(&is->pictq);
-  }
-  return 0;
-}
-
-static inline int cmp_audio_fmts(enum AVSampleFormat fmt1,
-                                 int64_t channel_count1,
-                                 enum AVSampleFormat fmt2,
-                                 int64_t channel_count2) {
-  /* If channel count == 1, planar and non-planar formats are the same */
-  if (channel_count1 == 1 && channel_count2 == 1)
-    return av_get_packed_sample_fmt(fmt1) != av_get_packed_sample_fmt(fmt2);
-  else
-    return channel_count1 != channel_count2 || fmt1 != fmt2;
-}
-
-static int get_video_frame(VideoState* is, AVFrame* frame) {
-  int got_picture;
-
-  if ((got_picture = decoder_decode_frame(&is->viddec, frame, NULL)) < 0)
-    return -1;
-
-  if (got_picture) {
-    double dpts = NAN;
-
-    if (frame->pts != AV_NOPTS_VALUE)
-      dpts = av_q2d(is->video_st->time_base) * frame->pts;
-
-    frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(is->ic, is->video_st, frame);
-
-    if (is->opt->framedrop > 0 ||
-        (is->opt->framedrop && is->get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) {
-      if (frame->pts != AV_NOPTS_VALUE) {
-        double diff = dpts - is->get_master_clock();
-        if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
-            diff - is->frame_last_filter_delay < 0 && is->viddec.pkt_serial == is->vidclk.serial &&
-            is->videoq.nb_packets) {
-          is->frame_drops_early++;
-          av_frame_unref(frame);
-          got_picture = 0;
-        }
-      }
-    }
-  }
-
-  return got_picture;
-}
-
 int audio_thread(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
-  AVFrame* frame = av_frame_alloc();
   Frame* af;
 #if CONFIG_AVFILTER
   int last_serial = -1;
@@ -491,18 +496,20 @@ int audio_thread(void* user_data) {
   int reconfigure;
 #endif
   int got_frame = 0;
-  AVRational tb;
   int ret = 0;
 
-  if (!frame)
+  AVFrame* frame = av_frame_alloc();
+  if (!frame) {
     return AVERROR(ENOMEM);
+  }
 
   do {
-    if ((got_frame = decoder_decode_frame(&is->auddec, frame, NULL)) < 0)
+    if ((got_frame = decoder_decode_frame(&is->auddec, frame, NULL)) < 0) {
       goto the_end;
+    }
 
     if (got_frame) {
-      tb = (AVRational){1, frame->sample_rate};
+      AVRational tb = {1, frame->sample_rate};
 
 #if CONFIG_AVFILTER
       dec_channel_layout =
@@ -526,7 +533,7 @@ int audio_thread(void* user_data) {
                frame->sample_rate, av_frame_get_channels(frame),
                av_get_sample_fmt_name((AVSampleFormat)frame->format), buf2, is->auddec.pkt_serial);
 
-        is->audio_filter_src.fmt = (AVSampleFormat)frame->format;
+        is->audio_filter_src.fmt = static_cast<AVSampleFormat>(frame->format);
         is->audio_filter_src.channels = av_frame_get_channels(frame);
         is->audio_filter_src.channel_layout = dec_channel_layout;
         is->audio_filter_src.freq = frame->sample_rate;
@@ -544,23 +551,27 @@ int audio_thread(void* user_data) {
       while ((ret = av_buffersink_get_frame_flags(is->out_audio_filter, frame, 0)) >= 0) {
         tb = is->out_audio_filter->inputs[0]->time_base;
 #endif
-        if (!(af = frame_queue_peek_writable(&is->sampq)))
+        if (!(af = frame_queue_peek_writable(&is->sampq))) {
           goto the_end;
+        }
 
         af->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
         af->pos = av_frame_get_pkt_pos(frame);
         af->serial = is->auddec.pkt_serial;
-        af->duration = av_q2d((AVRational){frame->nb_samples, frame->sample_rate});
+        AVRational tmp = {frame->nb_samples, frame->sample_rate};
+        af->duration = av_q2d(tmp);
 
         av_frame_move_ref(af->frame, frame);
         frame_queue_push(&is->sampq);
 
 #if CONFIG_AVFILTER
-        if (is->audioq.serial != is->auddec.pkt_serial)
+        if (is->audioq.serial != is->auddec.pkt_serial) {
           break;
+        }
       }
-      if (ret == AVERROR_EOF)
+      if (ret == AVERROR_EOF) {
         is->auddec.finished = is->auddec.pkt_serial;
+      }
 #endif
     }
   } while (ret >= 0 || ret == AVERROR(EAGAIN) || ret == AVERROR_EOF);
@@ -637,7 +648,7 @@ int video_thread(void* user_data) {
       filt_out = is->out_video_filter;
       last_w = frame->width;
       last_h = frame->height;
-      last_format = (AVPixelFormat)frame->format;
+      last_format = static_cast<AVPixelFormat>(frame->format);
       last_serial = is->viddec.pkt_serial;
       last_vfilter_idx = is->vfilter_idx;
       frame_rate = filt_out->inputs[0]->frame_rate;
@@ -690,20 +701,21 @@ int subtitle_thread(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
   Frame* sp;
   int got_subtitle;
-  double pts;
 
-  for (;;) {
-    if (!(sp = frame_queue_peek_writable(&is->subpq)))
+  while (true) {
+    if (!(sp = frame_queue_peek_writable(&is->subpq))) {
       return 0;
+    }
 
-    if ((got_subtitle = decoder_decode_frame(&is->subdec, NULL, &sp->sub)) < 0)
+    if ((got_subtitle = decoder_decode_frame(&is->subdec, NULL, &sp->sub)) < 0) {
       break;
+    }
 
-    pts = 0;
-
+    double pts = 0;
     if (got_subtitle && sp->sub.format == 0) {
-      if (sp->sub.pts != AV_NOPTS_VALUE)
-        pts = sp->sub.pts / (double)AV_TIME_BASE;
+      if (sp->sub.pts != AV_NOPTS_VALUE) {
+        pts = static_cast<double>(sp->sub.pts) / static_cast<double>(AV_TIME_BASE);
+      }
       sp->pts = pts;
       sp->serial = is->subdec.pkt_serial;
       sp->width = is->subdec.avctx->width;

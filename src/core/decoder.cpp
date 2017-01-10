@@ -80,10 +80,11 @@ int decoder_decode_frame(Decoder* d, AVFrame* frame, AVSubtitle* sub) {
         ret = avcodec_decode_audio4(d->avctx, frame, &got_frame, &d->pkt_temp);
         if (got_frame) {
           AVRational tb = (AVRational){1, frame->sample_rate};
-          if (frame->pts != AV_NOPTS_VALUE)
+          if (frame->pts != AV_NOPTS_VALUE) {
             frame->pts = av_rescale_q(frame->pts, av_codec_get_pkt_timebase(d->avctx), tb);
-          else if (d->next_pts != AV_NOPTS_VALUE)
+          } else if (d->next_pts != AV_NOPTS_VALUE) {
             frame->pts = av_rescale_q(d->next_pts, d->next_pts_tb, tb);
+          }
           if (frame->pts != AV_NOPTS_VALUE) {
             d->next_pts = frame->pts + frame->nb_samples;
             d->next_pts_tb = tb;

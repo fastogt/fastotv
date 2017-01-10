@@ -43,12 +43,14 @@ extern "C" {
 #define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
 
 struct VideoState {
-  VideoState(AVInputFormat* ifo, AppOptions* opt);
+  VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt);
   int exec();
 
   ~VideoState();
 
-  AppOptions* opt;
+  AppOptions* const opt;
+  ComplexOptions* const copt;
+  int64_t audio_callback_time;
 
   SDL_Thread* read_tid;
   AVInputFormat* iformat;

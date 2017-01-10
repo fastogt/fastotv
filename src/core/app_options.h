@@ -41,8 +41,7 @@ struct AppOptions {
   int seek_by_bytes;
   int display_disable;
   int is_full_screen;
-  int64_t audio_callback_time;
-  std::string input_filename;  //
+  std::string input_filename;
   int loop;
   int autoexit;
   int show_status;
@@ -65,11 +64,15 @@ struct AppOptions {
   char* afilters;
 #endif
 
+ private:
+  DISALLOW_COPY_AND_ASSIGN(AppOptions);
+};
+
+struct ComplexOptions {
+  ComplexOptions();
+
   AVDictionary* sws_dict;
   AVDictionary* swr_opts;
   AVDictionary* format_opts;
   AVDictionary* codec_opts;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(AppOptions);
 };

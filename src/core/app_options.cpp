@@ -28,7 +28,6 @@ AppOptions::AppOptions()
       seek_by_bytes(-1),
       display_disable(0),
       is_full_screen(0),
-      audio_callback_time(0),
       input_filename(),
       loop(1),
       autoexit(0),
@@ -41,15 +40,13 @@ AppOptions::AppOptions()
       audio_codec_name(),
       subtitle_codec_name(),
       video_codec_name(),
-      decoder_reorder_pts(-1),
+      decoder_reorder_pts(-1)
 #if CONFIG_AVFILTER
+      ,
       vfilters_list(),
-      afilters(NULL),
+      afilters(NULL)
 #endif
-      sws_dict(NULL),
-      swr_opts(NULL),
-      format_opts(NULL),
-      codec_opts(NULL) {
+{
 }
 
 #if CONFIG_AVFILTER
@@ -57,3 +54,6 @@ void AppOptions::initAvFilters(const std::string& arg) {
   vfilters_list.push_back(arg);
 }
 #endif
+
+ComplexOptions::ComplexOptions()
+    : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {}

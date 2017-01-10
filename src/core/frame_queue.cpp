@@ -4,7 +4,44 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
-static const AVPacket& flush_pkt() {}
+namespace {
+int packet_queue_put_private(PacketQueue* q, AVPacket* pkt) {
+  if (q->abort_request) {
+    return -1;
+  }
+
+  MyAVPacketList* pkt1 = static_cast<MyAVPacketList*>(av_malloc(sizeof(MyAVPacketList)));
+  if (!pkt1) {
+    return -1;
+  }
+  pkt1->pkt = *pkt;
+  pkt1->next = NULL;
+  if (pkt == PacketQueue::flush_pkt()) {
+    q->serial++;
+  }
+  pkt1->serial = q->serial;
+
+  if (!q->last_pkt) {
+    q->first_pkt = pkt1;
+  } else {
+    q->last_pkt->next = pkt1;
+  }
+  q->last_pkt = pkt1;
+  q->nb_packets++;
+  q->size += pkt1->pkt.size + sizeof(*pkt1);
+  q->duration += pkt1->pkt.duration;
+  /* XXX: should duplicate packet data in DV case */
+  SDL_CondSignal(q->cond);
+  return 0;
+}
+
+void free_picture(Frame* vp) {
+  if (vp->bmp) {
+    SDL_DestroyTexture(vp->bmp);
+    vp->bmp = NULL;
+  }
+}
+}
 
 int packet_queue_init(PacketQueue* q) {
   memset(q, 0, sizeof(PacketQueue));
@@ -22,34 +59,6 @@ int packet_queue_init(PacketQueue* q) {
   return 0;
 }
 
-static int packet_queue_put_private(PacketQueue* q, AVPacket* pkt) {
-  if (q->abort_request) {
-    return -1;
-  }
-
-  MyAVPacketList* pkt1 = static_cast<MyAVPacketList*>(av_malloc(sizeof(MyAVPacketList)));
-  if (!pkt1) {
-    return -1;
-  }
-  pkt1->pkt = *pkt;
-  pkt1->next = NULL;
-  if (pkt == PacketQueue::flush_pkt())
-    q->serial++;
-  pkt1->serial = q->serial;
-
-  if (!q->last_pkt)
-    q->first_pkt = pkt1;
-  else
-    q->last_pkt->next = pkt1;
-  q->last_pkt = pkt1;
-  q->nb_packets++;
-  q->size += pkt1->pkt.size + sizeof(*pkt1);
-  q->duration += pkt1->pkt.duration;
-  /* XXX: should duplicate packet data in DV case */
-  SDL_CondSignal(q->cond);
-  return 0;
-}
-
 int packet_queue_put_nullpacket(PacketQueue* q, int stream_index) {
   AVPacket pkt1, *pkt = &pkt1;
   av_init_packet(pkt);
@@ -60,28 +69,29 @@ int packet_queue_put_nullpacket(PacketQueue* q, int stream_index) {
 }
 
 int packet_queue_get(PacketQueue* q, AVPacket* pkt, int block, int* serial) {
-  MyAVPacketList* pkt1;
-  int ret;
+  int ret = 0;
 
   SDL_LockMutex(q->mutex);
 
-  for (;;) {
+  while (true) {
     if (q->abort_request) {
       ret = -1;
       break;
     }
 
-    pkt1 = q->first_pkt;
+    MyAVPacketList* pkt1 = q->first_pkt;
     if (pkt1) {
       q->first_pkt = pkt1->next;
-      if (!q->first_pkt)
+      if (!q->first_pkt) {
         q->last_pkt = NULL;
+      }
       q->nb_packets--;
       q->size -= pkt1->pkt.size + sizeof(*pkt1);
       q->duration -= pkt1->pkt.duration;
       *pkt = pkt1->pkt;
-      if (serial)
+      if (serial) {
         *serial = pkt1->serial;
+      }
       av_free(pkt1);
       ret = 1;
       break;
@@ -99,7 +109,7 @@ int packet_queue_get(PacketQueue* q, AVPacket* pkt, int block, int* serial) {
 AVPacket* PacketQueue::flush_pkt() {
   static AVPacket fls;
   av_init_packet(&fls);
-  fls.data = (uint8_t*)&fls;
+  fls.data = reinterpret_cast<uint8_t*>(&fls);
   return &fls;
 }
 
@@ -295,13 +305,6 @@ void frame_queue_next(FrameQueue* f) {
   f->size--;
   SDL_CondSignal(f->cond);
   SDL_UnlockMutex(f->mutex);
-}
-
-static void free_picture(Frame* vp) {
-  if (vp->bmp) {
-    SDL_DestroyTexture(vp->bmp);
-    vp->bmp = NULL;
-  }
 }
 
 void frame_queue_destory(FrameQueue* f) {

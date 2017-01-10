@@ -1,14 +1,8 @@
 #pragma once
 
-#include "ffmpeg_config.h"
-
 extern "C" {
-#include <libavcodec/avcodec.h>
-
 #include <SDL2/SDL.h>
 }
-
-#include "core/video_state.h"
 
 #define FF_ALLOC_EVENT (SDL_USEREVENT)
 #define FF_QUIT_EVENT (SDL_USEREVENT + 2)

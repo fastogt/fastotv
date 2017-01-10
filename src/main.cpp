@@ -504,11 +504,12 @@ int main(int argc, char** argv) {
     do_exit(NULL);
   }
 
-  g_options.swr_opts = swr_opts;
-  g_options.sws_dict = sws_dict;
-  g_options.format_opts = format_opts;
-  g_options.codec_opts = codec_opts;
-  VideoState* is = new VideoState(file_iformat, &g_options);
+  ComplexOptions copt;
+  copt.swr_opts = swr_opts;
+  copt.sws_dict = sws_dict;
+  copt.format_opts = format_opts;
+  copt.codec_opts = codec_opts;
+  VideoState* is = new VideoState(file_iformat, &g_options, &copt);
   int res = is->exec();
   do_exit(is);
   return res;
