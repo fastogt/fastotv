@@ -122,10 +122,10 @@ static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
 static void opt_input_file(void* optctx, const char* filename) {
   UNUSED(optctx);
 
-  if (g_options.input_filename) {
+  if (!g_options.input_filename.empty()) {
     av_log(NULL, AV_LOG_FATAL,
            "Argument '%s' provided as input filename, but '%s' was already specified.\n", filename,
-           g_options.input_filename);
+           g_options.input_filename.c_str());
     exit(1);
   }
 
@@ -466,7 +466,7 @@ int main(int argc, char** argv) {
 
   parse_options(NULL, argc, argv, options, opt_input_file);
 
-  if (!g_options.input_filename) {
+  if (g_options.input_filename.empty()) {
     show_usage();
     av_log(NULL, AV_LOG_FATAL, "An input file must be specified\n");
     av_log(NULL, AV_LOG_FATAL, "Use -h to get full help or, even better, run 'man %s'\n",

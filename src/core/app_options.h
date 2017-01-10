@@ -2,6 +2,9 @@
 
 #include "ffmpeg_config.h"
 
+#include <string>
+#include <vector>
+
 extern "C" {
 #include <libavutil/dict.h>
 #include <libavutil/avutil.h>
@@ -13,11 +16,6 @@ extern "C" {
 
 struct AppOptions {
   AppOptions();
-  ~AppOptions();
-
-#if CONFIG_AVFILTER
-  void initAvFilters(const char* arg);
-#endif
 
   int autorotate;
   int exit_on_keydown;
@@ -34,8 +32,8 @@ struct AppOptions {
   int screen_width;
   int screen_height;
 
-  ShowMode show_mode;  //
-  const char* window_title;
+  ShowMode show_mode;
+  std::string window_title;
   int framedrop;
   int genpts;
   AvSyncType av_sync_type;
@@ -44,26 +42,26 @@ struct AppOptions {
   int display_disable;
   int is_full_screen;
   int64_t audio_callback_time;
-  const char* input_filename;  //
+  std::string input_filename;  //
   int loop;
   int autoexit;
   int show_status;
   int infinite_buffer;
-  const char* wanted_stream_spec[AVMEDIA_TYPE_NB];
+  std::string wanted_stream_spec[AVMEDIA_TYPE_NB];
   double rdftspeed;
   int lowres;
 
   /* options specified by the user */
   int fast;
-  const char* audio_codec_name;
-  const char* subtitle_codec_name;
-  const char* video_codec_name;
+  std::string audio_codec_name;
+  std::string subtitle_codec_name;
+  std::string video_codec_name;
 
   int decoder_reorder_pts;
 
 #if CONFIG_AVFILTER
-  const char** vfilters_list;
-  int nb_vfilters;
+  void initAvFilters(const std::string& arg);
+  std::vector<std::string> vfilters_list;
   char* afilters;
 #endif
 

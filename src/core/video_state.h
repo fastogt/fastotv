@@ -43,7 +43,7 @@ extern "C" {
 #define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
 
 struct VideoState {
-  VideoState(AVInputFormat* iformat, AppOptions* opt);
+  VideoState(AVInputFormat* ifo, AppOptions* opt);
   int exec();
 
   ~VideoState();
@@ -79,8 +79,6 @@ struct VideoState {
 
   int audio_stream;
 
-  int av_sync_type;
-
   double audio_clock;
   int audio_clock_serial;
   double audio_diff_cum; /* used for AV difference average computation */
@@ -107,7 +105,6 @@ struct VideoState {
   int frame_drops_early;
   int frame_drops_late;
 
-  ShowMode show_mode;
   int16_t sample_array[SAMPLE_ARRAY_SIZE];
   int sample_array_index;
   int last_i_start;
@@ -135,7 +132,6 @@ struct VideoState {
   struct SwsContext* sub_convert_ctx;
   int eof;
 
-  char* filename;
   int width, height, xleft, ytop;
   int step;
 

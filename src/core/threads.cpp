@@ -1,5 +1,7 @@
 #include "core/threads.h"
 
+#include <common/utils.h>
+
 #include "core/video_state.h"
 #include "core/cmd_utils.h"
 #include "core/types.h"
@@ -53,6 +55,7 @@ int read_thread(void* user_data) {
   int scan_all_pmts_set = 0;
   int64_t pkt_ts;
 
+  const char* in_filename = common::utils::c_strornull(is->opt->input_filename);
   if (!wait_mutex) {
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
     ret = AVERROR(ENOMEM);
@@ -77,9 +80,9 @@ int read_thread(void* user_data) {
     av_dict_set(&is->opt->format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
     scan_all_pmts_set = 1;
   }
-  err = avformat_open_input(&ic, is->filename, is->iformat, &is->opt->format_opts);
+  err = avformat_open_input(&ic, in_filename, is->iformat, &is->opt->format_opts);
   if (err < 0) {
-    print_error(is->filename, err);
+    print_error(in_filename, err);
     ret = -1;
     goto fail;
   }
@@ -108,7 +111,7 @@ int read_thread(void* user_data) {
   av_freep(&opts);
 
   if (err < 0) {
-    av_log(NULL, AV_LOG_WARNING, "%s: could not find codec parameters\n", is->filename);
+    av_log(NULL, AV_LOG_WARNING, "%s: could not find codec parameters\n", in_filename);
     ret = -1;
     goto fail;
   }
@@ -124,8 +127,8 @@ int read_thread(void* user_data) {
 
   is->max_frame_duration = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
 
-  if (!is->opt->window_title && (t = av_dict_get(ic->metadata, "title", NULL, 0))) {
-    is->opt->window_title = av_asprintf("%s - %s", t->value, is->opt->input_filename);
+  if (is->opt->window_title.empty() && (t = av_dict_get(ic->metadata, "title", NULL, 0))) {
+    is->opt->window_title = av_asprintf("%s - %s", t->value, in_filename);
   }
 
   /* if seeking requested, we execute it */
@@ -138,7 +141,7 @@ int read_thread(void* user_data) {
       timestamp += ic->start_time;
     ret = avformat_seek_file(ic, -1, INT64_MIN, timestamp, INT64_MAX, 0);
     if (ret < 0) {
-      av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %0.3f\n", is->filename,
+      av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %0.3f\n", in_filename,
              (double)timestamp / AV_TIME_BASE);
     }
   }
@@ -146,21 +149,25 @@ int read_thread(void* user_data) {
   is->realtime = is_realtime(ic);
 
   if (is->opt->show_status) {
-    av_dump_format(ic, 0, is->filename, 0);
+    av_dump_format(ic, 0, in_filename, 0);
   }
 
   for (i = 0; i < ic->nb_streams; i++) {
     AVStream* st = ic->streams[i];
     enum AVMediaType type = st->codecpar->codec_type;
     st->discard = AVDISCARD_ALL;
-    if (type >= 0 && is->opt->wanted_stream_spec[type] && st_index[type] == -1)
-      if (avformat_match_stream_specifier(ic, st, is->opt->wanted_stream_spec[type]) > 0)
+    const char* want_spec = common::utils::c_strornull(is->opt->wanted_stream_spec[type]);
+    if (type >= 0 && want_spec && st_index[type] == -1) {
+      if (avformat_match_stream_specifier(ic, st, want_spec) > 0) {
         st_index[type] = i;
+      }
+    }
   }
   for (i = 0; i < static_cast<int>(AVMEDIA_TYPE_NB); i++) {
-    if (is->opt->wanted_stream_spec[i] && st_index[i] == -1) {
+    const char* want_spec = common::utils::c_strornull(is->opt->wanted_stream_spec[i]);
+    if (want_spec && st_index[i] == -1) {
       av_log(NULL, AV_LOG_ERROR, "Stream specifier %s does not match any %s stream\n",
-             is->opt->wanted_stream_spec[i], av_get_media_type_string(static_cast<AVMediaType>(i)));
+             want_spec, av_get_media_type_string(static_cast<AVMediaType>(i)));
       st_index[i] = INT_MAX;
     }
   }
@@ -182,7 +189,6 @@ int read_thread(void* user_data) {
                             NULL, 0);
   }
 
-  is->show_mode = is->opt->show_mode;
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
     AVStream* st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
     AVCodecParameters* codecpar = st->codecpar;
@@ -201,8 +207,8 @@ int read_thread(void* user_data) {
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
     ret = is->stream_component_open(st_index[AVMEDIA_TYPE_VIDEO]);
   }
-  if (is->show_mode == SHOW_MODE_NONE) {
-    is->show_mode = ret >= 0 ? SHOW_MODE_VIDEO : SHOW_MODE_RDFT;
+  if (is->opt->show_mode == SHOW_MODE_NONE) {
+    is->opt->show_mode = ret >= 0 ? SHOW_MODE_VIDEO : SHOW_MODE_RDFT;
   }
 
   if (st_index[AVMEDIA_TYPE_SUBTITLE] >= 0) {
@@ -210,7 +216,7 @@ int read_thread(void* user_data) {
   }
 
   if (is->video_stream < 0 && is->audio_stream < 0) {
-    av_log(NULL, AV_LOG_FATAL, "Failed to open file '%s' or configure filtergraph\n", is->filename);
+    av_log(NULL, AV_LOG_FATAL, "Failed to open file '%s' or configure filtergraph\n", in_filename);
     ret = -1;
     goto fail;
   }
@@ -335,7 +341,8 @@ int read_thread(void* user_data) {
         is->opt->duration == AV_NOPTS_VALUE ||
         (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
                     av_q2d(ic->streams[pkt->stream_index]->time_base) -
-                (double)(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0) / 1000000 <=
+                (double)(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0) /
+                    1000000 <=
             ((double)is->opt->duration / 1000000);
     if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
       packet_queue_put(&is->audioq, pkt);
@@ -615,9 +622,11 @@ int video_thread(void* user_data) {
              is->viddec.pkt_serial);
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
-      if ((ret = is->configure_video_filters(
-               graph, is->opt->vfilters_list ? is->opt->vfilters_list[is->vfilter_idx] : NULL,
-               frame)) < 0) {
+      const char* vfilters = NULL;
+      if (!is->opt->vfilters_list.empty()) {
+        vfilters = is->opt->vfilters_list[is->vfilter_idx].c_str();
+      }
+      if ((ret = is->configure_video_filters(graph, vfilters, frame)) < 0) {
         SDL_Event event;
         event.type = FF_QUIT_EVENT;
         event.user.data1 = is;

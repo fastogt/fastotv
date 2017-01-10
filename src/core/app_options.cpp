@@ -20,7 +20,7 @@ AppOptions::AppOptions()
       screen_width(0),
       screen_height(0),
       show_mode(SHOW_MODE_NONE),
-      window_title(NULL),
+      window_title(),
       framedrop(0),
       genpts(0),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
@@ -29,22 +29,21 @@ AppOptions::AppOptions()
       display_disable(0),
       is_full_screen(0),
       audio_callback_time(0),
-      input_filename(NULL),
+      input_filename(),
       loop(1),
       autoexit(0),
       show_status(1),
       infinite_buffer(-1),
-      wanted_stream_spec{0},
+      wanted_stream_spec(),
       rdftspeed(0.02),
       lowres(0),
       fast(0),
-      audio_codec_name(NULL),
-      subtitle_codec_name(NULL),
-      video_codec_name(NULL),
+      audio_codec_name(),
+      subtitle_codec_name(),
+      video_codec_name(),
       decoder_reorder_pts(-1),
 #if CONFIG_AVFILTER
-      vfilters_list(NULL),
-      nb_vfilters(0),
+      vfilters_list(),
       afilters(NULL),
 #endif
       sws_dict(NULL),
@@ -53,17 +52,8 @@ AppOptions::AppOptions()
       codec_opts(NULL) {
 }
 
-AppOptions::~AppOptions() {
 #if CONFIG_AVFILTER
-  av_freep(&vfilters_list);
-#endif
-}
-
-#if CONFIG_AVFILTER
-void AppOptions::initAvFilters(const char* arg) {
-  // GROW_ARRAY(vfilters_list, nb_vfilters);
-  vfilters_list = static_cast<const char**>(
-      grow_array(vfilters_list, sizeof(*vfilters_list), &nb_vfilters, nb_vfilters + 1));
-  vfilters_list[nb_vfilters - 1] = arg;
+void AppOptions::initAvFilters(const std::string& arg) {
+  vfilters_list.push_back(arg);
 }
 #endif

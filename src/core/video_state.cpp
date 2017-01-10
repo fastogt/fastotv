@@ -1,6 +1,7 @@
 #include "core/video_state.h"
 
 #include <common/macros.h>
+#include <common/utils.h>
 
 #include "core/cmd_utils.h"
 #include "core/threads.h"
@@ -127,49 +128,46 @@ void fill_rectangle(SDL_Renderer* renderer, int x, int y, int w, int h) {
 }
 }
 
-VideoState::VideoState(AVInputFormat* iformat, AppOptions* opt)
+VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt)
     : opt(opt),
       vis_texture(NULL),
       sub_texture(NULL),
+#if CONFIG_AVFILTER
+      vfilter_idx(0),
+#endif
       cursor_hidden_(false),
       cursor_last_shown_(0),
       renderer(NULL),
       window(NULL) {
-  VideoState* is = this;
-  is->filename = av_strdup(opt->input_filename);
-  if (!is->filename) {
-    return;
-  }
-
-  is->iformat = iformat;
-  is->ytop = 0;
-  is->xleft = 0;
+  iformat = ifo;
+  ytop = 0;
+  xleft = 0;
 
   /* start video display */
-  if (frame_queue_init(&is->pictq, &is->videoq, VIDEO_PICTURE_QUEUE_SIZE, 1) < 0) {
+  if (frame_queue_init(&pictq, &videoq, VIDEO_PICTURE_QUEUE_SIZE, 1) < 0) {
     return;
   }
-  if (frame_queue_init(&is->subpq, &is->subtitleq, SUBPICTURE_QUEUE_SIZE, 0) < 0) {
+  if (frame_queue_init(&subpq, &subtitleq, SUBPICTURE_QUEUE_SIZE, 0) < 0) {
     return;
   }
-  if (frame_queue_init(&is->sampq, &is->audioq, SAMPLE_QUEUE_SIZE, 1) < 0) {
-    return;
-  }
-
-  if (packet_queue_init(&is->videoq) < 0 || packet_queue_init(&is->audioq) < 0 ||
-      packet_queue_init(&is->subtitleq) < 0) {
+  if (frame_queue_init(&sampq, &audioq, SAMPLE_QUEUE_SIZE, 1) < 0) {
     return;
   }
 
-  if (!(is->continue_read_thread = SDL_CreateCond())) {
+  if (packet_queue_init(&videoq) < 0 || packet_queue_init(&audioq) < 0 ||
+      packet_queue_init(&subtitleq) < 0) {
+    return;
+  }
+
+  if (!(continue_read_thread = SDL_CreateCond())) {
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
     return;
   }
 
-  init_clock(&is->vidclk, &is->videoq.serial);
-  init_clock(&is->audclk, &is->audioq.serial);
-  init_clock(&is->extclk, &is->extclk.serial);
-  is->audio_clock_serial = -1;
+  init_clock(&vidclk, &videoq.serial);
+  init_clock(&audclk, &audioq.serial);
+  init_clock(&extclk, &extclk.serial);
+  audio_clock_serial = -1;
   if (opt->startup_volume < 0) {
     av_log(NULL, AV_LOG_WARNING, "-volume=%d < 0, setting to 0\n", opt->startup_volume);
   }
@@ -177,10 +175,10 @@ VideoState::VideoState(AVInputFormat* iformat, AppOptions* opt)
     av_log(NULL, AV_LOG_WARNING, "-volume=%d > 100, setting to 100\n", opt->startup_volume);
   }
   opt->startup_volume = av_clip(opt->startup_volume, 0, 100);
-  opt->startup_volume = av_clip(SDL_MIX_MAXVOLUME * opt->startup_volume / 100, 0, SDL_MIX_MAXVOLUME);
-  is->audio_volume = opt->startup_volume;
-  is->muted = 0;
-  is->av_sync_type = av_sync_type;
+  opt->startup_volume =
+      av_clip(SDL_MIX_MAXVOLUME * opt->startup_volume / 100, 0, SDL_MIX_MAXVOLUME);
+  audio_volume = opt->startup_volume;
+  muted = 0;
 }
 
 VideoState::~VideoState() {
@@ -209,7 +207,6 @@ VideoState::~VideoState() {
   SDL_DestroyCond(continue_read_thread);
   sws_freeContext(img_convert_ctx);
   sws_freeContext(sub_convert_ctx);
-  av_free(filename);
   if (vis_texture) {
     SDL_DestroyTexture(vis_texture);
     vis_texture = NULL;
@@ -415,7 +412,7 @@ static int audio_decode_frame(VideoState* is) {
   do {
 #if defined(_WIN32)
     while (frame_queue_nb_remaining(&is->sampq) == 0) {
-      if ((av_gettime_relative() - audio_callback_time) >
+      if ((av_gettime_relative() - is->opt->audio_callback_time) >
           1000000LL * is->audio_hw_buf_size / is->audio_tgt.bytes_per_sec / 2)
         return -1;
       av_usleep(1000);
@@ -536,8 +533,9 @@ static void sdl_audio_callback(void* opaque, Uint8* stream, int len) {
         is->audio_buf_size =
             SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
       } else {
-        if (is->show_mode != SHOW_MODE_VIDEO)
+        if (is->opt->show_mode != SHOW_MODE_VIDEO) {
           update_sample_display(is, (int16_t*)is->audio_buf, audio_size);
+        }
         is->audio_buf_size = audio_size;
       }
       is->audio_buf_index = 0;
@@ -717,14 +715,14 @@ the_end:
 }
 
 static void toggle_audio_display(VideoState* is) {
-  int next = is->show_mode;
+  int next = is->opt->show_mode;
   do {
     next = (next + 1) % SHOW_MODE_NB;
-  } while (next != is->show_mode &&
+  } while (next != is->opt->show_mode &&
            (next == SHOW_MODE_VIDEO && !is->video_st || next != SHOW_MODE_VIDEO && !is->audio_st));
-  if (is->show_mode != next) {
+  if (is->opt->show_mode != next) {
     is->force_refresh = 1;
-    is->show_mode = (ShowMode)next;
+    is->opt->show_mode = (ShowMode)next;
   }
 }
 
@@ -756,27 +754,26 @@ static void seek_chapter(VideoState* is, int incr) {
 }
 
 int VideoState::stream_component_open(int stream_index) {
-  AVCodecContext* avctx;
-  AVCodec* codec;
-  const char* forced_codec_name = NULL;
-  AVDictionary* opts = NULL;
-  AVDictionaryEntry* t = NULL;
-  int sample_rate, nb_channels;
-  int64_t channel_layout;
-  int ret = 0;
-  int stream_lowres = opt->lowres;
-
   if (stream_index < 0 || stream_index >= ic->nb_streams) {
     return -1;
   }
 
-  avctx = avcodec_alloc_context3(NULL);
-  if (!avctx)
+  AVCodecContext* avctx = avcodec_alloc_context3(NULL);
+  if (!avctx) {
     return AVERROR(ENOMEM);
+  }
+  const char* forced_codec_name = NULL;
+  AVCodec* codec;
+  AVDictionary* opts = NULL;
+  AVDictionaryEntry* t = NULL;
+  int sample_rate, nb_channels;
+  int64_t channel_layout;
+  int stream_lowres = opt->lowres;
 
-  ret = avcodec_parameters_to_context(avctx, ic->streams[stream_index]->codecpar);
-  if (ret < 0)
+  int ret = avcodec_parameters_to_context(avctx, ic->streams[stream_index]->codecpar);
+  if (ret < 0) {
     goto fail;
+  }
   av_codec_set_pkt_timebase(avctx, ic->streams[stream_index]->time_base);
 
   codec = avcodec_find_decoder(avctx->codec_id);
@@ -784,25 +781,26 @@ int VideoState::stream_component_open(int stream_index) {
   switch (avctx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
       last_audio_stream = stream_index;
-      forced_codec_name = opt->audio_codec_name;
+      forced_codec_name = common::utils::c_strornull(opt->audio_codec_name);
       break;
     case AVMEDIA_TYPE_SUBTITLE:
       last_subtitle_stream = stream_index;
-      forced_codec_name = opt->subtitle_codec_name;
+      forced_codec_name = common::utils::c_strornull(opt->subtitle_codec_name);
       break;
     case AVMEDIA_TYPE_VIDEO:
       last_video_stream = stream_index;
-      forced_codec_name = opt->video_codec_name;
+      forced_codec_name = common::utils::c_strornull(opt->video_codec_name);
       break;
   }
   if (forced_codec_name) {
     codec = avcodec_find_decoder_by_name(forced_codec_name);
   }
   if (!codec) {
-    if (forced_codec_name)
+    if (forced_codec_name) {
       av_log(NULL, AV_LOG_WARNING, "No codec could be found with name '%s'\n", forced_codec_name);
-    else
+    } else {
       av_log(NULL, AV_LOG_WARNING, "No codec could be found with id %d\n", avctx->codec_id);
+    }
     ret = AVERROR(EINVAL);
     goto fail;
   }
@@ -1011,13 +1009,13 @@ void VideoState::step_to_next_frame() {
 }
 
 int VideoState::get_master_sync_type() {
-  if (av_sync_type == AV_SYNC_VIDEO_MASTER) {
+  if (opt->av_sync_type == AV_SYNC_VIDEO_MASTER) {
     if (video_st) {
       return AV_SYNC_VIDEO_MASTER;
     } else {
       return AV_SYNC_AUDIO_MASTER;
     }
-  } else if (av_sync_type == AV_SYNC_AUDIO_MASTER) {
+  } else if (opt->av_sync_type == AV_SYNC_AUDIO_MASTER) {
     if (audio_st) {
       return AV_SYNC_AUDIO_MASTER;
     } else {
@@ -1086,7 +1084,7 @@ void VideoState::refresh_loop_wait_event(SDL_Event* event) {
       av_usleep((int64_t)(remaining_time * 1000000.0));
     }
     remaining_time = REFRESH_RATE;
-    if (show_mode != SHOW_MODE_NONE && (!paused || force_refresh)) {
+    if (opt->show_mode != SHOW_MODE_NONE && (!paused || force_refresh)) {
       video_refresh(&remaining_time);
     }
     SDL_PumpEvents();
@@ -1102,7 +1100,7 @@ void VideoState::video_refresh(double* remaining_time) {
     check_external_clock_speed(this);
   }
 
-  if (!opt->display_disable && show_mode != SHOW_MODE_VIDEO && audio_st) {
+  if (!opt->display_disable && opt->show_mode != SHOW_MODE_VIDEO && audio_st) {
     time = av_gettime_relative() / 1000000.0;
     if (force_refresh || last_vis_time + opt->rdftspeed < time) {
       video_display();
@@ -1206,7 +1204,7 @@ void VideoState::video_refresh(double* remaining_time) {
     }
   display:
     /* display picture */
-    if (!opt->display_disable && force_refresh && show_mode == SHOW_MODE_VIDEO &&
+    if (!opt->display_disable && force_refresh && opt->show_mode == SHOW_MODE_VIDEO &&
         pictq.rindex_shown) {
       video_display();
     }
@@ -1265,14 +1263,14 @@ int VideoState::video_open(Frame* vp) {
 
   if (!window) {
     int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-    if (!opt->window_title) {
+    if (opt->window_title.empty()) {
       opt->window_title = opt->input_filename;
     }
     if (opt->is_full_screen) {
       flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
-    window = SDL_CreateWindow(opt->window_title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w,
-                              h, flags);
+    window = SDL_CreateWindow(opt->window_title.c_str(), SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED, w, h, flags);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
     if (window) {
       SDL_RendererInfo info;
@@ -1344,7 +1342,7 @@ void VideoState::video_display() {
 
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
-  if (audio_st && show_mode != SHOW_MODE_VIDEO) {
+  if (audio_st && opt->show_mode != SHOW_MODE_VIDEO) {
     video_audio_display();
   } else if (video_st) {
     video_image_display();
@@ -1489,7 +1487,7 @@ void VideoState::video_audio_display() {
   channels = audio_tgt.channels;
   nb_display_channels = channels;
   if (!paused) {
-    int data_used = show_mode == SHOW_MODE_WAVES ? width : (2 * nb_freq);
+    int data_used = opt->show_mode == SHOW_MODE_WAVES ? width : (2 * nb_freq);
     n = 2 * channels;
     delay = audio_write_buf_size;
     delay /= n;
@@ -1506,7 +1504,7 @@ void VideoState::video_audio_display() {
       delay = data_used;
 
     i_start = x = compute_mod(sample_array_index - delay * channels, SAMPLE_ARRAY_SIZE);
-    if (show_mode == SHOW_MODE_WAVES) {
+    if (opt->show_mode == SHOW_MODE_WAVES) {
       h = INT_MIN;
       for (i = 0; i < 1000; i += channels) {
         int idx = (SAMPLE_ARRAY_SIZE + x - i) % SAMPLE_ARRAY_SIZE;
@@ -1527,7 +1525,7 @@ void VideoState::video_audio_display() {
     i_start = last_i_start;
   }
 
-  if (show_mode == SHOW_MODE_WAVES) {
+  if (opt->show_mode == SHOW_MODE_WAVES) {
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
     /* total height for one channel */
@@ -1574,7 +1572,7 @@ void VideoState::video_audio_display() {
     if (!rdft || !rdft_data) {
       av_log(NULL, AV_LOG_ERROR,
              "Failed to allocate buffers for RDFT, switching to waves display\n");
-      show_mode = SHOW_MODE_WAVES;
+      opt->show_mode = SHOW_MODE_WAVES;
     } else {
       FFTSample* data[2];
       SDL_Rect rect = {.x = xpos, .y = 0, .w = 1, .h = height};
@@ -1678,11 +1676,12 @@ int VideoState::exec() {
           case SDLK_t:
             stream_cycle_channel(cur_stream, AVMEDIA_TYPE_SUBTITLE);
             break;
-          case SDLK_w:
+          case SDLK_w: {
 #if CONFIG_AVFILTER
-            if (cur_stream->show_mode == SHOW_MODE_VIDEO &&
-                cur_stream->vfilter_idx < opt->nb_vfilters - 1) {
-              if (++cur_stream->vfilter_idx >= opt->nb_vfilters)
+            const int nb_vfilters = opt->vfilters_list.size();
+            if (cur_stream->opt->show_mode == SHOW_MODE_VIDEO &&
+                cur_stream->vfilter_idx < nb_vfilters - 1) {
+              if (++cur_stream->vfilter_idx >= nb_vfilters)
                 cur_stream->vfilter_idx = 0;
             } else {
               cur_stream->vfilter_idx = 0;
@@ -1692,6 +1691,7 @@ int VideoState::exec() {
             toggle_audio_display(cur_stream);
 #endif
             break;
+          }
           case SDLK_PAGEUP:
             if (cur_stream->ic->nb_chapters <= 1) {
               incr = 600.0;
