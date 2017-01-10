@@ -69,7 +69,7 @@ static int init_report(const char* env);
 
 AVDictionary* sws_dict;
 AVDictionary* swr_opts;
-AVDictionary *format_opts, *codec_opts, *resample_opts;
+AVDictionary *format_opts, *codec_opts;
 
 static FILE* report_file;
 static int report_file_level = AV_LOG_DEBUG;
@@ -84,7 +84,6 @@ void uninit_opts(void) {
   av_dict_free(&sws_dict);
   av_dict_free(&format_opts);
   av_dict_free(&codec_opts);
-  av_dict_free(&resample_opts);
 }
 
 void log_callback_help(void* ptr, int level, const char* fmt, va_list vl) {
@@ -181,24 +180,26 @@ void show_help_options(const OptionDef* options,
   printf("\n");
 }
 
-void show_help_children(const AVClass* class, int flags) {
+void show_help_children(const AVClass* cl, int flags) {
   const AVClass* child = NULL;
-  if (class->option) {
-    av_opt_show2(&class, NULL, flags, 0);
+  if (cl->option) {
+    av_opt_show2(&cl, NULL, flags, 0);
     printf("\n");
   }
 
-  while (child = av_opt_child_class_next(class, child))
+  while ((child = av_opt_child_class_next(cl, child))) {
     show_help_children(child, flags);
+  }
 }
 
 static const OptionDef* find_option(const OptionDef* po, const char* name) {
   const char* p = strchr(name, ':');
-  int len = p ? p - name : strlen(name);
+  size_t len = p ? (p - name) : strlen(name);
 
   while (po->name) {
-    if (!strncmp(name, po->name, len) && strlen(po->name) == len)
+    if (strncmp(name, po->name, len) == 0 && strlen(po->name) == len) {
       break;
+    }
     po++;
   }
   return po;
@@ -268,7 +269,7 @@ static inline void prepare_app_arguments(int* argc_ptr, char*** argv_ptr) {
 static int write_option(void* optctx, const OptionDef* po, const char* opt, const char* arg) {
   /* new-style options contain an offset into optctx, old-style address of
    * a global var*/
-  void* dst = po->flags & (OPT_OFFSET | OPT_SPEC) ? (uint8_t*)optctx + po->u.off : po->u.dst_ptr;
+  void* dst = (po->flags & (OPT_OFFSET | OPT_SPEC)) ? ((uint8_t*)optctx + po->u.off) : (po->u.dst_ptr);
   int* dstcount;
 
   if (po->flags & OPT_SPEC) {
@@ -350,8 +351,7 @@ int parse_option(void* optctx, const char* opt, const char* arg, const OptionDef
 void parse_options(void* optctx,
                    int argc,
                    char** argv,
-                   const OptionDef* options,
-                   void (*parse_arg_function)(void*, const char*)) {
+                   const OptionDef* options) {
   const char* opt;
   int optindex, handleoptions = 1, ret;
 
@@ -373,42 +373,8 @@ void parse_options(void* optctx,
       if ((ret = parse_option(optctx, opt, argv[optindex], options)) < 0)
         exit_program(1);
       optindex += ret;
-    } else {
-      if (parse_arg_function)
-        parse_arg_function(optctx, opt);
     }
   }
-}
-
-int parse_optgroup(void* optctx, OptionGroup* g) {
-  int i, ret;
-
-  av_log(NULL, AV_LOG_DEBUG, "Parsing a group of options: %s %s.\n", g->group_def->name, g->arg);
-
-  for (i = 0; i < g->nb_opts; i++) {
-    Option* o = &g->opts[i];
-
-    if (g->group_def->flags && !(g->group_def->flags & o->opt->flags)) {
-      av_log(NULL, AV_LOG_ERROR,
-             "Option %s (%s) cannot be applied to "
-             "%s %s -- you are trying to apply an input option to an "
-             "output file or vice versa. Move this option before the "
-             "file it belongs to.\n",
-             o->key, o->opt->help, g->group_def->name, g->arg);
-      return AVERROR(EINVAL);
-    }
-
-    av_log(NULL, AV_LOG_DEBUG, "Applying option %s (%s) with argument %s.\n", o->key, o->opt->help,
-           o->val);
-
-    ret = write_option(optctx, o->opt, o->key, o->val);
-    if (ret < 0)
-      return ret;
-  }
-
-  av_log(NULL, AV_LOG_DEBUG, "Successfully parsed a group of options.\n");
-
-  return 0;
 }
 
 int locate_option(int argc, char** argv, const OptionDef* options, const char* optname) {
@@ -595,233 +561,6 @@ int opt_default(void* optctx, const char* opt, const char* arg) {
   return AVERROR_OPTION_NOT_FOUND;
 }
 
-/*
- * Check whether given option is a group separator.
- *
- * @return index of the group definition that matched or -1 if none
- */
-static int match_group_separator(const OptionGroupDef* groups, int nb_groups, const char* opt) {
-  int i;
-
-  for (i = 0; i < nb_groups; i++) {
-    const OptionGroupDef* p = &groups[i];
-    if (p->sep && !strcmp(p->sep, opt))
-      return i;
-  }
-
-  return -1;
-}
-
-/*
- * Finish parsing an option group.
- *
- * @param group_idx which group definition should this group belong to
- * @param arg argument of the group delimiting option
- */
-static void finish_group(OptionParseContext* octx, int group_idx, const char* arg) {
-  OptionGroupList* l = &octx->groups[group_idx];
-  OptionGroup* g;
-
-  GROW_ARRAY(l->groups, l->nb_groups);
-  g = &l->groups[l->nb_groups - 1];
-
-  *g = octx->cur_group;
-  g->arg = arg;
-  g->group_def = l->group_def;
-  g->sws_dict = sws_dict;
-  g->swr_opts = swr_opts;
-  g->codec_opts = codec_opts;
-  g->format_opts = format_opts;
-  g->resample_opts = resample_opts;
-
-  codec_opts = NULL;
-  format_opts = NULL;
-  resample_opts = NULL;
-  sws_dict = NULL;
-  swr_opts = NULL;
-  init_opts();
-
-  memset(&octx->cur_group, 0, sizeof(octx->cur_group));
-}
-
-/*
- * Add an option instance to currently parsed group.
- */
-static void add_opt(OptionParseContext* octx,
-                    const OptionDef* opt,
-                    const char* key,
-                    const char* val) {
-  int global = !(opt->flags & (OPT_PERFILE | OPT_SPEC | OPT_OFFSET));
-  OptionGroup* g = global ? &octx->global_opts : &octx->cur_group;
-
-  GROW_ARRAY(g->opts, g->nb_opts);
-  g->opts[g->nb_opts - 1].opt = opt;
-  g->opts[g->nb_opts - 1].key = key;
-  g->opts[g->nb_opts - 1].val = val;
-}
-
-static void init_parse_context(OptionParseContext* octx,
-                               const OptionGroupDef* groups,
-                               int nb_groups) {
-  static const OptionGroupDef global_group = {"global"};
-  int i;
-
-  memset(octx, 0, sizeof(*octx));
-
-  octx->nb_groups = nb_groups;
-  octx->groups = av_mallocz_array(octx->nb_groups, sizeof(*octx->groups));
-  if (!octx->groups)
-    exit_program(1);
-
-  for (i = 0; i < octx->nb_groups; i++)
-    octx->groups[i].group_def = &groups[i];
-
-  octx->global_opts.group_def = &global_group;
-  octx->global_opts.arg = "";
-
-  init_opts();
-}
-
-void uninit_parse_context(OptionParseContext* octx) {
-  int i, j;
-
-  for (i = 0; i < octx->nb_groups; i++) {
-    OptionGroupList* l = &octx->groups[i];
-
-    for (j = 0; j < l->nb_groups; j++) {
-      av_freep(&l->groups[j].opts);
-      av_dict_free(&l->groups[j].codec_opts);
-      av_dict_free(&l->groups[j].format_opts);
-      av_dict_free(&l->groups[j].resample_opts);
-
-      av_dict_free(&l->groups[j].sws_dict);
-      av_dict_free(&l->groups[j].swr_opts);
-    }
-    av_freep(&l->groups);
-  }
-  av_freep(&octx->groups);
-
-  av_freep(&octx->cur_group.opts);
-  av_freep(&octx->global_opts.opts);
-
-  uninit_opts();
-}
-
-int split_commandline(OptionParseContext* octx,
-                      int argc,
-                      char* argv[],
-                      const OptionDef* options,
-                      const OptionGroupDef* groups,
-                      int nb_groups) {
-  int optindex = 1;
-  int dashdash = -2;
-
-  /* perform system-dependent conversions for arguments list */
-  prepare_app_arguments(&argc, &argv);
-
-  init_parse_context(octx, groups, nb_groups);
-  av_log(NULL, AV_LOG_DEBUG, "Splitting the commandline.\n");
-
-  while (optindex < argc) {
-    const char *opt = argv[optindex++], *arg;
-    const OptionDef* po;
-    int ret;
-
-    av_log(NULL, AV_LOG_DEBUG, "Reading option '%s' ...", opt);
-
-    if (opt[0] == '-' && opt[1] == '-' && !opt[2]) {
-      dashdash = optindex;
-      continue;
-    }
-    /* unnamed group separators, e.g. output filename */
-    if (opt[0] != '-' || !opt[1] || dashdash + 1 == optindex) {
-      finish_group(octx, 0, opt);
-      av_log(NULL, AV_LOG_DEBUG, " matched as %s.\n", groups[0].name);
-      continue;
-    }
-    opt++;
-
-#define GET_ARG(arg)                                                          \
-  do {                                                                        \
-    arg = argv[optindex++];                                                   \
-    if (!arg) {                                                               \
-      av_log(NULL, AV_LOG_ERROR, "Missing argument for option '%s'.\n", opt); \
-      return AVERROR(EINVAL);                                                 \
-    }                                                                         \
-  } while (0)
-
-    /* named group separators, e.g. -i */
-    if ((ret = match_group_separator(groups, nb_groups, opt)) >= 0) {
-      GET_ARG(arg);
-      finish_group(octx, ret, arg);
-      av_log(NULL, AV_LOG_DEBUG, " matched as %s with argument '%s'.\n", groups[ret].name, arg);
-      continue;
-    }
-
-    /* normal options */
-    po = find_option(options, opt);
-    if (po->name) {
-      if (po->flags & OPT_EXIT) {
-        /* optional argument, e.g. -h */
-        arg = argv[optindex++];
-      } else if (po->flags & HAS_ARG) {
-        GET_ARG(arg);
-      } else {
-        arg = "1";
-      }
-
-      add_opt(octx, po, opt, arg);
-      av_log(NULL, AV_LOG_DEBUG,
-             " matched as option '%s' (%s) with "
-             "argument '%s'.\n",
-             po->name, po->help, arg);
-      continue;
-    }
-
-    /* AVOptions */
-    if (argv[optindex]) {
-      ret = opt_default(NULL, opt, argv[optindex]);
-      if (ret >= 0) {
-        av_log(NULL, AV_LOG_DEBUG,
-               " matched as AVOption '%s' with "
-               "argument '%s'.\n",
-               opt, argv[optindex]);
-        optindex++;
-        continue;
-      } else if (ret != AVERROR_OPTION_NOT_FOUND) {
-        av_log(NULL, AV_LOG_ERROR,
-               "Error parsing option '%s' "
-               "with argument '%s'.\n",
-               opt, argv[optindex]);
-        return ret;
-      }
-    }
-
-    /* boolean -nofoo options */
-    if (opt[0] == 'n' && opt[1] == 'o' && (po = find_option(options, opt + 2)) && po->name &&
-        po->flags & OPT_BOOL) {
-      add_opt(octx, po, opt, "0");
-      av_log(NULL, AV_LOG_DEBUG,
-             " matched as option '%s' (%s) with "
-             "argument 0.\n",
-             po->name, po->help);
-      continue;
-    }
-
-    av_log(NULL, AV_LOG_ERROR, "Unrecognized option '%s'.\n", opt);
-    return AVERROR_OPTION_NOT_FOUND;
-  }
-
-  if (octx->cur_group.nb_opts || codec_opts || format_opts || resample_opts)
-    av_log(NULL, AV_LOG_WARNING,
-           "Trailing options were found on the "
-           "commandline.\n");
-
-  av_log(NULL, AV_LOG_DEBUG, "Finished splitting the commandline.\n");
-
-  return 0;
-}
-
 int opt_cpuflags(void* optctx, const char* opt, const char* arg) {
   int ret;
   unsigned flags = av_get_cpu_flags();
@@ -985,18 +724,6 @@ int opt_max_alloc(void* optctx, const char* opt, const char* arg) {
     exit_program(1);
   }
   av_max_alloc(max);
-  return 0;
-}
-
-int opt_timelimit(void* optctx, const char* opt, const char* arg) {
-#if HAVE_SETRLIMIT
-  int lim = parse_number_or_die(opt, arg, OPT_INT64, 0, INT_MAX);
-  struct rlimit rl = {lim, lim + 1};
-  if (setrlimit(RLIMIT_CPU, &rl))
-    perror("setrlimit");
-#else
-  av_log(NULL, AV_LOG_WARNING, "-%s not implemented on this OS\n", opt);
-#endif
   return 0;
 }
 
@@ -1775,64 +1502,6 @@ int show_help(void* optctx, const char* opt, const char* arg) {
 
   av_freep(&topic);
   return 0;
-}
-
-int read_yesno(void) {
-  int c = getchar();
-  int yesno = (av_toupper(c) == 'Y');
-
-  while (c != '\n' && c != EOF)
-    c = getchar();
-
-  return yesno;
-}
-
-FILE* get_preset_file(char* filename,
-                      size_t filename_size,
-                      const char* preset_name,
-                      int is_path,
-                      const char* codec_name) {
-  FILE* f = NULL;
-  int i;
-  const char* base[3] = {
-      getenv("FFMPEG_DATADIR"), getenv("HOME"), FFMPEG_DATADIR,
-  };
-
-  if (is_path) {
-    av_strlcpy(filename, preset_name, filename_size);
-    f = fopen(filename, "r");
-  } else {
-#ifdef _WIN32
-    char datadir[MAX_PATH], *ls;
-    base[2] = NULL;
-
-    if (GetModuleFileNameA(GetModuleHandleA(NULL), datadir, sizeof(datadir) - 1)) {
-      for (ls = datadir; ls < datadir + strlen(datadir); ls++)
-        if (*ls == '\\')
-          *ls = '/';
-
-      if (ls = strrchr(datadir, '/')) {
-        *ls = 0;
-        strncat(datadir, "/ffpresets", sizeof(datadir) - 1 - strlen(datadir));
-        base[2] = datadir;
-      }
-    }
-#endif
-    for (i = 0; i < 3 && !f; i++) {
-      if (!base[i])
-        continue;
-      snprintf(filename, filename_size, "%s%s/%s.ffpreset", base[i], i != 1 ? "" : "/.ffmpeg",
-               preset_name);
-      f = fopen(filename, "r");
-      if (!f && codec_name) {
-        snprintf(filename, filename_size, "%s%s/%s-%s.ffpreset", base[i], i != 1 ? "" : "/.ffmpeg",
-                 codec_name, preset_name);
-        f = fopen(filename, "r");
-      }
-    }
-  }
-
-  return f;
 }
 
 int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {

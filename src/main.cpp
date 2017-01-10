@@ -119,20 +119,22 @@ static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-static void opt_input_file(void* optctx, const char* filename) {
+static int opt_input_file(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
+  UNUSED(opt);
 
   if (!g_options.input_filename.empty()) {
     av_log(NULL, AV_LOG_FATAL,
-           "Argument '%s' provided as input filename, but '%s' was already specified.\n", filename,
+           "Argument '%s' provided as input filename, but '%s' was already specified.\n", arg,
            g_options.input_filename.c_str());
-    exit(1);
+    return AVERROR(EINVAL);
   }
 
-  if (strcmp(filename, "-") == 0) {
-    filename = "pipe:";
+  if (strcmp(arg, "-") == 0) {
+    arg = "pipe:";
   }
-  g_options.input_filename = filename;
+  g_options.input_filename = arg;
+  return 0;
 }
 
 static int opt_codec(void* optctx, const char* opt, const char* arg) {
@@ -161,8 +163,6 @@ static int opt_codec(void* optctx, const char* opt, const char* arg) {
   }
   return 0;
 }
-
-static int dummy;
 
 static const OptionDef options[] = {
     {"L", OPT_EXIT, {.func_arg = show_license}, "show license"},
@@ -337,7 +337,7 @@ static const OptionDef options[] = {
      {.func_arg = opt_default},
      "generic catch all option",
      ""},
-    {"i", OPT_BOOL, {&dummy}, "read specified file", "input_file"},
+    {"i", HAS_ARG, {.func_arg = opt_input_file}, "read specified file", "input_file"},
     {"codec", HAS_ARG, {.func_arg = opt_codec}, "force decoder", "decoder_name"},
     {"acodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
@@ -364,6 +364,65 @@ static void show_usage(void) {
   av_log(NULL, AV_LOG_INFO, "Simple media player\n");
   av_log(NULL, AV_LOG_INFO, "usage: %s [options] input_file\n", PROJECT_NAME_TITLE);
   av_log(NULL, AV_LOG_INFO, "\n");
+}
+
+static int lockmgr(void** mtx, enum AVLockOp op) {
+  SDL_mutex* lmtx = static_cast<SDL_mutex*>(*mtx);
+  switch (op) {
+    case AV_LOCK_CREATE:
+      *mtx = SDL_CreateMutex();
+      if (!*mtx) {
+        av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
+        return 1;
+      }
+      return 0;
+    case AV_LOCK_OBTAIN:
+      return !!SDL_LockMutex(lmtx);
+    case AV_LOCK_RELEASE:
+      return !!SDL_UnlockMutex(lmtx);
+    case AV_LOCK_DESTROY:
+      SDL_DestroyMutex(lmtx);
+      return 0;
+  }
+  return 1;
+}
+
+static void do_init(int argc, char** argv) {
+  init_dynload();
+
+  av_log_set_flags(AV_LOG_SKIP_REPEATED);
+  parse_loglevel(argc, argv, options);
+
+/* register all codecs, demux and protocols */
+#if CONFIG_AVDEVICE
+  avdevice_register_all();
+#endif
+#if CONFIG_AVFILTER
+  avfilter_register_all();
+#endif
+  av_register_all();
+  avformat_network_init();
+
+  init_opts();
+
+  signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
+  signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
+
+  show_banner(argc, argv, options);
+
+  parse_options(NULL, argc, argv, options);
+}
+
+/* handle an event sent by the GUI */
+static void do_exit() {
+  av_lockmgr_register(NULL);
+  uninit_opts();
+  avformat_network_deinit();
+  if (g_options.show_status) {
+    printf("\n");
+  }
+  SDL_Quit();
+  av_log(NULL, AV_LOG_QUIET, "%s", "");
 }
 
 void show_help_default(const char* opt, const char* arg) {
@@ -403,68 +462,10 @@ void show_help_default(const char* opt, const char* arg) {
       "left double-click   toggle full screen\n");
 }
 
-static int lockmgr(void** mtx, enum AVLockOp op) {
-  SDL_mutex* lmtx = static_cast<SDL_mutex*>(*mtx);
-  switch (op) {
-    case AV_LOCK_CREATE:
-      *mtx = SDL_CreateMutex();
-      if (!*mtx) {
-        av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
-        return 1;
-      }
-      return 0;
-    case AV_LOCK_OBTAIN:
-      return !!SDL_LockMutex(lmtx);
-    case AV_LOCK_RELEASE:
-      return !!SDL_UnlockMutex(lmtx);
-    case AV_LOCK_DESTROY:
-      SDL_DestroyMutex(lmtx);
-      return 0;
-  }
-  return 1;
-}
-
-/* handle an event sent by the GUI */
-void do_exit(VideoState* is) {
-  delete is;
-
-  av_lockmgr_register(NULL);
-  uninit_opts();
-  avformat_network_deinit();
-  if (g_options.show_status) {
-    printf("\n");
-  }
-  SDL_Quit();
-  av_log(NULL, AV_LOG_QUIET, "%s", "");
-}
-
 /* Called from the main */
 int main(int argc, char** argv) {
-  g_options.autorotate = 1;
-
-  init_dynload();
-
-  av_log_set_flags(AV_LOG_SKIP_REPEATED);
-  parse_loglevel(argc, argv, options);
-
-/* register all codecs, demux and protocols */
-#if CONFIG_AVDEVICE
-  avdevice_register_all();
-#endif
-#if CONFIG_AVFILTER
-  avfilter_register_all();
-#endif
-  av_register_all();
-  avformat_network_init();
-
-  init_opts();
-
-  signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
-  signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
-
-  show_banner(argc, argv, options);
-
-  parse_options(NULL, argc, argv, options, opt_input_file);
+  g_options.autorotate = 1;  // fix me
+  do_init(argc, argv);
 
   if (g_options.input_filename.empty()) {
     show_usage();
@@ -501,7 +502,8 @@ int main(int argc, char** argv) {
 
   if (av_lockmgr_register(lockmgr)) {
     av_log(NULL, AV_LOG_FATAL, "Could not initialize lock manager!\n");
-    do_exit(NULL);
+    do_exit();
+    return EXIT_FAILURE;
   }
 
   ComplexOptions copt;
@@ -511,6 +513,8 @@ int main(int argc, char** argv) {
   copt.codec_opts = codec_opts;
   VideoState* is = new VideoState(file_iformat, &g_options, &copt);
   int res = is->exec();
-  do_exit(is);
+  delete is;
+
+  do_exit();
   return res;
 }
