@@ -123,7 +123,7 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1,
 int get_video_frame(VideoState* is, AVFrame* frame) {
   int got_picture;
 
-  if ((got_picture = decoder_decode_frame(&is->viddec, frame, NULL)) < 0) {
+  if ((got_picture = is->viddec->decodeFrame(frame, NULL)) < 0) {
     return -1;
   }
 
@@ -140,8 +140,8 @@ int get_video_frame(VideoState* is, AVFrame* frame) {
       if (frame->pts != AV_NOPTS_VALUE) {
         double diff = dpts - is->get_master_clock();
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
-            diff - is->frame_last_filter_delay < 0 && is->viddec.pkt_serial == is->vidclk.serial &&
-            is->videoq.nb_packets) {
+            diff - is->frame_last_filter_delay < 0 &&
+            is->viddec->pktSerial() == is->vidclk.serial && is->videoq.nb_packets) {
           is->frame_drops_early++;
           av_frame_unref(frame);
           got_picture = 0;
@@ -418,10 +418,10 @@ int read_thread(void* user_data) {
       SDL_UnlockMutex(wait_mutex);
       continue;
     }
-    if (!is->paused && (!is->audio_st || (is->auddec.finished == is->audioq.serial &&
+    if (!is->paused && (!is->audio_st || (is->auddec->finished == is->audioq.serial &&
                                           frame_queue_nb_remaining(&is->sampq) == 0)) &&
-        (!is->video_st ||
-         (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
+        (!is->video_st || (is->viddec->finished == is->videoq.serial &&
+                           frame_queue_nb_remaining(&is->pictq) == 0))) {
       if (is->opt->loop != 1 && (!is->opt->loop || --is->opt->loop)) {
         is->stream_seek(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0, 0, 0);
       } else if (is->opt->autoexit) {
@@ -504,7 +504,7 @@ int audio_thread(void* user_data) {
   }
 
   do {
-    if ((got_frame = decoder_decode_frame(&is->auddec, frame, NULL)) < 0) {
+    if ((got_frame = is->auddec->decodeFrame(frame, NULL)) < 0) {
       goto the_end;
     }
 
@@ -519,7 +519,7 @@ int audio_thread(void* user_data) {
                                    (AVSampleFormat)frame->format, av_frame_get_channels(frame)) ||
                     is->audio_filter_src.channel_layout != dec_channel_layout ||
                     is->audio_filter_src.freq != frame->sample_rate ||
-                    is->auddec.pkt_serial != last_serial;
+                    is->auddec->pktSerial() != last_serial;
 
       if (reconfigure) {
         char buf1[1024], buf2[1024];
@@ -531,13 +531,14 @@ int audio_thread(void* user_data) {
                is->audio_filter_src.freq, is->audio_filter_src.channels,
                av_get_sample_fmt_name(is->audio_filter_src.fmt), buf1, last_serial,
                frame->sample_rate, av_frame_get_channels(frame),
-               av_get_sample_fmt_name((AVSampleFormat)frame->format), buf2, is->auddec.pkt_serial);
+               av_get_sample_fmt_name((AVSampleFormat)frame->format), buf2,
+               is->auddec->pktSerial());
 
         is->audio_filter_src.fmt = static_cast<AVSampleFormat>(frame->format);
         is->audio_filter_src.channels = av_frame_get_channels(frame);
         is->audio_filter_src.channel_layout = dec_channel_layout;
         is->audio_filter_src.freq = frame->sample_rate;
-        last_serial = is->auddec.pkt_serial;
+        last_serial = is->auddec->pktSerial();
 
         if ((ret = is->configure_audio_filters(is->opt->afilters, 1)) < 0) {
           goto the_end;
@@ -557,7 +558,7 @@ int audio_thread(void* user_data) {
 
         af->pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
         af->pos = av_frame_get_pkt_pos(frame);
-        af->serial = is->auddec.pkt_serial;
+        af->serial = is->auddec->pktSerial();
         AVRational tmp = {frame->nb_samples, frame->sample_rate};
         af->duration = av_q2d(tmp);
 
@@ -565,12 +566,12 @@ int audio_thread(void* user_data) {
         frame_queue_push(&is->sampq);
 
 #if CONFIG_AVFILTER
-        if (is->audioq.serial != is->auddec.pkt_serial) {
+        if (is->audioq.serial != is->auddec->pktSerial()) {
           break;
         }
       }
       if (ret == AVERROR_EOF) {
-        is->auddec.finished = is->auddec.pkt_serial;
+        is->auddec->finished = is->auddec->pktSerial();
       }
 #endif
     }
@@ -623,14 +624,14 @@ int video_thread(void* user_data) {
 
 #if CONFIG_AVFILTER
     if (last_w != frame->width || last_h != frame->height || last_format != frame->format ||
-        last_serial != is->viddec.pkt_serial || last_vfilter_idx != is->vfilter_idx) {
+        last_serial != is->viddec->pktSerial() || last_vfilter_idx != is->vfilter_idx) {
       av_log(NULL, AV_LOG_DEBUG,
              "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
              "serial:%d\n",
              last_w, last_h, (const char*)av_x_if_null(av_get_pix_fmt_name(last_format), "none"),
              last_serial, frame->width, frame->height,
              (const char*)av_x_if_null(av_get_pix_fmt_name((AVPixelFormat)frame->format), "none"),
-             is->viddec.pkt_serial);
+             is->viddec->pktSerial());
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
       const char* vfilters = NULL;
@@ -649,7 +650,7 @@ int video_thread(void* user_data) {
       last_w = frame->width;
       last_h = frame->height;
       last_format = static_cast<AVPixelFormat>(frame->format);
-      last_serial = is->viddec.pkt_serial;
+      last_serial = is->viddec->pktSerial();
       last_vfilter_idx = is->vfilter_idx;
       frame_rate = filt_out->inputs[0]->frame_rate;
     }
@@ -663,8 +664,9 @@ int video_thread(void* user_data) {
 
       ret = av_buffersink_get_frame_flags(filt_out, frame, 0);
       if (ret < 0) {
-        if (ret == AVERROR_EOF)
-          is->viddec.finished = is->viddec.pkt_serial;
+        if (ret == AVERROR_EOF) {
+          is->viddec->finished = is->viddec->pktSerial();
+        }
         ret = 0;
         break;
       }
@@ -680,7 +682,7 @@ int video_thread(void* user_data) {
                                             : 0);
       pts = (frame->pts == AV_NOPTS_VALUE) ? NAN : frame->pts * av_q2d(tb);
       ret = queue_picture(is, frame, pts, duration, av_frame_get_pkt_pos(frame),
-                          is->viddec.pkt_serial);
+                          is->viddec->pktSerial());
       av_frame_unref(frame);
 #if CONFIG_AVFILTER
     }
@@ -707,7 +709,7 @@ int subtitle_thread(void* user_data) {
       return 0;
     }
 
-    if ((got_subtitle = decoder_decode_frame(&is->subdec, NULL, &sp->sub)) < 0) {
+    if ((got_subtitle = is->subdec->decodeFrame(NULL, &sp->sub)) < 0) {
       break;
     }
 
@@ -717,9 +719,9 @@ int subtitle_thread(void* user_data) {
         pts = static_cast<double>(sp->sub.pts) / static_cast<double>(AV_TIME_BASE);
       }
       sp->pts = pts;
-      sp->serial = is->subdec.pkt_serial;
-      sp->width = is->subdec.avctx->width;
-      sp->height = is->subdec.avctx->height;
+      sp->serial = is->subdec->pktSerial();
+      sp->width = is->subdec->width();
+      sp->height = is->subdec->height();
       sp->uploaded = 0;
 
       /* now we can update the picture count */

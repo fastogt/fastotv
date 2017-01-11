@@ -469,10 +469,10 @@ void sdl_audio_callback(void* opaque, Uint8* stream, int len) {
 }
 
 int audio_open(void* opaque,
-                      int64_t wanted_channel_layout,
-                      int wanted_nb_channels,
-                      int wanted_sample_rate,
-                      struct AudioParams* audio_hw_params) {
+               int64_t wanted_channel_layout,
+               int wanted_nb_channels,
+               int wanted_sample_rate,
+               struct AudioParams* audio_hw_params) {
   SDL_AudioSpec wanted_spec, spec;
   const char* env;
   static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
@@ -661,6 +661,9 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
     : opt(opt),
       copt(copt),
       audio_callback_time(0),
+      auddec(NULL),
+      viddec(NULL),
+      subdec(NULL),
       vis_texture(NULL),
       sub_texture(NULL),
 #if CONFIG_AVFILTER
@@ -898,13 +901,14 @@ int VideoState::stream_component_open(int stream_index) {
       audio_stream = stream_index;
       audio_st = ic->streams[stream_index];
 
-      decoder_init(&auddec, avctx, &audioq, continue_read_thread, opt->decoder_reorder_pts);
+      auddec = new Decoder(avctx, &audioq, continue_read_thread, opt->decoder_reorder_pts);
       if ((ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic->iformat->read_seek) {
-        auddec.start_pts = audio_st->start_time;
-        auddec.start_pts_tb = audio_st->time_base;
+        auddec->start_pts = audio_st->start_time;
+        auddec->start_pts_tb = audio_st->time_base;
       }
-      if ((ret = decoder_start(&auddec, audio_thread, this)) < 0) {
+      if ((ret = auddec->start(audio_thread, this)) < 0) {
+        destroy(&auddec);
         goto out;
       }
       SDL_PauseAudio(0);
@@ -913,8 +917,9 @@ int VideoState::stream_component_open(int stream_index) {
       video_stream = stream_index;
       video_st = ic->streams[stream_index];
 
-      decoder_init(&viddec, avctx, &videoq, continue_read_thread, opt->decoder_reorder_pts);
-      if ((ret = decoder_start(&viddec, video_thread, this)) < 0) {
+      viddec = new VideoDecoder(avctx, &videoq, continue_read_thread, opt->decoder_reorder_pts);
+      if ((ret = viddec->start(video_thread, this)) < 0) {
+        destroy(&viddec);
         goto out;
       }
       queue_attachments_req = 1;
@@ -923,8 +928,9 @@ int VideoState::stream_component_open(int stream_index) {
       subtitle_stream = stream_index;
       subtitle_st = ic->streams[stream_index];
 
-      decoder_init(&subdec, avctx, &subtitleq, continue_read_thread, opt->decoder_reorder_pts);
-      if ((ret = decoder_start(&subdec, subtitle_thread, this)) < 0) {
+      subdec = new SubDecoder(avctx, &subtitleq, continue_read_thread, opt->decoder_reorder_pts);
+      if ((ret = subdec->start(subtitle_thread, this)) < 0) {
+        destroy(&subdec);
         goto out;
       }
       break;
@@ -949,9 +955,9 @@ void VideoState::stream_component_close(int stream_index) {
   AVCodecParameters* codecpar = ic->streams[stream_index]->codecpar;
   switch (codecpar->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
-      decoder_abort(&auddec, &sampq);
+      auddec->abort(&sampq);
       SDL_CloseAudio();
-      decoder_destroy(&auddec);
+      destroy(&auddec);
       swr_free(&swr_ctx);
       av_freep(&audio_buf1);
       audio_buf1_size = 0;
@@ -965,12 +971,12 @@ void VideoState::stream_component_close(int stream_index) {
       }
       break;
     case AVMEDIA_TYPE_VIDEO:
-      decoder_abort(&viddec, &pictq);
-      decoder_destroy(&viddec);
+      viddec->abort(&pictq);
+      destroy(&viddec);
       break;
     case AVMEDIA_TYPE_SUBTITLE:
-      decoder_abort(&subdec, &subpq);
-      decoder_destroy(&subdec);
+      subdec->abort(&subpq);
+      destroy(&subdec);
       break;
     default:
       break;
@@ -1016,7 +1022,7 @@ void VideoState::step_to_next_frame() {
   step = 1;
 }
 
-int VideoState::get_master_sync_type() {
+int VideoState::get_master_sync_type() const {
   if (opt->av_sync_type == AV_SYNC_VIDEO_MASTER) {
     if (video_st) {
       return AV_SYNC_VIDEO_MASTER;
@@ -1247,8 +1253,8 @@ void VideoState::video_refresh(double* remaining_time) {
              get_master_clock(),
              (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   ")),
              av_diff, frame_drops_early + frame_drops_late, aqsize / 1024, vqsize / 1024, sqsize,
-             video_st ? viddec.avctx->pts_correction_num_faulty_dts : 0,
-             video_st ? viddec.avctx->pts_correction_num_faulty_pts : 0);
+             video_st ? viddec->ptsCorrectionNumFaultyDts() : 0,
+             video_st ? viddec->ptsCorrectionNumFaultyPts() : 0);
       fflush(stdout);
       last_time = cur_time;
     }

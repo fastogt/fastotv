@@ -75,9 +75,9 @@ struct VideoState {
   FrameQueue subpq;
   FrameQueue sampq;
 
-  Decoder auddec;
-  Decoder viddec;
-  Decoder subdec;
+  Decoder* auddec;
+  VideoDecoder* viddec;
+  SubDecoder* subdec;
 
   int audio_stream;
 
@@ -158,7 +158,7 @@ struct VideoState {
   void stream_seek(int64_t pos, int64_t rel, int seek_by_bytes);
 
   void step_to_next_frame();
-  int get_master_sync_type();
+  int get_master_sync_type() const;
   double compute_target_delay(double delay);
   double get_master_clock();
   void set_default_window_size(int width, int height, AVRational sar);
