@@ -141,7 +141,7 @@ int get_video_frame(VideoState* is, AVFrame* frame) {
         double diff = dpts - is->get_master_clock();
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
             diff - is->frame_last_filter_delay < 0 &&
-            is->viddec->pktSerial() == is->vidclk.serial && is->videoq.nb_packets) {
+            is->viddec->pktSerial() == is->vidclk->serial() && is->videoq.nb_packets) {
           is->frame_drops_early++;
           av_frame_unref(frame);
           got_picture = 0;
@@ -383,9 +383,9 @@ int read_thread(void* user_data) {
           packet_queue_put(&is->videoq, PacketQueue::flush_pkt());
         }
         if (is->seek_flags & AVSEEK_FLAG_BYTE) {
-          set_clock(&is->extclk, NAN, 0);
+          is->extclk->set_clock(NAN, 0);
         } else {
-          set_clock(&is->extclk, seek_target / (double)AV_TIME_BASE, 0);
+          is->extclk->set_clock(seek_target / (double)AV_TIME_BASE, 0);
         }
       }
       is->seek_req = 0;

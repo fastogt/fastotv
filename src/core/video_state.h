@@ -30,6 +30,7 @@ extern "C" {
 
 #include <common/macros.h>
 
+#include "core/clock.h"
 #include "core/frame_queue.h"
 #include "core/decoder.h"
 #include "core/app_options.h"
@@ -67,9 +68,9 @@ struct VideoState {
   AVFormatContext* ic;
   int realtime;
 
-  Clock audclk;
-  Clock vidclk;
-  Clock extclk;
+  Clock* audclk;
+  Clock* vidclk;
+  Clock* extclk;
 
   FrameQueue pictq;
   FrameQueue subpq;
