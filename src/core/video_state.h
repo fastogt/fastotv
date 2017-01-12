@@ -43,6 +43,15 @@ extern "C" {
 /* If a frame duration is longer than this, it will not be duplicated to compensate AV sync */
 #define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
 
+struct AudioParams {
+  int freq;
+  int channels;
+  int64_t channel_layout;
+  enum AVSampleFormat fmt;
+  int frame_size;
+  int bytes_per_sec;
+};
+
 struct VideoState {
   VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt);
   int exec();
@@ -112,7 +121,7 @@ struct VideoState {
   int sample_array_index;
   int last_i_start;
   RDFTContext* rdft;
-  int rdft_bits;
+  int rdft_bits_;
   FFTSample* rdft_data;
   int xpos;
   double last_vis_time;

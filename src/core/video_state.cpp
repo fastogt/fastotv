@@ -647,8 +647,9 @@ void seek_chapter(VideoState* is, int incr) {
 
   i += incr;
   i = FFMAX(i, 0);
-  if (i >= is->ic->nb_chapters)
+  if (i >= is->ic->nb_chapters) {
     return;
+  }
 
   av_log(NULL, AV_LOG_VERBOSE, "Seeking to chapter %d.\n", i);
   is->stream_seek(
@@ -977,7 +978,7 @@ void VideoState::stream_component_close(int stream_index) {
         av_rdft_end(rdft);
         av_freep(&rdft_data);
         rdft = NULL;
-        rdft_bits = 0;
+        rdft_bits_ = 0;
       }
       break;
     case AVMEDIA_TYPE_VIDEO:
@@ -1105,7 +1106,8 @@ void VideoState::refresh_loop_wait_event(SDL_Event* event) {
       cursor_hidden_ = 1;
     }
     if (remaining_time > 0.0) {
-      av_usleep((int64_t)(remaining_time * 1000000.0));
+      const unsigned sleep_time = static_cast<unsigned>(remaining_time * 1000000.0);
+      av_usleep(sleep_time);
     }
     remaining_time = REFRESH_RATE;
     if (opt->show_mode != SHOW_MODE_NONE && (!paused || force_refresh)) {
@@ -1117,9 +1119,6 @@ void VideoState::refresh_loop_wait_event(SDL_Event* event) {
 
 void VideoState::video_refresh(double* remaining_time) {
   double time;
-
-  Frame *sp, *sp2;
-
   if (!paused && get_master_sync_type() == AV_SYNC_EXTERNAL_CLOCK && realtime) {
     check_external_clock_speed(this);
   }
@@ -1189,26 +1188,24 @@ void VideoState::video_refresh(double* remaining_time) {
 
       if (subtitle_st) {
         while (frame_queue_nb_remaining(&subpq) > 0) {
-          sp = frame_queue_peek(&subpq);
-
-          if (frame_queue_nb_remaining(&subpq) > 1)
+          Frame* sp = frame_queue_peek(&subpq);
+          Frame* sp2 = NULL;
+          if (frame_queue_nb_remaining(&subpq) > 1) {
             sp2 = frame_queue_peek_next(&subpq);
-          else
-            sp2 = NULL;
+          }
 
           if (sp->serial != subtitleq.serial ||
               (vidclk->pts() > (sp->pts + ((float)sp->sub.end_display_time / 1000))) ||
               (sp2 && vidclk->pts() > (sp2->pts + ((float)sp2->sub.start_display_time / 1000)))) {
             if (sp->uploaded) {
-              int i;
-              for (i = 0; i < sp->sub.num_rects; i++) {
+              for (unsigned int i = 0; i < sp->sub.num_rects; i++) {
                 AVSubtitleRect* sub_rect = sp->sub.rects[i];
                 uint8_t* pixels;
-                int pitch, j;
-
+                int pitch;
                 if (!SDL_LockTexture(sub_texture, (SDL_Rect*)sub_rect, (void**)&pixels, &pitch)) {
-                  for (j = 0; j < sub_rect->h; j++, pixels += pitch)
+                  for (int j = 0; j < sub_rect->h; j++, pixels += pitch) {
                     memset(pixels, 0, sub_rect->w << 2);
+                  }
                   SDL_UnlockTexture(sub_texture);
                 }
               }
@@ -1272,11 +1269,11 @@ void VideoState::video_refresh(double* remaining_time) {
 }
 
 int VideoState::video_open(Frame* vp) {
-  int w, h;
-
-  if (vp && vp->width)
+  if (vp && vp->width) {
     set_default_window_size(vp->width, vp->height, vp->sar);
+  }
 
+  int w, h;
   if (opt->screen_width) {
     w = opt->screen_width;
     h = opt->screen_height;
@@ -1286,7 +1283,7 @@ int VideoState::video_open(Frame* vp) {
   }
 
   if (!window) {
-    int flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+    Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
     if (opt->window_title.empty()) {
       opt->window_title = opt->input_filename;
     }
@@ -1333,7 +1330,7 @@ int VideoState::alloc_picture() {
     return ERROR_RESULT_VALUE;
   }
 
-  int sdl_format;
+  Uint32 sdl_format;
   if (vp->format == AV_PIX_FMT_YUV420P) {
     sdl_format = SDL_PIXELFORMAT_YV12;
   } else {
@@ -1393,18 +1390,21 @@ int VideoState::realloc_texture(SDL_Texture** texture,
     int pitch;
     SDL_DestroyTexture(*texture);
     if (!(*texture = SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width,
-                                       new_height)))
-      return -1;
-    if (SDL_SetTextureBlendMode(*texture, blendmode) < 0)
-      return -1;
+                                       new_height))) {
+      return ERROR_RESULT_VALUE;
+    }
+    if (SDL_SetTextureBlendMode(*texture, blendmode) < 0) {
+      return ERROR_RESULT_VALUE;
+    }
     if (init_texture) {
-      if (SDL_LockTexture(*texture, NULL, &pixels, &pitch) < 0)
-        return -1;
+      if (SDL_LockTexture(*texture, NULL, &pixels, &pitch) < 0) {
+        return ERROR_RESULT_VALUE;
+      }
       memset(pixels, 0, pitch * new_height);
       SDL_UnlockTexture(*texture);
     }
   }
-  return 0;
+  return SUCCESS_RESULT_VALUE;
 }
 
 void VideoState::set_default_window_size(int width, int height, AVRational sar) {
@@ -1429,16 +1429,16 @@ void VideoState::video_image_display() {
           if (!sp->uploaded) {
             uint8_t* pixels[4];
             int pitch[4];
-            int i;
             if (!sp->width || !sp->height) {
               sp->width = vp->width;
               sp->height = vp->height;
             }
             if (realloc_texture(&sub_texture, SDL_PIXELFORMAT_ARGB8888, sp->width, sp->height,
-                                SDL_BLENDMODE_BLEND, 1) < 0)
+                                SDL_BLENDMODE_BLEND, 1) < 0) {
               return;
+            }
 
-            for (i = 0; i < sp->sub.num_rects; i++) {
+            for (unsigned int i = 0; i < sp->sub.num_rects; i++) {
               AVSubtitleRect* sub_rect = sp->sub.rects[i];
 
               sub_rect->x = av_clip(sub_rect->x, 0, sp->width);
@@ -1498,18 +1498,15 @@ void VideoState::video_image_display() {
 }
 
 void VideoState::video_audio_display() {
-  int i, i_start, x, y1, y, ys, delay, n, nb_display_channels;
-  int ch, channels, h, h2;
-  int64_t time_diff;
-  int rdft_bits, nb_freq;
+  int rdft_bits;
+  for (rdft_bits = 1; (1 << rdft_bits) < 2 * height; rdft_bits++) {
+  }
+  const int nb_freq = 1 << (rdft_bits - 1);
 
-  for (rdft_bits = 1; (1 << rdft_bits) < 2 * height; rdft_bits++)
-    ;
-  nb_freq = 1 << (rdft_bits - 1);
-
+  int i, i_start, x, y1, y, ys, delay, n;
+  int h, h2;
   /* compute display index : center on currently output samples */
-  channels = audio_tgt.channels;
-  nb_display_channels = channels;
+  const int channels = audio_tgt.channels;
   if (!paused) {
     int data_used = opt->show_mode == SHOW_MODE_WAVES ? width : (2 * nb_freq);
     n = 2 * channels;
@@ -1519,13 +1516,14 @@ void VideoState::video_audio_display() {
     /* to be more precise, we take into account the time spent since
        the last buffer computation */
     if (audio_callback_time) {
-      time_diff = av_gettime_relative() - audio_callback_time;
+      int64_t time_diff = av_gettime_relative() - audio_callback_time;
       delay -= (time_diff * audio_tgt.freq) / 1000000;
     }
 
     delay += 2 * data_used;
-    if (delay < data_used)
+    if (delay < data_used) {
       delay = data_used;
+    }
 
     i_start = x = compute_mod(sample_array_index - delay * channels, SAMPLE_ARRAY_SIZE);
     if (opt->show_mode == SHOW_MODE_WAVES) {
@@ -1549,6 +1547,7 @@ void VideoState::video_audio_display() {
     i_start = last_i_start;
   }
 
+  int nb_display_channels = channels;
   if (opt->show_mode == SHOW_MODE_WAVES) {
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
@@ -1556,7 +1555,7 @@ void VideoState::video_audio_display() {
     h = height / nb_display_channels;
     /* graph height / 2 */
     h2 = (h * 9) / 20;
-    for (ch = 0; ch < nb_display_channels; ch++) {
+    for (int ch = 0; ch < nb_display_channels; ch++) {
       i = i_start + ch;
       y1 = ytop + ch * h + (h / 2); /* position of center line */
       for (x = 0; x < width; x++) {
@@ -1576,7 +1575,7 @@ void VideoState::video_audio_display() {
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
 
-    for (ch = 1; ch < nb_display_channels; ch++) {
+    for (int ch = 1; ch < nb_display_channels; ch++) {
       y = ytop + ch * h;
       fill_rectangle(renderer, xleft, y, width, 1);
     }
@@ -1587,11 +1586,11 @@ void VideoState::video_audio_display() {
     }
 
     nb_display_channels = FFMIN(nb_display_channels, 2);
-    if (rdft_bits != rdft_bits) {
+    if (rdft_bits_ != rdft_bits) {
       av_rdft_end(rdft);
       av_free(rdft_data);
       rdft = av_rdft_init(rdft_bits, DFT_R2C);
-      rdft_bits = rdft_bits;
+      rdft_bits_ = rdft_bits;
       rdft_data = static_cast<FFTSample*>(av_malloc_array(nb_freq, 4 * sizeof(*rdft_data)));
     }
     if (!rdft || !rdft_data) {
@@ -1603,7 +1602,7 @@ void VideoState::video_audio_display() {
       SDL_Rect rect = {.x = xpos, .y = 0, .w = 1, .h = height};
       uint32_t* pixels;
       int pitch;
-      for (ch = 0; ch < nb_display_channels; ch++) {
+      for (int ch = 0; ch < nb_display_channels; ch++) {
         data[ch] = rdft_data + 2 * nb_freq * ch;
         i = i_start + ch;
         for (x = 0; x < 2 * nb_freq; x++) {
@@ -1805,10 +1804,10 @@ int VideoState::exec() {
           x = event.motion.x;
         }
         if (opt->seek_by_bytes || cur_stream->ic->duration <= 0) {
-          uint64_t size = avio_size(cur_stream->ic->pb);
-          cur_stream->stream_seek(size * x / cur_stream->width, 0, 1);
+          const int64_t size = avio_size(cur_stream->ic->pb);
+          const int64_t pos = size * x / cur_stream->width;
+          cur_stream->stream_seek(pos, 0, 1);
         } else {
-          int64_t ts;
           int ns, hh, mm, ss;
           int tns, thh, tmm, tss;
           tns = cur_stream->ic->duration / 1000000LL;
@@ -1823,9 +1822,10 @@ int VideoState::exec() {
           av_log(NULL, AV_LOG_INFO,
                  "Seek to %2.0f%% (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)       \n",
                  frac * 100, hh, mm, ss, thh, tmm, tss);
-          ts = frac * cur_stream->ic->duration;
-          if (cur_stream->ic->start_time != AV_NOPTS_VALUE)
+          int64_t ts = frac * cur_stream->ic->duration;
+          if (cur_stream->ic->start_time != AV_NOPTS_VALUE) {
             ts += cur_stream->ic->start_time;
+          }
           cur_stream->stream_seek(ts, 0, 0);
         }
         break;
@@ -1839,9 +1839,12 @@ int VideoState::exec() {
               SDL_DestroyTexture(cur_stream->vis_texture);
               cur_stream->vis_texture = NULL;
             }
+            cur_stream->force_refresh = 1;
+            break;
           }
           case SDL_WINDOWEVENT_EXPOSED: {
             cur_stream->force_refresh = 1;
+            break;
           }
         }
         break;
@@ -1855,6 +1858,7 @@ int VideoState::exec() {
         if (res == ERROR_RESULT_VALUE) {
           return EXIT_FAILURE;
         }
+        break;
       }
       default:
         break;
