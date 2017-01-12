@@ -1,15 +1,7 @@
 #include "core/packet_queue.h"
 
 PacketQueue::PacketQueue()
-    : serial(0),
-      first_pkt(NULL),
-      last_pkt(NULL),
-      nb_packets_(0),
-      size_(0),
-      duration_(0),
-      abort_request_(true),
-      mutex(NULL),
-      cond(NULL) {
+    : serial(0), list_(), size_(0), duration_(0), abort_request_(true), mutex(NULL), cond(NULL) {
   mutex = SDL_CreateMutex();
   if (!mutex) {
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
@@ -42,13 +34,9 @@ int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
       break;
     }
 
-    MyAVPacketList* pkt1 = first_pkt;
-    if (pkt1) {
-      first_pkt = pkt1->next;
-      if (!first_pkt) {
-        last_pkt = NULL;
-      }
-      nb_packets_--;
+    if (!list_.empty()) {
+      MyAVPacket* pkt1 = list_[0];
+      list_.pop_front();
       size_ -= pkt1->pkt.size + sizeof(*pkt1);
       duration_ -= pkt1->pkt.duration;
       *pkt = pkt1->pkt;
@@ -80,8 +68,8 @@ bool PacketQueue::abortRequest() const {
   return abort_request_;
 }
 
-int PacketQueue::nbPackets() const {
-  return nb_packets_;
+size_t PacketQueue::nbPackets() const {
+  return list_.size();
 }
 
 int PacketQueue::size() const {
@@ -114,17 +102,13 @@ int PacketQueue::put(AVPacket* pkt) {
 }
 
 void PacketQueue::flush() {
-  MyAVPacketList *pkt, *pkt1;
-
   SDL_LockMutex(mutex);
-  for (pkt = first_pkt; pkt; pkt = pkt1) {
-    pkt1 = pkt->next;
+  for (auto it = list_.begin(); it != list_.end(); ++it) {
+    MyAVPacket* pkt = *it;
     av_packet_unref(&pkt->pkt);
-    av_freep(&pkt);
+    av_free(pkt);
   }
-  last_pkt = NULL;
-  first_pkt = NULL;
-  nb_packets_ = 0;
+  list_.clear();
   size_ = 0;
   duration_ = 0;
   SDL_UnlockMutex(mutex);
@@ -148,24 +132,17 @@ int PacketQueue::put_private(AVPacket* pkt) {
     return -1;
   }
 
-  MyAVPacketList* pkt1 = static_cast<MyAVPacketList*>(av_malloc(sizeof(MyAVPacketList)));
+  MyAVPacket* pkt1 = static_cast<MyAVPacket*>(av_malloc(sizeof(MyAVPacket)));
   if (!pkt1) {
     return -1;
   }
   pkt1->pkt = *pkt;
-  pkt1->next = NULL;
   if (pkt == flush_pkt()) {
     serial++;
   }
   pkt1->serial = serial;
 
-  if (!last_pkt) {
-    first_pkt = pkt1;
-  } else {
-    last_pkt->next = pkt1;
-  }
-  last_pkt = pkt1;
-  nb_packets_++;
+  list_.push_back(pkt1);
   size_ += pkt1->pkt.size + sizeof(*pkt1);
   duration_ += pkt1->pkt.duration;
   /* XXX: should duplicate packet data in DV case */

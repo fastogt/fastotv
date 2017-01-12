@@ -38,8 +38,8 @@ int configure_filtergraph(AVFilterGraph* graph,
                           const char* filtergraph,
                           AVFilterContext* source_ctx,
                           AVFilterContext* sink_ctx) {
-  int ret, i;
-  int nb_filters = graph->nb_filters;
+  int ret;
+  unsigned int nb_filters = graph->nb_filters;
   AVFilterInOut *outputs = NULL, *inputs = NULL;
 
   if (filtergraph) {
@@ -60,16 +60,19 @@ int configure_filtergraph(AVFilterGraph* graph,
     inputs->pad_idx = 0;
     inputs->next = NULL;
 
-    if ((ret = avfilter_graph_parse_ptr(graph, filtergraph, &inputs, &outputs, NULL)) < 0)
+    if ((ret = avfilter_graph_parse_ptr(graph, filtergraph, &inputs, &outputs, NULL)) < 0) {
       goto fail;
+    }
   } else {
-    if ((ret = avfilter_link(source_ctx, 0, sink_ctx, 0)) < 0)
+    if ((ret = avfilter_link(source_ctx, 0, sink_ctx, 0)) < 0) {
       goto fail;
+    }
   }
 
   /* Reorder the filters to ensure that inputs of the custom filters are merged first */
-  for (i = 0; i < graph->nb_filters - nb_filters; i++)
+  for (unsigned int i = 0; i < graph->nb_filters - nb_filters; i++) {
     FFSWAP(AVFilterContext*, graph->filters[i], graph->filters[i + nb_filters]);
+  }
 
   ret = avfilter_graph_config(graph, NULL);
 fail:
@@ -78,6 +81,7 @@ fail:
   return ret;
 }
 #endif
+
 void calculate_display_rect(SDL_Rect* rect,
                             int scr_xleft,
                             int scr_ytop,
@@ -87,33 +91,35 @@ void calculate_display_rect(SDL_Rect* rect,
                             int pic_height,
                             AVRational pic_sar) {
   float aspect_ratio;
-  int width, height, x, y;
 
-  if (pic_sar.num == 0)
+  if (pic_sar.num == 0) {
     aspect_ratio = 0;
-  else
+  } else {
     aspect_ratio = av_q2d(pic_sar);
+  }
 
-  if (aspect_ratio <= 0.0)
+  if (aspect_ratio <= 0.0) {
     aspect_ratio = 1.0;
+  }
   aspect_ratio *= (float)pic_width / (float)pic_height;
 
   /* XXX: we suppose the screen has a 1.0 pixel ratio */
-  height = scr_height;
-  width = lrint(height * aspect_ratio) & ~1;
+  int height = scr_height;
+  int width = lrint(height * aspect_ratio) & ~1;
   if (width > scr_width) {
     width = scr_width;
     height = lrint(width / aspect_ratio) & ~1;
   }
-  x = (scr_width - width) / 2;
-  y = (scr_height - height) / 2;
+  int x = (scr_width - width) / 2;
+  int y = (scr_height - height) / 2;
   rect->x = scr_xleft + x;
   rect->y = scr_ytop + y;
   rect->w = FFMAX(width, 1);
   rect->h = FFMAX(height, 1);
 }
+
 void fill_rectangle(SDL_Renderer* renderer, int x, int y, int w, int h) {
-  if (!renderer) {
+  if (!renderer || !w || !h) {
     return;
   }
 
@@ -122,9 +128,7 @@ void fill_rectangle(SDL_Renderer* renderer, int x, int y, int w, int h) {
   rect.y = y;
   rect.w = w;
   rect.h = h;
-  if (w && h) {
-    SDL_RenderFillRect(renderer, &rect);
-  }
+  SDL_RenderFillRect(renderer, &rect);
 }
 
 void check_external_clock_speed(VideoState* is) {
@@ -193,10 +197,11 @@ int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_con
 double vp_duration(VideoState* is, Frame* vp, Frame* nextvp) {
   if (vp->serial == nextvp->serial) {
     double duration = nextvp->pts - vp->pts;
-    if (isnan(duration) || duration <= 0 || duration > is->max_frame_duration)
+    if (isnan(duration) || duration <= 0 || duration > is->max_frame_duration) {
       return vp->duration;
-    else
+    } else {
       return duration;
+    }
   } else {
     return 0.0;
   }
@@ -238,18 +243,18 @@ void update_volume(VideoState* is, int sign, int step) {
 
 /* copy samples for viewing in editor window */
 void update_sample_display(VideoState* is, short* samples, int samples_size) {
-  int size, len;
-
-  size = samples_size / sizeof(short);
+  int size = samples_size / sizeof(short);
   while (size > 0) {
-    len = SAMPLE_ARRAY_SIZE - is->sample_array_index;
-    if (len > size)
+    int len = SAMPLE_ARRAY_SIZE - is->sample_array_index;
+    if (len > size) {
       len = size;
+    }
     memcpy(is->sample_array + is->sample_array_index, samples, len * sizeof(short));
     samples += len;
     is->sample_array_index += len;
-    if (is->sample_array_index >= SAMPLE_ARRAY_SIZE)
+    if (is->sample_array_index >= SAMPLE_ARRAY_SIZE) {
       is->sample_array_index = 0;
+    }
     size -= len;
   }
 }
@@ -309,8 +314,9 @@ int audio_decode_frame(VideoState* is) {
   int wanted_nb_samples;
   Frame* af;
 
-  if (is->paused)
+  if (is->paused) {
     return -1;
+  }
 
   do {
 #if defined(_WIN32)
@@ -405,10 +411,11 @@ int audio_decode_frame(VideoState* is) {
 
   audio_clock0 = is->audio_clock;
   /* update the audio clock with the pts */
-  if (!isnan(af->pts))
+  if (!isnan(af->pts)) {
     is->audio_clock = af->pts + (double)af->frame->nb_samples / af->frame->sample_rate;
-  else
+  } else {
     is->audio_clock = NAN;
+  }
   is->audio_clock_serial = af->serial;
 #ifdef DEBUG
   {
@@ -424,13 +431,12 @@ int audio_decode_frame(VideoState* is) {
 /* prepare a new audio buffer */
 void sdl_audio_callback(void* opaque, Uint8* stream, int len) {
   VideoState* is = static_cast<VideoState*>(opaque);
-  int audio_size, len1;
 
   is->audio_callback_time = av_gettime_relative();
 
   while (len > 0) {
     if (is->audio_buf_index >= is->audio_buf_size) {
-      audio_size = audio_decode_frame(is);
+      int audio_size = audio_decode_frame(is);
       if (audio_size < 0) {
         /* if error, just output silence */
         is->audio_buf = NULL;
@@ -444,15 +450,17 @@ void sdl_audio_callback(void* opaque, Uint8* stream, int len) {
       }
       is->audio_buf_index = 0;
     }
-    len1 = is->audio_buf_size - is->audio_buf_index;
-    if (len1 > len)
+    int len1 = is->audio_buf_size - is->audio_buf_index;
+    if (len1 > len) {
       len1 = len;
-    if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME)
+    }
+    if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME) {
       memcpy(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1);
-    else {
+    } else {
       memset(stream, 0, len1);
-      if (!is->muted && is->audio_buf)
+      if (!is->muted && is->audio_buf) {
         SDL_MixAudio(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1, is->audio_volume);
+      }
     }
     len -= len1;
     stream += len1;
@@ -475,12 +483,11 @@ int audio_open(void* opaque,
                int wanted_sample_rate,
                struct AudioParams* audio_hw_params) {
   SDL_AudioSpec wanted_spec, spec;
-  const char* env;
   static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
   static const int next_sample_rates[] = {0, 44100, 48000, 96000, 192000};
   int next_sample_rate_idx = FF_ARRAY_ELEMS(next_sample_rates) - 1;
 
-  env = SDL_getenv("SDL_AUDIO_CHANNELS");
+  const char* env = SDL_getenv("SDL_AUDIO_CHANNELS");
   if (env) {
     wanted_nb_channels = atoi(env);
     wanted_channel_layout = av_get_default_channel_layout(wanted_nb_channels);
@@ -497,8 +504,9 @@ int audio_open(void* opaque,
     av_log(NULL, AV_LOG_ERROR, "Invalid sample rate or channel count!\n");
     return -1;
   }
-  while (next_sample_rate_idx && next_sample_rates[next_sample_rate_idx] >= wanted_spec.freq)
+  while (next_sample_rate_idx && next_sample_rates[next_sample_rate_idx] >= wanted_spec.freq) {
     next_sample_rate_idx--;
+  }
   wanted_spec.format = AUDIO_S16SYS;
   wanted_spec.silence = 0;
   wanted_spec.samples = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE,
@@ -579,7 +587,7 @@ void stream_cycle_channel(VideoState* is, int codec_type) {
     }
   }
 
-  for (;;) {
+  while (true) {
     if (++stream_index >= nb_streams) {
       if (codec_type == AVMEDIA_TYPE_SUBTITLE) {
         stream_index = -1;
@@ -1983,8 +1991,9 @@ int VideoState::configure_audio_filters(const char* afilters, int force_output_f
   char asrc_args[256];
 
   avfilter_graph_free(&agraph);
-  if (!(agraph = avfilter_graph_alloc()))
+  if (!(agraph = avfilter_graph_alloc())) {
     return AVERROR(ENOMEM);
+  }
 
   while ((e = av_dict_get(swr_opts, "", e, AV_DICT_IGNORE_SUFFIX))) {
     av_strlcatf(aresample_swr_opts, sizeof(aresample_swr_opts), "%s=%s:", e->key, e->value);

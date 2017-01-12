@@ -213,8 +213,9 @@ int read_thread(void* user_data) {
   }
   is->ic = ic;
 
-  if (is->opt->genpts)
+  if (is->opt->genpts) {
     ic->flags |= AVFMT_FLAG_GENPTS;
+  }
 
   av_format_inject_global_side_data(ic);
 
@@ -223,8 +224,9 @@ int read_thread(void* user_data) {
 
   err = avformat_find_stream_info(ic, opts);
 
-  for (i = 0; i < orig_nb_streams; i++)
+  for (i = 0; i < orig_nb_streams; i++) {
     av_dict_free(&opts[i]);
+  }
   av_freep(&opts);
 
   if (err < 0) {
@@ -342,7 +344,7 @@ int read_thread(void* user_data) {
     is->opt->infinite_buffer = 1;
   }
 
-  for (;;) {
+  while (true) {
     if (is->abort_request)
       break;
     if (is->paused != is->last_paused) {
@@ -621,7 +623,7 @@ int video_thread(void* user_data) {
     return AVERROR(ENOMEM);
   }
 
-  for (;;) {
+  while (true) {
     ret = get_video_frame(is, frame);
     if (ret < 0)
       goto the_end;
