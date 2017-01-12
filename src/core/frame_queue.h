@@ -18,7 +18,7 @@ extern "C" {
   FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */
-typedef struct Frame {
+struct Frame {
   AVFrame* frame;
   AVSubtitle sub;
   int serial;
@@ -33,11 +33,11 @@ typedef struct Frame {
   AVRational sar;
   int uploaded;
   int flip_v;
-} Frame;
+};
 
 class FrameQueue {
  public:
-  FrameQueue(PacketQueue* pktq, int max_size, bool keep_last);
+  FrameQueue(PacketQueue* pktq, size_t max_size, bool keep_last);
   ~FrameQueue();
 
   void push();
@@ -50,17 +50,19 @@ class FrameQueue {
   void signal();
   void next();
   int64_t last_pos();
+  size_t rindexShown() const;
+  size_t windex() const;
 
   SDL_mutex* mutex;
   SDL_cond* cond;
-  int rindex_shown;
   Frame queue[FRAME_QUEUE_SIZE];
-  int windex;
 
  private:
-  int rindex_;
-  int size_;
-  int max_size_;
-  bool keep_last_;
-  PacketQueue* pktq_;
+  size_t rindex_;
+  size_t rindex_shown_;
+  size_t windex_;
+  size_t size_;
+  const size_t max_size_;
+  const bool keep_last_;
+  const PacketQueue* const pktq_;
 };

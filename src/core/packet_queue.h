@@ -21,25 +21,37 @@ typedef struct MyAVPacketList {
   int serial;
 } MyAVPacketList;
 
-typedef struct PacketQueue {
-  MyAVPacketList *first_pkt, *last_pkt;
-  int nb_packets;
-  int size;
-  int64_t duration;
-  int abort_request;
+class PacketQueue {
+ public:
+  /* packet queue handling */
+  PacketQueue();
+  ~PacketQueue();
+
+  void flush();
+  void abort();
+  int put(AVPacket* pkt);
+  int put_nullpacket(int stream_index);
+  /* return < 0 if aborted, 0 if no packet and > 0 if packet.  */
+  int get(AVPacket* pkt, int block, int* serial);
+  void start();
+
+  static AVPacket* flush_pkt();
+
+  bool abortRequest() const;
+  int nbPackets() const;
+  int size() const;
+  int64_t duration() const;
+
   int serial;
+
+ private:
+  int put_private(AVPacket* pkt);
+
+  MyAVPacketList *first_pkt, *last_pkt;
+  int nb_packets_;
+  int size_;
+  int64_t duration_;
+  bool abort_request_;
   SDL_mutex* mutex;
   SDL_cond* cond;
-  static AVPacket* flush_pkt();
-} PacketQueue;
-
-/* packet queue handling */
-int packet_queue_init(PacketQueue* q);
-void packet_queue_flush(PacketQueue* q);
-void packet_queue_abort(PacketQueue* q);
-int packet_queue_put(PacketQueue* q, AVPacket* pkt);
-int packet_queue_put_nullpacket(PacketQueue* q, int stream_index);
-/* return < 0 if aborted, 0 if no packet and > 0 if packet.  */
-int packet_queue_get(PacketQueue* q, AVPacket* pkt, int block, int* serial);
-void packet_queue_start(PacketQueue* q);
-void packet_queue_destroy(PacketQueue* q);
+};

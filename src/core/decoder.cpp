@@ -19,7 +19,7 @@ Decoder::Decoder(AVCodecContext* avctx,
       decoder_reorder_pts_(decoder_reorder_pts) {}
 
 int Decoder::start(int (*fn)(void*), void* arg) {
-  packet_queue_start(queue_);
+  queue_->start();
   decoder_tid_ = SDL_CreateThread(fn, "decoder", arg);
   if (!decoder_tid_) {
     av_log(NULL, AV_LOG_ERROR, "SDL_CreateThread(): %s\n", SDL_GetError());
@@ -29,11 +29,11 @@ int Decoder::start(int (*fn)(void*), void* arg) {
 }
 
 void Decoder::abort(FrameQueue* fq) {
-  packet_queue_abort(queue_);
+  queue_->abort();
   fq->signal();
   SDL_WaitThread(decoder_tid_, NULL);
   decoder_tid_ = NULL;
-  packet_queue_flush(queue_);
+  queue_->flush();
 }
 
 Decoder::~Decoder() {
@@ -48,17 +48,17 @@ int Decoder::decodeFrame(AVFrame* frame, AVSubtitle* sub) {
   do {
     int ret = -1;
 
-    if (queue_->abort_request) {
+    if (queue_->abortRequest()) {
       return -1;
     }
 
     if (!packet_pending_ || queue_->serial != pkt_serial_) {
       AVPacket lpkt;
       do {
-        if (queue_->nb_packets == 0) {
+        if (queue_->nbPackets() == 0) {
           SDL_CondSignal(empty_queue_cond_);
         }
-        if (packet_queue_get(queue_, &lpkt, 1, &pkt_serial_) < 0) {
+        if (queue_->get(&lpkt, 1, &pkt_serial_) < 0) {
           return -1;
         }
         if (lpkt.data == fls->data) {

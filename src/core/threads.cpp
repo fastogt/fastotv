@@ -38,9 +38,10 @@ int is_realtime(AVFormatContext* s) {
 }
 
 int stream_has_enough_packets(AVStream* st, int stream_id, PacketQueue* queue) {
-  return stream_id < 0 || queue->abort_request || (st->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
-         (queue->nb_packets > MIN_FRAMES &&
-          (!queue->duration || av_q2d(st->time_base) * queue->duration > 1.0));
+  return stream_id < 0 || queue->abortRequest() ||
+         (st->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
+         (queue->nbPackets() > MIN_FRAMES &&
+          (!queue->duration() || av_q2d(st->time_base) * queue->duration() > 1.0));
 }
 
 int queue_picture(VideoState* is,
@@ -80,12 +81,12 @@ int queue_picture(VideoState* is,
 
     /* wait until the picture is allocated */
     SDL_LockMutex(is->pictq->mutex);
-    while (!vp->allocated && !is->videoq.abort_request) {
+    while (!vp->allocated && !is->videoq->abortRequest()) {
       SDL_CondWait(is->pictq->cond, is->pictq->mutex);
     }
     /* if the queue is aborted, we have to pop the pending ALLOC event or wait for the allocation to
      * complete */
-    if (is->videoq.abort_request &&
+    if (is->videoq->abortRequest() &&
         SDL_PeepEvents(&event, 1, SDL_GETEVENT, FF_ALLOC_EVENT, FF_ALLOC_EVENT) != 1) {
       while (!vp->allocated && !is->abort_request) {
         SDL_CondWait(is->pictq->cond, is->pictq->mutex);
@@ -93,7 +94,7 @@ int queue_picture(VideoState* is,
     }
     SDL_UnlockMutex(is->pictq->mutex);
 
-    if (is->videoq.abort_request)
+    if (is->videoq->abortRequest())
       return -1;
   }
 
@@ -142,7 +143,7 @@ int get_video_frame(VideoState* is, AVFrame* frame) {
         double diff = dpts - is->get_master_clock();
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
             diff - is->frame_last_filter_delay < 0 &&
-            is->viddec->pktSerial() == is->vidclk->serial() && is->videoq.nb_packets) {
+            is->viddec->pktSerial() == is->vidclk->serial() && is->videoq->nbPackets()) {
           is->frame_drops_early++;
           av_frame_unref(frame);
           got_picture = 0;
@@ -372,16 +373,16 @@ int read_thread(void* user_data) {
         av_log(NULL, AV_LOG_ERROR, "%s: error while seeking\n", is->ic->filename);
       } else {
         if (is->audio_stream >= 0) {
-          packet_queue_flush(&is->audioq);
-          packet_queue_put(&is->audioq, PacketQueue::flush_pkt());
+          is->audioq->flush();
+          is->audioq->put(PacketQueue::flush_pkt());
         }
         if (is->subtitle_stream >= 0) {
-          packet_queue_flush(&is->subtitleq);
-          packet_queue_put(&is->subtitleq, PacketQueue::flush_pkt());
+          is->subtitleq->flush();
+          is->subtitleq->put(PacketQueue::flush_pkt());
         }
         if (is->video_stream >= 0) {
-          packet_queue_flush(&is->videoq);
-          packet_queue_put(&is->videoq, PacketQueue::flush_pkt());
+          is->videoq->flush();
+          is->videoq->put(PacketQueue::flush_pkt());
         }
         if (is->seek_flags & AVSEEK_FLAG_BYTE) {
           is->extclk->set_clock(NAN, 0);
@@ -399,30 +400,31 @@ int read_thread(void* user_data) {
     if (is->queue_attachments_req) {
       if (is->video_st && is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC) {
         AVPacket copy;
-        if ((ret = av_copy_packet(&copy, &is->video_st->attached_pic)) < 0)
+        if ((ret = av_copy_packet(&copy, &is->video_st->attached_pic)) < 0) {
           goto fail;
-        packet_queue_put(&is->videoq, &copy);
-        packet_queue_put_nullpacket(&is->videoq, is->video_stream);
+        }
+        is->videoq->put(&copy);
+        is->videoq->put_nullpacket(is->video_stream);
       }
       is->queue_attachments_req = 0;
     }
 
     /* if the queue are full, no need to read more */
     if (is->opt->infinite_buffer < 1 &&
-        (is->audioq.size + is->videoq.size + is->subtitleq.size > MAX_QUEUE_SIZE ||
-         (stream_has_enough_packets(is->audio_st, is->audio_stream, &is->audioq) &&
-          stream_has_enough_packets(is->video_st, is->video_stream, &is->videoq) &&
-          stream_has_enough_packets(is->subtitle_st, is->subtitle_stream, &is->subtitleq)))) {
+        (is->audioq->size() + is->videoq->size() + is->subtitleq->size() > MAX_QUEUE_SIZE ||
+         (stream_has_enough_packets(is->audio_st, is->audio_stream, is->audioq) &&
+          stream_has_enough_packets(is->video_st, is->video_stream, is->videoq) &&
+          stream_has_enough_packets(is->subtitle_st, is->subtitle_stream, is->subtitleq)))) {
       /* wait 10 ms */
       SDL_LockMutex(wait_mutex);
       SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
       SDL_UnlockMutex(wait_mutex);
       continue;
     }
-    if (!is->paused && (!is->audio_st || (is->auddec->finished == is->audioq.serial &&
+    if (!is->paused && (!is->audio_st || (is->auddec->finished == is->audioq->serial &&
                                           is->sampq->nb_remaining() == 0)) &&
         (!is->video_st ||
-         (is->viddec->finished == is->videoq.serial && is->pictq->nb_remaining() == 0))) {
+         (is->viddec->finished == is->videoq->serial && is->pictq->nb_remaining() == 0))) {
       if (is->opt->loop != 1 && (!is->opt->loop || --is->opt->loop)) {
         is->stream_seek(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0, 0, 0);
       } else if (is->opt->autoexit) {
@@ -433,12 +435,15 @@ int read_thread(void* user_data) {
     ret = av_read_frame(ic, pkt);
     if (ret < 0) {
       if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
-        if (is->video_stream >= 0)
-          packet_queue_put_nullpacket(&is->videoq, is->video_stream);
-        if (is->audio_stream >= 0)
-          packet_queue_put_nullpacket(&is->audioq, is->audio_stream);
-        if (is->subtitle_stream >= 0)
-          packet_queue_put_nullpacket(&is->subtitleq, is->subtitle_stream);
+        if (is->video_stream >= 0) {
+          is->videoq->put_nullpacket(is->video_stream);
+        }
+        if (is->audio_stream >= 0) {
+          is->audioq->put_nullpacket(is->audio_stream);
+        }
+        if (is->subtitle_stream >= 0) {
+          is->subtitleq->put_nullpacket(is->subtitle_stream);
+        }
         is->eof = 1;
       }
       if (ic->pb && ic->pb->error)
@@ -461,12 +466,12 @@ int read_thread(void* user_data) {
                     1000000 <=
             ((double)is->opt->duration / 1000000);
     if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
-      packet_queue_put(&is->audioq, pkt);
+      is->audioq->put(pkt);
     } else if (pkt->stream_index == is->video_stream && pkt_in_play_range &&
                !(is->video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
-      packet_queue_put(&is->videoq, pkt);
+      is->videoq->put(pkt);
     } else if (pkt->stream_index == is->subtitle_stream && pkt_in_play_range) {
-      packet_queue_put(&is->subtitleq, pkt);
+      is->subtitleq->put(pkt);
     } else {
       av_packet_unref(pkt);
     }
@@ -567,7 +572,7 @@ int audio_thread(void* user_data) {
         is->sampq->push();
 
 #if CONFIG_AVFILTER
-        if (is->audioq.serial != is->auddec->pktSerial()) {
+        if (is->audioq->serial != is->auddec->pktSerial()) {
           break;
         }
       }

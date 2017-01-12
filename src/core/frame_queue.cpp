@@ -14,13 +14,13 @@ void frame_queue_unref_item(Frame* vp) {
 }
 }
 
-FrameQueue::FrameQueue(PacketQueue* pktq, int max_size, bool keep_last)
+FrameQueue::FrameQueue(PacketQueue* pktq, size_t max_size, bool keep_last)
     : mutex(NULL),
       cond(NULL),
-      rindex_shown(0),
       queue(),
-      windex(0),
       rindex_(0),
+      rindex_shown_(0),
+      windex_(0),
       size_(0),
       max_size_(FFMIN(max_size, FRAME_QUEUE_SIZE)),
       keep_last_(keep_last),
@@ -33,7 +33,7 @@ FrameQueue::FrameQueue(PacketQueue* pktq, int max_size, bool keep_last)
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
     return;
   }
-  for (int i = 0; i < max_size; i++) {
+  for (size_t i = 0; i < max_size; i++) {
     if (!(queue[i].frame = av_frame_alloc())) {
       return;
     }
@@ -41,7 +41,7 @@ FrameQueue::FrameQueue(PacketQueue* pktq, int max_size, bool keep_last)
 }
 
 FrameQueue::~FrameQueue() {
-  for (int i = 0; i < max_size_; i++) {
+  for (size_t i = 0; i < max_size_; i++) {
     Frame* vp = &queue[i];
     frame_queue_unref_item(vp);
     av_frame_free(&vp->frame);
@@ -52,8 +52,8 @@ FrameQueue::~FrameQueue() {
 }
 
 void FrameQueue::push() {
-  if (++windex == max_size_) {
-    windex = 0;
+  if (++windex_ == max_size_) {
+    windex_ = 0;
   }
   SDL_LockMutex(mutex);
   size_++;
@@ -64,21 +64,21 @@ void FrameQueue::push() {
 Frame* FrameQueue::peek_writable() {
   /* wait until we have space to put a new frame */
   SDL_LockMutex(mutex);
-  while (size_ >= max_size_ && !pktq_->abort_request) {
+  while (size_ >= max_size_ && !pktq_->abortRequest()) {
     SDL_CondWait(cond, mutex);
   }
   SDL_UnlockMutex(mutex);
 
-  if (pktq_->abort_request) {
+  if (pktq_->abortRequest()) {
     return NULL;
   }
 
-  return &queue[windex];
+  return &queue[windex_];
 }
 
 /* return the number of undisplayed frames in the queue */
 int FrameQueue::nb_remaining() {
-  return size_ - rindex_shown;
+  return size_ - rindex_shown_;
 }
 
 Frame* FrameQueue::peek_last() {
@@ -86,26 +86,26 @@ Frame* FrameQueue::peek_last() {
 }
 
 Frame* FrameQueue::peek() {
-  return &queue[(rindex_ + rindex_shown) % max_size_];
+  return &queue[(rindex_ + rindex_shown_) % max_size_];
 }
 
 Frame* FrameQueue::peek_next() {
-  return &queue[(rindex_ + rindex_shown + 1) % max_size_];
+  return &queue[(rindex_ + rindex_shown_ + 1) % max_size_];
 }
 
 Frame* FrameQueue::peek_readable() {
   /* wait until we have a readable a new frame */
   SDL_LockMutex(mutex);
-  while (size_ - rindex_shown <= 0 && !pktq_->abort_request) {
+  while (size_ - rindex_shown_ <= 0 && !pktq_->abortRequest()) {
     SDL_CondWait(cond, mutex);
   }
   SDL_UnlockMutex(mutex);
 
-  if (pktq_->abort_request) {
+  if (pktq_->abortRequest()) {
     return NULL;
   }
 
-  return &queue[(rindex_ + rindex_shown) % max_size_];
+  return &queue[(rindex_ + rindex_shown_) % max_size_];
 }
 
 void FrameQueue::signal() {
@@ -115,8 +115,8 @@ void FrameQueue::signal() {
 }
 
 void FrameQueue::next() {
-  if (keep_last_ && !rindex_shown) {
-    rindex_shown = 1;
+  if (keep_last_ && !rindex_shown_) {
+    rindex_shown_ = 1;
     return;
   }
   frame_queue_unref_item(&queue[rindex_]);
@@ -132,9 +132,17 @@ void FrameQueue::next() {
 /* return last shown position */
 int64_t FrameQueue::last_pos() {
   Frame* fp = &queue[rindex_];
-  if (rindex_shown && fp->serial == pktq_->serial) {
+  if (rindex_shown_ && fp->serial == pktq_->serial) {
     return fp->pos;
   } else {
     return -1;
   }
+}
+
+size_t FrameQueue::rindexShown() const {
+  return rindex_shown_;
+}
+
+size_t FrameQueue::windex() const {
+  return windex_;
 }
