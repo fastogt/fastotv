@@ -55,8 +55,9 @@ int queue_picture(VideoState* is,
   printf("frame_type=%c pts=%0.3f\n", av_get_picture_type_char(src_frame->pict_type), pts);
 #endif
 
-  if (!(vp = frame_queue_peek_writable(&is->pictq)))
+  if (!(vp = is->pictq->peek_writable())) {
     return -1;
+  }
 
   vp->sar = src_frame->sample_aspect_ratio;
   vp->uploaded = 0;
@@ -78,19 +79,19 @@ int queue_picture(VideoState* is,
     SDL_PushEvent(&event);
 
     /* wait until the picture is allocated */
-    SDL_LockMutex(is->pictq.mutex);
+    SDL_LockMutex(is->pictq->mutex);
     while (!vp->allocated && !is->videoq.abort_request) {
-      SDL_CondWait(is->pictq.cond, is->pictq.mutex);
+      SDL_CondWait(is->pictq->cond, is->pictq->mutex);
     }
     /* if the queue is aborted, we have to pop the pending ALLOC event or wait for the allocation to
      * complete */
     if (is->videoq.abort_request &&
         SDL_PeepEvents(&event, 1, SDL_GETEVENT, FF_ALLOC_EVENT, FF_ALLOC_EVENT) != 1) {
       while (!vp->allocated && !is->abort_request) {
-        SDL_CondWait(is->pictq.cond, is->pictq.mutex);
+        SDL_CondWait(is->pictq->cond, is->pictq->mutex);
       }
     }
-    SDL_UnlockMutex(is->pictq.mutex);
+    SDL_UnlockMutex(is->pictq->mutex);
 
     if (is->videoq.abort_request)
       return -1;
@@ -104,7 +105,7 @@ int queue_picture(VideoState* is,
     vp->serial = serial;
 
     av_frame_move_ref(vp->frame, src_frame);
-    frame_queue_push(&is->pictq);
+    is->pictq->push();
   }
   return 0;
 }
@@ -419,9 +420,9 @@ int read_thread(void* user_data) {
       continue;
     }
     if (!is->paused && (!is->audio_st || (is->auddec->finished == is->audioq.serial &&
-                                          frame_queue_nb_remaining(&is->sampq) == 0)) &&
-        (!is->video_st || (is->viddec->finished == is->videoq.serial &&
-                           frame_queue_nb_remaining(&is->pictq) == 0))) {
+                                          is->sampq->nb_remaining() == 0)) &&
+        (!is->video_st ||
+         (is->viddec->finished == is->videoq.serial && is->pictq->nb_remaining() == 0))) {
       if (is->opt->loop != 1 && (!is->opt->loop || --is->opt->loop)) {
         is->stream_seek(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0, 0, 0);
       } else if (is->opt->autoexit) {
@@ -552,7 +553,7 @@ int audio_thread(void* user_data) {
       while ((ret = av_buffersink_get_frame_flags(is->out_audio_filter, frame, 0)) >= 0) {
         tb = is->out_audio_filter->inputs[0]->time_base;
 #endif
-        if (!(af = frame_queue_peek_writable(&is->sampq))) {
+        if (!(af = is->sampq->peek_writable())) {
           goto the_end;
         }
 
@@ -563,7 +564,7 @@ int audio_thread(void* user_data) {
         af->duration = av_q2d(tmp);
 
         av_frame_move_ref(af->frame, frame);
-        frame_queue_push(&is->sampq);
+        is->sampq->push();
 
 #if CONFIG_AVFILTER
         if (is->audioq.serial != is->auddec->pktSerial()) {
@@ -705,7 +706,7 @@ int subtitle_thread(void* user_data) {
   int got_subtitle;
 
   while (true) {
-    if (!(sp = frame_queue_peek_writable(&is->subpq))) {
+    if (!(sp = is->subpq->peek_writable())) {
       return 0;
     }
 
@@ -725,7 +726,7 @@ int subtitle_thread(void* user_data) {
       sp->uploaded = 0;
 
       /* now we can update the picture count */
-      frame_queue_push(&is->subpq);
+      is->subpq->push();
     } else if (got_subtitle) {
       avsubtitle_free(&sp->sub);
     }

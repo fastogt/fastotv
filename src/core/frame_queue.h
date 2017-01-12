@@ -35,30 +35,32 @@ typedef struct Frame {
   int flip_v;
 } Frame;
 
-void frame_queue_unref_item(Frame* vp);
+class FrameQueue {
+ public:
+  FrameQueue(PacketQueue* pktq, int max_size, bool keep_last);
+  ~FrameQueue();
 
-typedef struct FrameQueue {
-  Frame queue[FRAME_QUEUE_SIZE];
-  int rindex;
-  int windex;
-  int size;
-  int max_size;
-  int keep_last;
-  int rindex_shown;
+  void push();
+  Frame* peek_writable();
+  int nb_remaining();
+  Frame* peek_last();
+  Frame* peek();
+  Frame* peek_next();
+  Frame* peek_readable();
+  void signal();
+  void next();
+  int64_t last_pos();
+
   SDL_mutex* mutex;
   SDL_cond* cond;
-  PacketQueue* pktq;
-} FrameQueue;
+  int rindex_shown;
+  Frame queue[FRAME_QUEUE_SIZE];
+  int windex;
 
-int frame_queue_init(FrameQueue* f, PacketQueue* pktq, int max_size, int keep_last);
-void frame_queue_push(FrameQueue* f);
-Frame* frame_queue_peek_writable(FrameQueue* f);
-int frame_queue_nb_remaining(FrameQueue* f);
-Frame* frame_queue_peek_last(FrameQueue* f);
-Frame* frame_queue_peek(FrameQueue* f);
-Frame* frame_queue_peek_next(FrameQueue* f);
-Frame* frame_queue_peek_readable(FrameQueue* f);
-void frame_queue_signal(FrameQueue* f);
-void frame_queue_next(FrameQueue* f);
-int64_t frame_queue_last_pos(FrameQueue* f);
-void frame_queue_destory(FrameQueue* f);
+ private:
+  int rindex_;
+  int size_;
+  int max_size_;
+  bool keep_last_;
+  PacketQueue* pktq_;
+};

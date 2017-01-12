@@ -30,7 +30,7 @@ int Decoder::start(int (*fn)(void*), void* arg) {
 
 void Decoder::abort(FrameQueue* fq) {
   packet_queue_abort(queue_);
-  frame_queue_signal(fq);
+  fq->signal();
   SDL_WaitThread(decoder_tid_, NULL);
   decoder_tid_ = NULL;
   packet_queue_flush(queue_);
