@@ -2,9 +2,7 @@
 
 #include <stddef.h>
 
-#if CONFIG_AVFILTER
-#include "core/cmd_utils.h"
-#endif
+#include "core/utils.h"
 
 AppOptions::AppOptions()
     : autorotate(0),

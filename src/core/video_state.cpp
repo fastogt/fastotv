@@ -3,7 +3,7 @@
 #include <common/macros.h>
 #include <common/utils.h>
 
-#include "core/cmd_utils.h"
+#include "core/utils.h"
 #include "core/threads.h"
 #include "core/types.h"
 
@@ -13,10 +13,6 @@
 #define SDL_VOLUME_STEP (SDL_MIX_MAXVOLUME / 50)
 #define EXTERNAL_CLOCK_MIN_FRAMES 2
 #define EXTERNAL_CLOCK_MAX_FRAMES 10
-/* Minimum SDL audio buffer size, in samples. */
-#define SDL_AUDIO_MIN_BUFFER_SIZE 512
-/* Calculate actual buffer size keeping in mind not cause too frequent audio callbacks */
-#define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30
 /* maximum audio speed change to get correct sync */
 #define SAMPLE_CORRECTION_PERCENT_MAX 10
 /* external clock speed adjustment constants for realtime sources based on buffer fullness */
@@ -29,643 +25,6 @@
 #define REFRESH_RATE 0.01
 /* NOTE: the size must be big enough to compensate the hardware audio buffersize size */
 /* TODO: We assume that a decoded and resampled frame fits into this buffer */
-
-static unsigned sws_flags = SWS_BICUBIC;
-
-namespace {
-#if CONFIG_AVFILTER
-int configure_filtergraph(AVFilterGraph* graph,
-                          const char* filtergraph,
-                          AVFilterContext* source_ctx,
-                          AVFilterContext* sink_ctx) {
-  int ret;
-  unsigned int nb_filters = graph->nb_filters;
-  AVFilterInOut *outputs = NULL, *inputs = NULL;
-
-  if (filtergraph) {
-    outputs = avfilter_inout_alloc();
-    inputs = avfilter_inout_alloc();
-    if (!outputs || !inputs) {
-      ret = AVERROR(ENOMEM);
-      goto fail;
-    }
-
-    outputs->name = av_strdup("in");
-    outputs->filter_ctx = source_ctx;
-    outputs->pad_idx = 0;
-    outputs->next = NULL;
-
-    inputs->name = av_strdup("out");
-    inputs->filter_ctx = sink_ctx;
-    inputs->pad_idx = 0;
-    inputs->next = NULL;
-
-    if ((ret = avfilter_graph_parse_ptr(graph, filtergraph, &inputs, &outputs, NULL)) < 0) {
-      goto fail;
-    }
-  } else {
-    if ((ret = avfilter_link(source_ctx, 0, sink_ctx, 0)) < 0) {
-      goto fail;
-    }
-  }
-
-  /* Reorder the filters to ensure that inputs of the custom filters are merged first */
-  for (unsigned int i = 0; i < graph->nb_filters - nb_filters; i++) {
-    FFSWAP(AVFilterContext*, graph->filters[i], graph->filters[i + nb_filters]);
-  }
-
-  ret = avfilter_graph_config(graph, NULL);
-fail:
-  avfilter_inout_free(&outputs);
-  avfilter_inout_free(&inputs);
-  return ret;
-}
-#endif
-
-void calculate_display_rect(SDL_Rect* rect,
-                            int scr_xleft,
-                            int scr_ytop,
-                            int scr_width,
-                            int scr_height,
-                            int pic_width,
-                            int pic_height,
-                            AVRational pic_sar) {
-  float aspect_ratio;
-
-  if (pic_sar.num == 0) {
-    aspect_ratio = 0;
-  } else {
-    aspect_ratio = av_q2d(pic_sar);
-  }
-
-  if (aspect_ratio <= 0.0) {
-    aspect_ratio = 1.0;
-  }
-  aspect_ratio *= (float)pic_width / (float)pic_height;
-
-  /* XXX: we suppose the screen has a 1.0 pixel ratio */
-  int height = scr_height;
-  int width = lrint(height * aspect_ratio) & ~1;
-  if (width > scr_width) {
-    width = scr_width;
-    height = lrint(width / aspect_ratio) & ~1;
-  }
-  int x = (scr_width - width) / 2;
-  int y = (scr_height - height) / 2;
-  rect->x = scr_xleft + x;
-  rect->y = scr_ytop + y;
-  rect->w = FFMAX(width, 1);
-  rect->h = FFMAX(height, 1);
-}
-
-void fill_rectangle(SDL_Renderer* renderer, int x, int y, int w, int h) {
-  if (!renderer || !w || !h) {
-    return;
-  }
-
-  SDL_Rect rect;
-  rect.x = x;
-  rect.y = y;
-  rect.w = w;
-  rect.h = h;
-  SDL_RenderFillRect(renderer, &rect);
-}
-
-void check_external_clock_speed(VideoState* is) {
-  if ((is->video_stream >= 0 && is->videoq->nbPackets() <= EXTERNAL_CLOCK_MIN_FRAMES) ||
-      (is->audio_stream >= 0 && is->audioq->nbPackets() <= EXTERNAL_CLOCK_MIN_FRAMES)) {
-    is->extclk->set_clock_speed(
-        FFMAX(EXTERNAL_CLOCK_SPEED_MIN, is->extclk->speed() - EXTERNAL_CLOCK_SPEED_STEP));
-  } else if ((is->video_stream < 0 || is->videoq->nbPackets() > EXTERNAL_CLOCK_MAX_FRAMES) &&
-             (is->audio_stream < 0 || is->audioq->nbPackets() > EXTERNAL_CLOCK_MAX_FRAMES)) {
-    is->extclk->set_clock_speed(
-        FFMIN(EXTERNAL_CLOCK_SPEED_MAX, is->extclk->speed() + EXTERNAL_CLOCK_SPEED_STEP));
-  } else {
-    double speed = is->extclk->speed();
-    if (speed != 1.0)
-      is->extclk->set_clock_speed(speed +
-                                  EXTERNAL_CLOCK_SPEED_STEP * (1.0 - speed) / fabs(1.0 - speed));
-  }
-}
-
-int compute_mod(int a, int b) {
-  return a < 0 ? a % b + b : a % b;
-}
-
-int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_convert_ctx) {
-  int ret = 0;
-  switch (frame->format) {
-    case AV_PIX_FMT_YUV420P:
-      if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
-        av_log(NULL, AV_LOG_ERROR, "Negative linesize is not supported for YUV.\n");
-        return -1;
-      }
-      ret = SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1],
-                                 frame->linesize[1], frame->data[2], frame->linesize[2]);
-      break;
-    case AV_PIX_FMT_BGRA:
-      if (frame->linesize[0] < 0) {
-        ret =
-            SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
-                              -frame->linesize[0]);
-      } else {
-        ret = SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
-      }
-      break;
-    default:
-      /* This should only happen if we are not using avfilter... */
-      *img_convert_ctx = sws_getCachedContext(
-          *img_convert_ctx, frame->width, frame->height, (AVPixelFormat)frame->format, frame->width,
-          frame->height, AV_PIX_FMT_BGRA, sws_flags, NULL, NULL, NULL);
-      if (*img_convert_ctx != NULL) {
-        uint8_t* pixels[4];
-        int pitch[4];
-        if (!SDL_LockTexture(tex, NULL, (void**)pixels, pitch)) {
-          sws_scale(*img_convert_ctx, (const uint8_t* const*)frame->data, frame->linesize, 0,
-                    frame->height, pixels, pitch);
-          SDL_UnlockTexture(tex);
-        }
-      } else {
-        av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
-        ret = -1;
-      }
-      break;
-  }
-  return ret;
-}
-
-double vp_duration(VideoState* is, Frame* vp, Frame* nextvp) {
-  if (vp->serial == nextvp->serial) {
-    double duration = nextvp->pts - vp->pts;
-    if (isnan(duration) || duration <= 0 || duration > is->max_frame_duration) {
-      return vp->duration;
-    } else {
-      return duration;
-    }
-  } else {
-    return 0.0;
-  }
-}
-
-void update_video_pts(VideoState* is, double pts, int64_t pos, int serial) {
-  UNUSED(pos);
-
-  /* update current video pts */
-  is->vidclk->set_clock(pts, serial);
-  Clock::sync_clock_to_slave(is->extclk, is->vidclk);
-}
-
-/* pause or resume the video */
-void stream_toggle_pause(VideoState* is) {
-  if (is->paused) {
-    is->frame_timer += av_gettime_relative() / 1000000.0 - is->vidclk->last_updated();
-    if (is->read_pause_return != AVERROR(ENOSYS)) {
-      is->vidclk->paused_ = 0;
-    }
-    is->vidclk->set_clock(is->vidclk->get_clock(), is->vidclk->serial());
-  }
-  is->extclk->set_clock(is->extclk->get_clock(), is->extclk->serial());
-  is->paused = is->audclk->paused_ = is->vidclk->paused_ = is->extclk->paused_ = !is->paused;
-}
-
-void toggle_pause(VideoState* is) {
-  stream_toggle_pause(is);
-  is->step = 0;
-}
-
-void toggle_mute(VideoState* is) {
-  is->muted = !is->muted;
-}
-
-void update_volume(VideoState* is, int sign, int step) {
-  is->audio_volume = av_clip(is->audio_volume + sign * step, 0, SDL_MIX_MAXVOLUME);
-}
-
-/* copy samples for viewing in editor window */
-void update_sample_display(VideoState* is, short* samples, int samples_size) {
-  int size = samples_size / sizeof(short);
-  while (size > 0) {
-    int len = SAMPLE_ARRAY_SIZE - is->sample_array_index;
-    if (len > size) {
-      len = size;
-    }
-    memcpy(is->sample_array + is->sample_array_index, samples, len * sizeof(short));
-    samples += len;
-    is->sample_array_index += len;
-    if (is->sample_array_index >= SAMPLE_ARRAY_SIZE) {
-      is->sample_array_index = 0;
-    }
-    size -= len;
-  }
-}
-
-/* return the wanted number of samples to get better sync if sync_type is video
- * or external master clock */
-int synchronize_audio(VideoState* is, int nb_samples) {
-  int wanted_nb_samples = nb_samples;
-
-  /* if not master, then we try to remove or add samples to correct the clock */
-  if (is->get_master_sync_type() != AV_SYNC_AUDIO_MASTER) {
-    double diff, avg_diff;
-    int min_nb_samples, max_nb_samples;
-
-    diff = is->audclk->get_clock() - is->get_master_clock();
-
-    if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
-      is->audio_diff_cum = diff + is->audio_diff_avg_coef * is->audio_diff_cum;
-      if (is->audio_diff_avg_count < AUDIO_DIFF_AVG_NB) {
-        /* not enough measures to have a correct estimate */
-        is->audio_diff_avg_count++;
-      } else {
-        /* estimate the A-V difference */
-        avg_diff = is->audio_diff_cum * (1.0 - is->audio_diff_avg_coef);
-
-        if (fabs(avg_diff) >= is->audio_diff_threshold) {
-          wanted_nb_samples = nb_samples + (int)(diff * is->audio_src.freq);
-          min_nb_samples = ((nb_samples * (100 - SAMPLE_CORRECTION_PERCENT_MAX) / 100));
-          max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100));
-          wanted_nb_samples = av_clip(wanted_nb_samples, min_nb_samples, max_nb_samples);
-        }
-        av_log(NULL, AV_LOG_TRACE, "diff=%f adiff=%f sample_diff=%d apts=%0.3f %f\n", diff,
-               avg_diff, wanted_nb_samples - nb_samples, is->audio_clock, is->audio_diff_threshold);
-      }
-    } else {
-      /* too big difference : may be initial PTS errors, so
-         reset A-V filter */
-      is->audio_diff_avg_count = 0;
-      is->audio_diff_cum = 0;
-    }
-  }
-
-  return wanted_nb_samples;
-}
-
-/**
- * Decode one audio frame and return its uncompressed size.
- *
- * The processed audio frame is decoded, converted if required, and
- * stored in is->audio_buf, with size in bytes given by the return
- * value.
- */
-int audio_decode_frame(VideoState* is) {
-  int data_size, resampled_data_size;
-  int64_t dec_channel_layout;
-  av_unused double audio_clock0;
-  int wanted_nb_samples;
-  Frame* af;
-
-  if (is->paused) {
-    return -1;
-  }
-
-  do {
-#if defined(_WIN32)
-    while (is->sampq->nb_remaining() == 0) {
-      if ((av_gettime_relative() - is->audio_callback_time) >
-          1000000LL * is->audio_hw_buf_size / is->audio_tgt.bytes_per_sec / 2)
-        return -1;
-      av_usleep(1000);
-    }
-#endif
-    if (!(af = is->sampq->peek_readable())) {
-      return -1;
-    }
-    is->sampq->next();
-  } while (af->serial != is->audioq->serial);
-
-  data_size =
-      av_samples_get_buffer_size(NULL, av_frame_get_channels(af->frame), af->frame->nb_samples,
-                                 (AVSampleFormat)af->frame->format, 1);
-
-  dec_channel_layout = (af->frame->channel_layout &&
-                        av_frame_get_channels(af->frame) ==
-                            av_get_channel_layout_nb_channels(af->frame->channel_layout))
-                           ? af->frame->channel_layout
-                           : av_get_default_channel_layout(av_frame_get_channels(af->frame));
-  wanted_nb_samples = synchronize_audio(is, af->frame->nb_samples);
-
-  if (af->frame->format != is->audio_src.fmt ||
-      dec_channel_layout != is->audio_src.channel_layout ||
-      af->frame->sample_rate != is->audio_src.freq ||
-      (wanted_nb_samples != af->frame->nb_samples && !is->swr_ctx)) {
-    swr_free(&is->swr_ctx);
-    is->swr_ctx = swr_alloc_set_opts(
-        NULL, is->audio_tgt.channel_layout, is->audio_tgt.fmt, is->audio_tgt.freq,
-        dec_channel_layout, (AVSampleFormat)af->frame->format, af->frame->sample_rate, 0, NULL);
-    if (!is->swr_ctx || swr_init(is->swr_ctx) < 0) {
-      av_log(NULL, AV_LOG_ERROR,
-             "Cannot create sample rate converter for conversion of %d Hz %s %d channels to %d Hz "
-             "%s %d channels!\n",
-             af->frame->sample_rate, av_get_sample_fmt_name((AVSampleFormat)af->frame->format),
-             av_frame_get_channels(af->frame), is->audio_tgt.freq,
-             av_get_sample_fmt_name(is->audio_tgt.fmt), is->audio_tgt.channels);
-      swr_free(&is->swr_ctx);
-      return -1;
-    }
-    is->audio_src.channel_layout = dec_channel_layout;
-    is->audio_src.channels = av_frame_get_channels(af->frame);
-    is->audio_src.freq = af->frame->sample_rate;
-    is->audio_src.fmt = (AVSampleFormat)af->frame->format;
-  }
-
-  if (is->swr_ctx) {
-    const uint8_t** in = (const uint8_t**)af->frame->extended_data;
-    uint8_t** out = &is->audio_buf1;
-    int out_count = (int64_t)wanted_nb_samples * is->audio_tgt.freq / af->frame->sample_rate + 256;
-    int out_size =
-        av_samples_get_buffer_size(NULL, is->audio_tgt.channels, out_count, is->audio_tgt.fmt, 0);
-    int len2;
-    if (out_size < 0) {
-      av_log(NULL, AV_LOG_ERROR, "av_samples_get_buffer_size() failed\n");
-      return -1;
-    }
-    if (wanted_nb_samples != af->frame->nb_samples) {
-      if (swr_set_compensation(is->swr_ctx, (wanted_nb_samples - af->frame->nb_samples) *
-                                                is->audio_tgt.freq / af->frame->sample_rate,
-                               wanted_nb_samples * is->audio_tgt.freq / af->frame->sample_rate) <
-          0) {
-        av_log(NULL, AV_LOG_ERROR, "swr_set_compensation() failed\n");
-        return -1;
-      }
-    }
-    av_fast_malloc(&is->audio_buf1, &is->audio_buf1_size, out_size);
-    if (!is->audio_buf1)
-      return AVERROR(ENOMEM);
-    len2 = swr_convert(is->swr_ctx, out, out_count, in, af->frame->nb_samples);
-    if (len2 < 0) {
-      av_log(NULL, AV_LOG_ERROR, "swr_convert() failed\n");
-      return -1;
-    }
-    if (len2 == out_count) {
-      av_log(NULL, AV_LOG_WARNING, "audio buffer is probably too small\n");
-      if (swr_init(is->swr_ctx) < 0)
-        swr_free(&is->swr_ctx);
-    }
-    is->audio_buf = is->audio_buf1;
-    resampled_data_size =
-        len2 * is->audio_tgt.channels * av_get_bytes_per_sample(is->audio_tgt.fmt);
-  } else {
-    is->audio_buf = af->frame->data[0];
-    resampled_data_size = data_size;
-  }
-
-  audio_clock0 = is->audio_clock;
-  /* update the audio clock with the pts */
-  if (!isnan(af->pts)) {
-    is->audio_clock = af->pts + (double)af->frame->nb_samples / af->frame->sample_rate;
-  } else {
-    is->audio_clock = NAN;
-  }
-  is->audio_clock_serial = af->serial;
-#ifdef DEBUG
-  {
-    static double last_clock;
-    printf("audio: delay=%0.3f clock=%0.3f clock0=%0.3f\n", is->audio_clock - last_clock,
-           is->audio_clock, audio_clock0);
-    last_clock = is->audio_clock;
-  }
-#endif
-  return resampled_data_size;
-}
-
-/* prepare a new audio buffer */
-void sdl_audio_callback(void* opaque, Uint8* stream, int len) {
-  VideoState* is = static_cast<VideoState*>(opaque);
-
-  is->audio_callback_time = av_gettime_relative();
-
-  while (len > 0) {
-    if (is->audio_buf_index >= is->audio_buf_size) {
-      int audio_size = audio_decode_frame(is);
-      if (audio_size < 0) {
-        /* if error, just output silence */
-        is->audio_buf = NULL;
-        is->audio_buf_size =
-            SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
-      } else {
-        if (is->opt->show_mode != SHOW_MODE_VIDEO) {
-          update_sample_display(is, (int16_t*)is->audio_buf, audio_size);
-        }
-        is->audio_buf_size = audio_size;
-      }
-      is->audio_buf_index = 0;
-    }
-    int len1 = is->audio_buf_size - is->audio_buf_index;
-    if (len1 > len) {
-      len1 = len;
-    }
-    if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME) {
-      memcpy(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1);
-    } else {
-      memset(stream, 0, len1);
-      if (!is->muted && is->audio_buf) {
-        SDL_MixAudio(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1, is->audio_volume);
-      }
-    }
-    len -= len1;
-    stream += len1;
-    is->audio_buf_index += len1;
-  }
-  is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
-  /* Let's assume the audio driver that is used by SDL has two periods. */
-  if (!isnan(is->audio_clock)) {
-    is->audclk->set_clock_at(is->audio_clock -
-                                 (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) /
-                                     is->audio_tgt.bytes_per_sec,
-                             is->audio_clock_serial, is->audio_callback_time / 1000000.0);
-    Clock::sync_clock_to_slave(is->extclk, is->audclk);
-  }
-}
-
-int audio_open(void* opaque,
-               int64_t wanted_channel_layout,
-               int wanted_nb_channels,
-               int wanted_sample_rate,
-               struct AudioParams* audio_hw_params) {
-  SDL_AudioSpec wanted_spec, spec;
-  static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
-  static const int next_sample_rates[] = {0, 44100, 48000, 96000, 192000};
-  int next_sample_rate_idx = FF_ARRAY_ELEMS(next_sample_rates) - 1;
-
-  const char* env = SDL_getenv("SDL_AUDIO_CHANNELS");
-  if (env) {
-    wanted_nb_channels = atoi(env);
-    wanted_channel_layout = av_get_default_channel_layout(wanted_nb_channels);
-  }
-  if (!wanted_channel_layout ||
-      wanted_nb_channels != av_get_channel_layout_nb_channels(wanted_channel_layout)) {
-    wanted_channel_layout = av_get_default_channel_layout(wanted_nb_channels);
-    wanted_channel_layout &= ~AV_CH_LAYOUT_STEREO_DOWNMIX;
-  }
-  wanted_nb_channels = av_get_channel_layout_nb_channels(wanted_channel_layout);
-  wanted_spec.channels = wanted_nb_channels;
-  wanted_spec.freq = wanted_sample_rate;
-  if (wanted_spec.freq <= 0 || wanted_spec.channels <= 0) {
-    av_log(NULL, AV_LOG_ERROR, "Invalid sample rate or channel count!\n");
-    return -1;
-  }
-  while (next_sample_rate_idx && next_sample_rates[next_sample_rate_idx] >= wanted_spec.freq) {
-    next_sample_rate_idx--;
-  }
-  wanted_spec.format = AUDIO_S16SYS;
-  wanted_spec.silence = 0;
-  wanted_spec.samples = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE,
-                              2 << av_log2(wanted_spec.freq / SDL_AUDIO_MAX_CALLBACKS_PER_SEC));
-  wanted_spec.callback = sdl_audio_callback;
-  wanted_spec.userdata = opaque;
-  while (SDL_OpenAudio(&wanted_spec, &spec) < 0) {
-    av_log(NULL, AV_LOG_WARNING, "SDL_OpenAudio (%d channels, %d Hz): %s\n", wanted_spec.channels,
-           wanted_spec.freq, SDL_GetError());
-    wanted_spec.channels = next_nb_channels[FFMIN(7, wanted_spec.channels)];
-    if (!wanted_spec.channels) {
-      wanted_spec.freq = next_sample_rates[next_sample_rate_idx--];
-      wanted_spec.channels = wanted_nb_channels;
-      if (!wanted_spec.freq) {
-        av_log(NULL, AV_LOG_ERROR, "No more combinations to try, audio open failed\n");
-        return -1;
-      }
-    }
-    wanted_channel_layout = av_get_default_channel_layout(wanted_spec.channels);
-  }
-  if (spec.format != AUDIO_S16SYS) {
-    av_log(NULL, AV_LOG_ERROR, "SDL advised audio format %d is not supported!\n", spec.format);
-    return -1;
-  }
-  if (spec.channels != wanted_spec.channels) {
-    wanted_channel_layout = av_get_default_channel_layout(spec.channels);
-    if (!wanted_channel_layout) {
-      av_log(NULL, AV_LOG_ERROR, "SDL advised channel count %d is not supported!\n", spec.channels);
-      return -1;
-    }
-  }
-
-  audio_hw_params->fmt = AV_SAMPLE_FMT_S16;
-  audio_hw_params->freq = spec.freq;
-  audio_hw_params->channel_layout = wanted_channel_layout;
-  audio_hw_params->channels = spec.channels;
-  audio_hw_params->frame_size =
-      av_samples_get_buffer_size(NULL, audio_hw_params->channels, 1, audio_hw_params->fmt, 1);
-  audio_hw_params->bytes_per_sec = av_samples_get_buffer_size(
-      NULL, audio_hw_params->channels, audio_hw_params->freq, audio_hw_params->fmt, 1);
-  if (audio_hw_params->bytes_per_sec <= 0 || audio_hw_params->frame_size <= 0) {
-    av_log(NULL, AV_LOG_ERROR, "av_samples_get_buffer_size failed\n");
-    return -1;
-  }
-  return spec.size;
-}
-
-void stream_cycle_channel(VideoState* is, int codec_type) {
-  AVFormatContext* ic = is->ic;
-  int start_index, stream_index;
-  int old_index;
-  AVStream* st;
-  AVProgram* p = NULL;
-  int nb_streams = is->ic->nb_streams;
-
-  if (codec_type == AVMEDIA_TYPE_VIDEO) {
-    start_index = is->last_video_stream;
-    old_index = is->video_stream;
-  } else if (codec_type == AVMEDIA_TYPE_AUDIO) {
-    start_index = is->last_audio_stream;
-    old_index = is->audio_stream;
-  } else {
-    start_index = is->last_subtitle_stream;
-    old_index = is->subtitle_stream;
-  }
-  stream_index = start_index;
-
-  if (codec_type != AVMEDIA_TYPE_VIDEO && is->video_stream != -1) {
-    p = av_find_program_from_stream(ic, NULL, is->video_stream);
-    if (p) {
-      nb_streams = p->nb_stream_indexes;
-      for (start_index = 0; start_index < nb_streams; start_index++)
-        if (p->stream_index[start_index] == stream_index)
-          break;
-      if (start_index == nb_streams)
-        start_index = -1;
-      stream_index = start_index;
-    }
-  }
-
-  while (true) {
-    if (++stream_index >= nb_streams) {
-      if (codec_type == AVMEDIA_TYPE_SUBTITLE) {
-        stream_index = -1;
-        is->last_subtitle_stream = -1;
-        goto the_end;
-      }
-      if (start_index == -1)
-        return;
-      stream_index = 0;
-    }
-    if (stream_index == start_index)
-      return;
-    st = is->ic->streams[p ? p->stream_index[stream_index] : stream_index];
-    if (st->codecpar->codec_type == codec_type) {
-      /* check that parameters are OK */
-      switch (codec_type) {
-        case AVMEDIA_TYPE_AUDIO:
-          if (st->codecpar->sample_rate != 0 && st->codecpar->channels != 0)
-            goto the_end;
-          break;
-        case AVMEDIA_TYPE_VIDEO:
-        case AVMEDIA_TYPE_SUBTITLE:
-          goto the_end;
-        default:
-          break;
-      }
-    }
-  }
-the_end:
-  if (p && stream_index != -1)
-    stream_index = p->stream_index[stream_index];
-  av_log(NULL, AV_LOG_INFO, "Switch %s stream from #%d to #%d\n",
-         av_get_media_type_string((AVMediaType)codec_type), old_index, stream_index);
-
-  is->stream_component_close(old_index);
-  is->stream_component_open(stream_index);
-}
-
-void toggle_audio_display(VideoState* is) {
-  int next = is->opt->show_mode;
-  do {
-    next = (next + 1) % SHOW_MODE_NB;
-  } while (next != is->opt->show_mode && ((next == SHOW_MODE_VIDEO && !is->video_st) ||
-                                          (next != SHOW_MODE_VIDEO && !is->audio_st)));
-  if (is->opt->show_mode != next) {
-    is->force_refresh = 1;
-    is->opt->show_mode = static_cast<ShowMode>(next);
-  }
-}
-
-void seek_chapter(VideoState* is, int incr) {
-  if (!is->ic->nb_chapters) {
-    return;
-  }
-
-  int i;
-  int64_t pos = is->get_master_clock() * AV_TIME_BASE;
-  /* find the current chapter */
-  for (i = 0; i < is->ic->nb_chapters; i++) {
-    AVChapter* ch = is->ic->chapters[i];
-    if (av_compare_ts(pos, AV_TIME_BASE_Q, ch->start, ch->time_base) < 0) {
-      i--;
-      break;
-    }
-  }
-
-  i += incr;
-  i = FFMAX(i, 0);
-  if (i >= is->ic->nb_chapters) {
-    return;
-  }
-
-  av_log(NULL, AV_LOG_VERBOSE, "Seeking to chapter %d.\n", i);
-  is->stream_seek(
-      av_rescale_q(is->ic->chapters[i]->start, is->ic->chapters[i]->time_base, AV_TIME_BASE_Q), 0,
-      0);
-}
-}
 
 VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt)
     : opt(opt),
@@ -900,7 +259,8 @@ int VideoState::stream_component_open(int stream_index) {
 #endif
 
       /* prepare audio output */
-      if ((ret = audio_open(this, channel_layout, nb_channels, sample_rate, &audio_tgt)) < 0) {
+      if ((ret = audio_open(this, channel_layout, nb_channels, sample_rate, &audio_tgt,
+                            sdl_audio_callback)) < 0) {
         goto fail;
       }
 
@@ -1036,7 +396,7 @@ void VideoState::stream_seek(int64_t pos, int64_t rel, int seek_by_bytes) {
 void VideoState::step_to_next_frame() {
   /* if the stream is paused unpause it, then step */
   if (paused) {
-    stream_toggle_pause(this);
+    stream_toggle_pause();
   }
   step = 1;
 }
@@ -1128,7 +488,7 @@ void VideoState::refresh_loop_wait_event(SDL_Event* event) {
 void VideoState::video_refresh(double* remaining_time) {
   double time;
   if (!paused && get_master_sync_type() == AV_SYNC_EXTERNAL_CLOCK && realtime) {
-    check_external_clock_speed(this);
+    check_external_clock_speed();
   }
 
   if (!opt->display_disable && opt->show_mode != SHOW_MODE_VIDEO && audio_st) {
@@ -1164,7 +524,7 @@ void VideoState::video_refresh(double* remaining_time) {
         goto display;
 
       /* compute nominal last_duration */
-      last_duration = vp_duration(this, lastvp, vp);
+      last_duration = vp_duration(lastvp, vp);
       delay = compute_target_delay(last_duration);
 
       time = av_gettime_relative() / 1000000.0;
@@ -1179,13 +539,13 @@ void VideoState::video_refresh(double* remaining_time) {
 
       SDL_LockMutex(pictq->mutex);
       if (!isnan(vp->pts)) {
-        update_video_pts(this, vp->pts, vp->pos, vp->serial);
+        update_video_pts(vp->pts, vp->pos, vp->serial);
       }
       SDL_UnlockMutex(pictq->mutex);
 
       if (pictq->nb_remaining() > 1) {
         Frame* nextvp = pictq->peek_next();
-        duration = vp_duration(this, vp, nextvp);
+        duration = vp_duration(vp, nextvp);
         if (!step && (opt->framedrop > 0 ||
                       (opt->framedrop && get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) &&
             time > frame_timer + duration) {
@@ -1229,8 +589,9 @@ void VideoState::video_refresh(double* remaining_time) {
       pictq->next();
       force_refresh = 1;
 
-      if (step && !paused)
-        stream_toggle_pause(this);
+      if (step && !paused) {
+        stream_toggle_pause();
+      }
     }
   display:
     /* display picture */
@@ -1682,35 +1043,35 @@ int VideoState::exec() {
             break;
           case SDLK_p:
           case SDLK_SPACE:
-            toggle_pause(cur_stream);
+            toggle_pause();
             break;
           case SDLK_m:
-            toggle_mute(cur_stream);
+            toggle_mute();
             break;
           case SDLK_KP_MULTIPLY:
           case SDLK_0:
-            update_volume(cur_stream, 1, SDL_VOLUME_STEP);
+            update_volume(1, SDL_VOLUME_STEP);
             break;
           case SDLK_KP_DIVIDE:
           case SDLK_9:
-            update_volume(cur_stream, -1, SDL_VOLUME_STEP);
+            update_volume(-1, SDL_VOLUME_STEP);
             break;
           case SDLK_s:  // S: Step to next frame
             step_to_next_frame();
             break;
           case SDLK_a:
-            stream_cycle_channel(cur_stream, AVMEDIA_TYPE_AUDIO);
+            stream_cycle_channel(AVMEDIA_TYPE_AUDIO);
             break;
           case SDLK_v:
-            stream_cycle_channel(cur_stream, AVMEDIA_TYPE_VIDEO);
+            stream_cycle_channel(AVMEDIA_TYPE_VIDEO);
             break;
           case SDLK_c:
-            stream_cycle_channel(cur_stream, AVMEDIA_TYPE_VIDEO);
-            stream_cycle_channel(cur_stream, AVMEDIA_TYPE_AUDIO);
-            stream_cycle_channel(cur_stream, AVMEDIA_TYPE_SUBTITLE);
+            stream_cycle_channel(AVMEDIA_TYPE_VIDEO);
+            stream_cycle_channel(AVMEDIA_TYPE_AUDIO);
+            stream_cycle_channel(AVMEDIA_TYPE_SUBTITLE);
             break;
           case SDLK_t:
-            stream_cycle_channel(cur_stream, AVMEDIA_TYPE_SUBTITLE);
+            stream_cycle_channel(AVMEDIA_TYPE_SUBTITLE);
             break;
           case SDLK_w: {
 #if CONFIG_AVFILTER
@@ -1721,7 +1082,7 @@ int VideoState::exec() {
                 cur_stream->vfilter_idx = 0;
             } else {
               cur_stream->vfilter_idx = 0;
-              toggle_audio_display(cur_stream);
+              toggle_audio_display();
             }
 #else
             toggle_audio_display(cur_stream);
@@ -1733,14 +1094,14 @@ int VideoState::exec() {
               incr = 600.0;
               goto do_seek;
             }
-            seek_chapter(cur_stream, 1);
+            seek_chapter(1);
             break;
           case SDLK_PAGEDOWN:
             if (cur_stream->ic->nb_chapters <= 1) {
               incr = -600.0;
               goto do_seek;
             }
-            seek_chapter(cur_stream, -1);
+            seek_chapter(-1);
             break;
           case SDLK_LEFT:
             incr = -10.0;
@@ -1881,6 +1242,402 @@ int VideoState::exec() {
     }
   }
   return EXIT_SUCCESS;
+}
+
+void VideoState::check_external_clock_speed() {
+  if ((video_stream >= 0 && videoq->nbPackets() <= EXTERNAL_CLOCK_MIN_FRAMES) ||
+      (audio_stream >= 0 && audioq->nbPackets() <= EXTERNAL_CLOCK_MIN_FRAMES)) {
+    extclk->set_clock_speed(
+        FFMAX(EXTERNAL_CLOCK_SPEED_MIN, extclk->speed() - EXTERNAL_CLOCK_SPEED_STEP));
+  } else if ((video_stream < 0 || videoq->nbPackets() > EXTERNAL_CLOCK_MAX_FRAMES) &&
+             (audio_stream < 0 || audioq->nbPackets() > EXTERNAL_CLOCK_MAX_FRAMES)) {
+    extclk->set_clock_speed(
+        FFMIN(EXTERNAL_CLOCK_SPEED_MAX, extclk->speed() + EXTERNAL_CLOCK_SPEED_STEP));
+  } else {
+    double speed = extclk->speed();
+    if (speed != 1.0)
+      extclk->set_clock_speed(speed +
+                              EXTERNAL_CLOCK_SPEED_STEP * (1.0 - speed) / fabs(1.0 - speed));
+  }
+}
+
+double VideoState::vp_duration(Frame* vp, Frame* nextvp) {
+  if (vp->serial == nextvp->serial) {
+    double duration = nextvp->pts - vp->pts;
+    if (isnan(duration) || duration <= 0 || duration > max_frame_duration) {
+      return vp->duration;
+    } else {
+      return duration;
+    }
+  } else {
+    return 0.0;
+  }
+}
+
+void VideoState::update_video_pts(double pts, int64_t pos, int serial) {
+  UNUSED(pos);
+
+  /* update current video pts */
+  vidclk->set_clock(pts, serial);
+  Clock::sync_clock_to_slave(extclk, vidclk);
+}
+
+void VideoState::stream_toggle_pause() {
+  if (paused) {
+    frame_timer += av_gettime_relative() / 1000000.0 - vidclk->last_updated();
+    if (read_pause_return != AVERROR(ENOSYS)) {
+      vidclk->paused_ = 0;
+    }
+    vidclk->set_clock(vidclk->get_clock(), vidclk->serial());
+  }
+  extclk->set_clock(extclk->get_clock(), extclk->serial());
+  paused = audclk->paused_ = vidclk->paused_ = extclk->paused_ = !paused;
+}
+
+void VideoState::toggle_pause() {
+  stream_toggle_pause();
+  step = 0;
+}
+
+void VideoState::toggle_mute() {
+  muted = !muted;
+}
+
+void VideoState::update_volume(int sign, int step) {
+  audio_volume = av_clip(audio_volume + sign * step, 0, SDL_MIX_MAXVOLUME);
+}
+
+void VideoState::toggle_audio_display() {
+  int next = opt->show_mode;
+  do {
+    next = (next + 1) % SHOW_MODE_NB;
+  } while (next != opt->show_mode &&
+           ((next == SHOW_MODE_VIDEO && !video_st) || (next != SHOW_MODE_VIDEO && !audio_st)));
+  if (opt->show_mode != next) {
+    force_refresh = 1;
+    opt->show_mode = static_cast<ShowMode>(next);
+  }
+}
+
+void VideoState::seek_chapter(int incr) {
+  if (!ic->nb_chapters) {
+    return;
+  }
+
+  int i;
+  int64_t pos = get_master_clock() * AV_TIME_BASE;
+  /* find the current chapter */
+  for (i = 0; i < ic->nb_chapters; i++) {
+    AVChapter* ch = ic->chapters[i];
+    if (av_compare_ts(pos, AV_TIME_BASE_Q, ch->start, ch->time_base) < 0) {
+      i--;
+      break;
+    }
+  }
+
+  i += incr;
+  i = FFMAX(i, 0);
+  if (i >= ic->nb_chapters) {
+    return;
+  }
+
+  av_log(NULL, AV_LOG_VERBOSE, "Seeking to chapter %d.\n", i);
+  stream_seek(av_rescale_q(ic->chapters[i]->start, ic->chapters[i]->time_base, AV_TIME_BASE_Q), 0,
+              0);
+}
+
+void VideoState::stream_cycle_channel(int codec_type) {
+  int start_index, stream_index;
+  int old_index;
+  AVStream* st;
+  AVProgram* p = NULL;
+  int lnb_streams = ic->nb_streams;
+
+  if (codec_type == AVMEDIA_TYPE_VIDEO) {
+    start_index = last_video_stream;
+    old_index = video_stream;
+  } else if (codec_type == AVMEDIA_TYPE_AUDIO) {
+    start_index = last_audio_stream;
+    old_index = audio_stream;
+  } else {
+    start_index = last_subtitle_stream;
+    old_index = subtitle_stream;
+  }
+  stream_index = start_index;
+
+  if (codec_type != AVMEDIA_TYPE_VIDEO && video_stream != -1) {
+    p = av_find_program_from_stream(ic, NULL, video_stream);
+    if (p) {
+      lnb_streams = p->nb_stream_indexes;
+      for (start_index = 0; start_index < lnb_streams; start_index++)
+        if (p->stream_index[start_index] == stream_index)
+          break;
+      if (start_index == lnb_streams)
+        start_index = -1;
+      stream_index = start_index;
+    }
+  }
+
+  while (true) {
+    if (++stream_index >= lnb_streams) {
+      if (codec_type == AVMEDIA_TYPE_SUBTITLE) {
+        stream_index = -1;
+        last_subtitle_stream = -1;
+        goto the_end;
+      }
+      if (start_index == -1)
+        return;
+      stream_index = 0;
+    }
+    if (stream_index == start_index)
+      return;
+    st = ic->streams[p ? p->stream_index[stream_index] : stream_index];
+    if (st->codecpar->codec_type == codec_type) {
+      /* check that parameters are OK */
+      switch (codec_type) {
+        case AVMEDIA_TYPE_AUDIO:
+          if (st->codecpar->sample_rate != 0 && st->codecpar->channels != 0)
+            goto the_end;
+          break;
+        case AVMEDIA_TYPE_VIDEO:
+        case AVMEDIA_TYPE_SUBTITLE:
+          goto the_end;
+        default:
+          break;
+      }
+    }
+  }
+the_end:
+  if (p && stream_index != -1)
+    stream_index = p->stream_index[stream_index];
+  av_log(NULL, AV_LOG_INFO, "Switch %s stream from #%d to #%d\n",
+         av_get_media_type_string((AVMediaType)codec_type), old_index, stream_index);
+
+  stream_component_close(old_index);
+  stream_component_open(stream_index);
+}
+
+void VideoState::update_sample_display(short* samples, int samples_size) {
+  int size = samples_size / sizeof(short);
+  while (size > 0) {
+    int len = SAMPLE_ARRAY_SIZE - sample_array_index;
+    if (len > size) {
+      len = size;
+    }
+    memcpy(sample_array + sample_array_index, samples, len * sizeof(short));
+    samples += len;
+    sample_array_index += len;
+    if (sample_array_index >= SAMPLE_ARRAY_SIZE) {
+      sample_array_index = 0;
+    }
+    size -= len;
+  }
+}
+
+int VideoState::synchronize_audio(int nb_samples) {
+  int wanted_nb_samples = nb_samples;
+
+  /* if not master, then we try to remove or add samples to correct the clock */
+  if (get_master_sync_type() != AV_SYNC_AUDIO_MASTER) {
+    double diff, avg_diff;
+    int min_nb_samples, max_nb_samples;
+
+    diff = audclk->get_clock() - get_master_clock();
+
+    if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
+      audio_diff_cum = diff + audio_diff_avg_coef * audio_diff_cum;
+      if (audio_diff_avg_count < AUDIO_DIFF_AVG_NB) {
+        /* not enough measures to have a correct estimate */
+        audio_diff_avg_count++;
+      } else {
+        /* estimate the A-V difference */
+        avg_diff = audio_diff_cum * (1.0 - audio_diff_avg_coef);
+
+        if (fabs(avg_diff) >= audio_diff_threshold) {
+          wanted_nb_samples = nb_samples + (int)(diff * audio_src.freq);
+          min_nb_samples = ((nb_samples * (100 - SAMPLE_CORRECTION_PERCENT_MAX) / 100));
+          max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100));
+          wanted_nb_samples = av_clip(wanted_nb_samples, min_nb_samples, max_nb_samples);
+        }
+        av_log(NULL, AV_LOG_TRACE, "diff=%f adiff=%f sample_diff=%d apts=%0.3f %f\n", diff,
+               avg_diff, wanted_nb_samples - nb_samples, audio_clock, audio_diff_threshold);
+      }
+    } else {
+      /* too big difference : may be initial PTS errors, so
+         reset A-V filter */
+      audio_diff_avg_count = 0;
+      audio_diff_cum = 0;
+    }
+  }
+
+  return wanted_nb_samples;
+}
+
+int VideoState::audio_decode_frame() {
+  int data_size, resampled_data_size;
+  int64_t dec_channel_layout;
+  av_unused double audio_clock0;
+  int wanted_nb_samples;
+  Frame* af;
+
+  if (paused) {
+    return -1;
+  }
+
+  do {
+#if defined(_WIN32)
+    while (sampq->nb_remaining() == 0) {
+      if ((av_gettime_relative() - audio_callback_time) >
+          1000000LL * audio_hw_buf_size / audio_tgt.bytes_per_sec / 2)
+        return -1;
+      av_usleep(1000);
+    }
+#endif
+    if (!(af = sampq->peek_readable())) {
+      return -1;
+    }
+    sampq->next();
+  } while (af->serial != audioq->serial);
+
+  data_size =
+      av_samples_get_buffer_size(NULL, av_frame_get_channels(af->frame), af->frame->nb_samples,
+                                 (AVSampleFormat)af->frame->format, 1);
+
+  dec_channel_layout = (af->frame->channel_layout &&
+                        av_frame_get_channels(af->frame) ==
+                            av_get_channel_layout_nb_channels(af->frame->channel_layout))
+                           ? af->frame->channel_layout
+                           : av_get_default_channel_layout(av_frame_get_channels(af->frame));
+  wanted_nb_samples = synchronize_audio(af->frame->nb_samples);
+
+  if (af->frame->format != audio_src.fmt || dec_channel_layout != audio_src.channel_layout ||
+      af->frame->sample_rate != audio_src.freq ||
+      (wanted_nb_samples != af->frame->nb_samples && !swr_ctx)) {
+    swr_free(&swr_ctx);
+    swr_ctx = swr_alloc_set_opts(NULL, audio_tgt.channel_layout, audio_tgt.fmt, audio_tgt.freq,
+                                 dec_channel_layout, (AVSampleFormat)af->frame->format,
+                                 af->frame->sample_rate, 0, NULL);
+    if (!swr_ctx || swr_init(swr_ctx) < 0) {
+      av_log(NULL, AV_LOG_ERROR,
+             "Cannot create sample rate converter for conversion of %d Hz %s %d channels to %d Hz "
+             "%s %d channels!\n",
+             af->frame->sample_rate, av_get_sample_fmt_name((AVSampleFormat)af->frame->format),
+             av_frame_get_channels(af->frame), audio_tgt.freq,
+             av_get_sample_fmt_name(audio_tgt.fmt), audio_tgt.channels);
+      swr_free(&swr_ctx);
+      return -1;
+    }
+    audio_src.channel_layout = dec_channel_layout;
+    audio_src.channels = av_frame_get_channels(af->frame);
+    audio_src.freq = af->frame->sample_rate;
+    audio_src.fmt = (AVSampleFormat)af->frame->format;
+  }
+
+  if (swr_ctx) {
+    const uint8_t** in = (const uint8_t**)af->frame->extended_data;
+    uint8_t** out = &audio_buf1;
+    int out_count = (int64_t)wanted_nb_samples * audio_tgt.freq / af->frame->sample_rate + 256;
+    int out_size =
+        av_samples_get_buffer_size(NULL, audio_tgt.channels, out_count, audio_tgt.fmt, 0);
+    int len2;
+    if (out_size < 0) {
+      av_log(NULL, AV_LOG_ERROR, "av_samples_get_buffer_size() failed\n");
+      return -1;
+    }
+    if (wanted_nb_samples != af->frame->nb_samples) {
+      if (swr_set_compensation(swr_ctx, (wanted_nb_samples - af->frame->nb_samples) *
+                                            audio_tgt.freq / af->frame->sample_rate,
+                               wanted_nb_samples * audio_tgt.freq / af->frame->sample_rate) < 0) {
+        av_log(NULL, AV_LOG_ERROR, "swr_set_compensation() failed\n");
+        return -1;
+      }
+    }
+    av_fast_malloc(&audio_buf1, &audio_buf1_size, out_size);
+    if (!audio_buf1) {
+      return AVERROR(ENOMEM);
+    }
+    len2 = swr_convert(swr_ctx, out, out_count, in, af->frame->nb_samples);
+    if (len2 < 0) {
+      av_log(NULL, AV_LOG_ERROR, "swr_convert() failed\n");
+      return -1;
+    }
+    if (len2 == out_count) {
+      av_log(NULL, AV_LOG_WARNING, "audio buffer is probably too small\n");
+      if (swr_init(swr_ctx) < 0)
+        swr_free(&swr_ctx);
+    }
+    audio_buf = audio_buf1;
+    resampled_data_size = len2 * audio_tgt.channels * av_get_bytes_per_sample(audio_tgt.fmt);
+  } else {
+    audio_buf = af->frame->data[0];
+    resampled_data_size = data_size;
+  }
+
+  audio_clock0 = audio_clock;
+  /* update the audio clock with the pts */
+  if (!isnan(af->pts)) {
+    audio_clock = af->pts + (double)af->frame->nb_samples / af->frame->sample_rate;
+  } else {
+    audio_clock = NAN;
+  }
+  audio_clock_serial = af->serial;
+#ifdef DEBUG
+  {
+    static double last_clock;
+    printf("audio: delay=%0.3f clock=%0.3f clock0=%0.3f\n", audio_clock - last_clock, audio_clock,
+           audio_clock0);
+    last_clock = audio_clock;
+  }
+#endif
+  return resampled_data_size;
+}
+
+void VideoState::sdl_audio_callback(void* opaque, Uint8* stream, int len) {
+  VideoState* is = static_cast<VideoState*>(opaque);
+
+  is->audio_callback_time = av_gettime_relative();
+
+  while (len > 0) {
+    if (is->audio_buf_index >= is->audio_buf_size) {
+      int audio_size = is->audio_decode_frame();
+      if (audio_size < 0) {
+        /* if error, just output silence */
+        is->audio_buf = NULL;
+        is->audio_buf_size =
+            SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
+      } else {
+        if (is->opt->show_mode != SHOW_MODE_VIDEO) {
+          is->update_sample_display((int16_t*)is->audio_buf, audio_size);
+        }
+        is->audio_buf_size = audio_size;
+      }
+      is->audio_buf_index = 0;
+    }
+    int len1 = is->audio_buf_size - is->audio_buf_index;
+    if (len1 > len) {
+      len1 = len;
+    }
+    if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME) {
+      memcpy(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1);
+    } else {
+      memset(stream, 0, len1);
+      if (!is->muted && is->audio_buf) {
+        SDL_MixAudio(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1, is->audio_volume);
+      }
+    }
+    len -= len1;
+    stream += len1;
+    is->audio_buf_index += len1;
+  }
+  is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
+  /* Let's assume the audio driver that is used by SDL has two periods. */
+  if (!isnan(is->audio_clock)) {
+    is->audclk->set_clock_at(is->audio_clock -
+                                 (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) /
+                                     is->audio_tgt.bytes_per_sec,
+                             is->audio_clock_serial, is->audio_callback_time / 1000000.0);
+    Clock::sync_clock_to_slave(is->extclk, is->audclk);
+  }
 }
 
 #if CONFIG_AVFILTER

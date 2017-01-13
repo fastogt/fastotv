@@ -3,7 +3,7 @@
 #include <common/utils.h>
 
 #include "core/video_state.h"
-#include "core/cmd_utils.h"
+#include "core/utils.h"
 #include "core/types.h"
 
 #define MAX_QUEUE_SIZE (15 * 1024 * 1024)
@@ -50,14 +50,13 @@ int queue_picture(VideoState* is,
                   double duration,
                   int64_t pos,
                   int serial) {
-  Frame* vp;
-
 #if defined(DEBUG_SYNC)
   printf("frame_type=%c pts=%0.3f\n", av_get_picture_type_char(src_frame->pict_type), pts);
 #endif
 
-  if (!(vp = is->pictq->peek_writable())) {
-    return -1;
+  Frame* vp = is->pictq->peek_writable();
+  if (!vp) {
+    return ERROR_RESULT_VALUE;
   }
 
   vp->sar = src_frame->sample_aspect_ratio;
@@ -625,10 +624,12 @@ int video_thread(void* user_data) {
 
   while (true) {
     ret = get_video_frame(is, frame);
-    if (ret < 0)
+    if (ret < 0) {
       goto the_end;
-    if (!ret)
+    }
+    if (!ret) {
       continue;
+    }
 
 #if CONFIG_AVFILTER
     if (last_w != frame->width || last_h != frame->height || last_format != frame->format ||
@@ -709,15 +710,16 @@ the_end:
 
 int subtitle_thread(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
-  Frame* sp;
-  int got_subtitle;
-
+  FrameQueue* subpq = is->subpq;
+  SubDecoder* subdec = is->subdec;
   while (true) {
-    if (!(sp = is->subpq->peek_writable())) {
+    Frame* sp = subpq->peek_writable();
+    if (!sp) {
       return 0;
     }
 
-    if ((got_subtitle = is->subdec->decodeFrame(NULL, &sp->sub)) < 0) {
+    int got_subtitle = subdec->decodeFrame(NULL, &sp->sub);
+    if (got_subtitle < 0) {
       break;
     }
 
@@ -727,13 +729,13 @@ int subtitle_thread(void* user_data) {
         pts = static_cast<double>(sp->sub.pts) / static_cast<double>(AV_TIME_BASE);
       }
       sp->pts = pts;
-      sp->serial = is->subdec->pktSerial();
-      sp->width = is->subdec->width();
-      sp->height = is->subdec->height();
+      sp->serial = subdec->pktSerial();
+      sp->width = subdec->width();
+      sp->height = subdec->height();
       sp->uploaded = 0;
 
       /* now we can update the picture count */
-      is->subpq->push();
+      subpq->push();
     } else if (got_subtitle) {
       avsubtitle_free(&sp->sub);
     }

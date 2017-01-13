@@ -34,6 +34,7 @@ extern "C" {
 #include "core/frame_queue.h"
 #include "core/decoder.h"
 #include "core/app_options.h"
+#include "core/audio_params.h"
 
 #define SAMPLE_ARRAY_SIZE (8 * 65536)
 /* no AV sync correction is done if below the minimum AV sync threshold */
@@ -42,15 +43,6 @@ extern "C" {
 #define AV_SYNC_THRESHOLD_MAX 0.1
 /* If a frame duration is longer than this, it will not be duplicated to compensate AV sync */
 #define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
-
-struct AudioParams {
-  int freq;
-  int channels;
-  int64_t channel_layout;
-  enum AVSampleFormat fmt;
-  int frame_size;
-  int bytes_per_sec;
-};
 
 struct VideoState {
   VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt);
@@ -197,6 +189,32 @@ struct VideoState {
                       int init_texture);
   void video_audio_display();
   void video_image_display();
+  void check_external_clock_speed();
+  double vp_duration(Frame* vp, Frame* nextvp);
+  void update_video_pts(double pts, int64_t pos, int serial);
+  /* pause or resume the video */
+  void stream_toggle_pause();
+  void toggle_pause();
+  void toggle_mute();
+  void update_volume(int sign, int step);
+  void toggle_audio_display();
+  void seek_chapter(int incr);
+  /* copy samples for viewing in editor window */
+  void update_sample_display(short* samples, int samples_size);
+  void stream_cycle_channel(int codec_type);
+  /* return the wanted number of samples to get better sync if sync_type is video
+   * or external master clock */
+  int synchronize_audio(int nb_samples);
+  /**
+   * Decode one audio frame and return its uncompressed size.
+   *
+   * The processed audio frame is decoded, converted if required, and
+   * stored in is->audio_buf, with size in bytes given by the return
+   * value.
+   */
+  int audio_decode_frame();
+  /* prepare a new audio buffer */
+  static void sdl_audio_callback(void* opaque, Uint8* stream, int len);
 
   bool cursor_hidden_;
   int64_t cursor_last_shown_;

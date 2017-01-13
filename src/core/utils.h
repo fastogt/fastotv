@@ -5,7 +5,17 @@
 extern "C" {
 #include <libavutil/dict.h>
 #include <libavformat/avformat.h>
+#if CONFIG_AVFILTER
+#include <libavfilter/avfilter.h>
+#endif
+
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_audio.h>
 }
+
+/* Minimum SDL audio buffer size, in samples. */
+#define SDL_AUDIO_MIN_BUFFER_SIZE 512
 
 /**
  * Filter out options for given codec.
@@ -57,3 +67,28 @@ double get_rotation(AVStream* st);
  * Wraps exit with a program-specific cleanup routine.
  */
 void exit_program(int ret) av_noreturn;
+
+#if CONFIG_AVFILTER
+int configure_filtergraph(AVFilterGraph* graph,
+                          const char* filtergraph,
+                          AVFilterContext* source_ctx,
+                          AVFilterContext* sink_ctx);
+#endif
+
+void calculate_display_rect(SDL_Rect* rect,
+                            int scr_xleft,
+                            int scr_ytop,
+                            int scr_width,
+                            int scr_height,
+                            int pic_width,
+                            int pic_height,
+                            AVRational pic_sar);
+void fill_rectangle(SDL_Renderer* renderer, int x, int y, int w, int h);
+int compute_mod(int a, int b);
+int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_convert_ctx);
+int audio_open(void* opaque,
+               int64_t wanted_channel_layout,
+               int wanted_nb_channels,
+               int wanted_sample_rate,
+               struct AudioParams* audio_hw_params,
+               SDL_AudioCallback cb);

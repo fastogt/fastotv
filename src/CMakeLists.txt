@@ -3,25 +3,27 @@ INCLUDE (CheckIncludeFiles)
 SET(HEADERS_CORE
   core/types.h
   core/threads.h
-  core/cmd_utils.h
+  core/utils.h
   core/clock.h
   core/packet_queue.h
   core/frame_queue.h
   core/decoder.h
   core/app_options.h
   core/video_state.h
+  core/audio_params.h
 )
 
 SET(SOURCES_CORE
   core/types.cpp
   core/threads.cpp
-  core/cmd_utils.cpp
+  core/utils.cpp
   core/clock.cpp
   core/packet_queue.cpp
   core/frame_queue.cpp
   core/decoder.cpp
   core/app_options.cpp
   core/video_state.cpp
+  core/audio_params.cpp
 )
 
 SET_DESKTOP_TARGET()
