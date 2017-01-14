@@ -58,8 +58,6 @@ struct VideoState {
   AVInputFormat* iformat;
   int abort_request;
   int force_refresh;
-  int paused;
-  int last_paused;
   int queue_attachments_req;
   int seek_req;
   int seek_flags;
@@ -213,9 +211,19 @@ struct VideoState {
    * value.
    */
   int audio_decode_frame();
+  int get_video_frame(AVFrame* frame);
+  int queue_picture(AVFrame* src_frame, double pts, double duration, int64_t pos, int serial);
+
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, Uint8* stream, int len);
 
+  static int read_thread(void* user_data);
+  static int video_thread(void* user_data);
+  static int audio_thread(void* user_data);
+  static int subtitle_thread(void* user_data);
+
+  bool paused_;
+  bool last_paused_;
   bool cursor_hidden_;
   int64_t cursor_last_shown_;
   SDL_Renderer* renderer;

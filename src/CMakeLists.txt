@@ -2,7 +2,6 @@ INCLUDE (CheckIncludeFiles)
 
 SET(HEADERS_CORE
   core/types.h
-  core/threads.h
   core/utils.h
   core/clock.h
   core/packet_queue.h
@@ -15,7 +14,6 @@ SET(HEADERS_CORE
 
 SET(SOURCES_CORE
   core/types.cpp
-  core/threads.cpp
   core/utils.cpp
   core/clock.cpp
   core/packet_queue.cpp

@@ -349,3 +349,36 @@ int audio_open(void* opaque,
   }
   return spec.size;
 }
+
+void print_error(const char* filename, int err) {
+  char errbuf[128];
+  const char* errbuf_ptr = errbuf;
+
+  if (av_strerror(err, errbuf, sizeof(errbuf)) < 0) {
+    errbuf_ptr = strerror(AVUNERROR(err));
+  }
+  av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, errbuf_ptr);
+}
+
+int is_realtime(AVFormatContext* s) {
+  if (!strcmp(s->iformat->name, "rtp") || !strcmp(s->iformat->name, "rtsp") ||
+      !strcmp(s->iformat->name, "sdp")) {
+    return 1;
+  }
+
+  if (s->pb && (!strncmp(s->filename, "rtp:", 4) || !strncmp(s->filename, "udp:", 4))) {
+    return 1;
+  }
+  return 0;
+}
+
+int cmp_audio_fmts(enum AVSampleFormat fmt1,
+                   int64_t channel_count1,
+                   enum AVSampleFormat fmt2,
+                   int64_t channel_count2) {
+  /* If channel count == 1, planar and non-planar formats are the same */
+  if (channel_count1 == 1 && channel_count2 == 1)
+    return av_get_packed_sample_fmt(fmt1) != av_get_packed_sample_fmt(fmt2);
+  else
+    return channel_count1 != channel_count2 || fmt1 != fmt2;
+}
