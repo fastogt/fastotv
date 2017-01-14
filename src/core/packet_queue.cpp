@@ -1,5 +1,7 @@
 #include "core/packet_queue.h"
 
+SAVPacket::SAVPacket(const AVPacket& p) : pkt(p) {}
+
 PacketQueue::PacketQueue()
     : serial(0), list_(), size_(0), duration_(0), abort_request_(true), mutex(NULL), cond(NULL) {
   mutex = SDL_CreateMutex();
@@ -27,7 +29,6 @@ int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
   int ret = 0;
 
   SDL_LockMutex(mutex);
-
   while (true) {
     if (abort_request_) {
       ret = -1;
@@ -35,7 +36,7 @@ int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
     }
 
     if (!list_.empty()) {
-      MyAVPacket* pkt1 = list_[0];
+      SAVPacket* pkt1 = list_[0];
       list_.pop_front();
       size_ -= pkt1->pkt.size + sizeof(*pkt1);
       duration_ -= pkt1->pkt.duration;
@@ -43,7 +44,7 @@ int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
       if (serial) {
         *serial = pkt1->serial;
       }
-      av_free(pkt1);
+      delete pkt1;
       ret = 1;
       break;
     } else if (!block) {
@@ -104,9 +105,9 @@ int PacketQueue::put(AVPacket* pkt) {
 void PacketQueue::flush() {
   SDL_LockMutex(mutex);
   for (auto it = list_.begin(); it != list_.end(); ++it) {
-    MyAVPacket* pkt = *it;
+    SAVPacket* pkt = *it;
     av_packet_unref(&pkt->pkt);
-    av_free(pkt);
+    delete pkt;
   }
   list_.clear();
   size_ = 0;
@@ -132,11 +133,7 @@ int PacketQueue::put_private(AVPacket* pkt) {
     return -1;
   }
 
-  MyAVPacket* pkt1 = static_cast<MyAVPacket*>(av_malloc(sizeof(MyAVPacket)));
-  if (!pkt1) {
-    return -1;
-  }
-  pkt1->pkt = *pkt;
+  SAVPacket* pkt1 = new SAVPacket(*pkt);
   if (pkt == flush_pkt()) {
     serial++;
   }

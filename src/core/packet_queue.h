@@ -17,7 +17,9 @@ extern "C" {
 #define FRAME_QUEUE_SIZE \
   FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
 
-struct MyAVPacket {
+struct SAVPacket {
+  SAVPacket(const AVPacket& p);
+
   AVPacket pkt;
   int serial;
 };
@@ -48,7 +50,7 @@ class PacketQueue {
  private:
   int put_private(AVPacket* pkt);
 
-  std::deque<MyAVPacket*> list_;
+  std::deque<SAVPacket*> list_;
   int size_;
   int64_t duration_;
   bool abort_request_;
