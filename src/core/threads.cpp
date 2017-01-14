@@ -131,8 +131,9 @@ int get_video_frame(VideoState* is, AVFrame* frame) {
   if (got_picture) {
     double dpts = NAN;
 
-    if (frame->pts != AV_NOPTS_VALUE)
+    if (frame->pts != AV_NOPTS_VALUE) {
       dpts = av_q2d(is->video_st->time_base) * frame->pts;
+    }
 
     frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(is->ic, is->video_st, frame);
 
@@ -202,8 +203,9 @@ int read_thread(void* user_data) {
     ret = -1;
     goto fail;
   }
-  if (scan_all_pmts_set)
+  if (scan_all_pmts_set) {
     av_dict_set(&is->copt->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
+  }
 
   if ((t = av_dict_get(is->copt->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX))) {
     av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
@@ -463,9 +465,10 @@ int read_thread(void* user_data) {
         is->opt->duration == AV_NOPTS_VALUE ||
         (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
                     av_q2d(ic->streams[pkt->stream_index]->time_base) -
-                (double)(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0) /
+                static_cast<double>(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time
+                                                                          : 0) /
                     1000000 <=
-            ((double)is->opt->duration / 1000000);
+            (static_cast<double>(is->opt->duration) / 1000000);
     if (pkt->stream_index == is->audio_stream && pkt_in_play_range) {
       is->audioq->put(pkt);
     } else if (pkt->stream_index == is->video_stream && pkt_in_play_range &&
@@ -523,7 +526,8 @@ int audio_thread(void* user_data) {
           get_valid_channel_layout(frame->channel_layout, av_frame_get_channels(frame));
 
       reconfigure = cmp_audio_fmts(is->audio_filter_src.fmt, is->audio_filter_src.channels,
-                                   (AVSampleFormat)frame->format, av_frame_get_channels(frame)) ||
+                                   static_cast<AVSampleFormat>(frame->format),
+                                   av_frame_get_channels(frame)) ||
                     is->audio_filter_src.channel_layout != dec_channel_layout ||
                     is->audio_filter_src.freq != frame->sample_rate ||
                     is->auddec->pktSerial() != last_serial;
@@ -538,7 +542,7 @@ int audio_thread(void* user_data) {
                is->audio_filter_src.freq, is->audio_filter_src.channels,
                av_get_sample_fmt_name(is->audio_filter_src.fmt), buf1, last_serial,
                frame->sample_rate, av_frame_get_channels(frame),
-               av_get_sample_fmt_name((AVSampleFormat)frame->format), buf2,
+               av_get_sample_fmt_name(static_cast<AVSampleFormat>(frame->format)), buf2,
                is->auddec->pktSerial());
 
         is->audio_filter_src.fmt = static_cast<AVSampleFormat>(frame->format);
@@ -637,9 +641,11 @@ int video_thread(void* user_data) {
       av_log(NULL, AV_LOG_DEBUG,
              "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
              "serial:%d\n",
-             last_w, last_h, (const char*)av_x_if_null(av_get_pix_fmt_name(last_format), "none"),
+             last_w, last_h,
+             static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")),
              last_serial, frame->width, frame->height,
-             (const char*)av_x_if_null(av_get_pix_fmt_name((AVPixelFormat)frame->format), "none"),
+             static_cast<const char*>(
+                 av_x_if_null(av_get_pix_fmt_name((AVPixelFormat)frame->format), "none")),
              is->viddec->pktSerial());
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();

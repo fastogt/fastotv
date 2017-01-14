@@ -30,6 +30,7 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
     : opt(opt),
       copt(copt),
       audio_callback_time(0),
+      ic(NULL),
       audclk(NULL),
       vidclk(NULL),
       extclk(NULL),
@@ -564,14 +565,17 @@ void VideoState::video_refresh(double* remaining_time) {
           }
 
           if (sp->serial != subtitleq->serial ||
-              (vidclk->pts() > (sp->pts + ((float)sp->sub.end_display_time / 1000))) ||
-              (sp2 && vidclk->pts() > (sp2->pts + ((float)sp2->sub.start_display_time / 1000)))) {
+              (vidclk->pts() > (sp->pts + (static_cast<float>(sp->sub.end_display_time) / 1000))) ||
+              (sp2 &&
+               vidclk->pts() >
+                   (sp2->pts + (static_cast<float>(sp2->sub.start_display_time) / 1000)))) {
             if (sp->uploaded) {
               for (unsigned int i = 0; i < sp->sub.num_rects; i++) {
                 AVSubtitleRect* sub_rect = sp->sub.rects[i];
                 uint8_t* pixels;
                 int pitch;
-                if (!SDL_LockTexture(sub_texture, (SDL_Rect*)sub_rect, (void**)&pixels, &pitch)) {
+                if (!SDL_LockTexture(sub_texture, reinterpret_cast<SDL_Rect*>(sub_rect),
+                                     reinterpret_cast<void**>(&pixels), &pitch)) {
                   for (int j = 0; j < sub_rect->h; j++, pixels += pitch) {
                     memset(pixels, 0, sub_rect->w << 2);
                   }
@@ -798,7 +802,7 @@ void VideoState::video_image_display() {
       if (subpq->nb_remaining() > 0) {
         sp = subpq->peek();
 
-        if (vp->pts >= sp->pts + ((float)sp->sub.start_display_time / 1000)) {
+        if (vp->pts >= sp->pts + (static_cast<float>(sp->sub.start_display_time) / 1000)) {
           if (!sp->uploaded) {
             uint8_t* pixels[4];
             int pitch[4];
@@ -826,8 +830,9 @@ void VideoState::video_image_display() {
                 av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
                 return;
               }
-              if (!SDL_LockTexture(sub_texture, (SDL_Rect*)sub_rect, (void**)pixels, pitch)) {
-                sws_scale(sub_convert_ctx, (const uint8_t* const*)sub_rect->data,
+              if (!SDL_LockTexture(sub_texture, reinterpret_cast<SDL_Rect*>(sub_rect),
+                                   reinterpret_cast<void**>(pixels), pitch)) {
+                sws_scale(sub_convert_ctx, const_cast<const uint8_t* const*>(sub_rect->data),
                           sub_rect->linesize, 0, sub_rect->h, pixels, pitch);
                 SDL_UnlockTexture(sub_texture);
               }
@@ -989,7 +994,7 @@ void VideoState::video_audio_display() {
       }
       /* Least efficient way to do this, we should of course
        * directly access it but it is more than fast enough. */
-      if (!SDL_LockTexture(vis_texture, &rect, (void**)&pixels, &pitch)) {
+      if (!SDL_LockTexture(vis_texture, &rect, reinterpret_cast<void**>(&pixels), &pitch)) {
         pitch >>= 2;
         pixels += pitch * height;
         for (y = 0; y < height; y++) {
@@ -1135,14 +1140,15 @@ int VideoState::exec() {
               cur_stream->stream_seek(pos, incr, 1);
             } else {
               pos = get_master_clock();
-              if (isnan(pos))
-                pos = (double)cur_stream->seek_pos / AV_TIME_BASE;
+              if (isnan(pos)) {
+                pos = static_cast<double>(cur_stream->seek_pos) / AV_TIME_BASE;
+              }
               pos += incr;
               if (cur_stream->ic->start_time != AV_NOPTS_VALUE &&
-                  pos < cur_stream->ic->start_time / (double)AV_TIME_BASE)
-                pos = cur_stream->ic->start_time / (double)AV_TIME_BASE;
-              cur_stream->stream_seek((int64_t)(pos * AV_TIME_BASE), (int64_t)(incr * AV_TIME_BASE),
-                                      0);
+                  pos < cur_stream->ic->start_time / static_cast<double>(AV_TIME_BASE))
+                pos = cur_stream->ic->start_time / static_cast<double>(AV_TIME_BASE);
+              cur_stream->stream_seek(static_cast<int64_t>(pos * AV_TIME_BASE),
+                                      static_cast<int64_t>(incr * AV_TIME_BASE), 0);
             }
             break;
           default:
@@ -1411,7 +1417,7 @@ the_end:
   if (p && stream_index != -1)
     stream_index = p->stream_index[stream_index];
   av_log(NULL, AV_LOG_INFO, "Switch %s stream from #%d to #%d\n",
-         av_get_media_type_string((AVMediaType)codec_type), old_index, stream_index);
+         av_get_media_type_string(static_cast<AVMediaType>(codec_type)), old_index, stream_index);
 
   stream_component_close(old_index);
   stream_component_open(stream_index);
@@ -1454,7 +1460,7 @@ int VideoState::synchronize_audio(int nb_samples) {
         avg_diff = audio_diff_cum * (1.0 - audio_diff_avg_coef);
 
         if (fabs(avg_diff) >= audio_diff_threshold) {
-          wanted_nb_samples = nb_samples + (int)(diff * audio_src.freq);
+          wanted_nb_samples = nb_samples + static_cast<int>(diff * audio_src.freq);
           min_nb_samples = ((nb_samples * (100 - SAMPLE_CORRECTION_PERCENT_MAX) / 100));
           max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100));
           wanted_nb_samples = av_clip(wanted_nb_samples, min_nb_samples, max_nb_samples);
@@ -1499,9 +1505,9 @@ int VideoState::audio_decode_frame() {
     sampq->next();
   } while (af->serial != audioq->serial);
 
-  data_size =
-      av_samples_get_buffer_size(NULL, av_frame_get_channels(af->frame), af->frame->nb_samples,
-                                 (AVSampleFormat)af->frame->format, 1);
+  const AVSampleFormat sample_fmt = static_cast<AVSampleFormat>(af->frame->format);
+  data_size = av_samples_get_buffer_size(NULL, av_frame_get_channels(af->frame),
+                                         af->frame->nb_samples, sample_fmt, 1);
 
   dec_channel_layout = (af->frame->channel_layout &&
                         av_frame_get_channels(af->frame) ==
@@ -1515,13 +1521,12 @@ int VideoState::audio_decode_frame() {
       (wanted_nb_samples != af->frame->nb_samples && !swr_ctx)) {
     swr_free(&swr_ctx);
     swr_ctx = swr_alloc_set_opts(NULL, audio_tgt.channel_layout, audio_tgt.fmt, audio_tgt.freq,
-                                 dec_channel_layout, (AVSampleFormat)af->frame->format,
-                                 af->frame->sample_rate, 0, NULL);
+                                 dec_channel_layout, sample_fmt, af->frame->sample_rate, 0, NULL);
     if (!swr_ctx || swr_init(swr_ctx) < 0) {
       av_log(NULL, AV_LOG_ERROR,
              "Cannot create sample rate converter for conversion of %d Hz %s %d channels to %d Hz "
              "%s %d channels!\n",
-             af->frame->sample_rate, av_get_sample_fmt_name((AVSampleFormat)af->frame->format),
+             af->frame->sample_rate, av_get_sample_fmt_name(sample_fmt),
              av_frame_get_channels(af->frame), audio_tgt.freq,
              av_get_sample_fmt_name(audio_tgt.fmt), audio_tgt.channels);
       swr_free(&swr_ctx);
@@ -1530,13 +1535,14 @@ int VideoState::audio_decode_frame() {
     audio_src.channel_layout = dec_channel_layout;
     audio_src.channels = av_frame_get_channels(af->frame);
     audio_src.freq = af->frame->sample_rate;
-    audio_src.fmt = (AVSampleFormat)af->frame->format;
+    audio_src.fmt = sample_fmt;
   }
 
   if (swr_ctx) {
-    const uint8_t** in = (const uint8_t**)af->frame->extended_data;
+    const uint8_t** in = const_cast<const uint8_t**>(af->frame->extended_data);
     uint8_t** out = &audio_buf1;
-    int out_count = (int64_t)wanted_nb_samples * audio_tgt.freq / af->frame->sample_rate + 256;
+    int out_count =
+        static_cast<int64_t>(wanted_nb_samples) * audio_tgt.freq / af->frame->sample_rate + 256;
     int out_size =
         av_samples_get_buffer_size(NULL, audio_tgt.channels, out_count, audio_tgt.fmt, 0);
     int len2;
@@ -1576,7 +1582,7 @@ int VideoState::audio_decode_frame() {
   audio_clock0 = audio_clock;
   /* update the audio clock with the pts */
   if (!isnan(af->pts)) {
-    audio_clock = af->pts + (double)af->frame->nb_samples / af->frame->sample_rate;
+    audio_clock = af->pts + static_cast<double>(af->frame->nb_samples) / af->frame->sample_rate;
   } else {
     audio_clock = NAN;
   }
@@ -1607,7 +1613,7 @@ void VideoState::sdl_audio_callback(void* opaque, Uint8* stream, int len) {
             SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
       } else {
         if (is->opt->show_mode != SHOW_MODE_VIDEO) {
-          is->update_sample_display((int16_t*)is->audio_buf, audio_size);
+          is->update_sample_display(reinterpret_cast<int16_t*>(is->audio_buf), audio_size);
         }
         is->audio_buf_size = audio_size;
       }
@@ -1618,11 +1624,11 @@ void VideoState::sdl_audio_callback(void* opaque, Uint8* stream, int len) {
       len1 = len;
     }
     if (!is->muted && is->audio_buf && is->audio_volume == SDL_MIX_MAXVOLUME) {
-      memcpy(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1);
+      memcpy(stream, is->audio_buf + is->audio_buf_index, len1);
     } else {
       memset(stream, 0, len1);
       if (!is->muted && is->audio_buf) {
-        SDL_MixAudio(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1, is->audio_volume);
+        SDL_MixAudio(stream, is->audio_buf + is->audio_buf_index, len1, is->audio_volume);
       }
     }
     len -= len1;
@@ -1632,10 +1638,11 @@ void VideoState::sdl_audio_callback(void* opaque, Uint8* stream, int len) {
   is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
   /* Let's assume the audio driver that is used by SDL has two periods. */
   if (!isnan(is->audio_clock)) {
-    is->audclk->set_clock_at(is->audio_clock -
-                                 (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) /
-                                     is->audio_tgt.bytes_per_sec,
-                             is->audio_clock_serial, is->audio_callback_time / 1000000.0);
+    is->audclk->set_clock_at(
+        is->audio_clock -
+            static_cast<double>(2 * is->audio_hw_buf_size + is->audio_write_buf_size) /
+                is->audio_tgt.bytes_per_sec,
+        is->audio_clock_serial, is->audio_callback_time / 1000000.0);
     Clock::sync_clock_to_slave(is->extclk, is->audclk);
   }
 }

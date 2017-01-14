@@ -106,8 +106,9 @@ double get_rotation(AVStream* st) {
     if (*tail)
       theta = 0;
   }
-  if (displaymatrix && !theta)
-    theta = -av_display_rotation_get((int32_t*)displaymatrix);
+  if (displaymatrix && !theta) {
+    theta = -av_display_rotation_get(reinterpret_cast<int32_t*>(displaymatrix));
+  }
 
   theta -= 360 * floor(theta / 360 + 0.9 / 360);
 
@@ -193,7 +194,7 @@ void calculate_display_rect(SDL_Rect* rect,
   if (aspect_ratio <= 0.0) {
     aspect_ratio = 1.0;
   }
-  aspect_ratio *= (float)pic_width / (float)pic_height;
+  aspect_ratio *= static_cast<float>(pic_width) / static_cast<float>(pic_height);
 
   /* XXX: we suppose the screen has a 1.0 pixel ratio */
   int height = scr_height;
@@ -252,14 +253,14 @@ int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_con
     default:
       /* This should only happen if we are not using avfilter... */
       *img_convert_ctx = sws_getCachedContext(
-          *img_convert_ctx, frame->width, frame->height, (AVPixelFormat)frame->format, frame->width,
-          frame->height, AV_PIX_FMT_BGRA, sws_flags, NULL, NULL, NULL);
+          *img_convert_ctx, frame->width, frame->height, static_cast<AVPixelFormat>(frame->format),
+          frame->width, frame->height, AV_PIX_FMT_BGRA, sws_flags, NULL, NULL, NULL);
       if (*img_convert_ctx != NULL) {
         uint8_t* pixels[4];
         int pitch[4];
-        if (!SDL_LockTexture(tex, NULL, (void**)pixels, pitch)) {
-          sws_scale(*img_convert_ctx, (const uint8_t* const*)frame->data, frame->linesize, 0,
-                    frame->height, pixels, pitch);
+        if (!SDL_LockTexture(tex, NULL, reinterpret_cast<void**>(pixels), pitch)) {
+          sws_scale(*img_convert_ctx, const_cast<const uint8_t* const*>(frame->data),
+                    frame->linesize, 0, frame->height, pixels, pitch);
           SDL_UnlockTexture(tex);
         }
       } else {
