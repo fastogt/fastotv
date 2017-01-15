@@ -30,11 +30,11 @@ extern "C" {
 
 #include <common/macros.h>
 
-#include "core/clock.h"
 #include "core/frame_queue.h"
 #include "core/decoder.h"
 #include "core/app_options.h"
 #include "core/audio_params.h"
+#include "core/stream_engine.h"
 
 #define SAMPLE_ARRAY_SIZE (8 * 65536)
 /* no AV sync correction is done if below the minimum AV sync threshold */
@@ -140,13 +140,9 @@ class VideoState {
   AVFormatContext* ic;
   int realtime;
 
-  Clock* audclk;
-  Clock* vidclk;
-  Clock* extclk;
-
-  FrameQueue* pictq;
-  FrameQueue* subpq;
-  FrameQueue* sampq;
+  StreamEngine* video_engine_;
+  StreamEngine* audio_engine_;
+  StreamEngine* subtitle_engine_;
 
   Decoder* auddec;
   VideoDecoder* viddec;
@@ -161,7 +157,6 @@ class VideoState {
   double audio_diff_threshold;
   int audio_diff_avg_count;
   AVStream* audio_st;
-  PacketQueue* audioq;
   int audio_hw_buf_size;
   uint8_t* audio_buf;
   uint8_t* audio_buf1;
@@ -193,14 +188,12 @@ class VideoState {
 
   int subtitle_stream;
   AVStream* subtitle_st;
-  PacketQueue* subtitleq;
 
   double frame_timer;
   double frame_last_returned_time;
   double frame_last_filter_delay;
   int video_stream;
   AVStream* video_st;
-  PacketQueue* videoq;
   double max_frame_duration;  // maximum duration of a frame - above this, we consider the jump a
                               // timestamp discontinuity
   struct SwsContext* img_convert_ctx;

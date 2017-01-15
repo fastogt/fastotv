@@ -48,14 +48,14 @@ int Decoder::decodeFrame(AVFrame* frame, AVSubtitle* sub) {
   do {
     int ret = -1;
 
-    if (queue_->abortRequest()) {
+    if (queue_->abort_request()) {
       return -1;
     }
 
     if (!packet_pending_ || queue_->serial != pkt_serial_) {
       AVPacket lpkt;
       do {
-        if (queue_->nbPackets() == 0) {
+        if (queue_->nb_packets() == 0) {
           SDL_CondSignal(empty_queue_cond_);
         }
         if (queue_->get(&lpkt, 1, &pkt_serial_) < 0) {

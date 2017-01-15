@@ -10,6 +10,7 @@ SET(HEADERS_CORE
   core/app_options.h
   core/video_state.h
   core/audio_params.h
+  core/stream_engine.h
 )
 
 SET(SOURCES_CORE
@@ -22,6 +23,7 @@ SET(SOURCES_CORE
   core/app_options.cpp
   core/video_state.cpp
   core/audio_params.cpp
+  core/stream_engine.cpp
 )
 
 SET_DESKTOP_TARGET()

@@ -13,10 +13,10 @@ Clock::Clock(int* queue_serial) {
   set_clock(NAN, -1);
 }
 
-void Clock::sync_clock_to_slave(Clock* c, Clock* slave) {
+void Clock::sync_clock_to_slave(Clock* c, Clock* slave, double no_sync_threshold) {
   double clock = c->get_clock();
   double slave_clock = slave->get_clock();
-  if (!isnan(slave_clock) && (isnan(clock) || fabs(clock - slave_clock) > AV_NOSYNC_THRESHOLD)) {
+  if (!isnan(slave_clock) && (isnan(clock) || fabs(clock - slave_clock) > no_sync_threshold)) {
     c->set_clock(slave_clock, slave->serial_);
   }
 }
@@ -38,16 +38,16 @@ void Clock::set_clock(double pts, int serial) {
   set_clock_at(pts, serial, time);
 }
 
-double Clock::get_clock() {
+double Clock::get_clock() const {
   if (*queue_serial_ != serial_) {
     return NAN;
   }
   if (paused_) {
     return pts_;
-  } else {
-    double time = av_gettime_relative() / 1000000.0;
-    return pts_drift_ + time - (time - last_updated_) * (1.0 - speed_);
   }
+
+  double time = av_gettime_relative() / 1000000.0;
+  return pts_drift_ + time - (time - last_updated_) * (1.0 - speed_);
 }
 
 double Clock::speed() const {
@@ -64,4 +64,12 @@ double Clock::last_updated() const {
 
 double Clock::pts() const {
   return pts_;
+}
+
+int Clock::paused() const {
+  return paused_;
+}
+
+void Clock::set_paused(int paused) {
+  paused_ = paused;
 }

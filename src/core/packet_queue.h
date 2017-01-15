@@ -40,8 +40,8 @@ class PacketQueue {
 
   static AVPacket* flush_pkt();
 
-  bool abortRequest() const;
-  size_t nbPackets() const;
+  bool abort_request() const;
+  size_t nb_packets() const;
   int size() const;
   int64_t duration() const;
 

@@ -64,13 +64,13 @@ void FrameQueue::push() {
 Frame* FrameQueue::peek_writable() {
   /* wait until we have space to put a new frame */
   SDL_LockMutex(mutex);
-  while (size_ >= max_size_ && !pktq_->abortRequest()) {
+  while (size_ >= max_size_ && !pktq_->abort_request()) {
     SDL_CondWait(cond, mutex);
   }
   SDL_UnlockMutex(mutex);
 
-  if (pktq_->abortRequest()) {
-    return NULL;
+  if (pktq_->abort_request()) {
+    return nullptr;
   }
 
   return &queue[windex_];
@@ -96,13 +96,13 @@ Frame* FrameQueue::peek_next() {
 Frame* FrameQueue::peek_readable() {
   /* wait until we have a readable a new frame */
   SDL_LockMutex(mutex);
-  while (size_ - rindex_shown_ <= 0 && !pktq_->abortRequest()) {
+  while (size_ - rindex_shown_ <= 0 && !pktq_->abort_request()) {
     SDL_CondWait(cond, mutex);
   }
   SDL_UnlockMutex(mutex);
 
-  if (pktq_->abortRequest()) {
-    return NULL;
+  if (pktq_->abort_request()) {
+    return nullptr;
   }
 
   return &queue[(rindex_ + rindex_shown_) % max_size_];

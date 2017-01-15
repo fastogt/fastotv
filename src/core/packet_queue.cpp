@@ -65,11 +65,11 @@ AVPacket* PacketQueue::flush_pkt() {
   return &fls;
 }
 
-bool PacketQueue::abortRequest() const {
+bool PacketQueue::abort_request() const {
   return abort_request_;
 }
 
-size_t PacketQueue::nbPackets() const {
+size_t PacketQueue::nb_packets() const {
   return list_.size();
 }
 
