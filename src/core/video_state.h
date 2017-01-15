@@ -44,11 +44,84 @@ extern "C" {
 /* If a frame duration is longer than this, it will not be duplicated to compensate AV sync */
 #define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
 
-struct VideoState {
+class VideoState {
+ public:
   VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt);
-  int exec();
-
+  int exec() WARN_UNUSED_RESULT;
   ~VideoState();
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(VideoState);
+
+  /* open a given stream. Return 0 if OK */
+  int stream_component_open(int stream_index);
+  void stream_component_close(int stream_index);
+
+  /* seek in the stream */
+  void stream_seek(int64_t pos, int64_t rel, int seek_by_bytes);
+
+  void step_to_next_frame();
+  int get_master_sync_type() const;
+  double compute_target_delay(double delay);
+  double get_master_clock();
+  void set_default_window_size(int width, int height, AVRational sar);
+#if CONFIG_AVFILTER
+  int configure_video_filters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame);
+  int configure_audio_filters(const char* afilters, int force_output_format);
+#endif
+
+  void refresh_loop_wait_event(SDL_Event* event);
+  int video_open(Frame* vp);
+  /* allocate a picture (needs to do that in main thread to avoid
+     potential locking problems */
+  int alloc_picture();
+  void video_display();
+  /* called to display each frame */
+  void video_refresh(double* remaining_time);
+  void toggle_full_screen();
+  int realloc_texture(SDL_Texture** texture,
+                      Uint32 new_format,
+                      int new_width,
+                      int new_height,
+                      SDL_BlendMode blendmode,
+                      int init_texture);
+  void video_audio_display();
+  void video_image_display();
+  void check_external_clock_speed();
+  double vp_duration(Frame* vp, Frame* nextvp);
+  void update_video_pts(double pts, int64_t pos, int serial);
+  /* pause or resume the video */
+  void stream_toggle_pause();
+  void toggle_pause();
+  void toggle_mute();
+  void update_volume(int sign, int step);
+  void toggle_audio_display();
+  void seek_chapter(int incr);
+  /* copy samples for viewing in editor window */
+  void update_sample_display(short* samples, int samples_size);
+  void stream_cycle_channel(int codec_type);
+  /* return the wanted number of samples to get better sync if sync_type is video
+   * or external master clock */
+  int synchronize_audio(int nb_samples);
+  /**
+   * Decode one audio frame and return its uncompressed size.
+   *
+   * The processed audio frame is decoded, converted if required, and
+   * stored in is->audio_buf, with size in bytes given by the return
+   * value.
+   */
+  int audio_decode_frame();
+  int get_video_frame(AVFrame* frame);
+  int queue_picture(AVFrame* src_frame, double pts, double duration, int64_t pos, int serial);
+
+  /* prepare a new audio buffer */
+  static void sdl_audio_callback(void* opaque, Uint8* stream, int len);
+
+  static int read_thread(void* user_data);
+  static int video_thread(void* user_data);
+  static int audio_thread(void* user_data);
+  static int subtitle_thread(void* user_data);
+  static int decode_interrupt_cb(void* user_data);
 
   AppOptions* const opt;
   ComplexOptions* const copt;
@@ -132,7 +205,6 @@ struct VideoState {
                               // timestamp discontinuity
   struct SwsContext* img_convert_ctx;
   struct SwsContext* sub_convert_ctx;
-  int eof;
 
   int width, height, xleft, ytop;
   int step;
@@ -150,82 +222,12 @@ struct VideoState {
 
   SDL_cond* continue_read_thread;
 
-  /* open a given stream. Return 0 if OK */
-  int stream_component_open(int stream_index);
-  void stream_component_close(int stream_index);
-
-  /* seek in the stream */
-  void stream_seek(int64_t pos, int64_t rel, int seek_by_bytes);
-
-  void step_to_next_frame();
-  int get_master_sync_type() const;
-  double compute_target_delay(double delay);
-  double get_master_clock();
-  void set_default_window_size(int width, int height, AVRational sar);
-#if CONFIG_AVFILTER
-  int configure_video_filters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame);
-  int configure_audio_filters(const char* afilters, int force_output_format);
-#endif
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(VideoState);
-
-  void refresh_loop_wait_event(SDL_Event* event);
-  int video_open(Frame* vp);
-  /* allocate a picture (needs to do that in main thread to avoid
-     potential locking problems */
-  int alloc_picture();
-  void video_display();
-  /* called to display each frame */
-  void video_refresh(double* remaining_time);
-  void toggle_full_screen();
-  int realloc_texture(SDL_Texture** texture,
-                      Uint32 new_format,
-                      int new_width,
-                      int new_height,
-                      SDL_BlendMode blendmode,
-                      int init_texture);
-  void video_audio_display();
-  void video_image_display();
-  void check_external_clock_speed();
-  double vp_duration(Frame* vp, Frame* nextvp);
-  void update_video_pts(double pts, int64_t pos, int serial);
-  /* pause or resume the video */
-  void stream_toggle_pause();
-  void toggle_pause();
-  void toggle_mute();
-  void update_volume(int sign, int step);
-  void toggle_audio_display();
-  void seek_chapter(int incr);
-  /* copy samples for viewing in editor window */
-  void update_sample_display(short* samples, int samples_size);
-  void stream_cycle_channel(int codec_type);
-  /* return the wanted number of samples to get better sync if sync_type is video
-   * or external master clock */
-  int synchronize_audio(int nb_samples);
-  /**
-   * Decode one audio frame and return its uncompressed size.
-   *
-   * The processed audio frame is decoded, converted if required, and
-   * stored in is->audio_buf, with size in bytes given by the return
-   * value.
-   */
-  int audio_decode_frame();
-  int get_video_frame(AVFrame* frame);
-  int queue_picture(AVFrame* src_frame, double pts, double duration, int64_t pos, int serial);
-
-  /* prepare a new audio buffer */
-  static void sdl_audio_callback(void* opaque, Uint8* stream, int len);
-
-  static int read_thread(void* user_data);
-  static int video_thread(void* user_data);
-  static int audio_thread(void* user_data);
-  static int subtitle_thread(void* user_data);
-
   bool paused_;
   bool last_paused_;
   bool cursor_hidden_;
   int64_t cursor_last_shown_;
+  bool eof_;
+
   SDL_Renderer* renderer;
   SDL_Window* window;
 };

@@ -36,11 +36,6 @@ extern "C" {
 #define FF_QUIT_EVENT (SDL_USEREVENT + 2)
 
 namespace {
-int decode_interrupt_cb(void* user_data) {
-  VideoState* is = static_cast<VideoState*>(user_data);
-  return is->abort_request;
-}
-
 int stream_has_enough_packets(AVStream* st, int stream_id, PacketQueue* queue) {
   return stream_id < 0 || queue->abortRequest() ||
          (st->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
@@ -75,6 +70,8 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
       last_paused_(false),
       cursor_hidden_(false),
       cursor_last_shown_(0),
+      eof_(false),
+
       renderer(NULL),
       window(NULL) {
   iformat = ifo;
@@ -85,19 +82,18 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
   audioq = new PacketQueue;
   subtitleq = new PacketQueue;
 
-  /* start video display */
   pictq = new FrameQueue(videoq, VIDEO_PICTURE_QUEUE_SIZE, true);
   subpq = new FrameQueue(subtitleq, SUBPICTURE_QUEUE_SIZE, false);
   sampq = new FrameQueue(audioq, SAMPLE_QUEUE_SIZE, true);
+
+  vidclk = new Clock(&videoq->serial);
+  audclk = new Clock(&audioq->serial);
+  extclk = new Clock(&subtitleq->serial);
 
   if (!(continue_read_thread = SDL_CreateCond())) {
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
     return;
   }
-
-  vidclk = new Clock(&videoq->serial);
-  audclk = new Clock(&audioq->serial);
-  extclk = new Clock(&subtitleq->serial);
   audio_clock_serial = -1;
   if (opt->startup_volume < 0) {
     av_log(NULL, AV_LOG_WARNING, "-volume=%d < 0, setting to 0\n", opt->startup_volume);
@@ -166,7 +162,7 @@ VideoState::~VideoState() {
 
 int VideoState::stream_component_open(int stream_index) {
   if (stream_index < 0 || stream_index >= ic->nb_streams) {
-    return -1;
+    return AVERROR(EINVAL);
   }
 
   AVCodecContext* avctx = avcodec_alloc_context3(NULL);
@@ -257,7 +253,7 @@ int VideoState::stream_component_open(int stream_index) {
     goto fail;
   }
 
-  eof = 0;
+  eof_ = false;
   ic->streams[stream_index]->discard = AVDISCARD_DEFAULT;
   switch (avctx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
@@ -1802,7 +1798,7 @@ int VideoState::read_thread(void* user_data) {
   is->last_video_stream = is->video_stream = -1;
   is->last_audio_stream = is->audio_stream = -1;
   is->last_subtitle_stream = is->subtitle_stream = -1;
-  is->eof = 0;
+  is->eof_ = false;
 
   ic = avformat_alloc_context();
   if (!ic) {
@@ -2015,7 +2011,7 @@ int VideoState::read_thread(void* user_data) {
       }
       is->seek_req = 0;
       is->queue_attachments_req = 1;
-      is->eof = 0;
+      is->eof_ = false;
       if (is->paused_) {
         is->step_to_next_frame();
       }
@@ -2057,7 +2053,7 @@ int VideoState::read_thread(void* user_data) {
     }
     ret = av_read_frame(ic, pkt);
     if (ret < 0) {
-      if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
+      if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof_) {
         if (is->video_stream >= 0) {
           is->videoq->put_nullpacket(is->video_stream);
         }
@@ -2067,7 +2063,7 @@ int VideoState::read_thread(void* user_data) {
         if (is->subtitle_stream >= 0) {
           is->subtitleq->put_nullpacket(is->subtitle_stream);
         }
-        is->eof = 1;
+        is->eof_ = true;
       }
       if (ic->pb && ic->pb->error)
         break;
@@ -2076,7 +2072,7 @@ int VideoState::read_thread(void* user_data) {
       SDL_UnlockMutex(wait_mutex);
       continue;
     } else {
-      is->eof = 0;
+      is->eof_ = false;
     }
     /* check if packet is in play range specified by user, then queue, otherwise discard */
     stream_start_time = ic->streams[pkt->stream_index]->start_time;
@@ -2367,6 +2363,11 @@ int VideoState::subtitle_thread(void* user_data) {
     }
   }
   return 0;
+}
+
+int VideoState::decode_interrupt_cb(void* user_data) {
+  VideoState* is = static_cast<VideoState*>(user_data);
+  return is->abort_request;
 }
 
 #if CONFIG_AVFILTER
