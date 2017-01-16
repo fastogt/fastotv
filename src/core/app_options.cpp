@@ -19,7 +19,7 @@ AppOptions::AppOptions()
       screen_height(0),
       show_mode(SHOW_MODE_NONE),
       window_title(),
-      framedrop(0),
+      framedrop(-1),
       genpts(0),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
       startup_volume(100),
