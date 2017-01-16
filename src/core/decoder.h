@@ -8,39 +8,56 @@ extern "C" {
 
 class Decoder {
  public:
-  Decoder(AVCodecContext* avctx,
-          PacketQueue* queue,
-          SDL_cond* empty_queue_cond,
-          int decoder_reorder_pts);
-  ~Decoder();
+  virtual ~Decoder();
 
-  int start(int (*fn)(void*), void* arg);
-  void abort(FrameQueue* fq);
-  int decodeFrame(AVFrame* frame, AVSubtitle* sub);
-  int pktSerial() const;
+  int Start(int (*fn)(void*), void* arg);
+  void Abort(FrameQueue* fq);
+  int GetPktSerial() const;
 
-  int finished;
+  bool Finished() const;
+  void SetFinished(bool finished);
+
   int64_t start_pts;
   AVRational start_pts_tb;
 
  protected:
-  AVCodecContext* avctx_;
+  Decoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
 
- private:
+  AVCodecContext* avctx_;
   AVPacket pkt_;
   PacketQueue* const queue_;
 
-  int packet_pending_;
+  bool packet_pending_;
   SDL_cond* const empty_queue_cond_;
   int pkt_serial_;
 
   int64_t next_pts_;
   AVRational next_pts_tb_;
   SDL_Thread* decoder_tid_;
-  int decoder_reorder_pts_;
+
+ private:
+  bool finished_;
 };
 
-class VideoDecoder : public Decoder {
+class IFrameDecoder : public Decoder {
+ public:
+  IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+  virtual int DecodeFrame(AVFrame* frame) = 0;
+};
+
+class ISubDecoder : public Decoder {
+ public:
+  ISubDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+  virtual int DecodeFrame(AVSubtitle* sub) = 0;
+};
+
+class AudioDecoder : public IFrameDecoder {
+ public:
+  AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+  virtual int DecodeFrame(AVFrame* frame) override;
+};
+
+class VideoDecoder : public IFrameDecoder {
  public:
   VideoDecoder(AVCodecContext* avctx,
                PacketQueue* queue,
@@ -49,8 +66,22 @@ class VideoDecoder : public Decoder {
 
   int width() const;
   int height() const;
-  int64_t ptsCorrectionNumFaultyDts() const;
-  int64_t ptsCorrectionNumFaultyPts() const;
+
+  int64_t PtsCorrectionNumFaultyDts() const;
+  int64_t PtsCorrectionNumFaultyPts() const;
+
+  int DecodeFrame(AVFrame* frame) override;
+
+ private:
+  int decoder_reorder_pts_;
 };
 
-typedef VideoDecoder SubDecoder;
+class SubDecoder : public ISubDecoder {
+ public:
+  SubDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+
+  int width() const;
+  int height() const;
+
+  int DecodeFrame(AVSubtitle* sub) override;
+};

@@ -139,7 +139,7 @@ class VideoState {
   StreamEngine* audio_engine_;
   StreamEngine* subtitle_engine_;
 
-  Decoder* auddec;
+  AudioDecoder* auddec;
   VideoDecoder* viddec;
   SubDecoder* subdec;
 
