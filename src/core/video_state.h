@@ -37,18 +37,18 @@ extern "C" {
 #include "core/stream_engine.h"
 
 #define SAMPLE_ARRAY_SIZE (8 * 65536)
-/* no AV sync correction is done if below the minimum AV sync threshold */
-#define AV_SYNC_THRESHOLD_MIN 0.04
-/* AV sync correction is done if above the maximum AV sync threshold */
-#define AV_SYNC_THRESHOLD_MAX 0.1
-/* If a frame duration is longer than this, it will not be duplicated to compensate AV sync */
-#define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
 
 class VideoState {
  public:
   VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt);
-  int exec() WARN_UNUSED_RESULT;
+  int Exec() WARN_UNUSED_RESULT;
   ~VideoState();
+
+  void ToggleFullScreen();
+  void StreamTogglePause();
+  void TogglePause();
+  void ToggleMute();
+  void ToggleAudioDisplay();
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoState);
@@ -78,7 +78,6 @@ class VideoState {
   void video_display();
   /* called to display each frame */
   void video_refresh(double* remaining_time);
-  void toggle_full_screen();
   int realloc_texture(SDL_Texture** texture,
                       Uint32 new_format,
                       int new_width,
@@ -91,11 +90,7 @@ class VideoState {
   double vp_duration(Frame* vp, Frame* nextvp);
   void update_video_pts(double pts, int64_t pos, int serial);
   /* pause or resume the video */
-  void stream_toggle_pause();
-  void toggle_pause();
-  void toggle_mute();
   void update_volume(int sign, int step);
-  void toggle_audio_display();
   void seek_chapter(int incr);
   /* copy samples for viewing in editor window */
   void update_sample_display(short* samples, int samples_size);
@@ -165,7 +160,6 @@ class VideoState {
   int audio_buf_index; /* in bytes */
   int audio_write_buf_size;
   int audio_volume;
-  int muted;
   struct AudioParams audio_src;
 #if CONFIG_AVFILTER
   struct AudioParams audio_filter_src;
@@ -218,6 +212,7 @@ class VideoState {
   bool paused_;
   bool last_paused_;
   bool cursor_hidden_;
+  bool muted_;
   int64_t cursor_last_shown_;
   bool eof_;
 

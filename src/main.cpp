@@ -512,7 +512,7 @@ int main(int argc, char** argv) {
   copt.format_opts = format_opts;
   copt.codec_opts = codec_opts;
   VideoState* is = new VideoState(file_iformat, &g_options, &copt);
-  int res = is->exec();
+  int res = is->Exec();
   delete is;
 
   do_exit();

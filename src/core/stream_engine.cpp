@@ -6,9 +6,10 @@
 
 StreamEngine::StreamEngine(size_t max_size, bool keep_last)
     : packet_queue_(nullptr), frame_queue_(nullptr), clock_(nullptr) {
-  packet_queue_ = new PacketQueue;
+  int* ext_serial = NULL;
+  packet_queue_ = PacketQueue::make_packet_queue(&ext_serial);
   frame_queue_ = new FrameQueue(packet_queue_, max_size, keep_last);
-  clock_ = new Clock(&packet_queue_->serial);
+  clock_ = new Clock(ext_serial);
 }
 
 double StreamEngine::GetClock() const {

@@ -3,7 +3,7 @@
 SAVPacket::SAVPacket(const AVPacket& p) : pkt(p) {}
 
 PacketQueue::PacketQueue()
-    : serial(0), list_(), size_(0), duration_(0), abort_request_(true), mutex(NULL), cond(NULL) {
+    : serial_(0), list_(), size_(0), duration_(0), abort_request_(true), mutex(NULL), cond(NULL) {
   mutex = SDL_CreateMutex();
   if (!mutex) {
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
@@ -58,6 +58,14 @@ int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
   return ret;
 }
 
+PacketQueue* PacketQueue::make_packet_queue(int** ext_serial) {
+  PacketQueue* pq = new PacketQueue;
+  if (ext_serial) {
+    *ext_serial = &pq->serial_;
+  }
+  return pq;
+}
+
 AVPacket* PacketQueue::flush_pkt() {
   static AVPacket fls;
   av_init_packet(&fls);
@@ -79,6 +87,10 @@ int PacketQueue::size() const {
 
 int64_t PacketQueue::duration() const {
   return duration_;
+}
+
+int PacketQueue::serial() const {
+  return serial_;
 }
 
 void PacketQueue::start() {
@@ -135,9 +147,9 @@ int PacketQueue::put_private(AVPacket* pkt) {
 
   SAVPacket* pkt1 = new SAVPacket(*pkt);
   if (pkt == flush_pkt()) {
-    serial++;
+    serial_++;
   }
-  pkt1->serial = serial;
+  pkt1->serial = serial_;
 
   list_.push_back(pkt1);
   size_ += pkt1->pkt.size + sizeof(*pkt1);

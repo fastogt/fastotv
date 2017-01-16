@@ -132,7 +132,7 @@ void FrameQueue::next() {
 /* return last shown position */
 int64_t FrameQueue::last_pos() {
   Frame* fp = &queue[rindex_];
-  if (rindex_shown_ && fp->serial == pktq_->serial) {
+  if (rindex_shown_ && fp->serial == pktq_->serial()) {
     return fp->pos;
   } else {
     return -1;

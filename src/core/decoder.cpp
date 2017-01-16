@@ -52,7 +52,7 @@ int Decoder::decodeFrame(AVFrame* frame, AVSubtitle* sub) {
       return -1;
     }
 
-    if (!packet_pending_ || queue_->serial != pkt_serial_) {
+    if (!packet_pending_ || queue_->serial() != pkt_serial_) {
       AVPacket lpkt;
       do {
         if (queue_->nb_packets() == 0) {
@@ -67,7 +67,7 @@ int Decoder::decodeFrame(AVFrame* frame, AVSubtitle* sub) {
           next_pts_ = start_pts;
           next_pts_tb_ = start_pts_tb;
         }
-      } while (lpkt.data == fls->data || queue_->serial != pkt_serial_);
+      } while (lpkt.data == fls->data || queue_->serial() != pkt_serial_);
       av_packet_unref(&pkt_);
       pkt_temp = pkt_ = lpkt;
       packet_pending_ = 1;

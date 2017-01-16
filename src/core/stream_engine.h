@@ -9,6 +9,7 @@ class StreamEngine {
   StreamEngine(size_t max_size, bool keep_last);
   ~StreamEngine();
 
+  // clock interface
   double GetClock() const;
   double GetPts() const;
 

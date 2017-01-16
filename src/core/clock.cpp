@@ -6,10 +6,7 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
-Clock::Clock(int* queue_serial) {
-  speed_ = 1.0;
-  paused_ = 0;
-  queue_serial_ = queue_serial;
+Clock::Clock(int* queue_serial) : paused_(false), speed_(1.0), queue_serial_(queue_serial) {
   set_clock(NAN, -1);
 }
 
@@ -66,10 +63,10 @@ double Clock::pts() const {
   return pts_;
 }
 
-int Clock::paused() const {
+bool Clock::paused() const {
   return paused_;
 }
 
-void Clock::set_paused(int paused) {
+void Clock::set_paused(bool paused) {
   paused_ = paused;
 }

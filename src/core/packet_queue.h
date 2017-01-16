@@ -10,6 +10,8 @@ extern "C" {
 
 #include <deque>
 
+#include <common/macros.h>
+
 /* no AV correction is done if too big error */
 #define SUBPICTURE_QUEUE_SIZE 16
 #define VIDEO_PICTURE_QUEUE_SIZE 3
@@ -18,7 +20,7 @@ extern "C" {
   FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
 
 struct SAVPacket {
-  SAVPacket(const AVPacket& p);
+  explicit SAVPacket(const AVPacket& p);
 
   AVPacket pkt;
   int serial;
@@ -26,8 +28,6 @@ struct SAVPacket {
 
 class PacketQueue {
  public:
-  /* packet queue handling */
-  PacketQueue();
   ~PacketQueue();
 
   void flush();
@@ -39,17 +39,21 @@ class PacketQueue {
   void start();
 
   static AVPacket* flush_pkt();
+  static PacketQueue* make_packet_queue(int** ext_serial);
 
   bool abort_request() const;
   size_t nb_packets() const;
   int size() const;
   int64_t duration() const;
-
-  int serial;
+  int serial() const;
 
  private:
+  PacketQueue();
+
+  DISALLOW_COPY_AND_ASSIGN(PacketQueue);
   int put_private(AVPacket* pkt);
 
+  int serial_;
   std::deque<SAVPacket*> list_;
   int size_;
   int64_t duration_;
