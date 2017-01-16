@@ -56,39 +56,35 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
     : opt(opt),
       copt(copt),
       audio_callback_time(0),
+      iformat(ifo),
       ic(NULL),
+      video_engine_(new StreamEngine(VIDEO_PICTURE_QUEUE_SIZE, true)),
+      audio_engine_(new StreamEngine(SAMPLE_QUEUE_SIZE, true)),
+      subtitle_engine_(new StreamEngine(SUBPICTURE_QUEUE_SIZE, false)),
       auddec(NULL),
       viddec(NULL),
       subdec(NULL),
       vis_texture(NULL),
       sub_texture(NULL),
+      xleft(0),
+      ytop(0),
 #if CONFIG_AVFILTER
       vfilter_idx(0),
 #endif
-      video_engine_(nullptr),
-      audio_engine_(nullptr),
-      subtitle_engine_(nullptr),
       paused_(false),
       last_paused_(false),
       cursor_hidden_(false),
+      muted_(false),
       cursor_last_shown_(0),
       eof_(false),
-      muted_(false),
-
+      abort_request_(false),
       renderer(NULL),
       window(NULL) {
-  iformat = ifo;
-  ytop = 0;
-  xleft = 0;
-
-  video_engine_ = new StreamEngine(VIDEO_PICTURE_QUEUE_SIZE, true);
-  audio_engine_ = new StreamEngine(SAMPLE_QUEUE_SIZE, true);
-  subtitle_engine_ = new StreamEngine(SUBPICTURE_QUEUE_SIZE, false);
-
   if (!(continue_read_thread = SDL_CreateCond())) {
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
     return;
   }
+
   audio_clock_serial = -1;
   if (opt->startup_volume < 0) {
     av_log(NULL, AV_LOG_WARNING, "-volume=%d < 0, setting to 0\n", opt->startup_volume);
@@ -104,7 +100,7 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
 
 VideoState::~VideoState() {
   /* XXX: use a special url_shutdown call to abort parse cleanly */
-  abort_request = 1;
+  abort_request_ = true;
   SDL_WaitThread(read_tid, NULL);
 
   /* close each stream */
@@ -194,9 +190,6 @@ int VideoState::stream_component_open(int stream_index) {
     return ret;
   }
 
-  AVDictionaryEntry* t = NULL;
-  int sample_rate, nb_channels;
-  int64_t channel_layout;
   int stream_lowres = opt->lowres;
   avctx->codec_id = codec->id;
   if (stream_lowres > av_codec_get_max_lowres(codec)) {
@@ -231,22 +224,28 @@ int VideoState::stream_component_open(int stream_index) {
     av_dict_set(&opts, "refcounted_frames", "1", 0);
   }
   if ((ret = avcodec_open2(avctx, codec, &opts)) < 0) {
-    goto fail;
-  }
-  if ((t = av_dict_get(opts, "", NULL, AV_DICT_IGNORE_SUFFIX))) {
-    av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
-    ret = AVERROR_OPTION_NOT_FOUND;
-    goto fail;
+    avcodec_free_context(&avctx);
+    av_dict_free(&opts);
+    return ret;
   }
 
+  AVDictionaryEntry* t = av_dict_get(opts, "", NULL, AV_DICT_IGNORE_SUFFIX);
+  if (t) {
+    av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
+    ret = AVERROR_OPTION_NOT_FOUND;
+    avcodec_free_context(&avctx);
+    av_dict_free(&opts);
+    return ret;
+  }
+
+  int sample_rate, nb_channels;
+  int64_t channel_layout;
   eof_ = false;
   stream->discard = AVDISCARD_DEFAULT;
   switch (avctx->codec_type) {
     case AVMEDIA_TYPE_AUDIO:
 #if CONFIG_AVFILTER
     {
-      AVFilterLink* link;
-
       audio_filter_src.freq = avctx->sample_rate;
       audio_filter_src.channels = avctx->channels;
       audio_filter_src.channel_layout =
@@ -255,7 +254,7 @@ int VideoState::stream_component_open(int stream_index) {
       if ((ret = configure_audio_filters(opt->afilters, 0)) < 0) {
         goto fail;
       }
-      link = out_audio_filter->inputs[0];
+      AVFilterLink* link = out_audio_filter->inputs[0];
       sample_rate = link->sample_rate;
       nb_channels = avfilter_link_get_channels(link);
       channel_layout = link->channel_layout;
@@ -506,11 +505,10 @@ void VideoState::video_refresh(double* remaining_time) {
       // nothing to do, no picture to display in the queue
     } else {
       double last_duration, duration, delay;
-      Frame *vp, *lastvp;
 
       /* dequeue the picture */
-      lastvp = video_engine_->frame_queue_->peek_last();
-      vp = video_engine_->frame_queue_->peek();
+      Frame* lastvp = video_engine_->frame_queue_->peek_last();
+      Frame* vp = video_engine_->frame_queue_->peek();
 
       if (vp->serial != video_engine_->packet_queue_->serial()) {
         video_engine_->frame_queue_->next();
@@ -535,8 +533,9 @@ void VideoState::video_refresh(double* remaining_time) {
       }
 
       frame_timer += delay;
-      if (delay > 0 && time - frame_timer > AV_SYNC_THRESHOLD_MAX)
+      if (delay > 0 && time - frame_timer > AV_SYNC_THRESHOLD_MAX) {
         frame_timer = time;
+      }
 
       SDL_LockMutex(video_engine_->frame_queue_->mutex);
       if (!isnan(vp->pts)) {
@@ -601,7 +600,7 @@ void VideoState::video_refresh(double* remaining_time) {
   display:
     /* display picture */
     if (!opt->display_disable && force_refresh && opt->show_mode == SHOW_MODE_VIDEO &&
-        video_engine_->frame_queue_->rindexShown()) {
+        video_engine_->frame_queue_->rindex_shown()) {
       video_display();
     }
   }
@@ -702,7 +701,7 @@ int VideoState::video_open(Frame* vp) {
 }
 
 int VideoState::alloc_picture() {
-  Frame* vp = &video_engine_->frame_queue_->queue[video_engine_->frame_queue_->windex()];
+  Frame* vp = video_engine_->frame_queue_->windex_frame();
 
   int res = video_open(vp);
   if (res == ERROR_RESULT_VALUE) {
@@ -1695,7 +1694,7 @@ int VideoState::queue_picture(AVFrame* src_frame,
      * complete */
     if (video_engine_->packet_queue_->abort_request() &&
         SDL_PeepEvents(&event, 1, SDL_GETEVENT, FF_ALLOC_EVENT, FF_ALLOC_EVENT) != 1) {
-      while (!vp->allocated && !abort_request) {
+      while (!vp->allocated && !abort_request_) {
         SDL_CondWait(video_engine_->frame_queue_->cond, video_engine_->frame_queue_->mutex);
       }
     }
@@ -1943,7 +1942,7 @@ int VideoState::read_thread(void* user_data) {
   }
 
   while (true) {
-    if (is->abort_request)
+    if (is->abort_request_)
       break;
     if (is->paused_ != is->last_paused_) {
       is->last_paused_ = is->paused_;
@@ -2087,12 +2086,12 @@ int VideoState::read_thread(void* user_data) {
 
   ret = 0;
 fail:
-  if (ic && !is->ic)
+  if (ic && !is->ic) {
     avformat_close_input(&ic);
+  }
 
   if (ret != 0) {
     SDL_Event event;
-
     event.type = FF_QUIT_EVENT;
     event.user.data1 = is;
     SDL_PushEvent(&event);
@@ -2355,7 +2354,7 @@ int VideoState::subtitle_thread(void* user_data) {
 
 int VideoState::decode_interrupt_cb(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
-  return is->abort_request;
+  return is->abort_request_;
 }
 
 #if CONFIG_AVFILTER

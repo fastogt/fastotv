@@ -139,10 +139,14 @@ int64_t FrameQueue::last_pos() {
   }
 }
 
-size_t FrameQueue::rindexShown() const {
+size_t FrameQueue::rindex_shown() const {
   return rindex_shown_;
 }
 
 size_t FrameQueue::windex() const {
   return windex_;
+}
+
+Frame* FrameQueue::windex_frame() {
+  return &queue[windex_];
 }

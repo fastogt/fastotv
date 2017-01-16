@@ -50,14 +50,17 @@ class FrameQueue {
   void signal();
   void next();
   int64_t last_pos();
-  size_t rindexShown() const;
+  size_t rindex_shown() const;
   size_t windex() const;
 
   SDL_mutex* mutex;
   SDL_cond* cond;
-  Frame queue[FRAME_QUEUE_SIZE];
+
+  Frame* windex_frame();
 
  private:
+  Frame queue[FRAME_QUEUE_SIZE];
+
   size_t rindex_;
   size_t rindex_shown_;
   size_t windex_;

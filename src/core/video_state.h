@@ -124,7 +124,6 @@ class VideoState {
 
   SDL_Thread* read_tid;
   AVInputFormat* iformat;
-  int abort_request;
   int force_refresh;
   int queue_attachments_req;
   int seek_req;
@@ -215,6 +214,7 @@ class VideoState {
   bool muted_;
   int64_t cursor_last_shown_;
   bool eof_;
+  bool abort_request_;
 
   SDL_Renderer* renderer;
   SDL_Window* window;
