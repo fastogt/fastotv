@@ -17,6 +17,8 @@ class Decoder {
   bool Finished() const;
   void SetFinished(bool finished);
 
+  AVMediaType CodecType() const;
+
   int64_t start_pts;
   AVRational start_pts_tb;
 

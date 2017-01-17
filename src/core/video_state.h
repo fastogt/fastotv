@@ -35,6 +35,7 @@ extern "C" {
 #include "core/app_options.h"
 #include "core/audio_params.h"
 #include "core/stream_engine.h"
+#include "core/stream.h"
 
 #define SAMPLE_ARRAY_SIZE (8 * 65536)
 
@@ -138,11 +139,13 @@ class VideoState {
   StreamEngine* audio_engine_;
   StreamEngine* subtitle_engine_;
 
-  AudioDecoder* auddec;
-  VideoDecoder* viddec;
-  SubDecoder* subdec;
+  VideoStream* vstream_;
+  AudioStream* astream_;
+  SubtitleStream* sstream_;
 
-  int audio_stream;
+  VideoDecoder* viddec;
+  AudioDecoder* auddec;
+  SubDecoder* subdec;
 
   double audio_clock;
   int audio_clock_serial;
@@ -150,7 +153,6 @@ class VideoState {
   double audio_diff_avg_coef;
   double audio_diff_threshold;
   int audio_diff_avg_count;
-  AVStream* audio_st;
   int audio_hw_buf_size;
   uint8_t* audio_buf;
   uint8_t* audio_buf1;
@@ -179,14 +181,9 @@ class VideoState {
   SDL_Texture* vis_texture;
   SDL_Texture* sub_texture;
 
-  int subtitle_stream;
-  AVStream* subtitle_st;
-
   double frame_timer;
   double frame_last_returned_time;
   double frame_last_filter_delay;
-  int video_stream;
-  AVStream* video_st;
   double max_frame_duration;  // maximum duration of a frame - above this, we consider the jump a
                               // timestamp discontinuity
   struct SwsContext* img_convert_ctx;

@@ -4,10 +4,10 @@ Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queu
     : start_pts(AV_NOPTS_VALUE),
       start_pts_tb{0, 0},
       avctx_(avctx),
-      finished_(false),
       pkt_(),
       queue_(queue),
       packet_pending_(false),
+      finished_(false),
       empty_queue_cond_(empty_queue_cond),
       pkt_serial_(0),
       next_pts_(0),
@@ -49,6 +49,10 @@ void Decoder::SetFinished(bool finished) {
   finished_ = finished;
 }
 
+AVMediaType Decoder::CodecType() const {
+  return avctx_->codec_type;
+}
+
 IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond)
     : Decoder(avctx, queue, empty_queue_cond) {}
 
@@ -57,7 +61,7 @@ ISubDecoder::ISubDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* em
 
 AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond)
     : IFrameDecoder(avctx, queue, empty_queue_cond) {
-  CHECK(avctx_->codec_type == AVMEDIA_TYPE_AUDIO);
+  CHECK(CodecType() == AVMEDIA_TYPE_AUDIO);
 }
 
 int AudioDecoder::DecodeFrame(AVFrame* frame) {
@@ -133,7 +137,7 @@ VideoDecoder::VideoDecoder(AVCodecContext* avctx,
                            SDL_cond* empty_queue_cond,
                            int decoder_reorder_pts)
     : IFrameDecoder(avctx, queue, empty_queue_cond), decoder_reorder_pts_(decoder_reorder_pts) {
-  CHECK(avctx_->codec_type == AVMEDIA_TYPE_VIDEO);
+  CHECK(CodecType() == AVMEDIA_TYPE_VIDEO);
 }
 
 int VideoDecoder::width() const {
@@ -218,6 +222,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
 
 SubDecoder::SubDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond)
     : ISubDecoder(avctx, queue, empty_queue_cond) {
+  CHECK(CodecType() == AVMEDIA_TYPE_SUBTITLE);
 }
 
 int SubDecoder::width() const {
