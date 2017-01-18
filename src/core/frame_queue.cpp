@@ -254,7 +254,10 @@ bool FrameQueueEx::GetFewFrames(std::vector<Frame*>* vect, size_t count) {
 
 Frame* FrameQueueEx::PeekOrNull() {
   lock_t lock(queue_mutex_);
-  return &queue_[rindex_];
+  if (size_ - rindex_shown_ == 0) {  // if is empty
+    return nullptr;
+  }
+  return &queue_[(rindex_ + rindex_shown_) % max_size_];
 }
 
 void FrameQueueEx::MoveToNext() {

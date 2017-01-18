@@ -82,7 +82,7 @@ class FrameQueueEx {
   bool GetLastUsedPos(int64_t* pos);
   Frame* GetPeekReadable();
   Frame* GetPeekWritable();
-  Frame* PeekOrNull();
+  Frame* PeekOrNull(); // peek or null if empty queue
   bool GetFewFrames(std::vector<Frame*>* vect, size_t count);
 
   void MoveToNext();
