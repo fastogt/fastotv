@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "ffmpeg_config.h"
 
 extern "C" {
@@ -7,6 +9,8 @@ extern "C" {
 
 #include <SDL2/SDL_render.h>
 }
+
+#include <common/thread/types.h>
 
 #include "core/packet_queue.h"
 
@@ -60,6 +64,39 @@ class FrameQueue {
 
  private:
   Frame queue[FRAME_QUEUE_SIZE];
+
+  size_t rindex_;
+  size_t rindex_shown_;
+  size_t windex_;
+  size_t size_;
+  const size_t max_size_;
+  const bool keep_last_;
+  const PacketQueue* const pktq_;
+};
+
+class FrameQueueEx {
+ public:
+  FrameQueueEx(PacketQueue* pktq, size_t max_size, bool keep_last);
+  ~FrameQueueEx();
+
+  bool GetLastUsedPos(int64_t* pos);
+  Frame* GetPeekReadable();
+  Frame* GetPeekWritable();
+  Frame* PeekOrNull();
+  bool GetFewFrames(std::vector<Frame*>* vect, size_t count);
+
+  void MoveToNext();
+  void Push();
+  void Signal();
+
+  int NbRemaining();
+  bool IsEmpty();
+
+ private:
+  typedef common::thread::unique_lock<common::thread::mutex> lock_t;
+  common::thread::condition_variable queue_cond_;
+  common::thread::mutex queue_mutex_;
+  Frame queue_[FRAME_QUEUE_SIZE];
 
   size_t rindex_;
   size_t rindex_shown_;

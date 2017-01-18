@@ -89,7 +89,6 @@ class VideoState {
   void video_image_display();
   void check_external_clock_speed();
   double vp_duration(Frame* vp, Frame* nextvp);
-  void update_video_pts(double pts, int64_t pos, int serial);
   /* pause or resume the video */
   void update_volume(int sign, int step);
   void seek_chapter(int incr);
@@ -144,8 +143,8 @@ class VideoState {
   SubDecoder* subdec;
 
   FrameQueue* video_frame_queue_;
-  FrameQueue* audio_frame_queue_;
-  FrameQueue* subtitle_frame_queue_;
+  FrameQueueEx* audio_frame_queue_;
+  FrameQueueEx* subtitle_frame_queue_;
 
   double audio_clock;
   int audio_clock_serial;

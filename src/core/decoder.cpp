@@ -32,6 +32,14 @@ void Decoder::Abort(FrameQueue* fq) {
   queue_->flush();
 }
 
+void Decoder::Abort(FrameQueueEx* fq) {
+  queue_->abort();
+  fq->Signal();
+  SDL_WaitThread(decoder_tid_, NULL);
+  decoder_tid_ = NULL;
+  queue_->flush();
+}
+
 Decoder::~Decoder() {
   av_packet_unref(&pkt_);
   avcodec_free_context(&avctx_);

@@ -150,3 +150,133 @@ size_t FrameQueue::windex() const {
 Frame* FrameQueue::windex_frame() {
   return &queue[windex_];
 }
+
+FrameQueueEx::FrameQueueEx(PacketQueue* pktq, size_t max_size, bool keep_last)
+    : queue_cond_(),
+      queue_mutex_(),
+      queue_(),
+      rindex_(0),
+      rindex_shown_(0),
+      windex_(0),
+      size_(0),
+      max_size_(FFMIN(max_size, FRAME_QUEUE_SIZE)),
+      keep_last_(keep_last),
+      pktq_(pktq) {
+  for (size_t i = 0; i < max_size; i++) {
+    if (!(queue_[i].frame = av_frame_alloc())) {
+      return;
+    }
+  }
+}
+
+FrameQueueEx::~FrameQueueEx() {
+  for (size_t i = 0; i < max_size_; i++) {
+    Frame* vp = &queue_[i];
+    frame_queue_unref_item(vp);
+    av_frame_free(&vp->frame);
+    free_picture(vp);
+  }
+}
+
+bool FrameQueueEx::GetLastUsedPos(int64_t* pos) {
+  if (!pos) {
+    return false;
+  }
+
+  lock_t lock(queue_mutex_);
+  Frame* fp = &queue_[rindex_];
+  if (rindex_shown_ && fp->serial == pktq_->serial()) {
+    *pos = fp->pos;
+    return fp->pos;
+  }
+  return false;
+}
+
+Frame* FrameQueueEx::GetPeekReadable() {
+  /* wait until we have a readable a new frame */
+  lock_t lock(queue_mutex_);
+  while (size_ - rindex_shown_ <= 0 && !pktq_->abort_request()) {
+    queue_cond_.wait(lock);
+  }
+
+  if (pktq_->abort_request()) {
+    return nullptr;
+  }
+
+  return &queue_[(rindex_ + rindex_shown_) % max_size_];
+}
+
+Frame* FrameQueueEx::GetPeekWritable() {
+  /* wait until we have space to put a new frame */
+  lock_t lock(queue_mutex_);
+  while (size_ >= max_size_ && !pktq_->abort_request()) {
+    queue_cond_.wait(lock);
+  }
+
+  if (pktq_->abort_request()) {
+    return nullptr;
+  }
+
+  return &queue_[windex_];
+}
+
+void FrameQueueEx::Push() {
+  lock_t lock(queue_mutex_);
+  if (++windex_ == max_size_) {
+    windex_ = 0;
+  }
+  size_++;
+  queue_cond_.notify_one();
+}
+
+void FrameQueueEx::Signal() {
+  lock_t lock(queue_mutex_);
+  queue_cond_.notify_one();
+}
+
+bool FrameQueueEx::GetFewFrames(std::vector<Frame*>* vect, size_t count) {
+  if (!vect || count == 0 || count > max_size_) {
+    return false;
+  }
+
+  lock_t lock(queue_mutex_);
+  for (size_t i = 0; i < count; ++i) {
+    size_t ind = (rindex_ + rindex_shown_ + i) % max_size_;
+    Frame* fr = &queue_[ind];
+    if (ind + 1 < max_size_) {
+      vect->push_back(fr);
+    } else {
+      vect->push_back(nullptr);
+    }
+  }
+  return true;
+}
+
+Frame* FrameQueueEx::PeekOrNull() {
+  lock_t lock(queue_mutex_);
+  return &queue_[rindex_];
+}
+
+void FrameQueueEx::MoveToNext() {
+  lock_t lock(queue_mutex_);
+  if (keep_last_ && !rindex_shown_) {
+    rindex_shown_ = 1;
+    return;
+  }
+  frame_queue_unref_item(&queue_[rindex_]);
+  if (++rindex_ == max_size_) {
+    rindex_ = 0;
+  }
+  size_--;
+  queue_cond_.notify_one();
+}
+
+int FrameQueueEx::NbRemaining() {
+  lock_t lock(queue_mutex_);
+  return size_ - rindex_shown_;
+}
+
+bool FrameQueueEx::IsEmpty() {
+  lock_t lock(queue_mutex_);
+  return size_ - rindex_shown_ == 0;
+}
