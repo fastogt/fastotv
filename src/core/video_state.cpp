@@ -2254,7 +2254,7 @@ int VideoState::video_thread(void* user_data) {
   while (true) {
     ret = is->get_video_frame(frame);
     if (ret < 0) {
-      break;
+      goto the_end;
     }
     if (!ret) {
       continue;
@@ -2283,7 +2283,7 @@ int VideoState::video_thread(void* user_data) {
         event.type = FF_QUIT_EVENT;
         event.user.data1 = is;
         SDL_PushEvent(&event);
-        break;
+        goto the_end;
       }
       filt_in = is->in_video_filter;
       filt_out = is->out_video_filter;
@@ -2297,7 +2297,7 @@ int VideoState::video_thread(void* user_data) {
 
     ret = av_buffersrc_add_frame(filt_in, frame);
     if (ret < 0) {
-      break;
+      goto the_end;
     }
 
     while (ret >= 0) {
@@ -2308,9 +2308,8 @@ int VideoState::video_thread(void* user_data) {
         if (ret == AVERROR_EOF) {
           is->viddec->SetFinished(is->viddec->GetPktSerial());
         }
-        avfilter_graph_free(&graph);
-        av_frame_free(&frame);
-        return 0;
+        ret = 0;
+        break;
       }
 
       is->frame_last_filter_delay =
@@ -2331,10 +2330,10 @@ int VideoState::video_thread(void* user_data) {
 #endif
 
     if (ret < 0) {
-      break;
+      goto the_end;
     }
   }
-
+the_end:
 #if CONFIG_AVFILTER
   avfilter_graph_free(&graph);
 #endif
