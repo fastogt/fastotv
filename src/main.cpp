@@ -12,8 +12,6 @@ extern "C" {
 
 #include "core/video_state.h"
 
-// http://csm.fastbroad.com/i/nickelodeon_gre142p1_1@383943/master.m3u8
-
 AppOptions g_options;
 AVInputFormat* file_iformat = NULL;
 

@@ -135,10 +135,6 @@ class VideoState {
   AVFormatContext* ic;
   int realtime;
 
-  StreamEngine* video_engine_;
-  StreamEngine* audio_engine_;
-  StreamEngine* subtitle_engine_;
-
   VideoStream* vstream_;
   AudioStream* astream_;
   SubtitleStream* sstream_;
@@ -146,6 +142,10 @@ class VideoState {
   VideoDecoder* viddec;
   AudioDecoder* auddec;
   SubDecoder* subdec;
+
+  FrameQueue* video_frame_queue_;
+  FrameQueue* audio_frame_queue_;
+  FrameQueue* subtitle_frame_queue_;
 
   double audio_clock;
   int audio_clock_serial;
