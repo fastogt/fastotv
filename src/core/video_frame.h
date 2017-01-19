@@ -10,7 +10,7 @@ extern "C" {
 #include <common/macros.h>
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */
-struct Frame {
+struct VideoFrame {
   AVFrame* frame;
   int serial;
   double pts;      /* presentation timestamp for the frame */

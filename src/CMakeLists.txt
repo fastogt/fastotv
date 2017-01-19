@@ -10,7 +10,6 @@ SET(HEADERS_CORE
   core/app_options.h
   core/video_state.h
   core/audio_params.h
-  core/stream_engine.h
   core/stream.h
   core/ring_buffer.h
   core/audio_frame.h
@@ -28,7 +27,6 @@ SET(SOURCES_CORE
   core/app_options.cpp
   core/video_state.cpp
   core/audio_params.cpp
-  core/stream_engine.cpp
   core/stream.cpp
   core/ring_buffer.cpp
   core/audio_frame.cpp

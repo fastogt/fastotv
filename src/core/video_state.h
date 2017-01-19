@@ -34,7 +34,6 @@ extern "C" {
 #include "core/decoder.h"
 #include "core/app_options.h"
 #include "core/audio_params.h"
-#include "core/stream_engine.h"
 #include "core/stream.h"
 
 #define SAMPLE_ARRAY_SIZE (8 * 65536)
@@ -72,7 +71,7 @@ class VideoState {
 #endif
 
   void refresh_loop_wait_event(SDL_Event* event);
-  int video_open(Frame* vp);
+  int video_open(VideoFrame* vp);
   /* allocate a picture (needs to do that in main thread to avoid
      potential locking problems */
   int alloc_picture();
@@ -88,7 +87,7 @@ class VideoState {
   void video_audio_display();
   void video_image_display();
   void check_external_clock_speed();
-  double vp_duration(Frame* vp, Frame* nextvp);
+  double vp_duration(VideoFrame* vp, VideoFrame* nextvp);
   /* pause or resume the video */
   void update_volume(int sign, int step);
   void seek_chapter(int incr);
@@ -142,8 +141,8 @@ class VideoState {
   AudioDecoder* auddec;
   SubDecoder* subdec;
 
-  FrameQueue* video_frame_queue_;
-  AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
+  VideoFrameQueue* video_frame_queue_;
+  AudioVideoFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
   SubTitleQueue<SUBPICTURE_QUEUE_SIZE>* subtitle_frame_queue_;
 
   double audio_clock;

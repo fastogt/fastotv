@@ -4,14 +4,13 @@ extern "C" {
 #include <SDL2/SDL_thread.h>
 }
 
-#include "core/frame_queue.h"
+#include "core/packet_queue.h"
 
 class Decoder {
  public:
   virtual ~Decoder();
 
   int Start(int (*fn)(void*), void* arg);
-  void Abort(FrameQueue* fq);
   void Abort();
   int GetPktSerial() const;
 

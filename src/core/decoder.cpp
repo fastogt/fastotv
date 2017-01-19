@@ -24,14 +24,6 @@ int Decoder::Start(int (*fn)(void*), void* arg) {
   return 0;
 }
 
-void Decoder::Abort(FrameQueue* fq) {
-  queue_->abort();
-  fq->signal();
-  SDL_WaitThread(decoder_tid_, NULL);
-  decoder_tid_ = NULL;
-  queue_->flush();
-}
-
 void Decoder::Abort() {
   queue_->abort();
   SDL_WaitThread(decoder_tid_, NULL);

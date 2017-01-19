@@ -1,19 +1,19 @@
 #include "core/frame_queue.h"
 
 namespace {
-void free_picture(Frame* vp) {
+void free_picture(VideoFrame* vp) {
   if (vp->bmp) {
     SDL_DestroyTexture(vp->bmp);
     vp->bmp = NULL;
   }
 }
 
-void frame_queue_unref_item(Frame* vp) {
+void frame_queue_unref_item(VideoFrame* vp) {
   av_frame_unref(vp->frame);
 }
 }
 
-FrameQueue::FrameQueue(PacketQueue* pktq, size_t max_size, bool keep_last)
+VideoFrameQueue::VideoFrameQueue(size_t max_size, bool keep_last)
     : mutex(NULL),
       cond(NULL),
       queue(),
@@ -23,7 +23,7 @@ FrameQueue::FrameQueue(PacketQueue* pktq, size_t max_size, bool keep_last)
       size_(0),
       max_size_(FFMIN(max_size, VIDEO_PICTURE_QUEUE_SIZE)),
       keep_last_(keep_last),
-      pktq_(pktq) {
+      stoped_(false) {
   if (!(mutex = SDL_CreateMutex())) {
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
     return;
@@ -39,9 +39,9 @@ FrameQueue::FrameQueue(PacketQueue* pktq, size_t max_size, bool keep_last)
   }
 }
 
-FrameQueue::~FrameQueue() {
+VideoFrameQueue::~VideoFrameQueue() {
   for (size_t i = 0; i < max_size_; i++) {
-    Frame* vp = &queue[i];
+    VideoFrame* vp = &queue[i];
     frame_queue_unref_item(vp);
     av_frame_free(&vp->frame);
     free_picture(vp);
@@ -50,7 +50,7 @@ FrameQueue::~FrameQueue() {
   SDL_DestroyCond(cond);
 }
 
-void FrameQueue::push() {
+void VideoFrameQueue::push() {
   if (++windex_ == max_size_) {
     windex_ = 0;
   }
@@ -60,15 +60,15 @@ void FrameQueue::push() {
   SDL_UnlockMutex(mutex);
 }
 
-Frame* FrameQueue::peek_writable() {
+VideoFrame* VideoFrameQueue::peek_writable() {
   /* wait until we have space to put a new frame */
   SDL_LockMutex(mutex);
-  while (size_ >= max_size_ && !pktq_->abort_request()) {
+  while (size_ >= max_size_ && !stoped_) {
     SDL_CondWait(cond, mutex);
   }
   SDL_UnlockMutex(mutex);
 
-  if (pktq_->abort_request()) {
+  if (stoped_) {
     return nullptr;
   }
 
@@ -76,44 +76,45 @@ Frame* FrameQueue::peek_writable() {
 }
 
 /* return the number of undisplayed frames in the queue */
-int FrameQueue::nb_remaining() {
+int VideoFrameQueue::nb_remaining() {
   return size_ - rindex_shown_;
 }
 
-Frame* FrameQueue::peek_last() {
+VideoFrame* VideoFrameQueue::peek_last() {
   return &queue[rindex_];
 }
 
-Frame* FrameQueue::peek() {
+VideoFrame* VideoFrameQueue::peek() {
   return &queue[(rindex_ + rindex_shown_) % max_size_];
 }
 
-Frame* FrameQueue::peek_next() {
+VideoFrame* VideoFrameQueue::peek_next() {
   return &queue[(rindex_ + rindex_shown_ + 1) % max_size_];
 }
 
-Frame* FrameQueue::peek_readable() {
+VideoFrame* VideoFrameQueue::peek_readable() {
   /* wait until we have a readable a new frame */
   SDL_LockMutex(mutex);
-  while (size_ - rindex_shown_ <= 0 && !pktq_->abort_request()) {
+  while (size_ - rindex_shown_ <= 0 && !stoped_) {
     SDL_CondWait(cond, mutex);
   }
   SDL_UnlockMutex(mutex);
 
-  if (pktq_->abort_request()) {
+  if (stoped_) {
     return nullptr;
   }
 
   return &queue[(rindex_ + rindex_shown_) % max_size_];
 }
 
-void FrameQueue::signal() {
+void VideoFrameQueue::Stop() {
   SDL_LockMutex(mutex);
+  stoped_ = true;
   SDL_CondSignal(cond);
   SDL_UnlockMutex(mutex);
 }
 
-void FrameQueue::next() {
+void VideoFrameQueue::next() {
   if (keep_last_ && !rindex_shown_) {
     rindex_shown_ = 1;
     return;
@@ -129,23 +130,28 @@ void FrameQueue::next() {
 }
 
 /* return last shown position */
-int64_t FrameQueue::last_pos() {
-  Frame* fp = &queue[rindex_];
-  if (rindex_shown_ && fp->serial == pktq_->serial()) {
-    return fp->pos;
+bool VideoFrameQueue::last_pos(int64_t* pos, int serial) {
+  if (!pos) {
+    return false;
+  }
+
+  VideoFrame* fp = &queue[rindex_];
+  if (rindex_shown_ && fp->serial == serial) {
+    *pos = fp->pos;
+    return true;
   } else {
     return -1;
   }
 }
 
-size_t FrameQueue::rindex_shown() const {
+size_t VideoFrameQueue::rindex_shown() const {
   return rindex_shown_;
 }
 
-size_t FrameQueue::windex() const {
+size_t VideoFrameQueue::windex() const {
   return windex_;
 }
 
-Frame* FrameQueue::windex_frame() {
+VideoFrame* VideoFrameQueue::windex_frame() {
   return &queue[windex_];
 }

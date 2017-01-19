@@ -7,10 +7,9 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 
-#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_mutex.h>
 }
 
-#include "core/packet_queue.h"
 #include "core/ring_buffer.h"
 #include "core/audio_frame.h"
 #include "core/video_frame.h"
@@ -21,31 +20,31 @@ extern "C" {
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
 
-class FrameQueue {
+class VideoFrameQueue {
  public:
-  FrameQueue(PacketQueue* pktq, size_t max_size, bool keep_last);
-  ~FrameQueue();
+  VideoFrameQueue(size_t max_size, bool keep_last);
+  ~VideoFrameQueue();
 
   void push();
-  Frame* peek_writable();
+  VideoFrame* peek_writable();
   int nb_remaining();
-  Frame* peek_last();
-  Frame* peek();
-  Frame* peek_next();
-  Frame* peek_readable();
-  void signal();
+  VideoFrame* peek_last();
+  VideoFrame* peek();
+  VideoFrame* peek_next();
+  VideoFrame* peek_readable();
+  void Stop();
   void next();
-  int64_t last_pos();
+  bool last_pos(int64_t* pos, int serial);
   size_t rindex_shown() const;
   size_t windex() const;
 
   SDL_mutex* mutex;
   SDL_cond* cond;
 
-  Frame* windex_frame();
+  VideoFrame* windex_frame();
 
  private:
-  Frame queue[VIDEO_PICTURE_QUEUE_SIZE];
+  VideoFrame queue[VIDEO_PICTURE_QUEUE_SIZE];
 
   size_t rindex_;
   size_t rindex_shown_;
@@ -53,16 +52,16 @@ class FrameQueue {
   size_t size_;
   const size_t max_size_;
   const bool keep_last_;
-  const PacketQueue* const pktq_;
+  bool stoped_;
 };
 
 template <size_t buffer_size>
-class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
+class AudioVideoFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
  public:
   typedef RingBuffer<AudioFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
-  AudioFrameQueue(bool keep_last) : base_class(keep_last) {}
+  AudioVideoFrameQueue(bool keep_last) : base_class(keep_last) {}
 
   bool GetLastUsedPos(int64_t* pos, int serial) {
     if (!pos) {

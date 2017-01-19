@@ -248,7 +248,7 @@ int VideoState::stream_component_open(int stream_index) {
     case AVMEDIA_TYPE_VIDEO: {
       bool opened = vstream_->Open(stream_index, stream);
       PacketQueue* packet_queue = vstream_->Queue();
-      video_frame_queue_ = new FrameQueue(packet_queue, VIDEO_PICTURE_QUEUE_SIZE, true);
+      video_frame_queue_ = new VideoFrameQueue(VIDEO_PICTURE_QUEUE_SIZE, true);
       viddec =
           new VideoDecoder(avctx, packet_queue, continue_read_thread, opt->decoder_reorder_pts);
       if ((ret = viddec->Start(video_thread, this)) < 0) {
@@ -301,7 +301,7 @@ int VideoState::stream_component_open(int stream_index) {
           static_cast<double>(audio_hw_buf_size) / static_cast<double>(audio_tgt.bytes_per_sec);
       bool opened = astream_->Open(stream_index, stream);
       PacketQueue* packet_queue = astream_->Queue();
-      audio_frame_queue_ = new AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
+      audio_frame_queue_ = new AudioVideoFrameQueue<SAMPLE_QUEUE_SIZE>(true);
       auddec = new AudioDecoder(avctx, packet_queue, continue_read_thread);
       if ((ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic->iformat->read_seek) {
@@ -350,7 +350,8 @@ void VideoState::stream_component_close(int stream_index) {
   AVCodecParameters* codecpar = avs->codecpar;
   switch (codecpar->codec_type) {
     case AVMEDIA_TYPE_VIDEO:
-      viddec->Abort(video_frame_queue_);
+      video_frame_queue_->Stop();
+      viddec->Abort();
       destroy(&viddec);
       destroy(&video_frame_queue_);
       break;
@@ -521,8 +522,8 @@ void VideoState::video_refresh(double* remaining_time) {
       double last_duration, duration, delay;
 
       /* dequeue the picture */
-      Frame* lastvp = video_frame_queue_->peek_last();
-      Frame* vp = video_frame_queue_->peek();
+      VideoFrame* lastvp = video_frame_queue_->peek_last();
+      VideoFrame* vp = video_frame_queue_->peek();
 
       if (vp->serial != video_packet_queue->serial()) {
         video_frame_queue_->next();
@@ -561,7 +562,7 @@ void VideoState::video_refresh(double* remaining_time) {
       SDL_UnlockMutex(video_frame_queue_->mutex);
 
       if (video_frame_queue_->nb_remaining() > 1) {
-        Frame* nextvp = video_frame_queue_->peek_next();
+        VideoFrame* nextvp = video_frame_queue_->peek_next();
         duration = vp_duration(vp, nextvp);
         if (!step && (opt->framedrop > 0 ||
                       (opt->framedrop && get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) &&
@@ -661,7 +662,7 @@ void VideoState::video_refresh(double* remaining_time) {
   }
 }
 
-int VideoState::video_open(Frame* vp) {
+int VideoState::video_open(VideoFrame* vp) {
   if (vp && vp->width) {
     set_default_window_size(vp->width, vp->height, vp->sar);
   }
@@ -717,7 +718,7 @@ int VideoState::video_open(Frame* vp) {
 }
 
 int VideoState::alloc_picture() {
-  Frame* vp = video_frame_queue_->windex_frame();
+  VideoFrame* vp = video_frame_queue_->windex_frame();
 
   int res = video_open(vp);
   if (res == ERROR_RESULT_VALUE) {
@@ -809,7 +810,7 @@ void VideoState::set_default_window_size(int width, int height, AVRational sar) 
 }
 
 void VideoState::video_image_display() {
-  Frame* vp = video_frame_queue_->peek_last();
+  VideoFrame* vp = video_frame_queue_->peek_last();
   SubtitleFrame* sp = NULL;
   if (vp->bmp) {
     if (sstream_->IsOpened()) {
@@ -1138,7 +1139,13 @@ int VideoState::Exec() {
             if (opt->seek_by_bytes) {
               pos = -1;
               if (pos < 0 && vstream_->IsOpened()) {
-                pos = video_frame_queue_->last_pos();
+                int64_t lpos = 0;
+                PacketQueue* vqueue = vstream_->Queue();
+                if (video_frame_queue_->last_pos(&lpos, vqueue->serial())) {
+                  pos = lpos;
+                } else {
+                  pos = -1;
+                }
               }
               if (pos < 0 && astream_->IsOpened()) {
                 int64_t lpos = 0;
@@ -1294,7 +1301,7 @@ void VideoState::check_external_clock_speed() {
   }
 }
 
-double VideoState::vp_duration(Frame* vp, Frame* nextvp) {
+double VideoState::vp_duration(VideoFrame* vp, VideoFrame* nextvp) {
   if (vp->serial == nextvp->serial) {
     double duration = nextvp->pts - vp->pts;
     if (isnan(duration) || duration <= 0 || duration > max_frame_duration) {
@@ -1672,7 +1679,7 @@ int VideoState::queue_picture(AVFrame* src_frame,
 #endif
 
   PacketQueue* video_packet_queue = vstream_->Queue();
-  Frame* vp = video_frame_queue_->peek_writable();
+  VideoFrame* vp = video_frame_queue_->peek_writable();
   if (!vp) {
     return ERROR_RESULT_VALUE;
   }
