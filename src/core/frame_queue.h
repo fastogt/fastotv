@@ -25,7 +25,7 @@ class VideoFrameQueue {
   VideoFrameQueue(size_t max_size, bool keep_last);
   ~VideoFrameQueue();
 
-  void push();
+  void Push();
   VideoFrame* peek_writable();
   int nb_remaining();
   VideoFrame* peek_last();
@@ -33,10 +33,9 @@ class VideoFrameQueue {
   VideoFrame* peek_next();
   VideoFrame* peek_readable();
   void Stop();
-  void next();
-  bool last_pos(int64_t* pos, int serial);
+  void MoveToNext();
+  bool GetLastUsedPos(int64_t* pos, int serial);
   size_t rindex_shown() const;
-  size_t windex() const;
 
   SDL_mutex* mutex;
   SDL_cond* cond;
@@ -44,7 +43,7 @@ class VideoFrameQueue {
   VideoFrame* windex_frame();
 
  private:
-  VideoFrame queue[VIDEO_PICTURE_QUEUE_SIZE];
+  VideoFrame* queue[VIDEO_PICTURE_QUEUE_SIZE];
 
   size_t rindex_;
   size_t rindex_shown_;

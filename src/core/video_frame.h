@@ -11,6 +11,10 @@ extern "C" {
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */
 struct VideoFrame {
+  VideoFrame();
+  ~VideoFrame();
+  void ClearFrame();
+
   AVFrame* frame;
   int serial;
   double pts;      /* presentation timestamp for the frame */
@@ -24,5 +28,7 @@ struct VideoFrame {
   AVRational sar;
   int uploaded;
   int flip_v;
-};
 
+ private:
+  DISALLOW_COPY_AND_ASSIGN(VideoFrame);
+};

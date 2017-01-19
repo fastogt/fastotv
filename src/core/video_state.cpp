@@ -526,7 +526,7 @@ void VideoState::video_refresh(double* remaining_time) {
       VideoFrame* vp = video_frame_queue_->peek();
 
       if (vp->serial != video_packet_queue->serial()) {
-        video_frame_queue_->next();
+        video_frame_queue_->MoveToNext();
         goto retry;
       }
 
@@ -568,7 +568,7 @@ void VideoState::video_refresh(double* remaining_time) {
                       (opt->framedrop && get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) &&
             time > frame_timer + duration) {
           frame_drops_late++;
-          video_frame_queue_->next();
+          video_frame_queue_->MoveToNext();
           goto retry;
         }
       }
@@ -610,7 +610,7 @@ void VideoState::video_refresh(double* remaining_time) {
         }
       }
 
-      video_frame_queue_->next();
+      video_frame_queue_->MoveToNext();
       force_refresh = 1;
 
       if (step && !paused_) {
@@ -1141,7 +1141,7 @@ int VideoState::Exec() {
               if (pos < 0 && vstream_->IsOpened()) {
                 int64_t lpos = 0;
                 PacketQueue* vqueue = vstream_->Queue();
-                if (video_frame_queue_->last_pos(&lpos, vqueue->serial())) {
+                if (video_frame_queue_->GetLastUsedPos(&lpos, vqueue->serial())) {
                   pos = lpos;
                 } else {
                   pos = -1;
@@ -1731,7 +1731,7 @@ int VideoState::queue_picture(AVFrame* src_frame,
     vp->serial = serial;
 
     av_frame_move_ref(vp->frame, src_frame);
-    video_frame_queue_->push();
+    video_frame_queue_->Push();
   }
   return 0;
 }

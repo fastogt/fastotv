@@ -1,18 +1,5 @@
 #include "core/frame_queue.h"
 
-namespace {
-void free_picture(VideoFrame* vp) {
-  if (vp->bmp) {
-    SDL_DestroyTexture(vp->bmp);
-    vp->bmp = NULL;
-  }
-}
-
-void frame_queue_unref_item(VideoFrame* vp) {
-  av_frame_unref(vp->frame);
-}
-}
-
 VideoFrameQueue::VideoFrameQueue(size_t max_size, bool keep_last)
     : mutex(NULL),
       cond(NULL),
@@ -33,24 +20,20 @@ VideoFrameQueue::VideoFrameQueue(size_t max_size, bool keep_last)
     return;
   }
   for (size_t i = 0; i < max_size; i++) {
-    if (!(queue[i].frame = av_frame_alloc())) {
-      return;
-    }
+    queue[i] = new VideoFrame;
   }
 }
 
 VideoFrameQueue::~VideoFrameQueue() {
   for (size_t i = 0; i < max_size_; i++) {
-    VideoFrame* vp = &queue[i];
-    frame_queue_unref_item(vp);
-    av_frame_free(&vp->frame);
-    free_picture(vp);
+    VideoFrame* vp = queue[i];
+    delete vp;
   }
   SDL_DestroyMutex(mutex);
   SDL_DestroyCond(cond);
 }
 
-void VideoFrameQueue::push() {
+void VideoFrameQueue::Push() {
   if (++windex_ == max_size_) {
     windex_ = 0;
   }
@@ -71,8 +54,7 @@ VideoFrame* VideoFrameQueue::peek_writable() {
   if (stoped_) {
     return nullptr;
   }
-
-  return &queue[windex_];
+  return queue[windex_];
 }
 
 /* return the number of undisplayed frames in the queue */
@@ -81,15 +63,15 @@ int VideoFrameQueue::nb_remaining() {
 }
 
 VideoFrame* VideoFrameQueue::peek_last() {
-  return &queue[rindex_];
+  return queue[rindex_];
 }
 
 VideoFrame* VideoFrameQueue::peek() {
-  return &queue[(rindex_ + rindex_shown_) % max_size_];
+  return queue[(rindex_ + rindex_shown_) % max_size_];
 }
 
 VideoFrame* VideoFrameQueue::peek_next() {
-  return &queue[(rindex_ + rindex_shown_ + 1) % max_size_];
+  return queue[(rindex_ + rindex_shown_ + 1) % max_size_];
 }
 
 VideoFrame* VideoFrameQueue::peek_readable() {
@@ -104,7 +86,7 @@ VideoFrame* VideoFrameQueue::peek_readable() {
     return nullptr;
   }
 
-  return &queue[(rindex_ + rindex_shown_) % max_size_];
+  return queue[(rindex_ + rindex_shown_) % max_size_];
 }
 
 void VideoFrameQueue::Stop() {
@@ -114,12 +96,12 @@ void VideoFrameQueue::Stop() {
   SDL_UnlockMutex(mutex);
 }
 
-void VideoFrameQueue::next() {
+void VideoFrameQueue::MoveToNext() {
   if (keep_last_ && !rindex_shown_) {
     rindex_shown_ = 1;
     return;
   }
-  frame_queue_unref_item(&queue[rindex_]);
+  queue[rindex_]->ClearFrame();
   if (++rindex_ == max_size_) {
     rindex_ = 0;
   }
@@ -130,28 +112,24 @@ void VideoFrameQueue::next() {
 }
 
 /* return last shown position */
-bool VideoFrameQueue::last_pos(int64_t* pos, int serial) {
+bool VideoFrameQueue::GetLastUsedPos(int64_t* pos, int serial) {
   if (!pos) {
     return false;
   }
 
-  VideoFrame* fp = &queue[rindex_];
+  VideoFrame* fp = queue[rindex_];
   if (rindex_shown_ && fp->serial == serial) {
     *pos = fp->pos;
     return true;
-  } else {
-    return -1;
   }
+
+  return false;
 }
 
 size_t VideoFrameQueue::rindex_shown() const {
   return rindex_shown_;
 }
 
-size_t VideoFrameQueue::windex() const {
-  return windex_;
-}
-
 VideoFrame* VideoFrameQueue::windex_frame() {
-  return &queue[windex_];
+  return queue[windex_];
 }
