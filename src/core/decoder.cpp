@@ -34,7 +34,7 @@ void Decoder::Abort(FrameQueue* fq) {
 
 void Decoder::Abort(FrameQueueEx* fq) {
   queue_->abort();
-  fq->Signal();
+  fq->Stop();
   SDL_WaitThread(decoder_tid_, NULL);
   decoder_tid_ = NULL;
   queue_->flush();

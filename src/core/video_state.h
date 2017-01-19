@@ -144,7 +144,7 @@ class VideoState {
 
   FrameQueue* video_frame_queue_;
   FrameQueueEx* audio_frame_queue_;
-  FrameQueueEx* subtitle_frame_queue_;
+  FrameQueue* subtitle_frame_queue_;
 
   double audio_clock;
   int audio_clock_serial;

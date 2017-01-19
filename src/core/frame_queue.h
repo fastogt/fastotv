@@ -76,23 +76,25 @@ class FrameQueue {
 
 class FrameQueueEx {
  public:
-  FrameQueueEx(PacketQueue* pktq, size_t max_size, bool keep_last);
+  FrameQueueEx(size_t max_size, bool keep_last);
   ~FrameQueueEx();
 
-  bool GetLastUsedPos(int64_t* pos);
+  bool GetLastUsedPos(int64_t* pos, int serial);
   Frame* GetPeekReadable();
   Frame* GetPeekWritable();
-  Frame* PeekOrNull(); // peek or null if empty queue
-  bool GetFewFrames(std::vector<Frame*>* vect, size_t count);
+  Frame* PeekOrNull();  // peek or null if empty queue
 
   void MoveToNext();
   void Push();
-  void Signal();
+  void Stop();
 
-  int NbRemaining();
   bool IsEmpty();
 
  private:
+  bool IsFullInner() const;
+  bool IsEmptyInner() const;
+  int NbRemainingInner() const;
+
   typedef common::thread::unique_lock<common::thread::mutex> lock_t;
   common::thread::condition_variable queue_cond_;
   common::thread::mutex queue_mutex_;
@@ -104,5 +106,5 @@ class FrameQueueEx {
   size_t size_;
   const size_t max_size_;
   const bool keep_last_;
-  const PacketQueue* const pktq_;
+  bool stoped_;
 };

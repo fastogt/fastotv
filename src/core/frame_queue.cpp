@@ -151,7 +151,7 @@ Frame* FrameQueue::windex_frame() {
   return &queue[windex_];
 }
 
-FrameQueueEx::FrameQueueEx(PacketQueue* pktq, size_t max_size, bool keep_last)
+FrameQueueEx::FrameQueueEx(size_t max_size, bool keep_last)
     : queue_cond_(),
       queue_mutex_(),
       queue_(),
@@ -161,7 +161,7 @@ FrameQueueEx::FrameQueueEx(PacketQueue* pktq, size_t max_size, bool keep_last)
       size_(0),
       max_size_(FFMIN(max_size, FRAME_QUEUE_SIZE)),
       keep_last_(keep_last),
-      pktq_(pktq) {
+      stoped_(false) {
   for (size_t i = 0; i < max_size; i++) {
     if (!(queue_[i].frame = av_frame_alloc())) {
       return;
@@ -178,16 +178,16 @@ FrameQueueEx::~FrameQueueEx() {
   }
 }
 
-bool FrameQueueEx::GetLastUsedPos(int64_t* pos) {
+bool FrameQueueEx::GetLastUsedPos(int64_t* pos, int serial) {
   if (!pos) {
     return false;
   }
 
   lock_t lock(queue_mutex_);
   Frame* fp = &queue_[rindex_];
-  if (rindex_shown_ && fp->serial == pktq_->serial()) {
+  if (rindex_shown_ && fp->serial == serial) {
     *pos = fp->pos;
-    return fp->pos;
+    return true;
   }
   return false;
 }
@@ -195,11 +195,11 @@ bool FrameQueueEx::GetLastUsedPos(int64_t* pos) {
 Frame* FrameQueueEx::GetPeekReadable() {
   /* wait until we have a readable a new frame */
   lock_t lock(queue_mutex_);
-  while (size_ - rindex_shown_ <= 0 && !pktq_->abort_request()) {
+  while (IsEmptyInner() && !stoped_) {
     queue_cond_.wait(lock);
   }
 
-  if (pktq_->abort_request()) {
+  if (stoped_) {
     return nullptr;
   }
 
@@ -209,11 +209,11 @@ Frame* FrameQueueEx::GetPeekReadable() {
 Frame* FrameQueueEx::GetPeekWritable() {
   /* wait until we have space to put a new frame */
   lock_t lock(queue_mutex_);
-  while (size_ >= max_size_ && !pktq_->abort_request()) {
+  while (IsFullInner() && !stoped_) {
     queue_cond_.wait(lock);
   }
 
-  if (pktq_->abort_request()) {
+  if (stoped_) {
     return nullptr;
   }
 
@@ -229,32 +229,15 @@ void FrameQueueEx::Push() {
   queue_cond_.notify_one();
 }
 
-void FrameQueueEx::Signal() {
+void FrameQueueEx::Stop() {
   lock_t lock(queue_mutex_);
+  stoped_ = true;
   queue_cond_.notify_one();
-}
-
-bool FrameQueueEx::GetFewFrames(std::vector<Frame*>* vect, size_t count) {
-  if (!vect || count == 0 || count > max_size_) {
-    return false;
-  }
-
-  lock_t lock(queue_mutex_);
-  for (size_t i = 0; i < count; ++i) {
-    size_t ind = (rindex_ + rindex_shown_ + i) % max_size_;
-    Frame* fr = &queue_[ind];
-    if (ind + 1 < max_size_) {
-      vect->push_back(fr);
-    } else {
-      vect->push_back(nullptr);
-    }
-  }
-  return true;
 }
 
 Frame* FrameQueueEx::PeekOrNull() {
   lock_t lock(queue_mutex_);
-  if (size_ - rindex_shown_ == 0) {  // if is empty
+  if (IsEmptyInner()) {  // if is empty
     return nullptr;
   }
   return &queue_[(rindex_ + rindex_shown_) % max_size_];
@@ -274,12 +257,21 @@ void FrameQueueEx::MoveToNext() {
   queue_cond_.notify_one();
 }
 
-int FrameQueueEx::NbRemaining() {
-  lock_t lock(queue_mutex_);
-  return size_ - rindex_shown_;
-}
-
 bool FrameQueueEx::IsEmpty() {
   lock_t lock(queue_mutex_);
-  return size_ - rindex_shown_ == 0;
+  return IsEmptyInner();
+}
+
+int FrameQueueEx::NbRemainingInner() const {
+  int res = size_ - rindex_shown_;
+  DCHECK(res != -1);
+  return res;
+}
+
+bool FrameQueueEx::IsFullInner() const {
+  return size_ >= max_size_;
+}
+
+bool FrameQueueEx::IsEmptyInner() const {
+  return NbRemainingInner() <= 0;
 }

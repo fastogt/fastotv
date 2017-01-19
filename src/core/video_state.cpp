@@ -301,7 +301,7 @@ int VideoState::stream_component_open(int stream_index) {
           static_cast<double>(audio_hw_buf_size) / static_cast<double>(audio_tgt.bytes_per_sec);
       bool opened = astream_->Open(stream_index, stream);
       PacketQueue* packet_queue = astream_->Queue();
-      audio_frame_queue_ = new FrameQueueEx(packet_queue, SAMPLE_QUEUE_SIZE, true);
+      audio_frame_queue_ = new FrameQueueEx(SAMPLE_QUEUE_SIZE, true);
       auddec = new AudioDecoder(avctx, packet_queue, continue_read_thread);
       if ((ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic->iformat->read_seek) {
@@ -319,7 +319,7 @@ int VideoState::stream_component_open(int stream_index) {
     case AVMEDIA_TYPE_SUBTITLE: {
       bool opened = sstream_->Open(stream_index, stream);
       PacketQueue* packet_queue = sstream_->Queue();
-      subtitle_frame_queue_ = new FrameQueueEx(packet_queue, SUBPICTURE_QUEUE_SIZE, false);
+      subtitle_frame_queue_ = new FrameQueue(packet_queue, SUBPICTURE_QUEUE_SIZE, false);
       subdec = new SubDecoder(avctx, packet_queue, continue_read_thread);
       if ((ret = subdec->Start(subtitle_thread, this)) < 0) {
         destroy(&subdec);
@@ -571,14 +571,12 @@ void VideoState::video_refresh(double* remaining_time) {
       }
 
       if (subtitle_st) {
-        while (true) {
-          std::vector<Frame*> frames;
-          if (subtitle_frame_queue_->GetFewFrames(&frames, 2)) {
-            break;
+        while (subtitle_frame_queue_->nb_remaining() > 0) {
+          Frame* sp = subtitle_frame_queue_->peek();
+          Frame* sp2 = NULL;
+          if (subtitle_frame_queue_->nb_remaining() > 1) {
+            sp2 = subtitle_frame_queue_->peek_next();
           }
-
-          Frame* sp = frames[0];
-          Frame* sp2 = frames[1];
 
           if (sp->serial != subtitle_packet_queue->serial() ||
               (vstream_->GetPts() >
@@ -600,7 +598,7 @@ void VideoState::video_refresh(double* remaining_time) {
                 }
               }
             }
-            subtitle_frame_queue_->MoveToNext();
+            subtitle_frame_queue_->next();
           } else {
             break;
           }
@@ -811,7 +809,9 @@ void VideoState::video_image_display() {
   Frame* sp = NULL;
   if (vp->bmp) {
     if (sstream_->IsOpened()) {
-      sp = subtitle_frame_queue_->PeekOrNull();
+      if (subtitle_frame_queue_->nb_remaining() > 0) {
+        sp = subtitle_frame_queue_->peek();
+      }
       if (sp) {
         if (vp->pts >= sp->pts + (static_cast<float>(sp->sub.start_display_time) / 1000)) {
           if (!sp->uploaded) {
@@ -1140,7 +1140,8 @@ int VideoState::Exec() {
               }
               if (pos < 0 && astream_->IsOpened()) {
                 int64_t lpos = 0;
-                if (audio_frame_queue_->GetLastUsedPos(&lpos)) {
+                PacketQueue* aqueue = astream_->Queue();
+                if (audio_frame_queue_->GetLastUsedPos(&lpos, aqueue->serial())) {
                   pos = lpos;
                 } else {
                   pos = -1;
@@ -1499,7 +1500,6 @@ int VideoState::synchronize_audio(int nb_samples) {
 int VideoState::audio_decode_frame() {
   int data_size, resampled_data_size;
   int64_t dec_channel_layout;
-  av_unused double audio_clock0;
   int wanted_nb_samples;
   Frame* af;
 
@@ -1509,15 +1509,6 @@ int VideoState::audio_decode_frame() {
 
   PacketQueue* audio_packet_queue = astream_->IsOpened() ? astream_->Queue() : NULL;
   do {
-#if defined(_WIN32)
-    while (audio_frame_queue_->nb_remaining() == 0) {
-      if ((av_gettime_relative() - audio_callback_time) >
-          1000000LL * audio_hw_buf_size / audio_tgt.bytes_per_sec / 2) {
-        return -1;
-      }
-      av_usleep(1000);
-    }
-#endif
     af = audio_frame_queue_->GetPeekReadable();
     if (!af) {
       return -1;
@@ -1599,7 +1590,9 @@ int VideoState::audio_decode_frame() {
     resampled_data_size = data_size;
   }
 
-  audio_clock0 = audio_clock;
+#ifdef DEBUG
+  double audio_clock0 = audio_clock;
+#endif
   /* update the audio clock with the pts */
   if (!isnan(af->pts)) {
     audio_clock = af->pts + static_cast<double>(af->frame->nb_samples) / af->frame->sample_rate;
@@ -2185,7 +2178,7 @@ int VideoState::audio_thread(void* user_data) {
         tb = is->out_audio_filter->inputs[0]->time_base;
 #endif
         af = is->audio_frame_queue_->GetPeekWritable();
-        if (!af) {
+        if (!af) {  // if stoped
 #if CONFIG_AVFILTER
           avfilter_graph_free(&is->agraph);
 #endif
@@ -2346,10 +2339,10 @@ the_end:
 
 int VideoState::subtitle_thread(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
-  FrameQueueEx* subpq = is->subtitle_frame_queue_;
+  FrameQueue* subpq = is->subtitle_frame_queue_;
   SubDecoder* subdec = is->subdec;
   while (true) {
-    Frame* sp = subpq->GetPeekWritable();
+    Frame* sp = subpq->peek_writable();
     if (!sp) {
       return 0;
     }
@@ -2371,7 +2364,7 @@ int VideoState::subtitle_thread(void* user_data) {
       sp->uploaded = 0;
 
       /* now we can update the picture count */
-      subpq->Push();
+      subpq->push();
     } else if (got_subtitle) {
       avsubtitle_free(&sp->sub);
     }
