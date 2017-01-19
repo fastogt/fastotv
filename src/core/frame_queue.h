@@ -2,57 +2,10 @@
 
 #include <vector>
 
-#include "ffmpeg_config.h"
-
-extern "C" {
-#include <libavcodec/avcodec.h>
-
-#include <SDL2/SDL_mutex.h>
-}
-
 #include "core/ring_buffer.h"
 #include "core/audio_frame.h"
 #include "core/video_frame.h"
 #include "core/subtitle_frame.h"
-
-/* no AV correction is done if too big error */
-#define SUBPICTURE_QUEUE_SIZE 16
-#define VIDEO_PICTURE_QUEUE_SIZE 3
-#define SAMPLE_QUEUE_SIZE 9
-
-class VideoFrameQueue {
- public:
-  VideoFrameQueue(size_t max_size, bool keep_last);
-  ~VideoFrameQueue();
-
-  void Push();
-  VideoFrame* GetPeekWritable();
-  int NbRemaining();
-  VideoFrame* PeekLast();
-  VideoFrame* Peek();
-  VideoFrame* PeekNext();
-  void Stop();
-  void MoveToNext();
-  bool GetLastUsedPos(int64_t* pos, int serial);
-  size_t RindexShown() const;
-
-  SDL_mutex* mutex;
-  SDL_cond* cond;
-
-  VideoFrame* Windex();
-  bool IsEmpty();
-
- private:
-  VideoFrame* queue[VIDEO_PICTURE_QUEUE_SIZE];
-
-  size_t rindex_;
-  size_t rindex_shown_;
-  size_t windex_;
-  size_t size_;
-  const size_t max_size_;
-  const bool keep_last_;
-  bool stoped_;
-};
 
 template <size_t buffer_size>
 class VideoFrameQueueEx : public RingBuffer<VideoFrame, buffer_size> {

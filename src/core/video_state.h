@@ -37,6 +37,10 @@ extern "C" {
 #include "core/stream.h"
 
 #define SAMPLE_ARRAY_SIZE (8 * 65536)
+/* no AV correction is done if too big error */
+#define SUBPICTURE_QUEUE_SIZE 16
+#define VIDEO_PICTURE_QUEUE_SIZE 3
+#define SAMPLE_QUEUE_SIZE 9
 
 class VideoState {
  public:
@@ -141,7 +145,7 @@ class VideoState {
   AudioDecoder* auddec;
   SubDecoder* subdec;
 
-  VideoFrameQueue* video_frame_queue_;
+  VideoFrameQueueEx<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
   AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
   SubTitleQueue<SUBPICTURE_QUEUE_SIZE>* subtitle_frame_queue_;
 

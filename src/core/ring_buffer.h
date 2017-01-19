@@ -29,6 +29,27 @@ class RingBuffer {
     }
   }
 
+  template <typename F>
+  void ChangeSafeAndNotify(F f, pointer_type el) {
+    lock_t lock(queue_mutex_);
+    f(el);
+    queue_cond_.notify_one();
+  }
+
+  template <typename F>
+  void ChangeSafe(F f, pointer_type fr) {
+    lock_t lock(queue_mutex_);
+    f(fr);
+  }
+
+  template <typename F>
+  void WaitSafeAndNotify(F f) {
+    lock_t lock(queue_mutex_);
+    while (f()) {
+      queue_cond_.wait(lock);
+    }
+  }
+
   bool IsStoped() {
     lock_t lock(queue_mutex_);
     return stoped_;
@@ -99,9 +120,6 @@ class RingBuffer {
 
   pointer_type Windex() {
     lock_t lock(queue_mutex_);
-    if (IsEmptyInner()) {  // if is empty
-      return nullptr;
-    }
     return WindexElementInner();
   }
 

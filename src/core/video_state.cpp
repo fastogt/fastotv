@@ -248,7 +248,7 @@ int VideoState::stream_component_open(int stream_index) {
     case AVMEDIA_TYPE_VIDEO: {
       bool opened = vstream_->Open(stream_index, stream);
       PacketQueue* packet_queue = vstream_->Queue();
-      video_frame_queue_ = new VideoFrameQueue(VIDEO_PICTURE_QUEUE_SIZE, true);
+      video_frame_queue_ = new VideoFrameQueueEx<VIDEO_PICTURE_QUEUE_SIZE>(true);
       viddec =
           new VideoDecoder(avctx, packet_queue, continue_read_thread, opt->decoder_reorder_pts);
       if ((ret = viddec->Start(video_thread, this)) < 0) {
@@ -553,13 +553,15 @@ void VideoState::video_refresh(double* remaining_time) {
         frame_timer = time;
       }
 
-      SDL_LockMutex(video_frame_queue_->mutex);
-      if (!isnan(vp->pts)) {
-        /* update current video pts */
-        vstream_->SetClock(vp->pts, vp->serial);
-        sstream_->SyncClockWith(vstream_, AV_NOSYNC_THRESHOLD);
-      }
-      SDL_UnlockMutex(video_frame_queue_->mutex);
+      video_frame_queue_->ChangeSafe(
+          [this](VideoFrame* fr) {
+            if (!isnan(fr->pts)) {
+              /* update current video pts */
+              vstream_->SetClock(fr->pts, fr->serial);
+              sstream_->SyncClockWith(vstream_, AV_NOSYNC_THRESHOLD);
+            }
+          },
+          vp);
 
       if (video_frame_queue_->NbRemaining() > 1) {
         VideoFrame* nextvp = video_frame_queue_->PeekNext();
@@ -743,10 +745,7 @@ int VideoState::alloc_picture() {
     return ERROR_RESULT_VALUE;
   }
 
-  SDL_LockMutex(video_frame_queue_->mutex);
-  vp->allocated = 1;
-  SDL_CondSignal(video_frame_queue_->cond);
-  SDL_UnlockMutex(video_frame_queue_->mutex);
+  video_frame_queue_->ChangeSafeAndNotify([](VideoFrame* fr) { fr->allocated = 1; }, vp);
   return SUCCESS_RESULT_VALUE;
 }
 
@@ -1703,6 +1702,7 @@ int VideoState::queue_picture(AVFrame* src_frame,
     event.user.data1 = this;
     SDL_PushEvent(&event);
 
+#if 0
     /* wait until the picture is allocated */
     SDL_LockMutex(video_frame_queue_->mutex);
     while (!vp->allocated && !video_packet_queue->abort_request()) {
@@ -1717,6 +1717,11 @@ int VideoState::queue_picture(AVFrame* src_frame,
       }
     }
     SDL_UnlockMutex(video_frame_queue_->mutex);
+#endif
+
+    video_frame_queue_->WaitSafeAndNotify([video_packet_queue, vp]() -> bool {
+      return !vp->allocated && !video_packet_queue->abort_request();
+    });
 
     if (video_packet_queue->abort_request()) {
       return -1;
