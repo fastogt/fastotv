@@ -1,5 +1,6 @@
 #include "core/frame_queue.h"
 
+namespace {
 void free_picture(Frame* vp) {
   if (vp->bmp) {
     SDL_DestroyTexture(vp->bmp);
@@ -9,18 +10,7 @@ void free_picture(Frame* vp) {
 
 void frame_queue_unref_item(Frame* vp) {
   av_frame_unref(vp->frame);
-  avsubtitle_free(&vp->sub);
 }
-
-AudioFrame::AudioFrame() : frame(av_frame_alloc()), serial(0), pts(0), duration(0), pos(0) {}
-
-AudioFrame::~AudioFrame() {
-  ClearFrame();
-  av_frame_free(&frame);
-}
-
-void AudioFrame::ClearFrame() {
-  av_frame_unref(frame);
 }
 
 FrameQueue::FrameQueue(PacketQueue* pktq, size_t max_size, bool keep_last)
@@ -31,7 +21,7 @@ FrameQueue::FrameQueue(PacketQueue* pktq, size_t max_size, bool keep_last)
       rindex_shown_(0),
       windex_(0),
       size_(0),
-      max_size_(FFMIN(max_size, FRAME_QUEUE_SIZE)),
+      max_size_(FFMIN(max_size, VIDEO_PICTURE_QUEUE_SIZE)),
       keep_last_(keep_last),
       pktq_(pktq) {
   if (!(mutex = SDL_CreateMutex())) {

@@ -12,13 +12,6 @@ extern "C" {
 
 #include <common/macros.h>
 
-/* no AV correction is done if too big error */
-#define SUBPICTURE_QUEUE_SIZE 16
-#define VIDEO_PICTURE_QUEUE_SIZE 3
-#define SAMPLE_QUEUE_SIZE 9
-#define FRAME_QUEUE_SIZE \
-  FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
-
 struct SAVPacket {
   explicit SAVPacket(const AVPacket& p);
 

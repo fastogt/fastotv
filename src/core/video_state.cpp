@@ -301,7 +301,7 @@ int VideoState::stream_component_open(int stream_index) {
           static_cast<double>(audio_hw_buf_size) / static_cast<double>(audio_tgt.bytes_per_sec);
       bool opened = astream_->Open(stream_index, stream);
       PacketQueue* packet_queue = astream_->Queue();
-      audio_frame_queue_ = new FrameQueueEx<SAMPLE_QUEUE_SIZE>(true);
+      audio_frame_queue_ = new AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
       auddec = new AudioDecoder(avctx, packet_queue, continue_read_thread);
       if ((ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic->iformat->read_seek) {
@@ -319,7 +319,7 @@ int VideoState::stream_component_open(int stream_index) {
     case AVMEDIA_TYPE_SUBTITLE: {
       bool opened = sstream_->Open(stream_index, stream);
       PacketQueue* packet_queue = sstream_->Queue();
-      subtitle_frame_queue_ = new FrameQueue(packet_queue, SUBPICTURE_QUEUE_SIZE, false);
+      subtitle_frame_queue_ = new SubTitleQueue<SUBPICTURE_QUEUE_SIZE>(false);
       subdec = new SubDecoder(avctx, packet_queue, continue_read_thread);
       if ((ret = subdec->Start(subtitle_thread, this)) < 0) {
         destroy(&subdec);
@@ -355,7 +355,8 @@ void VideoState::stream_component_close(int stream_index) {
       destroy(&video_frame_queue_);
       break;
     case AVMEDIA_TYPE_SUBTITLE:
-      subdec->Abort(subtitle_frame_queue_);
+      subtitle_frame_queue_->Stop();
+      subdec->Abort();
       destroy(&subdec);
       destroy(&subtitle_frame_queue_);
       break;
@@ -572,12 +573,14 @@ void VideoState::video_refresh(double* remaining_time) {
       }
 
       if (subtitle_st) {
-        while (subtitle_frame_queue_->nb_remaining() > 0) {
-          Frame* sp = subtitle_frame_queue_->peek();
-          Frame* sp2 = NULL;
-          if (subtitle_frame_queue_->nb_remaining() > 1) {
-            sp2 = subtitle_frame_queue_->peek_next();
+        while (true) {
+          std::vector<SubtitleFrame*> frames;
+          if (subtitle_frame_queue_->GetFewFrames(&frames, 2)) {
+            break;
           }
+
+          SubtitleFrame* sp = frames[0];
+          SubtitleFrame* sp2 = frames[1];
 
           if (sp->serial != subtitle_packet_queue->serial() ||
               (vstream_->GetPts() >
@@ -599,7 +602,7 @@ void VideoState::video_refresh(double* remaining_time) {
                 }
               }
             }
-            subtitle_frame_queue_->next();
+            subtitle_frame_queue_->MoveToNext();
           } else {
             break;
           }
@@ -807,12 +810,10 @@ void VideoState::set_default_window_size(int width, int height, AVRational sar) 
 
 void VideoState::video_image_display() {
   Frame* vp = video_frame_queue_->peek_last();
-  Frame* sp = NULL;
+  SubtitleFrame* sp = NULL;
   if (vp->bmp) {
     if (sstream_->IsOpened()) {
-      if (subtitle_frame_queue_->nb_remaining() > 0) {
-        sp = subtitle_frame_queue_->peek();
-      }
+      sp = subtitle_frame_queue_->PeekOrNull();
       if (sp) {
         if (vp->pts >= sp->pts + (static_cast<float>(sp->sub.start_display_time) / 1000)) {
           if (!sp->uploaded) {
@@ -2340,10 +2341,10 @@ the_end:
 
 int VideoState::subtitle_thread(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
-  FrameQueue* subpq = is->subtitle_frame_queue_;
+  SubTitleQueue<SUBPICTURE_QUEUE_SIZE>* subpq = is->subtitle_frame_queue_;
   SubDecoder* subdec = is->subdec;
   while (true) {
-    Frame* sp = subpq->peek_writable();
+    SubtitleFrame* sp = subpq->GetPeekWritable();
     if (!sp) {
       return 0;
     }
@@ -2365,7 +2366,7 @@ int VideoState::subtitle_thread(void* user_data) {
       sp->uploaded = 0;
 
       /* now we can update the picture count */
-      subpq->push();
+      subpq->Push();
     } else if (got_subtitle) {
       avsubtitle_free(&sp->sub);
     }
