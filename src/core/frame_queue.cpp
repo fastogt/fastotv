@@ -43,7 +43,7 @@ void VideoFrameQueue::Push() {
   SDL_UnlockMutex(mutex);
 }
 
-VideoFrame* VideoFrameQueue::peek_writable() {
+VideoFrame* VideoFrameQueue::GetPeekWritable() {
   /* wait until we have space to put a new frame */
   SDL_LockMutex(mutex);
   while (size_ >= max_size_ && !stoped_) {
@@ -58,35 +58,20 @@ VideoFrame* VideoFrameQueue::peek_writable() {
 }
 
 /* return the number of undisplayed frames in the queue */
-int VideoFrameQueue::nb_remaining() {
+int VideoFrameQueue::NbRemaining() {
   return size_ - rindex_shown_;
 }
 
-VideoFrame* VideoFrameQueue::peek_last() {
+VideoFrame* VideoFrameQueue::PeekLast() {
   return queue[rindex_];
 }
 
-VideoFrame* VideoFrameQueue::peek() {
+VideoFrame* VideoFrameQueue::Peek() {
   return queue[(rindex_ + rindex_shown_) % max_size_];
 }
 
-VideoFrame* VideoFrameQueue::peek_next() {
+VideoFrame* VideoFrameQueue::PeekNext() {
   return queue[(rindex_ + rindex_shown_ + 1) % max_size_];
-}
-
-VideoFrame* VideoFrameQueue::peek_readable() {
-  /* wait until we have a readable a new frame */
-  SDL_LockMutex(mutex);
-  while (size_ - rindex_shown_ <= 0 && !stoped_) {
-    SDL_CondWait(cond, mutex);
-  }
-  SDL_UnlockMutex(mutex);
-
-  if (stoped_) {
-    return nullptr;
-  }
-
-  return queue[(rindex_ + rindex_shown_) % max_size_];
 }
 
 void VideoFrameQueue::Stop() {
@@ -126,10 +111,14 @@ bool VideoFrameQueue::GetLastUsedPos(int64_t* pos, int serial) {
   return false;
 }
 
-size_t VideoFrameQueue::rindex_shown() const {
+size_t VideoFrameQueue::RindexShown() const {
   return rindex_shown_;
 }
 
-VideoFrame* VideoFrameQueue::windex_frame() {
+VideoFrame* VideoFrameQueue::Windex() {
   return queue[windex_];
+}
+
+bool VideoFrameQueue::IsEmpty() {
+  return NbRemaining() == 0;
 }

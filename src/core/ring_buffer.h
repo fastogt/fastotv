@@ -29,7 +29,12 @@ class RingBuffer {
     }
   }
 
-  T* GetPeekReadable() {
+  bool IsStoped() {
+    lock_t lock(queue_mutex_);
+    return stoped_;
+  }
+
+  pointer_type GetPeekReadable() {
     /* wait until we have a readable a new frame */
     lock_t lock(queue_mutex_);
     while (IsEmptyInner() && !stoped_) {
@@ -43,7 +48,7 @@ class RingBuffer {
     return queue_[(rindex_ + rindex_shown_) % buffer_size];
   }
 
-  T* GetPeekWritable() {
+  pointer_type GetPeekWritable() {
     /* wait until we have space to put a new frame */
     lock_t lock(queue_mutex_);
     while (IsFullInner() && !stoped_) {
@@ -69,17 +74,50 @@ class RingBuffer {
     queue_cond_.notify_one();
   }
 
-  T* PeekOrNull() {
+  pointer_type PeekLast() {
+    lock_t lock(queue_mutex_);
+    return RindexElementInner();
+  }
+
+  pointer_type Peek() {
+    lock_t lock(queue_mutex_);
+    return PeekInner();
+  }
+
+  pointer_type PeekNext() {
+    lock_t lock(queue_mutex_);
+    return PeekNextInner();
+  }
+
+  pointer_type PeekOrNull() {
     lock_t lock(queue_mutex_);
     if (IsEmptyInner()) {  // if is empty
       return nullptr;
     }
-    return queue_[(rindex_ + rindex_shown_) % buffer_size];
+    return PeekInner();
+  }
+
+  pointer_type Windex() {
+    lock_t lock(queue_mutex_);
+    if (IsEmptyInner()) {  // if is empty
+      return nullptr;
+    }
+    return WindexElementInner();
   }
 
   bool IsEmpty() {
     lock_t lock(queue_mutex_);
     return IsEmptyInner();
+  }
+
+  int NbRemaining() {
+    lock_t lock(queue_mutex_);
+    return NbRemainingInner();
+  }
+
+  size_t RindexShown() {
+    lock_t lock(queue_mutex_);
+    return RindexShownInner();
   }
 
  protected:
@@ -93,11 +131,26 @@ class RingBuffer {
 
   bool IsEmptyInner() const { return NbRemainingInner() <= 0; }
 
+  pointer_type PeekInner() { return queue_[(rindex_ + rindex_shown_) % buffer_size]; }
+
+  pointer_type PeekNextInner() { return queue_[(rindex_ + rindex_shown_ + 1) % buffer_size]; }
+
   pointer_type RindexElementInner() const { return queue_[rindex_]; }
 
   pointer_type IndexElementInner(size_t pos) const { return queue_[pos]; }
 
+  pointer_type WindexElementInner() { return queue_[windex_]; }
+
   size_t SafeRindexInner(size_t pos) const { return (rindex_ + rindex_shown_ + pos) % buffer_size; }
+
+  pointer_type MoveToNextInner() {
+    if (keep_last_ && !rindex_shown_) {
+      rindex_shown_ = 1;
+      return nullptr;
+    }
+
+    return RindexElementInner();
+  }
 
   void RindexUpInner() {
     if (++rindex_ == buffer_size) {
@@ -113,16 +166,16 @@ class RingBuffer {
     size_++;
   }
 
+  size_t RindexShownInner() const { return rindex_shown_; }
+
   typedef common::thread::unique_lock<common::thread::mutex> lock_t;
   common::thread::condition_variable queue_cond_;
   common::thread::mutex queue_mutex_;
 
+ private:
   pointer_type queue_[buffer_size];
-
   size_t rindex_shown_;
   const bool keep_last_;
-
- private:
   size_t rindex_;
   size_t windex_;
   size_t size_;

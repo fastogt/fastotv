@@ -301,7 +301,7 @@ int VideoState::stream_component_open(int stream_index) {
           static_cast<double>(audio_hw_buf_size) / static_cast<double>(audio_tgt.bytes_per_sec);
       bool opened = astream_->Open(stream_index, stream);
       PacketQueue* packet_queue = astream_->Queue();
-      audio_frame_queue_ = new AudioVideoFrameQueue<SAMPLE_QUEUE_SIZE>(true);
+      audio_frame_queue_ = new AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
       auddec = new AudioDecoder(avctx, packet_queue, continue_read_thread);
       if ((ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic->iformat->read_seek) {
@@ -516,14 +516,14 @@ void VideoState::video_refresh(double* remaining_time) {
 
   if (video_st) {
   retry:
-    if (video_frame_queue_->nb_remaining() == 0) {
+    if (video_frame_queue_->IsEmpty()) {
       // nothing to do, no picture to display in the queue
     } else {
       double last_duration, duration, delay;
 
       /* dequeue the picture */
-      VideoFrame* lastvp = video_frame_queue_->peek_last();
-      VideoFrame* vp = video_frame_queue_->peek();
+      VideoFrame* lastvp = video_frame_queue_->PeekLast();
+      VideoFrame* vp = video_frame_queue_->Peek();
 
       if (vp->serial != video_packet_queue->serial()) {
         video_frame_queue_->MoveToNext();
@@ -561,8 +561,8 @@ void VideoState::video_refresh(double* remaining_time) {
       }
       SDL_UnlockMutex(video_frame_queue_->mutex);
 
-      if (video_frame_queue_->nb_remaining() > 1) {
-        VideoFrame* nextvp = video_frame_queue_->peek_next();
+      if (video_frame_queue_->NbRemaining() > 1) {
+        VideoFrame* nextvp = video_frame_queue_->PeekNext();
         duration = vp_duration(vp, nextvp);
         if (!step && (opt->framedrop > 0 ||
                       (opt->framedrop && get_master_sync_type() != AV_SYNC_VIDEO_MASTER)) &&
@@ -620,7 +620,7 @@ void VideoState::video_refresh(double* remaining_time) {
   display:
     /* display picture */
     if (!opt->display_disable && force_refresh && opt->show_mode == SHOW_MODE_VIDEO &&
-        video_frame_queue_->rindex_shown()) {
+        video_frame_queue_->RindexShown()) {
       video_display();
     }
   }
@@ -718,7 +718,7 @@ int VideoState::video_open(VideoFrame* vp) {
 }
 
 int VideoState::alloc_picture() {
-  VideoFrame* vp = video_frame_queue_->windex_frame();
+  VideoFrame* vp = video_frame_queue_->Windex();
 
   int res = video_open(vp);
   if (res == ERROR_RESULT_VALUE) {
@@ -810,7 +810,7 @@ void VideoState::set_default_window_size(int width, int height, AVRational sar) 
 }
 
 void VideoState::video_image_display() {
-  VideoFrame* vp = video_frame_queue_->peek_last();
+  VideoFrame* vp = video_frame_queue_->PeekLast();
   SubtitleFrame* sp = NULL;
   if (vp->bmp) {
     if (sstream_->IsOpened()) {
@@ -1679,7 +1679,7 @@ int VideoState::queue_picture(AVFrame* src_frame,
 #endif
 
   PacketQueue* video_packet_queue = vstream_->Queue();
-  VideoFrame* vp = video_frame_queue_->peek_writable();
+  VideoFrame* vp = video_frame_queue_->GetPeekWritable();
   if (!vp) {
     return ERROR_RESULT_VALUE;
   }
@@ -2050,7 +2050,7 @@ int VideoState::read_thread(void* user_data) {
     if (!is->paused_ && (!audio_st || (is->auddec->Finished() == audio_packet_queue->serial() &&
                                        is->audio_frame_queue_->IsEmpty())) &&
         (!video_st || (is->viddec->Finished() == video_packet_queue->serial() &&
-                       is->video_frame_queue_->nb_remaining() == 0))) {
+                       is->video_frame_queue_->IsEmpty()))) {
       if (is->opt->loop != 1 && (!is->opt->loop || --is->opt->loop)) {
         is->stream_seek(is->opt->start_time != AV_NOPTS_VALUE ? is->opt->start_time : 0, 0, 0);
       } else if (is->opt->autoexit) {

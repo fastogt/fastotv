@@ -26,21 +26,21 @@ class VideoFrameQueue {
   ~VideoFrameQueue();
 
   void Push();
-  VideoFrame* peek_writable();
-  int nb_remaining();
-  VideoFrame* peek_last();
-  VideoFrame* peek();
-  VideoFrame* peek_next();
-  VideoFrame* peek_readable();
+  VideoFrame* GetPeekWritable();
+  int NbRemaining();
+  VideoFrame* PeekLast();
+  VideoFrame* Peek();
+  VideoFrame* PeekNext();
   void Stop();
   void MoveToNext();
   bool GetLastUsedPos(int64_t* pos, int serial);
-  size_t rindex_shown() const;
+  size_t RindexShown() const;
 
   SDL_mutex* mutex;
   SDL_cond* cond;
 
-  VideoFrame* windex_frame();
+  VideoFrame* Windex();
+  bool IsEmpty();
 
  private:
   VideoFrame* queue[VIDEO_PICTURE_QUEUE_SIZE];
@@ -55,12 +55,12 @@ class VideoFrameQueue {
 };
 
 template <size_t buffer_size>
-class AudioVideoFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
+class VideoFrameQueueEx : public RingBuffer<VideoFrame, buffer_size> {
  public:
-  typedef RingBuffer<AudioFrame, buffer_size> base_class;
+  typedef RingBuffer<VideoFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
-  AudioVideoFrameQueue(bool keep_last) : base_class(keep_last) {}
+  VideoFrameQueueEx(bool keep_last) : base_class(keep_last) {}
 
   bool GetLastUsedPos(int64_t* pos, int serial) {
     if (!pos) {
@@ -69,7 +69,7 @@ class AudioVideoFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
 
     typename base_class::lock_t lock(base_class::queue_mutex_);
     pointer_type fp = base_class::RindexElementInner();
-    if (base_class::rindex_shown_ && fp->serial == serial) {
+    if (base_class::RindexShownInner() && fp->serial == serial) {
       *pos = fp->pos;
       return true;
     }
@@ -78,11 +78,44 @@ class AudioVideoFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
 
   void MoveToNext() {
     typename base_class::lock_t lock(base_class::queue_mutex_);
-    if (base_class::keep_last_ && !base_class::rindex_shown_) {
-      base_class::rindex_shown_ = 1;
+    pointer_type fp = base_class::MoveToNextInner();
+    if (!fp) {
       return;
     }
+    fp->ClearFrame();
+    base_class::RindexUpInner();
+    base_class::queue_cond_.notify_one();
+  }
+};
+
+template <size_t buffer_size>
+class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
+ public:
+  typedef RingBuffer<AudioFrame, buffer_size> base_class;
+  typedef typename base_class::pointer_type pointer_type;
+
+  AudioFrameQueue(bool keep_last) : base_class(keep_last) {}
+
+  bool GetLastUsedPos(int64_t* pos, int serial) {
+    if (!pos) {
+      return false;
+    }
+
+    typename base_class::lock_t lock(base_class::queue_mutex_);
     pointer_type fp = base_class::RindexElementInner();
+    if (base_class::RindexShownInner() && fp->serial == serial) {
+      *pos = fp->pos;
+      return true;
+    }
+    return false;
+  }
+
+  void MoveToNext() {
+    typename base_class::lock_t lock(base_class::queue_mutex_);
+    pointer_type fp = base_class::MoveToNextInner();
+    if (!fp) {
+      return;
+    }
     fp->ClearFrame();
     base_class::RindexUpInner();
     base_class::queue_cond_.notify_one();
@@ -115,27 +148,12 @@ class SubTitleQueue : public RingBuffer<SubtitleFrame, buffer_size> {
     return true;
   }
 
-  bool GetLastUsedPos(int64_t* pos, int serial) {
-    if (!pos) {
-      return false;
-    }
-
-    typename base_class::lock_t lock(base_class::queue_mutex_);
-    pointer_type fp = base_class::RindexElementInner();
-    if (base_class::rindex_shown_ && fp->serial == serial) {
-      *pos = fp->pos;
-      return true;
-    }
-    return false;
-  }
-
   void MoveToNext() {
     typename base_class::lock_t lock(base_class::queue_mutex_);
-    if (base_class::keep_last_ && !base_class::rindex_shown_) {
-      base_class::rindex_shown_ = 1;
+    pointer_type fp = base_class::MoveToNextInner();
+    if (!fp) {
       return;
     }
-    pointer_type fp = base_class::RindexElementInner();
     fp->ClearFrame();
     base_class::RindexUpInner();
     base_class::queue_cond_.notify_one();
