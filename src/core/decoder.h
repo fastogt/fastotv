@@ -12,7 +12,7 @@ class Decoder {
 
   int Start(int (*fn)(void*), void* arg);
   void Abort(FrameQueue* fq);
-  void Abort(FrameQueueEx* fq);
+  void Abort();
   int GetPktSerial() const;
 
   bool Finished() const;

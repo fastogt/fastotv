@@ -301,7 +301,7 @@ int VideoState::stream_component_open(int stream_index) {
           static_cast<double>(audio_hw_buf_size) / static_cast<double>(audio_tgt.bytes_per_sec);
       bool opened = astream_->Open(stream_index, stream);
       PacketQueue* packet_queue = astream_->Queue();
-      audio_frame_queue_ = new FrameQueueEx(SAMPLE_QUEUE_SIZE, true);
+      audio_frame_queue_ = new FrameQueueEx<SAMPLE_QUEUE_SIZE>(true);
       auddec = new AudioDecoder(avctx, packet_queue, continue_read_thread);
       if ((ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic->iformat->read_seek) {
@@ -360,7 +360,8 @@ void VideoState::stream_component_close(int stream_index) {
       destroy(&subtitle_frame_queue_);
       break;
     case AVMEDIA_TYPE_AUDIO:
-      auddec->Abort(audio_frame_queue_);
+      audio_frame_queue_->Stop();
+      auddec->Abort();
       destroy(&auddec);
       destroy(&audio_frame_queue_);
       SDL_CloseAudio();
@@ -1501,7 +1502,7 @@ int VideoState::audio_decode_frame() {
   int data_size, resampled_data_size;
   int64_t dec_channel_layout;
   int wanted_nb_samples;
-  Frame* af;
+  AudioFrame* af = nullptr;
 
   if (paused_) {
     return -1;
@@ -2113,7 +2114,7 @@ fail:
 
 int VideoState::audio_thread(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
-  Frame* af;
+  AudioFrame* af = nullptr;
 #if CONFIG_AVFILTER
   int last_serial = -1;
   int64_t dec_channel_layout;

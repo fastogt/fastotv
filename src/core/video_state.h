@@ -143,7 +143,7 @@ class VideoState {
   SubDecoder* subdec;
 
   FrameQueue* video_frame_queue_;
-  FrameQueueEx* audio_frame_queue_;
+  FrameQueueEx<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
   FrameQueue* subtitle_frame_queue_;
 
   double audio_clock;
