@@ -1,33 +1,26 @@
 #include "core/decoder.h"
 
-Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond)
+Decoder::DecoderClient::~DecoderClient() {}
+
+Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
     : start_pts(AV_NOPTS_VALUE),
       start_pts_tb{0, 0},
       avctx_(avctx),
       pkt_(),
       queue_(queue),
       packet_pending_(false),
-      finished_(false),
-      empty_queue_cond_(empty_queue_cond),
       pkt_serial_(0),
       next_pts_(0),
       next_pts_tb_{0, 0},
-      decoder_tid_(NULL) {}
+      client_(client),
+      finished_(false) {}
 
-int Decoder::Start(int (*fn)(void*), void* arg) {
+void Decoder::Start() {
   queue_->start();
-  decoder_tid_ = SDL_CreateThread(fn, "decoder", arg);
-  if (!decoder_tid_) {
-    av_log(NULL, AV_LOG_ERROR, "SDL_CreateThread(): %s\n", SDL_GetError());
-    return AVERROR(ENOMEM);
-  }
-  return 0;
 }
 
 void Decoder::Abort() {
   queue_->abort();
-  SDL_WaitThread(decoder_tid_, NULL);
-  decoder_tid_ = NULL;
   queue_->flush();
 }
 
@@ -52,14 +45,14 @@ AVMediaType Decoder::CodecType() const {
   return avctx_->codec_type;
 }
 
-IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond)
-    : Decoder(avctx, queue, empty_queue_cond) {}
+IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
+    : Decoder(avctx, queue, client) {}
 
-ISubDecoder::ISubDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond)
-    : Decoder(avctx, queue, empty_queue_cond) {}
+ISubDecoder::ISubDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
+    : Decoder(avctx, queue, client) {}
 
-AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond)
-    : IFrameDecoder(avctx, queue, empty_queue_cond) {
+AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
+    : IFrameDecoder(avctx, queue, client) {
   CHECK(CodecType() == AVMEDIA_TYPE_AUDIO);
 }
 
@@ -78,7 +71,9 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       AVPacket lpkt;
       do {
         if (queue_->nb_packets() == 0) {
-          SDL_CondSignal(empty_queue_cond_);
+          if (client_) {
+            client_->HandleEmptyQueue(this);
+          }
         }
         if (queue_->get(&lpkt, 1, &pkt_serial_) < 0) {
           return -1;
@@ -133,9 +128,9 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
 
 VideoDecoder::VideoDecoder(AVCodecContext* avctx,
                            PacketQueue* queue,
-                           SDL_cond* empty_queue_cond,
+                           DecoderClient* client,
                            int decoder_reorder_pts)
-    : IFrameDecoder(avctx, queue, empty_queue_cond), decoder_reorder_pts_(decoder_reorder_pts) {
+    : IFrameDecoder(avctx, queue, client), decoder_reorder_pts_(decoder_reorder_pts) {
   CHECK(CodecType() == AVMEDIA_TYPE_VIDEO);
 }
 
@@ -170,7 +165,9 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
       AVPacket lpkt;
       do {
         if (queue_->nb_packets() == 0) {
-          SDL_CondSignal(empty_queue_cond_);
+          if (client_) {
+            client_->HandleEmptyQueue(this);
+          }
         }
         if (queue_->get(&lpkt, 1, &pkt_serial_) < 0) {
           return -1;
@@ -219,8 +216,8 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
   return got_frame;
 }
 
-SubDecoder::SubDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond)
-    : ISubDecoder(avctx, queue, empty_queue_cond) {
+SubDecoder::SubDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
+    : ISubDecoder(avctx, queue, client) {
   CHECK(CodecType() == AVMEDIA_TYPE_SUBTITLE);
 }
 
@@ -247,7 +244,9 @@ int SubDecoder::DecodeFrame(AVSubtitle* sub) {
       AVPacket lpkt;
       do {
         if (queue_->nb_packets() == 0) {
-          SDL_CondSignal(empty_queue_cond_);
+          if (client_) {
+            client_->HandleEmptyQueue(this);
+          }
         }
         if (queue_->get(&lpkt, 1, &pkt_serial_) < 0) {
           return -1;

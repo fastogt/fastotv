@@ -1,16 +1,17 @@
 #pragma once
 
-extern "C" {
-#include <SDL2/SDL_thread.h>
-}
-
 #include "core/packet_queue.h"
 
 class Decoder {
  public:
+  class DecoderClient {
+   public:
+    virtual void HandleEmptyQueue(Decoder* dec) = 0;
+    virtual ~DecoderClient();
+  };
   virtual ~Decoder();
 
-  int Start(int (*fn)(void*), void* arg);
+  void Start();
   void Abort();
   int GetPktSerial() const;
 
@@ -23,19 +24,18 @@ class Decoder {
   AVRational start_pts_tb;
 
  protected:
-  Decoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+  Decoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
 
   AVCodecContext* avctx_;
   AVPacket pkt_;
   PacketQueue* const queue_;
 
   bool packet_pending_;
-  SDL_cond* const empty_queue_cond_;
   int pkt_serial_;
 
   int64_t next_pts_;
   AVRational next_pts_tb_;
-  SDL_Thread* decoder_tid_;
+  DecoderClient* const client_;
 
  private:
   bool finished_;
@@ -43,19 +43,19 @@ class Decoder {
 
 class IFrameDecoder : public Decoder {
  public:
-  IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+  IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
   virtual int DecodeFrame(AVFrame* frame) = 0;
 };
 
 class ISubDecoder : public Decoder {
  public:
-  ISubDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+  ISubDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
   virtual int DecodeFrame(AVSubtitle* sub) = 0;
 };
 
 class AudioDecoder : public IFrameDecoder {
  public:
-  AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+  AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
   virtual int DecodeFrame(AVFrame* frame) override;
 };
 
@@ -63,7 +63,7 @@ class VideoDecoder : public IFrameDecoder {
  public:
   VideoDecoder(AVCodecContext* avctx,
                PacketQueue* queue,
-               SDL_cond* empty_queue_cond,
+               DecoderClient* client,
                int decoder_reorder_pts);
 
   int width() const;
@@ -80,7 +80,7 @@ class VideoDecoder : public IFrameDecoder {
 
 class SubDecoder : public ISubDecoder {
  public:
-  SubDecoder(AVCodecContext* avctx, PacketQueue* queue, SDL_cond* empty_queue_cond);
+  SubDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
 
   int width() const;
   int height() const;

@@ -69,6 +69,10 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
       out_audio_filter(NULL),
       agraph(NULL),
 #endif
+      continue_read_thread(NULL),
+      vdecoder_tid_(NULL),
+      adecoder_tid_(NULL),
+      sdecoder_tid_(NULL),
       paused_(false),
       last_paused_(false),
       cursor_hidden_(false),
@@ -249,9 +253,10 @@ int VideoState::stream_component_open(int stream_index) {
       bool opened = vstream_->Open(stream_index, stream);
       PacketQueue* packet_queue = vstream_->Queue();
       video_frame_queue_ = new VideoFrameQueueEx<VIDEO_PICTURE_QUEUE_SIZE>(true);
-      viddec =
-          new VideoDecoder(avctx, packet_queue, continue_read_thread, opt->decoder_reorder_pts);
-      if ((ret = viddec->Start(video_thread, this)) < 0) {
+      viddec = new VideoDecoder(avctx, packet_queue, this, opt->decoder_reorder_pts);
+      viddec->Start();
+      vdecoder_tid_ = SDL_CreateThread(video_thread, "video_decoder_thread", this);
+      if (!vdecoder_tid_) {
         destroy(&viddec);
         destroy(&video_frame_queue_);
         goto out;
@@ -302,15 +307,17 @@ int VideoState::stream_component_open(int stream_index) {
       bool opened = astream_->Open(stream_index, stream);
       PacketQueue* packet_queue = astream_->Queue();
       audio_frame_queue_ = new AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
-      auddec = new AudioDecoder(avctx, packet_queue, continue_read_thread);
+      auddec = new AudioDecoder(avctx, packet_queue, this);
       if ((ic->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic->iformat->read_seek) {
         auddec->start_pts = stream->start_time;
         auddec->start_pts_tb = stream->time_base;
       }
-      if ((ret = auddec->Start(audio_thread, this)) < 0) {
+      auddec->Start();
+      adecoder_tid_ = SDL_CreateThread(audio_thread, "audio_decoder_thread", this);
+      if (!adecoder_tid_) {
         destroy(&auddec);
-        destroy(&audio_frame_queue_);
+        destroy(&auddec);
         goto out;
       }
       SDL_PauseAudio(0);
@@ -320,10 +327,12 @@ int VideoState::stream_component_open(int stream_index) {
       bool opened = sstream_->Open(stream_index, stream);
       PacketQueue* packet_queue = sstream_->Queue();
       subtitle_frame_queue_ = new SubTitleQueue<SUBPICTURE_QUEUE_SIZE>(false);
-      subdec = new SubDecoder(avctx, packet_queue, continue_read_thread);
-      if ((ret = subdec->Start(subtitle_thread, this)) < 0) {
+      subdec = new SubDecoder(avctx, packet_queue, this);
+      subdec->Start();
+      sdecoder_tid_ = SDL_CreateThread(subtitle_thread, "subtitle_decoder_thread", this);
+      if (!sdecoder_tid_) {
         destroy(&subdec);
-        destroy(&subtitle_frame_queue_);
+        destroy(&subdec);
         goto out;
       }
       break;
@@ -349,21 +358,20 @@ void VideoState::stream_component_close(int stream_index) {
   AVStream* avs = ic->streams[stream_index];
   AVCodecParameters* codecpar = avs->codecpar;
   switch (codecpar->codec_type) {
-    case AVMEDIA_TYPE_VIDEO:
+    case AVMEDIA_TYPE_VIDEO: {
       video_frame_queue_->Stop();
       viddec->Abort();
+      SDL_WaitThread(vdecoder_tid_, NULL);
+      vdecoder_tid_ = NULL;
       destroy(&viddec);
       destroy(&video_frame_queue_);
       break;
-    case AVMEDIA_TYPE_SUBTITLE:
-      subtitle_frame_queue_->Stop();
-      subdec->Abort();
-      destroy(&subdec);
-      destroy(&subtitle_frame_queue_);
-      break;
-    case AVMEDIA_TYPE_AUDIO:
+    }
+    case AVMEDIA_TYPE_AUDIO: {
       audio_frame_queue_->Stop();
       auddec->Abort();
+      SDL_WaitThread(adecoder_tid_, NULL);
+      adecoder_tid_ = NULL;
       destroy(&auddec);
       destroy(&audio_frame_queue_);
       SDL_CloseAudio();
@@ -379,6 +387,16 @@ void VideoState::stream_component_close(int stream_index) {
         rdft_bits_ = 0;
       }
       break;
+    }
+    case AVMEDIA_TYPE_SUBTITLE: {
+      subtitle_frame_queue_->Stop();
+      subdec->Abort();
+      SDL_WaitThread(sdecoder_tid_, NULL);
+      sdecoder_tid_ = NULL;
+      destroy(&subdec);
+      destroy(&subtitle_frame_queue_);
+      break;
+    }
     default:
       break;
   }
@@ -576,14 +594,12 @@ void VideoState::video_refresh(double* remaining_time) {
       }
 
       if (subtitle_st) {
-        while (true) {
-          std::vector<SubtitleFrame*> frames;
-          if (subtitle_frame_queue_->GetFewFrames(&frames, 2)) {
-            break;
+        while (subtitle_frame_queue_->NbRemaining() > 0) {
+          SubtitleFrame* sp = subtitle_frame_queue_->Peek();
+          SubtitleFrame* sp2 = NULL;
+          if (subtitle_frame_queue_->NbRemaining() > 1) {
+            sp2 = subtitle_frame_queue_->PeekNext();
           }
-
-          SubtitleFrame* sp = frames[0];
-          SubtitleFrame* sp2 = frames[1];
 
           if (sp->serial != subtitle_packet_queue->serial() ||
               (vstream_->GetPts() >
@@ -1353,6 +1369,11 @@ void VideoState::ToggleAudioDisplay() {
   }
 }
 
+void VideoState::HandleEmptyQueue(Decoder* dec) {
+  UNUSED(dec);
+  SDL_CondSignal(continue_read_thread);
+}
+
 void VideoState::seek_chapter(int incr) {
   if (!ic->nb_chapters) {
     return;
@@ -1659,11 +1680,10 @@ void VideoState::sdl_audio_callback(void* opaque, Uint8* stream, int len) {
   is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
   /* Let's assume the audio driver that is used by SDL has two periods. */
   if (!isnan(is->audio_clock)) {
-    is->astream_->SetClockAt(
-        is->audio_clock -
-            static_cast<double>(2 * is->audio_hw_buf_size + is->audio_write_buf_size) /
-                is->audio_tgt.bytes_per_sec,
-        is->audio_clock_serial, is->audio_callback_time / 1000000.0);
+    const double pts = is->audio_clock -
+                       static_cast<double>(2 * is->audio_hw_buf_size + is->audio_write_buf_size) /
+                           is->audio_tgt.bytes_per_sec;
+    is->astream_->SetClockAt(pts, is->audio_clock_serial, is->audio_callback_time / 1000000.0);
     is->sstream_->SyncClockWith(is->astream_, AV_NOSYNC_THRESHOLD);
   }
 }
@@ -1786,7 +1806,6 @@ int VideoState::read_thread(void* user_data) {
   AVDictionaryEntry* t;
   AVDictionary** opts;
   int orig_nb_streams;
-  SDL_mutex* wait_mutex = SDL_CreateMutex();
   int scan_all_pmts_set = 0;
   int64_t pkt_ts;
 
@@ -1798,6 +1817,7 @@ int VideoState::read_thread(void* user_data) {
   PacketQueue* subtitle_packet_queue = subtitle_stream->Queue();
 
   const char* in_filename = common::utils::c_strornull(is->opt->input_filename);
+  SDL_mutex* wait_mutex = SDL_CreateMutex();
   if (!wait_mutex) {
     av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
     ret = AVERROR(ENOMEM);

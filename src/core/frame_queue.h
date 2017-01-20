@@ -83,24 +83,6 @@ class SubTitleQueue : public RingBuffer<SubtitleFrame, buffer_size> {
 
   SubTitleQueue(bool keep_last) : base_class(keep_last) {}
 
-  bool GetFewFrames(std::vector<SubtitleFrame*>* vect, size_t count) {
-    if (!vect || count == 0 || count > buffer_size) {
-      return false;
-    }
-
-    typename base_class::lock_t lock(base_class::queue_mutex_);
-    for (size_t i = 0; i < count; ++i) {
-      size_t ind = base_class::SafeRindexInner(i);
-      SubtitleFrame* fr = base_class::IndexElementInner(ind);
-      if (ind + 1 < buffer_size) {
-        vect->push_back(fr);
-      } else {
-        vect->push_back(nullptr);
-      }
-    }
-    return true;
-  }
-
   void MoveToNext() {
     typename base_class::lock_t lock(base_class::queue_mutex_);
     pointer_type fp = base_class::MoveToNextInner();

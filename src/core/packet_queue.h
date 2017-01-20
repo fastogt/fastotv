@@ -19,7 +19,7 @@ struct SAVPacket {
   int serial;
 };
 
-class PacketQueue {
+class PacketQueue {  // compressed queue data
  public:
   ~PacketQueue();
 

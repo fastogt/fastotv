@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_thread.h>
 }
 
 #include <common/macros.h>
@@ -42,7 +43,7 @@ extern "C" {
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
 
-class VideoState {
+class VideoState : public Decoder::DecoderClient {
  public:
   VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt);
   int Exec() WARN_UNUSED_RESULT;
@@ -53,6 +54,9 @@ class VideoState {
   void TogglePause();
   void ToggleMute();
   void ToggleAudioDisplay();
+
+ protected:
+  virtual void HandleEmptyQueue(Decoder* dec);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoState);
@@ -206,6 +210,9 @@ class VideoState {
   int last_video_stream, last_audio_stream, last_subtitle_stream;
 
   SDL_cond* continue_read_thread;
+  SDL_Thread* vdecoder_tid_;
+  SDL_Thread* adecoder_tid_;
+  SDL_Thread* sdecoder_tid_;
 
   bool paused_;
   bool last_paused_;
