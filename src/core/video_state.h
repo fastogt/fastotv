@@ -26,10 +26,11 @@ extern "C" {
 #endif
 
 #include <SDL2/SDL_events.h>
-#include <SDL2/SDL_thread.h>
+#include <SDL2/SDL_mutex.h>
 }
 
 #include <common/macros.h>
+#include <common/thread/thread_manager.h>
 
 #include "core/frame_queue.h"
 #include "core/decoder.h"
@@ -119,17 +120,17 @@ class VideoState : public Decoder::DecoderClient {
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, Uint8* stream, int len);
 
-  static int read_thread(void* user_data);
-  static int video_thread(void* user_data);
-  static int audio_thread(void* user_data);
-  static int subtitle_thread(void* user_data);
+  int read_thread();
+  int video_thread();
+  int audio_thread();
+  int subtitle_thread();
   static int decode_interrupt_cb(void* user_data);
 
   AppOptions* const opt;
   ComplexOptions* const copt;
   int64_t audio_callback_time;
 
-  SDL_Thread* read_tid;
+  common::shared_ptr<common::thread::Thread<int>> read_tid_;
   AVInputFormat* iformat;
   int force_refresh;
   int queue_attachments_req;
@@ -210,9 +211,9 @@ class VideoState : public Decoder::DecoderClient {
   int last_video_stream, last_audio_stream, last_subtitle_stream;
 
   SDL_cond* continue_read_thread;
-  SDL_Thread* vdecoder_tid_;
-  SDL_Thread* adecoder_tid_;
-  SDL_Thread* sdecoder_tid_;
+  common::shared_ptr<common::thread::Thread<int>> vdecoder_tid_;
+  common::shared_ptr<common::thread::Thread<int>> adecoder_tid_;
+  common::shared_ptr<common::thread::Thread<int>> sdecoder_tid_;
 
   bool paused_;
   bool last_paused_;

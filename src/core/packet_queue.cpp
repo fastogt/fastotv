@@ -3,18 +3,7 @@
 SAVPacket::SAVPacket(const AVPacket& p) : pkt(p) {}
 
 PacketQueue::PacketQueue()
-    : serial_(0), list_(), size_(0), duration_(0), abort_request_(true), mutex(NULL), cond(NULL) {
-  mutex = SDL_CreateMutex();
-  if (!mutex) {
-    av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
-    return;
-  }
-  cond = SDL_CreateCond();
-  if (!cond) {
-    av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
-    return;
-  }
-}
+    : serial_(0), queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
 
 int PacketQueue::put_nullpacket(int stream_index) {
   AVPacket pkt1, *pkt = &pkt1;
@@ -28,16 +17,16 @@ int PacketQueue::put_nullpacket(int stream_index) {
 int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
   int ret = 0;
 
-  SDL_LockMutex(mutex);
+  lock_t lock(mutex_);
   while (true) {
     if (abort_request_) {
       ret = -1;
       break;
     }
 
-    if (!list_.empty()) {
-      SAVPacket* pkt1 = list_[0];
-      list_.pop_front();
+    if (!queue_.empty()) {
+      SAVPacket* pkt1 = queue_[0];
+      queue_.pop_front();
       size_ -= pkt1->pkt.size + sizeof(*pkt1);
       duration_ -= pkt1->pkt.duration;
       *pkt = pkt1->pkt;
@@ -51,10 +40,9 @@ int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
       ret = 0;
       break;
     } else {
-      SDL_CondWait(cond, mutex);
+      cond_.wait(lock);
     }
   }
-  SDL_UnlockMutex(mutex);
   return ret;
 }
 
@@ -78,7 +66,7 @@ bool PacketQueue::abort_request() const {
 }
 
 size_t PacketQueue::nb_packets() const {
-  return list_.size();
+  return queue_.size();
 }
 
 int PacketQueue::size() const {
@@ -94,19 +82,17 @@ int PacketQueue::serial() const {
 }
 
 void PacketQueue::start() {
-  SDL_LockMutex(mutex);
+  lock_t lock(mutex_);
   abort_request_ = false;
   put_private(flush_pkt());
-  SDL_UnlockMutex(mutex);
 }
 
 int PacketQueue::put(AVPacket* pkt) {
   int ret;
-
-  SDL_LockMutex(mutex);
-  ret = put_private(pkt);
-  SDL_UnlockMutex(mutex);
-
+  {
+    lock_t lock(mutex_);
+    ret = put_private(pkt);
+  }
   if (pkt != PacketQueue::flush_pkt() && ret < 0) {
     av_packet_unref(pkt);
   }
@@ -115,29 +101,25 @@ int PacketQueue::put(AVPacket* pkt) {
 }
 
 void PacketQueue::flush() {
-  SDL_LockMutex(mutex);
-  for (auto it = list_.begin(); it != list_.end(); ++it) {
+  lock_t lock(mutex_);
+  for (auto it = queue_.begin(); it != queue_.end(); ++it) {
     SAVPacket* pkt = *it;
     av_packet_unref(&pkt->pkt);
     delete pkt;
   }
-  list_.clear();
+  queue_.clear();
   size_ = 0;
   duration_ = 0;
-  SDL_UnlockMutex(mutex);
 }
 
 void PacketQueue::abort() {
-  SDL_LockMutex(mutex);
+  lock_t lock(mutex_);
   abort_request_ = true;
-  SDL_CondSignal(cond);
-  SDL_UnlockMutex(mutex);
+  cond_.notify_one();
 }
 
 PacketQueue::~PacketQueue() {
   flush();
-  SDL_DestroyMutex(mutex);
-  SDL_DestroyCond(cond);
 }
 
 int PacketQueue::put_private(AVPacket* pkt) {
@@ -151,10 +133,10 @@ int PacketQueue::put_private(AVPacket* pkt) {
   }
   pkt1->serial = serial_;
 
-  list_.push_back(pkt1);
+  queue_.push_back(pkt1);
   size_ += pkt1->pkt.size + sizeof(*pkt1);
   duration_ += pkt1->pkt.duration;
   /* XXX: should duplicate packet data in DV case */
-  SDL_CondSignal(cond);
+  cond_.notify_one();
   return 0;
 }

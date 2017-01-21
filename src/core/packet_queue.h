@@ -4,13 +4,12 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
-
-#include <SDL2/SDL_mutex.h>
 }
 
 #include <deque>
 
 #include <common/macros.h>
+#include <common/thread/types.h>
 
 struct SAVPacket {
   explicit SAVPacket(const AVPacket& p);
@@ -47,10 +46,11 @@ class PacketQueue {  // compressed queue data
   int put_private(AVPacket* pkt);
 
   int serial_;
-  std::deque<SAVPacket*> list_;
+  std::deque<SAVPacket*> queue_;
   int size_;
   int64_t duration_;
   bool abort_request_;
-  SDL_mutex* mutex;
-  SDL_cond* cond;
+  typedef common::thread::unique_lock<common::thread::mutex> lock_t;
+  common::thread::condition_variable cond_;
+  common::thread::mutex mutex_;
 };
