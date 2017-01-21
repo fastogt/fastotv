@@ -10,7 +10,7 @@ extern "C" {
 #include "cmdutils.h"
 }
 
-#include "core/video_state.h"
+#include "video_state.h"
 
 AppOptions g_options;
 AVInputFormat* file_iformat = NULL;

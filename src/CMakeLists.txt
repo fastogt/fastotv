@@ -8,7 +8,6 @@ SET(HEADERS_CORE
   core/frame_queue.h
   core/decoder.h
   core/app_options.h
-  core/video_state.h
   core/audio_params.h
   core/stream.h
   core/ring_buffer.h
@@ -25,7 +24,6 @@ SET(SOURCES_CORE
   core/frame_queue.cpp
   core/decoder.cpp
   core/app_options.cpp
-  core/video_state.cpp
   core/audio_params.cpp
   core/stream.cpp
   core/ring_buffer.cpp
@@ -149,7 +147,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}
   common
 )
 
-SET(EXE_SOURCES main.cpp cmdutils.c ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
+SET(EXE_SOURCES main.cpp video_state.cpp video_state.h cmdutils.c ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
 
 IF(MINGW OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGCXX)
   IF(OS_ANDROID)

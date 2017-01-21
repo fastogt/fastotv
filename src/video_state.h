@@ -26,7 +26,6 @@ extern "C" {
 #endif
 
 #include <SDL2/SDL_events.h>
-#include <SDL2/SDL_mutex.h>
 }
 
 #include <common/macros.h>
@@ -210,7 +209,7 @@ class VideoState : public Decoder::DecoderClient {
 
   int last_video_stream, last_audio_stream, last_subtitle_stream;
 
-  SDL_cond* continue_read_thread;
+  common::thread::condition_variable continue_read_thread_;
   common::shared_ptr<common::thread::Thread<int>> vdecoder_tid_;
   common::shared_ptr<common::thread::Thread<int>> adecoder_tid_;
   common::shared_ptr<common::thread::Thread<int>> sdecoder_tid_;

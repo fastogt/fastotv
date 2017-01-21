@@ -1,7 +1,7 @@
-#include "core/video_state.h"
+#include "video_state.h"
 
 extern "C" {
-#include <SDL2/SDL.h>
+#include <SDL2/SDL_hints.h>
 }
 
 #include <common/macros.h>
@@ -70,10 +70,10 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
       out_audio_filter(NULL),
       agraph(NULL),
 #endif
-      continue_read_thread(NULL),
-      vdecoder_tid_(THREAD_MANAGER()->createThread(&video_thread, this)),
-      adecoder_tid_(THREAD_MANAGER()->createThread(&audio_thread, this)),
-      sdecoder_tid_(THREAD_MANAGER()->createThread(&subtitle_thread, this)),
+      continue_read_thread_(),
+      vdecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::video_thread, this)),
+      adecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::audio_thread, this)),
+      sdecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::subtitle_thread, this)),
       paused_(false),
       last_paused_(false),
       cursor_hidden_(false),
@@ -83,12 +83,6 @@ VideoState::VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt
       abort_request_(false),
       renderer(NULL),
       window(NULL) {
-
-  if (!(continue_read_thread = SDL_CreateCond())) {
-    av_log(NULL, AV_LOG_FATAL, "SDL_CreateCond(): %s\n", SDL_GetError());
-    return;
-  }
-
   audio_clock_serial = -1;
   if (opt->startup_volume < 0) {
     av_log(NULL, AV_LOG_WARNING, "-volume=%d < 0, setting to 0\n", opt->startup_volume);
@@ -128,7 +122,6 @@ VideoState::~VideoState() {
 
   avformat_close_input(&ic);
 
-  SDL_DestroyCond(continue_read_thread);
   sws_freeContext(img_convert_ctx);
   sws_freeContext(sub_convert_ctx);
   if (vis_texture) {
@@ -410,7 +403,7 @@ void VideoState::stream_seek(int64_t pos, int64_t rel, int seek_by_bytes) {
       seek_flags |= AVSEEK_FLAG_BYTE;
     }
     seek_req = 1;
-    SDL_CondSignal(continue_read_thread);
+    continue_read_thread_.notify_one();
   }
 }
 
@@ -1363,7 +1356,7 @@ void VideoState::ToggleAudioDisplay() {
 
 void VideoState::HandleEmptyQueue(Decoder* dec) {
   UNUSED(dec);
-  SDL_CondSignal(continue_read_thread);
+  continue_read_thread_.notify_one();
 }
 
 void VideoState::seek_chapter(int incr) {
@@ -1808,13 +1801,8 @@ int VideoState::read_thread() {
   PacketQueue* subtitle_packet_queue = subtitle_stream->Queue();
 
   const char* in_filename = common::utils::c_strornull(opt->input_filename);
-  SDL_mutex* wait_mutex = SDL_CreateMutex();
-  if (!wait_mutex) {
-    av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
-    ret = AVERROR(ENOMEM);
-    goto fail;
-  }
 
+  common::thread::mutex wait_mutex;
   memset(st_index, -1, sizeof(st_index));
   last_video_stream = -1;
   last_audio_stream = -1;
@@ -2058,13 +2046,12 @@ int VideoState::read_thread() {
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets() &&
           sstream_->HasEnoughPackets()))) {
       /* wait 10 ms */
-      SDL_LockMutex(wait_mutex);
-      SDL_CondWaitTimeout(continue_read_thread, wait_mutex, 10);
-      SDL_UnlockMutex(wait_mutex);
+      common::thread::unique_lock<common::thread::mutex> lock(wait_mutex);
+      continue_read_thread_.wait_for(lock, std::chrono::milliseconds(10));
       continue;
     }
     if (!paused_ && (!audio_st || (auddec->Finished() == audio_packet_queue->serial() &&
-                                       audio_frame_queue_->IsEmpty())) &&
+                                   audio_frame_queue_->IsEmpty())) &&
         (!video_st ||
          (viddec->Finished() == video_packet_queue->serial() && video_frame_queue_->IsEmpty()))) {
       if (opt->loop != 1 && (!opt->loop || --opt->loop)) {
@@ -2090,9 +2077,8 @@ int VideoState::read_thread() {
       }
       if (ic->pb && ic->pb->error)
         break;
-      SDL_LockMutex(wait_mutex);
-      SDL_CondWaitTimeout(continue_read_thread, wait_mutex, 10);
-      SDL_UnlockMutex(wait_mutex);
+      common::thread::unique_lock<common::thread::mutex> lock(wait_mutex);
+      continue_read_thread_.wait_for(lock, std::chrono::milliseconds(10));
       continue;
     } else {
       eof_ = false;
@@ -2131,7 +2117,6 @@ fail:
     event.user.data1 = this;
     SDL_PushEvent(&event);
   }
-  SDL_DestroyMutex(wait_mutex);
   return 0;
 }
 
