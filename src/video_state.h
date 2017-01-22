@@ -54,7 +54,7 @@ class VideoState : public Decoder::DecoderClient {
   void ToggleAudioDisplay();
 
  protected:
-  virtual void HandleEmptyQueue(Decoder* dec);
+  virtual void HandleEmptyQueue(Decoder* dec) override;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoState);
@@ -181,30 +181,35 @@ class VideoState : public Decoder::DecoderClient {
   FFTSample* rdft_data;
   int xpos;
   double last_vis_time;
-  SDL_Texture* vis_texture;
-  SDL_Texture* sub_texture;
+  SDL_Texture* vis_texture_;
+  SDL_Texture* sub_texture_;
 
-  double frame_timer;
-  double frame_last_returned_time;
-  double frame_last_filter_delay;
-  double max_frame_duration;  // maximum duration of a frame - above this, we consider the jump a
-                              // timestamp discontinuity
-  struct SwsContext* img_convert_ctx;
-  struct SwsContext* sub_convert_ctx;
+  double frame_timer_;
+  double frame_last_returned_time_;
+  double frame_last_filter_delay_;
+  double max_frame_duration_;  // maximum duration of a frame - above this, we consider the jump a
+                               // timestamp discontinuity
+  struct SwsContext* img_convert_ctx_;
+  struct SwsContext* sub_convert_ctx_;
 
-  int width, height, xleft, ytop;
-  int step;
+  int width_;
+  int height_;
+  int xleft_;
+  int ytop_;
+  int step_;
 
 #if CONFIG_AVFILTER
-  size_t vfilter_idx;
-  AVFilterContext* in_video_filter;   // the first filter in the video chain
-  AVFilterContext* out_video_filter;  // the last filter in the video chain
-  AVFilterContext* in_audio_filter;   // the first filter in the audio chain
-  AVFilterContext* out_audio_filter;  // the last filter in the audio chain
-  AVFilterGraph* agraph;              // audio filter graph
+  size_t vfilter_idx_;
+  AVFilterContext* in_video_filter_;   // the first filter in the video chain
+  AVFilterContext* out_video_filter_;  // the last filter in the video chain
+  AVFilterContext* in_audio_filter_;   // the first filter in the audio chain
+  AVFilterContext* out_audio_filter_;  // the last filter in the audio chain
+  AVFilterGraph* agraph_;              // audio filter graph
 #endif
 
-  int last_video_stream, last_audio_stream, last_subtitle_stream;
+  int last_video_stream_;
+  int last_audio_stream_;
+  int last_subtitle_stream_;
 
   common::thread::condition_variable continue_read_thread_;
   common::shared_ptr<common::thread::Thread<int>> vdecoder_tid_;
@@ -219,6 +224,6 @@ class VideoState : public Decoder::DecoderClient {
   bool eof_;
   bool abort_request_;
 
-  SDL_Renderer* renderer;
-  SDL_Window* window;
+  SDL_Renderer* renderer_;
+  SDL_Window* window_;
 };
