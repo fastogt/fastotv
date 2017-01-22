@@ -24,8 +24,6 @@ extern "C" {
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>
 #endif
-
-#include <SDL2/SDL_events.h>
 }
 
 #include <common/macros.h>
@@ -78,7 +76,6 @@ class VideoState : public Decoder::DecoderClient {
   int configure_audio_filters(const char* afilters, int force_output_format);
 #endif
 
-  void refresh_loop_wait_event(SDL_Event* event);
   int video_open(VideoFrame* vp);
   /* allocate a picture (needs to do that in main thread to avoid
      potential locking problems */
@@ -199,7 +196,7 @@ class VideoState : public Decoder::DecoderClient {
   int step;
 
 #if CONFIG_AVFILTER
-  int vfilter_idx;
+  size_t vfilter_idx;
   AVFilterContext* in_video_filter;   // the first filter in the video chain
   AVFilterContext* out_video_filter;  // the last filter in the video chain
   AVFilterContext* in_audio_filter;   // the first filter in the audio chain
