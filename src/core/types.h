@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+namespace core {
+
 enum ShowMode {
   SHOW_MODE_NONE = -1,
   SHOW_MODE_VIDEO = 0,
@@ -17,3 +19,5 @@ enum AvSyncType {
 };
 
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels);
+
+}

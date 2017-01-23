@@ -11,6 +11,8 @@ extern "C" {
 #include <common/macros.h>
 #include <common/thread/types.h>
 
+namespace core {
+
 struct SAVPacket {
   explicit SAVPacket(const AVPacket& p);
 
@@ -54,3 +56,5 @@ class PacketQueue {  // compressed queue data
   common::thread::condition_variable cond_;
   common::thread::mutex mutex_;
 };
+
+}  // namespace core

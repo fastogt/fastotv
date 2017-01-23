@@ -6,6 +6,8 @@ extern "C" {
 
 #include <common/macros.h>
 
+namespace core {
+
 struct AudioFrame {
   AudioFrame();
   ~AudioFrame();
@@ -21,3 +23,5 @@ struct AudioFrame {
  private:
   DISALLOW_COPY_AND_ASSIGN(AudioFrame);
 };
+
+}  // namespace core

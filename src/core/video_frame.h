@@ -9,6 +9,8 @@ extern "C" {
 
 #include <common/macros.h>
 
+namespace core {
+
 /* Common struct for handling all types of decoded data and allocated render buffers. */
 struct VideoFrame {
   VideoFrame();
@@ -32,3 +34,5 @@ struct VideoFrame {
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoFrame);
 };
+
+}  // namespace core

@@ -7,6 +7,8 @@
 #include "core/video_frame.h"
 #include "core/subtitle_frame.h"
 
+namespace core {
+
 template <size_t buffer_size>
 class VideoFrameQueueEx : public RingBuffer<VideoFrame, buffer_size> {
  public:
@@ -94,3 +96,5 @@ class SubTitleQueue : public RingBuffer<SubtitleFrame, buffer_size> {
     base_class::queue_cond_.notify_one();
   }
 };
+
+}  // namespace core

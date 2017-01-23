@@ -1,5 +1,7 @@
 #include "core/video_frame.h"
 
+namespace core {
+
 VideoFrame::VideoFrame()
     : frame(av_frame_alloc()),
       serial(0),
@@ -27,3 +29,5 @@ VideoFrame::~VideoFrame() {
 void VideoFrame::ClearFrame() {
   av_frame_unref(frame);
 }
+
+}  // namespace core

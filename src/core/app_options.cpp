@@ -4,6 +4,8 @@
 
 #include "core/utils.h"
 
+namespace core {
+
 AppOptions::AppOptions()
     : autorotate(0),
       exit_on_keydown(0),
@@ -55,3 +57,5 @@ void AppOptions::initAvFilters(const std::string& arg) {
 
 ComplexOptions::ComplexOptions()
     : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {}
+
+}  // namespace core

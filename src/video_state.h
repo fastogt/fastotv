@@ -41,9 +41,9 @@ extern "C" {
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
 
-class VideoState : public Decoder::DecoderClient {
+class VideoState : public core::Decoder::DecoderClient {
  public:
-  VideoState(AVInputFormat* ifo, AppOptions* opt, ComplexOptions* copt);
+  VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexOptions* copt);
   int Exec() WARN_UNUSED_RESULT;
   ~VideoState();
 
@@ -54,7 +54,7 @@ class VideoState : public Decoder::DecoderClient {
   void ToggleAudioDisplay();
 
  protected:
-  virtual void HandleEmptyQueue(Decoder* dec) override;
+  virtual void HandleEmptyQueue(core::Decoder* dec) override;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoState);
@@ -76,7 +76,7 @@ class VideoState : public Decoder::DecoderClient {
   int ConfigureAudioFilters(const char* afilters, int force_output_format);
 #endif
 
-  int VideoOpen(VideoFrame* vp);
+  int VideoOpen(core::VideoFrame* vp);
   /* allocate a picture (needs to do that in main thread to avoid
      potential locking problems */
   int AllocPicture();
@@ -84,15 +84,15 @@ class VideoState : public Decoder::DecoderClient {
   /* called to display each frame */
   void VideoRefresh(double* remaining_time);
   int ReallocTexture(SDL_Texture** texture,
-                      Uint32 new_format,
-                      int new_width,
-                      int new_height,
-                      SDL_BlendMode blendmode,
-                      int init_texture);
+                     Uint32 new_format,
+                     int new_width,
+                     int new_height,
+                     SDL_BlendMode blendmode,
+                     int init_texture);
   void VideoAudioDisplay();
   void VideoImageDisplay();
   void CheckExternalClockSpeed();
-  double VpDuration(VideoFrame* vp, VideoFrame* nextvp);
+  double VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp);
   /* pause or resume the video */
   void UpdateVolume(int sign, int step);
   void SeekChapter(int incr);
@@ -122,8 +122,8 @@ class VideoState : public Decoder::DecoderClient {
   int SubtitleThread();
   static int decode_interrupt_callback(void* user_data);
 
-  AppOptions* const opt_;
-  ComplexOptions* const copt_;
+  core::AppOptions* const opt_;
+  core::ComplexOptions* const copt_;
   int64_t audio_callback_time_;
 
   common::shared_ptr<common::thread::Thread<int>> read_tid_;
@@ -138,17 +138,17 @@ class VideoState : public Decoder::DecoderClient {
   AVFormatContext* ic_;
   int realtime_;
 
-  VideoStream* vstream_;
-  AudioStream* astream_;
-  SubtitleStream* sstream_;
+  core::VideoStream* vstream_;
+  core::AudioStream* astream_;
+  core::SubtitleStream* sstream_;
 
-  VideoDecoder* viddec_;
-  AudioDecoder* auddec_;
-  SubDecoder* subdec_;
+  core::VideoDecoder* viddec_;
+  core::AudioDecoder* auddec_;
+  core::SubDecoder* subdec_;
 
-  VideoFrameQueueEx<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
-  AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
-  SubTitleQueue<SUBPICTURE_QUEUE_SIZE>* subtitle_frame_queue_;
+  core::VideoFrameQueueEx<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
+  core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
+  core::SubTitleQueue<SUBPICTURE_QUEUE_SIZE>* subtitle_frame_queue_;
 
   double audio_clock_;
   int audio_clock_serial_;
@@ -164,11 +164,11 @@ class VideoState : public Decoder::DecoderClient {
   int audio_buf_index_; /* in bytes */
   int audio_write_buf_size_;
   int audio_volume_;
-  struct AudioParams audio_src_;
+  struct core::AudioParams audio_src_;
 #if CONFIG_AVFILTER
-  struct AudioParams audio_filter_src_;
+  struct core::AudioParams audio_filter_src_;
 #endif
-  struct AudioParams audio_tgt_;
+  struct core::AudioParams audio_tgt_;
   struct SwrContext* swr_ctx_;
   int frame_drops_early_;
   int frame_drops_late_;

@@ -14,6 +14,8 @@ extern "C" {
 
 #include "core/types.h"
 
+namespace core {
+
 struct AppOptions {
   AppOptions();
 
@@ -76,3 +78,5 @@ struct ComplexOptions {
   AVDictionary* format_opts;
   AVDictionary* codec_opts;
 };
+
+}  // namespace core

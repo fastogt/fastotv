@@ -12,6 +12,8 @@ extern "C" {
 /* Calculate actual buffer size keeping in mind not cause too frequent audio callbacks */
 #define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30
 
+namespace core {
+
 int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {
   int ret = avformat_match_stream_specifier(s, st, spec);
   if (ret < 0)
@@ -382,3 +384,5 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1,
   else
     return channel_count1 != channel_count2 || fmt1 != fmt2;
 }
+
+}  // namespace core

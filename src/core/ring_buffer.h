@@ -3,6 +3,8 @@
 #include <common/macros.h>
 #include <common/thread/types.h>
 
+namespace core {
+
 template <typename T, size_t buffer_size>
 class RingBuffer {
  public:
@@ -199,3 +201,5 @@ class RingBuffer {
   size_t size_;
   bool stoped_;
 };
+
+}  // namespace core

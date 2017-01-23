@@ -4,6 +4,8 @@
 
 #define MIN_FRAMES 25
 
+namespace core {
+
 Stream::Stream() : packet_queue_(nullptr), clock_(nullptr), stream_index_(-1), stream_st_(NULL) {
   int* ext_serial = NULL;
   packet_queue_ = PacketQueue::MakePacketQueue(&ext_serial);
@@ -113,3 +115,5 @@ AudioStream::AudioStream(int index, AVStream* av_stream_st) : Stream(index, av_s
 SubtitleStream::SubtitleStream() : Stream() {}
 
 SubtitleStream::SubtitleStream(int index, AVStream* av_stream_st) : Stream(index, av_stream_st) {}
+
+}  // namespace core

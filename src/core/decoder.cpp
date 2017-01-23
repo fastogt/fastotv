@@ -1,5 +1,7 @@
 #include "core/decoder.h"
 
+namespace core {
+
 Decoder::DecoderClient::~DecoderClient() {}
 
 Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
@@ -286,3 +288,5 @@ int SubDecoder::DecodeFrame(AVSubtitle* sub) {
 
   return got_frame;
 }
+
+} // namespace core

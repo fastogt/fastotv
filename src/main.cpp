@@ -12,7 +12,7 @@ extern "C" {
 
 #include "video_state.h"
 
-AppOptions g_options;
+core::AppOptions g_options;
 AVInputFormat* file_iformat = NULL;
 
 #if CONFIG_AVFILTER
@@ -77,11 +77,11 @@ static int opt_sync(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
   if (!strcmp(arg, "audio")) {
-    g_options.av_sync_type = AV_SYNC_AUDIO_MASTER;
+    g_options.av_sync_type = core::AV_SYNC_AUDIO_MASTER;
   } else if (!strcmp(arg, "video")) {
-    g_options.av_sync_type = AV_SYNC_VIDEO_MASTER;
+    g_options.av_sync_type = core::AV_SYNC_VIDEO_MASTER;
   } else if (!strcmp(arg, "ext")) {
-    g_options.av_sync_type = AV_SYNC_EXTERNAL_CLOCK;
+    g_options.av_sync_type = core::AV_SYNC_EXTERNAL_CLOCK;
   } else {
     av_log(NULL, AV_LOG_ERROR, "Unknown value for %s: %s\n", opt, arg);
     exit(1);
@@ -107,13 +107,13 @@ static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
   g_options.show_mode = !strcmp(arg, "video")
-                            ? SHOW_MODE_VIDEO
+                            ? core::SHOW_MODE_VIDEO
                             : !strcmp(arg, "waves")
-                                  ? SHOW_MODE_WAVES
+                                  ? core::SHOW_MODE_WAVES
                                   : !strcmp(arg, "rdft")
-                                        ? SHOW_MODE_RDFT
-                                        : static_cast<ShowMode>(parse_number_or_die(
-                                              opt, arg, OPT_INT, 0, SHOW_MODE_NB - 1));
+                                        ? core::SHOW_MODE_RDFT
+                                        : static_cast<core::ShowMode>(parse_number_or_die(
+                                              opt, arg, OPT_INT, 0, core::SHOW_MODE_NB - 1));
   return 0;
 }
 
@@ -503,7 +503,7 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
-  ComplexOptions copt;
+  core::ComplexOptions copt;
   copt.swr_opts = swr_opts;
   copt.sws_dict = sws_dict;
   copt.format_opts = format_opts;

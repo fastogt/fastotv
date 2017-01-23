@@ -6,6 +6,8 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 }
 
+namespace core {
+
 struct AudioParams {
   int freq;
   int channels;
@@ -14,3 +16,5 @@ struct AudioParams {
   int frame_size;
   int bytes_per_sec;
 };
+
+}  // namespace core

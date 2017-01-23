@@ -1,5 +1,7 @@
 #include "core/packet_queue.h"
 
+namespace core {
+
 SAVPacket::SAVPacket(const AVPacket& p) : pkt(p) {}
 
 PacketQueue::PacketQueue()
@@ -140,3 +142,5 @@ int PacketQueue::PutPrivate(AVPacket* pkt) {
   cond_.notify_one();
   return 0;
 }
+
+}  // namespace core

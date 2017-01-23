@@ -9,6 +9,8 @@ extern "C" {
 
 #include "core/packet_queue.h"
 
+namespace core {
+
 class Clock;
 
 class Stream {
@@ -72,3 +74,5 @@ class SubtitleStream : public Stream {
   SubtitleStream();
   SubtitleStream(int index, AVStream* av_stream_st);
 };
+
+}  // namespace core

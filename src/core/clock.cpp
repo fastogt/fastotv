@@ -6,6 +6,8 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
+namespace core {
+
 Clock::Clock(int* queue_serial) : paused_(false), speed_(1.0), queue_serial_(queue_serial) {
   SetClock(NAN, -1);
 }
@@ -70,3 +72,5 @@ bool Clock::Paused() const {
 void Clock::SetPaused(bool paused) {
   paused_ = paused;
 }
+
+}  // namespace core

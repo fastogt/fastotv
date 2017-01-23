@@ -1,5 +1,7 @@
 #pragma once
 
+namespace core {
+
 class Clock {
  public:
   explicit Clock(int* queue_serial);
@@ -29,3 +31,5 @@ class Clock {
       queue_serial_; /* pointer to the current packet queue serial, used for obsolete clock
            detection */
 };
+
+}

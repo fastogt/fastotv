@@ -2,6 +2,8 @@
 
 #include "core/packet_queue.h"
 
+namespace core {
+
 class Decoder {
  public:
   class DecoderClient {
@@ -87,3 +89,5 @@ class SubDecoder : public ISubDecoder {
 
   int DecodeFrame(AVSubtitle* sub) override;
 };
+
+}

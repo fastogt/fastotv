@@ -8,6 +8,8 @@ extern "C" {
 
 #include <common/macros.h>
 
+namespace core {
+
 struct SubtitleFrame {
   SubtitleFrame();
   ~SubtitleFrame();
@@ -24,3 +26,5 @@ struct SubtitleFrame {
  private:
   DISALLOW_COPY_AND_ASSIGN(SubtitleFrame);
 };
+
+}  // namespace core
