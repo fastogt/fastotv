@@ -122,65 +122,67 @@ class VideoState : public Decoder::DecoderClient {
   int subtitle_thread();
   static int decode_interrupt_cb(void* user_data);
 
-  AppOptions* const opt;
-  ComplexOptions* const copt;
-  int64_t audio_callback_time;
+  AppOptions* const opt_;
+  ComplexOptions* const copt_;
+  int64_t audio_callback_time_;
 
   common::shared_ptr<common::thread::Thread<int>> read_tid_;
-  AVInputFormat* iformat;
-  int force_refresh;
-  int queue_attachments_req;
-  int seek_req;
-  int seek_flags;
-  int64_t seek_pos;
-  int64_t seek_rel;
-  int read_pause_return;
-  AVFormatContext* ic;
-  int realtime;
+  AVInputFormat* iformat_;
+  bool force_refresh_;
+  int queue_attachments_req_;
+  int seek_req_;
+  int seek_flags_;
+  int64_t seek_pos_;
+  int64_t seek_rel_;
+  int read_pause_return_;
+  AVFormatContext* ic_;
+  int realtime_;
 
   VideoStream* vstream_;
   AudioStream* astream_;
   SubtitleStream* sstream_;
 
-  VideoDecoder* viddec;
-  AudioDecoder* auddec;
-  SubDecoder* subdec;
+  VideoDecoder* viddec_;
+  AudioDecoder* auddec_;
+  SubDecoder* subdec_;
 
   VideoFrameQueueEx<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
   AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
   SubTitleQueue<SUBPICTURE_QUEUE_SIZE>* subtitle_frame_queue_;
 
-  double audio_clock;
-  int audio_clock_serial;
-  double audio_diff_cum; /* used for AV difference average computation */
-  double audio_diff_avg_coef;
-  double audio_diff_threshold;
-  int audio_diff_avg_count;
-  int audio_hw_buf_size;
-  uint8_t* audio_buf;
-  uint8_t* audio_buf1;
-  unsigned int audio_buf_size; /* in bytes */
-  unsigned int audio_buf1_size;
-  int audio_buf_index; /* in bytes */
-  int audio_write_buf_size;
-  int audio_volume;
-  struct AudioParams audio_src;
+  double audio_clock_;
+  int audio_clock_serial_;
+  double audio_diff_cum_; /* used for AV difference average computation */
+  double audio_diff_avg_coef_;
+  double audio_diff_threshold_;
+  int audio_diff_avg_count_;
+  int audio_hw_buf_size_;
+  uint8_t* audio_buf_;
+  uint8_t* audio_buf1_;
+  unsigned int audio_buf_size_; /* in bytes */
+  unsigned int audio_buf1_size_;
+  int audio_buf_index_; /* in bytes */
+  int audio_write_buf_size_;
+  int audio_volume_;
+  struct AudioParams audio_src_;
 #if CONFIG_AVFILTER
-  struct AudioParams audio_filter_src;
+  struct AudioParams audio_filter_src_;
 #endif
-  struct AudioParams audio_tgt;
-  struct SwrContext* swr_ctx;
-  int frame_drops_early;
-  int frame_drops_late;
+  struct AudioParams audio_tgt_;
+  struct SwrContext* swr_ctx_;
+  int frame_drops_early_;
+  int frame_drops_late_;
 
-  int16_t sample_array[SAMPLE_ARRAY_SIZE];
-  int sample_array_index;
-  int last_i_start;
-  RDFTContext* rdft;
+  int16_t sample_array_[SAMPLE_ARRAY_SIZE];
+  int sample_array_index_;
+  int last_i_start_;
+
+  RDFTContext* rdft_;
   int rdft_bits_;
-  FFTSample* rdft_data;
-  int xpos;
-  double last_vis_time;
+  FFTSample* rdft_data_;
+
+  int xpos_;
+  double last_vis_time_;
   SDL_Texture* vis_texture_;
   SDL_Texture* sub_texture_;
 
