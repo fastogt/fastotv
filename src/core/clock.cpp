@@ -65,10 +65,6 @@ double Clock::Pts() const {
   return pts_;
 }
 
-bool Clock::Paused() const {
-  return paused_;
-}
-
 void Clock::SetPaused(bool paused) {
   paused_ = paused;
 }

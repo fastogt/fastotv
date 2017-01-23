@@ -289,4 +289,4 @@ int SubDecoder::DecodeFrame(AVSubtitle* sub) {
   return got_frame;
 }
 
-} // namespace core
+}  // namespace core

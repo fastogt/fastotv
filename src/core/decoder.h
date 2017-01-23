@@ -89,5 +89,4 @@ class SubDecoder : public ISubDecoder {
 
   int DecodeFrame(AVSubtitle* sub) override;
 };
-
 }

@@ -366,20 +366,24 @@ static void show_usage(void) {
 static int lockmgr(void** mtx, enum AVLockOp op) {
   SDL_mutex* lmtx = static_cast<SDL_mutex*>(*mtx);
   switch (op) {
-    case AV_LOCK_CREATE:
+    case AV_LOCK_CREATE: {
       *mtx = SDL_CreateMutex();
       if (!*mtx) {
         av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
         return 1;
       }
       return 0;
-    case AV_LOCK_OBTAIN:
+    }
+    case AV_LOCK_OBTAIN: {
       return !!SDL_LockMutex(lmtx);
-    case AV_LOCK_RELEASE:
+    }
+    case AV_LOCK_RELEASE: {
       return !!SDL_UnlockMutex(lmtx);
-    case AV_LOCK_DESTROY:
+    }
+    case AV_LOCK_DESTROY: {
       SDL_DestroyMutex(lmtx);
       return 0;
+    }
   }
   return 1;
 }

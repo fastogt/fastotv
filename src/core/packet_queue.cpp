@@ -2,7 +2,7 @@
 
 namespace core {
 
-SAVPacket::SAVPacket(const AVPacket& p) : pkt(p) {}
+SAVPacket::SAVPacket(const AVPacket& p) : pkt(p), serial(0) {}
 
 PacketQueue::PacketQueue()
     : serial_(0), queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}

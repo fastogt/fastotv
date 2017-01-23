@@ -51,6 +51,7 @@ class Stream {
   Stream(int index, AVStream* av_stream_st);
 
  private:
+  DISALLOW_COPY_AND_ASSIGN(Stream);
   PacketQueue* packet_queue_;
   Clock* clock_;
   int stream_index_;

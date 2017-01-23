@@ -48,9 +48,17 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
       prefix = 's';
       flags |= AV_OPT_FLAG_SUBTITLE_PARAM;
       break;
+    case AVMEDIA_TYPE_UNKNOWN:
+      break;
+    case AVMEDIA_TYPE_ATTACHMENT:
+      break;
+    case AVMEDIA_TYPE_DATA:
+      break;
+    case AVMEDIA_TYPE_NB:
+      break;
   }
 
-  while (t = av_dict_get(opts, "", t, AV_DICT_IGNORE_SUFFIX)) {
+  while ((t = av_dict_get(opts, "", t, AV_DICT_IGNORE_SUFFIX))) {
     char* p = strchr(t->key, ':');
 
     /* check stream specification in opt name */
@@ -67,14 +75,16 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
 
     if (av_opt_find(&cc, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ) || !codec ||
         (codec->priv_class &&
-         av_opt_find(&codec->priv_class, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ)))
+         av_opt_find(&codec->priv_class, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ))) {
       av_dict_set(&ret, t->key, t->value, 0);
-    else if (t->key[0] == prefix &&
-             av_opt_find(&cc, t->key + 1, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ))
+    } else if (t->key[0] == prefix &&
+               av_opt_find(&cc, t->key + 1, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ)) {
       av_dict_set(&ret, t->key + 1, t->value, 0);
+    }
 
-    if (p)
+    if (p) {
       *p = ':';
+    }
   }
   return ret;
 }

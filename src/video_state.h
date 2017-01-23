@@ -213,7 +213,8 @@ class VideoState : public core::Decoder::DecoderClient {
   int last_audio_stream_;
   int last_subtitle_stream_;
 
-  common::thread::condition_variable continue_ReadThread_;
+  common::thread::condition_variable continue_read_thread_;
+  common::thread::mutex wait_mutex_;
   common::shared_ptr<common::thread::Thread<int>> vdecoder_tid_;
   common::shared_ptr<common::thread::Thread<int>> adecoder_tid_;
   common::shared_ptr<common::thread::Thread<int>> sdecoder_tid_;

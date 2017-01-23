@@ -15,7 +15,7 @@ class VideoFrameQueueEx : public RingBuffer<VideoFrame, buffer_size> {
   typedef RingBuffer<VideoFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
-  VideoFrameQueueEx(bool keep_last) : base_class(keep_last) {}
+  explicit VideoFrameQueueEx(bool keep_last) : base_class(keep_last) {}
 
   bool GetLastUsedPos(int64_t* pos, int serial) {
     if (!pos) {
@@ -49,7 +49,7 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
   typedef RingBuffer<AudioFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
-  AudioFrameQueue(bool keep_last) : base_class(keep_last) {}
+  explicit AudioFrameQueue(bool keep_last) : base_class(keep_last) {}
 
   bool GetLastUsedPos(int64_t* pos, int serial) {
     if (!pos) {
@@ -83,7 +83,7 @@ class SubTitleQueue : public RingBuffer<SubtitleFrame, buffer_size> {
   typedef RingBuffer<SubtitleFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
-  SubTitleQueue(bool keep_last) : base_class(keep_last) {}
+  explicit SubTitleQueue(bool keep_last) : base_class(keep_last) {}
 
   void MoveToNext() {
     typename base_class::lock_t lock(base_class::queue_mutex_);

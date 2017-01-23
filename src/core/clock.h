@@ -17,7 +17,6 @@ class Clock {
   double LastUpdated() const;
   double Pts() const;
 
-  bool Paused() const;
   void SetPaused(bool paused);
 
  private:
@@ -31,5 +30,4 @@ class Clock {
       queue_serial_; /* pointer to the current packet queue serial, used for obsolete clock
            detection */
 };
-
 }

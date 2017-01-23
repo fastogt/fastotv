@@ -121,7 +121,8 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
       last_video_stream_(-1),
       last_audio_stream_(-1),
       last_subtitle_stream_(-1),
-      continue_ReadThread_(),
+      continue_read_thread_(),
+      wait_mutex_(),
       vdecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::VideoThread, this)),
       adecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::AudioThread, this)),
       sdecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::SubtitleThread, this)),
@@ -486,7 +487,8 @@ void VideoState::StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes) {
       seek_flags_ |= AVSEEK_FLAG_BYTE;
     }
     seek_req_ = 1;
-    continue_ReadThread_.notify_one();
+    common::thread::unique_lock<common::thread::mutex> lock(wait_mutex_);
+    continue_read_thread_.notify_one();
   }
 }
 
@@ -517,7 +519,7 @@ int VideoState::GetMasterSyncType() const {
 }
 
 double VideoState::ComputeTargetDelay(double delay) {
-  double sync_threshold, diff = 0;
+  double diff = 0;
 
   /* update delay to follow master synchronisation source */
   if (GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER) {
@@ -528,7 +530,7 @@ double VideoState::ComputeTargetDelay(double delay) {
     /* skip or repeat frame. We take into account the
        delay to compute the threshold. I still don't know
        if it is the best guess */
-    sync_threshold = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(AV_SYNC_THRESHOLD_MAX, delay));
+    double sync_threshold = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(AV_SYNC_THRESHOLD_MAX, delay));
     if (!isnan(diff) && fabs(diff) < max_frame_duration_) {
       if (diff <= -sync_threshold) {
         delay = FFMAX(0, delay + diff);
@@ -967,14 +969,14 @@ void VideoState::VideoAudioDisplay() {
   }
   const int nb_freq = 1 << (rdft_bits - 1);
 
-  int i, i_start, x, y1, y, ys, delay, n;
-  int h, h2;
+  int i, i_start, x, y, n;
+  int h;
   /* compute display index : center on currently output samples */
   const int channels = audio_tgt_.channels;
   if (!paused_) {
     int data_used = opt_->show_mode == core::SHOW_MODE_WAVES ? width_ : (2 * nb_freq);
     n = 2 * channels;
-    delay = audio_write_buf_size_;
+    int delay = audio_write_buf_size_;
     delay /= n;
 
     /* to be more precise, we take into account the time spent since
@@ -1018,10 +1020,11 @@ void VideoState::VideoAudioDisplay() {
     /* total height for one channel */
     h = height_ / nb_display_channels;
     /* graph height / 2 */
-    h2 = (h * 9) / 20;
+    int h2 = (h * 9) / 20;
     for (int ch = 0; ch < nb_display_channels; ch++) {
       i = i_start + ch;
-      y1 = ytop_ + ch * h + (h / 2); /* position of center line */
+      int ys;
+      int y1 = ytop_ + ch * h + (h / 2); /* position of center line */
       for (x = 0; x < width_; x++) {
         y = (sample_array_[i] * h2) >> 15;
         if (y < 0) {
@@ -1443,7 +1446,8 @@ void VideoState::ToggleAudioDisplay() {
 
 void VideoState::HandleEmptyQueue(core::Decoder* dec) {
   UNUSED(dec);
-  continue_ReadThread_.notify_one();
+  common::thread::unique_lock<common::thread::mutex> lock(wait_mutex_);
+  continue_read_thread_.notify_one();
 }
 
 void VideoState::SeekChapter(int incr) {
@@ -1475,30 +1479,10 @@ void VideoState::SeekChapter(int incr) {
 
 void VideoState::StreamCycleChannel(int codec_type) {
   int start_index;
-  int stream_index;
   int old_index;
-  AVStream* st;
-  AVProgram* p = NULL;
-  int lnb_streams = ic_->nb_streams;
-
   if (codec_type == AVMEDIA_TYPE_VIDEO) {
     start_index = last_video_stream_;
     old_index = vstream_->Index();
-    if (vstream_->IsOpened()) {
-      p = av_find_program_from_stream(ic_, NULL, old_index);
-      if (p) {
-        lnb_streams = p->nb_stream_indexes;
-        for (start_index = 0; start_index < lnb_streams; start_index++) {
-          if (p->stream_index[start_index] == stream_index) {
-            break;
-          }
-        }
-        if (start_index == lnb_streams) {
-          start_index = -1;
-        }
-        stream_index = start_index;
-      }
-    }
   } else if (codec_type == AVMEDIA_TYPE_AUDIO) {
     start_index = last_audio_stream_;
     old_index = astream_->Index();
@@ -1506,7 +1490,26 @@ void VideoState::StreamCycleChannel(int codec_type) {
     start_index = last_subtitle_stream_;
     old_index = sstream_->Index();
   }
-  stream_index = start_index;
+  int stream_index = start_index;
+
+  AVStream* st;
+  AVProgram* p = NULL;
+  int lnb_streams = ic_->nb_streams;
+  if (codec_type != AVMEDIA_TYPE_VIDEO && vstream_->IsOpened()) {
+    p = av_find_program_from_stream(ic_, NULL, old_index);
+    if (p) {
+      lnb_streams = p->nb_stream_indexes;
+      for (start_index = 0; start_index < lnb_streams; start_index++) {
+        if (p->stream_index[start_index] == stream_index) {
+          break;
+        }
+      }
+      if (start_index == lnb_streams) {
+        start_index = -1;
+      }
+      stream_index = start_index;
+    }
+  }
 
   while (true) {
     if (++stream_index >= lnb_streams) {
@@ -1571,7 +1574,6 @@ int VideoState::SynchronizeAudio(int nb_samples) {
 
   /* if not master, then we try to remove or add samples to correct the clock */
   if (GetMasterSyncType() != core::AV_SYNC_AUDIO_MASTER) {
-    int min_nb_samples, max_nb_samples;
     double diff = astream_->GetClock() - GetMasterClock();
     if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
       audio_diff_cum_ = diff + audio_diff_avg_coef_ * audio_diff_cum_;
@@ -1583,8 +1585,8 @@ int VideoState::SynchronizeAudio(int nb_samples) {
         double avg_diff = audio_diff_cum_ * (1.0 - audio_diff_avg_coef_);
         if (fabs(avg_diff) >= audio_diff_threshold_) {
           wanted_nb_samples = nb_samples + static_cast<int>(diff * audio_src_.freq);
-          min_nb_samples = ((nb_samples * (100 - SAMPLE_CORRECTION_PERCENT_MAX) / 100));
-          max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100));
+          int min_nb_samples = ((nb_samples * (100 - SAMPLE_CORRECTION_PERCENT_MAX) / 100));
+          int max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100));
           wanted_nb_samples = av_clip(wanted_nb_samples, min_nb_samples, max_nb_samples);
         }
         av_log(NULL, AV_LOG_TRACE, "diff=%f adiff=%f sample_diff=%d apts=%0.3f %f\n", diff,
@@ -1891,7 +1893,6 @@ int VideoState::ReadThread() {
 
   const char* in_filename = common::utils::c_strornull(opt_->input_filename);
 
-  common::thread::mutex wait_mutex;
   int st_index[AVMEDIA_TYPE_NB];
   memset(st_index, -1, sizeof(st_index));
 
@@ -2056,8 +2057,9 @@ int VideoState::ReadThread() {
   }
 
   while (true) {
-    if (abort_request_)
+    if (abort_request_) {
       break;
+    }
     if (paused_ != last_paused_) {
       last_paused_ = paused_;
       if (paused_) {
@@ -2132,8 +2134,8 @@ int VideoState::ReadThread() {
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets() &&
           sstream_->HasEnoughPackets()))) {
       /* wait 10 ms */
-      common::thread::unique_lock<common::thread::mutex> lock(wait_mutex);
-      continue_ReadThread_.wait_for(lock, std::chrono::milliseconds(10));
+      common::thread::unique_lock<common::thread::mutex> lock(wait_mutex_);
+      continue_read_thread_.wait_for(lock, std::chrono::milliseconds(10));
       continue;
     }
     if (!paused_ && (!audio_st || (auddec_->Finished() == audio_packet_queue->Serial() &&
@@ -2161,10 +2163,11 @@ int VideoState::ReadThread() {
         }
         eof_ = true;
       }
-      if (ic->pb && ic->pb->error)
+      if (ic->pb && ic->pb->error) {
         break;
-      common::thread::unique_lock<common::thread::mutex> lock(wait_mutex);
-      continue_ReadThread_.wait_for(lock, std::chrono::milliseconds(10));
+      }
+      common::thread::unique_lock<common::thread::mutex> lock(wait_mutex_);
+      continue_read_thread_.wait_for(lock, std::chrono::milliseconds(10));
       continue;
     } else {
       eof_ = false;
@@ -2193,7 +2196,7 @@ int VideoState::ReadThread() {
 
   ret = 0;
 fail:
-  if (ic && !ic) {
+  if (ic && !ic_) {
     avformat_close_input(&ic);
   }
 
@@ -2213,7 +2216,6 @@ int VideoState::AudioThread() {
   int64_t dec_channel_layout;
   int reconfigure;
 #endif
-  int got_frame = 0;
   int ret = 0;
 
   AVFrame* frame = av_frame_alloc();
@@ -2222,7 +2224,8 @@ int VideoState::AudioThread() {
   }
 
   do {
-    if ((got_frame = auddec_->DecodeFrame(frame)) < 0) {
+    int got_frame = auddec_->DecodeFrame(frame);
+    if (got_frame < 0) {
       break;
     }
 
@@ -2442,8 +2445,8 @@ int VideoState::SubtitleThread() {
       break;
     }
 
-    double pts = 0;
     if (got_subtitle && sp->sub.format == 0) {
+      double pts = 0;
       if (sp->sub.pts != AV_NOPTS_VALUE) {
         pts = static_cast<double>(sp->sub.pts) / static_cast<double>(AV_TIME_BASE);
       }
@@ -2618,10 +2621,10 @@ int VideoState::ConfigureAudioFilters(const char* afilters, int force_output_for
     return ret;
   }
 
-  int channels[2] = {0, -1};
-  int64_t channel_layouts[2] = {0, -1};
-  int sample_rates[2] = {0, -1};
   if (force_output_format) {
+    int channels[2] = {0, -1};
+    int64_t channel_layouts[2] = {0, -1};
+    int sample_rates[2] = {0, -1};
     channel_layouts[0] = audio_tgt_.channel_layout;
     channels[0] = audio_tgt_.channels;
     sample_rates[0] = audio_tgt_.freq;

@@ -10,7 +10,7 @@ class RingBuffer {
  public:
   typedef T* pointer_type;
 
-  RingBuffer(bool keep_last)
+  explicit RingBuffer(bool keep_last)
       : queue_cond_(),
         queue_mutex_(),
         queue_(),
@@ -157,11 +157,7 @@ class RingBuffer {
 
   pointer_type RindexElementInner() const { return queue_[rindex_]; }
 
-  pointer_type IndexElementInner(size_t pos) const { return queue_[pos]; }
-
   pointer_type WindexElementInner() { return queue_[windex_]; }
-
-  size_t SafeRindexInner(size_t pos) const { return (rindex_ + rindex_shown_ + pos) % buffer_size; }
 
   pointer_type MoveToNextInner() {
     if (keep_last_ && !rindex_shown_) {
