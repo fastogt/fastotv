@@ -13,7 +13,6 @@ SET(HEADERS_CORE
   core/ring_buffer.h
   core/audio_frame.h
   core/video_frame.h
-  core/subtitle_frame.h
 )
 
 SET(SOURCES_CORE
@@ -29,7 +28,6 @@ SET(SOURCES_CORE
   core/ring_buffer.cpp
   core/audio_frame.cpp
   core/video_frame.cpp
-  core/subtitle_frame.cpp
 )
 
 SET_DESKTOP_TARGET()

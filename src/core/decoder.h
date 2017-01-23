@@ -49,12 +49,6 @@ class IFrameDecoder : public Decoder {
   virtual int DecodeFrame(AVFrame* frame) = 0;
 };
 
-class ISubDecoder : public Decoder {
- public:
-  ISubDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
-  virtual int DecodeFrame(AVSubtitle* sub) = 0;
-};
-
 class AudioDecoder : public IFrameDecoder {
  public:
   AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
@@ -80,13 +74,4 @@ class VideoDecoder : public IFrameDecoder {
   int decoder_reorder_pts_;
 };
 
-class SubDecoder : public ISubDecoder {
- public:
-  SubDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
-
-  int width() const;
-  int height() const;
-
-  int DecodeFrame(AVSubtitle* sub) override;
-};
 }

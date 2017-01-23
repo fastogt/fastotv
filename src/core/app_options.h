@@ -25,7 +25,6 @@ struct AppOptions {
 
   int audio_disable;
   int video_disable;
-  int subtitle_disable;
 
   int64_t start_time;
   int64_t duration;
@@ -55,7 +54,6 @@ struct AppOptions {
   /* options specified by the user */
   int fast;
   std::string audio_codec_name;
-  std::string subtitle_codec_name;
   std::string video_codec_name;
 
   int decoder_reorder_pts;

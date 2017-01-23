@@ -70,10 +70,4 @@ class AudioStream : public Stream {
   AudioStream(int index, AVStream* av_stream_st);
 };
 
-class SubtitleStream : public Stream {
- public:
-  SubtitleStream();
-  SubtitleStream(int index, AVStream* av_stream_st);
-};
-
 }  // namespace core

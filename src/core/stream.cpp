@@ -112,8 +112,4 @@ AudioStream::AudioStream() : Stream() {}
 
 AudioStream::AudioStream(int index, AVStream* av_stream_st) : Stream(index, av_stream_st) {}
 
-SubtitleStream::SubtitleStream() : Stream() {}
-
-SubtitleStream::SubtitleStream(int index, AVStream* av_stream_st) : Stream(index, av_stream_st) {}
-
 }  // namespace core

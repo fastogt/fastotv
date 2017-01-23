@@ -50,9 +50,6 @@ AVMediaType Decoder::CodecType() const {
 IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
     : Decoder(avctx, queue, client) {}
 
-ISubDecoder::ISubDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
-    : Decoder(avctx, queue, client) {}
-
 AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
     : IFrameDecoder(avctx, queue, client) {
   CHECK(CodecType() == AVMEDIA_TYPE_AUDIO);
@@ -195,77 +192,6 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
       }
     }
 
-    if (ret < 0) {
-      packet_pending_ = false;
-    } else {
-      pkt_temp.dts = pkt_temp.pts = AV_NOPTS_VALUE;
-      if (pkt_temp.data) {
-        ret = pkt_temp.size;
-        pkt_temp.data += ret;
-        pkt_temp.size -= ret;
-        if (pkt_temp.size <= 0) {
-          packet_pending_ = false;
-        }
-      } else {
-        if (!got_frame) {
-          packet_pending_ = false;
-          SetFinished(pkt_serial_);
-        }
-      }
-    }
-  } while (!got_frame && !Finished());
-
-  return got_frame;
-}
-
-SubDecoder::SubDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
-    : ISubDecoder(avctx, queue, client) {
-  CHECK(CodecType() == AVMEDIA_TYPE_SUBTITLE);
-}
-
-int SubDecoder::width() const {
-  return avctx_->width;
-}
-
-int SubDecoder::height() const {
-  return avctx_->height;
-}
-
-int SubDecoder::DecodeFrame(AVSubtitle* sub) {
-  int got_frame = 0;
-  AVPacket pkt_temp;
-  static const AVPacket* fls = PacketQueue::FlushPkt();
-  do {
-    int ret = -1;
-
-    if (queue_->AbortRequest()) {
-      return -1;
-    }
-
-    if (!packet_pending_ || queue_->Serial() != pkt_serial_) {
-      AVPacket lpkt;
-      do {
-        if (queue_->NbPackets() == 0) {
-          if (client_) {
-            client_->HandleEmptyQueue(this);
-          }
-        }
-        if (queue_->Get(&lpkt, 1, &pkt_serial_) < 0) {
-          return -1;
-        }
-        if (lpkt.data == fls->data) {
-          avcodec_flush_buffers(avctx_);
-          SetFinished(false);
-          next_pts_ = start_pts;
-          next_pts_tb_ = start_pts_tb;
-        }
-      } while (lpkt.data == fls->data || queue_->Serial() != pkt_serial_);
-      av_packet_unref(&pkt_);
-      pkt_temp = pkt_ = lpkt;
-      packet_pending_ = true;
-    }
-
-    ret = avcodec_decode_subtitle2(avctx_, sub, &got_frame, &pkt_temp);
     if (ret < 0) {
       packet_pending_ = false;
     } else {

@@ -5,17 +5,16 @@
 #include "core/ring_buffer.h"
 #include "core/audio_frame.h"
 #include "core/video_frame.h"
-#include "core/subtitle_frame.h"
 
 namespace core {
 
 template <size_t buffer_size>
-class VideoFrameQueueEx : public RingBuffer<VideoFrame, buffer_size> {
+class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {
  public:
   typedef RingBuffer<VideoFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
-  explicit VideoFrameQueueEx(bool keep_last) : base_class(keep_last) {}
+  explicit VideoFrameQueue(bool keep_last) : base_class(keep_last) {}
 
   bool GetLastUsedPos(int64_t* pos, int serial) {
     if (!pos) {
@@ -64,26 +63,6 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
     }
     return false;
   }
-
-  void MoveToNext() {
-    typename base_class::lock_t lock(base_class::queue_mutex_);
-    pointer_type fp = base_class::MoveToNextInner();
-    if (!fp) {
-      return;
-    }
-    fp->ClearFrame();
-    base_class::RindexUpInner();
-    base_class::queue_cond_.notify_one();
-  }
-};
-
-template <size_t buffer_size>
-class SubTitleQueue : public RingBuffer<SubtitleFrame, buffer_size> {
- public:
-  typedef RingBuffer<SubtitleFrame, buffer_size> base_class;
-  typedef typename base_class::pointer_type pointer_type;
-
-  explicit SubTitleQueue(bool keep_last) : base_class(keep_last) {}
 
   void MoveToNext() {
     typename base_class::lock_t lock(base_class::queue_mutex_);

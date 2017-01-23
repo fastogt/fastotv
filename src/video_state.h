@@ -37,7 +37,6 @@ extern "C" {
 
 #define SAMPLE_ARRAY_SIZE (8 * 65536)
 /* no AV correction is done if too big error */
-#define SUBPICTURE_QUEUE_SIZE 16
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
 
@@ -91,7 +90,6 @@ class VideoState : public core::Decoder::DecoderClient {
                      int init_texture);
   void VideoAudioDisplay();
   void VideoImageDisplay();
-  void CheckExternalClockSpeed();
   double VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp);
   /* pause or resume the video */
   void UpdateVolume(int sign, int step);
@@ -119,7 +117,6 @@ class VideoState : public core::Decoder::DecoderClient {
   int ReadThread();
   int VideoThread();
   int AudioThread();
-  int SubtitleThread();
   static int decode_interrupt_callback(void* user_data);
 
   core::AppOptions* const opt_;
@@ -140,15 +137,12 @@ class VideoState : public core::Decoder::DecoderClient {
 
   core::VideoStream* vstream_;
   core::AudioStream* astream_;
-  core::SubtitleStream* sstream_;
 
   core::VideoDecoder* viddec_;
   core::AudioDecoder* auddec_;
-  core::SubDecoder* subdec_;
 
-  core::VideoFrameQueueEx<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
+  core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
   core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
-  core::SubTitleQueue<SUBPICTURE_QUEUE_SIZE>* subtitle_frame_queue_;
 
   double audio_clock_;
   int audio_clock_serial_;
@@ -211,13 +205,11 @@ class VideoState : public core::Decoder::DecoderClient {
 
   int last_video_stream_;
   int last_audio_stream_;
-  int last_subtitle_stream_;
 
   common::thread::condition_variable continue_read_thread_;
   common::thread::mutex wait_mutex_;
   common::shared_ptr<common::thread::Thread<int>> vdecoder_tid_;
   common::shared_ptr<common::thread::Thread<int>> adecoder_tid_;
-  common::shared_ptr<common::thread::Thread<int>> sdecoder_tid_;
 
   bool paused_;
   bool last_paused_;

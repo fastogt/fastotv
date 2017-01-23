@@ -12,7 +12,6 @@ AppOptions::AppOptions()
       exit_on_mousedown(0),
       audio_disable(0),
       video_disable(0),
-      subtitle_disable(0),
       start_time(AV_NOPTS_VALUE),
       duration(AV_NOPTS_VALUE),
       default_width(640),
@@ -38,7 +37,6 @@ AppOptions::AppOptions()
       lowres(0),
       fast(0),
       audio_codec_name(),
-      subtitle_codec_name(),
       video_codec_name(),
       decoder_reorder_pts(-1)
 #if CONFIG_AVFILTER

@@ -149,9 +149,6 @@ static int opt_codec(void* optctx, const char* opt, const char* arg) {
     case 'a':
       g_options.audio_codec_name = arg;
       break;
-    case 's':
-      g_options.subtitle_codec_name = arg;
-      break;
     case 'v':
       g_options.video_codec_name = arg;
       break;
@@ -232,7 +229,6 @@ static const OptionDef options[] = {
     {"fs", OPT_BOOL, {&g_options.is_full_screen}, "force full screen"},
     {"an", OPT_BOOL, {&g_options.audio_disable}, "disable audio"},
     {"vn", OPT_BOOL, {&g_options.video_disable}, "disable video"},
-    {"sn", OPT_BOOL, {&g_options.subtitle_disable}, "disable subtitling"},
     {"ast",
      OPT_STRING | HAS_ARG | OPT_EXPERT,
      {&g_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO]},
@@ -242,11 +238,6 @@ static const OptionDef options[] = {
      OPT_STRING | HAS_ARG | OPT_EXPERT,
      {&g_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO]},
      "select desired video stream",
-     "stream_specifier"},
-    {"sst",
-     OPT_STRING | HAS_ARG | OPT_EXPERT,
-     {&g_options.wanted_stream_spec[AVMEDIA_TYPE_SUBTITLE]},
-     "select desired subtitle stream",
      "stream_specifier"},
     {"ss", HAS_ARG, {.func_arg = opt_seek}, "seek to a given position in seconds", "pos"},
     {"t",
@@ -341,11 +332,6 @@ static const OptionDef options[] = {
      HAS_ARG | OPT_STRING | OPT_EXPERT,
      {&g_options.audio_codec_name},
      "force audio decoder",
-     "decoder_name"},
-    {"scodec",
-     HAS_ARG | OPT_STRING | OPT_EXPERT,
-     {&g_options.subtitle_codec_name},
-     "force subtitle decoder",
      "decoder_name"},
     {"vcodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
@@ -452,7 +438,6 @@ void show_help_default(const char* opt, const char* arg) {
       "/, *                decrease and increase volume respectively\n"
       "a                   cycle audio channel in the current program\n"
       "v                   cycle video channel\n"
-      "t                   cycle subtitle channel in the current program\n"
       "c                   cycle program\n"
       "w                   cycle video filters or show modes\n"
       "s                   activate frame-step mode\n"
