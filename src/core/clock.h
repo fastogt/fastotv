@@ -4,19 +4,19 @@ class Clock {
  public:
   explicit Clock(int* queue_serial);
 
-  static void sync_clock_to_slave(Clock* c, Clock* slave, double no_sync_threshold);
-  void set_clock_speed(double speed);
-  void set_clock_at(double pts, int serial, double time);
-  void set_clock(double pts, int serial);
-  double get_clock() const;
+  static void SyncClockToSlave(Clock* c, Clock* slave, double no_sync_threshold);
+  void SetClockSpeed(double speed);
+  void SetClockAt(double pts, int serial, double time);
+  void SetClock(double pts, int serial);
+  double GetClock() const;
 
-  double speed() const;
-  int serial() const;
-  double last_updated() const;
-  double pts() const;
+  double Speed() const;
+  int Serial() const;
+  double LastUpdated() const;
+  double Pts() const;
 
-  bool paused() const;
-  void set_paused(bool paused);
+  bool Paused() const;
+  void SetPaused(bool paused);
 
  private:
   bool paused_;

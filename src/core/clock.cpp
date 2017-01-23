@@ -7,35 +7,35 @@ extern "C" {
 }
 
 Clock::Clock(int* queue_serial) : paused_(false), speed_(1.0), queue_serial_(queue_serial) {
-  set_clock(NAN, -1);
+  SetClock(NAN, -1);
 }
 
-void Clock::sync_clock_to_slave(Clock* c, Clock* slave, double no_sync_threshold) {
-  double clock = c->get_clock();
-  double slave_clock = slave->get_clock();
+void Clock::SyncClockToSlave(Clock* c, Clock* slave, double no_sync_threshold) {
+  double clock = c->GetClock();
+  double slave_clock = slave->GetClock();
   if (!isnan(slave_clock) && (isnan(clock) || fabs(clock - slave_clock) > no_sync_threshold)) {
-    c->set_clock(slave_clock, slave->serial_);
+    c->SetClock(slave_clock, slave->serial_);
   }
 }
 
-void Clock::set_clock_speed(double speed) {
-  set_clock(get_clock(), serial_);
+void Clock::SetClockSpeed(double speed) {
+  SetClock(GetClock(), serial_);
   speed_ = speed;
 }
 
-void Clock::set_clock_at(double pts, int serial, double time) {
+void Clock::SetClockAt(double pts, int serial, double time) {
   pts_ = pts;
   last_updated_ = time;
   pts_drift_ = pts - time;
   serial_ = serial;
 }
 
-void Clock::set_clock(double pts, int serial) {
+void Clock::SetClock(double pts, int serial) {
   double time = av_gettime_relative() / 1000000.0;
-  set_clock_at(pts, serial, time);
+  SetClockAt(pts, serial, time);
 }
 
-double Clock::get_clock() const {
+double Clock::GetClock() const {
   if (*queue_serial_ != serial_) {
     return NAN;
   }
@@ -47,26 +47,26 @@ double Clock::get_clock() const {
   return pts_drift_ + time - (time - last_updated_) * (1.0 - speed_);
 }
 
-double Clock::speed() const {
+double Clock::Speed() const {
   return speed_;
 }
 
-int Clock::serial() const {
+int Clock::Serial() const {
   return serial_;
 }
 
-double Clock::last_updated() const {
+double Clock::LastUpdated() const {
   return last_updated_;
 }
 
-double Clock::pts() const {
+double Clock::Pts() const {
   return pts_;
 }
 
-bool Clock::paused() const {
+bool Clock::Paused() const {
   return paused_;
 }
 
-void Clock::set_paused(bool paused) {
+void Clock::SetPaused(bool paused) {
   paused_ = paused;
 }

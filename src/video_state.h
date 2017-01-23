@@ -60,48 +60,48 @@ class VideoState : public Decoder::DecoderClient {
   DISALLOW_COPY_AND_ASSIGN(VideoState);
 
   /* open a given stream. Return 0 if OK */
-  int stream_component_open(int stream_index);
-  void stream_component_close(int stream_index);
+  int StreamComponentOpen(int stream_index);
+  void StreamComponentClose(int stream_index);
 
   /* seek in the stream */
-  void stream_seek(int64_t pos, int64_t rel, int seek_by_bytes);
+  void StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes);
 
-  void step_to_next_frame();
-  int get_master_sync_type() const;
-  double compute_target_delay(double delay);
-  double get_master_clock();
-  void set_default_window_size(int width, int height, AVRational sar);
+  void StepToNextFrame();
+  int GetMasterSyncType() const;
+  double ComputeTargetDelay(double delay);
+  double GetMasterClock();
+  void SetDefaultWindowSize(int width, int height, AVRational sar);
 #if CONFIG_AVFILTER
-  int configure_video_filters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame);
-  int configure_audio_filters(const char* afilters, int force_output_format);
+  int ConfigureVideoFilters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame);
+  int ConfigureAudioFilters(const char* afilters, int force_output_format);
 #endif
 
-  int video_open(VideoFrame* vp);
+  int VideoOpen(VideoFrame* vp);
   /* allocate a picture (needs to do that in main thread to avoid
      potential locking problems */
-  int alloc_picture();
-  void video_display();
+  int AllocPicture();
+  void VideoDisplay();
   /* called to display each frame */
-  void video_refresh(double* remaining_time);
-  int realloc_texture(SDL_Texture** texture,
+  void VideoRefresh(double* remaining_time);
+  int ReallocTexture(SDL_Texture** texture,
                       Uint32 new_format,
                       int new_width,
                       int new_height,
                       SDL_BlendMode blendmode,
                       int init_texture);
-  void video_audio_display();
-  void video_image_display();
-  void check_external_clock_speed();
-  double vp_duration(VideoFrame* vp, VideoFrame* nextvp);
+  void VideoAudioDisplay();
+  void VideoImageDisplay();
+  void CheckExternalClockSpeed();
+  double VpDuration(VideoFrame* vp, VideoFrame* nextvp);
   /* pause or resume the video */
-  void update_volume(int sign, int step);
-  void seek_chapter(int incr);
+  void UpdateVolume(int sign, int step);
+  void SeekChapter(int incr);
   /* copy samples for viewing in editor window */
-  void update_sample_display(short* samples, int samples_size);
-  void stream_cycle_channel(int codec_type);
+  void UpdateSampleDisplay(short* samples, int samples_size);
+  void StreamCycleChannel(int codec_type);
   /* return the wanted number of samples to get better sync if sync_type is video
    * or external master clock */
-  int synchronize_audio(int nb_samples);
+  int SynchronizeAudio(int nb_samples);
   /**
    * Decode one audio frame and return its uncompressed size.
    *
@@ -109,18 +109,18 @@ class VideoState : public Decoder::DecoderClient {
    * stored in is->audio_buf, with size in bytes given by the return
    * value.
    */
-  int audio_decode_frame();
-  int get_video_frame(AVFrame* frame);
-  int queue_picture(AVFrame* src_frame, double pts, double duration, int64_t pos, int serial);
+  int AudioDecodeFrame();
+  int GetVideoFrame(AVFrame* frame);
+  int QueuePicture(AVFrame* src_frame, double pts, double duration, int64_t pos, int serial);
 
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, Uint8* stream, int len);
 
-  int read_thread();
-  int video_thread();
-  int audio_thread();
-  int subtitle_thread();
-  static int decode_interrupt_cb(void* user_data);
+  int ReadThread();
+  int VideoThread();
+  int AudioThread();
+  int SubtitleThread();
+  static int decode_interrupt_callback(void* user_data);
 
   AppOptions* const opt_;
   ComplexOptions* const copt_;
@@ -213,7 +213,7 @@ class VideoState : public Decoder::DecoderClient {
   int last_audio_stream_;
   int last_subtitle_stream_;
 
-  common::thread::condition_variable continue_read_thread_;
+  common::thread::condition_variable continue_ReadThread_;
   common::shared_ptr<common::thread::Thread<int>> vdecoder_tid_;
   common::shared_ptr<common::thread::Thread<int>> adecoder_tid_;
   common::shared_ptr<common::thread::Thread<int>> sdecoder_tid_;

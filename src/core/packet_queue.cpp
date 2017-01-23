@@ -5,16 +5,16 @@ SAVPacket::SAVPacket(const AVPacket& p) : pkt(p) {}
 PacketQueue::PacketQueue()
     : serial_(0), queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
 
-int PacketQueue::put_nullpacket(int stream_index) {
+int PacketQueue::PutNullpacket(int stream_index) {
   AVPacket pkt1, *pkt = &pkt1;
   av_init_packet(pkt);
   pkt->data = NULL;
   pkt->size = 0;
   pkt->stream_index = stream_index;
-  return put(pkt);
+  return Put(pkt);
 }
 
-int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
+int PacketQueue::Get(AVPacket* pkt, int block, int* serial) {
   int ret = 0;
 
   lock_t lock(mutex_);
@@ -46,7 +46,7 @@ int PacketQueue::get(AVPacket* pkt, int block, int* serial) {
   return ret;
 }
 
-PacketQueue* PacketQueue::make_packet_queue(int** ext_serial) {
+PacketQueue* PacketQueue::MakePacketQueue(int** ext_serial) {
   PacketQueue* pq = new PacketQueue;
   if (ext_serial) {
     *ext_serial = &pq->serial_;
@@ -54,53 +54,53 @@ PacketQueue* PacketQueue::make_packet_queue(int** ext_serial) {
   return pq;
 }
 
-AVPacket* PacketQueue::flush_pkt() {
+AVPacket* PacketQueue::FlushPkt() {
   static AVPacket fls;
   av_init_packet(&fls);
   fls.data = reinterpret_cast<uint8_t*>(&fls);
   return &fls;
 }
 
-bool PacketQueue::abort_request() const {
+bool PacketQueue::AbortRequest() const {
   return abort_request_;
 }
 
-size_t PacketQueue::nb_packets() const {
+size_t PacketQueue::NbPackets() const {
   return queue_.size();
 }
 
-int PacketQueue::size() const {
+int PacketQueue::Size() const {
   return size_;
 }
 
-int64_t PacketQueue::duration() const {
+int64_t PacketQueue::Duration() const {
   return duration_;
 }
 
-int PacketQueue::serial() const {
+int PacketQueue::Serial() const {
   return serial_;
 }
 
-void PacketQueue::start() {
+void PacketQueue::Start() {
   lock_t lock(mutex_);
   abort_request_ = false;
-  put_private(flush_pkt());
+  PutPrivate(FlushPkt());
 }
 
-int PacketQueue::put(AVPacket* pkt) {
+int PacketQueue::Put(AVPacket* pkt) {
   int ret;
   {
     lock_t lock(mutex_);
-    ret = put_private(pkt);
+    ret = PutPrivate(pkt);
   }
-  if (pkt != PacketQueue::flush_pkt() && ret < 0) {
+  if (pkt != PacketQueue::FlushPkt() && ret < 0) {
     av_packet_unref(pkt);
   }
 
   return ret;
 }
 
-void PacketQueue::flush() {
+void PacketQueue::Flush() {
   lock_t lock(mutex_);
   for (auto it = queue_.begin(); it != queue_.end(); ++it) {
     SAVPacket* pkt = *it;
@@ -112,23 +112,23 @@ void PacketQueue::flush() {
   duration_ = 0;
 }
 
-void PacketQueue::abort() {
+void PacketQueue::Abort() {
   lock_t lock(mutex_);
   abort_request_ = true;
   cond_.notify_one();
 }
 
 PacketQueue::~PacketQueue() {
-  flush();
+  Flush();
 }
 
-int PacketQueue::put_private(AVPacket* pkt) {
+int PacketQueue::PutPrivate(AVPacket* pkt) {
   if (abort_request_) {
     return -1;
   }
 
   SAVPacket* pkt1 = new SAVPacket(*pkt);
-  if (pkt == flush_pkt()) {
+  if (pkt == FlushPkt()) {
     serial_++;
   }
   pkt1->serial = serial_;

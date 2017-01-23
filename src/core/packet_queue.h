@@ -22,28 +22,28 @@ class PacketQueue {  // compressed queue data
  public:
   ~PacketQueue();
 
-  void flush();
-  void abort();
-  int put(AVPacket* pkt);
-  int put_nullpacket(int stream_index);
+  void Flush();
+  void Abort();
+  int Put(AVPacket* pkt);
+  int PutNullpacket(int stream_index);
   /* return < 0 if aborted, 0 if no packet and > 0 if packet.  */
-  int get(AVPacket* pkt, int block, int* serial);
-  void start();
+  int Get(AVPacket* pkt, int block, int* serial);
+  void Start();
 
-  static AVPacket* flush_pkt();
-  static PacketQueue* make_packet_queue(int** ext_serial);
+  static AVPacket* FlushPkt();
+  static PacketQueue* MakePacketQueue(int** ext_serial);
 
-  bool abort_request() const;
-  size_t nb_packets() const;
-  int size() const;
-  int64_t duration() const;
-  int serial() const;
+  bool AbortRequest() const;
+  size_t NbPackets() const;
+  int Size() const;
+  int64_t Duration() const;
+  int Serial() const;
 
  private:
   PacketQueue();
 
   DISALLOW_COPY_AND_ASSIGN(PacketQueue);
-  int put_private(AVPacket* pkt);
+  int PutPrivate(AVPacket* pkt);
 
   int serial_;
   std::deque<SAVPacket*> queue_;

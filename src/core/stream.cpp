@@ -6,7 +6,7 @@
 
 Stream::Stream() : packet_queue_(nullptr), clock_(nullptr), stream_index_(-1), stream_st_(NULL) {
   int* ext_serial = NULL;
-  packet_queue_ = PacketQueue::make_packet_queue(&ext_serial);
+  packet_queue_ = PacketQueue::MakePacketQueue(&ext_serial);
   clock_ = new Clock(ext_serial);
 }
 
@@ -29,10 +29,10 @@ void Stream::Close() {
 }
 
 int Stream::HasEnoughPackets() {
-  return stream_index_ < 0 || packet_queue_->abort_request() ||
+  return stream_index_ < 0 || packet_queue_->AbortRequest() ||
          (stream_st_->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
-         (packet_queue_->nb_packets() > MIN_FRAMES &&
-          (!packet_queue_->duration() || q2d() * packet_queue_->duration() > 1.0));
+         (packet_queue_->NbPackets() > MIN_FRAMES &&
+          (!packet_queue_->Duration() || q2d() * packet_queue_->Duration() > 1.0));
 }
 
 Stream::~Stream() {
@@ -55,47 +55,47 @@ double Stream::q2d() const {
 }
 
 double Stream::GetClock() const {
-  return clock_->get_clock();
+  return clock_->GetClock();
 }
 
 double Stream::GetPts() const {
-  return clock_->pts();
+  return clock_->Pts();
 }
 
 void Stream::SetClockSpeed(double speed) {
-  clock_->set_clock_speed(speed);
+  clock_->SetClockSpeed(speed);
 }
 
 double Stream::GetSpeed() const {
-  return clock_->speed();
+  return clock_->Speed();
 }
 
 void Stream::SetClockAt(double pts, int serial, double time) {
-  clock_->set_clock_at(pts, serial, time);
+  clock_->SetClockAt(pts, serial, time);
 }
 
 void Stream::SetClock(double pts, int serial) {
-  clock_->set_clock(pts, serial);
+  clock_->SetClock(pts, serial);
 }
 
 void Stream::SetPaused(bool pause) {
-  clock_->set_paused(pause);
+  clock_->SetPaused(pause);
 }
 
 double Stream::LastUpdatedClock() const {
-  return clock_->last_updated();
+  return clock_->LastUpdated();
 }
 
 void Stream::SyncSerialClock() {
-  SetClock(clock_->get_clock(), clock_->serial());
+  SetClock(clock_->GetClock(), clock_->Serial());
 }
 
 int Stream::Serial() const {
-  return clock_->serial();
+  return clock_->Serial();
 }
 
 void Stream::SyncClockWith(Stream* str, double no_sync_threshold) {
-  Clock::sync_clock_to_slave(clock_, str->clock_, no_sync_threshold);
+  Clock::SyncClockToSlave(clock_, str->clock_, no_sync_threshold);
 }
 
 PacketQueue* Stream::Queue() const {

@@ -42,14 +42,14 @@ static int opt_frame_size(void* optctx, const char* opt, const char* arg) {
 static int opt_width(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
-  g_options.screen_width = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
+  g_options.screen_width = static_cast<int>(parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX));
   return 0;
 }
 
 static int opt_height(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
-  g_options.screen_height = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
+  g_options.screen_height = static_cast<int>(parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX));
   return 0;
 }
 
@@ -76,13 +76,13 @@ static int opt_frame_pix_fmt(void* optctx, const char* opt, const char* arg) {
 static int opt_sync(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
-  if (!strcmp(arg, "audio"))
+  if (!strcmp(arg, "audio")) {
     g_options.av_sync_type = AV_SYNC_AUDIO_MASTER;
-  else if (!strcmp(arg, "video"))
+  } else if (!strcmp(arg, "video")) {
     g_options.av_sync_type = AV_SYNC_VIDEO_MASTER;
-  else if (!strcmp(arg, "ext"))
+  } else if (!strcmp(arg, "ext")) {
     g_options.av_sync_type = AV_SYNC_EXTERNAL_CLOCK;
-  else {
+  } else {
     av_log(NULL, AV_LOG_ERROR, "Unknown value for %s: %s\n", opt, arg);
     exit(1);
   }
@@ -106,14 +106,14 @@ static int opt_duration(void* optctx, const char* opt, const char* arg) {
 static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
-  g_options.show_mode =
-      !strcmp(arg, "video")
-          ? SHOW_MODE_VIDEO
-          : !strcmp(arg, "waves")
-                ? SHOW_MODE_WAVES
-                : !strcmp(arg, "rdft")
-                      ? SHOW_MODE_RDFT
-                      : (ShowMode)parse_number_or_die(opt, arg, OPT_INT, 0, SHOW_MODE_NB - 1);
+  g_options.show_mode = !strcmp(arg, "video")
+                            ? SHOW_MODE_VIDEO
+                            : !strcmp(arg, "waves")
+                                  ? SHOW_MODE_WAVES
+                                  : !strcmp(arg, "rdft")
+                                        ? SHOW_MODE_RDFT
+                                        : static_cast<ShowMode>(parse_number_or_die(
+                                              opt, arg, OPT_INT, 0, SHOW_MODE_NB - 1));
   return 0;
 }
 
@@ -355,8 +355,7 @@ static const OptionDef options[] = {
     {"autorotate", OPT_BOOL, {&g_options.autorotate}, "automatically rotate video", ""},
     {
         NULL,
-    },
-};
+    }};
 
 static void show_usage(void) {
   av_log(NULL, AV_LOG_INFO, "Simple media player\n");
@@ -476,7 +475,7 @@ int main(int argc, char** argv) {
   if (g_options.display_disable) {
     g_options.video_disable = 1;
   }
-  int flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
+  Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
   if (g_options.audio_disable) {
     flags &= ~SDL_INIT_AUDIO;
   } else {
