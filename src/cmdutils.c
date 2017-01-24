@@ -620,12 +620,12 @@ int opt_loglevel(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-static void expand_filename_template(AVBPrint* bp, const char* template, struct tm* tm) {
+static void expand_filename_template(AVBPrint* bp, const char* temp, struct tm* tm) {
   int c;
 
-  while ((c = *(template ++))) {
+  while ((c = *(temp ++))) {
     if (c == '%') {
-      if (!(c = *(template ++)))
+      if (!(c = *(temp ++)))
         break;
       switch (c) {
         case 'p':

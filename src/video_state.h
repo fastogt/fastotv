@@ -171,10 +171,6 @@ class VideoState : public core::Decoder::DecoderClient {
   int sample_array_index_;
   int last_i_start_;
 
-  RDFTContext* rdft_;
-  int rdft_bits_;
-  FFTSample* rdft_data_;
-
   int xpos_;
   double last_vis_time_;
   SDL_Texture* vis_texture_;

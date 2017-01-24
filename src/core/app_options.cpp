@@ -33,7 +33,6 @@ AppOptions::AppOptions()
       show_status(1),
       infinite_buffer(-1),
       wanted_stream_spec(),
-      rdftspeed(0.02),
       lowres(0),
       fast(0),
       audio_codec_name(),

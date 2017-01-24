@@ -48,7 +48,6 @@ struct AppOptions {
   int show_status;
   int infinite_buffer;
   std::string wanted_stream_spec[AVMEDIA_TYPE_NB];
-  double rdftspeed;
   int lowres;
 
   /* options specified by the user */

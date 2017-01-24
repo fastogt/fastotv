@@ -110,10 +110,8 @@ static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
                             ? core::SHOW_MODE_VIDEO
                             : !strcmp(arg, "waves")
                                   ? core::SHOW_MODE_WAVES
-                                  : !strcmp(arg, "rdft")
-                                        ? core::SHOW_MODE_RDFT
-                                        : static_cast<core::ShowMode>(parse_number_or_die(
-                                              opt, arg, OPT_INT, 0, core::SHOW_MODE_NB - 1));
+                                  : static_cast<core::ShowMode>(parse_number_or_die(
+                                        opt, arg, OPT_INT, 0, core::SHOW_MODE_NB - 1));
   return 0;
 }
 
@@ -311,15 +309,10 @@ static const OptionDef options[] = {
      "filter_graph"},
     {"af", OPT_STRING | HAS_ARG, {&g_options.afilters}, "set audio filters", "filter_graph"},
 #endif
-    {"rdftspeed",
-     OPT_INT | HAS_ARG | OPT_AUDIO | OPT_EXPERT,
-     {&g_options.rdftspeed},
-     "rdft speed",
-     "msecs"},
     {"showmode",
      HAS_ARG,
      {.func_arg = opt_show_mode},
-     "select show mode (0 = video, 1 = waves, 2 = RDFT)",
+     "select show mode (0 = video, 1 = waves)",
      "mode"},
     {"default",
      HAS_ARG | OPT_AUDIO | OPT_VIDEO | OPT_EXPERT,

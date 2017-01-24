@@ -88,9 +88,6 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
       sample_array_{0},
       sample_array_index_(0),
       last_i_start_(0),
-      rdft_(NULL),
-      rdft_bits_(0),
-      rdft_data_(NULL),
       xpos_(0),
       last_vis_time_(0),
       vis_texture_(NULL),
@@ -419,13 +416,6 @@ void VideoState::StreamComponentClose(int stream_index) {
       av_freep(&audio_buf1_);
       audio_buf1_size_ = 0;
       audio_buf_ = NULL;
-
-      if (rdft_) {
-        av_rdft_end(rdft_);
-        av_freep(&rdft_data_);
-        rdft_ = NULL;
-        rdft_bits_ = 0;
-      }
       break;
     }
     case AVMEDIA_TYPE_SUBTITLE: {
@@ -527,8 +517,7 @@ double VideoState::GetMasterClock() {
       val = astream_->GetClock();
       break;
     default:
-      DNOTREACHED();
-      // val = sstream_->GetClock();
+      val = vstream_->GetClock();
       break;
   }
   return val;
@@ -543,11 +532,11 @@ void VideoState::VideoRefresh(double* remaining_time) {
 
   if (!opt_->display_disable && opt_->show_mode != core::SHOW_MODE_VIDEO && audio_st) {
     time = av_gettime_relative() / 1000000.0;
-    if (force_refresh_ || last_vis_time_ + opt_->rdftspeed < time) {
+    if (force_refresh_ || last_vis_time_ < time) {
       VideoDisplay();
       last_vis_time_ = time;
     }
-    *remaining_time = FFMIN(*remaining_time, last_vis_time_ + opt_->rdftspeed - time);
+    *remaining_time = FFMIN(*remaining_time, last_vis_time_ - time);
   }
 
   if (video_st) {
@@ -825,18 +814,13 @@ void VideoState::VideoImageDisplay() {
 }
 
 void VideoState::VideoAudioDisplay() {
-  int rdft_bits;
-  for (rdft_bits = 1; (1 << rdft_bits) < 2 * height_; rdft_bits++) {
-  }
-  const int nb_freq = 1 << (rdft_bits - 1);
-
-  int i, i_start, x, y, n;
+  int i, i_start, x;
   int h;
   /* compute display index : center on currently output samples */
   const int channels = audio_tgt_.channels;
   if (!paused_) {
-    int data_used = opt_->show_mode == core::SHOW_MODE_WAVES ? width_ : (2 * nb_freq);
-    n = 2 * channels;
+    int data_used = width_;
+    int n = 2 * channels;
     int delay = audio_write_buf_size_;
     delay /= n;
 
@@ -887,7 +871,7 @@ void VideoState::VideoAudioDisplay() {
       int ys;
       int y1 = ytop_ + ch * h + (h / 2); /* position of center line */
       for (x = 0; x < width_; x++) {
-        y = (sample_array_[i] * h2) >> 15;
+        int y = (sample_array_[i] * h2) >> 15;
         if (y < 0) {
           y = -y;
           ys = y1 - y;
@@ -904,71 +888,8 @@ void VideoState::VideoAudioDisplay() {
     SDL_SetRenderDrawColor(renderer_, 0, 0, 255, 255);
 
     for (int ch = 1; ch < nb_display_channels; ch++) {
-      y = ytop_ + ch * h;
+      int y = ytop_ + ch * h;
       core::fill_rectangle(renderer_, xleft_, y, width_, 1);
-    }
-  } else {
-    if (ReallocTexture(&vis_texture_, SDL_PIXELFORMAT_ARGB8888, width_, height_, SDL_BLENDMODE_NONE,
-                       1) < 0) {
-      return;
-    }
-
-    nb_display_channels = FFMIN(nb_display_channels, 2);
-    if (rdft_bits_ != rdft_bits) {
-      av_rdft_end(rdft_);
-      av_free(rdft_data_);
-      rdft_ = av_rdft_init(rdft_bits, DFT_R2C);
-      rdft_bits_ = rdft_bits;
-      rdft_data_ = static_cast<FFTSample*>(av_malloc_array(nb_freq, 4 * sizeof(*rdft_data_)));
-    }
-    if (!rdft_ || !rdft_data_) {
-      av_log(NULL, AV_LOG_ERROR,
-             "Failed to allocate buffers for RDFT, switching to waves display\n");
-      opt_->show_mode = core::SHOW_MODE_WAVES;
-    } else {
-      FFTSample* data[2] = {NULL, NULL};
-      SDL_Rect rect = {xpos_, 0, 1, height_};
-      uint32_t* pixels;
-      int pitch;
-      for (int ch = 0; ch < nb_display_channels; ch++) {
-        data[ch] = rdft_data_ + 2 * nb_freq * ch;
-        i = i_start + ch;
-        for (x = 0; x < 2 * nb_freq; x++) {
-          double w = (x - nb_freq) * (1.0 / nb_freq);
-          data[ch][x] = sample_array_[i] * (1.0 - w * w);
-          i += channels;
-          if (i >= SAMPLE_ARRAY_SIZE) {
-            i -= SAMPLE_ARRAY_SIZE;
-          }
-        }
-        av_rdft_calc(rdft_, data[ch]);
-      }
-      /* Least efficient way to do this, we should of course
-       * directly access it but it is more than fast enough. */
-      if (!SDL_LockTexture(vis_texture_, &rect, reinterpret_cast<void**>(&pixels), &pitch)) {
-        pitch >>= 2;
-        pixels += pitch * height_;
-        for (y = 0; y < height_; y++) {
-          double w = 1 / sqrt(nb_freq);
-          int a = sqrt(w * sqrt(data[0][2 * y + 0] * data[0][2 * y + 0] +
-                                data[0][2 * y + 1] * data[0][2 * y + 1]));
-          int b = (nb_display_channels == 2)
-                      ? sqrt(w * hypot(data[1][2 * y + 0], data[1][2 * y + 1]))
-                      : a;
-          a = FFMIN(a, 255);
-          b = FFMIN(b, 255);
-          pixels -= pitch;
-          *pixels = (a << 16) + (b << 8) + ((a + b) >> 1);
-        }
-        SDL_UnlockTexture(vis_texture_);
-      }
-      SDL_RenderCopy(renderer_, vis_texture_, NULL, NULL);
-    }
-    if (!paused_) {
-      xpos_++;
-    }
-    if (xpos_ >= width_) {
-      xpos_ = xleft_;
     }
   }
 }
@@ -1870,7 +1791,7 @@ int VideoState::ReadThread() {
     ret = StreamComponentOpen(st_index[AVMEDIA_TYPE_VIDEO]);
   }
   if (opt_->show_mode == core::SHOW_MODE_NONE) {
-    opt_->show_mode = ret >= 0 ? core::SHOW_MODE_VIDEO : core::SHOW_MODE_RDFT;
+    opt_->show_mode = ret >= 0 ? core::SHOW_MODE_VIDEO : core::SHOW_MODE_WAVES;
   }
 
   if (!video_stream->IsOpened() && !audio_stream->IsOpened()) {
