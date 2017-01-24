@@ -5,15 +5,11 @@ namespace core {
 Decoder::DecoderClient::~DecoderClient() {}
 
 Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
-    : start_pts(AV_NOPTS_VALUE),
-      start_pts_tb{0, 0},
-      avctx_(avctx),
+    : avctx_(avctx),
       pkt_(),
       queue_(queue),
       packet_pending_(false),
       pkt_serial_(0),
-      next_pts_(0),
-      next_pts_tb_{0, 0},
       client_(client),
       finished_(false) {}
 
@@ -51,8 +47,17 @@ IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderC
     : Decoder(avctx, queue, client) {}
 
 AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
-    : IFrameDecoder(avctx, queue, client) {
+    : IFrameDecoder(avctx, queue, client),
+      start_pts_(AV_NOPTS_VALUE),
+      start_pts_tb_{0, 0},
+      next_pts_(AV_NOPTS_VALUE),
+      next_pts_tb_{0, 0} {
   CHECK(CodecType() == AVMEDIA_TYPE_AUDIO);
+}
+
+void AudioDecoder::SetStartPts(int64_t start_pts, AVRational start_pts_tb) {
+  start_pts_ = start_pts;
+  start_pts_tb_ = start_pts_tb;
 }
 
 int AudioDecoder::DecodeFrame(AVFrame* frame) {
@@ -60,8 +65,6 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
   AVPacket pkt_temp;
   static const AVPacket* fls = PacketQueue::FlushPkt();
   do {
-    int ret = -1;
-
     if (queue_->AbortRequest()) {
       return -1;
     }
@@ -74,14 +77,14 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
             client_->HandleEmptyQueue(this);
           }
         }
-        if (queue_->Get(&lpkt, 1, &pkt_serial_) < 0) {
+        if (queue_->Get(&lpkt, true, &pkt_serial_) < 0) {
           return -1;
         }
         if (lpkt.data == fls->data) {
           avcodec_flush_buffers(avctx_);
           SetFinished(false);
-          next_pts_ = start_pts;
-          next_pts_tb_ = start_pts_tb;
+          next_pts_ = start_pts_;
+          next_pts_tb_ = start_pts_tb_;
         }
       } while (lpkt.data == fls->data || queue_->Serial() != pkt_serial_);
       av_packet_unref(&pkt_);
@@ -89,9 +92,9 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       packet_pending_ = true;
     }
 
-    ret = avcodec_decode_audio4(avctx_, frame, &got_frame, &pkt_temp);
+    int ret = avcodec_decode_audio4(avctx_, frame, &got_frame, &pkt_temp);
     if (got_frame) {
-      AVRational tb = (AVRational){1, frame->sample_rate};
+      AVRational tb = {1, frame->sample_rate};
       if (frame->pts != AV_NOPTS_VALUE) {
         frame->pts = av_rescale_q(frame->pts, av_codec_get_pkt_timebase(avctx_), tb);
       } else if (next_pts_ != AV_NOPTS_VALUE) {
@@ -116,7 +119,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       } else {
         if (!got_frame) {
           packet_pending_ = false;
-          SetFinished(pkt_serial_);
+          SetFinished(true);
         }
       }
     }
@@ -154,8 +157,6 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
   AVPacket pkt_temp;
   static const AVPacket* fls = PacketQueue::FlushPkt();
   do {
-    int ret = -1;
-
     if (queue_->AbortRequest()) {
       return -1;
     }
@@ -168,14 +169,12 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
             client_->HandleEmptyQueue(this);
           }
         }
-        if (queue_->Get(&lpkt, 1, &pkt_serial_) < 0) {
+        if (queue_->Get(&lpkt, true, &pkt_serial_) < 0) {
           return -1;
         }
         if (lpkt.data == fls->data) {
           avcodec_flush_buffers(avctx_);
           SetFinished(false);
-          next_pts_ = start_pts;
-          next_pts_tb_ = start_pts_tb;
         }
       } while (lpkt.data == fls->data || queue_->Serial() != pkt_serial_);
       av_packet_unref(&pkt_);
@@ -183,7 +182,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
       packet_pending_ = true;
     }
 
-    ret = avcodec_decode_video2(avctx_, frame, &got_frame, &pkt_temp);
+    int ret = avcodec_decode_video2(avctx_, frame, &got_frame, &pkt_temp);
     if (got_frame) {
       if (decoder_reorder_pts_ == -1) {
         frame->pts = av_frame_get_best_effort_timestamp(frame);
@@ -206,7 +205,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
       } else {
         if (!got_frame) {
           packet_pending_ = false;
-          SetFinished(pkt_serial_);
+          SetFinished(true);
         }
       }
     }

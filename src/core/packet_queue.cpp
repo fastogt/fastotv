@@ -16,9 +16,12 @@ int PacketQueue::PutNullpacket(int stream_index) {
   return Put(pkt);
 }
 
-int PacketQueue::Get(AVPacket* pkt, int block, int* serial) {
-  int ret = 0;
+int PacketQueue::Get(AVPacket* pkt, bool block, int* serial) {
+  if (!pkt) {
+    return -1;
+  }
 
+  int ret = 0;
   lock_t lock(mutex_);
   while (true) {
     if (abort_request_) {

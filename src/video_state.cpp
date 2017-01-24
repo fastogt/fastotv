@@ -354,8 +354,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
       auddec_ = new core::AudioDecoder(avctx, packet_queue, this);
       if ((ic_->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic_->iformat->read_seek) {
-        auddec_->start_pts = stream->start_time;
-        auddec_->start_pts_tb = stream->time_base;
+        auddec_->SetStartPts(stream->start_time, stream->time_base);
       }
       auddec_->Start();
       adecoder_tid_->start();
@@ -1797,8 +1796,9 @@ int VideoState::ReadThread() {
 
     timestamp = opt_->start_time;
     /* add the stream start time */
-    if (ic->start_time != AV_NOPTS_VALUE)
+    if (ic->start_time != AV_NOPTS_VALUE) {
       timestamp += ic->start_time;
+    }
     ret = avformat_seek_file(ic, -1, INT64_MIN, timestamp, INT64_MAX, 0);
     if (ret < 0) {
       av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %0.3f\n", in_filename,

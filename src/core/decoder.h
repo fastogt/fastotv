@@ -22,9 +22,6 @@ class Decoder {
 
   AVMediaType CodecType() const;
 
-  int64_t start_pts;
-  AVRational start_pts_tb;
-
  protected:
   Decoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
 
@@ -35,8 +32,6 @@ class Decoder {
   bool packet_pending_;
   int pkt_serial_;
 
-  int64_t next_pts_;
-  AVRational next_pts_tb_;
   DecoderClient* const client_;
 
  private:
@@ -53,6 +48,14 @@ class AudioDecoder : public IFrameDecoder {
  public:
   AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client);
   virtual int DecodeFrame(AVFrame* frame) override;
+
+  void SetStartPts(int64_t start_pts, AVRational start_pts_tb);
+
+ private:
+  int64_t start_pts_;
+  AVRational start_pts_tb_;
+  int64_t next_pts_;
+  AVRational next_pts_tb_;
 };
 
 class VideoDecoder : public IFrameDecoder {
@@ -73,5 +76,4 @@ class VideoDecoder : public IFrameDecoder {
  private:
   int decoder_reorder_pts_;
 };
-
 }
