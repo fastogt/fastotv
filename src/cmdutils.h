@@ -327,17 +327,6 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
 AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* codec_opts);
 
 /**
- * Print an error message to stderr, indicating filename and a human
- * readable description of the error code err.
- *
- * If strerror_r() is not available the use of this function in a
- * multithreaded application may be unsafe.
- *
- * @see av_strerror()
- */
-void print_error(const char* filename, int err);
-
-/**
  * Print the program banner to stderr. The banner contents depend on the
  * current version of the repository and of the libav* libraries used by
  * the program.

@@ -97,8 +97,6 @@ int audio_open(void* opaque,
                struct AudioParams* audio_hw_params,
                SDL_AudioCallback cb);
 
-void print_error(const char* filename, int err);
-
 int is_realtime(AVFormatContext* s);
 
 int cmp_audio_fmts(enum AVSampleFormat fmt1,

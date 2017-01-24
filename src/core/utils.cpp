@@ -362,16 +362,6 @@ int audio_open(void* opaque,
   return spec.size;
 }
 
-void print_error(const char* filename, int err) {
-  char errbuf[128];
-  const char* errbuf_ptr = errbuf;
-
-  if (av_strerror(err, errbuf, sizeof(errbuf)) < 0) {
-    errbuf_ptr = strerror(AVUNERROR(err));
-  }
-  av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, errbuf_ptr);
-}
-
 int is_realtime(AVFormatContext* s) {
   if (!strcmp(s->iformat->name, "rtp") || !strcmp(s->iformat->name, "rtsp") ||
       !strcmp(s->iformat->name, "sdp")) {

@@ -727,15 +727,6 @@ int opt_max_alloc(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-void print_error(const char* filename, int err) {
-  char errbuf[128];
-  const char* errbuf_ptr = errbuf;
-
-  if (av_strerror(err, errbuf, sizeof(errbuf)) < 0)
-    errbuf_ptr = strerror(AVUNERROR(err));
-  av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, errbuf_ptr);
-}
-
 static int warned_cfg = 0;
 
 #define INDENT 1
