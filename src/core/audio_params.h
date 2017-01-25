@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 extern "C" {
 #include <libavutil/samplefmt.h>
 }

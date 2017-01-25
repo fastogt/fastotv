@@ -112,14 +112,6 @@ class RingBuffer {
     return PeekNextInner();
   }
 
-  pointer_type PeekOrNull() {
-    lock_t lock(queue_mutex_);
-    if (IsEmptyInner()) {  // if is empty
-      return nullptr;
-    }
-    return PeekInner();
-  }
-
   pointer_type Windex() {
     lock_t lock(queue_mutex_);
     return WindexElementInner();

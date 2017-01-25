@@ -30,7 +30,7 @@ void Stream::Close() {
   stream_st_ = NULL;
 }
 
-int Stream::HasEnoughPackets() {
+int Stream::HasEnoughPackets() const {
   return stream_index_ < 0 || packet_queue_->AbortRequest() ||
          (stream_st_->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
          (packet_queue_->NbPackets() > MIN_FRAMES &&
@@ -60,18 +60,6 @@ double Stream::GetClock() const {
   return clock_->GetClock();
 }
 
-double Stream::GetPts() const {
-  return clock_->Pts();
-}
-
-void Stream::SetClockSpeed(double speed) {
-  clock_->SetClockSpeed(speed);
-}
-
-double Stream::GetSpeed() const {
-  return clock_->Speed();
-}
-
 void Stream::SetClockAt(double pts, int serial, double time) {
   clock_->SetClockAt(pts, serial, time);
 }
@@ -94,10 +82,6 @@ void Stream::SyncSerialClock() {
 
 int Stream::Serial() const {
   return clock_->Serial();
-}
-
-void Stream::SyncClockWith(Stream* str, double no_sync_threshold) {
-  Clock::SyncClockToSlave(clock_, str->clock_, no_sync_threshold);
 }
 
 PacketQueue* Stream::Queue() const {

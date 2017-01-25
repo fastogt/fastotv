@@ -67,8 +67,8 @@ class VideoState : public core::Decoder::DecoderClient {
 
   void StepToNextFrame();
   int GetMasterSyncType() const;
-  double ComputeTargetDelay(double delay);
-  double GetMasterClock();
+  double ComputeTargetDelay(double delay) const;
+  double GetMasterClock() const;
   void SetDefaultWindowSize(int width, int height, AVRational sar);
 #if CONFIG_AVFILTER
   int ConfigureVideoFilters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame);
@@ -90,7 +90,7 @@ class VideoState : public core::Decoder::DecoderClient {
                      int init_texture);
   void VideoAudioDisplay();
   void VideoImageDisplay();
-  double VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp);
+  double VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp) const;
   /* pause or resume the video */
   void UpdateVolume(int sign, int step);
   void SeekChapter(int incr);

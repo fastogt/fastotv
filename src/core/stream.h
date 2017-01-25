@@ -15,7 +15,7 @@ class Clock;
 
 class Stream {
  public:
-  int HasEnoughPackets();
+  int HasEnoughPackets() const;
   virtual bool Open(int index, AVStream* av_stream_st);
   bool IsOpened() const;
   virtual void Close();
@@ -27,10 +27,6 @@ class Stream {
 
   // clock interface
   double GetClock() const;
-  double GetPts() const;
-
-  void SetClockSpeed(double speed);
-  double GetSpeed() const;
 
   void SetClockAt(double pts, int serial, double time);
   void SetClock(double pts, int serial);
@@ -41,8 +37,6 @@ class Stream {
   void SyncSerialClock();
 
   int Serial() const;
-
-  void SyncClockWith(Stream* str, double no_sync_threshold);
 
   PacketQueue* Queue() const;
 

@@ -476,7 +476,7 @@ int VideoState::GetMasterSyncType() const {
   return core::AV_SYNC_EXTERNAL_CLOCK;
 }
 
-double VideoState::ComputeTargetDelay(double delay) {
+double VideoState::ComputeTargetDelay(double delay) const {
   double diff = 0;
 
   /* update delay to follow master synchronisation source */
@@ -506,7 +506,7 @@ double VideoState::ComputeTargetDelay(double delay) {
 }
 
 /* get the current master clock value */
-double VideoState::GetMasterClock() {
+double VideoState::GetMasterClock() const {
   double val;
 
   switch (GetMasterSyncType()) {
@@ -1150,7 +1150,7 @@ int VideoState::Exec() {
   return EXIT_SUCCESS;
 }
 
-double VideoState::VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp) {
+double VideoState::VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp) const {
   if (vp->serial == nextvp->serial) {
     double duration = nextvp->pts - vp->pts;
     if (isnan(duration) || duration <= 0 || duration > max_frame_duration_) {

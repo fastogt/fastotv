@@ -6,16 +6,12 @@ class Clock {
  public:
   explicit Clock(int* queue_serial);
 
-  static void SyncClockToSlave(Clock* c, Clock* slave, double no_sync_threshold);
-  void SetClockSpeed(double speed);
   void SetClockAt(double pts, int serial, double time);
   void SetClock(double pts, int serial);
   double GetClock() const;
 
-  double Speed() const;
   int Serial() const;
   double LastUpdated() const;
-  double Pts() const;
 
   void SetPaused(bool paused);
 
