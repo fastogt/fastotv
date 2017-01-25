@@ -7,9 +7,9 @@
 namespace core {
 
 Stream::Stream() : packet_queue_(nullptr), clock_(nullptr), stream_index_(-1), stream_st_(NULL) {
-  int* ext_serial = NULL;
+  std::atomic<int>* ext_serial = NULL;
   packet_queue_ = PacketQueue::MakePacketQueue(&ext_serial);
-  clock_ = new Clock(ext_serial);
+  clock_ = new Clock(*ext_serial);
 }
 
 Stream::Stream(int index, AVStream* av_stream_st)
@@ -30,10 +30,21 @@ void Stream::Close() {
   stream_st_ = NULL;
 }
 
-int Stream::HasEnoughPackets() const {
-  return stream_index_ < 0 || packet_queue_->AbortRequest() ||
-         (stream_st_->disposition & AV_DISPOSITION_ATTACHED_PIC) ||
-         (packet_queue_->NbPackets() > MIN_FRAMES &&
+bool Stream::HasEnoughPackets() const {
+  if (stream_index_ < 0) {
+    return false;
+  }
+
+  if (packet_queue_->AbortRequest()) {
+    return false;
+  }
+
+  bool attach = stream_st_->disposition & AV_DISPOSITION_ATTACHED_PIC;
+  if (!attach) {
+    return false;
+  }
+
+  return (packet_queue_->NbPackets() > MIN_FRAMES &&
           (!packet_queue_->Duration() || q2d() * packet_queue_->Duration() > 1.0));
 }
 

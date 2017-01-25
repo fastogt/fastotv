@@ -2,7 +2,7 @@
 
 namespace core {
 
-SAVPacket::SAVPacket(const AVPacket& p) : pkt(p), serial(0) {}
+SAVPacket::SAVPacket(const AVPacket& p, int serial) : pkt(p), serial(serial) {}
 
 PacketQueue::PacketQueue()
     : serial_(0), queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
@@ -51,7 +51,7 @@ int PacketQueue::Get(AVPacket* pkt, bool block, int* serial) {
   return ret;
 }
 
-PacketQueue* PacketQueue::MakePacketQueue(int** ext_serial) {
+PacketQueue* PacketQueue::MakePacketQueue(std::atomic<int>** ext_serial) {
   PacketQueue* pq = new PacketQueue;
   if (ext_serial) {
     *ext_serial = &pq->serial_;
@@ -82,31 +82,36 @@ int PacketQueue::Size() {
 }
 
 int64_t PacketQueue::Duration() {
-  lock_t lock(mutex_);
   return duration_;
 }
 
 int PacketQueue::Serial() {
-  lock_t lock(mutex_);
   return serial_;
 }
 
 void PacketQueue::Start() {
+  SAVPacket* sav = new SAVPacket(*FlushPkt(), ++serial_);
+
   lock_t lock(mutex_);
   abort_request_ = false;
-  PutPrivate(FlushPkt());
+  PutPrivate(sav);
+  cond_.notify_one();
 }
 
 int PacketQueue::Put(AVPacket* pkt) {
-  int ret;
-  {
-    lock_t lock(mutex_);
-    ret = PutPrivate(pkt);
-  }
-  if (pkt != PacketQueue::FlushPkt() && ret < 0) {
-    av_packet_unref(pkt);
+  bool is_flush = false;
+  SAVPacket* sav = MakePacket(pkt, &is_flush);
+  lock_t lock(mutex_);
+  if (abort_request_) {
+    if (!is_flush) {
+      av_packet_unref(pkt);
+      delete sav;
+      return -1;
+    }
   }
 
+  int ret = PutPrivate(sav);
+  cond_.notify_one();
   return ret;
 }
 
@@ -132,22 +137,21 @@ PacketQueue::~PacketQueue() {
   Flush();
 }
 
-int PacketQueue::PutPrivate(AVPacket* pkt) {
-  if (abort_request_) {
-    return -1;
-  }
-
-  SAVPacket* pkt1 = new SAVPacket(*pkt);
+SAVPacket* PacketQueue::MakePacket(AVPacket* pkt, bool* is_flush) {
   if (pkt == FlushPkt()) {
     serial_++;
+    *is_flush = true;
   }
-  pkt1->serial = serial_;
+  SAVPacket* pkt1 = new SAVPacket(*pkt, serial_);
+  *is_flush = false;
+  return pkt1;
+}
 
+int PacketQueue::PutPrivate(SAVPacket* pkt1) {
   queue_.push_back(pkt1);
   size_ += pkt1->pkt.size + sizeof(*pkt1);
   duration_ += pkt1->pkt.duration;
   /* XXX: should duplicate packet data in DV case */
-  cond_.notify_one();
   return 0;
 }
 

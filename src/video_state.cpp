@@ -454,21 +454,7 @@ void VideoState::StepToNextFrame() {
 }
 
 int VideoState::GetMasterSyncType() const {
-  if (opt_->av_sync_type == core::AV_SYNC_VIDEO_MASTER) {
-    if (vstream_->IsOpened()) {
-      return core::AV_SYNC_VIDEO_MASTER;
-    } else {
-      return core::AV_SYNC_AUDIO_MASTER;
-    }
-  } else if (opt_->av_sync_type == core::AV_SYNC_AUDIO_MASTER) {
-    if (astream_->IsOpened()) {
-      return core::AV_SYNC_AUDIO_MASTER;
-    } else {
-      return core::AV_SYNC_EXTERNAL_CLOCK;
-    }
-  }
-
-  return core::AV_SYNC_EXTERNAL_CLOCK;
+  return opt_->av_sync_type;
 }
 
 double VideoState::ComputeTargetDelay(double delay) const {
@@ -500,20 +486,11 @@ double VideoState::ComputeTargetDelay(double delay) const {
 
 /* get the current master clock value */
 double VideoState::GetMasterClock() const {
-  double val;
-
-  switch (GetMasterSyncType()) {
-    case core::AV_SYNC_VIDEO_MASTER:
-      val = vstream_->GetClock();
-      break;
-    case core::AV_SYNC_AUDIO_MASTER:
-      val = astream_->GetClock();
-      break;
-    default:
-      val = vstream_->GetClock();
-      break;
+  if (GetMasterSyncType() == core::AV_SYNC_VIDEO_MASTER) {
+    return vstream_->GetClock();
   }
-  return val;
+
+  return astream_->GetClock();
 }
 
 void VideoState::VideoRefresh(double* remaining_time) {
@@ -555,7 +532,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
       }
 
       /* compute nominal last_duration */
-      double last_duration = VpDuration(lastvp, vp);
+      double last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
       double delay = ComputeTargetDelay(last_duration);
 
       time = av_gettime_relative() / 1000000.0;
@@ -569,18 +546,18 @@ void VideoState::VideoRefresh(double* remaining_time) {
         frame_timer_ = time;
       }
 
-      video_frame_queue_->ChangeSafe(
-          [this](core::VideoFrame* fr) {
-            if (!isnan(fr->pts)) {
-              /* update current video pts */
-              vstream_->SetClock(fr->pts, fr->serial);
-            }
-          },
-          vp);
+      {
+        const double pts = vp->pts;
+        const int serial = vp->serial;
+        if (!isnan(pts)) {
+          /* update current video pts */
+          vstream_->SetClock(pts, serial);
+        }
+      }
 
-      if (video_frame_queue_->NbRemaining() > 1) {
-        core::VideoFrame* nextvp = video_frame_queue_->PeekNext();
-        double duration = VpDuration(vp, nextvp);
+      core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
+      if (nextvp) {
+        double duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
         if (!step_ && (opt_->framedrop > 0 ||
                        (opt_->framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) &&
             time > frame_timer_ + duration) {
@@ -1137,19 +1114,6 @@ int VideoState::Exec() {
     }
   }
   return EXIT_SUCCESS;
-}
-
-double VideoState::VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp) const {
-  if (vp->serial == nextvp->serial) {
-    double duration = nextvp->pts - vp->pts;
-    if (isnan(duration) || duration <= 0 || duration > max_frame_duration_) {
-      return vp->duration;
-    } else {
-      return duration;
-    }
-  } else {
-    return 0.0;
-  }
 }
 
 void VideoState::StreamTogglePause() {

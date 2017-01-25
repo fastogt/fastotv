@@ -7,6 +7,7 @@ extern "C" {
 }
 
 #include <deque>
+#include <atomic>
 
 #include <common/macros.h>
 #include <common/thread/types.h>
@@ -14,10 +15,10 @@ extern "C" {
 namespace core {
 
 struct SAVPacket {
-  explicit SAVPacket(const AVPacket& p);
+  explicit SAVPacket(const AVPacket& p, int serial);
 
   AVPacket pkt;
-  int serial;
+  const int serial;
 };
 
 class PacketQueue {  // compressed queue data
@@ -33,7 +34,7 @@ class PacketQueue {  // compressed queue data
   void Start();
 
   static AVPacket* FlushPkt();
-  static PacketQueue* MakePacketQueue(int** ext_serial);
+  static PacketQueue* MakePacketQueue(std::atomic<int>** ext_serial);
 
   bool AbortRequest();
   size_t NbPackets();
@@ -45,9 +46,11 @@ class PacketQueue {  // compressed queue data
   PacketQueue();
 
   DISALLOW_COPY_AND_ASSIGN(PacketQueue);
-  int PutPrivate(AVPacket* pkt);
+  int PutPrivate(SAVPacket* pkt1);
 
-  int serial_;
+  SAVPacket* MakePacket(AVPacket* pkt, bool* is_flush);
+
+  std::atomic<int> serial_;
   std::deque<SAVPacket*> queue_;
   int size_;
   int64_t duration_;

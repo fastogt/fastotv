@@ -11,12 +11,11 @@ extern "C" {
 }
 
 #include "video_state.h"
-
+namespace {
 core::AppOptions g_options;
 AVInputFormat* file_iformat = NULL;
-
 #if CONFIG_AVFILTER
-static int opt_add_vfilter(void* optctx, const char* opt, const char* arg) {
+int opt_add_vfilter(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
   UNUSED(opt);
 
@@ -25,13 +24,13 @@ static int opt_add_vfilter(void* optctx, const char* opt, const char* arg) {
 }
 #endif
 
-static void sigterm_handler(int sig) {
+void sigterm_handler(int sig) {
   UNUSED(sig);
 
   exit(123);
 }
 
-static int opt_frame_size(void* optctx, const char* opt, const char* arg) {
+int opt_frame_size(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
   UNUSED(opt);
 
@@ -46,14 +45,14 @@ static int opt_width(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-static int opt_height(void* optctx, const char* opt, const char* arg) {
+int opt_height(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
   g_options.screen_height = static_cast<int>(parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX));
   return 0;
 }
 
-static int opt_format(void* optctx, const char* opt, const char* arg) {
+int opt_format(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
   UNUSED(opt);
 
@@ -65,7 +64,7 @@ static int opt_format(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-static int opt_frame_pix_fmt(void* optctx, const char* opt, const char* arg) {
+int opt_frame_pix_fmt(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
   UNUSED(opt);
 
@@ -73,15 +72,13 @@ static int opt_frame_pix_fmt(void* optctx, const char* opt, const char* arg) {
   return opt_default(NULL, "pixel_format", arg);
 }
 
-static int opt_sync(void* optctx, const char* opt, const char* arg) {
+int opt_sync(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
   if (!strcmp(arg, "audio")) {
     g_options.av_sync_type = core::AV_SYNC_AUDIO_MASTER;
   } else if (!strcmp(arg, "video")) {
     g_options.av_sync_type = core::AV_SYNC_VIDEO_MASTER;
-  } else if (!strcmp(arg, "ext")) {
-    g_options.av_sync_type = core::AV_SYNC_EXTERNAL_CLOCK;
   } else {
     av_log(NULL, AV_LOG_ERROR, "Unknown value for %s: %s\n", opt, arg);
     exit(1);
@@ -89,21 +86,21 @@ static int opt_sync(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-static int opt_seek(void* optctx, const char* opt, const char* arg) {
+int opt_seek(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
   g_options.start_time = parse_time_or_die(opt, arg, 1);
   return 0;
 }
 
-static int opt_duration(void* optctx, const char* opt, const char* arg) {
+int opt_duration(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
   g_options.duration = parse_time_or_die(opt, arg, 1);
   return 0;
 }
 
-static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
+int opt_show_mode(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
   g_options.show_mode = !strcmp(arg, "video")
@@ -115,7 +112,7 @@ static int opt_show_mode(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-static int opt_input_file(void* optctx, const char* opt, const char* arg) {
+int opt_input_file(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
   UNUSED(opt);
 
@@ -133,7 +130,7 @@ static int opt_input_file(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-static int opt_codec(void* optctx, const char* opt, const char* arg) {
+int opt_codec(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
 
   const char* spec = strchr(opt, ':');
@@ -157,7 +154,7 @@ static int opt_codec(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-static const OptionDef options[] = {
+const OptionDef options[] = {
     {"L", OPT_EXIT, {.func_arg = show_license}, "show license"},
     {"h", OPT_EXIT, {.func_arg = show_help}, "show help", "topic"},
     {"?", OPT_EXIT, {.func_arg = show_help}, "show help", "topic"},
@@ -336,13 +333,13 @@ static const OptionDef options[] = {
         NULL,
     }};
 
-static void show_usage(void) {
+void show_usage(void) {
   av_log(NULL, AV_LOG_INFO, "Simple media player\n");
   av_log(NULL, AV_LOG_INFO, "usage: %s [options] input_file\n", PROJECT_NAME_TITLE);
   av_log(NULL, AV_LOG_INFO, "\n");
 }
 
-static int lockmgr(void** mtx, enum AVLockOp op) {
+int lockmgr(void** mtx, enum AVLockOp op) {
   SDL_mutex* lmtx = static_cast<SDL_mutex*>(*mtx);
   switch (op) {
     case AV_LOCK_CREATE: {
@@ -367,7 +364,7 @@ static int lockmgr(void** mtx, enum AVLockOp op) {
   return 1;
 }
 
-static void do_init(int argc, char** argv) {
+void do_init(int argc, char** argv) {
   init_dynload();
 
   av_log_set_flags(AV_LOG_SKIP_REPEATED);
@@ -394,7 +391,7 @@ static void do_init(int argc, char** argv) {
 }
 
 /* handle an event sent by the GUI */
-static void do_exit() {
+void do_exit() {
   av_lockmgr_register(NULL);
   uninit_opts();
   avformat_network_deinit();
@@ -403,6 +400,7 @@ static void do_exit() {
   }
   SDL_Quit();
   av_log(NULL, AV_LOG_QUIET, "%s", "");
+}
 }
 
 void show_help_default(const char* opt, const char* arg) {

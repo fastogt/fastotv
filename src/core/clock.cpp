@@ -8,7 +8,8 @@ extern "C" {
 
 namespace core {
 
-Clock::Clock(int* queue_serial) : paused_(false), speed_(1.0), queue_serial_(queue_serial) {
+Clock::Clock(const std::atomic<int>& queue_serial)
+    : paused_(false), speed_(1.0), queue_serial_(queue_serial) {
   SetClock(NAN, -1);
 }
 
@@ -25,7 +26,7 @@ void Clock::SetClock(double pts, int serial) {
 }
 
 double Clock::GetClock() const {
-  if (*queue_serial_ != serial_) {
+  if (queue_serial_ != serial_) {
     return NAN;
   }
   if (paused_) {

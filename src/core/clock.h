@@ -1,10 +1,12 @@
 #pragma once
 
+#include <atomic>
+
 namespace core {
 
 class Clock {
  public:
-  explicit Clock(int* queue_serial);
+  explicit Clock(const std::atomic<int>& queue_serial);
 
   void SetClockAt(double pts, int serial, double time);
   void SetClock(double pts, int serial);
@@ -22,7 +24,7 @@ class Clock {
   double last_updated_;
   double speed_;
   int serial_; /* clock is based on a packet with this serial */
-  const int* const
+  const std::atomic<int>&
       queue_serial_; /* pointer to the current packet queue serial, used for obsolete clock
            detection */
 };

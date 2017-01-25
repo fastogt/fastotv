@@ -87,7 +87,6 @@ class VideoState {
                      int init_texture);
   void VideoAudioDisplay();
   void VideoImageDisplay();
-  double VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp) const;
   /* pause or resume the video */
   void UpdateVolume(int sign, int step);
   void SeekChapter(int incr);

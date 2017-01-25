@@ -15,7 +15,7 @@ class Clock;
 
 class Stream {
  public:
-  int HasEnoughPackets() const;
+  bool HasEnoughPackets() const;
   virtual bool Open(int index, AVStream* av_stream_st);
   bool IsOpened() const;
   virtual void Close();

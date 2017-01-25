@@ -31,6 +31,10 @@ struct VideoFrame {
   int uploaded;
   int flip_v;
 
+  static double VpDuration(core::VideoFrame* vp,
+                           core::VideoFrame* nextvp,
+                           double max_frame_duration);
+
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoFrame);
 };

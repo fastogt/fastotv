@@ -39,12 +39,6 @@ class RingBuffer {
   }
 
   template <typename F>
-  void ChangeSafe(F f, pointer_type fr) {
-    lock_t lock(queue_mutex_);
-    f(fr);
-  }
-
-  template <typename F>
   void WaitSafeAndNotify(F f) {
     lock_t lock(queue_mutex_);
     while (f()) {
@@ -107,8 +101,11 @@ class RingBuffer {
     return PeekInner();
   }
 
-  pointer_type PeekNext() {
+  pointer_type PeekNextOrNull() {
     lock_t lock(queue_mutex_);
+    if (IsEmptyInner()) {
+      return nullptr;
+    }
     return PeekNextInner();
   }
 
