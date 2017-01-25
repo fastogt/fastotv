@@ -2,15 +2,12 @@
 
 namespace core {
 
-Decoder::DecoderClient::~DecoderClient() {}
-
-Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
+Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
     : avctx_(avctx),
       pkt_(),
       queue_(queue),
       packet_pending_(false),
       pkt_serial_(0),
-      client_(client),
       finished_(false) {}
 
 void Decoder::Start() {
@@ -43,11 +40,10 @@ AVMediaType Decoder::CodecType() const {
   return avctx_->codec_type;
 }
 
-IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
-    : Decoder(avctx, queue, client) {}
+IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue) : Decoder(avctx, queue) {}
 
-AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue, DecoderClient* client)
-    : IFrameDecoder(avctx, queue, client),
+AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue)
+    : IFrameDecoder(avctx, queue),
       start_pts_(AV_NOPTS_VALUE),
       start_pts_tb_{0, 0},
       next_pts_(AV_NOPTS_VALUE),
@@ -72,11 +68,6 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
     if (!packet_pending_ || queue_->Serial() != pkt_serial_) {
       AVPacket lpkt;
       do {
-        if (queue_->NbPackets() == 0) {
-          if (client_) {
-            client_->HandleEmptyQueue(this);
-          }
-        }
         if (queue_->Get(&lpkt, true, &pkt_serial_) < 0) {
           return -1;
         }
@@ -128,11 +119,8 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
   return got_frame;
 }
 
-VideoDecoder::VideoDecoder(AVCodecContext* avctx,
-                           PacketQueue* queue,
-                           DecoderClient* client,
-                           int decoder_reorder_pts)
-    : IFrameDecoder(avctx, queue, client), decoder_reorder_pts_(decoder_reorder_pts) {
+VideoDecoder::VideoDecoder(AVCodecContext* avctx, PacketQueue* queue, int decoder_reorder_pts)
+    : IFrameDecoder(avctx, queue), decoder_reorder_pts_(decoder_reorder_pts) {
   CHECK(CodecType() == AVMEDIA_TYPE_VIDEO);
 }
 
@@ -164,11 +152,6 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
     if (!packet_pending_ || queue_->Serial() != pkt_serial_) {
       AVPacket lpkt;
       do {
-        if (queue_->NbPackets() == 0) {
-          if (client_) {
-            client_->HandleEmptyQueue(this);
-          }
-        }
         if (queue_->Get(&lpkt, true, &pkt_serial_) < 0) {
           return -1;
         }

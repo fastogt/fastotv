@@ -66,23 +66,28 @@ AVPacket* PacketQueue::FlushPkt() {
   return &fls;
 }
 
-bool PacketQueue::AbortRequest() const {
+bool PacketQueue::AbortRequest() {
+  lock_t lock(mutex_);
   return abort_request_;
 }
 
-size_t PacketQueue::NbPackets() const {
+size_t PacketQueue::NbPackets() {
+  lock_t lock(mutex_);
   return queue_.size();
 }
 
-int PacketQueue::Size() const {
+int PacketQueue::Size() {
+  lock_t lock(mutex_);
   return size_;
 }
 
-int64_t PacketQueue::Duration() const {
+int64_t PacketQueue::Duration() {
+  lock_t lock(mutex_);
   return duration_;
 }
 
-int PacketQueue::Serial() const {
+int PacketQueue::Serial() {
+  lock_t lock(mutex_);
   return serial_;
 }
 

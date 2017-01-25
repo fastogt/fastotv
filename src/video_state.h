@@ -40,7 +40,7 @@ extern "C" {
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
 
-class VideoState : public core::Decoder::DecoderClient {
+class VideoState {
  public:
   VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexOptions* copt);
   int Exec() WARN_UNUSED_RESULT;
@@ -51,9 +51,6 @@ class VideoState : public core::Decoder::DecoderClient {
   void TogglePause();
   void ToggleMute();
   void ToggleAudioDisplay();
-
- protected:
-  virtual void HandleEmptyQueue(core::Decoder* dec) override;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoState);
@@ -202,8 +199,6 @@ class VideoState : public core::Decoder::DecoderClient {
   int last_video_stream_;
   int last_audio_stream_;
 
-  common::thread::condition_variable continue_read_thread_;
-  common::thread::mutex wait_mutex_;
   common::shared_ptr<common::thread::Thread<int>> vdecoder_tid_;
   common::shared_ptr<common::thread::Thread<int>> adecoder_tid_;
 

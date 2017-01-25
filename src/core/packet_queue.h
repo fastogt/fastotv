@@ -35,11 +35,11 @@ class PacketQueue {  // compressed queue data
   static AVPacket* FlushPkt();
   static PacketQueue* MakePacketQueue(int** ext_serial);
 
-  bool AbortRequest() const;
-  size_t NbPackets() const;
-  int Size() const;
-  int64_t Duration() const;
-  int Serial() const;
+  bool AbortRequest();
+  size_t NbPackets();
+  int Size();
+  int64_t Duration();
+  int Serial();
 
  private:
   PacketQueue();

@@ -113,8 +113,6 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
 #endif
       last_video_stream_(-1),
       last_audio_stream_(-1),
-      continue_read_thread_(),
-      wait_mutex_(),
       vdecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::VideoThread, this)),
       adecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::AudioThread, this)),
       paused_(false),
@@ -289,7 +287,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
   }
 
   int sample_rate, nb_channels;
-  int64_t channel_layout;
+  int64_t channel_layout = 0;
   eof_ = false;
   stream->discard = AVDISCARD_DEFAULT;
   switch (avctx->codec_type) {
@@ -298,7 +296,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
       UNUSED(opened);
       core::PacketQueue* packet_queue = vstream_->Queue();
       video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
-      viddec_ = new core::VideoDecoder(avctx, packet_queue, this, opt_->decoder_reorder_pts);
+      viddec_ = new core::VideoDecoder(avctx, packet_queue, opt_->decoder_reorder_pts);
       viddec_->Start();
       vdecoder_tid_->start();
       queue_attachments_req_ = 1;
@@ -348,7 +346,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
       UNUSED(opened);
       core::PacketQueue* packet_queue = astream_->Queue();
       audio_frame_queue_ = new core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
-      auddec_ = new core::AudioDecoder(avctx, packet_queue, this);
+      auddec_ = new core::AudioDecoder(avctx, packet_queue);
       if ((ic_->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
           !ic_->iformat->read_seek) {
         auddec_->SetStartPts(stream->start_time, stream->time_base);
@@ -432,7 +430,6 @@ void VideoState::StreamComponentClose(int stream_index) {
     default:
       break;
   }
-
   avs->discard = AVDISCARD_ALL;
 }
 
@@ -445,8 +442,6 @@ void VideoState::StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes) {
       seek_flags_ |= AVSEEK_FLAG_BYTE;
     }
     seek_req_ = 1;
-    common::thread::unique_lock<common::thread::mutex> lock(wait_mutex_);
-    continue_read_thread_.notify_one();
   }
 }
 
@@ -499,9 +494,7 @@ double VideoState::ComputeTargetDelay(double delay) const {
       }
     }
   }
-
   av_log(NULL, AV_LOG_TRACE, "video: delay=%0.3f A-V=%f\n", delay, -diff);
-
   return delay;
 }
 
@@ -544,8 +537,6 @@ void VideoState::VideoRefresh(double* remaining_time) {
     if (video_frame_queue_->IsEmpty()) {
       // nothing to do, no picture to display in the queue
     } else {
-      double last_duration, duration, delay;
-
       /* dequeue the picture */
       core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
       core::VideoFrame* vp = video_frame_queue_->Peek();
@@ -564,8 +555,8 @@ void VideoState::VideoRefresh(double* remaining_time) {
       }
 
       /* compute nominal last_duration */
-      last_duration = VpDuration(lastvp, vp);
-      delay = ComputeTargetDelay(last_duration);
+      double last_duration = VpDuration(lastvp, vp);
+      double delay = ComputeTargetDelay(last_duration);
 
       time = av_gettime_relative() / 1000000.0;
       if (time < frame_timer_ + delay) {
@@ -589,7 +580,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
 
       if (video_frame_queue_->NbRemaining() > 1) {
         core::VideoFrame* nextvp = video_frame_queue_->PeekNext();
-        duration = VpDuration(vp, nextvp);
+        double duration = VpDuration(vp, nextvp);
         if (!step_ && (opt_->framedrop > 0 ||
                        (opt_->framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) &&
             time > frame_timer_ + duration) {
@@ -616,9 +607,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
   force_refresh_ = false;
   if (opt_->show_status) {
     static int64_t last_time;
-    int64_t cur_time;
-
-    cur_time = av_gettime_relative();
+    int64_t cur_time = av_gettime_relative();
     if (!last_time || (cur_time - last_time) >= 30000) {
       int aqsize = 0, vqsize = 0;
       if (video_st) {
@@ -1201,12 +1190,6 @@ void VideoState::ToggleAudioDisplay() {
   }
 }
 
-void VideoState::HandleEmptyQueue(core::Decoder* dec) {
-  UNUSED(dec);
-  common::thread::unique_lock<common::thread::mutex> lock(wait_mutex_);
-  continue_read_thread_.notify_one();
-}
-
 void VideoState::SeekChapter(int incr) {
   if (!ic_->nb_chapters) {
     return;
@@ -1360,13 +1343,17 @@ int VideoState::AudioDecodeFrame() {
   int data_size, resampled_data_size;
   int64_t dec_channel_layout;
   int wanted_nb_samples;
-  core::AudioFrame* af = nullptr;
 
   if (paused_) {
     return -1;
   }
 
   core::PacketQueue* audio_packet_queue = astream_->IsOpened() ? astream_->Queue() : NULL;
+  if (!audio_packet_queue) {
+    return -1;
+  }
+
+  core::AudioFrame* af = nullptr;
   do {
     af = audio_frame_queue_->GetPeekReadable();
     if (!af) {
@@ -1870,9 +1857,6 @@ int VideoState::ReadThread() {
     if (opt_->infinite_buffer < 1 &&
         (video_packet_queue->Size() + audio_packet_queue->Size() > MAX_QUEUE_SIZE ||
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
-      /* wait 10 ms */
-      common::thread::unique_lock<common::thread::mutex> lock(wait_mutex_);
-      continue_read_thread_.wait_for(lock, std::chrono::milliseconds(10));
       continue;
     }
     if (!paused_ && (!audio_st || (auddec_->Finished() == audio_packet_queue->Serial() &&
@@ -1900,8 +1884,6 @@ int VideoState::ReadThread() {
       if (ic->pb && ic->pb->error) {
         break;
       }
-      common::thread::unique_lock<common::thread::mutex> lock(wait_mutex_);
-      continue_read_thread_.wait_for(lock, std::chrono::milliseconds(10));
       continue;
     } else {
       eof_ = false;
@@ -2028,7 +2010,7 @@ int VideoState::AudioThread() {
         }
       }
       if (ret == AVERROR_EOF) {
-        auddec_->SetFinished(auddec_->GetPktSerial());
+        auddec_->SetFinished(true);
       }
 #endif
     }
@@ -2123,7 +2105,7 @@ int VideoState::VideoThread() {
       ret = av_buffersink_get_frame_flags(filt_out, frame, 0);
       if (ret < 0) {
         if (ret == AVERROR_EOF) {
-          viddec_->SetFinished(viddec_->GetPktSerial());
+          viddec_->SetFinished(true);
         }
         ret = 0;
         break;
