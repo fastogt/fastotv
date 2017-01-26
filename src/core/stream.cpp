@@ -7,7 +7,7 @@
 namespace core {
 
 Stream::Stream() : packet_queue_(nullptr), clock_(nullptr), stream_index_(-1), stream_st_(NULL) {
-  std::atomic<int>* ext_serial = NULL;
+  common::atomic<int>* ext_serial = NULL;
   packet_queue_ = PacketQueue::MakePacketQueue(&ext_serial);
   clock_ = new Clock(*ext_serial);
 }

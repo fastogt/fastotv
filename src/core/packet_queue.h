@@ -10,6 +10,7 @@ extern "C" {
 #include <atomic>
 
 #include <common/macros.h>
+#include <common/types.h>
 #include <common/thread/types.h>
 
 namespace core {
@@ -34,13 +35,13 @@ class PacketQueue {  // compressed queue data
   void Start();
 
   static AVPacket* FlushPkt();
-  static PacketQueue* MakePacketQueue(std::atomic<int>** ext_serial);
+  static PacketQueue* MakePacketQueue(common::atomic<int>** ext_serial);
 
   bool AbortRequest();
   size_t NbPackets();
   int Size();
-  int64_t Duration();
-  int Serial();
+  int64_t Duration() const;
+  int Serial() const;
 
  private:
   PacketQueue();
@@ -50,7 +51,7 @@ class PacketQueue {  // compressed queue data
 
   SAVPacket* MakePacket(AVPacket* pkt, bool* is_flush);
 
-  std::atomic<int> serial_;
+  common::atomic<int> serial_;
   std::deque<SAVPacket*> queue_;
   int size_;
   int64_t duration_;

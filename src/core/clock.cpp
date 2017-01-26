@@ -8,7 +8,7 @@ extern "C" {
 
 namespace core {
 
-Clock::Clock(const std::atomic<int>& queue_serial)
+Clock::Clock(const common::atomic<int>& queue_serial)
     : paused_(false), speed_(1.0), queue_serial_(queue_serial) {
   SetClock(NAN, -1);
 }

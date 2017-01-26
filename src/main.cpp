@@ -269,7 +269,7 @@ const OptionDef options[] = {
     {"sync",
      HAS_ARG | OPT_EXPERT,
      {.func_arg = opt_sync},
-     "set audio-video sync. type (type=audio/video/ext)",
+     "set audio-video sync. type (type=audio/video)",
      "type"},
     {"autoexit", OPT_BOOL | OPT_EXPERT, {&g_options.autoexit}, "exit at the end", ""},
     {"exitonkeydown", OPT_BOOL | OPT_EXPERT, {&g_options.exit_on_keydown}, "exit on key down", ""},
