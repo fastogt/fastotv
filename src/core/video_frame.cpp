@@ -14,7 +14,7 @@ VideoFrame::VideoFrame()
       height(0),
       format(0),
       sar{0, 0},
-      uploaded(0),
+      uploaded(false),
       flip_v(0) {}
 
 VideoFrame::~VideoFrame() {

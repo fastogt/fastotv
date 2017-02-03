@@ -42,6 +42,13 @@ extern "C" {
 #define FF_ALLOC_EVENT (SDL_USEREVENT)
 #define FF_QUIT_EVENT (SDL_USEREVENT + 2)
 
+namespace {
+int decode_interrupt_callback(void* user_data) {
+  VideoState* is = static_cast<VideoState*>(user_data);
+  return is->IsAborted();
+}
+}
+
 VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexOptions* copt)
     : opt_(opt),
       copt_(copt),
@@ -88,10 +95,7 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
       sample_array_{0},
       sample_array_index_(0),
       last_i_start_(0),
-      xpos_(0),
       last_vis_time_(0),
-      vis_texture_(NULL),
-      sub_texture_(NULL),
       frame_timer_(0),
       frame_last_returned_time_(0),
       frame_last_filter_delay_(0),
@@ -102,7 +106,7 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
       height_(0),
       xleft_(0),
       ytop_(0),
-      step_(0),
+      step_(false),
 #if CONFIG_AVFILTER
       vfilter_idx_(0),
       in_video_filter_(NULL),
@@ -138,7 +142,7 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
 
 VideoState::~VideoState() {
   /* XXX: use a special url_shutdown call to abort parse cleanly */
-  abort_request_ = true;
+  Abort();
   int res = read_tid_->joinAndGet();
   DCHECK_EQ(res, 0);
 
@@ -159,14 +163,6 @@ VideoState::~VideoState() {
 
   sws_freeContext(img_convert_ctx_);
   sws_freeContext(sub_convert_ctx_);
-  if (vis_texture_) {
-    SDL_DestroyTexture(vis_texture_);
-    vis_texture_ = NULL;
-  }
-  if (sub_texture_) {
-    SDL_DestroyTexture(sub_texture_);
-    sub_texture_ = NULL;
-  }
 
   if (renderer_) {
     SDL_DestroyRenderer(renderer_);
@@ -272,7 +268,8 @@ int VideoState::StreamComponentOpen(int stream_index) {
   if (avctx->codec_type == AVMEDIA_TYPE_VIDEO || avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
     av_dict_set(&opts, "refcounted_frames", "1", 0);
   }
-  if ((ret = avcodec_open2(avctx, codec, &opts)) < 0) {
+  ret = avcodec_open2(avctx, codec, &opts);
+  if (ret < 0) {
     avcodec_free_context(&avctx);
     av_dict_free(&opts);
     return ret;
@@ -298,7 +295,10 @@ int VideoState::StreamComponentOpen(int stream_index) {
       video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
       viddec_ = new core::VideoDecoder(avctx, packet_queue, opt_->decoder_reorder_pts);
       viddec_->Start();
-      vdecoder_tid_->start();
+      if (!vdecoder_tid_->start()) {
+        destroy(&viddec_);
+        goto out;
+      }
       queue_attachments_req_ = 1;
       break;
     }
@@ -352,9 +352,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
         auddec_->SetStartPts(stream->start_time, stream->time_base);
       }
       auddec_->Start();
-      adecoder_tid_->start();
-      if (!adecoder_tid_) {
-        destroy(&auddec_);
+      if (!adecoder_tid_->start()) {
         destroy(&auddec_);
         goto out;
       }
@@ -450,7 +448,7 @@ void VideoState::StepToNextFrame() {
   if (paused_) {
     StreamTogglePause();
   }
-  step_ = 1;
+  step_ = true;
 }
 
 int VideoState::GetMasterSyncType() const {
@@ -494,14 +492,13 @@ double VideoState::GetMasterClock() const {
 }
 
 void VideoState::VideoRefresh(double* remaining_time) {
-  double time;
   AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
   AVStream* audio_st = astream_->IsOpened() ? astream_->AvStream() : NULL;
   core::PacketQueue* video_packet_queue = vstream_->Queue();
   core::PacketQueue* audio_packet_queue = astream_->Queue();
 
   if (!opt_->display_disable && opt_->show_mode != core::SHOW_MODE_VIDEO && audio_st) {
-    time = av_gettime_relative() / 1000000.0;
+    double time = av_gettime_relative() / 1000000.0;
     if (force_refresh_ || last_vis_time_ < time) {
       VideoDisplay();
       last_vis_time_ = time;
@@ -534,8 +531,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
       /* compute nominal last_duration */
       double last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
       double delay = ComputeTargetDelay(last_duration);
-
-      time = av_gettime_relative() / 1000000.0;
+      double time = av_gettime_relative() / 1000000.0;
       if (time < frame_timer_ + delay) {
         *remaining_time = FFMIN(frame_timer_ + delay - time, *remaining_time);
         goto display;
@@ -666,7 +662,6 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
 
   width_ = w;
   height_ = h;
-
   return 0;
 }
 
@@ -770,7 +765,7 @@ void VideoState::VideoImageDisplay() {
       if (core::upload_texture(vp->bmp, vp->frame, &img_convert_ctx_) < 0) {
         return;
       }
-      vp->uploaded = 1;
+      vp->uploaded = true;
       vp->flip_v = vp->frame->linesize[0] < 0;
     }
 
@@ -780,7 +775,7 @@ void VideoState::VideoImageDisplay() {
 }
 
 void VideoState::VideoAudioDisplay() {
-  int i, i_start, x;
+  int i_start, x;
   int h;
   /* compute display index : center on currently output samples */
   const int channels = audio_tgt_.channels;
@@ -805,7 +800,7 @@ void VideoState::VideoAudioDisplay() {
     i_start = x = core::compute_mod(sample_array_index_ - delay * channels, SAMPLE_ARRAY_SIZE);
     if (opt_->show_mode == core::SHOW_MODE_WAVES) {
       h = INT_MIN;
-      for (i = 0; i < 1000; i += channels) {
+      for (int i = 0; i < 1000; i += channels) {
         int idx = (SAMPLE_ARRAY_SIZE + x - i) % SAMPLE_ARRAY_SIZE;
         int a = sample_array_[idx];
         int b = sample_array_[(idx + 4 * channels) % SAMPLE_ARRAY_SIZE];
@@ -833,7 +828,7 @@ void VideoState::VideoAudioDisplay() {
     /* graph height / 2 */
     int h2 = (h * 9) / 20;
     for (int ch = 0; ch < nb_display_channels; ch++) {
-      i = i_start + ch;
+      int i = i_start + ch;
       int ys;
       int y1 = ytop_ + ch * h + (h / 2); /* position of center line */
       for (x = 0; x < width_; x++) {
@@ -846,8 +841,9 @@ void VideoState::VideoAudioDisplay() {
         }
         core::fill_rectangle(renderer_, xleft_ + x, ys, 1, y);
         i += channels;
-        if (i >= SAMPLE_ARRAY_SIZE)
+        if (i >= SAMPLE_ARRAY_SIZE) {
           i -= SAMPLE_ARRAY_SIZE;
+        }
       }
     }
 
@@ -861,7 +857,10 @@ void VideoState::VideoAudioDisplay() {
 }
 
 int VideoState::Exec() {
-  read_tid_->start();
+  if (!read_tid_->start()) {
+    return EXIT_FAILURE;
+  }
+
   double incr, pos, frac;
   SDL_Event event;
   while (true) {
@@ -871,7 +870,7 @@ int VideoState::Exec() {
       while (!SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) {
         if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
           SDL_ShowCursor(0);
-          cursor_hidden_ = 1;
+          cursor_hidden_ = true;
         }
         if (remaining_time > 0.0) {
           const unsigned sleep_time = static_cast<unsigned>(remaining_time * 1000000.0);
@@ -1084,10 +1083,6 @@ int VideoState::Exec() {
           case SDL_WINDOWEVENT_RESIZED: {
             opt_->screen_width = width_ = event.window.data1;
             opt_->screen_height = height_ = event.window.data2;
-            if (vis_texture_) {
-              SDL_DestroyTexture(vis_texture_);
-              vis_texture_ = NULL;
-            }
             force_refresh_ = true;
             break;
           }
@@ -1116,6 +1111,14 @@ int VideoState::Exec() {
   return EXIT_SUCCESS;
 }
 
+void VideoState::Abort() {
+  abort_request_ = true;
+}
+
+bool VideoState::IsAborted() const {
+  return abort_request_;
+}
+
 void VideoState::StreamTogglePause() {
   if (paused_) {
     frame_timer_ += av_gettime_relative() / 1000000.0 - vstream_->LastUpdatedClock();
@@ -1131,7 +1134,7 @@ void VideoState::StreamTogglePause() {
 
 void VideoState::TogglePause() {
   StreamTogglePause();
-  step_ = 0;
+  step_ = false;
 }
 
 void VideoState::ToggleMute() {
@@ -1484,7 +1487,7 @@ int VideoState::QueuePicture(AVFrame* src_frame,
   }
 
   vp->sar = src_frame->sample_aspect_ratio;
-  vp->uploaded = 0;
+  vp->uploaded = false;
 
   /* alloc or resize hardware picture buffer */
   if (!vp->bmp || !vp->allocated || vp->width != src_frame->width ||
@@ -1501,23 +1504,6 @@ int VideoState::QueuePicture(AVFrame* src_frame,
     event.type = FF_ALLOC_EVENT;
     event.user.data1 = this;
     SDL_PushEvent(&event);
-
-#if 0
-    /* wait until the picture is allocated */
-    SDL_LockMutex(video_frame_queue_->mutex);
-    while (!vp->allocated && !video_packet_queue->abort_request()) {
-      SDL_CondWait(video_frame_queue_->cond, video_frame_queue_->mutex);
-    }
-    /* if the queue is aborted, we have to pop the pending ALLOC event or wait for the allocation to
-     * complete */
-    if (video_packet_queue->abort_request() &&
-        SDL_PeepEvents(&event, 1, SDL_GETEVENT, FF_ALLOC_EVENT, FF_ALLOC_EVENT) != 1) {
-      while (!vp->allocated && !abort_request_) {
-        SDL_CondWait(video_frame_queue_->cond, video_frame_queue_->mutex);
-      }
-    }
-    SDL_UnlockMutex(video_frame_queue_->mutex);
-#endif
 
     video_frame_queue_->WaitSafeAndNotify([video_packet_queue, vp]() -> bool {
       return !vp->allocated && !video_packet_queue->AbortRequest();
@@ -1755,10 +1741,7 @@ int VideoState::ReadThread() {
     opt_->infinite_buffer = 1;
   }
 
-  while (true) {
-    if (abort_request_) {
-      break;
-    }
+  while (!IsAborted()) {
     if (paused_ != last_paused_) {
       last_paused_ = paused_;
       if (paused_) {
@@ -2103,27 +2086,23 @@ the_end:
   return 0;
 }
 
-int VideoState::decode_interrupt_callback(void* user_data) {
-  VideoState* is = static_cast<VideoState*>(user_data);
-  return is->abort_request_;
-}
-
 #if CONFIG_AVFILTER
 int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame) {
   static const enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_YUV420P, AV_PIX_FMT_BGRA,
                                                 AV_PIX_FMT_NONE};
   AVDictionary* sws_dict = copt_->sws_dict;
   AVDictionaryEntry* e = NULL;
-  char sws_flags_str[512] = "";
+  char sws_flags_str[512] = {0};
   while ((e = av_dict_get(sws_dict, "", e, AV_DICT_IGNORE_SUFFIX))) {
-    if (!strcmp(e->key, "sws_flags")) {
+    if (strcmp(e->key, "sws_flags") == 0) {
       av_strlcatf(sws_flags_str, sizeof(sws_flags_str), "%s=%s:", "flags", e->value);
-    } else
+    } else {
       av_strlcatf(sws_flags_str, sizeof(sws_flags_str), "%s=%s:", e->key, e->value);
+    }
   }
   const size_t len_sws_flags = strlen(sws_flags_str);
   if (len_sws_flags) {
-    sws_flags_str[len_sws_flags - 1] = '\0';
+    sws_flags_str[len_sws_flags - 1] = 0;
   }
 
   AVStream* video_st = vstream_->AvStream();

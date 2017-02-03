@@ -44,10 +44,11 @@ class VideoState {
  public:
   VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexOptions* copt);
   int Exec() WARN_UNUSED_RESULT;
+  void Abort();
+  bool IsAborted() const;
   ~VideoState();
 
   void ToggleFullScreen();
-  void StreamTogglePause();
   void TogglePause();
   void ToggleMute();
   void ToggleAudioDisplay();
@@ -58,6 +59,7 @@ class VideoState {
   /* open a given stream. Return 0 if OK */
   int StreamComponentOpen(int stream_index);
   void StreamComponentClose(int stream_index);
+  void StreamTogglePause();
 
   /* seek in the stream */
   void StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes);
@@ -113,7 +115,6 @@ class VideoState {
   int ReadThread();
   int VideoThread();
   int AudioThread();
-  static int decode_interrupt_callback(void* user_data);
 
   core::AppOptions* const opt_;
   core::ComplexOptions* const copt_;
@@ -167,10 +168,7 @@ class VideoState {
   int sample_array_index_;
   int last_i_start_;
 
-  int xpos_;
   double last_vis_time_;
-  SDL_Texture* vis_texture_;
-  SDL_Texture* sub_texture_;
 
   double frame_timer_;
   double frame_last_returned_time_;
@@ -182,9 +180,9 @@ class VideoState {
 
   int width_;
   int height_;
-  int xleft_;
-  int ytop_;
-  int step_;
+  const int xleft_;
+  const int ytop_;
+  bool step_;
 
 #if CONFIG_AVFILTER
   size_t vfilter_idx_;

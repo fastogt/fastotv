@@ -28,7 +28,7 @@ struct VideoFrame {
   int height;
   int format;
   AVRational sar;
-  int uploaded;
+  bool uploaded;
   int flip_v;
 
   static double VpDuration(core::VideoFrame* vp,
