@@ -11,6 +11,8 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include <common/macros.h>
+
 #define HAS_ARG 0x0001
 #define OPT_BOOL 0x0002
 #define OPT_EXPERT 0x0004

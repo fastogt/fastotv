@@ -209,14 +209,18 @@ int VideoState::StreamComponentOpen(int stream_index) {
     case AVMEDIA_TYPE_SUBTITLE: {
       break;
     }
-    case AVMEDIA_TYPE_UNKNOWN:
+    case AVMEDIA_TYPE_UNKNOWN: {
       break;
-    case AVMEDIA_TYPE_ATTACHMENT:
+    }
+    case AVMEDIA_TYPE_ATTACHMENT: {
       break;
-    case AVMEDIA_TYPE_DATA:
+    }
+    case AVMEDIA_TYPE_DATA: {
       break;
-    case AVMEDIA_TYPE_NB:
+    }
+    case AVMEDIA_TYPE_NB: {
       break;
+    }
     default:
       break;
   }
