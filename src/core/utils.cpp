@@ -16,8 +16,9 @@ namespace core {
 
 int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {
   int ret = avformat_match_stream_specifier(s, st, spec);
-  if (ret < 0)
+  if (ret < 0) {
     av_log(s, AV_LOG_ERROR, "Invalid stream specifier: %s.\n", spec);
+  }
   return ret;
 }
 
@@ -362,16 +363,16 @@ int audio_open(void* opaque,
   return spec.size;
 }
 
-int is_realtime(AVFormatContext* s) {
+bool is_realtime(AVFormatContext* s) {
   if (!strcmp(s->iformat->name, "rtp") || !strcmp(s->iformat->name, "rtsp") ||
       !strcmp(s->iformat->name, "sdp")) {
-    return 1;
+    return true;
   }
 
   if (s->pb && (!strncmp(s->filename, "rtp:", 4) || !strncmp(s->filename, "udp:", 4))) {
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 int cmp_audio_fmts(enum AVSampleFormat fmt1,

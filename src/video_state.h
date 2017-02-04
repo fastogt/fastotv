@@ -40,8 +40,18 @@ extern "C" {
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
 
+struct Stats {
+  Stats() : frame_drops_early(0), frame_drops_late(0) {}
+
+  int FrameDrops() const { return frame_drops_early + frame_drops_late; }
+
+  int frame_drops_early;
+  int frame_drops_late;
+};
+
 class VideoState {
  public:
+  enum { invalid_stream_index = -1 };
   VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexOptions* copt);
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
@@ -123,14 +133,14 @@ class VideoState {
   common::shared_ptr<common::thread::Thread<int>> read_tid_;
   AVInputFormat* iformat_;
   bool force_refresh_;
-  int queue_attachments_req_;
-  int seek_req_;
+  bool queue_attachments_req_;
+  bool seek_req_;
   int seek_flags_;
   int64_t seek_pos_;
   int64_t seek_rel_;
   int read_pause_return_;
   AVFormatContext* ic_;
-  int realtime_;
+  bool realtime_;
 
   core::VideoStream* vstream_;
   core::AudioStream* astream_;
@@ -161,8 +171,6 @@ class VideoState {
 #endif
   struct core::AudioParams audio_tgt_;
   struct SwrContext* swr_ctx_;
-  int frame_drops_early_;
-  int frame_drops_late_;
 
   int16_t sample_array_[SAMPLE_ARRAY_SIZE];
   int sample_array_index_;
@@ -209,4 +217,5 @@ class VideoState {
 
   SDL_Renderer* renderer_;
   SDL_Window* window_;
+  Stats stats_;
 };

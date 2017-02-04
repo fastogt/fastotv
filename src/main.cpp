@@ -7,10 +7,11 @@
 
 extern "C" {
 #include <SDL2/SDL.h>
-#include "cmdutils.h"
 }
 
+#include "cmdutils.h"
 #include "video_state.h"
+
 namespace {
 core::AppOptions g_options;
 AVInputFormat* file_iformat = NULL;

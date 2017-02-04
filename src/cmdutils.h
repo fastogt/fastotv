@@ -1,18 +1,15 @@
-#ifndef CMDUTILS_H
-#define CMDUTILS_H
+#pragma once
 
 #include <stdint.h>
 
 #include "ffmpeg_config.h"
 
+extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavfilter/avfilter.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
-
-#ifdef _WIN32
-#undef main /* We don't want SDL to override our main() */
-#endif
+}
 
 #define HAS_ARG 0x0001
 #define OPT_BOOL 0x0002
@@ -43,7 +40,7 @@ extern AVDictionary* sws_dict;
 extern AVDictionary* swr_opts;
 extern AVDictionary* format_opts;
 extern AVDictionary* codec_opts;
-extern int hide_banner;
+extern bool hide_banner;
 
 /**
  * Wraps exit with a program-specific cleanup routine.
@@ -449,22 +446,7 @@ int show_sample_fmts(void* optctx, const char* opt, const char* arg);
  */
 int show_colors(void* optctx, const char* opt, const char* arg);
 
-/**
- * Realloc array to hold new_size elements of elem_size.
- * Calls exit() on failure.
- *
- * @param array array to reallocate
- * @param elem_size size in bytes of each element
- * @param size new element count will be written here
- * @param new_size number of elements to place in reallocated array
- * @return reallocated array
- */
-void* grow_array(void* array, int elem_size, int* size, int new_size);
-
 #define media_type_string av_get_media_type_string
-
-#define GROW_ARRAY(array, nb_elems) \
-  array = grow_array(array, sizeof(*array), &nb_elems, nb_elems + 1)
 
 #define GET_PIX_FMT_NAME(pix_fmt) const char* name = av_get_pix_fmt_name(pix_fmt);
 
@@ -483,5 +465,3 @@ void* grow_array(void* array, int elem_size, int* size, int new_size);
   av_get_channel_layout_string(name, sizeof(name), 0, ch_layout);
 
 double get_rotation(AVStream* st);
-
-#endif /* CMDUTILS_H */

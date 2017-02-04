@@ -56,14 +56,14 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
       read_tid_(THREAD_MANAGER()->createThread(&VideoState::ReadThread, this)),
       iformat_(ifo),
       force_refresh_(false),
-      queue_attachments_req_(0),
-      seek_req_(0),
+      queue_attachments_req_(false),
+      seek_req_(false),
       seek_flags_(0),
       seek_pos_(0),
       seek_rel_(0),
       read_pause_return_(0),
       ic_(NULL),
-      realtime_(0),
+      realtime_(false),
       vstream_(new core::VideoStream),
       astream_(new core::AudioStream),
       viddec_(nullptr),
@@ -90,8 +90,6 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
 #endif
       audio_tgt_(),
       swr_ctx_(NULL),
-      frame_drops_early_(0),
-      frame_drops_late_(0),
       sample_array_{0},
       sample_array_index_(0),
       last_i_start_(0),
@@ -115,8 +113,8 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
       out_audio_filter_(NULL),
       agraph_(NULL),
 #endif
-      last_video_stream_(-1),
-      last_audio_stream_(-1),
+      last_video_stream_(invalid_stream_index),
+      last_audio_stream_(invalid_stream_index),
       vdecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::VideoThread, this)),
       adecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::AudioThread, this)),
       paused_(false),
@@ -127,7 +125,8 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
       eof_(false),
       abort_request_(false),
       renderer_(NULL),
-      window_(NULL) {
+      window_(NULL),
+      stats_() {
   if (opt->startup_volume < 0) {
     av_log(NULL, AV_LOG_WARNING, "-volume=%d < 0, setting to 0\n", opt->startup_volume);
   }
@@ -175,7 +174,8 @@ VideoState::~VideoState() {
 }
 
 int VideoState::StreamComponentOpen(int stream_index) {
-  if (stream_index < 0 || static_cast<unsigned int>(stream_index) >= ic_->nb_streams) {
+  if (stream_index == invalid_stream_index ||
+      static_cast<unsigned int>(stream_index) >= ic_->nb_streams) {
     return AVERROR(EINVAL);
   }
 
@@ -299,7 +299,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
         destroy(&viddec_);
         goto out;
       }
-      queue_attachments_req_ = 1;
+      queue_attachments_req_ = true;
       break;
     }
     case AVMEDIA_TYPE_AUDIO: {
@@ -439,7 +439,7 @@ void VideoState::StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes) {
     if (seek_by_bytes) {
       seek_flags_ |= AVSEEK_FLAG_BYTE;
     }
-    seek_req_ = 1;
+    seek_req_ = true;
   }
 }
 
@@ -557,7 +557,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
         if (!step_ && (opt_->framedrop > 0 ||
                        (opt_->framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) &&
             time > frame_timer_ + duration) {
-          frame_drops_late_++;
+          stats_.frame_drops_late++;
           video_frame_queue_->MoveToNext();
           goto retry;
         }
@@ -603,8 +603,8 @@ void VideoState::VideoRefresh(double* remaining_time) {
           (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
       av_log(NULL, AV_LOG_INFO,
              "%7.2f %s:%7.3f fd=%4d aq=%5dKB vq=%5dKB f=%" PRId64 "/%" PRId64 "   \r",
-             GetMasterClock(), fmt, av_diff, frame_drops_early_ + frame_drops_late_, aqsize / 1024,
-             vqsize / 1024, fdts, fpts);
+             GetMasterClock(), fmt, av_diff, stats_.FrameDrops(), aqsize / 1024, vqsize / 1024,
+             fdts, fpts);
       fflush(stdout);
       last_time = cur_time;
     }
@@ -1185,8 +1185,8 @@ void VideoState::SeekChapter(int incr) {
 }
 
 void VideoState::StreamCycleChannel(int codec_type) {
-  int start_index;
-  int old_index;
+  int start_index = invalid_stream_index;
+  int old_index = invalid_stream_index;
   if (codec_type == AVMEDIA_TYPE_VIDEO) {
     start_index = last_video_stream_;
     old_index = vstream_->Index();
@@ -1210,7 +1210,7 @@ void VideoState::StreamCycleChannel(int codec_type) {
         }
       }
       if (start_index == lnb_streams) {
-        start_index = -1;
+        start_index = invalid_stream_index;
       }
       stream_index = start_index;
     }
@@ -1218,7 +1218,7 @@ void VideoState::StreamCycleChannel(int codec_type) {
 
   while (true) {
     if (++stream_index >= lnb_streams) {
-      if (start_index == -1) {
+      if (start_index == invalid_stream_index) {
         return;
       }
       stream_index = 0;
@@ -1245,7 +1245,7 @@ void VideoState::StreamCycleChannel(int codec_type) {
     }
   }
 the_end:
-  if (p && stream_index != -1) {
+  if (p && stream_index != invalid_stream_index) {
     stream_index = p->stream_index[stream_index];
   }
   av_log(NULL, AV_LOG_INFO, "Switch %s stream from #%d to #%d\n",
@@ -1510,7 +1510,7 @@ int VideoState::QueuePicture(AVFrame* src_frame,
     });
 
     if (video_packet_queue->AbortRequest()) {
-      return -1;
+      return ERROR_RESULT_VALUE;
     }
   }
 
@@ -1524,7 +1524,7 @@ int VideoState::QueuePicture(AVFrame* src_frame,
     av_frame_move_ref(vp->frame, src_frame);
     video_frame_queue_->Push();
   }
-  return 0;
+  return SUCCESS_RESULT_VALUE;
 }
 
 int VideoState::GetVideoFrame(AVFrame* frame) {
@@ -1550,7 +1550,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
         if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
             diff - frame_last_filter_delay_ < 0 && viddec_->GetPktSerial() == vstream_->Serial() &&
             video_packet_queue->NbPackets()) {
-          frame_drops_early_++;
+          stats_.frame_drops_early++;
           av_frame_unref(frame);
           got_picture = 0;
         }
@@ -1779,8 +1779,8 @@ int VideoState::ReadThread() {
           audio_packet_queue->Put(core::PacketQueue::FlushPkt());
         }
       }
-      seek_req_ = 0;
-      queue_attachments_req_ = 1;
+      seek_req_ = false;
+      queue_attachments_req_ = true;
       eof_ = false;
       if (paused_) {
         StepToNextFrame();
@@ -1797,7 +1797,7 @@ int VideoState::ReadThread() {
         video_packet_queue->Put(&copy);
         video_packet_queue->PutNullpacket(video_stream->Index());
       }
-      queue_attachments_req_ = 0;
+      queue_attachments_req_ = false;
     }
 
     /* if the queue are full, no need to read more */

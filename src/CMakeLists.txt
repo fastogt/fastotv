@@ -145,7 +145,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}
   common
 )
 
-SET(EXE_SOURCES main.cpp video_state.cpp video_state.h cmdutils.c ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
+SET(EXE_SOURCES main.cpp video_state.cpp video_state.h cmdutils.cpp ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
 
 IF(MINGW OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGCXX)
   IF(OS_ANDROID)
