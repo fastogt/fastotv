@@ -388,7 +388,7 @@ int write_option(void* optctx, const OptionDef* po, const char* opt, const char*
 
   if (po->flags & OPT_SPEC) {
     SpecifierOpt** so = static_cast<SpecifierOpt**>(dst);
-    char* p = strchr(opt, ':');
+    const char* p = strchr(opt, ':');
     char* str;
 
     int* dstcount = (int*)(so + 1);
@@ -1199,7 +1199,7 @@ int opt_loglevel(void* optctx, const char* opt, const char* arg) {
   };
 
   int flags = av_log_get_flags();
-  char* tail = strstr(arg, "repeat");
+  const char* tail = strstr(arg, "repeat");
   if (tail) {
     flags &= ~AV_LOG_SKIP_REPEATED;
   } else {
@@ -1221,8 +1221,13 @@ int opt_loglevel(void* optctx, const char* opt, const char* arg) {
     }
   }
 
-  int level = strtol(arg, &tail, 10);
-  if (*tail) {
+  char* copy_tail = av_strdup(tail);
+  if (!copy_tail) {
+    return AVERROR(ENOMEM);
+  }
+
+  int level = strtol(arg, &copy_tail, 10);
+  if (*copy_tail) {
     av_log(NULL, AV_LOG_FATAL,
            "Invalid loglevel \"%s\". "
            "Possible levels are numbers or:\n",
@@ -1232,6 +1237,7 @@ int opt_loglevel(void* optctx, const char* opt, const char* arg) {
     }
     exit_program(1);
   }
+  av_freep(&copy_tail);
   av_log_set_level(level);
   return 0;
 }

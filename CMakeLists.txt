@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.3.0) # deb package fix in 3.3.0
 ###################### Branding ##########################
 
 SET(BRANDING_PROJECT_NAME "gpu_player" CACHE STRING "Branding for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_VERSION "0.1.0.0" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_VERSION "0.1.0.2" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "rc" CACHE STRING "Build version type for ${BRANDING_PROJECT_NAME}") #default
   #possible variables: alfa, beta, rc, release
 
@@ -100,7 +100,6 @@ ELSE(MSVC)
   ENDIF(CMAKE_SIZEOF_VOID_P MATCHES 8)
 ENDIF(MSVC)
 
-OPTION(LOG_TO_FILE "Logging to file" OFF)
 OPTION(CPACK_SUPPORT "Enable package support" ON)
 OPTION(DEVELOPER_ENABLE_TESTS "Enable tests for ${PROJECT_NAME_TITLE} project" OFF)
 OPTION(DEVELOPER_CHECK_STYLE "Enable check style for ${PROJECT_NAME_TITLE} project" OFF)

@@ -53,9 +53,7 @@ class AudioDecoder : public IFrameDecoder {
 
 class VideoDecoder : public IFrameDecoder {
  public:
-  VideoDecoder(AVCodecContext* avctx,
-               PacketQueue* queue,
-               int decoder_reorder_pts);
+  VideoDecoder(AVCodecContext* avctx, PacketQueue* queue, int decoder_reorder_pts);
 
   int width() const;
   int height() const;
