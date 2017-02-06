@@ -314,8 +314,11 @@ int VideoState::StreamComponentOpen(int stream_index) {
         audio_filter_src_.channel_layout =
             core::get_valid_channel_layout(avctx->channel_layout, avctx->channels);
         audio_filter_src_.fmt = avctx->sample_fmt;
-        if ((ret = ConfigureAudioFilters(opt_->afilters, 0)) < 0) {
-          goto fail;
+        ret = ConfigureAudioFilters(opt_->afilters, 0);
+        if (ret < 0) {
+          avcodec_free_context(&avctx);
+          av_dict_free(&opts);
+          return ret;
         }
         AVFilterLink* link = out_audio_filter_->inputs[0];
         sample_rate = link->sample_rate;
@@ -329,9 +332,12 @@ int VideoState::StreamComponentOpen(int stream_index) {
 #endif
 
       /* prepare audio output */
-      if ((ret = audio_open(this, channel_layout, nb_channels, sample_rate, &audio_tgt_,
-                            sdl_audio_callback)) < 0) {
-        goto fail;
+      ret = audio_open(this, channel_layout, nb_channels, sample_rate, &audio_tgt_,
+                                  sdl_audio_callback);
+      if (ret < 0) {
+        avcodec_free_context(&avctx);
+        av_dict_free(&opts);
+        return ret;
       }
 
       audio_hw_buf_size_ = ret;
@@ -377,13 +383,8 @@ int VideoState::StreamComponentOpen(int stream_index) {
     default:
       break;
   }
-  goto out;
-
-fail:
-  avcodec_free_context(&avctx);
 out:
   av_dict_free(&opts);
-
   return ret;
 }
 
@@ -2110,7 +2111,10 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const char* vfilters
   }
 
   AVStream* video_st = vstream_->AvStream();
-  CHECK(video_st);
+  if (!video_st) {
+    DNOTREACHED();
+    return ERROR_RESULT_VALUE;
+  }
   AVCodecParameters* codecpar = video_st->codecpar;
 
   char buffersrc_args[256];

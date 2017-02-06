@@ -17,14 +17,15 @@ extern "C" {
 namespace core {
 
 struct AppOptions {
+  enum { width = 640, height = 480, volume = 100, loop_count = 1 };
   AppOptions();
 
-  int autorotate;
-  int exit_on_keydown;
-  int exit_on_mousedown;
+  bool autorotate;
+  bool exit_on_keydown;
+  bool exit_on_mousedown;
 
-  int audio_disable;
-  int video_disable;
+  bool audio_disable;
+  bool video_disable;
 
   int64_t start_time;
   int64_t duration;
@@ -36,29 +37,29 @@ struct AppOptions {
   ShowMode show_mode;
   std::string window_title;
   int framedrop;
-  int genpts;
+  bool genpts;
   AvSyncType av_sync_type;
   int startup_volume;
   int seek_by_bytes;
-  int display_disable;
-  int is_full_screen;
+  bool display_disable;
+  bool is_full_screen;
   std::string input_filename;
   int loop;
-  int autoexit;
-  int show_status;
+  bool autoexit;
+  bool show_status;
   int infinite_buffer;
   std::string wanted_stream_spec[AVMEDIA_TYPE_NB];
   int lowres;
 
   /* options specified by the user */
-  int fast;
+  bool fast;
   std::string audio_codec_name;
   std::string video_codec_name;
 
   int decoder_reorder_pts;
 
 #if CONFIG_AVFILTER
-  void initAvFilters(const std::string& arg);
+  void InitAvFilters(const std::string& arg);
   std::vector<std::string> vfilters_list;
   char* afilters;
 #endif

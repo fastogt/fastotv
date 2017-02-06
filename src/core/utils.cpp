@@ -144,16 +144,15 @@ int configure_filtergraph(AVFilterGraph* graph,
                           const char* filtergraph,
                           AVFilterContext* source_ctx,
                           AVFilterContext* sink_ctx) {
-  int ret;
-  unsigned int nb_filters = graph->nb_filters;
   AVFilterInOut *outputs = NULL, *inputs = NULL;
-
+  int ret;
   if (filtergraph) {
     outputs = avfilter_inout_alloc();
     inputs = avfilter_inout_alloc();
     if (!outputs || !inputs) {
-      ret = AVERROR(ENOMEM);
-      goto fail;
+      avfilter_inout_free(&outputs);
+      avfilter_inout_free(&inputs);
+      return AVERROR(ENOMEM);
     }
 
     outputs->name = av_strdup("in");
@@ -166,22 +165,28 @@ int configure_filtergraph(AVFilterGraph* graph,
     inputs->pad_idx = 0;
     inputs->next = NULL;
 
-    if ((ret = avfilter_graph_parse_ptr(graph, filtergraph, &inputs, &outputs, NULL)) < 0) {
-      goto fail;
+    ret = avfilter_graph_parse_ptr(graph, filtergraph, &inputs, &outputs, NULL);
+    if (ret < 0) {
+      avfilter_inout_free(&outputs);
+      avfilter_inout_free(&inputs);
+      return ret;
     }
   } else {
-    if ((ret = avfilter_link(source_ctx, 0, sink_ctx, 0)) < 0) {
-      goto fail;
+    ret = avfilter_link(source_ctx, 0, sink_ctx, 0);
+    if (ret < 0) {
+      avfilter_inout_free(&outputs);
+      avfilter_inout_free(&inputs);
+      return ret;
     }
   }
 
+  unsigned int nb_filters = graph->nb_filters;
   /* Reorder the filters to ensure that inputs of the custom filters are merged first */
   for (unsigned int i = 0; i < graph->nb_filters - nb_filters; i++) {
     FFSWAP(AVFilterContext*, graph->filters[i], graph->filters[i + nb_filters]);
   }
 
   ret = avfilter_graph_config(graph, NULL);
-fail:
   avfilter_inout_free(&outputs);
   avfilter_inout_free(&inputs);
   return ret;

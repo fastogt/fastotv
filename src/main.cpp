@@ -20,7 +20,7 @@ int opt_add_vfilter(void* optctx, const char* opt, const char* arg) {
   UNUSED(optctx);
   UNUSED(opt);
 
-  g_options.initAvFilters(arg);
+  g_options.InitAvFilters(arg);
   return 0;
 }
 #endif
