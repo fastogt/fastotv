@@ -23,13 +23,13 @@ struct VideoFrame {
   double duration; /* estimated duration of the frame */
   int64_t pos;     /* byte position of the frame in the input file */
   SDL_Texture* bmp;
-  int allocated;
+  bool allocated;
   int width;
   int height;
   int format;
   AVRational sar;
   bool uploaded;
-  int flip_v;
+  bool flip_v;
 
   static double VpDuration(core::VideoFrame* vp,
                            core::VideoFrame* nextvp,

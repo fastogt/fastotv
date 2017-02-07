@@ -9,13 +9,13 @@ VideoFrame::VideoFrame()
       duration(0),
       pos(0),
       bmp(NULL),
-      allocated(0),
+      allocated(false),
       width(0),
       height(0),
       format(0),
       sar{0, 0},
       uploaded(false),
-      flip_v(0) {}
+      flip_v(false) {}
 
 VideoFrame::~VideoFrame() {
   ClearFrame();

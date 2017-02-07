@@ -696,7 +696,7 @@ int VideoState::AllocPicture() {
     return ERROR_RESULT_VALUE;
   }
 
-  video_frame_queue_->ChangeSafeAndNotify([](core::VideoFrame* fr) { fr->allocated = 1; }, vp);
+  video_frame_queue_->ChangeSafeAndNotify([](core::VideoFrame* fr) { fr->allocated = true; }, vp);
   return SUCCESS_RESULT_VALUE;
 }
 
@@ -1499,7 +1499,7 @@ int VideoState::QueuePicture(AVFrame* src_frame,
       vp->height != src_frame->height || vp->format != src_frame->format) {
     SDL_Event event;
 
-    vp->allocated = 0;
+    vp->allocated = false;
     vp->width = src_frame->width;
     vp->height = src_frame->height;
     vp->format = src_frame->format;
