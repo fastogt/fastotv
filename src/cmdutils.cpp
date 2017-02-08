@@ -51,6 +51,10 @@ extern "C" {
 
 namespace {
 
+FILE* report_file;
+int report_file_level = AV_LOG_DEBUG;
+bool warned_cfg = false;
+
 bool compare_codec_desc(const AVCodecDescriptor* da, const AVCodecDescriptor* db) {
   return (da)->type != (db)->type ? FFDIFFSIGN((da)->type, (db)->type)
                                   : strcmp((da)->name, (db)->name);
@@ -246,10 +250,6 @@ inline void prepare_app_arguments(int* argc_ptr, char*** argv_ptr) {
 }
 #endif /* HAVE_COMMANDLINETOARGVW */
 
-FILE* report_file;
-int report_file_level = AV_LOG_DEBUG;
-int warned_cfg = 0;
-
 void log_callback_report(void* ptr, int level, const char* fmt, va_list vl) {
   va_list vl2;
   char line[1024];
@@ -291,12 +291,7 @@ void expand_filename_template(AVBPrint* bp, const char* temp, struct tm* tm) {
   }
 }
 
-int init_report(const char* env) {
-  char* filename_template = NULL;
-  char *key, *val;
-  int count = 0;
-  AVBPrint filename;
-
+int init_report() {
   if (report_file) { /* already opened */
     return 0;
   }
@@ -304,38 +299,8 @@ int init_report(const char* env) {
   time(&now);
   struct tm* tm = localtime(&now);
 
-  while (env && *env) {
-    int ret = av_opt_get_key_value(&env, "=", ":", 0, &key, &val);
-    if (ret < 0) {
-      if (count) {
-        char err_str[AV_ERROR_MAX_STRING_SIZE] = {0};
-        av_make_error_string(err_str, AV_ERROR_MAX_STRING_SIZE, ret);
-        av_log(NULL, AV_LOG_ERROR, "Failed to parse FFREPORT environment variable: %s\n", err_str);
-      }
-      break;
-    }
-    if (*env) {
-      env++;
-    }
-    count++;
-    if (!strcmp(key, "file")) {
-      av_free(filename_template);
-      filename_template = val;
-      val = NULL;
-    } else if (!strcmp(key, "level")) {
-      char* tail;
-      report_file_level = strtol(val, &tail, 10);
-      if (*tail) {
-        av_log(NULL, AV_LOG_FATAL, "Invalid report file level\n");
-        exit_program(1);
-      }
-    } else {
-      av_log(NULL, AV_LOG_ERROR, "Unknown key '%s' in FFREPORT\n", key);
-    }
-    av_free(val);
-    av_free(key);
-  }
-
+  char* filename_template = NULL;
+  AVBPrint filename;
   av_bprint_init(&filename, 0, 1);
   const char* chr = static_cast<const char*>(av_x_if_null(filename_template, "%p-%t.log"));
   expand_filename_template(&filename, chr, tm);
@@ -361,52 +326,18 @@ int init_report(const char* env) {
   return 0;
 }
 
-void* grow_array(void* array, int elem_size, int* size, int new_size) {
-  if (new_size >= INT_MAX / elem_size) {
-    av_log(NULL, AV_LOG_ERROR, "Array too big.\n");
-    exit_program(1);
-  }
-  if (*size < new_size) {
-    uint8_t* tmp = static_cast<uint8_t*>(av_realloc_array(array, new_size, elem_size));
-    if (!tmp) {
-      av_log(NULL, AV_LOG_ERROR, "Could not alloc buffer.\n");
-      exit_program(1);
-    }
-    int diff = new_size - *size;
-    memset(tmp + *size * elem_size, 0, diff * elem_size);
-    *size = new_size;
-    return tmp;
-  }
-  return array;
-}
-
 int write_option(void* optctx, const OptionDef* po, const char* opt, const char* arg) {
   /* new-style options contain an offset into optctx, old-style address of
    * a global var*/
-  void* dst =
-      (po->flags & (OPT_OFFSET | OPT_SPEC)) ? ((uint8_t*)optctx + po->u.off) : (po->u.dst_ptr);
-
-  if (po->flags & OPT_SPEC) {
-    SpecifierOpt** so = static_cast<SpecifierOpt**>(dst);
-    const char* p = strchr(opt, ':');
-    char* str;
-
-    int* dstcount = (int*)(so + 1);
-    *so = static_cast<SpecifierOpt*>(grow_array(*so, sizeof(**so), dstcount, *dstcount + 1));
-    str = av_strdup(p ? p + 1 : "");
-    if (!str) {
-      return AVERROR(ENOMEM);
-    }
-    (*so)[*dstcount - 1].specifier = str;
-    dst = &(*so)[*dstcount - 1].u;
-  }
+  void* dst = po->u.dst_ptr;
 
   if (po->flags & OPT_STRING) {
     char* str;
     str = av_strdup(arg);
     av_freep(dst);
-    if (!str)
+    if (!str) {
       return AVERROR(ENOMEM);
+    }
     *(char**)dst = str;
   } else if (po->flags & OPT_BOOL || po->flags & OPT_INT) {
     *(int*)dst = parse_number_or_die(opt, arg, OPT_INT64, INT_MIN, INT_MAX);
@@ -461,14 +392,6 @@ void dump_argument(const char* a) {
   fputc('"', report_file);
 }
 
-void check_options(const OptionDef* po) {
-  while (po->name) {
-    if (po->flags & OPT_PERFILE)
-      av_assert0(po->flags & (OPT_INPUT | OPT_OUTPUT));
-    po++;
-  }
-}
-
 #define INDENT 1
 #define SHOW_VERSION 2
 #define SHOW_CONFIG 4
@@ -476,7 +399,7 @@ void check_options(const OptionDef* po) {
 
 #define PRINT_LIB_INFO(libname, LIBNAME, flags, level)                                           \
   if (CONFIG_##LIBNAME) {                                                                        \
-    const char* indent = flags & INDENT ? "  " : "";                                             \
+    const char* indent = (flags & INDENT) ? "  " : "";                                           \
     if (flags & SHOW_VERSION) {                                                                  \
       unsigned int version = libname##_version();                                                \
       av_log(NULL, level, "%slib%-11s %2d.%3d.%3d / %2d.%3d.%3d\n", indent, #libname,            \
@@ -489,7 +412,7 @@ void check_options(const OptionDef* po) {
       if (strcmp(FFMPEG_CONFIGURATION, cfg)) {                                                   \
         if (!warned_cfg) {                                                                       \
           av_log(NULL, level, "%sWARNING: library configuration mismatch\n", indent);            \
-          warned_cfg = 1;                                                                        \
+          warned_cfg = true;                                                                     \
         }                                                                                        \
         av_log(NULL, level, "%s%-11s configuration: %s\n", indent, #libname, cfg);               \
       }                                                                                          \
@@ -509,7 +432,7 @@ void print_all_libs_info(int flags, int level) {
 }
 
 void print_program_info(int flags, int level) {
-  const char* indent = flags & INDENT ? "  " : "";
+  const char* indent = (flags & INDENT) ? "  " : "";
 
   av_log(NULL, level, "%s version " FFMPEG_VERSION, PROJECT_NAME_TITLE);
   if (flags & SHOW_COPYRIGHT) {
@@ -522,7 +445,7 @@ void print_program_info(int flags, int level) {
 }
 
 void print_buildconf(int flags, int level) {
-  const char* indent = flags & INDENT ? "  " : "";
+  const char* indent = (flags & INDENT) ? "  " : "";
   char str[] = {FFMPEG_CONFIGURATION};
   char *conflist, *remove_tilde, *splitconf;
 
@@ -1047,8 +970,6 @@ int locate_option(int argc, char** argv, const OptionDef* options, const char* o
 
 void parse_loglevel(int argc, char** argv, const OptionDef* options) {
   int idx = locate_option(argc, argv, options, "loglevel");
-  check_options(options);
-
   if (!idx) {
     idx = locate_option(argc, argv, options, "v");
   }
@@ -1056,9 +977,8 @@ void parse_loglevel(int argc, char** argv, const OptionDef* options) {
     opt_loglevel(NULL, "loglevel", argv[idx + 1]);
   }
   idx = locate_option(argc, argv, options, "report");
-  const char* env = getenv("FFREPORT");
-  if (env || idx) {
-    init_report(env);
+  if (idx) {
+    init_report();
     if (report_file) {
       int i;
       fprintf(report_file, "Command line:\n");
@@ -1245,7 +1165,7 @@ int opt_loglevel(void* optctx, const char* opt, const char* arg) {
 int opt_report(const char* opt) {
   UNUSED(opt);
 
-  return init_report(NULL);
+  return init_report();
 }
 
 int opt_max_alloc(void* optctx, const char* opt, const char* arg) {
@@ -1472,8 +1392,9 @@ int show_filters(void* optctx, const char* opt, const char* arg) {
       pad = i ? filter->outputs : filter->inputs;
       int j;
       for (j = 0; pad && avfilter_pad_get_name(pad, j); j++) {
-        if (descr_cur >= descr + sizeof(descr) - 4)
+        if (descr_cur >= descr + sizeof(descr) - 4) {
           break;
+        }
         *(descr_cur++) = get_media_type_char(avfilter_pad_get_type(pad, j));
       }
       if (!j)
@@ -1483,8 +1404,8 @@ int show_filters(void* optctx, const char* opt, const char* arg) {
                              : '|';
     }
     *descr_cur = 0;
-    printf(" %c%c%c %-17s %-10s %s\n", filter->flags & AVFILTER_FLAG_SUPPORT_TIMELINE ? 'T' : '.',
-           filter->flags & AVFILTER_FLAG_SLICE_THREADS ? 'S' : '.',
+    printf(" %c%c%c %-17s %-10s %s\n", (filter->flags & AVFILTER_FLAG_SUPPORT_TIMELINE) ? 'T' : '.',
+           (filter->flags & AVFILTER_FLAG_SLICE_THREADS) ? 'S' : '.',
            filter->process_command ? 'C' : '.', filter->name, descr, filter->description);
   }
 #else
@@ -1535,9 +1456,9 @@ int show_pix_fmts(void* optctx, const char* opt, const char* arg) {
     enum AVPixelFormat pix_fmt = av_pix_fmt_desc_get_id(pix_desc);
     printf("%c%c%c%c%c %-16s       %d            %2d\n", sws_isSupportedInput(pix_fmt) ? 'I' : '.',
            sws_isSupportedOutput(pix_fmt) ? 'O' : '.',
-           pix_desc->flags & AV_PIX_FMT_FLAG_HWACCEL ? 'H' : '.',
-           pix_desc->flags & AV_PIX_FMT_FLAG_PAL ? 'P' : '.',
-           pix_desc->flags & AV_PIX_FMT_FLAG_BITSTREAM ? 'B' : '.', pix_desc->name,
+           (pix_desc->flags & AV_PIX_FMT_FLAG_HWACCEL) ? 'H' : '.',
+           (pix_desc->flags & AV_PIX_FMT_FLAG_PAL) ? 'P' : '.',
+           (pix_desc->flags & AV_PIX_FMT_FLAG_BITSTREAM) ? 'B' : '.', pix_desc->name,
            pix_desc->nb_components, av_get_bits_per_pixel(pix_desc));
   }
   return 0;
