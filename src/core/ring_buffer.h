@@ -1,7 +1,7 @@
 #pragma once
 
 #include <common/macros.h>
-#include <common/thread/types.h>
+#include <common/threads/types.h>
 
 namespace core {
 
@@ -173,9 +173,9 @@ class RingBuffer {
 
   size_t RindexShownInner() const { return rindex_shown_; }
 
-  typedef common::thread::unique_lock<common::thread::mutex> lock_t;
-  common::thread::condition_variable queue_cond_;
-  common::thread::mutex queue_mutex_;
+  typedef common::unique_lock<common::mutex> lock_t;
+  common::condition_variable queue_cond_;
+  common::mutex queue_mutex_;
 
  private:
   pointer_type queue_[buffer_size];

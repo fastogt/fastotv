@@ -27,7 +27,7 @@ extern "C" {
 }
 
 #include <common/macros.h>
-#include <common/thread/thread_manager.h>
+#include <common/threads/thread_manager.h>
 
 #include "core/frame_queue.h"
 #include "core/decoder.h"
@@ -130,7 +130,7 @@ class VideoState {
   core::ComplexOptions* const copt_;
   int64_t audio_callback_time_;
 
-  common::shared_ptr<common::thread::Thread<int>> read_tid_;
+  common::shared_ptr<common::threads::Thread<int>> read_tid_;
   AVInputFormat* iformat_;
   bool force_refresh_;
   bool queue_attachments_req_;
@@ -204,8 +204,8 @@ class VideoState {
   int last_video_stream_;
   int last_audio_stream_;
 
-  common::shared_ptr<common::thread::Thread<int>> vdecoder_tid_;
-  common::shared_ptr<common::thread::Thread<int>> adecoder_tid_;
+  common::shared_ptr<common::threads::Thread<int>> vdecoder_tid_;
+  common::shared_ptr<common::threads::Thread<int>> adecoder_tid_;
 
   bool paused_;
   bool last_paused_;

@@ -11,7 +11,7 @@ extern "C" {
 
 #include <common/macros.h>
 #include <common/types.h>
-#include <common/thread/types.h>
+#include <common/threads/types.h>
 
 namespace core {
 
@@ -56,9 +56,9 @@ class PacketQueue {  // compressed queue data
   int size_;
   int64_t duration_;
   bool abort_request_;
-  typedef common::thread::unique_lock<common::thread::mutex> lock_t;
-  common::thread::condition_variable cond_;
-  common::thread::mutex mutex_;
+  typedef common::unique_lock<common::mutex> lock_t;
+  common::condition_variable cond_;
+  common::mutex mutex_;
 };
 
 }  // namespace core
