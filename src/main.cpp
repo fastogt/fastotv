@@ -191,11 +191,6 @@ const OptionDef options[] = {
      {.func_arg = opt_cpuflags},
      "force specific cpu flags",
      "flags"},
-    {"hide_banner",
-     OPT_BOOL | OPT_EXPERT,
-     {&hide_banner},
-     "do not show program banner",
-     "hide_banner"},
 #if CONFIG_OPENCL
     {"opencl_bench",
      OPT_EXIT,

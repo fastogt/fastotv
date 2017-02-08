@@ -49,8 +49,6 @@ extern "C" {
 #include <vector>
 #include <algorithm>
 
-bool hide_banner = false;
-
 namespace {
 
 FILE* report_file;
@@ -379,14 +377,15 @@ void print_all_libs_info(int flags, int level) {
 void print_program_info(int flags, int level) {
   const char* indent = (flags & INDENT) ? "  " : "";
 
-  av_log(NULL, level, "%s version " FFMPEG_VERSION, PROJECT_NAME_TITLE);
+  av_log(NULL, level, "%s version " PROJECT_VERSION, PROJECT_NAME_TITLE);
   if (flags & SHOW_COPYRIGHT) {
     av_log(NULL, level, " " PROJECT_COPYRIGHT);
   }
   av_log(NULL, level, "\n");
   av_log(NULL, level, "%sbuilt with %s\n", indent, CC_IDENT);
 
-  av_log(NULL, level, "%sconfiguration: " FFMPEG_CONFIGURATION "\n", indent);
+  av_log(NULL, level,
+         "%sFFMPEG version " FFMPEG_VERSION ", configuration: " FFMPEG_CONFIGURATION "\n", indent);
 }
 
 void print_buildconf(int flags, int level) {
@@ -407,7 +406,7 @@ void print_buildconf(int flags, int level) {
   }
 
   splitconf = strtok(str, "~");
-  av_log(NULL, level, "\n%sconfiguration:\n", indent);
+  av_log(NULL, level, "\n%s FFMPEG configuration:\n", indent);
   while (splitconf != NULL) {
     av_log(NULL, level, "%s%s%s\n", indent, indent, splitconf);
     splitconf = strtok(NULL, "~");
@@ -526,7 +525,10 @@ void print_codecs(bool encoder) {
   }
 }
 
-int show_formats_devices(const char* opt, const char* arg, DictionaryOptions* dopt, bool device_only) {
+int show_formats_devices(const char* opt,
+                         const char* arg,
+                         DictionaryOptions* dopt,
+                         bool device_only) {
   UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
@@ -882,7 +884,10 @@ void show_help_children(const AVClass* cl, int flags) {
   }
 }
 
-int parse_option(const char* opt, const char* arg, const OptionDef* options, DictionaryOptions* dopt) {
+int parse_option(const char* opt,
+                 const char* arg,
+                 const OptionDef* options,
+                 DictionaryOptions* dopt) {
   const OptionDef* po = find_option(options, opt);
   if (!po->name && opt[0] == 'n' && opt[1] == 'o') {
     /* handle 'no' bool option */
@@ -985,10 +990,6 @@ void parse_loglevel(int argc, char** argv, const OptionDef* options) {
       }
       fflush(report_file);
     }
-  }
-  idx = locate_option(argc, argv, options, "hide_banner");
-  if (idx) {
-    hide_banner = true;
   }
 }
 
@@ -1128,11 +1129,6 @@ int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt) {
 }
 
 void show_banner(int argc, char** argv, const OptionDef* options) {
-  int idx = locate_option(argc, argv, options, "version");
-  if (hide_banner || idx) {
-    return;
-  }
-
   print_program_info(INDENT | SHOW_COPYRIGHT, AV_LOG_INFO);
   print_all_libs_info(INDENT | SHOW_CONFIG, AV_LOG_INFO);
   print_all_libs_info(INDENT | SHOW_VERSION, AV_LOG_INFO);

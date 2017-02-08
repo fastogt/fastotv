@@ -31,9 +31,7 @@ extern "C" {
 #define OPT_INPUT 0x40000
 #define OPT_OUTPUT 0x80000
 
-extern bool hide_banner;
-
-struct DictionaryOptions{
+struct DictionaryOptions {
   DictionaryOptions();
   ~DictionaryOptions();
 
@@ -41,6 +39,7 @@ struct DictionaryOptions{
   AVDictionary* swr_opts;
   AVDictionary* format_opts;
   AVDictionary* codec_opts;
+
  private:
   DISALLOW_COPY_AND_ASSIGN(DictionaryOptions);
 };
@@ -186,7 +185,10 @@ void parse_options(int argc, char** argv, const OptionDef* options, DictionaryOp
  *
  * @return on success 1 if arg was consumed, 0 otherwise; negative number on error
  */
-int parse_option(const char* opt, const char* arg, const OptionDef* options, DictionaryOptions* dopt);
+int parse_option(const char* opt,
+                 const char* arg,
+                 const OptionDef* options,
+                 DictionaryOptions* dopt);
 
 /**
  * Find the '-loglevel' option in the command line args and apply it.

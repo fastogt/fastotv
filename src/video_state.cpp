@@ -333,7 +333,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
 
       /* prepare audio output */
       ret = audio_open(this, channel_layout, nb_channels, sample_rate, &audio_tgt_,
-                                  sdl_audio_callback);
+                       sdl_audio_callback);
       if (ret < 0) {
         avcodec_free_context(&avctx);
         av_dict_free(&opts);
