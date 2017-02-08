@@ -16,8 +16,8 @@ namespace {
 core::AppOptions g_options;
 AVInputFormat* file_iformat = NULL;
 #if CONFIG_AVFILTER
-int opt_add_vfilter(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_add_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   g_options.InitAvFilters(arg);
@@ -31,30 +31,30 @@ void sigterm_handler(int sig) {
   exit(123);
 }
 
-int opt_frame_size(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_frame_size(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   av_log(NULL, AV_LOG_WARNING, "Option -s is deprecated, use -video_size.\n");
-  return opt_default(NULL, "video_size", arg);
+  return opt_default("video_size", arg, dopt);
 }
 
-static int opt_width(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+static int opt_width(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
 
   g_options.screen_width = static_cast<int>(parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX));
   return 0;
 }
 
-int opt_height(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
 
   g_options.screen_height = static_cast<int>(parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX));
   return 0;
 }
 
-int opt_format(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_format(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   file_iformat = av_find_input_format(arg);
@@ -65,16 +65,16 @@ int opt_format(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int opt_frame_pix_fmt(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_frame_pix_fmt(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   av_log(NULL, AV_LOG_WARNING, "Option -pix_fmt is deprecated, use -pixel_format.\n");
-  return opt_default(NULL, "pixel_format", arg);
+  return opt_default("pixel_format", arg, dopt);
 }
 
-int opt_sync(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_sync(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
 
   if (!strcmp(arg, "audio")) {
     g_options.av_sync_type = core::AV_SYNC_AUDIO_MASTER;
@@ -87,22 +87,22 @@ int opt_sync(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int opt_seek(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_seek(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
 
   g_options.start_time = parse_time_or_die(opt, arg, 1);
   return 0;
 }
 
-int opt_duration(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_duration(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
 
   g_options.duration = parse_time_or_die(opt, arg, 1);
   return 0;
 }
 
-int opt_show_mode(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_show_mode(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
 
   g_options.show_mode = !strcmp(arg, "video")
                             ? core::SHOW_MODE_VIDEO
@@ -113,8 +113,8 @@ int opt_show_mode(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int opt_input_file(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_input_file(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   if (!g_options.input_filename.empty()) {
@@ -131,8 +131,8 @@ int opt_input_file(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int opt_codec(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
 
   const char* spec = strchr(opt, ':');
   if (!spec) {
@@ -365,7 +365,7 @@ int lockmgr(void** mtx, enum AVLockOp op) {
   return 1;
 }
 
-void do_init(int argc, char** argv) {
+void do_init(int argc, char** argv, DictionaryOptions** opt) {
   init_dynload();
 
   av_log_set_flags(AV_LOG_SKIP_REPEATED);
@@ -381,20 +381,21 @@ void do_init(int argc, char** argv) {
   av_register_all();
   avformat_network_init();
 
-  init_opts();
+  DictionaryOptions* lopt = new DictionaryOptions;
 
   signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
   signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
 
   show_banner(argc, argv, options);
 
-  parse_options(NULL, argc, argv, options);
+  parse_options(argc, argv, options, lopt);
+  *opt = lopt;
 }
 
 /* handle an event sent by the GUI */
-void do_exit() {
+void do_exit(DictionaryOptions** opt) {
   av_lockmgr_register(NULL);
-  uninit_opts();
+  destroy(opt);
   avformat_network_deinit();
   if (g_options.show_status) {
     printf("\n");
@@ -443,7 +444,8 @@ void show_help_default(const char* opt, const char* arg) {
 /* Called from the main */
 int main(int argc, char** argv) {
   g_options.autorotate = 1;  // fix me
-  do_init(argc, argv);
+  DictionaryOptions* dict;
+  do_init(argc, argv, &dict);
 
   if (g_options.input_filename.empty()) {
     show_usage();
@@ -480,19 +482,18 @@ int main(int argc, char** argv) {
 
   if (av_lockmgr_register(lockmgr)) {
     av_log(NULL, AV_LOG_FATAL, "Could not initialize lock manager!\n");
-    do_exit();
+    do_exit(&dict);
     return EXIT_FAILURE;
   }
 
   core::ComplexOptions copt;
-  copt.swr_opts = swr_opts;
-  copt.sws_dict = sws_dict;
-  copt.format_opts = format_opts;
-  copt.codec_opts = codec_opts;
+  copt.swr_opts = dict->swr_opts;
+  copt.sws_dict = dict->sws_dict;
+  copt.format_opts = dict->format_opts;
+  copt.codec_opts = dict->codec_opts;
   VideoState* is = new VideoState(file_iformat, &g_options, &copt);
   int res = is->Exec();
-  delete is;
-
-  do_exit();
+  destroy(&is);
+  do_exit(&dict);
   return res;
 }

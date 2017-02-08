@@ -49,6 +49,8 @@ extern "C" {
 #include <vector>
 #include <algorithm>
 
+bool hide_banner = false;
+
 namespace {
 
 FILE* report_file;
@@ -187,68 +189,11 @@ const AVOption* opt_find(void* obj,
   return o;
 }
 
-/* _WIN32 means using the windows libc - cygwin doesn't define that
- * by default. HAVE_COMMANDLINETOARGVW is true on cygwin, while
- * it doesn't provide the actual command line via GetCommandLineW(). */
-#if HAVE_COMMANDLINETOARGVW && defined(_WIN32)
-#include <windows.h>
-#include <shellapi.h>
-/* Will be leaked on exit */
-char** win32_argv_utf8 = NULL;
-int win32_argc = 0;
-
-/**
- * Prepare command line arguments for executable.
- * For Windows - perform wide-char to UTF-8 conversion.
- * Input arguments should be main() function arguments.
- * @param argc_ptr Arguments number (including executable)
- * @param argv_ptr Arguments list.
- */
-void prepare_app_arguments(int* argc_ptr, char*** argv_ptr) {
-  char* argstr_flat;
-  wchar_t** argv_w;
-  int i, buffsize = 0, offset = 0;
-
-  if (win32_argv_utf8) {
-    *argc_ptr = win32_argc;
-    *argv_ptr = win32_argv_utf8;
-    return;
-  }
-
-  win32_argc = 0;
-  argv_w = CommandLineToArgvW(GetCommandLineW(), &win32_argc);
-  if (win32_argc <= 0 || !argv_w)
-    return;
-
-  /* determine the UTF-8 buffer size (including NULL-termination symbols) */
-  for (i = 0; i < win32_argc; i++)
-    buffsize += WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, NULL, 0, NULL, NULL);
-
-  win32_argv_utf8 = av_mallocz(sizeof(char*) * (win32_argc + 1) + buffsize);
-  argstr_flat = (char*)win32_argv_utf8 + sizeof(char*) * (win32_argc + 1);
-  if (!win32_argv_utf8) {
-    LocalFree(argv_w);
-    return;
-  }
-
-  for (i = 0; i < win32_argc; i++) {
-    win32_argv_utf8[i] = &argstr_flat[offset];
-    offset += WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, &argstr_flat[offset],
-                                  buffsize - offset, NULL, NULL);
-  }
-  win32_argv_utf8[i] = NULL;
-  LocalFree(argv_w);
-
-  *argc_ptr = win32_argc;
-  *argv_ptr = win32_argv_utf8;
-}
-#else
 inline void prepare_app_arguments(int* argc_ptr, char*** argv_ptr) {
   UNUSED(argc_ptr);
   UNUSED(argv_ptr);
   /* nothing to do */
 }
-#endif /* HAVE_COMMANDLINETOARGVW */
 
 void log_callback_report(void* ptr, int level, const char* fmt, va_list vl) {
   va_list vl2;
@@ -326,7 +271,7 @@ int init_report() {
   return 0;
 }
 
-int write_option(void* optctx, const OptionDef* po, const char* opt, const char* arg) {
+int write_option(const OptionDef* po, const char* opt, const char* arg, DictionaryOptions* dopt) {
   /* new-style options contain an offset into optctx, old-style address of
    * a global var*/
   void* dst = po->u.dst_ptr;
@@ -350,7 +295,7 @@ int write_option(void* optctx, const OptionDef* po, const char* opt, const char*
   } else if (po->flags & OPT_DOUBLE) {
     *(double*)dst = parse_number_or_die(opt, arg, OPT_DOUBLE, -INFINITY, INFINITY);
   } else if (po->u.func_arg) {
-    int ret = po->u.func_arg(optctx, opt, arg);
+    int ret = po->u.func_arg(opt, arg, dopt);
     if (ret < 0) {
       char err_str[AV_ERROR_MAX_STRING_SIZE] = {0};
       av_make_error_string(err_str, AV_ERROR_MAX_STRING_SIZE, ret);
@@ -581,8 +526,8 @@ void print_codecs(bool encoder) {
   }
 }
 
-int show_formats_devices(void* optctx, const char* opt, const char* arg, bool device_only) {
-  UNUSED(optctx);
+int show_formats_devices(const char* opt, const char* arg, DictionaryOptions* dopt, bool device_only) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -772,19 +717,71 @@ void show_help_codec(const char* name, int encoder) {
     av_log(NULL, AV_LOG_ERROR, "Codec '%s' is not recognized by FFmpeg.\n", name);
   }
 }
+
+int opt_loglevel_inner(const char* opt, const char* arg, char* argv) {
+  UNUSED(argv);
+  UNUSED(opt);
+
+  const struct {
+    const char* name;
+    int level;
+  } log_levels[] = {
+      {"quiet", AV_LOG_QUIET},     {"panic", AV_LOG_PANIC},     {"fatal", AV_LOG_FATAL},
+      {"error", AV_LOG_ERROR},     {"warning", AV_LOG_WARNING}, {"info", AV_LOG_INFO},
+      {"verbose", AV_LOG_VERBOSE}, {"debug", AV_LOG_DEBUG},     {"trace", AV_LOG_TRACE},
+  };
+
+  int flags = av_log_get_flags();
+  const char* tail = strstr(arg, "repeat");
+  if (tail) {
+    flags &= ~AV_LOG_SKIP_REPEATED;
+  } else {
+    flags |= AV_LOG_SKIP_REPEATED;
+  }
+
+  av_log_set_flags(flags);
+  if (tail == arg) {
+    arg += 6 + (arg[6] == '+');
+  }
+  if (tail && !*arg) {
+    return 0;
+  }
+
+  for (size_t i = 0; i < FF_ARRAY_ELEMS(log_levels); i++) {
+    if (!strcmp(log_levels[i].name, arg)) {
+      av_log_set_level(log_levels[i].level);
+      return 0;
+    }
+  }
+
+  char* copy_tail = av_strdup(tail);
+  if (!copy_tail) {
+    return AVERROR(ENOMEM);
+  }
+
+  int level = strtol(arg, &copy_tail, 10);
+  if (*copy_tail) {
+    av_log(NULL, AV_LOG_FATAL,
+           "Invalid loglevel \"%s\". "
+           "Possible levels are numbers or:\n",
+           arg);
+    for (size_t i = 0; i < FF_ARRAY_ELEMS(log_levels); i++) {
+      av_log(NULL, AV_LOG_FATAL, "\"%s\"\n", log_levels[i].name);
+    }
+    exit_program(1);
+  }
+  av_freep(&copy_tail);
+  av_log_set_level(level);
+  return 0;
+}
 }  // namespace
 
-AVDictionary* sws_dict;
-AVDictionary* swr_opts;
-AVDictionary* format_opts;
-AVDictionary* codec_opts;
-bool hide_banner = false;
-
-void init_opts(void) {
+DictionaryOptions::DictionaryOptions()
+    : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 }
 
-void uninit_opts(void) {
+DictionaryOptions::~DictionaryOptions() {
   av_dict_free(&swr_opts);
   av_dict_free(&sws_dict);
   av_dict_free(&format_opts);
@@ -885,7 +882,7 @@ void show_help_children(const AVClass* cl, int flags) {
   }
 }
 
-int parse_option(void* optctx, const char* opt, const char* arg, const OptionDef* options) {
+int parse_option(const char* opt, const char* arg, const OptionDef* options, DictionaryOptions* dopt) {
   const OptionDef* po = find_option(options, opt);
   if (!po->name && opt[0] == 'n' && opt[1] == 'o') {
     /* handle 'no' bool option */
@@ -909,7 +906,7 @@ int parse_option(void* optctx, const char* opt, const char* arg, const OptionDef
     return AVERROR(EINVAL);
   }
 
-  int ret = write_option(optctx, po, opt, arg);
+  int ret = write_option(po, opt, arg, dopt);
   if (ret < 0) {
     return ret;
   }
@@ -917,7 +914,7 @@ int parse_option(void* optctx, const char* opt, const char* arg, const OptionDef
   return !!(po->flags & HAS_ARG);
 }
 
-void parse_options(void* optctx, int argc, char** argv, const OptionDef* options) {
+void parse_options(int argc, char** argv, const OptionDef* options, DictionaryOptions* dopt) {
   bool handleoptions = true;
 
   /* perform system-dependent conversions for arguments list */
@@ -935,7 +932,7 @@ void parse_options(void* optctx, int argc, char** argv, const OptionDef* options
       }
       opt++;
 
-      int ret = parse_option(optctx, opt, argv[optindex], options);
+      int ret = parse_option(opt, argv[optindex], options, dopt);
       if (ret < 0) {
         exit_program(1);
       }
@@ -974,7 +971,7 @@ void parse_loglevel(int argc, char** argv, const OptionDef* options) {
     idx = locate_option(argc, argv, options, "v");
   }
   if (idx && argv[idx + 1]) {
-    opt_loglevel(NULL, "loglevel", argv[idx + 1]);
+    opt_loglevel_inner(NULL, "loglevel", argv[idx + 1]);
   }
   idx = locate_option(argc, argv, options, "report");
   if (idx) {
@@ -997,8 +994,8 @@ void parse_loglevel(int argc, char** argv, const OptionDef* options) {
 
 #define FLAGS \
   (o->type == AV_OPT_TYPE_FLAGS && (arg[0] == '-' || arg[0] == '+')) ? AV_DICT_APPEND : 0
-int opt_default(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   const AVOption* o;
   bool consumed = false;
   char opt_stripped[128];
@@ -1026,11 +1023,11 @@ int opt_default(void* optctx, const char* opt, const char* arg) {
   if ((o = opt_find(&cc, opt_stripped, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ)) ||
       ((opt[0] == 'v' || opt[0] == 'a' || opt[0] == 's') &&
        (o = opt_find(&cc, opt + 1, NULL, 0, AV_OPT_SEARCH_FAKE_OBJ)))) {
-    av_dict_set(&codec_opts, opt, arg, FLAGS);
+    av_dict_set(&dopt->codec_opts, opt, arg, FLAGS);
     consumed = true;
   }
   if ((o = opt_find(&fc, opt, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ))) {
-    av_dict_set(&format_opts, opt, arg, FLAGS);
+    av_dict_set(&dopt->format_opts, opt, arg, FLAGS);
     if (consumed) {
       av_log(NULL, AV_LOG_VERBOSE, "Routing option %s to both codec and muxer layer\n", opt);
     }
@@ -1054,7 +1051,7 @@ int opt_default(void* optctx, const char* opt, const char* arg) {
       return ret;
     }
 
-    av_dict_set(&sws_dict, opt, arg, FLAGS);
+    av_dict_set(&dopt->sws_dict, opt, arg, FLAGS);
 
     consumed = true;
   }
@@ -1074,7 +1071,7 @@ int opt_default(void* optctx, const char* opt, const char* arg) {
       av_log(NULL, AV_LOG_ERROR, "Error setting option %s.\n", opt);
       return ret;
     }
-    av_dict_set(&swr_opts, opt, arg, FLAGS);
+    av_dict_set(&dopt->swr_opts, opt, arg, FLAGS);
     consumed = true;
   }
 #endif
@@ -1091,8 +1088,8 @@ int opt_default(void* optctx, const char* opt, const char* arg) {
   return AVERROR_OPTION_NOT_FOUND;
 }
 
-int opt_cpuflags(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_cpuflags(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   unsigned flags = av_get_cpu_flags();
@@ -1105,61 +1102,9 @@ int opt_cpuflags(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int opt_loglevel(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
-  UNUSED(opt);
-
-  const struct {
-    const char* name;
-    int level;
-  } log_levels[] = {
-      {"quiet", AV_LOG_QUIET},     {"panic", AV_LOG_PANIC},     {"fatal", AV_LOG_FATAL},
-      {"error", AV_LOG_ERROR},     {"warning", AV_LOG_WARNING}, {"info", AV_LOG_INFO},
-      {"verbose", AV_LOG_VERBOSE}, {"debug", AV_LOG_DEBUG},     {"trace", AV_LOG_TRACE},
-  };
-
-  int flags = av_log_get_flags();
-  const char* tail = strstr(arg, "repeat");
-  if (tail) {
-    flags &= ~AV_LOG_SKIP_REPEATED;
-  } else {
-    flags |= AV_LOG_SKIP_REPEATED;
-  }
-
-  av_log_set_flags(flags);
-  if (tail == arg) {
-    arg += 6 + (arg[6] == '+');
-  }
-  if (tail && !*arg) {
-    return 0;
-  }
-
-  for (size_t i = 0; i < FF_ARRAY_ELEMS(log_levels); i++) {
-    if (!strcmp(log_levels[i].name, arg)) {
-      av_log_set_level(log_levels[i].level);
-      return 0;
-    }
-  }
-
-  char* copy_tail = av_strdup(tail);
-  if (!copy_tail) {
-    return AVERROR(ENOMEM);
-  }
-
-  int level = strtol(arg, &copy_tail, 10);
-  if (*copy_tail) {
-    av_log(NULL, AV_LOG_FATAL,
-           "Invalid loglevel \"%s\". "
-           "Possible levels are numbers or:\n",
-           arg);
-    for (size_t i = 0; i < FF_ARRAY_ELEMS(log_levels); i++) {
-      av_log(NULL, AV_LOG_FATAL, "\"%s\"\n", log_levels[i].name);
-    }
-    exit_program(1);
-  }
-  av_freep(&copy_tail);
-  av_log_set_level(level);
-  return 0;
+int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
+  return opt_loglevel_inner(opt, arg, NULL);
 }
 
 int opt_report(const char* opt) {
@@ -1168,8 +1113,8 @@ int opt_report(const char* opt) {
   return init_report();
 }
 
-int opt_max_alloc(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   char* tail = NULL;
@@ -1193,8 +1138,8 @@ void show_banner(int argc, char** argv, const OptionDef* options) {
   print_all_libs_info(INDENT | SHOW_VERSION, AV_LOG_INFO);
 }
 
-int show_version(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_version(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1204,8 +1149,8 @@ int show_version(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_buildconf(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_buildconf(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1215,8 +1160,8 @@ int show_buildconf(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_license(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_license(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1238,16 +1183,16 @@ int show_license(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_formats(void* optctx, const char* opt, const char* arg) {
-  return show_formats_devices(optctx, opt, arg, false);
+int show_formats(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  return show_formats_devices(opt, arg, dopt, false);
 }
 
-int show_devices(void* optctx, const char* opt, const char* arg) {
-  return show_formats_devices(optctx, opt, arg, true);
+int show_devices(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  return show_formats_devices(opt, arg, dopt, true);
 }
 
-int show_codecs(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_codecs(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1308,8 +1253,8 @@ int show_codecs(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_decoders(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_decoders(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1317,8 +1262,8 @@ int show_decoders(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_encoders(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_encoders(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1326,8 +1271,8 @@ int show_encoders(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_bsfs(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_bsfs(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1342,8 +1287,8 @@ int show_bsfs(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_protocols(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_protocols(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1363,8 +1308,8 @@ int show_protocols(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_filters(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_filters(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1414,8 +1359,8 @@ int show_filters(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_colors(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_colors(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1430,8 +1375,8 @@ int show_colors(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_pix_fmts(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_pix_fmts(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1464,8 +1409,8 @@ int show_pix_fmts(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_layouts(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_layouts(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1497,8 +1442,8 @@ int show_layouts(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_sample_fmts(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_sample_fmts(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
   UNUSED(arg);
 
@@ -1511,8 +1456,8 @@ int show_sample_fmts(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_help(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_help(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   av_log_set_callback(log_callback_help);
@@ -1751,8 +1696,8 @@ int show_sinks_sources_parse_arg(const char* arg, char** dev, AVDictionary** opt
 }
 }  // namespace
 
-int show_sources(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_sources(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   AVInputFormat* fmt = NULL;
@@ -1795,8 +1740,8 @@ int show_sources(void* optctx, const char* opt, const char* arg) {
   return 0;
 }
 
-int show_sinks(void* optctx, const char* opt, const char* arg) {
-  UNUSED(optctx);
+int show_sinks(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
   UNUSED(opt);
 
   AVOutputFormat* fmt = NULL;

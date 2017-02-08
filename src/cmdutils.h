@@ -31,11 +31,19 @@ extern "C" {
 #define OPT_INPUT 0x40000
 #define OPT_OUTPUT 0x80000
 
-extern AVDictionary* sws_dict;
-extern AVDictionary* swr_opts;
-extern AVDictionary* format_opts;
-extern AVDictionary* codec_opts;
 extern bool hide_banner;
+
+struct DictionaryOptions{
+  DictionaryOptions();
+  ~DictionaryOptions();
+
+  AVDictionary* sws_dict;
+  AVDictionary* swr_opts;
+  AVDictionary* format_opts;
+  AVDictionary* codec_opts;
+ private:
+  DISALLOW_COPY_AND_ASSIGN(DictionaryOptions);
+};
 
 /**
  * Wraps exit with a program-specific cleanup routine.
@@ -48,17 +56,6 @@ void exit_program(int ret) av_noreturn;
 void init_dynload(void);
 
 /**
- * Initialize the cmdutils option system, in particular
- * allocate the *_opts contexts.
- */
-void init_opts(void);
-/**
- * Uninitialize the cmdutils option system, in particular
- * free the *_opts contexts and their contents.
- */
-void uninit_opts(void);
-
-/**
  * Trivial log callback.
  * Only suitable for opt_help and similar since it lacks prefix handling.
  */
@@ -67,29 +64,29 @@ void log_callback_help(void* ptr, int level, const char* fmt, va_list vl);
 /**
  * Override the cpuflags.
  */
-int opt_cpuflags(void* optctx, const char* opt, const char* arg);
+int opt_cpuflags(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Fallback for options that are not explicitly handled, these will be
  * parsed through AVOptions.
  */
-int opt_default(void* optctx, const char* opt, const char* arg);
+int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Set the libav* libraries log level.
  */
-int opt_loglevel(void* optctx, const char* opt, const char* arg);
+int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 int opt_report(const char* opt);
 
-int opt_max_alloc(void* optctx, const char* opt, const char* arg);
+int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt);
 
-int opt_codec_debug(void* optctx, const char* opt, const char* arg);
+int opt_codec_debug(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 #if CONFIG_OPENCL
-int opt_opencl(void* optctx, const char* opt, const char* arg);
+int opt_opencl(const char* opt, const char* arg, DictionaryOptions* dopt);
 
-int opt_opencl_bench(void* optctx, const char* opt, const char* arg);
+int opt_opencl_bench(const char* opt, const char* arg, DictionaryOptions* dopt);
 #endif
 
 /**
@@ -132,7 +129,7 @@ typedef struct OptionDef {
   int flags;
   union {
     void* dst_ptr;
-    int (*func_arg)(void*, const char*, const char*);
+    int (*func_arg)(const char*, const char*, DictionaryOptions*);
   } u;
   const char* help;
   const char* argname;
@@ -168,28 +165,28 @@ void show_help_default(const char* opt, const char* arg);
 /**
  * Generic -h handler common to all fftools.
  */
-int show_help(void* optctx, const char* opt, const char* arg);
+int show_help(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Parse the command line arguments.
  *
- * @param optctx an opaque options context
  * @param argc   number of command line arguments
  * @param argv   values of command line arguments
  * @param options Array with the definitions required to interpret every
  * option of the form: -option_name [argument]
+ * @param optctx an opaque options context
  * @param parse_arg_function Name of the function called to process every
  * argument without a leading option name flag. NULL if such arguments do
  * not have to be processed.
  */
-void parse_options(void* optctx, int argc, char** argv, const OptionDef* options);
+void parse_options(int argc, char** argv, const OptionDef* options, DictionaryOptions* dopt);
 
 /**
  * Parse one given option.
  *
  * @return on success 1 if arg was consumed, 0 otherwise; negative number on error
  */
-int parse_option(void* optctx, const char* opt, const char* arg, const OptionDef* options);
+int parse_option(const char* opt, const char* arg, const OptionDef* options, DictionaryOptions* dopt);
 
 /**
  * Find the '-loglevel' option in the command line args and apply it.
@@ -258,48 +255,48 @@ void show_banner(int argc, char** argv, const OptionDef* options);
  * libraries.
  * This option processing function does not utilize the arguments.
  */
-int show_version(void* optctx, const char* opt, const char* arg);
+int show_version(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print the build configuration of the program to stdout. The contents
  * depend on the definition of FFMPEG_CONFIGURATION.
  * This option processing function does not utilize the arguments.
  */
-int show_buildconf(void* optctx, const char* opt, const char* arg);
+int show_buildconf(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print the license of the program to stdout. The license depends on
  * the license of the libraries compiled into the program.
  * This option processing function does not utilize the arguments.
  */
-int show_license(void* optctx, const char* opt, const char* arg);
+int show_license(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the formats supported by the
  * program (including devices).
  * This option processing function does not utilize the arguments.
  */
-int show_formats(void* optctx, const char* opt, const char* arg);
+int show_formats(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the devices supported by the
  * program.
  * This option processing function does not utilize the arguments.
  */
-int show_devices(void* optctx, const char* opt, const char* arg);
+int show_devices(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 #if CONFIG_AVDEVICE
 /**
  * Print a listing containing autodetected sinks of the output device.
  * Device name with options may be passed as an argument to limit results.
  */
-int show_sinks(void* optctx, const char* opt, const char* arg);
+int show_sinks(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing autodetected sources of the input device.
  * Device name with options may be passed as an argument to limit results.
  */
-int show_sources(void* optctx, const char* opt, const char* arg);
+int show_sources(const char* opt, const char* arg, DictionaryOptions* dopt);
 #endif
 
 /**
@@ -307,66 +304,66 @@ int show_sources(void* optctx, const char* opt, const char* arg);
  * program.
  * This option processing function does not utilize the arguments.
  */
-int show_codecs(void* optctx, const char* opt, const char* arg);
+int show_codecs(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the decoders supported by the
  * program.
  */
-int show_decoders(void* optctx, const char* opt, const char* arg);
+int show_decoders(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the encoders supported by the
  * program.
  */
-int show_encoders(void* optctx, const char* opt, const char* arg);
+int show_encoders(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the filters supported by the
  * program.
  * This option processing function does not utilize the arguments.
  */
-int show_filters(void* optctx, const char* opt, const char* arg);
+int show_filters(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the bit stream filters supported by the
  * program.
  * This option processing function does not utilize the arguments.
  */
-int show_bsfs(void* optctx, const char* opt, const char* arg);
+int show_bsfs(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the protocols supported by the
  * program.
  * This option processing function does not utilize the arguments.
  */
-int show_protocols(void* optctx, const char* opt, const char* arg);
+int show_protocols(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the pixel formats supported by the
  * program.
  * This option processing function does not utilize the arguments.
  */
-int show_pix_fmts(void* optctx, const char* opt, const char* arg);
+int show_pix_fmts(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the standard channel layouts supported by
  * the program.
  * This option processing function does not utilize the arguments.
  */
-int show_layouts(void* optctx, const char* opt, const char* arg);
+int show_layouts(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the sample formats supported by the
  * program.
  */
-int show_sample_fmts(void* optctx, const char* opt, const char* arg);
+int show_sample_fmts(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 /**
  * Print a listing containing all the color names and values recognized
  * by the program.
  */
-int show_colors(void* optctx, const char* opt, const char* arg);
+int show_colors(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 #define media_type_string av_get_media_type_string
 

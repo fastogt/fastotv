@@ -75,6 +75,9 @@ struct ComplexOptions {
   AVDictionary* swr_opts;
   AVDictionary* format_opts;
   AVDictionary* codec_opts;
+
+private:
+ DISALLOW_COPY_AND_ASSIGN(ComplexOptions);
 };
 
 }  // namespace core
