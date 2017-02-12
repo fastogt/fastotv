@@ -7,12 +7,9 @@ import shutil
 import platform
 from pybuild_utils.base import system_info
 
-VAAPI_ROOT = "https://www.freedesktop.org/software/vaapi/releases/"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
 
-ARCH_VAAPI_COMP = "bz2"
-ARCH_VAAPI_EXT = "tar." + ARCH_VAAPI_COMP
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
 ARCH_FFMPEG_COMP = "bz2"
@@ -41,12 +38,11 @@ def splitext(path):
 
 def print_usage():
     print("Usage:\n"
-        "[required] argv[1] vaapi version(1.7.3)\n"
-        "[required] argv[2] sdl2 version(2.0.5)\n"
-        "[required] argv[3] ffmpeg version(3.2.2)\n"
-        "[optional] argv[4] platform\n"
-        "[optional] argv[5] architecture\n"
-        "[optional] argv[6] prefix path\n")
+        "[required] argv[1] sdl2 version(2.0.5)\n"
+        "[required] argv[2] ffmpeg version(3.2.2)\n"
+        "[optional] argv[3] platform\n"
+        "[optional] argv[4] architecture\n"
+        "[optional] argv[5] prefix path\n")
 
 def print_message(progress, message):
     print message.message()
@@ -96,6 +92,20 @@ def build_ffmpeg(url, prefix_path):
     subprocess.call(['make', 'install'])
     os.chdir(pwd)
     shutil.rmtree(folder)
+    
+def git_clone(self, url):
+    pwd = os.getcwd()
+    common_git_clone_line = ['git', 'clone']
+    common_git_clone_line.append(url)
+    cloned_dir = os.path.splitext(url.rsplit('/', 1)[-1])[0]
+    common_git_clone_line.append(cloned_dir)
+    run_command.run_command_cb(common_git_clone_line, git_policy)
+    os.chdir(cloned_dir)
+
+    common_git_clone_init_line = ['git', 'submodule', 'update', '--init', '--recursive']
+    run_command.run_command_cb(common_git_clone_init_line, git_policy)
+    os.chdir(pwd)
+    return os.path.join(pwd, cloned_dir)
 
 class BuildRequest(object):
     def __init__(self, platform, arch_bit):
@@ -111,7 +121,25 @@ class BuildRequest(object):
         self.platform_ = system_info.Platform(platform_or_none.name(), arch, platform_or_none.package_types())
         print("Build request for platform: {0}, arch: {1} created".format(platform, arch.name()))
 
+    def git_clone(self, url):
+        pwd = os.getcwd()
+        common_git_clone_line = ['git', 'clone']
+        common_git_clone_line.append(url)
+        cloned_dir = os.path.splitext(url.rsplit('/', 1)[-1])[0]
+        common_git_clone_line.append(cloned_dir)
+        subprocess.call(common_git_clone_line)
+        os.chdir(cloned_dir)
+
+        common_git_clone_init_line = ['git', 'submodule', 'update', '--init', '--recursive']
+        subprocess.call(common_git_clone_init_line)
+        os.chdir(pwd)
+        return os.path.join(pwd, cloned_dir)
+
     def build(self, dir_path, prefix_path):
+        cmake_project_root_abs_path = '..'
+        if not os.path.exists(cmake_project_root_abs_path):
+            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
+
         if prefix_path == None:
             prefix_path = self.platform_.arch().default_install_prefix_path()
 
@@ -129,9 +157,9 @@ class BuildRequest(object):
         if platform_name == 'linux':
             distr = get_dist()
             if distr  == 'DEBIAN':
-                dep_libs = ['gcc', 'g++', 'pkg-config', 'gettext', 'libmount-dev', 'libpcre3-dev', 'yasm']
+                dep_libs = ['gcc', 'g++', 'yasm', 'cmake', 'pkg-config', 'libz-dev', 'libbz2-dev', 'libpcre3-dev', 'libx11-dev', 'libxext-dev', 'xserver-xorg']
             elif distr == 'RHEL':
-                dep_libs = ['gcc', 'gcc-c++', 'pkgconfig', 'gettext', 'libmount-devel', 'pcre-devel', 'yasm']
+                dep_libs = ['gcc', 'gcc-c++', 'yasm', 'cmake', 'pkgconfig', 'libz-devel', 'libbz2-devel', 'pcre-devel', 'libx11-devel', 'libxext-devel', 'xserver-xorg']
 
             for lib in dep_libs:
                 if distr  == 'DEBIAN':
@@ -147,11 +175,28 @@ class BuildRequest(object):
             for lib in dep_libs:
                 subprocess.call(['pacman', '-S', lib])
 
+        # project static options
+        prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(prefix_path)
+
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE', prefix_args]
+        try:
+            cloned_dir = self.git_clone('https://github.com/fastogt/common.git')
+            os.chdir(cloned_dir)
+
+            os.mkdir('build_cmake_release')
+            os.chdir('build_cmake_release')
+            common_cmake_line = list(cmake_line)
+            common_cmake_line.append('-DQT_ENABLED=OFF')
+            subprocess.call(common_cmake_line)
+            subprocess.call(['make', 'install'])
+            os.chdir(abs_dir_path)
+            shutil.rmtree(cloned_dir)
+        except Exception as ex:
+            os.chdir(abs_dir_path)
+            raise ex
+
         # build from sources
-        source_urls = ['{0}libva/libva-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT),
-                       '{0}libva-intel-driver/libva-intel-driver-{1}.{2}'.format(VAAPI_ROOT, vaapi_version, ARCH_VAAPI_EXT),
-                       '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)
-                       ]
+        source_urls = ['{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)]
 
         for url in source_urls:
             file = download_file(url)
@@ -168,35 +213,29 @@ if __name__ == "__main__":
     argc = len(sys.argv)
 
     if argc > 1:
-        vaapi_version = sys.argv[1]
+        sdl_version = sys.argv[1]
     else:
         print_usage()
         sys.exit(1)
 
     if argc > 2:
-        sdl_version = sys.argv[2]
+        ffmpeg_version = sys.argv[2]
     else:
         print_usage()
         sys.exit(1)
 
     if argc > 3:
-        ffmpeg_version = sys.argv[3]
-    else:
-        print_usage()
-        sys.exit(1)
-
-    if argc > 4:
-        platform_str = sys.argv[4]
+        platform_str = sys.argv[3]
     else:
         platform_str = system_info.get_os()
 
-    if argc > 5:
-        arch_bit_str = sys.argv[5]
+    if argc > 4:
+        arch_bit_str = sys.argv[4]
     else:
         arch_bit_str = system_info.get_arch_bit()
 
-    if argc > 6:
-        prefix_path = sys.argv[6]
+    if argc > 5:
+        prefix_path = sys.argv[5]
     else:
         prefix_path = None
 

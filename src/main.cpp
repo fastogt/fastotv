@@ -360,7 +360,7 @@ int lockmgr(void** mtx, enum AVLockOp op) {
   return 1;
 }
 
-void do_init(int argc, char** argv, DictionaryOptions** opt) {
+DictionaryOptions* do_init(int argc, char** argv) {
   init_dynload();
 
   av_log_set_flags(AV_LOG_SKIP_REPEATED);
@@ -384,7 +384,7 @@ void do_init(int argc, char** argv, DictionaryOptions** opt) {
   show_banner(argc, argv, options);
 
   parse_options(argc, argv, options, lopt);
-  *opt = lopt;
+  return lopt;
 }
 
 /* handle an event sent by the GUI */
@@ -439,8 +439,7 @@ void show_help_default(const char* opt, const char* arg) {
 /* Called from the main */
 int main(int argc, char** argv) {
   g_options.autorotate = 1;  // fix me
-  DictionaryOptions* dict;
-  do_init(argc, argv, &dict);
+  DictionaryOptions* dict = do_init(argc, argv);
 
   if (g_options.input_filename.empty()) {
     show_usage();
