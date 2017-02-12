@@ -35,7 +35,7 @@ double VideoFrame::VpDuration(core::VideoFrame* vp,
                               double max_frame_duration) {
   if (vp->serial == nextvp->serial) {
     double duration = nextvp->pts - vp->pts;
-    if (isnan(duration) || duration <= 0 || duration > max_frame_duration) {
+    if (std::isnan(duration) || duration <= 0 || duration > max_frame_duration) {
       return vp->duration;
     } else {
       return duration;

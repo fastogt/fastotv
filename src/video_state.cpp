@@ -473,7 +473,7 @@ double VideoState::ComputeTargetDelay(double delay) const {
        delay to compute the threshold. I still don't know
        if it is the best guess */
     double sync_threshold = FFMAX(AV_SYNC_THRESHOLD_MIN, FFMIN(AV_SYNC_THRESHOLD_MAX, delay));
-    if (!isnan(diff) && fabs(diff) < max_frame_duration_) {
+    if (!std::isnan(diff) && fabs(diff) < max_frame_duration_) {
       if (diff <= -sync_threshold) {
         delay = FFMAX(0, delay + diff);
       } else if (diff >= sync_threshold && delay > AV_SYNC_FRAMEDUP_THRESHOLD) {
@@ -550,7 +550,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
       {
         const double pts = vp->pts;
         const int serial = vp->serial;
-        if (!isnan(pts)) {
+        if (!std::isnan(pts)) {
           /* update current video pts */
           vstream_->SetClock(pts, serial);
         }
@@ -1006,7 +1006,7 @@ int VideoState::Exec() {
               StreamSeek(pos, incr, 1);
             } else {
               pos = GetMasterClock();
-              if (isnan(pos)) {
+              if (std::isnan(pos)) {
                 pos = static_cast<double>(seek_pos_) / AV_TIME_BASE;
               }
               pos += incr;
@@ -1283,7 +1283,7 @@ int VideoState::SynchronizeAudio(int nb_samples) {
   /* if not master, then we try to remove or add samples to correct the clock */
   if (GetMasterSyncType() != core::AV_SYNC_AUDIO_MASTER) {
     double diff = astream_->GetClock() - GetMasterClock();
-    if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
+    if (!std::isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD) {
       audio_diff_cum_ = diff + audio_diff_avg_coef_ * audio_diff_cum_;
       if (audio_diff_avg_count_ < AUDIO_DIFF_AVG_NB) {
         /* not enough measures to have a correct estimate */
@@ -1412,7 +1412,7 @@ int VideoState::AudioDecodeFrame() {
   double audio_clock0 = audio_clock;
 #endif
   /* update the audio clock with the pts */
-  if (!isnan(af->pts)) {
+  if (!std::isnan(af->pts)) {
     audio_clock_ = af->pts + static_cast<double>(af->frame->nb_samples) / af->frame->sample_rate;
   } else {
     audio_clock_ = NAN;
@@ -1468,7 +1468,7 @@ void VideoState::sdl_audio_callback(void* opaque, Uint8* stream, int len) {
   }
   is->audio_write_buf_size_ = is->audio_buf_size_ - is->audio_buf_index_;
   /* Let's assume the audio driver that is used by SDL has two periods. */
-  if (!isnan(is->audio_clock_)) {
+  if (!std::isnan(is->audio_clock_)) {
     const double pts = is->audio_clock_ -
                        static_cast<double>(2 * is->audio_hw_buf_size_ + is->audio_write_buf_size_) /
                            is->audio_tgt_.bytes_per_sec;
@@ -1552,7 +1552,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
       if (frame->pts != AV_NOPTS_VALUE) {
         double diff = dpts - GetMasterClock();
         core::PacketQueue* video_packet_queue = vstream_->Queue();
-        if (!isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
+        if (!std::isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&
             diff - frame_last_filter_delay_ < 0 && viddec_->GetPktSerial() == vstream_->Serial() &&
             video_packet_queue->NbPackets()) {
           stats_.frame_drops_early++;
