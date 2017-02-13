@@ -159,7 +159,7 @@ class BuildRequest(object):
             if distr  == 'DEBIAN':
                 dep_libs = ['gcc', 'g++', 'yasm', 'cmake', 'pkg-config', 'libz-dev', 'libbz2-dev', 'libasound2-dev', 'libpcre3-dev', 'libx11-dev', 'libegl1-mesa-dev', 'libxext-dev', 'libdrm-dev', 'xorg-dev', 'xutils-dev']
             elif distr == 'RHEL':
-                dep_libs = ['gcc', 'gcc-c++', 'yasm', 'cmake', 'pkgconfig', 'libz-devel', 'libbz2-devel', 'libasound2-dev', 'pcre-devel', 'libx11-devel', 'libxext-devel', 'libegl1-mesa-devel', 'libdrm-devel', 'xorg-devel', 'xorg-x11-server-devel']
+                dep_libs = ['gcc', 'gcc-c++', 'yasm', 'cmake', 'pkgconfig', 'libz-devel', 'libbz2-devel', 'libasound2-dev', 'pcre-devel', 'libx11-devel', 'libxext-devel', 'mesa-libEGL-devel', 'libdrm-devel', 'xorg-devel', 'xorg-x11-server-devel']
 
             for lib in dep_libs:
                 if distr  == 'DEBIAN':
