@@ -12,6 +12,7 @@ extern "C" {
 }
 
 #include <common/macros.h>
+#include <common/convert2string.h>
 
 #define HAS_ARG 0x0001
 #define OPT_BOOL 0x0002
@@ -88,40 +89,35 @@ int opt_opencl(const char* opt, const char* arg, DictionaryOptions* dopt);
 int opt_opencl_bench(const char* opt, const char* arg, DictionaryOptions* dopt);
 #endif
 
-/**
- * Parse a string and return its corresponding value as a double.
- * Exit from the application if the string cannot be correctly
- * parsed or the corresponding value is invalid.
- *
- * @param context the context of the value to be set (e.g. the
- * corresponding command line option name)
- * @param numstr the string to be parsed
- * @param type the type (OPT_INT64 or OPT_FLOAT) as which the
- * string should be parsed
- * @param min the minimum valid accepted value
- * @param max the maximum valid accepted value
- */
-double parse_number_or_die(const char* context,
-                           const char* numstr,
-                           int type,
-                           double min,
-                           double max);
+bool parse_bool(const std::string& bool_str, bool* result);
 
-/**
- * Parse a string specifying a time and return its corresponding
- * value as a number of microseconds. Exit from the application if
- * the string cannot be correctly parsed.
- *
- * @param context the context of the value to be set (e.g. the
- * corresponding command line option name)
- * @param timestr the string to be parsed
- * @param is_duration a flag which tells how to interpret timestr, if
- * not zero timestr is interpreted as a duration, otherwise as a
- * date
- *
- * @see av_parse_time()
- */
-int64_t parse_time_or_die(const char* context, const char* timestr, int is_duration);
+template <typename T>
+bool parse_number(const std::string& number_str, int type, T min, T max, T* result) {
+  if (number_str.empty()) {
+    WARNING_LOG() << "Can't parse value(number) invalid arguments!";
+    return false;
+  }
+
+  T lresult = common::ConvertFromString<T>(number_str);
+  if (lresult < min || lresult > max) {
+    WARNING_LOG() << "The value for " << number_str << " was " << lresult << " which is not within "
+                  << min << " - " << max;
+    return false;
+  } else if (type == OPT_INT64 && static_cast<int64_t>(lresult) != lresult) {
+    WARNING_LOG() << "Expected int64 for " << number_str << " but found: " << lresult;
+    return false;
+  } else if (type == OPT_INT && static_cast<int>(lresult) != lresult) {
+    WARNING_LOG() << "Expected int for " << number_str << " but found: " << lresult;
+    return false;
+  } else {
+    if (result) {
+      *result = lresult;
+    }
+    return true;
+  }
+}
+
+bool parse_time(const std::string& time_str, bool is_duration, int64_t* result);
 
 typedef struct OptionDef {
   const char* name;

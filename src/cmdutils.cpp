@@ -273,25 +273,48 @@ int write_option(const OptionDef* po, const char* opt, const char* arg, Dictiona
   /* new-style options contain an offset into optctx, old-style address of
    * a global var*/
   void* dst = po->u.dst_ptr;
-
   if (po->flags & OPT_STRING) {
-    char* str;
-    str = av_strdup(arg);
+    char* str = av_strdup(arg);
     av_freep(dst);
     if (!str) {
       return AVERROR(ENOMEM);
     }
-    *(char**)dst = str;
-  } else if (po->flags & OPT_BOOL || po->flags & OPT_INT) {
-    *(int*)dst = parse_number_or_die(opt, arg, OPT_INT64, INT_MIN, INT_MAX);
+    char** char_ptr = static_cast<char**>(dst);
+    *char_ptr = str;
+  } else if (po->flags & OPT_BOOL) {
+    bool* bool_ptr = static_cast<bool*>(dst);
+    if (!parse_bool(arg, bool_ptr)) {
+      exit_program(1);
+    }
+  } else if (po->flags & OPT_INT) {
+    int* int_ptr = static_cast<int*>(dst);
+    if (!parse_number(arg, OPT_INT, std::numeric_limits<int>::min(),
+                      std::numeric_limits<int>::max(), int_ptr)) {
+      exit_program(1);
+    }
   } else if (po->flags & OPT_INT64) {
-    *(int64_t*)dst = parse_number_or_die(opt, arg, OPT_INT64, INT64_MIN, INT64_MAX);
+    int64_t* int_ptr = static_cast<int64_t*>(dst);
+    if (!parse_number(arg, OPT_INT, std::numeric_limits<int64_t>::min(),
+                      std::numeric_limits<int64_t>::max(), int_ptr)) {
+      exit_program(1);
+    }
   } else if (po->flags & OPT_TIME) {
-    *(int64_t*)dst = parse_time_or_die(opt, arg, 1);
+    int64_t* time_ptr = static_cast<int64_t*>(dst);
+    if (!parse_time(arg, true, time_ptr)) {
+      exit_program(1);
+    }
   } else if (po->flags & OPT_FLOAT) {
-    *(float*)dst = parse_number_or_die(opt, arg, OPT_FLOAT, -INFINITY, INFINITY);
+    float* float_ptr = static_cast<float*>(dst);
+    if (!parse_number(arg, OPT_FLOAT, std::numeric_limits<float>::min(),
+                      std::numeric_limits<float>::max(), float_ptr)) {
+      exit_program(1);
+    }
   } else if (po->flags & OPT_DOUBLE) {
-    *(double*)dst = parse_number_or_die(opt, arg, OPT_DOUBLE, -INFINITY, INFINITY);
+    double* double_ptr = static_cast<double*>(dst);
+    if (!parse_number(arg, OPT_DOUBLE, std::numeric_limits<double>::min(),
+                      std::numeric_limits<double>::max(), double_ptr)) {
+      exit_program(1);
+    }
   } else if (po->u.func_arg) {
     int ret = po->u.func_arg(opt, arg, dopt);
     if (ret < 0) {
@@ -809,38 +832,37 @@ void exit_program(int ret) {
   exit(ret);
 }
 
-double parse_number_or_die(const char* context,
-                           const char* numstr,
-                           int type,
-                           double min,
-                           double max) {
-  char* tail;
-  const char* error;
-  double d = av_strtod(numstr, &tail);
-  if (*tail) {
-    error = "Expected number for %s but found: %s\n";
-  } else if (d < min || d > max) {
-    error = "The value for %s was %s which is not within %f - %f\n";
-  } else if (type == OPT_INT64 && (int64_t)d != d) {
-    error = "Expected int64 for %s but found %s\n";
-  } else if (type == OPT_INT && (int)d != d) {
-    error = "Expected int for %s but found %s\n";
-  } else {
-    return d;
+bool parse_bool(const std::string& bool_str, bool* result) {
+  if (bool_str.empty()) {
+    WARNING_LOG() << "Can't parse value(bool) invalid arguments!";
+    return false;
   }
-  av_log(NULL, AV_LOG_FATAL, error, context, numstr, min, max);
-  exit_program(1);
-  return 0;
+
+  std::string bool_str_copy = bool_str;
+  std::transform(bool_str_copy.begin(), bool_str_copy.end(), bool_str_copy.begin(), ::tolower);
+  if (result) {
+    *result = bool_str_copy == "true";
+  }
+  return true;
 }
 
-int64_t parse_time_or_die(const char* context, const char* timestr, int is_duration) {
-  int64_t us;
-  if (av_parse_time(&us, timestr, is_duration) < 0) {
-    av_log(NULL, AV_LOG_FATAL, "Invalid %s specification for %s: %s\n",
-           is_duration ? "duration" : "date", context, timestr);
-    exit_program(1);
+bool parse_time(const std::string& time_str, bool is_duration, int64_t* result) {
+  if (time_str.empty()) {
+    WARNING_LOG() << "Can't parse value(time) invalid arguments!";
+    return false;
   }
-  return us;
+
+  int64_t us;
+  if (av_parse_time(&us, time_str.c_str(), is_duration) < 0) {
+    const char* res = is_duration ? "duration" : "date";
+    WARNING_LOG() << "Invalid specification for " << res << ": " << time_str;
+    return false;
+  }
+
+  if (result) {
+    *result = us;
+  }
+  return true;
 }
 
 void show_help_options(const OptionDef* options,
@@ -893,10 +915,10 @@ int parse_option(const char* opt,
     /* handle 'no' bool option */
     po = find_option(options, opt + 2);
     if ((po->name && (po->flags & OPT_BOOL))) {
-      arg = "0";
+      arg = "false";
     }
   } else if (po->flags & OPT_BOOL) {
-    arg = "1";
+    arg = "true";
   }
 
   if (!po->name) {
@@ -1411,16 +1433,17 @@ int show_layouts(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(arg);
 
   uint64_t layout, j;
-  const char *name, *descr;
+  const char* name;
 
   printf(
       "Individual channels:\n"
       "NAME           DESCRIPTION\n");
   for (int i = 0; i < 63; i++) {
     name = av_get_channel_name((uint64_t)1 << i);
-    if (!name)
+    if (!name) {
       continue;
-    descr = av_get_channel_description((uint64_t)1 << i);
+    }
+    const char* descr = av_get_channel_description(static_cast<uint64_t>(1) << i);
     printf("%-14s %s\n", name, descr);
   }
   printf(

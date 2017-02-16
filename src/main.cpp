@@ -3,6 +3,8 @@
 #include <limits.h>
 #include <signal.h>
 
+#include <numeric>
+
 #include <common/macros.h>
 
 extern "C" {
@@ -41,16 +43,22 @@ int opt_frame_size(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
 static int opt_width(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
+  UNUSED(opt);
 
-  g_options.screen_width = static_cast<int>(parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX));
-  return 0;
+  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(), &g_options.screen_width)) {
+    return ERROR_RESULT_VALUE;
+  }
+  return SUCCESS_RESULT_VALUE;
 }
 
 int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
+  UNUSED(opt);
 
-  g_options.screen_height = static_cast<int>(parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX));
-  return 0;
+  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(), &g_options.screen_height)) {
+    return ERROR_RESULT_VALUE;
+  }
+  return SUCCESS_RESULT_VALUE;
 }
 
 int opt_format(const char* opt, const char* arg, DictionaryOptions* dopt) {
@@ -89,28 +97,46 @@ int opt_sync(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
 int opt_seek(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
+  UNUSED(opt);
 
-  g_options.start_time = parse_time_or_die(opt, arg, 1);
-  return 0;
+  if (!parse_time(arg, true, &g_options.start_time)) {
+    return ERROR_RESULT_VALUE;
+  }
+
+  return SUCCESS_RESULT_VALUE;
 }
 
 int opt_duration(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
+  UNUSED(opt);
 
-  g_options.duration = parse_time_or_die(opt, arg, 1);
-  return 0;
+  if (!parse_time(arg, true, &g_options.duration)) {
+    return ERROR_RESULT_VALUE;
+  }
+
+  return SUCCESS_RESULT_VALUE;
 }
 
 int opt_show_mode(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
+  UNUSED(opt);
 
-  g_options.show_mode = !strcmp(arg, "video")
-                            ? core::SHOW_MODE_VIDEO
-                            : !strcmp(arg, "waves")
-                                  ? core::SHOW_MODE_WAVES
-                                  : static_cast<core::ShowMode>(parse_number_or_die(
-                                        opt, arg, OPT_INT, 0, core::SHOW_MODE_NB - 1));
-  return 0;
+  if (strcmp(arg, "video") == 0) {
+    g_options.show_mode = core::SHOW_MODE_VIDEO;
+    return SUCCESS_RESULT_VALUE;
+  }
+
+  if (strcmp(arg, "waves") == 0) {
+    g_options.show_mode = core::SHOW_MODE_WAVES;
+    return SUCCESS_RESULT_VALUE;
+  }
+
+  int mode = 0;
+  if (!parse_number(arg, OPT_INT, 0, core::SHOW_MODE_NB - 1, &mode)) {
+    return ERROR_RESULT_VALUE;
+  }
+  g_options.show_mode = static_cast<core::ShowMode>(mode);
+  return SUCCESS_RESULT_VALUE;
 }
 
 int opt_input_file(const char* opt, const char* arg, DictionaryOptions* dopt) {
@@ -438,6 +464,17 @@ void show_help_default(const char* opt, const char* arg) {
 
 /* Called from the main */
 int main(int argc, char** argv) {
+#if defined(NDEBUG)
+  common::logging::LEVEL_LOG level = common::logging::L_INFO;
+#else
+  common::logging::LEVEL_LOG level = common::logging::L_DEBUG;
+#endif
+#if defined(LOG_TO_FILE)
+  std::string log_path = common::file_system::prepare_path("~/" PROJECT_NAME_LOWERCASE ".log");
+  INIT_LOGGER(PROJECT_NAME_TITLE, log_path, level);
+#else
+  INIT_LOGGER(PROJECT_NAME_TITLE, level);
+#endif
   g_options.autorotate = 1;  // fix me
   DictionaryOptions* dict = do_init(argc, argv);
 
