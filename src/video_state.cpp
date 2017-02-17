@@ -7,6 +7,7 @@ extern "C" {
 
 #include <common/macros.h>
 #include <common/utils.h>
+#include <common/sprintf.h>
 
 #include "core/utils.h"
 #include "core/types.h"
@@ -128,10 +129,10 @@ VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexO
       window_(NULL),
       stats_() {
   if (opt->startup_volume < 0) {
-    av_log(NULL, AV_LOG_WARNING, "-volume=%d < 0, setting to 0\n", opt->startup_volume);
+    WARNING_LOG() << "-volume=" << opt->startup_volume << " < 0, setting to 0";
   }
   if (opt->startup_volume > 100) {
-    av_log(NULL, AV_LOG_WARNING, "-volume=%d > 100, setting to 100\n", opt->startup_volume);
+    WARNING_LOG() << "-volume=" << opt->startup_volume << " > 100, setting to 100";
   }
   opt->startup_volume = av_clip(opt->startup_volume, 0, 100);
   opt->startup_volume =
@@ -229,9 +230,9 @@ int VideoState::StreamComponentOpen(int stream_index) {
   }
   if (!codec) {
     if (forced_codec_name) {
-      av_log(NULL, AV_LOG_WARNING, "No codec could be found with name '%s'\n", forced_codec_name);
+      WARNING_LOG() << "No codec could be found with name '" << forced_codec_name << "'";
     } else {
-      av_log(NULL, AV_LOG_WARNING, "No codec could be found with id %d\n", avctx->codec_id);
+      WARNING_LOG() << "No codec could be found with id " << avctx->codec_id;
     }
     ret = AVERROR(EINVAL);
     avcodec_free_context(&avctx);
@@ -241,8 +242,8 @@ int VideoState::StreamComponentOpen(int stream_index) {
   int stream_lowres = opt_->lowres;
   avctx->codec_id = codec->id;
   if (stream_lowres > av_codec_get_max_lowres(codec)) {
-    av_log(avctx, AV_LOG_WARNING, "The maximum value for lowres supported by the decoder is %d\n",
-           av_codec_get_max_lowres(codec));
+    WARNING_LOG() << "The maximum value for lowres supported by the decoder is "
+                  << av_codec_get_max_lowres(codec);
     stream_lowres = av_codec_get_max_lowres(codec);
   }
   av_codec_set_lowres(avctx, stream_lowres);
@@ -281,7 +282,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
 
   AVDictionaryEntry* t = av_dict_get(opts, "", NULL, AV_DICT_IGNORE_SUFFIX);
   if (t) {
-    av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
+    ERROR_LOG() << "Option " << t->key << " not found.";
     avcodec_free_context(&avctx);
     av_dict_free(&opts);
     return AVERROR_OPTION_NOT_FOUND;
@@ -483,7 +484,7 @@ double VideoState::ComputeTargetDelay(double delay) const {
       }
     }
   }
-  av_log(NULL, AV_LOG_TRACE, "video: delay=%0.3f A-V=%f\n", delay, -diff);
+  DEBUG_LOG() << "video: delay=" << delay << " A-V=" << -diff;
   return delay;
 }
 
@@ -606,10 +607,10 @@ void VideoState::VideoRefresh(double* remaining_time) {
       int64_t fpts = video_st ? viddec_->PtsCorrectionNumFaultyPts() : 0;
       const char* fmt =
           (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
-      av_log(NULL, AV_LOG_INFO,
-             "%7.2f %s:%7.3f fd=%4d aq=%5dKB vq=%5dKB f=%" PRId64 "/%" PRId64 "   \r",
-             GetMasterClock(), fmt, av_diff, stats_.FrameDrops(), aqsize / 1024, vqsize / 1024,
-             fdts, fpts);
+      common::logging::LogMessage(common::logging::L_INFO, false).stream()
+          << GetMasterClock() << " " << fmt << ":" << av_diff << " fd=" << stats_.FrameDrops()
+          << " aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts << "/" << fpts
+          << "\r";
       fflush(stdout);
       last_time = cur_time;
     }
@@ -646,13 +647,12 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
       renderer_ =
           SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
       if (!renderer_) {
-        av_log(NULL, AV_LOG_WARNING, "Failed to initialize a hardware accelerated renderer: %s\n",
-               SDL_GetError());
+        WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
         renderer_ = SDL_CreateRenderer(window_, -1, 0);
       }
       if (renderer_) {
         if (!SDL_GetRendererInfo(renderer_, &info)) {
-          av_log(NULL, AV_LOG_VERBOSE, "Initialized %s renderer.\n", info.name);
+          DEBUG_LOG() << "Initialized " << info.name << " renderer.";
         }
       }
     }
@@ -661,7 +661,7 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
   }
 
   if (!window_ || !renderer_) {
-    av_log(NULL, AV_LOG_FATAL, "SDL: could not set video mode - exiting\n");
+    ERROR_LOG() << "SDL: could not set video mode - exiting";
     return ERROR_RESULT_VALUE;
   }
 
@@ -688,11 +688,12 @@ int VideoState::AllocPicture() {
   if (ReallocTexture(&vp->bmp, sdl_format, vp->width, vp->height, SDL_BLENDMODE_NONE, 0) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
-    av_log(NULL, AV_LOG_FATAL,
-           "Error: the video system does not support an image\n"
-           "size of %dx%d pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-           "to reduce the image size.\n",
-           vp->width, vp->height);
+
+    ERROR_LOG() << "Error: the video system does not support an image\n"
+                   "size of "
+                << vp->width << "x" << vp->height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return ERROR_RESULT_VALUE;
   }
 
@@ -1072,9 +1073,9 @@ int VideoState::Exec() {
           hh = ns / 3600;
           mm = (ns % 3600) / 60;
           ss = (ns % 60);
-          av_log(NULL, AV_LOG_INFO,
-                 "Seek to %2.0f%% (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)       \n",
-                 frac * 100, hh, mm, ss, thh, tmm, tss);
+          INFO_LOG() << "Seek to " << frac * 100
+                     << common::MemSPrintf(" (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)", hh,
+                                           mm, ss, thh, tmm, tss);
           int64_t ts = frac * ic_->duration;
           if (ic_->start_time != AV_NOPTS_VALUE) {
             ts += ic_->start_time;
@@ -1184,7 +1185,7 @@ void VideoState::SeekChapter(int incr) {
     return;
   }
 
-  av_log(NULL, AV_LOG_VERBOSE, "Seeking to chapter %d.\n", ii);
+  DEBUG_LOG() << "Seeking to chapter " << ii;
   int64_t rq = av_rescale_q(ic_->chapters[ii]->start, ic_->chapters[ii]->time_base, AV_TIME_BASE_Q);
   StreamSeek(rq, 0, 0);
 }
@@ -1253,9 +1254,8 @@ the_end:
   if (p && stream_index != invalid_stream_index) {
     stream_index = p->stream_index[stream_index];
   }
-  av_log(NULL, AV_LOG_INFO, "Switch %s stream from #%d to #%d\n",
-         av_get_media_type_string(static_cast<AVMediaType>(codec_type)), old_index, stream_index);
-
+  INFO_LOG() << "Switch " << av_get_media_type_string(static_cast<AVMediaType>(codec_type))
+             << "  stream from #" << old_index << " to #" << stream_index;
   StreamComponentClose(old_index);
   StreamComponentOpen(stream_index);
 }
@@ -1297,8 +1297,9 @@ int VideoState::SynchronizeAudio(int nb_samples) {
           int max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100));
           wanted_nb_samples = av_clip(wanted_nb_samples, min_nb_samples, max_nb_samples);
         }
-        av_log(NULL, AV_LOG_TRACE, "diff=%f adiff=%f sample_diff=%d apts=%0.3f %f\n", diff,
-               avg_diff, wanted_nb_samples - nb_samples, audio_clock_, audio_diff_threshold_);
+        DEBUG_LOG() << "diff=" << diff << " adiff=" << avg_diff
+                    << " sample_diff=" << wanted_nb_samples - nb_samples << " apts=" << audio_clock_
+                    << " " << audio_diff_threshold_;
       }
     } else {
       /* too big difference : may be initial PTS errors, so
@@ -1352,12 +1353,11 @@ int VideoState::AudioDecodeFrame() {
     swr_ctx_ = swr_alloc_set_opts(NULL, audio_tgt_.channel_layout, audio_tgt_.fmt, audio_tgt_.freq,
                                   dec_channel_layout, sample_fmt, af->frame->sample_rate, 0, NULL);
     if (!swr_ctx_ || swr_init(swr_ctx_) < 0) {
-      av_log(NULL, AV_LOG_ERROR,
-             "Cannot create sample rate converter for conversion of %d Hz %s %d channels to %d Hz "
-             "%s %d channels!\n",
-             af->frame->sample_rate, av_get_sample_fmt_name(sample_fmt),
-             av_frame_get_channels(af->frame), audio_tgt_.freq,
-             av_get_sample_fmt_name(audio_tgt_.fmt), audio_tgt_.channels);
+      ERROR_LOG() << "Cannot create sample rate converter for conversion of "
+                  << af->frame->sample_rate << " Hz " << av_get_sample_fmt_name(sample_fmt) << " "
+                  << av_frame_get_channels(af->frame) << " channels to " << audio_tgt_.freq
+                  << " Hz " << av_get_sample_fmt_name(audio_tgt_.fmt) << " " << audio_tgt_.channels
+                  << " channels!";
       swr_free(&swr_ctx_);
       return -1;
     }
@@ -1375,14 +1375,14 @@ int VideoState::AudioDecodeFrame() {
     int out_size =
         av_samples_get_buffer_size(NULL, audio_tgt_.channels, out_count, audio_tgt_.fmt, 0);
     if (out_size < 0) {
-      av_log(NULL, AV_LOG_ERROR, "av_samples_get_buffer_size() failed\n");
+      ERROR_LOG() << "av_samples_get_buffer_size() failed";
       return -1;
     }
     if (wanted_nb_samples != af->frame->nb_samples) {
       if (swr_set_compensation(swr_ctx_, (wanted_nb_samples - af->frame->nb_samples) *
                                              audio_tgt_.freq / af->frame->sample_rate,
                                wanted_nb_samples * audio_tgt_.freq / af->frame->sample_rate) < 0) {
-        av_log(NULL, AV_LOG_ERROR, "swr_set_compensation() failed\n");
+        ERROR_LOG() << "swr_set_compensation() failed";
         return -1;
       }
     }
@@ -1392,11 +1392,11 @@ int VideoState::AudioDecodeFrame() {
     }
     int len2 = swr_convert(swr_ctx_, out, out_count, in, af->frame->nb_samples);
     if (len2 < 0) {
-      av_log(NULL, AV_LOG_ERROR, "swr_convert() failed\n");
+      ERROR_LOG() << "swr_convert() failed";
       return -1;
     }
     if (len2 == out_count) {
-      av_log(NULL, AV_LOG_WARNING, "audio buffer is probably too small\n");
+      WARNING_LOG() << "audio buffer is probably too small";
       if (swr_init(swr_ctx_) < 0) {
         swr_free(&swr_ctx_);
       }
@@ -1572,7 +1572,7 @@ int VideoState::ReadThread() {
   const char* in_filename = common::utils::c_strornull(opt_->input_filename);
   AVFormatContext* ic = avformat_alloc_context();
   if (!ic) {
-    av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
+    ERROR_LOG() << "Could not allocate context.";
     SDL_Event event;
     event.type = FF_QUIT_EVENT;
     event.user.data1 = this;
@@ -1592,7 +1592,7 @@ int VideoState::ReadThread() {
     if (av_strerror(err, errbuf, sizeof(errbuf)) < 0) {
       errbuf_ptr = strerror(AVUNERROR(err));
     }
-    av_log(NULL, AV_LOG_ERROR, "%s: %s\n", in_filename, errbuf_ptr);
+    ERROR_LOG() << in_filename << ": " << errbuf_ptr;
 
     avformat_close_input(&ic);
     SDL_Event event;
@@ -1607,7 +1607,7 @@ int VideoState::ReadThread() {
 
   AVDictionaryEntry* t = av_dict_get(copt_->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX);
   if (t) {
-    av_log(NULL, AV_LOG_ERROR, "Option %s not found.\n", t->key);
+    ERROR_LOG() << "Option " << t->key << " not found.";
     avformat_close_input(&ic);
     SDL_Event event;
     event.type = FF_QUIT_EVENT;
@@ -1643,7 +1643,7 @@ int VideoState::ReadThread() {
   AVPacket pkt1, *pkt = &pkt1;
   int ret;
   if (err < 0) {
-    av_log(NULL, AV_LOG_WARNING, "%s: could not find codec parameters\n", in_filename);
+    WARNING_LOG() << in_filename << ": could not find codec parameters";
     ret = -1;
     goto fail;
   }
@@ -1673,8 +1673,8 @@ int VideoState::ReadThread() {
     }
     ret = avformat_seek_file(ic, -1, INT64_MIN, timestamp, INT64_MAX, 0);
     if (ret < 0) {
-      av_log(NULL, AV_LOG_WARNING, "%s: could not seek to position %0.3f\n", in_filename,
-             static_cast<double>(timestamp) / AV_TIME_BASE);
+      WARNING_LOG() << in_filename << ": could not seek to position "
+                    << static_cast<double>(timestamp) / AV_TIME_BASE;
     }
   }
 
@@ -1698,8 +1698,8 @@ int VideoState::ReadThread() {
   for (int i = 0; i < static_cast<int>(AVMEDIA_TYPE_NB); i++) {
     const char* want_spec = common::utils::c_strornull(opt_->wanted_stream_spec[i]);
     if (want_spec && st_index[i] == -1) {
-      av_log(NULL, AV_LOG_ERROR, "Stream specifier %s does not match any %s stream\n", want_spec,
-             av_get_media_type_string(static_cast<AVMediaType>(i)));
+      ERROR_LOG() << "Stream specifier " << want_spec << " does not match any "
+                  << av_get_media_type_string(static_cast<AVMediaType>(i)) << " stream";
       st_index[i] = INT_MAX;
     }
   }
@@ -1737,7 +1737,7 @@ int VideoState::ReadThread() {
   }
 
   if (!video_stream->IsOpened() && !audio_stream->IsOpened()) {
-    av_log(NULL, AV_LOG_FATAL, "Failed to open file '%s' or configure filtergraph\n", in_filename);
+    ERROR_LOG() << "Failed to open file '" << in_filename << "' or configure filtergraph";
     ret = -1;
     goto fail;
   }
@@ -1773,7 +1773,7 @@ int VideoState::ReadThread() {
 
       ret = avformat_seek_file(ic, -1, seek_min, seek_target, seek_max, seek_flags_);
       if (ret < 0) {
-        av_log(NULL, AV_LOG_ERROR, "%s: error while seeking\n", ic->filename);
+        ERROR_LOG() << ic->filename << ": error while seeking";
       } else {
         if (video_stream->IsOpened()) {
           video_packet_queue->Flush();
@@ -1909,14 +1909,15 @@ int VideoState::AudioThread() {
         char buf1[1024], buf2[1024];
         av_get_channel_layout_string(buf1, sizeof(buf1), -1, audio_filter_src_.channel_layout);
         av_get_channel_layout_string(buf2, sizeof(buf2), -1, dec_channel_layout);
-        av_log(NULL, AV_LOG_DEBUG,
-               "Audio frame changed from rate:%d ch:%d fmt:%s layout:%s serial:%d to rate:%d ch:%d "
-               "fmt:%s layout:%s serial:%d\n",
-               audio_filter_src_.freq, audio_filter_src_.channels,
-               av_get_sample_fmt_name(audio_filter_src_.fmt), buf1, last_serial, frame->sample_rate,
-               av_frame_get_channels(frame),
-               av_get_sample_fmt_name(static_cast<AVSampleFormat>(frame->format)), buf2,
-               auddec_->GetPktSerial());
+        const std::string mess = common::MemSPrintf(
+            "Audio frame changed from rate:%d ch:%d fmt:%s layout:%s serial:%d to rate:%d ch:%d "
+            "fmt:%s layout:%s serial:%d\n",
+            audio_filter_src_.freq, audio_filter_src_.channels,
+            av_get_sample_fmt_name(audio_filter_src_.fmt), buf1, last_serial, frame->sample_rate,
+            av_frame_get_channels(frame),
+            av_get_sample_fmt_name(static_cast<AVSampleFormat>(frame->format)), buf2,
+            auddec_->GetPktSerial());
+        DEBUG_LOG() << mess;
 
         audio_filter_src_.fmt = static_cast<AVSampleFormat>(frame->format);
         audio_filter_src_.channels = av_frame_get_channels(frame);
@@ -2014,15 +2015,16 @@ int VideoState::VideoThread() {
 #if CONFIG_AVFILTER
     if (last_w != frame->width || last_h != frame->height || last_format != frame->format ||
         last_serial != viddec_->GetPktSerial() || last_vfilter_idx != vfilter_idx_) {
-      av_log(NULL, AV_LOG_DEBUG,
-             "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
-             "serial:%d\n",
-             last_w, last_h,
-             static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")),
-             last_serial, frame->width, frame->height,
-             static_cast<const char*>(av_x_if_null(
-                 av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
-             viddec_->GetPktSerial());
+      const std::string mess = common::MemSPrintf(
+          "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
+          "serial:%d\n",
+          last_w, last_h,
+          static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")),
+          last_serial, frame->width, frame->height,
+          static_cast<const char*>(
+              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          viddec_->GetPktSerial());
+      DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
       std::string vfilters;

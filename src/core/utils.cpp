@@ -7,17 +7,23 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include <common/logger.h>
+
 #include "core/audio_params.h"
 
 /* Calculate actual buffer size keeping in mind not cause too frequent audio callbacks */
 #define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30
+
+namespace {
+const unsigned sws_flags = SWS_BICUBIC;
+}
 
 namespace core {
 
 int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {
   int ret = avformat_match_stream_specifier(s, st, spec);
   if (ret < 0) {
-    av_log(s, AV_LOG_ERROR, "Invalid stream specifier: %s.\n", spec);
+    ERROR_LOG() << "Invalid stream specifier: " << spec;
   }
   return ret;
 }
@@ -97,7 +103,7 @@ AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* cod
 
   AVDictionary** opts = static_cast<AVDictionary**>(av_mallocz_array(s->nb_streams, sizeof(*opts)));
   if (!opts) {
-    av_log(NULL, AV_LOG_ERROR, "Could not alloc memory for stream options.\n");
+    ERROR_LOG() << "Could not alloc memory for stream options.";
     return NULL;
   }
 
@@ -116,21 +122,20 @@ double get_rotation(AVStream* st) {
   if (rotate_tag && *rotate_tag->value && strcmp(rotate_tag->value, "0")) {
     char* tail;
     theta = av_strtod(rotate_tag->value, &tail);
-    if (*tail)
+    if (*tail) {
       theta = 0;
+    }
   }
+
   if (displaymatrix && !theta) {
     theta = -av_display_rotation_get(reinterpret_cast<int32_t*>(displaymatrix));
   }
 
   theta -= 360 * floor(theta / 360 + 0.9 / 360);
 
-  if (fabs(theta - 90 * round(theta / 90)) > 2)
-    av_log(NULL, AV_LOG_WARNING,
-           "Odd rotation angle.\n"
-           "If you want to help, upload a sample "
-           "of this file to ftp://upload.ffmpeg.org/incoming/ "
-           "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
+  if (fabs(theta - 90 * round(theta / 90)) > 2) {
+    WARNING_LOG() << "Odd rotation angle.";
+  }
 
   return theta;
 }
@@ -246,14 +251,12 @@ int compute_mod(int a, int b) {
   return a < 0 ? a % b + b : a % b;
 }
 
-static unsigned sws_flags = SWS_BICUBIC;
-
 int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_convert_ctx) {
   int ret = 0;
   switch (frame->format) {
     case AV_PIX_FMT_YUV420P:
       if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
-        av_log(NULL, AV_LOG_ERROR, "Negative linesize is not supported for YUV.\n");
+        ERROR_LOG() << "Negative linesize is not supported for YUV.";
         return -1;
       }
       ret = SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1],
@@ -282,7 +285,7 @@ int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_con
           SDL_UnlockTexture(tex);
         }
       } else {
-        av_log(NULL, AV_LOG_FATAL, "Cannot initialize the conversion context\n");
+        ERROR_LOG() << "Cannot initialize the conversion context";
         ret = -1;
       }
       break;
@@ -315,7 +318,7 @@ int audio_open(void* opaque,
   wanted_spec.channels = wanted_nb_channels;
   wanted_spec.freq = wanted_sample_rate;
   if (wanted_spec.freq <= 0 || wanted_spec.channels <= 0) {
-    av_log(NULL, AV_LOG_ERROR, "Invalid sample rate or channel count!\n");
+    ERROR_LOG() << "Invalid sample rate or channel count!";
     return -1;
   }
   while (next_sample_rate_idx && next_sample_rates[next_sample_rate_idx] >= wanted_spec.freq) {
@@ -328,27 +331,27 @@ int audio_open(void* opaque,
   wanted_spec.callback = cb;
   wanted_spec.userdata = opaque;
   while (SDL_OpenAudio(&wanted_spec, &spec) < 0) {
-    av_log(NULL, AV_LOG_WARNING, "SDL_OpenAudio (%d channels, %d Hz): %s\n", wanted_spec.channels,
-           wanted_spec.freq, SDL_GetError());
+    WARNING_LOG() << "SDL_OpenAudio (" << wanted_spec.channels
+                  << " channels, %d Hz): " << SDL_GetError();
     wanted_spec.channels = next_nb_channels[FFMIN(7, wanted_spec.channels)];
     if (!wanted_spec.channels) {
       wanted_spec.freq = next_sample_rates[next_sample_rate_idx--];
       wanted_spec.channels = wanted_nb_channels;
       if (!wanted_spec.freq) {
-        av_log(NULL, AV_LOG_ERROR, "No more combinations to try, audio open failed\n");
+        ERROR_LOG() << "No more combinations to try, audio open failed";
         return -1;
       }
     }
     wanted_channel_layout = av_get_default_channel_layout(wanted_spec.channels);
   }
   if (spec.format != AUDIO_S16SYS) {
-    av_log(NULL, AV_LOG_ERROR, "SDL advised audio format %d is not supported!\n", spec.format);
+    ERROR_LOG() << "SDL advised audio format " << spec.format << " is not supported!";
     return -1;
   }
   if (spec.channels != wanted_spec.channels) {
     wanted_channel_layout = av_get_default_channel_layout(spec.channels);
     if (!wanted_channel_layout) {
-      av_log(NULL, AV_LOG_ERROR, "SDL advised channel count %d is not supported!\n", spec.channels);
+      ERROR_LOG() << "SDL advised channel count " << spec.channels << " is not supported!";
       return -1;
     }
   }
@@ -362,7 +365,7 @@ int audio_open(void* opaque,
   audio_hw_params->bytes_per_sec = av_samples_get_buffer_size(
       NULL, audio_hw_params->channels, audio_hw_params->freq, audio_hw_params->fmt, 1);
   if (audio_hw_params->bytes_per_sec <= 0 || audio_hw_params->frame_size <= 0) {
-    av_log(NULL, AV_LOG_ERROR, "av_samples_get_buffer_size failed\n");
+    ERROR_LOG() << "av_samples_get_buffer_size failed";
     return -1;
   }
   return spec.size;
