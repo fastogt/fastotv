@@ -206,7 +206,6 @@ const OptionDef options[] = {
     {"colors", OPT_EXIT, {.func_arg = show_colors}, "show available color names"},
     {"loglevel", HAS_ARG, {.func_arg = opt_loglevel}, "set logging level", "loglevel"},
     {"v", HAS_ARG, {.func_arg = opt_loglevel}, "set logging level", "loglevel"},
-    {"report", 0, {(void*)opt_report}, "generate a report"},
     {"max_alloc",
      HAS_ARG,
      {.func_arg = opt_max_alloc},

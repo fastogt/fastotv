@@ -141,12 +141,12 @@ void exit_program(int ret) {
 
 #if CONFIG_AVFILTER
 int configure_filtergraph(AVFilterGraph* graph,
-                          const char* filtergraph,
+                          const std::string& filtergraph,
                           AVFilterContext* source_ctx,
                           AVFilterContext* sink_ctx) {
   AVFilterInOut *outputs = NULL, *inputs = NULL;
   int ret;
-  if (filtergraph) {
+  if (!filtergraph.empty()) {
     outputs = avfilter_inout_alloc();
     inputs = avfilter_inout_alloc();
     if (!outputs || !inputs) {
@@ -165,7 +165,7 @@ int configure_filtergraph(AVFilterGraph* graph,
     inputs->pad_idx = 0;
     inputs->next = NULL;
 
-    ret = avfilter_graph_parse_ptr(graph, filtergraph, &inputs, &outputs, NULL);
+    ret = avfilter_graph_parse_ptr(graph, filtergraph.c_str(), &inputs, &outputs, NULL);
     if (ret < 0) {
       avfilter_inout_free(&outputs);
       avfilter_inout_free(&inputs);

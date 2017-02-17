@@ -162,14 +162,14 @@ class BuildRequest(object):
                             'libasound2-dev', 
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
-                            'xorg-dev', 'xutils-dev']
+                            'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
             elif distr == 'RHEL':
                 dep_libs = ['gcc', 'gcc-c++', 'yasm', 'cmake', 'pkgconfig', 'libtoolize',
                             'libz-devel', 'libbz2-devel', 'pcre-devel',
                             'libasound2-dev',  
                             'libx11-devel',
                             'libdrm-devel', 'libdri2-devel', 'libump-devel',
-                            'xorg-x11-server-devel']
+                            'xorg-x11-server-devel', 'xserver-xorg', 'xinit']
 
             for lib in dep_libs:
                 if distr  == 'DEBIAN':

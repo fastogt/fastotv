@@ -61,7 +61,7 @@ struct AppOptions {
 #if CONFIG_AVFILTER
   void InitAvFilters(const std::string& arg);
   std::vector<std::string> vfilters_list;
-  char* afilters;
+  std::string afilters;
 #endif
 
  private:

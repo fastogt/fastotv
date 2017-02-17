@@ -51,8 +51,6 @@ extern "C" {
 
 namespace {
 
-FILE* report_file;
-int report_file_level = AV_LOG_DEBUG;
 bool warned_cfg = false;
 
 bool compare_codec_desc(const AVCodecDescriptor* da, const AVCodecDescriptor* db) {
@@ -193,94 +191,13 @@ inline void prepare_app_arguments(int* argc_ptr, char*** argv_ptr) {
   /* nothing to do */
 }
 
-void log_callback_report(void* ptr, int level, const char* fmt, va_list vl) {
-  va_list vl2;
-  char line[1024];
-  static int print_prefix = 1;
-
-  va_copy(vl2, vl);
-  av_log_default_callback(ptr, level, fmt, vl);
-  av_log_format_line(ptr, level, fmt, vl2, line, sizeof(line), &print_prefix);
-  va_end(vl2);
-  if (report_file_level >= level) {
-    fputs(line, report_file);
-    fflush(report_file);
-  }
-}
-
-void expand_filename_template(AVBPrint* bp, const char* temp, struct tm* tm) {
-  int c;
-
-  while ((c = *(temp++))) {
-    if (c == '%') {
-      if (!(c = *(temp++))) {
-        break;
-      }
-      switch (c) {
-        case 'p':
-          av_bprintf(bp, "%s", PROJECT_NAME_TITLE);
-          break;
-        case 't':
-          av_bprintf(bp, "%04d%02d%02d-%02d%02d%02d", tm->tm_year + 1900, tm->tm_mon + 1,
-                     tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-          break;
-        case '%':
-          av_bprint_chars(bp, c, 1);
-          break;
-      }
-    } else {
-      av_bprint_chars(bp, c, 1);
-    }
-  }
-}
-
-int init_report() {
-  if (report_file) { /* already opened */
-    return 0;
-  }
-  time_t now;
-  time(&now);
-  struct tm* tm = localtime(&now);
-
-  char* filename_template = NULL;
-  AVBPrint filename;
-  av_bprint_init(&filename, 0, 1);
-  const char* chr = static_cast<const char*>(av_x_if_null(filename_template, "%p-%t.log"));
-  expand_filename_template(&filename, chr, tm);
-  av_free(filename_template);
-  if (!av_bprint_is_complete(&filename)) {
-    av_log(NULL, AV_LOG_ERROR, "Out of memory building report file name\n");
-    return AVERROR(ENOMEM);
-  }
-
-  report_file = fopen(filename.str, "w");
-  if (!report_file) {
-    int ret = AVERROR(errno);
-    av_log(NULL, AV_LOG_ERROR, "Failed to open report \"%s\": %s\n", filename.str, strerror(errno));
-    return ret;
-  }
-  av_log_set_callback(log_callback_report);
-  av_log(NULL, AV_LOG_INFO,
-         "%s started on %04d-%02d-%02d at %02d:%02d:%02d\n"
-         "Report written to \"%s\"\n",
-         PROJECT_NAME_TITLE, tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour,
-         tm->tm_min, tm->tm_sec, filename.str);
-  av_bprint_finalize(&filename, NULL);
-  return 0;
-}
-
 int write_option(const OptionDef* po, const char* opt, const char* arg, DictionaryOptions* dopt) {
   /* new-style options contain an offset into optctx, old-style address of
    * a global var*/
   void* dst = po->u.dst_ptr;
   if (po->flags & OPT_STRING) {
-    char* str = av_strdup(arg);
-    av_freep(dst);
-    if (!str) {
-      return AVERROR(ENOMEM);
-    }
-    char** char_ptr = static_cast<char**>(dst);
-    *char_ptr = str;
+    std::string* str_ptr = static_cast<std::string*>(dst);
+    *str_ptr = arg;
   } else if (po->flags & OPT_BOOL) {
     bool* bool_ptr = static_cast<bool*>(dst);
     if (!parse_bool(arg, bool_ptr)) {
@@ -330,32 +247,6 @@ int write_option(const OptionDef* po, const char* opt, const char* arg, Dictiona
   }
 
   return 0;
-}
-
-void dump_argument(const char* a) {
-  const unsigned char* p;
-
-  for (p = reinterpret_cast<const unsigned char*>(a); *p; p++) {
-    if (!((*p >= '+' && *p <= ':') || (*p >= '@' && *p <= 'Z') || *p == '_' ||
-          (*p >= 'a' && *p <= 'z'))) {
-      break;
-    }
-  }
-  if (!*p) {
-    fputs(a, report_file);
-    return;
-  }
-  fputc('"', report_file);
-  for (p = reinterpret_cast<const unsigned char*>(a); *p; p++) {
-    if (*p == '\\' || *p == '"' || *p == '$' || *p == '`') {
-      fprintf(report_file, "\\%c", *p);
-    } else if (*p < ' ' || *p > '~') {
-      fprintf(report_file, "\\x%02x", *p);
-    } else {
-      fputc(*p, report_file);
-    }
-  }
-  fputc('"', report_file);
 }
 
 #define INDENT 1
@@ -1000,19 +891,6 @@ void parse_loglevel(int argc, char** argv, const OptionDef* options) {
   if (idx && argv[idx + 1]) {
     opt_loglevel_inner(NULL, "loglevel", argv[idx + 1]);
   }
-  idx = locate_option(argc, argv, options, "report");
-  if (idx) {
-    init_report();
-    if (report_file) {
-      int i;
-      fprintf(report_file, "Command line:\n");
-      for (i = 0; i < argc; i++) {
-        dump_argument(argv[i]);
-        fputc(i < argc - 1 ? ' ' : '\n', report_file);
-      }
-      fflush(report_file);
-    }
-  }
 }
 
 #define FLAGS \
@@ -1128,12 +1006,6 @@ int opt_cpuflags(const char* opt, const char* arg, DictionaryOptions* dopt) {
 int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   return opt_loglevel_inner(opt, arg, NULL);
-}
-
-int opt_report(const char* opt) {
-  UNUSED(opt);
-
-  return init_report();
 }
 
 int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt) {

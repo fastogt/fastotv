@@ -2,6 +2,8 @@
 
 #include "ffmpeg_config.h"
 
+#include <string>
+
 extern "C" {
 #include <libavutil/dict.h>
 #include <libavformat/avformat.h>
@@ -13,7 +15,6 @@ extern "C" {
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_audio.h>
 }
-
 /* Minimum SDL audio buffer size, in samples. */
 #define SDL_AUDIO_MIN_BUFFER_SIZE 512
 
@@ -74,7 +75,7 @@ void exit_program(int ret) av_noreturn;
 
 #if CONFIG_AVFILTER
 int configure_filtergraph(AVFilterGraph* graph,
-                          const char* filtergraph,
+                          const std::string& filtergraph,
                           AVFilterContext* source_ctx,
                           AVFilterContext* sink_ctx);
 #endif

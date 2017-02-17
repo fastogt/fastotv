@@ -80,8 +80,8 @@ class VideoState {
   double GetMasterClock() const;
   void SetDefaultWindowSize(int width, int height, AVRational sar);
 #if CONFIG_AVFILTER
-  int ConfigureVideoFilters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame);
-  int ConfigureAudioFilters(const char* afilters, int force_output_format);
+  int ConfigureVideoFilters(AVFilterGraph* graph, const std::string& vfilters, AVFrame* frame);
+  int ConfigureAudioFilters(const std::string& afilters, int force_output_format);
 #endif
 
   int VideoOpen(core::VideoFrame* vp);

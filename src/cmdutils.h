@@ -77,8 +77,6 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt);
  */
 int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt);
 
-int opt_report(const char* opt);
-
 int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 int opt_codec_debug(const char* opt, const char* arg, DictionaryOptions* dopt);

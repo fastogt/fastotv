@@ -41,7 +41,7 @@ AppOptions::AppOptions()
 #if CONFIG_AVFILTER
       ,
       vfilters_list(),
-      afilters(NULL)
+      afilters()
 #endif
 {
 }

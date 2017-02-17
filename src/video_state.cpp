@@ -2025,9 +2025,9 @@ int VideoState::VideoThread() {
              viddec_->GetPktSerial());
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
-      const char* vfilters = NULL;
+      std::string vfilters;
       if (!opt_->vfilters_list.empty()) {
-        vfilters = opt_->vfilters_list[vfilter_idx_].c_str();
+        vfilters = opt_->vfilters_list[vfilter_idx_];
       }
       if ((ret = ConfigureVideoFilters(graph, vfilters, frame)) < 0) {
         SDL_Event event;
@@ -2092,7 +2092,9 @@ the_end:
 }
 
 #if CONFIG_AVFILTER
-int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const char* vfilters, AVFrame* frame) {
+int VideoState::ConfigureVideoFilters(AVFilterGraph* graph,
+                                      const std::string& vfilters,
+                                      AVFrame* frame) {
   static const enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_YUV420P, AV_PIX_FMT_BGRA,
                                                 AV_PIX_FMT_NONE};
   AVDictionary* sws_dict = copt_->sws_dict;
@@ -2192,7 +2194,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const char* vfilters
   return ret;
 }
 
-int VideoState::ConfigureAudioFilters(const char* afilters, int force_output_format) {
+int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_output_format) {
   static const enum AVSampleFormat sample_fmts[] = {AV_SAMPLE_FMT_S16, AV_SAMPLE_FMT_NONE};
   avfilter_graph_free(&agraph_);
   agraph_ = avfilter_graph_alloc();
