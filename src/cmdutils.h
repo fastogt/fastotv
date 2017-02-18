@@ -56,12 +56,6 @@ void exit_program(int ret) av_noreturn;
 void init_dynload(void);
 
 /**
- * Trivial log callback.
- * Only suitable for opt_help and similar since it lacks prefix handling.
- */
-void log_callback_help(void* ptr, int level, const char* fmt, va_list vl);
-
-/**
  * Override the cpuflags.
  */
 int opt_cpuflags(const char* opt, const char* arg, DictionaryOptions* dopt);

@@ -43,11 +43,14 @@ extern "C" {
 #include <sys/resource.h>
 #endif
 #ifdef _WIN32
-#include <windows.h>
+#include <windef.h>
+#include <winbase.h>
 #endif
 
 #include <vector>
 #include <algorithm>
+
+#include <common/sprintf.h>
 
 namespace {
 
@@ -69,13 +72,13 @@ bool is_device(const AVClass* avclass) {
 void show_help_filter(const char* name) {
 #if CONFIG_AVFILTER
   if (!name) {
-    av_log(NULL, AV_LOG_ERROR, "No filter name specified.\n");
+    ERROR_LOG() << "No filter name specified.";
     return;
   }
 
   const AVFilter* f = avfilter_get_by_name(name);
   if (!f) {
-    av_log(NULL, AV_LOG_ERROR, "Unknown filter '%s'.\n", name);
+    ERROR_LOG() << "Unknown filter '" << name;
     return;
   }
 
@@ -120,9 +123,7 @@ void show_help_filter(const char* name) {
     printf("This filter has support for timeline through the 'enable' option.\n");
   }
 #else
-  av_log(NULL, AV_LOG_ERROR,
-         "Build without libavfilter; "
-         "can not to satisfy request\n");
+  ERROR_LOG() << "Build without libavfilter; can not to satisfy request";
 #endif
 }
 #endif
@@ -234,11 +235,10 @@ int write_option(const OptionDef* po, const char* opt, const char* arg, Dictiona
     }
   } else if (po->u.func_arg) {
     int ret = po->u.func_arg(opt, arg, dopt);
-    if (ret < 0) {
+    if (ret != SUCCESS_RESULT_VALUE) {
       char err_str[AV_ERROR_MAX_STRING_SIZE] = {0};
       av_make_error_string(err_str, AV_ERROR_MAX_STRING_SIZE, ret);
-      av_log(NULL, AV_LOG_ERROR, "Failed to set value '%s' for option '%s': %s\n", arg, opt,
-             err_str);
+      ERROR_LOG() << "Failed to set value '" << arg << "' for option '" << opt << "': " << err_str;
       return ret;
     }
   }
@@ -254,29 +254,31 @@ int write_option(const OptionDef* po, const char* opt, const char* arg, Dictiona
 #define SHOW_CONFIG 4
 #define SHOW_COPYRIGHT 8
 
-#define PRINT_LIB_INFO(libname, LIBNAME, flags, level)                                           \
-  if (CONFIG_##LIBNAME) {                                                                        \
-    const char* indent = (flags & INDENT) ? "  " : "";                                           \
-    if (flags & SHOW_VERSION) {                                                                  \
-      unsigned int version = libname##_version();                                                \
-      av_log(NULL, level, "%slib%-11s %2d.%3d.%3d / %2d.%3d.%3d\n", indent, #libname,            \
-             LIB##LIBNAME##_VERSION_MAJOR, LIB##LIBNAME##_VERSION_MINOR,                         \
-             LIB##LIBNAME##_VERSION_MICRO, AV_VERSION_MAJOR(version), AV_VERSION_MINOR(version), \
-             AV_VERSION_MICRO(version));                                                         \
-    }                                                                                            \
-    if (flags & SHOW_CONFIG) {                                                                   \
-      const char* cfg = libname##_configuration();                                               \
-      if (strcmp(FFMPEG_CONFIGURATION, cfg)) {                                                   \
-        if (!warned_cfg) {                                                                       \
-          av_log(NULL, level, "%sWARNING: library configuration mismatch\n", indent);            \
-          warned_cfg = true;                                                                     \
-        }                                                                                        \
-        av_log(NULL, level, "%s%-11s configuration: %s\n", indent, #libname, cfg);               \
-      }                                                                                          \
-    }                                                                                            \
+#define PRINT_LIB_INFO(libname, LIBNAME, flags, level)                                            \
+  if (CONFIG_##LIBNAME) {                                                                         \
+    const char* indent = (flags & INDENT) ? "  " : "";                                            \
+    if (flags & SHOW_VERSION) {                                                                   \
+      unsigned int version = libname##_version();                                                 \
+      RUNTIME_LOG(level) << common::MemSPrintf(                                                   \
+          "%slib%-11s %2d.%3d.%3d / %2d.%3d.%3d", indent, #libname, LIB##LIBNAME##_VERSION_MAJOR, \
+          LIB##LIBNAME##_VERSION_MINOR, LIB##LIBNAME##_VERSION_MICRO, AV_VERSION_MAJOR(version),  \
+          AV_VERSION_MINOR(version), AV_VERSION_MICRO(version));                                  \
+    }                                                                                             \
+    if (flags & SHOW_CONFIG) {                                                                    \
+      const char* cfg = libname##_configuration();                                                \
+      if (strcmp(FFMPEG_CONFIGURATION, cfg)) {                                                    \
+        if (!warned_cfg) {                                                                        \
+          RUNTIME_LOG(level) << common::MemSPrintf("%sWARNING: library configuration mismatch",   \
+                                                   indent);                                       \
+          warned_cfg = true;                                                                      \
+        }                                                                                         \
+        RUNTIME_LOG(level) << indent << common::MemSPrintf("%s%-11s configuration: %s", indent,   \
+                                                           #libname, cfg);                        \
+      }                                                                                           \
+    }                                                                                             \
   }
 
-void print_all_libs_info(int flags, int level) {
+void print_all_libs_info(int flags, common::logging::LEVEL_LOG level) {
   PRINT_LIB_INFO(avutil, AVUTIL, flags, level);
   PRINT_LIB_INFO(avcodec, AVCODEC, flags, level);
   PRINT_LIB_INFO(avformat, AVFORMAT, flags, level);
@@ -288,21 +290,18 @@ void print_all_libs_info(int flags, int level) {
   //    PRINT_LIB_INFO(postproc,   POSTPROC,   flags, level);
 }
 
-void print_program_info(int flags, int level) {
+void print_program_info(int flags, common::logging::LEVEL_LOG level) {
   const char* indent = (flags & INDENT) ? "  " : "";
-
-  av_log(NULL, level, "%s version " PROJECT_VERSION, PROJECT_NAME_TITLE);
+  RUNTIME_LOG(level) << PROJECT_NAME_TITLE " version " PROJECT_VERSION;
   if (flags & SHOW_COPYRIGHT) {
-    av_log(NULL, level, " " PROJECT_COPYRIGHT);
+    RUNTIME_LOG(level) << " " PROJECT_COPYRIGHT;
   }
-  av_log(NULL, level, "\n");
-  av_log(NULL, level, "%sbuilt with %s\n", indent, CC_IDENT);
-
-  av_log(NULL, level,
-         "%sFFMPEG version " FFMPEG_VERSION ", configuration: " FFMPEG_CONFIGURATION "\n", indent);
+  RUNTIME_LOG(level) << "\n" << indent << "built with " << CC_IDENT;
+  RUNTIME_LOG(level) << indent
+                     << "FFMPEG version " FFMPEG_VERSION ", configuration: " FFMPEG_CONFIGURATION;
 }
 
-void print_buildconf(int flags, int level) {
+void print_buildconf(int flags, common::logging::LEVEL_LOG level) {
   const char* indent = (flags & INDENT) ? "  " : "";
   char str[] = {FFMPEG_CONFIGURATION};
   char *conflist, *remove_tilde, *splitconf;
@@ -320,9 +319,9 @@ void print_buildconf(int flags, int level) {
   }
 
   splitconf = strtok(str, "~");
-  av_log(NULL, level, "\n%s FFMPEG configuration:\n", indent);
+  RUNTIME_LOG(level) << "\n" << indent << " FFMPEG configuration:";
   while (splitconf != NULL) {
-    av_log(NULL, level, "%s%s%s\n", indent, indent, splitconf);
+    RUNTIME_LOG(level) << indent << indent << splitconf;
     splitconf = strtok(NULL, "~");
   }
 }
@@ -331,7 +330,7 @@ void show_help_demuxer(const char* name) {
   const AVInputFormat* fmt = av_find_input_format(name);
 
   if (!fmt) {
-    av_log(NULL, AV_LOG_ERROR, "Unknown format '%s'.\n", name);
+    ERROR_LOG() << "Unknown format '" << name << "'.";
     return;
   }
 
@@ -351,7 +350,7 @@ void show_help_muxer(const char* name) {
   const AVOutputFormat* fmt = av_guess_format(name, NULL, NULL);
 
   if (!fmt) {
-    av_log(NULL, AV_LOG_ERROR, "Unknown format '%s'.\n", name);
+    ERROR_LOG() << "Unknown format '" << name << "'.";
     return;
   }
 
@@ -605,7 +604,7 @@ void show_help_codec(const char* name, int encoder) {
   const AVCodecDescriptor* desc;
 
   if (!name) {
-    av_log(NULL, AV_LOG_ERROR, "No codec name specified.\n");
+    ERROR_LOG() << "No codec name specified.";
     return;
   }
 
@@ -623,14 +622,13 @@ void show_help_codec(const char* name, int encoder) {
     }
 
     if (!printed) {
-      av_log(NULL, AV_LOG_ERROR,
-             "Codec '%s' is known to FFmpeg, "
-             "but no %s for it are available. FFmpeg might need to be "
-             "recompiled with additional external libraries.\n",
-             name, encoder ? "encoders" : "decoders");
+      ERROR_LOG() << "Codec '" << name << "' is known to FFmpeg, "
+                  << "but no " << (encoder ? "encoders" : "decoders")
+                  << " for it are available. FFmpeg might need to be recompiled with additional "
+                     "external libraries.";
     }
   } else {
-    av_log(NULL, AV_LOG_ERROR, "Codec '%s' is not recognized by FFmpeg.\n", name);
+    ERROR_LOG() << "Codec '" << name << "' is not recognized by FFmpeg.";
   }
 }
 
@@ -638,57 +636,17 @@ int opt_loglevel_inner(const char* opt, const char* arg, char* argv) {
   UNUSED(argv);
   UNUSED(opt);
 
-  const struct {
-    const char* name;
-    int level;
-  } log_levels[] = {
-      {"quiet", AV_LOG_QUIET},     {"panic", AV_LOG_PANIC},     {"fatal", AV_LOG_FATAL},
-      {"error", AV_LOG_ERROR},     {"warning", AV_LOG_WARNING}, {"info", AV_LOG_INFO},
-      {"verbose", AV_LOG_VERBOSE}, {"debug", AV_LOG_DEBUG},     {"trace", AV_LOG_TRACE},
-  };
-
-  int flags = av_log_get_flags();
-  const char* tail = strstr(arg, "repeat");
-  if (tail) {
-    flags &= ~AV_LOG_SKIP_REPEATED;
-  } else {
-    flags |= AV_LOG_SKIP_REPEATED;
+  common::logging::LEVEL_LOG lg;
+  if (common::logging::text_to_log_level(arg, &lg)) {
+    SET_CURRENT_LOG_LEVEL(lg);
+    return SUCCESS_RESULT_VALUE;
   }
 
-  av_log_set_flags(flags);
-  if (tail == arg) {
-    arg += 6 + (arg[6] == '+');
+  ERROR_LOG() << "Invalid loglevel " << arg << ". Possible levels are:";
+  for (size_t i = 0; i < SIZEOFMASS(common::logging::level_names); i++) {
+    ERROR_LOG() << common::logging::level_names[i];
   }
-  if (tail && !*arg) {
-    return 0;
-  }
-
-  for (size_t i = 0; i < FF_ARRAY_ELEMS(log_levels); i++) {
-    if (!strcmp(log_levels[i].name, arg)) {
-      av_log_set_level(log_levels[i].level);
-      return 0;
-    }
-  }
-
-  char* copy_tail = av_strdup(tail);
-  if (!copy_tail) {
-    return AVERROR(ENOMEM);
-  }
-
-  int level = strtol(arg, &copy_tail, 10);
-  if (*copy_tail) {
-    av_log(NULL, AV_LOG_FATAL,
-           "Invalid loglevel \"%s\". "
-           "Possible levels are numbers or:\n",
-           arg);
-    for (size_t i = 0; i < FF_ARRAY_ELEMS(log_levels); i++) {
-      av_log(NULL, AV_LOG_FATAL, "\"%s\"\n", log_levels[i].name);
-    }
-    exit_program(1);
-  }
-  av_freep(&copy_tail);
-  av_log_set_level(level);
-  return 0;
+  return ERROR_RESULT_VALUE;
 }
 }  // namespace
 
@@ -702,13 +660,6 @@ DictionaryOptions::~DictionaryOptions() {
   av_dict_free(&sws_dict);
   av_dict_free(&format_opts);
   av_dict_free(&codec_opts);
-}
-
-void log_callback_help(void* ptr, int level, const char* fmt, va_list vl) {
-  UNUSED(ptr);
-  UNUSED(level);
-
-  vfprintf(stdout, fmt, vl);
 }
 
 void init_dynload(void) {
@@ -816,11 +767,11 @@ int parse_option(const char* opt,
     po = find_option(options, "default");
   }
   if (!po->name) {
-    av_log(NULL, AV_LOG_ERROR, "Unrecognized option '%s'\n", opt);
+    ERROR_LOG() << "Unrecognized option '" << opt << "'";
     return AVERROR(EINVAL);
   }
   if (po->flags & HAS_ARG && !arg) {
-    av_log(NULL, AV_LOG_ERROR, "Missing argument for option '%s'\n", opt);
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
     return AVERROR(EINVAL);
   }
 
@@ -912,8 +863,8 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
   const AVClass* swr_class = swr_get_class();
 #endif
 
-  if (!strcmp(opt, "debug") || !strcmp(opt, "fdebug")) {
-    av_log_set_level(AV_LOG_DEBUG);
+  if (strcmp(opt, "debug") == 0) {
+    SET_CURRENT_LOG_LEVEL(common::logging::L_DEBUG);
   }
 
   if (!(p = strchr(opt, ':'))) {
@@ -930,7 +881,7 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
   if ((o = opt_find(&fc, opt, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ))) {
     av_dict_set(&dopt->format_opts, opt, arg, FLAGS);
     if (consumed) {
-      av_log(NULL, AV_LOG_VERBOSE, "Routing option %s to both codec and muxer layer\n", opt);
+      DEBUG_LOG() << "Routing option " << opt << " to both codec and muxer layer";
     }
     consumed = true;
   }
@@ -942,13 +893,12 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
     sws_freeContext(sws);
     if (!strcmp(opt, "srcw") || !strcmp(opt, "srch") || !strcmp(opt, "dstw") ||
         !strcmp(opt, "dsth") || !strcmp(opt, "src_format") || !strcmp(opt, "dst_format")) {
-      av_log(NULL, AV_LOG_ERROR,
-             "Directly using swscale dimensions/format options is not supported, please use the -s "
-             "or -pix_fmt options\n");
+      ERROR_LOG() << "Directly using swscale dimensions/format options is not supported, please "
+                     "use the -s or -pix_fmt options";
       return AVERROR(EINVAL);
     }
     if (ret < 0) {
-      av_log(NULL, AV_LOG_ERROR, "Error setting option %s.\n", opt);
+      ERROR_LOG() << "Error setting option " << opt << ".";
       return ret;
     }
 
@@ -958,7 +908,7 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
   }
 #else
   if (!consumed && !strcmp(opt, "sws_flags")) {
-    av_log(NULL, AV_LOG_WARNING, "Ignoring %s %s, due to disabled swscale\n", opt, arg);
+    WARNING_LOG() << "Ignoring " << opt << " " << arg << ", due to disabled swscale";
     consumed = true;
   }
 #endif
@@ -969,7 +919,7 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
     int ret = av_opt_set(swr, opt, arg, 0);
     swr_free(&swr);
     if (ret < 0) {
-      av_log(NULL, AV_LOG_ERROR, "Error setting option %s.\n", opt);
+      ERROR_LOG() << "Error setting option " << opt;
       return ret;
     }
     av_dict_set(&dopt->swr_opts, opt, arg, FLAGS);
@@ -1015,7 +965,7 @@ int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt) {
   char* tail = NULL;
   long max = strtol(arg, &tail, 10);
   if (*tail) {
-    av_log(NULL, AV_LOG_FATAL, "Invalid max_alloc \"%s\".\n", arg);
+    ERROR_LOG() << "Invalid max_alloc \"" << arg << "\".";
     exit_program(1);
   }
   av_max_alloc(max);
@@ -1023,9 +973,9 @@ int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt) {
 }
 
 void show_banner(int argc, char** argv, const OptionDef* options) {
-  print_program_info(INDENT | SHOW_COPYRIGHT, AV_LOG_INFO);
-  print_all_libs_info(INDENT | SHOW_CONFIG, AV_LOG_INFO);
-  print_all_libs_info(INDENT | SHOW_VERSION, AV_LOG_INFO);
+  print_program_info(INDENT | SHOW_COPYRIGHT, common::logging::L_INFO);
+  print_all_libs_info(INDENT | SHOW_CONFIG, common::logging::L_INFO);
+  print_all_libs_info(INDENT | SHOW_VERSION, common::logging::L_INFO);
 }
 
 int show_version(const char* opt, const char* arg, DictionaryOptions* dopt) {
@@ -1033,9 +983,8 @@ int show_version(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(opt);
   UNUSED(arg);
 
-  av_log_set_callback(log_callback_help);
-  print_program_info(SHOW_COPYRIGHT, AV_LOG_INFO);
-  print_all_libs_info(SHOW_VERSION, AV_LOG_INFO);
+  print_program_info(SHOW_COPYRIGHT, common::logging::L_INFO);
+  print_all_libs_info(SHOW_VERSION, common::logging::L_INFO);
   return 0;
 }
 
@@ -1044,9 +993,7 @@ int show_buildconf(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(opt);
   UNUSED(arg);
 
-  av_log_set_callback(log_callback_help);
-  print_buildconf(INDENT | 0, AV_LOG_INFO);
-
+  print_buildconf(INDENT | 0, common::logging::L_INFO);
   return 0;
 }
 
@@ -1325,8 +1272,9 @@ int show_layouts(const char* opt, const char* arg, DictionaryOptions* dopt) {
     if (name) {
       printf("%-14s ", name);
       for (j = 1; j; j <<= 1)
-        if ((layout & j))
+        if ((layout & j)) {
           printf("%s%s", (layout & (j - 1)) ? "+" : "", av_get_channel_name(j));
+        }
       printf("\n");
     }
   }
@@ -1351,7 +1299,6 @@ int show_help(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  av_log_set_callback(log_callback_help);
   char* topic = av_strdup(arg ? arg : "");
   if (!topic) {
     return AVERROR(ENOMEM);
@@ -1386,7 +1333,7 @@ int show_help(const char* opt, const char* arg, DictionaryOptions* dopt) {
 int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {
   int ret = avformat_match_stream_specifier(s, st, spec);
   if (ret < 0) {
-    av_log(s, AV_LOG_ERROR, "Invalid stream specifier: %s.\n", spec);
+    ERROR_LOG() << "Invalid stream specifier: " << spec;
   }
   return ret;
 }
@@ -1463,7 +1410,7 @@ AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* cod
 
   AVDictionary** opts = static_cast<AVDictionary**>(av_mallocz_array(s->nb_streams, sizeof(*opts)));
   if (!opts) {
-    av_log(NULL, AV_LOG_ERROR, "Could not alloc memory for stream options.\n");
+    ERROR_LOG() << "Could not alloc memory for stream options.";
     return NULL;
   }
   for (int i = 0; i < s->nb_streams; i++) {
@@ -1492,11 +1439,10 @@ double get_rotation(AVStream* st) {
   theta -= 360 * floor(theta / 360 + 0.9 / 360);
 
   if (fabs(theta - 90 * round(theta / 90)) > 2) {
-    av_log(NULL, AV_LOG_WARNING,
-           "Odd rotation angle.\n"
-           "If you want to help, upload a sample "
-           "of this file to ftp://upload.ffmpeg.org/incoming/ "
-           "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
+    WARNING_LOG() << "Odd rotation angle.\n"
+                     "If you want to help, upload a sample "
+                     "of this file to ftp://upload.ffmpeg.org/incoming/ "
+                     "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)";
   }
 
   return theta;
@@ -1594,15 +1540,10 @@ int show_sources(const char* opt, const char* arg, DictionaryOptions* dopt) {
   AVInputFormat* fmt = NULL;
   char* dev = NULL;
   AVDictionary* opts = NULL;
-  int error_level = av_log_get_level();
-
-  av_log_set_level(AV_LOG_ERROR);
-
   int ret = show_sinks_sources_parse_arg(arg, &dev, &opts);
   if (ret < 0) {
     av_dict_free(&opts);
     av_free(dev);
-    av_log_set_level(error_level);
     return ret;
   }
 
@@ -1627,7 +1568,6 @@ int show_sources(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
   av_dict_free(&opts);
   av_free(dev);
-  av_log_set_level(error_level);
   return 0;
 }
 
@@ -1638,15 +1578,10 @@ int show_sinks(const char* opt, const char* arg, DictionaryOptions* dopt) {
   AVOutputFormat* fmt = NULL;
   char* dev = NULL;
   AVDictionary* opts = NULL;
-  int error_level = av_log_get_level();
-
-  av_log_set_level(AV_LOG_ERROR);
-
   int ret = show_sinks_sources_parse_arg(arg, &dev, &opts);
   if (ret < 0) {
     av_dict_free(&opts);
     av_free(dev);
-    av_log_set_level(error_level);
     return ret;
   }
 
@@ -1669,7 +1604,6 @@ int show_sinks(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
   av_dict_free(&opts);
   av_free(dev);
-  av_log_set_level(error_level);
   return 0;
 }
 

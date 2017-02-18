@@ -37,7 +37,7 @@ int opt_frame_size(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  av_log(NULL, AV_LOG_WARNING, "Option -s is deprecated, use -video_size.\n");
+  WARNING_LOG() << "Option -s is deprecated, use -video_size.";
   return opt_default("video_size", arg, dopt);
 }
 
@@ -67,7 +67,7 @@ int opt_format(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
   file_iformat = av_find_input_format(arg);
   if (!file_iformat) {
-    av_log(NULL, AV_LOG_FATAL, "Unknown input format: %s\n", arg);
+    ERROR_LOG() << "Unknown input format: " << arg;
     return AVERROR(EINVAL);
   }
   return 0;
@@ -77,7 +77,7 @@ int opt_frame_pix_fmt(const char* opt, const char* arg, DictionaryOptions* dopt)
   UNUSED(dopt);
   UNUSED(opt);
 
-  av_log(NULL, AV_LOG_WARNING, "Option -pix_fmt is deprecated, use -pixel_format.\n");
+  WARNING_LOG() << "Option -pix_fmt is deprecated, use -pixel_format.";
   return opt_default("pixel_format", arg, dopt);
 }
 
@@ -89,7 +89,7 @@ int opt_sync(const char* opt, const char* arg, DictionaryOptions* dopt) {
   } else if (!strcmp(arg, "video")) {
     g_options.av_sync_type = core::AV_SYNC_VIDEO_MASTER;
   } else {
-    av_log(NULL, AV_LOG_ERROR, "Unknown value for %s: %s\n", opt, arg);
+    ERROR_LOG() << "Unknown value for " << opt << ": " << arg;
     exit(1);
   }
   return 0;
@@ -144,9 +144,8 @@ int opt_input_file(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(opt);
 
   if (!g_options.input_filename.empty()) {
-    av_log(NULL, AV_LOG_FATAL,
-           "Argument '%s' provided as input filename, but '%s' was already specified.\n", arg,
-           g_options.input_filename.c_str());
+    ERROR_LOG() << "Argument '" << g_options.input_filename << " provided as input filename, but '"
+                << "' was already specified.";
     return AVERROR(EINVAL);
   }
 
@@ -162,21 +161,23 @@ int opt_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
   const char* spec = strchr(opt, ':');
   if (!spec) {
-    av_log(NULL, AV_LOG_ERROR, "No media specifier was specified in '%s' in option '%s'\n", arg,
-           opt);
+    ERROR_LOG() << "No media specifier was specified in '" << arg << "' in option '" << opt << "'";
     return AVERROR(EINVAL);
   }
   spec++;
   switch (spec[0]) {
-    case 'a':
+    case 'a': {
       g_options.audio_codec_name = arg;
       break;
-    case 'v':
+    }
+    case 'v': {
       g_options.video_codec_name = arg;
       break;
-    default:
-      av_log(NULL, AV_LOG_ERROR, "Invalid media specifier '%s' in option '%s'\n", spec, opt);
+    }
+    default: {
+      ERROR_LOG() << "Invalid media specifier '" << spec << "' in option '" << opt << "'";
       return AVERROR(EINVAL);
+    }
   }
   return 0;
 }
@@ -355,9 +356,7 @@ const OptionDef options[] = {
     }};
 
 void show_usage(void) {
-  av_log(NULL, AV_LOG_INFO, "Simple media player\n");
-  av_log(NULL, AV_LOG_INFO, "usage: %s [options] input_file\n", PROJECT_NAME_TITLE);
-  av_log(NULL, AV_LOG_INFO, "\n");
+  INFO_LOG() << "Simple media player\nusage: " PROJECT_NAME_TITLE " [options] input_file";
 }
 
 int lockmgr(void** mtx, enum AVLockOp op) {
@@ -366,7 +365,7 @@ int lockmgr(void** mtx, enum AVLockOp op) {
     case AV_LOCK_CREATE: {
       *mtx = SDL_CreateMutex();
       if (!*mtx) {
-        av_log(NULL, AV_LOG_FATAL, "SDL_CreateMutex(): %s\n", SDL_GetError());
+        ERROR_LOG() << "SDL_CreateMutex(): " << SDL_GetError();
         return 1;
       }
       return 0;
@@ -388,7 +387,6 @@ int lockmgr(void** mtx, enum AVLockOp op) {
 DictionaryOptions* do_init(int argc, char** argv) {
   init_dynload();
 
-  av_log_set_flags(AV_LOG_SKIP_REPEATED);
   parse_loglevel(argc, argv, options);
 
 /* register all codecs, demux and protocols */
@@ -421,7 +419,6 @@ void do_exit(DictionaryOptions** opt) {
     printf("\n");
   }
   SDL_Quit();
-  av_log(NULL, AV_LOG_QUIET, "%s", "");
 }
 }
 
@@ -429,7 +426,6 @@ void show_help_default(const char* opt, const char* arg) {
   UNUSED(opt);
   UNUSED(arg);
 
-  av_log_set_callback(log_callback_help);
   show_usage();
   show_help_options(options, "Main options:", 0, OPT_EXPERT, 0);
   show_help_options(options, "Advanced options:", OPT_EXPERT, 0, 0);
@@ -479,9 +475,8 @@ int main(int argc, char** argv) {
 
   if (g_options.input_filename.empty()) {
     show_usage();
-    av_log(NULL, AV_LOG_FATAL, "An input file must be specified\n");
-    av_log(NULL, AV_LOG_FATAL, "Use -h to get full help or, even better, run 'man %s'\n",
-           PROJECT_NAME_TITLE);
+    ERROR_LOG() << "An input file must be specified";
+    ERROR_LOG() << "Use -h to get full help or, even better, run 'man " PROJECT_NAME_TITLE "'";
     return EXIT_FAILURE;
   }
 
@@ -502,8 +497,8 @@ int main(int argc, char** argv) {
     flags &= ~SDL_INIT_VIDEO;
   }
   if (SDL_Init(flags)) {
-    av_log(NULL, AV_LOG_FATAL, "Could not initialize SDL - %s\n", SDL_GetError());
-    av_log(NULL, AV_LOG_FATAL, "(Did you set the DISPLAY variable?)\n");
+    ERROR_LOG() << "Could not initialize SDL - " << SDL_GetError();
+    ERROR_LOG() << "(Did you set the DISPLAY variable?)";
     return EXIT_FAILURE;
   }
 
@@ -511,7 +506,7 @@ int main(int argc, char** argv) {
   SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
 
   if (av_lockmgr_register(lockmgr)) {
-    av_log(NULL, AV_LOG_FATAL, "Could not initialize lock manager!\n");
+    ERROR_LOG() << "Could not initialize lock manager!";
     do_exit(&dict);
     return EXIT_FAILURE;
   }
