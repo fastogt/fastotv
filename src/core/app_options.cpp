@@ -1,8 +1,6 @@
 #include "core/app_options.h"
 
-#include <stddef.h>
-
-#include "core/utils.h"
+#include <stddef.h>  // for NULL
 
 namespace core {
 

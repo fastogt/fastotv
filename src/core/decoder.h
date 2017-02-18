@@ -1,6 +1,17 @@
 #pragma once
 
-#include "core/packet_queue.h"
+#include <stdint.h>  // for int64_t
+
+extern "C" {
+#include <libavcodec/avcodec.h>  // for AVCodecContext, AVPacket
+#include <libavutil/avutil.h>    // for AVMediaType
+#include <libavutil/frame.h>     // for AVFrame
+#include <libavutil/rational.h>  // for AVRational
+}
+
+namespace core {
+class PacketQueue;
+}
 
 namespace core {
 

@@ -1,20 +1,27 @@
 #pragma once
 
-#include "ffmpeg_config.h"
+#include <SDL2/SDL_audio.h>   // for SDL_AudioCallback
+#include <SDL2/SDL_rect.h>    // for SDL_Rect
+#include <SDL2/SDL_render.h>  // for SDL_Renderer, SDL_Texture
 
-#include <string>
+#include <stdint.h>  // for int64_t
+#include <string>    // for string
+
+#include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 
 extern "C" {
-#include <libavutil/dict.h>
-#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>  // for AVCodec, AVCodecID
 #if CONFIG_AVFILTER
 #include <libavfilter/avfilter.h>
 #endif
-
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_audio.h>
+#include <libavformat/avformat.h>  // for AVFormatContext, AVStream
+#include <libavutil/attributes.h>  // for av_noreturn
+#include <libavutil/dict.h>        // for AVDictionary
+#include <libavutil/frame.h>       // for AVFrame
+#include <libavutil/rational.h>    // for AVRational
+#include <libavutil/samplefmt.h>   // for AVSampleFormat
 }
+
 /* Minimum SDL audio buffer size, in samples. */
 #define SDL_AUDIO_MIN_BUFFER_SIZE 512
 

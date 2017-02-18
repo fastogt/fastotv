@@ -1,16 +1,65 @@
 #include "video_state.h"
 
+#include <limits.h>    // for INT_MAX, INT_MIN
+#include <stdio.h>     // for snprintf, stdout
+#include <stdlib.h>    // for EXIT_SUCCESS, EXIT_FAILURE
+#include <string.h>    // for memset, strlen, memcpy, etc
+#include <errno.h>     // for ENOMEM, EINVAL, EAGAIN, etc
+#include <inttypes.h>  // for PRIx64
+#include <math.h>      // for fabs, isnan, NAN, exp, log
+
+#include <ostream>  // for operator<<, basic_ostream, etc
+#include <memory>
+
+#include <SDL2/SDL_audio.h>     // for SDL_MIX_MAXVOLUME, etc
+#include <SDL2/SDL_error.h>     // for SDL_GetError
+#include <SDL2/SDL_events.h>    // for SDL_Event, SDL_PushEvent, etc
+#include <SDL2/SDL_hints.h>     // for SDL_SetHint, etc
+#include <SDL2/SDL_keyboard.h>  // for SDL_Keysym
+#include <SDL2/SDL_keycode.h>   // for ::SDLK_0, ::SDLK_9, etc
+#include <SDL2/SDL_mouse.h>     // for SDL_ShowCursor, etc
+#include <SDL2/SDL_rect.h>      // for SDL_Rect
+
 extern "C" {
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_hints.h>
+#include <libavcodec/avcodec.h>  // for AVCodecContext, etc
+#include <libavcodec/version.h>  // for FF_API_EMU_EDGE
+#include <libavformat/avio.h>    // for AVIOContext, etc
+#include <libavutil/avutil.h>    // for AV_NOPTS_VALUE, etc
+#include <libavutil/channel_layout.h>
+#include <libavutil/common.h>       // for FFMAX, av_clip, FFMIN
+#include <libavutil/dict.h>         // for av_dict_free, av_dict_get, etc
+#include <libavutil/error.h>        // for AVERROR, AVERROR_EOF, etc
+#include <libavutil/mathematics.h>  // for av_compare_ts, av_rescale_q
+#include <libavutil/mem.h>          // for av_freep, av_fast_malloc, etc
+#include <libavutil/pixfmt.h>       // for AVPixelFormat, etc
+#include <libavutil/opt.h>
+#include <libavutil/samplefmt.h>  // for AVSampleFormat, etc
+#include <libavutil/avstring.h>
+#include <libavutil/time.h>
+#include <libavutil/pixdesc.h>
+#include <libswscale/swscale.h>
+#include <libswresample/swresample.h>
+
+#if CONFIG_AVFILTER
+#include <libavfilter/avfilter.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
+#endif
 }
 
-#include <common/macros.h>
+#include <common/logger.h>  // for LogMessage, etc
+#include <common/macros.h>  // for destroy, ERROR_RESULT_VALUE, etc
+#include <common/threads/thread_manager.h>
 #include <common/utils.h>
 #include <common/sprintf.h>
 
-#include "core/utils.h"
-#include "core/types.h"
+#include "core/types.h"  // for get_valid_channel_layout, etc
+#include "core/utils.h"  // for configure_filtergraph, etc
+#include "core/stream.h"
+#include "core/frame_queue.h"
+#include "core/app_options.h"
+#include "core/decoder.h"
+#include "core/packet_queue.h"
 
 /* no AV sync correction is done if below the minimum AV sync threshold */
 #define AV_SYNC_THRESHOLD_MIN 0.04

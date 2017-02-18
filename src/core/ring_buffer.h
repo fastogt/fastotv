@@ -1,7 +1,12 @@
 #pragma once
 
-#include <common/macros.h>
-#include <common/threads/types.h>
+#include <stddef.h>  // for size_t
+
+#include <common/logger.h>         // for COMPACT_LOG_FILE_CRIT, etc
+#include <common/macros.h>         // for DCHECK
+#include <common/threads/types.h>  // for condition_variable, mutex
+
+#include <mutex>  // for unique_lock
 
 namespace core {
 

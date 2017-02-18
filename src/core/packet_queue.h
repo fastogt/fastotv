@@ -1,17 +1,20 @@
 #pragma once
 
+#include <stddef.h>  // for size_t
+#include <stdint.h>  // for int64_t
+#include <atomic>    // for atomic
+#include <deque>     // for deque
+#include <mutex>     // for unique_loc
+
+#include <common/macros.h>         // for DISALLOW_COPY_AND_ASSIGN
+#include <common/threads/types.h>  // for mutex, condition_variable
+#include <common/types.h>
+
 #include "ffmpeg_config.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
 }
-
-#include <deque>
-#include <atomic>
-
-#include <common/macros.h>
-#include <common/types.h>
-#include <common/threads/types.h>
 
 namespace core {
 

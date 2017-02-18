@@ -1,39 +1,64 @@
 #pragma once
 
-#include "ffmpeg_config.h"
-extern "C" {
-#include <libavutil/avstring.h>
-#include <libavutil/eval.h>
-#include <libavutil/mathematics.h>
-#include <libavutil/pixdesc.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/dict.h>
-#include <libavutil/parseutils.h>
-#include <libavutil/samplefmt.h>
-#include <libavutil/avassert.h>
-#include <libavutil/time.h>
-#include <libavformat/avformat.h>
-#include <libavdevice/avdevice.h>
-#include <libswscale/swscale.h>
-#include <libavutil/opt.h>
-#include <libavcodec/avfft.h>
-#include <libswresample/swresample.h>
+#include <stddef.h>   // for size_t
+#include <stdint.h>   // for int64_t, uint8_t, int16_t
+#include <memory>     // for shared_ptr
+#include <string>     // for string
 
-#if CONFIG_AVFILTER
-#include <libavfilter/avfilter.h>
-#include <libavfilter/buffersink.h>
-#include <libavfilter/buffersrc.h>
-#endif
+#include <SDL2/SDL_blendmode.h>  // for SDL_BlendMode
+#include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Texture
+#include <SDL2/SDL_stdinc.h>     // for Uint32, Uint8
+#include <SDL2/SDL_video.h>      // for SDL_Window
+
+#include "ffmpeg_config.h"  // for CONFIG_AVFILTER
+
+extern "C" {
+#include <libavfilter/avfilter.h>  // for AVFilterContext (ptr only), etc
+#include <libavformat/avformat.h>  // for AVInputFormat, etc
+#include <libavutil/frame.h>       // for AVFrame
+#include <libavutil/rational.h>    // for AVRational
 }
 
-#include <common/macros.h>
-#include <common/threads/thread_manager.h>
+#include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN, etc
+#include <common/smart_ptr.h>
 
-#include "core/frame_queue.h"
-#include "core/decoder.h"
-#include "core/app_options.h"
-#include "core/audio_params.h"
-#include "core/stream.h"
+#include "core/audio_params.h"  // for AudioParams
+
+namespace common {
+namespace threads {
+template <typename RT>
+class Thread;
+}
+}
+namespace core {
+class AudioDecoder;
+}
+namespace core {
+class AudioStream;
+}
+namespace core {
+class VideoDecoder;
+}
+namespace core {
+class VideoStream;
+}
+namespace core {
+struct AppOptions;
+}
+namespace core {
+struct ComplexOptions;
+}
+namespace core {
+struct VideoFrame;
+}
+namespace core {
+template <size_t buffer_size>
+class AudioFrameQueue;
+}
+namespace core {
+template <size_t buffer_size>
+class VideoFrameQueue;
+}
 
 #define SAMPLE_ARRAY_SIZE (8 * 65536)
 /* no AV correction is done if too big error */

@@ -1,56 +1,60 @@
 #include "cmdutils.h"
 
-#include <string.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <math.h>
+#ifdef _WIN32
+#include <windef.h>
+#include <winbase.h>
+#endif
+
+#include <math.h>    // for fabs, floor, round
+#include <stddef.h>  // for size_t
+#include <stdint.h>  // for int64_t, uint64_t, uint8_t, etc
+#include <stdlib.h>  // for exit, strtol
+#include <string.h>  // for strcmp, strchr, strlen, etc
+#include <errno.h>   // for EINVAL, ENOMEM, ENOSYS
+
+#include <algorithm>  // for sort, transform
+#include <limits>     // for numeric_limits
+#include <vector>     // for
 
 /* Include only the enabled headers since some compilers (namely, Sun
    Studio) will not omit unused inline functions and create undefined
    references to libraries that are not being built. */
 
 extern "C" {
-//#include "compat/va_copy.h"
-#include <libavformat/avformat.h>
-#include <libavfilter/avfilter.h>
-#include <libavdevice/avdevice.h>
-//#include <libavresample/avresample.h>
-#include <libswscale/swscale.h>
-#include <libswresample/swresample.h>
-//#include <libpostproc/postprocess.h>
-#include <libavutil/avassert.h>
-#include <libavutil/avstring.h>
-#include <libavutil/bprint.h>
-#include <libavutil/display.h>
-#include <libavutil/mathematics.h>
-#include <libavutil/imgutils.h>
-//#include <libavutil/libm.h>
-#include <libavutil/parseutils.h>
-#include <libavutil/pixdesc.h>
-#include <libavutil/eval.h>
-#include <libavutil/dict.h>
-#include <libavutil/opt.h>
-#include <libavutil/cpu.h>
-#include <libavutil/ffversion.h>
-#include <libavutil/version.h>
+#include <libavcodec/version.h>        // for LIBAVCODEC_VERSION_MAJOR, etc
+#include <libavdevice/avdevice.h>      // for AVDeviceInfoList, etc
+#include <libavdevice/version.h>       // for LIBAVDEVICE_VERSION_MAJOR, etc
+#include <libavfilter/avfilter.h>      // for AVFilter, etc
+#include <libavfilter/version.h>       // for LIBAVFILTER_VERSION_MAJOR, etc
+#include <libavformat/avformat.h>      // for AVOutputFormat, etc
+#include <libavformat/avio.h>          // for avio_enum_protocols
+#include <libavformat/version.h>       // for LIBAVFORMAT_VERSION_MAJOR, etc
+#include <libavutil/avstring.h>        // for av_match_name, av_strlcat, etc
+#include <libavutil/common.h>          // for FFDIFFSIGN, FFMIN
+#include <libavutil/cpu.h>             // for av_force_cpu_flags, etc
+#include <libavutil/dict.h>            // for av_dict_free, AVDictionary, etc
+#include <libavutil/display.h>         // for av_display_rotation_get
+#include <libavutil/error.h>           // for AVERROR, etc
+#include <libavutil/eval.h>            // for av_strtod
+#include <libavutil/ffversion.h>       // for FFMPEG_VERSION
+#include <libavutil/mem.h>             // for av_free, av_freep, etc
+#include <libavutil/opt.h>             // for AVOption, etc
+#include <libavutil/parseutils.h>      // for av_get_known_color_name, etc
+#include <libavutil/pixdesc.h>         // for AVPixFmtDescriptor, etc
+#include <libavutil/pixfmt.h>          // for AVPixelFormat, etc
+#include <libavutil/rational.h>        // for AVRational
+#include <libavutil/version.h>         // for AV_VERSION_MAJOR, etc
+#include <libswresample/swresample.h>  // for swr_alloc, swr_free, etc
+#include <libswresample/version.h>     // for LIBSWRESAMPLE_VERSION_MAJOR, etc
+#include <libswscale/swscale.h>        // for sws_alloc_context, etc
+#include <libswscale/version.h>        // for LIBSWSCALE_VERSION_MAJOR, etc
 #if CONFIG_NETWORK
-#include "libavformat/network.h"
+#include <libavformat/network.h>
 #endif
 }
-#if HAVE_SYS_RESOURCE_H
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
-#ifdef _WIN32
-#include <windef.h>
-#include <winbase.h>
-#endif
 
-#include <vector>
-#include <algorithm>
-
-#include <common/sprintf.h>
+#include <common/log_levels.h>  // for LEVEL_LOG::L_INFO, etc
+#include <common/sprintf.h>     // for MemSPrintf
 
 namespace {
 

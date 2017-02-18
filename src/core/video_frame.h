@@ -1,13 +1,17 @@
 #pragma once
 
+#include <stdint.h>
+
+#include <SDL2/SDL_render.h>
+
 #include "ffmpeg_config.h"
 
 extern "C" {
-#include <libavcodec/avcodec.h>
-#include <SDL2/SDL_render.h>
+#include <libavutil/frame.h>     // for AVFrame
+#include <libavutil/rational.h>  // for AVRational
 }
 
-#include <common/macros.h>
+#include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN
 
 namespace core {
 

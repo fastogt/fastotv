@@ -1,5 +1,8 @@
 #include "core/video_frame.h"
 
+#include <math.h>    // for isnan
+#include <stddef.h>  // for NULL
+
 namespace core {
 
 VideoFrame::VideoFrame()

@@ -1,6 +1,14 @@
 #include "core/stream.h"
 
+#include <stddef.h>  // for NULL
+#include <atomic>    // for atomic
+
+extern "C" {
+#include <libavutil/rational.h>  // for av_q2d
+}
+
 #include "core/clock.h"
+#include "core/packet_queue.h"
 
 #define MIN_FRAMES 25
 

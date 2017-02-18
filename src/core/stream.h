@@ -1,17 +1,19 @@
 #pragma once
 
 #include "ffmpeg_config.h"
+
 extern "C" {
 #include <libavformat/avformat.h>
 }
 
 #include <common/macros.h>
 
-#include "core/packet_queue.h"
+namespace core {
+class Clock;
+class PacketQueue;
+}  // lines 12-12
 
 namespace core {
-
-class Clock;
 
 class Stream {
  public:

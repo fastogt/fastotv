@@ -1,6 +1,7 @@
 #pragma once
 
-#include <vector>
+#include <stddef.h>  // for size_t
+#include <stdint.h>  // for int64_t
 
 #include "core/ring_buffer.h"
 #include "core/audio_frame.h"

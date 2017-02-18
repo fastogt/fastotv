@@ -1,18 +1,43 @@
-#include <inttypes.h>
-#include <math.h>
-#include <limits.h>
-#include <signal.h>
+#include <errno.h>   // for EINVAL
+#include <signal.h>  // for signal, SIGINT, SIGTERM
+#include <stdio.h>   // for printf
+#include <stdlib.h>  // for exit, EXIT_FAILURE
+#include <string.h>  // for strcmp, NULL, strchr
+#include <limits>    // for numeric_limits
+#include <ostream>   // for operator<<, basic_ostream
+#include <string>    // for char_traits, string, etc
 
-#include <numeric>
+#include <SDL2/SDL.h>         // for SDL_INIT_AUDIO, etc
+#include <SDL2/SDL_error.h>   // for SDL_GetError
+#include <SDL2/SDL_events.h>  // for SDL_EventState, SDL_IGNORE, etc
+#include <SDL2/SDL_mutex.h>   // for SDL_CreateMutex, etc
+#include <SDL2/SDL_stdinc.h>  // for SDL_getenv, SDL_setenv, etc
 
-#include <common/macros.h>
+#include "ffmpeg_config.h"
 
 extern "C" {
-#include <SDL2/SDL.h>
+#include <libavcodec/avcodec.h>    // for av_lockmgr_register, etc
+#include <libavdevice/avdevice.h>  // for avdevice_register_all
+#if CONFIG_AVFILTER
+#include <libavfilter/avfilter.h>  // for avfilter_get_class, etc
+#endif
+#if CONFIG_AVFORMAT
+#include <libavformat/avformat.h>  // for av_find_input_format, etc
+#endif
+#include <libavutil/avutil.h>
+#include <libavutil/error.h>  // for AVERROR
+#include <libavutil/opt.h>    // for AV_OPT_FLAG_DECODING_PARAM, etc
 }
 
-#include "cmdutils.h"
-#include "video_state.h"
+#include <common/log_levels.h>  // for LEVEL_LOG, etc
+#include <common/logger.h>      // for LogMessage, etc
+#include <common/macros.h>      // for UNUSED, etc
+
+#include "cmdutils.h"          // for HAS_ARG, OPT_EXPERT, etc
+#include "core/app_options.h"  // for AppOptions, ComplexOptions
+#include "core/types.h"
+#include "ffmpeg_config.h"  // for CONFIG_AVFILTER, etc
+#include "video_state.h"    // for VideoState
 
 namespace {
 core::AppOptions g_options;

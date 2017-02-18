@@ -1,15 +1,30 @@
 #include "core/utils.h"
 
+#include <math.h>    // for lrint, fabs, floor, round
+#include <stdint.h>  // for uint8_t
+#include <stdlib.h>  // for atoi, exit
+#include <string.h>  // for NULL, strcmp, strncmp, etc
+#include <errno.h>   // for ENOMEM
+
+#include <ostream>   // for operator<<, basic_ostream, etc
+
 extern "C" {
-#include <libavutil/opt.h>
-#include <libavutil/eval.h>
-#include <libavutil/display.h>
-#include <libswscale/swscale.h>
+#include <libavutil/avutil.h>
+#include <libavutil/channel_layout.h>
+#include <libavutil/common.h>   // for av_log2, FFMAX, FFMIN, etc
+#include <libavutil/display.h>  // for av_display_rotation_get
+#include <libavutil/error.h>    // for AVERROR
+#include <libavutil/eval.h>     // for av_strtod
+#include <libavutil/log.h>      // for AVClass
+#include <libavutil/mem.h>      // for av_strdup, av_mallocz_array
+#include <libavutil/opt.h>      // for av_opt_find, etc
+#include <libavutil/pixfmt.h>
+#include <libswscale/swscale.h>  // for sws_getCachedContext, etc
 }
 
-#include <common/logger.h>
+#include <common/logger.h>  // for LogMessage, etc
 
-#include "core/audio_params.h"
+#include "core/audio_params.h"  // for AudioParams
 
 /* Calculate actual buffer size keeping in mind not cause too frequent audio callbacks */
 #define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30

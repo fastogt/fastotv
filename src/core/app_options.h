@@ -1,9 +1,10 @@
 #pragma once
 
-#include "ffmpeg_config.h"
-
+#include <stdint.h>  // for int64_t
 #include <string>
 #include <vector>
+
+#include "ffmpeg_config.h"
 
 extern "C" {
 #include <libavutil/dict.h>

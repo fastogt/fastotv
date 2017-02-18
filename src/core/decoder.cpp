@@ -1,5 +1,14 @@
 #include "core/decoder.h"
 
+extern "C" {
+#include <libavutil/mathematics.h>  // for av_rescale_q
+}
+
+#include <common/logger.h>  // for COMPACT_LOG_FILE_CRIT, etc
+#include <common/macros.h>  // for CHECK
+
+#include "core/packet_queue.h"  // for PacketQueu
+
 namespace core {
 
 Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
