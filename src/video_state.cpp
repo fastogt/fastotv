@@ -1217,7 +1217,7 @@ void VideoState::SeekChapter(int incr) {
     return;
   }
 
-  int i;
+  unsigned int i;
   int64_t pos = GetMasterClock() * AV_TIME_BASE;
   /* find the current chapter */
   for (i = 0; i < ic_->nb_chapters; i++) {
@@ -1227,9 +1227,8 @@ void VideoState::SeekChapter(int incr) {
       break;
     }
   }
-  i += incr;
 
-  unsigned int ii = static_cast<unsigned int>(FFMAX(i, 0));
+  unsigned int ii = FFMAX(i + incr, 0);
   if (ii >= ic_->nb_chapters) {
     return;
   }

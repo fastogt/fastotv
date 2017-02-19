@@ -133,20 +133,19 @@ void show_help_filter(const char* name) {
 #endif
 
 char get_media_type_char(enum AVMediaType type) {
-  switch (type) {
-    case AVMEDIA_TYPE_VIDEO:
-      return 'V';
-    case AVMEDIA_TYPE_AUDIO:
-      return 'A';
-    case AVMEDIA_TYPE_DATA:
-      return 'D';
-    case AVMEDIA_TYPE_SUBTITLE:
-      return 'S';
-    case AVMEDIA_TYPE_ATTACHMENT:
-      return 'T';
-    default:
-      return '?';
+  if (type == AVMEDIA_TYPE_VIDEO) {
+    return 'V';
+  } else if (type == AVMEDIA_TYPE_AUDIO) {
+    return 'A';
+  } else if (type == AVMEDIA_TYPE_DATA) {
+    return 'D';
+  } else if (type == AVMEDIA_TYPE_SUBTITLE) {
+    return 'S';
+  } else if (type == AVMEDIA_TYPE_ATTACHMENT) {
+    return 'T';
   }
+
+  return '?';
 }
 
 bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
@@ -647,8 +646,8 @@ int opt_loglevel_inner(const char* opt, const char* arg, char* argv) {
   }
 
   ERROR_LOG() << "Invalid loglevel " << arg << ". Possible levels are:";
-  for (size_t i = 0; i < SIZEOFMASS(common::logging::level_names); i++) {
-    ERROR_LOG() << common::logging::level_names[i];
+  for (int i = common::logging::L_EMERG; i < common::logging::LEVEL_LOG_COUNT; ++i) {
+    ERROR_LOG() << common::logging::log_level_to_text(static_cast<common::logging::LEVEL_LOG>(i));
   }
   return ERROR_RESULT_VALUE;
 }
@@ -947,8 +946,9 @@ int opt_cpuflags(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  unsigned flags = av_get_cpu_flags();
-  int ret = av_parse_cpu_caps(&flags, arg);
+  int flags = av_get_cpu_flags();
+  unsigned int* uflags = reinterpret_cast<unsigned int*>(&flags);
+  int ret = av_parse_cpu_caps(uflags, arg);
   if (ret < 0) {
     return ret;
   }
@@ -967,16 +967,20 @@ int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(opt);
 
   char* tail = NULL;
-  long max = strtol(arg, &tail, 10);
+  size_t max = strtoull(arg, &tail, 10);
   if (*tail) {
     ERROR_LOG() << "Invalid max_alloc \"" << arg << "\".";
-    exit_program(1);
+    return ERROR_RESULT_VALUE;
   }
   av_max_alloc(max);
-  return 0;
+  return SUCCESS_RESULT_VALUE;
 }
 
 void show_banner(int argc, char** argv, const OptionDef* options) {
+  UNUSED(argc);
+  UNUSED(argv);
+  UNUSED(options);
+
   print_program_info(INDENT | SHOW_COPYRIGHT, common::logging::L_INFO);
   print_all_libs_info(INDENT | SHOW_CONFIG, common::logging::L_INFO);
   print_all_libs_info(INDENT | SHOW_VERSION, common::logging::L_INFO);
@@ -1357,24 +1361,16 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
     codec = s->oformat ? avcodec_find_encoder(codec_id) : avcodec_find_decoder(codec_id);
   }
 
-  switch (st->codecpar->codec_type) {
-    case AVMEDIA_TYPE_VIDEO: {
-      prefix = 'v';
-      flags |= AV_OPT_FLAG_VIDEO_PARAM;
-      break;
-    }
-    case AVMEDIA_TYPE_AUDIO: {
-      prefix = 'a';
-      flags |= AV_OPT_FLAG_AUDIO_PARAM;
-      break;
-    }
-    case AVMEDIA_TYPE_SUBTITLE: {
-      prefix = 's';
-      flags |= AV_OPT_FLAG_SUBTITLE_PARAM;
-      break;
-    }
-    default:
-      break;
+  AVCodecParameters* codecpar = st->codecpar;
+  if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+    prefix = 'v';
+    flags |= AV_OPT_FLAG_VIDEO_PARAM;
+  } else if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+    prefix = 'a';
+    flags |= AV_OPT_FLAG_AUDIO_PARAM;
+  } else if (codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+    prefix = 's';
+    flags |= AV_OPT_FLAG_SUBTITLE_PARAM;
   }
 
   while ((t = av_dict_get(opts, "", t, AV_DICT_IGNORE_SUFFIX))) {
@@ -1394,11 +1390,12 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
 
     if (av_opt_find(&cc, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ) || !codec ||
         (codec->priv_class &&
-         av_opt_find(&codec->priv_class, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ)))
+         av_opt_find(&codec->priv_class, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ))) {
       av_dict_set(&ret, t->key, t->value, 0);
-    else if (t->key[0] == prefix &&
-             av_opt_find(&cc, t->key + 1, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ))
+    } else if (t->key[0] == prefix &&
+               av_opt_find(&cc, t->key + 1, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ)) {
       av_dict_set(&ret, t->key + 1, t->value, 0);
+    }
 
     if (p) {
       *p = ':';
@@ -1417,7 +1414,7 @@ AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* cod
     ERROR_LOG() << "Could not alloc memory for stream options.";
     return NULL;
   }
-  for (int i = 0; i < s->nb_streams; i++) {
+  for (unsigned int i = 0; i < s->nb_streams; i++) {
     opts[i] =
         filter_codec_opts(codec_opts, s->streams[i]->codecpar->codec_id, s, s->streams[i], NULL);
   }
