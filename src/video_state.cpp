@@ -53,6 +53,8 @@ extern "C" {
 #include <common/utils.h>
 #include <common/sprintf.h>
 
+#include "video_state_handler.h"
+
 #include "core/types.h"  // for get_valid_channel_layout, etc
 #include "core/utils.h"  // for configure_filtergraph, etc
 #include "core/stream.h"
@@ -69,9 +71,7 @@ extern "C" {
 #define AV_SYNC_FRAMEDUP_THRESHOLD 0.1
 
 #define AV_NOSYNC_THRESHOLD 10.0
-#define CURSOR_HIDE_DELAY 1000000
-/* Step size for volume control */
-#define SDL_VOLUME_STEP (SDL_MIX_MAXVOLUME / 50)
+
 #define EXTERNAL_CLOCK_MIN_FRAMES 2
 #define EXTERNAL_CLOCK_MAX_FRAMES 10
 /* maximum audio speed change to get correct sync */
@@ -82,26 +82,54 @@ extern "C" {
 #define EXTERNAL_CLOCK_SPEED_STEP 0.001
 /* we use about AUDIO_DIFF_AVG_NB A-V differences to make the average */
 #define AUDIO_DIFF_AVG_NB 20
-/* polls for possible required screen refresh at least this often, should be less than 1/fps */
-#define REFRESH_RATE 0.01
+
 /* NOTE: the size must be big enough to compensate the hardware audio buffersize size */
 /* TODO: We assume that a decoded and resampled frame fits into this buffer */
-
 #define MAX_QUEUE_SIZE (15 * 1024 * 1024)
-
-#define FF_ALLOC_EVENT (SDL_USEREVENT)
-#define FF_QUIT_EVENT (SDL_USEREVENT + 2)
 
 namespace {
 int decode_interrupt_callback(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
   return is->IsAborted();
 }
+
+SDL_Texture* CreateTexture(SDL_Renderer* renderer,
+                           Uint32 new_format,
+                           int new_width,
+                           int new_height,
+                           SDL_BlendMode blendmode,
+                           bool init_texture) {
+  SDL_Texture* ltexture =
+      SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
+  if (!ltexture) {
+    NOTREACHED();
+    return nullptr;
+  }
+  if (SDL_SetTextureBlendMode(ltexture, blendmode) < 0) {
+    NOTREACHED();
+    SDL_DestroyTexture(ltexture);
+    return nullptr;
+  }
+  if (init_texture) {
+    void* pixels;
+    int pitch;
+    if (SDL_LockTexture(ltexture, NULL, &pixels, &pitch) < 0) {
+      NOTREACHED();
+      SDL_DestroyTexture(ltexture);
+      return nullptr;
+    }
+    memset(pixels, 0, pitch * new_height);
+    SDL_UnlockTexture(ltexture);
+  }
+
+  return ltexture;
+}
 }
 
 VideoState::VideoState(const common::uri::Uri& uri,
                        core::AppOptions* opt,
-                       core::ComplexOptions* copt)
+                       core::ComplexOptions* copt,
+                       VideoStateHandler* handler)
     : uri_(uri),
       opt_(opt),
       copt_(copt),
@@ -171,23 +199,14 @@ VideoState::VideoState(const common::uri::Uri& uri,
       adecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::AudioThread, this)),
       paused_(false),
       last_paused_(false),
-      cursor_hidden_(false),
       muted_(false),
-      cursor_last_shown_(0),
       eof_(false),
       abort_request_(false),
       renderer_(NULL),
       window_(NULL),
-      stats_() {
-  if (opt->startup_volume < 0) {
-    WARNING_LOG() << "-volume=" << opt->startup_volume << " < 0, setting to 0";
-  }
-  if (opt->startup_volume > 100) {
-    WARNING_LOG() << "-volume=" << opt->startup_volume << " > 100, setting to 100";
-  }
-  opt->startup_volume = av_clip(opt->startup_volume, 0, 100);
-  opt->startup_volume =
-      av_clip(SDL_MIX_MAXVOLUME * opt->startup_volume / 100, 0, SDL_MIX_MAXVOLUME);
+      stats_(),
+      handler_(handler) {
+  CHECK(handler);
   audio_volume_ = opt->startup_volume;
 }
 
@@ -214,15 +233,6 @@ VideoState::~VideoState() {
 
   sws_freeContext(img_convert_ctx_);
   sws_freeContext(sub_convert_ctx_);
-
-  if (renderer_) {
-    SDL_DestroyRenderer(renderer_);
-    renderer_ = NULL;
-  }
-  if (window_) {
-    SDL_DestroyWindow(window_);
-    window_ = NULL;
-  }
 }
 
 int VideoState::StreamComponentOpen(int stream_index) {
@@ -682,38 +692,8 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
     h = opt_->default_height;
   }
 
-  if (!window_) {
-    Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-    if (opt_->window_title.empty()) {
-      const std::string uri_str = uri_.url();
-      opt_->window_title = uri_str;
-    }
-    if (opt_->is_full_screen) {
-      flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-    }
-    window_ = SDL_CreateWindow(opt_->window_title.c_str(), SDL_WINDOWPOS_UNDEFINED,
-                               SDL_WINDOWPOS_UNDEFINED, w, h, flags);
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-    if (window_) {
-      SDL_RendererInfo info;
-      renderer_ =
-          SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-      if (!renderer_) {
-        WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
-        renderer_ = SDL_CreateRenderer(window_, -1, 0);
-      }
-      if (renderer_) {
-        if (!SDL_GetRendererInfo(renderer_, &info)) {
-          DEBUG_LOG() << "Initialized " << info.name << " renderer.";
-        }
-      }
-    }
-  } else {
-    SDL_SetWindowSize(window_, w, h);
-  }
-
-  if (!window_ || !renderer_) {
-    ERROR_LOG() << "SDL: could not set video mode - exiting";
+  bool res = handler_->RequestWindow(uri_, w, h, &renderer_, &window_);
+  if (!res) {
     return ERROR_RESULT_VALUE;
   }
 
@@ -737,7 +717,7 @@ int VideoState::AllocPicture() {
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(&vp->bmp, sdl_format, vp->width, vp->height, SDL_BLENDMODE_NONE, 0) < 0) {
+  if (ReallocTexture(&vp->bmp, sdl_format, vp->width, vp->height, SDL_BLENDMODE_NONE, false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
@@ -755,7 +735,7 @@ int VideoState::AllocPicture() {
 
 /* display the current picture, if any */
 void VideoState::VideoDisplay() {
-  if (!window_) {
+  if (!renderer_) {
     VideoOpen(NULL);
   }
 
@@ -769,37 +749,20 @@ void VideoState::VideoDisplay() {
   SDL_RenderPresent(renderer_);
 }
 
-void VideoState::ToggleFullScreen() {
-  opt_->is_full_screen = !opt_->is_full_screen;
-  SDL_SetWindowFullscreen(window_, opt_->is_full_screen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-}
-
 int VideoState::ReallocTexture(SDL_Texture** texture,
                                Uint32 new_format,
                                int new_width,
                                int new_height,
                                SDL_BlendMode blendmode,
-                               int init_texture) {
+                               bool init_texture) {
   Uint32 format;
   int access, w, h;
   if (SDL_QueryTexture(*texture, &format, &access, &w, &h) < 0 || new_width != w ||
       new_height != h || new_format != format) {
-    void* pixels;
-    int pitch;
     SDL_DestroyTexture(*texture);
-    if (!(*texture = SDL_CreateTexture(renderer_, new_format, SDL_TEXTUREACCESS_STREAMING,
-                                       new_width, new_height))) {
+    *texture = CreateTexture(renderer_, new_format, new_width, new_height, blendmode, init_texture);
+    if (!*texture) {
       return ERROR_RESULT_VALUE;
-    }
-    if (SDL_SetTextureBlendMode(*texture, blendmode) < 0) {
-      return ERROR_RESULT_VALUE;
-    }
-    if (init_texture) {
-      if (SDL_LockTexture(*texture, NULL, &pixels, &pitch) < 0) {
-        return ERROR_RESULT_VALUE;
-      }
-      memset(pixels, 0, pitch * new_height);
-      SDL_UnlockTexture(*texture);
     }
   }
   return SUCCESS_RESULT_VALUE;
@@ -920,253 +883,6 @@ int VideoState::Exec() {
     return EXIT_FAILURE;
   }
 
-  double incr, pos, frac;
-  SDL_Event event;
-  while (true) {
-    {
-      double remaining_time = 0.0;
-      SDL_PumpEvents();
-      while (!SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) {
-        if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
-          SDL_ShowCursor(0);
-          cursor_hidden_ = true;
-        }
-        if (remaining_time > 0.0) {
-          const unsigned sleep_time = static_cast<unsigned>(remaining_time * 1000000.0);
-          av_usleep(sleep_time);
-        }
-        remaining_time = REFRESH_RATE;
-        if (opt_->show_mode != core::SHOW_MODE_NONE && (!paused_ || force_refresh_)) {
-          VideoRefresh(&remaining_time);
-        }
-        SDL_PumpEvents();
-      }
-    }
-    switch (event.type) {
-      case SDL_KEYDOWN: {
-        if (opt_->exit_on_keydown) {
-          return EXIT_SUCCESS;
-        }
-        switch (event.key.keysym.sym) {
-          case SDLK_ESCAPE:
-          case SDLK_q:
-            return EXIT_SUCCESS;
-          case SDLK_f:
-            ToggleFullScreen();
-            force_refresh_ = true;
-            break;
-          case SDLK_p:
-          case SDLK_SPACE:
-            TogglePause();
-            break;
-          case SDLK_m:
-            ToggleMute();
-            break;
-          case SDLK_KP_MULTIPLY:
-          case SDLK_0:
-            UpdateVolume(1, SDL_VOLUME_STEP);
-            break;
-          case SDLK_KP_DIVIDE:
-          case SDLK_9:
-            UpdateVolume(-1, SDL_VOLUME_STEP);
-            break;
-          case SDLK_s:  // S: Step to next frame
-            StepToNextFrame();
-            break;
-          case SDLK_a:
-            StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
-            break;
-          case SDLK_v:
-            StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-            break;
-          case SDLK_c:
-            StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-            StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
-            break;
-          case SDLK_t:
-            // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
-            break;
-          case SDLK_w: {
-#if CONFIG_AVFILTER
-            const size_t nb_vfilters = opt_->vfilters_list.size();
-            if (opt_->show_mode == core::SHOW_MODE_VIDEO && vfilter_idx_ < nb_vfilters - 1) {
-              if (++vfilter_idx_ >= nb_vfilters) {
-                vfilter_idx_ = 0;
-              }
-            } else {
-              vfilter_idx_ = 0;
-              ToggleAudioDisplay();
-            }
-#else
-            ToggleAudioDisplay(cur_stream);
-#endif
-            break;
-          }
-          case SDLK_PAGEUP:
-            if (ic_->nb_chapters <= 1) {
-              incr = 600.0;
-              goto do_seek;
-            }
-            SeekChapter(1);
-            break;
-          case SDLK_PAGEDOWN:
-            if (ic_->nb_chapters <= 1) {
-              incr = -600.0;
-              goto do_seek;
-            }
-            SeekChapter(-1);
-            break;
-          case SDLK_LEFT:
-            incr = -10.0;
-            goto do_seek;
-          case SDLK_RIGHT:
-            incr = 10.0;
-            goto do_seek;
-          case SDLK_UP:
-            incr = 60.0;
-            goto do_seek;
-          case SDLK_DOWN:
-            incr = -60.0;
-          do_seek:
-            if (opt_->seek_by_bytes) {
-              pos = -1;
-              if (pos < 0 && vstream_->IsOpened()) {
-                int64_t lpos = 0;
-                core::PacketQueue* vqueue = vstream_->Queue();
-                if (video_frame_queue_->GetLastUsedPos(&lpos, vqueue->Serial())) {
-                  pos = lpos;
-                } else {
-                  pos = -1;
-                }
-              }
-              if (pos < 0 && astream_->IsOpened()) {
-                int64_t lpos = 0;
-                core::PacketQueue* aqueue = astream_->Queue();
-                if (audio_frame_queue_->GetLastUsedPos(&lpos, aqueue->Serial())) {
-                  pos = lpos;
-                } else {
-                  pos = -1;
-                }
-              }
-              if (pos < 0) {
-                pos = avio_tell(ic_->pb);
-              }
-              if (ic_->bit_rate) {
-                incr *= ic_->bit_rate / 8.0;
-              } else {
-                incr *= 180000.0;
-              }
-              pos += incr;
-              StreamSeek(pos, incr, 1);
-            } else {
-              pos = GetMasterClock();
-              if (std::isnan(pos)) {
-                pos = static_cast<double>(seek_pos_) / AV_TIME_BASE;
-              }
-              pos += incr;
-              if (ic_->start_time != AV_NOPTS_VALUE &&
-                  pos < ic_->start_time / static_cast<double>(AV_TIME_BASE)) {
-                pos = ic_->start_time / static_cast<double>(AV_TIME_BASE);
-              }
-              StreamSeek(static_cast<int64_t>(pos * AV_TIME_BASE),
-                         static_cast<int64_t>(incr * AV_TIME_BASE), 0);
-            }
-            break;
-          default:
-            break;
-        }
-        break;
-      }
-      case SDL_MOUSEBUTTONDOWN: {
-        if (opt_->exit_on_mousedown) {
-          return EXIT_SUCCESS;
-        }
-        if (event.button.button == SDL_BUTTON_LEFT) {
-          static int64_t last_mouse_left_click = 0;
-          if (av_gettime_relative() - last_mouse_left_click <= 500000) {
-            ToggleFullScreen();
-            force_refresh_ = true;
-            last_mouse_left_click = 0;
-          } else {
-            last_mouse_left_click = av_gettime_relative();
-          }
-        }
-      }
-      case SDL_MOUSEMOTION: {
-        if (cursor_hidden_) {
-          SDL_ShowCursor(1);
-          cursor_hidden_ = false;
-        }
-        double x;
-        cursor_last_shown_ = av_gettime_relative();
-        if (event.type == SDL_MOUSEBUTTONDOWN) {
-          if (event.button.button != SDL_BUTTON_RIGHT) {
-            break;
-          }
-          x = event.button.x;
-        } else {
-          if (!(event.motion.state & SDL_BUTTON_RMASK)) {
-            break;
-          }
-          x = event.motion.x;
-        }
-        if (opt_->seek_by_bytes || ic_->duration <= 0) {
-          const int64_t size = avio_size(ic_->pb);
-          const int64_t pos = size * x / width_;
-          StreamSeek(pos, 0, 1);
-        } else {
-          int ns, hh, mm, ss;
-          int tns, thh, tmm, tss;
-          tns = ic_->duration / 1000000LL;
-          thh = tns / 3600;
-          tmm = (tns % 3600) / 60;
-          tss = (tns % 60);
-          frac = x / width_;
-          ns = frac * tns;
-          hh = ns / 3600;
-          mm = (ns % 3600) / 60;
-          ss = (ns % 60);
-          INFO_LOG() << "Seek to " << frac * 100
-                     << common::MemSPrintf(" (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)", hh,
-                                           mm, ss, thh, tmm, tss);
-          int64_t ts = frac * ic_->duration;
-          if (ic_->start_time != AV_NOPTS_VALUE) {
-            ts += ic_->start_time;
-          }
-          StreamSeek(ts, 0, 0);
-        }
-        break;
-      }
-      case SDL_WINDOWEVENT: {
-        switch (event.window.event) {
-          case SDL_WINDOWEVENT_RESIZED: {
-            opt_->screen_width = width_ = event.window.data1;
-            opt_->screen_height = height_ = event.window.data2;
-            force_refresh_ = true;
-            break;
-          }
-          case SDL_WINDOWEVENT_EXPOSED: {
-            force_refresh_ = true;
-            break;
-          }
-        }
-        break;
-      }
-      case SDL_QUIT:
-      case FF_QUIT_EVENT: {
-        return EXIT_SUCCESS;
-      }
-      case FF_ALLOC_EVENT: {
-        int res = static_cast<VideoState*>(event.user.data1)->AllocPicture();
-        if (res == ERROR_RESULT_VALUE) {
-          return EXIT_FAILURE;
-        }
-        break;
-      }
-      default:
-        break;
-    }
-  }
   return EXIT_SUCCESS;
 }
 
@@ -1191,6 +907,12 @@ void VideoState::StreamTogglePause() {
   astream_->SetPaused(paused_);
 }
 
+void VideoState::ToggleFullScreen() {
+  opt_->is_full_screen = !opt_->is_full_screen;
+  SDL_SetWindowFullscreen(window_, opt_->is_full_screen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+  force_refresh_ = true;
+}
+
 void VideoState::TogglePause() {
   StreamTogglePause();
   step_ = false;
@@ -1202,6 +924,28 @@ void VideoState::ToggleMute() {
 
 void VideoState::UpdateVolume(int sign, int step) {
   audio_volume_ = av_clip(audio_volume_ + sign * step, 0, SDL_MIX_MAXVOLUME);
+}
+
+void VideoState::ToggleWaveDisplay() {
+#if CONFIG_AVFILTER
+  const size_t nb_vfilters = opt_->vfilters_list.size();
+  if (opt_->show_mode == core::SHOW_MODE_VIDEO && vfilter_idx_ < nb_vfilters - 1) {
+    if (++vfilter_idx_ >= nb_vfilters) {
+      vfilter_idx_ = 0;
+    }
+  } else {
+    vfilter_idx_ = 0;
+    ToggleAudioDisplay();
+  }
+#else
+  ToggleAudioDisplay(cur_stream);
+#endif
+}
+
+void VideoState::TryRefreshVideo(double* remaining_time) {
+  if (opt_->show_mode != core::SHOW_MODE_NONE && (!paused_ || force_refresh_)) {
+    VideoRefresh(remaining_time);
+  }
 }
 
 void VideoState::ToggleAudioDisplay() {
@@ -1242,7 +986,7 @@ void VideoState::SeekChapter(int incr) {
   StreamSeek(rq, 0, 0);
 }
 
-void VideoState::StreamCycleChannel(int codec_type) {
+void VideoState::StreamCycleChannel(AVMediaType codec_type) {
   int start_index = invalid_stream_index;
   int old_index = invalid_stream_index;
   if (codec_type == AVMEDIA_TYPE_VIDEO) {
@@ -1310,6 +1054,135 @@ the_end:
              << "  stream from #" << old_index << " to #" << stream_index;
   StreamComponentClose(old_index);
   StreamComponentOpen(stream_index);
+}
+
+void VideoState::StreamSeekPos(double x) {
+  if (opt_->seek_by_bytes || ic_->duration <= 0) {
+    const int64_t size = avio_size(ic_->pb);
+    const int64_t pos = size * x / width_;
+    StreamSeek(pos, 0, 1);
+  } else {
+    int ns, hh, mm, ss;
+    int tns, thh, tmm, tss;
+    tns = ic_->duration / 1000000LL;
+    thh = tns / 3600;
+    tmm = (tns % 3600) / 60;
+    tss = (tns % 60);
+    float frac = x / width_;
+    ns = frac * tns;
+    hh = ns / 3600;
+    mm = (ns % 3600) / 60;
+    ss = (ns % 60);
+    INFO_LOG() << "Seek to " << frac * 100
+               << common::MemSPrintf(" (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)", hh, mm,
+                                     ss, thh, tmm, tss);
+    int64_t ts = frac * ic_->duration;
+    if (ic_->start_time != AV_NOPTS_VALUE) {
+      ts += ic_->start_time;
+    }
+    StreamSeek(ts, 0, 0);
+  }
+}
+
+void VideoState::StreemSeek(double incr) {
+  if (opt_->seek_by_bytes) {
+    int pos = -1;
+    if (pos < 0 && vstream_->IsOpened()) {
+      int64_t lpos = 0;
+      core::PacketQueue* vqueue = vstream_->Queue();
+      if (video_frame_queue_->GetLastUsedPos(&lpos, vqueue->Serial())) {
+        pos = lpos;
+      } else {
+        pos = -1;
+      }
+    }
+    if (pos < 0 && astream_->IsOpened()) {
+      int64_t lpos = 0;
+      core::PacketQueue* aqueue = astream_->Queue();
+      if (audio_frame_queue_->GetLastUsedPos(&lpos, aqueue->Serial())) {
+        pos = lpos;
+      } else {
+        pos = -1;
+      }
+    }
+    if (pos < 0) {
+      pos = avio_tell(ic_->pb);
+    }
+    if (ic_->bit_rate) {
+      incr *= ic_->bit_rate / 8.0;
+    } else {
+      incr *= 180000.0;
+    }
+    pos += incr;
+    StreamSeek(pos, incr, 1);
+  } else {
+    int pos = GetMasterClock();
+    if (std::isnan(pos)) {
+      pos = static_cast<double>(seek_pos_) / AV_TIME_BASE;
+    }
+    pos += incr;
+    if (ic_->start_time != AV_NOPTS_VALUE &&
+        pos < ic_->start_time / static_cast<double>(AV_TIME_BASE)) {
+      pos = ic_->start_time / static_cast<double>(AV_TIME_BASE);
+    }
+    StreamSeek(static_cast<int64_t>(pos * AV_TIME_BASE), static_cast<int64_t>(incr * AV_TIME_BASE),
+               0);
+  }
+}
+
+void VideoState::MoveToNextFragment(double incr) {
+  if (ic_->nb_chapters <= 1) {
+    incr = 600.0;
+    StreemSeek(incr);
+  }
+  SeekChapter(1);
+}
+
+void VideoState::MoveToPreviousFragment(double incr) {
+  if (ic_->nb_chapters <= 1) {
+    incr = -600.0;
+    StreemSeek(incr);
+  }
+  SeekChapter(-1);
+}
+
+void VideoState::HandleMouseButtonEvent(SDL_MouseButtonEvent* event) {
+  if (!event) {
+    return;
+  }
+
+  if (event->button == SDL_BUTTON_LEFT) {
+    static int64_t last_mouse_left_click = 0;
+    if (av_gettime_relative() - last_mouse_left_click <= 500000) {
+      ToggleFullScreen();
+      last_mouse_left_click = 0;
+    } else {
+      last_mouse_left_click = av_gettime_relative();
+    }
+  }
+}
+
+void VideoState::HandleWindowEvent(SDL_WindowEvent* event) {
+  if (!event) {
+    return;
+  }
+
+  switch (event->event) {
+    case SDL_WINDOWEVENT_RESIZED: {
+      opt_->screen_width = width_ = event->data1;
+      opt_->screen_height = height_ = event->data2;
+      force_refresh_ = true;
+      break;
+    }
+    case SDL_WINDOWEVENT_EXPOSED: {
+      force_refresh_ = true;
+      break;
+    }
+  }
+}
+
+int VideoState::HandleAllocPictureEvent() {
+  return AllocPicture();
 }
 
 void VideoState::UpdateSampleDisplay(short* samples, int samples_size) {

@@ -1,14 +1,15 @@
 #pragma once
 
-#include <stddef.h>   // for size_t
-#include <stdint.h>   // for int64_t, uint8_t, int16_t
-#include <memory>     // for shared_ptr
-#include <string>     // for string
+#include <stddef.h>  // for size_t
+#include <stdint.h>  // for int64_t, uint8_t, int16_t
+#include <memory>    // for shared_ptr
+#include <string>    // for string
 
 #include <SDL2/SDL_blendmode.h>  // for SDL_BlendMode
 #include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Texture
 #include <SDL2/SDL_stdinc.h>     // for Uint32, Uint8
 #include <SDL2/SDL_video.h>      // for SDL_Window
+#include <SDL2/SDL_events.h>
 
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 
@@ -66,6 +67,12 @@ class VideoFrameQueue;
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
 
+/* polls for possible required screen refresh at least this often, should be less than 1/fps */
+#define REFRESH_RATE 0.01
+
+#define FF_ALLOC_EVENT (SDL_USEREVENT)
+#define FF_QUIT_EVENT (SDL_USEREVENT + 2)
+
 struct Stats {
   Stats() : frame_drops_early(0), frame_drops_late(0) {}
 
@@ -75,19 +82,40 @@ struct Stats {
   int frame_drops_late;
 };
 
+class VideoStateHandler;
 class VideoState {
  public:
   enum { invalid_stream_index = -1 };
-  VideoState(const common::uri::Uri& uri, core::AppOptions* opt, core::ComplexOptions* copt);
+  VideoState(const common::uri::Uri& uri,
+             core::AppOptions* opt,
+             core::ComplexOptions* copt,
+             VideoStateHandler* handler);
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
   bool IsAborted() const;
-  ~VideoState();
+  virtual ~VideoState();
 
   void ToggleFullScreen();
+  /* pause or resume the video */
   void TogglePause();
   void ToggleMute();
+  void ToggleWaveDisplay();
   void ToggleAudioDisplay();
+  void TryRefreshVideo(double* remaining_time);
+
+  void UpdateVolume(int sign, int step);
+
+  void StepToNextFrame();
+  void StreamCycleChannel(AVMediaType codec_type);
+  void StreamSeekPos(double x);
+  void StreemSeek(double incr);
+
+  void MoveToNextFragment(double incr);
+  void MoveToPreviousFragment(double incr);
+
+  virtual void HandleMouseButtonEvent(SDL_MouseButtonEvent* event);
+  virtual void HandleWindowEvent(SDL_WindowEvent* event);
+  virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoState);
@@ -100,7 +128,6 @@ class VideoState {
   /* seek in the stream */
   void StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes);
 
-  void StepToNextFrame();
   int GetMasterSyncType() const;
   double ComputeTargetDelay(double delay) const;
   double GetMasterClock() const;
@@ -122,15 +149,13 @@ class VideoState {
                      int new_width,
                      int new_height,
                      SDL_BlendMode blendmode,
-                     int init_texture);
+                     bool init_texture);
   void VideoAudioDisplay();
   void VideoImageDisplay();
-  /* pause or resume the video */
-  void UpdateVolume(int sign, int step);
+
   void SeekChapter(int incr);
   /* copy samples for viewing in editor window */
   void UpdateSampleDisplay(short* samples, int samples_size);
-  void StreamCycleChannel(int codec_type);
   /* return the wanted number of samples to get better sync if sync_type is video
    * or external master clock */
   int SynchronizeAudio(int nb_samples);
@@ -235,13 +260,12 @@ class VideoState {
 
   bool paused_;
   bool last_paused_;
-  bool cursor_hidden_;
   bool muted_;
-  int64_t cursor_last_shown_;
   bool eof_;
   bool abort_request_;
 
   SDL_Renderer* renderer_;
   SDL_Window* window_;
   Stats stats_;
+  VideoStateHandler* handler_;
 };

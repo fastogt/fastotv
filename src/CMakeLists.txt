@@ -145,7 +145,13 @@ TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}
   common
 )
 
-SET(EXE_SOURCES main.cpp player.h player.cpp video_state.cpp video_state.h cmdutils.cpp cmdutils.h)
+SET(MAIN_SOURCES
+  video_state_handler.h video_state_handler.cpp
+  player.h player.cpp
+  video_state.h video_state.cpp
+  cmdutils.h cmdutils.cpp
+)
+SET(EXE_SOURCES main.cpp ${MAIN_SOURCES})
 SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
 
 IF(MINGW OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGCXX)
