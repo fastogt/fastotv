@@ -692,7 +692,7 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
     h = opt_->default_height;
   }
 
-  bool res = handler_->RequestWindow(uri_, w, h, &renderer_, &window_);
+  bool res = handler_->RequestWindow(this, w, h, &renderer_, &window_);
   if (!res) {
     return ERROR_RESULT_VALUE;
   }
@@ -894,6 +894,10 @@ bool VideoState::IsAborted() const {
   return abort_request_;
 }
 
+const common::uri::Uri& VideoState::uri() const {
+  return uri_;
+}
+
 void VideoState::StreamTogglePause() {
   if (paused_) {
     frame_timer_ += av_gettime_relative() / 1000000.0 - vstream_->LastUpdatedClock();
@@ -907,9 +911,8 @@ void VideoState::StreamTogglePause() {
   astream_->SetPaused(paused_);
 }
 
-void VideoState::ToggleFullScreen() {
-  opt_->is_full_screen = !opt_->is_full_screen;
-  SDL_SetWindowFullscreen(window_, opt_->is_full_screen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+void VideoState::SetFullScreen(bool full_screen) {
+  SDL_SetWindowFullscreen(window_, full_screen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
   force_refresh_ = true;
 }
 
@@ -1056,8 +1059,8 @@ the_end:
   StreamComponentOpen(stream_index);
 }
 
-void VideoState::StreamSeekPos(double x) {
-  if (opt_->seek_by_bytes || ic_->duration <= 0) {
+void VideoState::StreamSeekPos(double x, int seek_by_bytes) {
+  if (seek_by_bytes || ic_->duration <= 0) {
     const int64_t size = avio_size(ic_->pb);
     const int64_t pos = size * x / width_;
     StreamSeek(pos, 0, 1);
@@ -1084,8 +1087,8 @@ void VideoState::StreamSeekPos(double x) {
   }
 }
 
-void VideoState::StreemSeek(double incr) {
-  if (opt_->seek_by_bytes) {
+void VideoState::StreemSeek(double incr, int seek_by_bytes) {
+  if (seek_by_bytes) {
     int pos = -1;
     if (pos < 0 && vstream_->IsOpened()) {
       int64_t lpos = 0;
@@ -1130,36 +1133,20 @@ void VideoState::StreemSeek(double incr) {
   }
 }
 
-void VideoState::MoveToNextFragment(double incr) {
+void VideoState::MoveToNextFragment(double incr, int seek_by_bytes) {
   if (ic_->nb_chapters <= 1) {
     incr = 600.0;
-    StreemSeek(incr);
+    StreemSeek(incr, seek_by_bytes);
   }
   SeekChapter(1);
 }
 
-void VideoState::MoveToPreviousFragment(double incr) {
+void VideoState::MoveToPreviousFragment(double incr, int seek_by_bytes) {
   if (ic_->nb_chapters <= 1) {
     incr = -600.0;
-    StreemSeek(incr);
+    StreemSeek(incr, seek_by_bytes);
   }
   SeekChapter(-1);
-}
-
-void VideoState::HandleMouseButtonEvent(SDL_MouseButtonEvent* event) {
-  if (!event) {
-    return;
-  }
-
-  if (event->button == SDL_BUTTON_LEFT) {
-    static int64_t last_mouse_left_click = 0;
-    if (av_gettime_relative() - last_mouse_left_click <= 500000) {
-      ToggleFullScreen();
-      last_mouse_left_click = 0;
-    } else {
-      last_mouse_left_click = av_gettime_relative();
-    }
-  }
 }
 
 void VideoState::HandleWindowEvent(SDL_WindowEvent* event) {
@@ -1579,16 +1566,8 @@ int VideoState::ReadThread() {
         0;  // FIXME hack, ffplay maybe should not use avio_feof() to test for the end
   }
 
-  if (opt_->seek_by_bytes < 0) {
-    opt_->seek_by_bytes =
-        !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
-  }
-
   max_frame_duration_ = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
-
-  if (opt_->window_title.empty() && (t = av_dict_get(ic->metadata, "title", NULL, 0))) {
-    opt_->window_title = av_asprintf("%s - %s", t->value, in_filename);
-  }
+  handler_->OnDiscoveryStream(this, ic);
 
   /* if seeking requested, we execute it */
   if (opt_->start_time != AV_NOPTS_VALUE) {

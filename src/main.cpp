@@ -21,9 +21,7 @@ extern "C" {
 #if CONFIG_AVFILTER
 #include <libavfilter/avfilter.h>  // for avfilter_get_class, etc
 #endif
-#if CONFIG_AVFORMAT
 #include <libavformat/avformat.h>  // for av_find_input_format, etc
-#endif
 #include <libavutil/avutil.h>
 #include <libavutil/error.h>  // for AVERROR
 #include <libavutil/opt.h>    // for AV_OPT_FLAG_DECODING_PARAM, etc
@@ -41,7 +39,7 @@ extern "C" {
 
 namespace {
 core::AppOptions g_options;
-common::uri::Uri play_list_url;
+PlayerOptions g_player_options;
 #if CONFIG_AVFILTER
 int opt_add_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
@@ -156,8 +154,9 @@ int opt_input_playlist(const char* opt, const char* arg, DictionaryOptions* dopt
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (play_list_url.isValid()) {
-    ERROR_LOG() << "Argument '" << play_list_url.url() << " provided as input playlist file, but '"
+  if (g_player_options.play_list_location.isValid()) {
+    ERROR_LOG() << "Argument '" << g_player_options.play_list_location.url()
+                << " provided as input playlist file, but '"
                 << "' was already specified.";
     return AVERROR(EINVAL);
   }
@@ -165,7 +164,7 @@ int opt_input_playlist(const char* opt, const char* arg, DictionaryOptions* dopt
   if (strcmp(arg, "-") == 0) {
     arg = "pipe:";
   }
-  play_list_url = common::uri::Uri(arg);
+  g_player_options.play_list_location = common::uri::Uri(arg);
   return 0;
 }
 
@@ -256,7 +255,7 @@ const OptionDef options[] = {
      {.func_arg = opt_frame_size},
      "set frame size (WxH or abbreviation)",
      "size"},
-    {"fs", OPT_BOOL, {&g_options.is_full_screen}, "force full screen"},
+    {"fs", OPT_BOOL, {&g_player_options.is_full_screen}, "force full screen"},
     {"an", OPT_BOOL, {&g_options.audio_disable}, "disable audio"},
     {"vn", OPT_BOOL, {&g_options.video_disable}, "disable video"},
     {"ast",
@@ -277,7 +276,7 @@ const OptionDef options[] = {
      "duration"},
     {"bytes",
      OPT_INT | HAS_ARG,
-     {&g_options.seek_by_bytes},
+     {&g_player_options.seek_by_bytes},
      "seek by bytes 0=off 1=on -1=auto",
      "val"},
     {"nodisp", OPT_BOOL, {&g_options.display_disable}, "disable graphical display"},
@@ -306,10 +305,14 @@ const OptionDef options[] = {
      "set audio-video sync. type (type=audio/video)",
      "type"},
     {"autoexit", OPT_BOOL | OPT_EXPERT, {&g_options.autoexit}, "exit at the end", ""},
-    {"exitonkeydown", OPT_BOOL | OPT_EXPERT, {&g_options.exit_on_keydown}, "exit on key down", ""},
+    {"exitonkeydown",
+     OPT_BOOL | OPT_EXPERT,
+     {&g_player_options.exit_on_keydown},
+     "exit on key down",
+     ""},
     {"exitonmousedown",
      OPT_BOOL | OPT_EXPERT,
-     {&g_options.exit_on_mousedown},
+     {&g_player_options.exit_on_mousedown},
      "exit on mouse down",
      ""},
     {"loop",
@@ -329,7 +332,7 @@ const OptionDef options[] = {
      ""},
     {"window_title",
      OPT_STRING | HAS_ARG,
-     {&g_options.window_title},
+     {&g_player_options.window_title},
      "set window title",
      "window title"},
 #if CONFIG_AVFILTER
@@ -350,7 +353,11 @@ const OptionDef options[] = {
      {.func_arg = opt_default},
      "generic catch all option",
      ""},
-    {"i", HAS_ARG, {.func_arg = opt_input_playlist}, "read specified playlist", "input_play_list_url"},
+    {"i",
+     HAS_ARG,
+     {.func_arg = opt_input_playlist},
+     "read specified playlist",
+     "input_play_list_url"},
     {"codec", HAS_ARG, {.func_arg = opt_codec}, "force decoder", "decoder_name"},
     {"acodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
@@ -485,7 +492,7 @@ int main(int argc, char** argv) {
   g_options.autorotate = 1;  // fix me
   DictionaryOptions* dict = do_init(argc, argv);
 
-  if (!play_list_url.isValid()) {
+  if (!g_player_options.play_list_location.isValid()) {
     show_usage();
     ERROR_LOG() << "An input file must be specified";
     ERROR_LOG() << "Use -h to get full help or, even better, run 'man " PROJECT_NAME_TITLE "'";
@@ -528,7 +535,7 @@ int main(int argc, char** argv) {
   copt.sws_dict = dict->sws_dict;
   copt.format_opts = dict->format_opts;
   copt.codec_opts = dict->codec_opts;
-  Player* player = new Player(play_list_url, &g_options, &copt);
+  Player* player = new Player(g_player_options, &g_options, &copt);
   int res = player->Exec();
   destroy(&player);
   do_exit(&dict);

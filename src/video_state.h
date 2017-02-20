@@ -93,9 +93,10 @@ class VideoState {
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
   bool IsAborted() const;
+  const common::uri::Uri& uri() const;
   virtual ~VideoState();
 
-  void ToggleFullScreen();
+  void SetFullScreen(bool full_screen);
   /* pause or resume the video */
   void TogglePause();
   void ToggleMute();
@@ -107,13 +108,12 @@ class VideoState {
 
   void StepToNextFrame();
   void StreamCycleChannel(AVMediaType codec_type);
-  void StreamSeekPos(double x);
-  void StreemSeek(double incr);
+  void StreamSeekPos(double x, int seek_by_bytes);
+  void StreemSeek(double incr, int seek_by_bytes);
 
-  void MoveToNextFragment(double incr);
-  void MoveToPreviousFragment(double incr);
+  void MoveToNextFragment(double incr, int seek_by_bytes);
+  void MoveToPreviousFragment(double incr, int seek_by_bytes);
 
-  virtual void HandleMouseButtonEvent(SDL_MouseButtonEvent* event);
   virtual void HandleWindowEvent(SDL_WindowEvent* event);
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 

@@ -22,8 +22,6 @@ struct AppOptions {
   AppOptions();
 
   bool autorotate;
-  bool exit_on_keydown;
-  bool exit_on_mousedown;
 
   bool audio_disable;
   bool video_disable;
@@ -36,14 +34,11 @@ struct AppOptions {
   int screen_height;
 
   ShowMode show_mode;
-  std::string window_title;
   int framedrop;
   bool genpts;
   AvSyncType av_sync_type;
   int startup_volume;
-  int seek_by_bytes;
   bool display_disable;
-  bool is_full_screen;
   int loop;
   bool autoexit;
   bool show_status;

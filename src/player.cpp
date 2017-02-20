@@ -21,7 +21,7 @@ extern "C" {
 namespace {
 typedef common::file_system::ascii_string_path file_path;
 bool ReadPlaylistFromFile(const file_path& location,
-                          std::vector<common::uri::Uri>* urls = nullptr) {
+                          std::vector<Url>* urls = nullptr) {
   if (!location.isValid()) {
     return false;
   }
@@ -31,11 +31,11 @@ bool ReadPlaylistFromFile(const file_path& location,
     return false;
   }
 
-  std::vector<common::uri::Uri> lurls;
+  std::vector<Url> lurls;
   std::string path;
   while (!pl.isEof() && pl.readLine(&path)) {
-    common::uri::Uri ur(path);
-    if (ur.isValid()) {
+    Url ur(path);
+    if (ur.IsValid()) {
       lurls.push_back(ur);
     }
   }
@@ -48,18 +48,25 @@ bool ReadPlaylistFromFile(const file_path& location,
 }
 }
 
-Player::Player(const common::uri::Uri& play_list_location,
-               core::AppOptions* opt,
-               core::ComplexOptions* copt)
-    : opt_(opt),
+PlayerOptions::PlayerOptions()
+    : exit_on_keydown(false),
+      exit_on_mousedown(false),
+      is_full_screen(false),
+      seek_by_bytes(-1),
+      window_title() {}
+
+Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::ComplexOptions* copt)
+    : options_(options),
+      opt_(opt),
       copt_(copt),
       play_list_(),
       stream_(),
       renderer_(NULL),
       window_(NULL),
       cursor_hidden_(false),
-      cursor_last_shown_(0) {
-  ChangePlayListLocation(play_list_location);
+      cursor_last_shown_(0),
+      last_mouse_left_click_(0) {
+  ChangePlayListLocation(options.play_list_location);
 
   // stable options
   if (opt->startup_volume < 0) {
@@ -78,7 +85,7 @@ int Player::Exec() {
     return EXIT_FAILURE;
   }
 
-  stream_ = common::make_scoped<VideoState>(play_list_[0], opt_, copt_, this);
+  stream_ = common::make_scoped<VideoState>(play_list_[0].url(), opt_, copt_, this);
   int res = stream_->Exec();
   if (res == EXIT_FAILURE) {
     return EXIT_FAILURE;
@@ -105,7 +112,7 @@ int Player::Exec() {
     }
     switch (event.type) {
       case SDL_KEYDOWN: {
-        if (opt_->exit_on_keydown) {
+        if (options_.exit_on_keydown) {
           return EXIT_SUCCESS;
         }
         double incr = 0;
@@ -113,9 +120,11 @@ int Player::Exec() {
           case SDLK_ESCAPE:
           case SDLK_q:
             return EXIT_SUCCESS;
-          case SDLK_f:
-            stream_->ToggleFullScreen();
+          case SDLK_f: {
+            bool full_screen = options_.is_full_screen = !options_.is_full_screen;
+            stream_->SetFullScreen(full_screen);
             break;
+          }
           case SDLK_p:
           case SDLK_SPACE:
             stream_->TogglePause();
@@ -152,10 +161,10 @@ int Player::Exec() {
             break;
           }
           case SDLK_PAGEUP:
-            stream_->MoveToNextFragment(0);
+            stream_->MoveToNextFragment(0, options_.seek_by_bytes);
             break;
           case SDLK_PAGEDOWN:
-            stream_->MoveToPreviousFragment(0);
+            stream_->MoveToPreviousFragment(0, options_.seek_by_bytes);
             break;
           case SDLK_LEFT:
             incr = -10.0;
@@ -169,7 +178,7 @@ int Player::Exec() {
           case SDLK_DOWN:
             incr = -60.0;
           do_seek:
-            stream_->StreemSeek(incr);
+            stream_->StreemSeek(incr, options_.seek_by_bytes);
             break;
           default:
             break;
@@ -177,10 +186,18 @@ int Player::Exec() {
         break;
       }
       case SDL_MOUSEBUTTONDOWN: {
-        if (opt_->exit_on_mousedown) {
+        if (options_.exit_on_mousedown) {
           return EXIT_SUCCESS;
         }
-        stream_->HandleMouseButtonEvent(&event.button);
+        if (event.button.button == SDL_BUTTON_LEFT) {
+          if (av_gettime_relative() - last_mouse_left_click_ <= 500000) {
+            bool full_screen = options_.is_full_screen = !options_.is_full_screen;
+            stream_->SetFullScreen(full_screen);
+            last_mouse_left_click_ = 0;
+          } else {
+            last_mouse_left_click_ = av_gettime_relative();
+          }
+        }
       }
       case SDL_MOUSEMOTION: {
         if (cursor_hidden_) {
@@ -200,7 +217,7 @@ int Player::Exec() {
           }
           x = event.motion.x;
         }
-        stream_->StreamSeekPos(x);
+        stream_->StreamSeekPos(x, options_.seek_by_bytes);
         break;
       }
       case SDL_WINDOWEVENT: {
@@ -236,26 +253,22 @@ Player::~Player() {
   }
 }
 
-bool Player::RequestWindow(const common::uri::Uri& uri,
+bool Player::RequestWindow(VideoState* stream,
                            int width,
                            int height,
                            SDL_Renderer** renderer,
                            SDL_Window** window) {
-  if (!renderer || !window) {
+  if (!stream || !renderer || !window) {  // invalid input
     return false;
   }
 
   if (!window_) {
     Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-    if (opt_->window_title.empty()) {
-      const std::string uri_str = uri.url();
-      opt_->window_title = uri_str;
-    }
-    if (opt_->is_full_screen) {
+    if (options_.is_full_screen) {
       flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
-    window_ = SDL_CreateWindow(opt_->window_title.c_str(), SDL_WINDOWPOS_UNDEFINED,
-                               SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+    window_ = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
+                               height, flags);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
     if (window_) {
       SDL_RendererInfo info;
@@ -280,9 +293,30 @@ bool Player::RequestWindow(const common::uri::Uri& uri,
     return false;
   }
 
+  if (options_.window_title.empty()) {
+    const std::string uri_str = stream->uri().url();
+    options_.window_title = uri_str;
+  }
+
+  SDL_SetWindowTitle(window_, options_.window_title.c_str());
   *renderer = renderer_;
   *window = window_;
   return true;
+}
+
+void Player::OnDiscoveryStream(VideoState* stream, AVFormatContext* context) {
+  if (!stream || !context) {
+    return;
+  }
+
+  if (options_.seek_by_bytes < 0) {
+    options_.seek_by_bytes =
+        !!(context->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", context->iformat->name);
+  }
+  AVDictionaryEntry* t = NULL;
+  if (options_.window_title.empty() && (t = av_dict_get(context->metadata, "title", NULL, 0))) {
+    options_.window_title = common::MemSPrintf("%s - %s", t->value, stream->uri().url());
+  }
 }
 
 bool Player::ChangePlayListLocation(const common::uri::Uri& location) {

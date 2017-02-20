@@ -6,8 +6,6 @@ namespace core {
 
 AppOptions::AppOptions()
     : autorotate(false),
-      exit_on_keydown(false),
-      exit_on_mousedown(false),
       audio_disable(false),
       video_disable(false),
       start_time(AV_NOPTS_VALUE),
@@ -17,14 +15,11 @@ AppOptions::AppOptions()
       screen_width(0),
       screen_height(0),
       show_mode(SHOW_MODE_NONE),
-      window_title(),
       framedrop(-1),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
       startup_volume(volume),
-      seek_by_bytes(-1),
       display_disable(false),
-      is_full_screen(false),
       loop(loop_count),
       autoexit(false),
       show_status(true),
