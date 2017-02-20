@@ -8,6 +8,8 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
+#include "third-party/json-c/json-c/json.h"  // for json_object_...
+
 #include <common/file_system.h>
 
 #include "video_state.h"
@@ -18,10 +20,12 @@ extern "C" {
 #define SDL_VOLUME_STEP (SDL_MIX_MAXVOLUME / 50)
 #define CURSOR_HIDE_DELAY 1000000
 
+#define USER_FIELD "user"
+#define URLS_FIELD "urls"
+
 namespace {
 typedef common::file_system::ascii_string_path file_path;
-bool ReadPlaylistFromFile(const file_path& location,
-                          std::vector<Url>* urls = nullptr) {
+bool ReadPlaylistFromFile(const file_path& location, std::vector<Url>* urls = nullptr) {
   if (!location.isValid()) {
     return false;
   }
@@ -31,9 +35,42 @@ bool ReadPlaylistFromFile(const file_path& location,
     return false;
   }
 
+  std::string line;
+  std::string full_config;
+  while (!pl.isEof() && pl.readLine(&line)) {
+    full_config += line;
+  }
+
+  json_object* obj = json_tokener_parse(full_config.c_str());
+  if (!obj) {
+    ERROR_LOG() << "Invalid config file: " << location.path();
+    pl.close();
+    return false;
+  }
+
+  json_object* juser = NULL;
+  json_bool juser_exists = json_object_object_get_ex(obj, USER_FIELD, &juser);
+  if (!juser_exists) {
+    ERROR_LOG() << "Invalid config(user field) file: " << location.path();
+    json_object_put(obj);
+    pl.close();
+    return false;
+  }
+
+  json_object* jurls = NULL;
+  json_bool jurls_exists = json_object_object_get_ex(obj, URLS_FIELD, &jurls);
+  if (!jurls_exists) {
+    ERROR_LOG() << "Invalid config(urls field) file: " << location.path();
+    json_object_put(obj);
+    pl.close();
+    return false;
+  }
+
+  int array_len = json_object_array_length(jurls);
   std::vector<Url> lurls;
-  std::string path;
-  while (!pl.isEof() && pl.readLine(&path)) {
+  for (int i = 0; i < array_len; ++i) {
+    json_object* jpath = json_object_array_get_idx(jurls, i);
+    const std::string path = json_object_get_string(jpath);
     Url ur(path);
     if (ur.IsValid()) {
       lurls.push_back(ur);
@@ -43,6 +80,7 @@ bool ReadPlaylistFromFile(const file_path& location,
   if (urls) {
     *urls = lurls;
   }
+  json_object_put(obj);
   pl.close();
   return true;
 }
