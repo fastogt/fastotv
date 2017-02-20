@@ -21,6 +21,7 @@ extern "C" {
 
 #include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN, etc
 #include <common/smart_ptr.h>
+#include <common/url.h>
 
 #include "core/audio_params.h"  // for AudioParams
 
@@ -77,7 +78,7 @@ struct Stats {
 class VideoState {
  public:
   enum { invalid_stream_index = -1 };
-  VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexOptions* copt);
+  VideoState(const common::uri::Uri& uri, core::AppOptions* opt, core::ComplexOptions* copt);
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
   bool IsAborted() const;
@@ -151,12 +152,12 @@ class VideoState {
   int VideoThread();
   int AudioThread();
 
+  const common::uri::Uri uri_;
   core::AppOptions* const opt_;
   core::ComplexOptions* const copt_;
   int64_t audio_callback_time_;
 
   common::shared_ptr<common::threads::Thread<int>> read_tid_;
-  AVInputFormat* iformat_;
   bool force_refresh_;
   bool queue_attachments_req_;
   bool seek_req_;

@@ -25,7 +25,6 @@ AppOptions::AppOptions()
       seek_by_bytes(-1),
       display_disable(false),
       is_full_screen(false),
-      input_filename(),
       loop(loop_count),
       autoexit(false),
       show_status(true),

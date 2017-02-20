@@ -99,12 +99,14 @@ int decode_interrupt_callback(void* user_data) {
 }
 }
 
-VideoState::VideoState(AVInputFormat* ifo, core::AppOptions* opt, core::ComplexOptions* copt)
-    : opt_(opt),
+VideoState::VideoState(const common::uri::Uri& uri,
+                       core::AppOptions* opt,
+                       core::ComplexOptions* copt)
+    : uri_(uri),
+      opt_(opt),
       copt_(copt),
       audio_callback_time_(0),
       read_tid_(THREAD_MANAGER()->createThread(&VideoState::ReadThread, this)),
-      iformat_(ifo),
       force_refresh_(false),
       queue_attachments_req_(false),
       seek_req_(false),
@@ -683,7 +685,8 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
   if (!window_) {
     Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
     if (opt_->window_title.empty()) {
-      opt_->window_title = opt_->input_filename;
+      const std::string uri_str = uri_.url();
+      opt_->window_title = uri_str;
     }
     if (opt_->is_full_screen) {
       flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -912,7 +915,8 @@ void VideoState::VideoAudioDisplay() {
 }
 
 int VideoState::Exec() {
-  if (!read_tid_->start()) {
+  bool started = read_tid_->start();
+  if (!started) {
     return EXIT_FAILURE;
   }
 
@@ -1617,7 +1621,8 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
 /* this thread gets the stream from the disk or the network */
 int VideoState::ReadThread() {
   bool scan_all_pmts_set = false;
-  const char* in_filename = common::utils::c_strornull(opt_->input_filename);
+  const std::string uri_str = uri_.url();
+  const char* in_filename = common::utils::c_strornull(uri_str);
   AVFormatContext* ic = avformat_alloc_context();
   if (!ic) {
     ERROR_LOG() << "Could not allocate context.";
@@ -1633,7 +1638,7 @@ int VideoState::ReadThread() {
     av_dict_set(&copt_->format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
     scan_all_pmts_set = true;
   }
-  int err = avformat_open_input(&ic, in_filename, iformat_, &copt_->format_opts);
+  int err = avformat_open_input(&ic, in_filename, NULL, &copt_->format_opts);  // autodetect format
   if (err < 0) {
     char errbuf[128];
     const char* errbuf_ptr = errbuf;

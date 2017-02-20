@@ -37,11 +37,11 @@ extern "C" {
 #include "core/app_options.h"  // for AppOptions, ComplexOptions
 #include "core/types.h"
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER, etc
-#include "video_state.h"    // for VideoState
+#include "player.h"
 
 namespace {
 core::AppOptions g_options;
-AVInputFormat* file_iformat = NULL;
+common::uri::Uri play_list_url;
 #if CONFIG_AVFILTER
 int opt_add_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
@@ -84,18 +84,6 @@ int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
-}
-
-int opt_format(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  file_iformat = av_find_input_format(arg);
-  if (!file_iformat) {
-    ERROR_LOG() << "Unknown input format: " << arg;
-    return AVERROR(EINVAL);
-  }
-  return 0;
 }
 
 int opt_frame_pix_fmt(const char* opt, const char* arg, DictionaryOptions* dopt) {
@@ -164,12 +152,12 @@ int opt_show_mode(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return SUCCESS_RESULT_VALUE;
 }
 
-int opt_input_file(const char* opt, const char* arg, DictionaryOptions* dopt) {
+int opt_input_playlist(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!g_options.input_filename.empty()) {
-    ERROR_LOG() << "Argument '" << g_options.input_filename << " provided as input filename, but '"
+  if (play_list_url.isValid()) {
+    ERROR_LOG() << "Argument '" << play_list_url.url() << " provided as input playlist file, but '"
                 << "' was already specified.";
     return AVERROR(EINVAL);
   }
@@ -177,7 +165,7 @@ int opt_input_file(const char* opt, const char* arg, DictionaryOptions* dopt) {
   if (strcmp(arg, "-") == 0) {
     arg = "pipe:";
   }
-  g_options.input_filename = arg;
+  play_list_url = common::uri::Uri(arg);
   return 0;
 }
 
@@ -298,7 +286,6 @@ const OptionDef options[] = {
      {&g_options.startup_volume},
      "set startup volume 0=min 100=max",
      "volume"},
-    {"f", HAS_ARG, {.func_arg = opt_format}, "force format", "fmt"},
     {"pix_fmt",
      HAS_ARG | OPT_EXPERT | OPT_VIDEO,
      {.func_arg = opt_frame_pix_fmt},
@@ -363,7 +350,7 @@ const OptionDef options[] = {
      {.func_arg = opt_default},
      "generic catch all option",
      ""},
-    {"i", HAS_ARG, {.func_arg = opt_input_file}, "read specified file", "input_file"},
+    {"i", HAS_ARG, {.func_arg = opt_input_playlist}, "read specified playlist", "input_play_list_url"},
     {"codec", HAS_ARG, {.func_arg = opt_codec}, "force decoder", "decoder_name"},
     {"acodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
@@ -498,7 +485,7 @@ int main(int argc, char** argv) {
   g_options.autorotate = 1;  // fix me
   DictionaryOptions* dict = do_init(argc, argv);
 
-  if (g_options.input_filename.empty()) {
+  if (!play_list_url.isValid()) {
     show_usage();
     ERROR_LOG() << "An input file must be specified";
     ERROR_LOG() << "Use -h to get full help or, even better, run 'man " PROJECT_NAME_TITLE "'";
@@ -541,9 +528,9 @@ int main(int argc, char** argv) {
   copt.sws_dict = dict->sws_dict;
   copt.format_opts = dict->format_opts;
   copt.codec_opts = dict->codec_opts;
-  VideoState* is = new VideoState(file_iformat, &g_options, &copt);
-  int res = is->Exec();
-  destroy(&is);
+  Player* player = new Player(play_list_url, &g_options, &copt);
+  int res = player->Exec();
+  destroy(&player);
   do_exit(&dict);
   return res;
 }

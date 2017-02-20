@@ -44,7 +44,6 @@ struct AppOptions {
   int seek_by_bytes;
   bool display_disable;
   bool is_full_screen;
-  std::string input_filename;
   int loop;
   bool autoexit;
   bool show_status;
