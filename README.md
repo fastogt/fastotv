@@ -1,9 +1,9 @@
-About GPUPlayer
+About FastoTV
 ===============
 [![Travis Build Status](https://travis-ci.org/fastogt/gpu_player.svg?branch=master)](https://travis-ci.org/fastogt/gpu_player)
 [![GitHub license](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://raw.githubusercontent.com/fastogt/fastonosql/gpu_player/COPYRIGHT)
 
-GPUPlayer &mdash; is a crossplatform gpu player. <br />
+FastoTV &mdash; is a crossplatform tv player. <br />
 
 Visit our site: [www.fastogt.com](http://www.fastogt.com)
 
