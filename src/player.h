@@ -1,5 +1,7 @@
 #pragma once
 
+#include <SDL2/SDL_events.h>  // for SDL_Event, SDL_PushEvent, etc
+
 #include "video_state_handler.h"
 
 #include "url.h"
@@ -29,6 +31,7 @@ class Player : public VideoStateHandler {
  public:
   Player(const PlayerOptions& options, core::AppOptions* opt, core::ComplexOptions* copt);
   int Exec() WARN_UNUSED_RESULT;
+  void Stop();
   ~Player();
 
  protected:
@@ -38,7 +41,14 @@ class Player : public VideoStateHandler {
                              SDL_Renderer** renderer,
                              SDL_Window** window) override;
 
+  virtual void HandleKeyPressEvent(SDL_KeyboardEvent* event);
+  virtual void HandleWindowEvent(SDL_WindowEvent* event);
+  virtual void HandleMousePressEvent(SDL_MouseButtonEvent* event);
+  virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
+
  private:
+  void SwitchToErrorMode();
+
   bool ChangePlayListLocation(const common::uri::Uri& location);
   common::scoped_ptr<VideoState> CreateNextStream();
   common::scoped_ptr<VideoState> CreatePrevStream();
@@ -54,4 +64,7 @@ class Player : public VideoStateHandler {
   int64_t cursor_last_shown_;
   int64_t last_mouse_left_click_;
   size_t curent_stream_pos_;
+
+  bool stop_;
+  common::scoped_ptr<VideoState> stream_;
 };

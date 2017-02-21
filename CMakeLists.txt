@@ -1,8 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3.0) # deb package fix in 3.3.0
 ###################### Branding ##########################
 
-SET(BRANDING_PROJECT_NAME "gpu_player" CACHE STRING "Branding for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_VERSION "0.1.0.2" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_NAME "fastotv" CACHE STRING "Branding for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_VERSION "0.1.0.3" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "rc" CACHE STRING "Build version type for ${BRANDING_PROJECT_NAME}") #default
   #possible variables: alfa, beta, rc, release
 
@@ -13,17 +13,17 @@ SET(BRANDING_PROJECT_COMPANYNAME_DOMAIN "http://www.fastogt.com" CACHE STRING "I
 SET(BRANDING_PROJECT_MAINTAINER_MAIL "atopilski@fastogt.com" CACHE STRING "Internet mail address mainteiner of ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_MAINTAINER_NAME "Alexandr Topilski" CACHE STRING "Name of mainteiner for ${BRANDING_PROJECT_NAME}") #default
 
-SET(BRANDING_PROJECT_GITHUB_FORK "https://www.github.com/fastogt/gpu_player" CACHE STRING "Branding fork url for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_GITHUB_ISSUES "https://www.github.com/fastogt/gpu_player/issues" CACHE STRING "Branding issues url for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_GITHUB_FORK "https://www.github.com/fastogt/fastotv" CACHE STRING "Branding fork url for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_GITHUB_ISSUES "https://www.github.com/fastogt/fastotv/issues" CACHE STRING "Branding issues url for ${BRANDING_PROJECT_NAME}") #default
 
 SET(BRANDING_PROJECT_HOMEPAGE_LINK "http://www.fastogt.com" CACHE STRING "Home page link for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_FACEBOOK_LINK "https://www.facebook.com/profile.php?id=100010049712549" CACHE STRING "Facebook link for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_TWITTER_LINK "https://www.twitter.com/FastoGT" CACHE STRING "Twitter link for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_GITHUB_LINK "https://www.github.com/fastogt/gpu_player" CACHE STRING "Github link for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_GITHUB_LINK "https://www.github.com/fastogt/fastotv" CACHE STRING "Github link for ${BRANDING_PROJECT_NAME}") #default
 
-SET(BRANDING_PROJECT_SUMMARY "Cross-platform open source gpu player."
+SET(BRANDING_PROJECT_SUMMARY "Cross-platform open source tv player."
   CACHE STRING "Short description of ${BRANDING_PROJECT_NAME}")
-SET(BRANDING_PROJECT_DESCRIPTION "${BRANDING_PROJECT_NAME} it is gpu plyer."
+SET(BRANDING_PROJECT_DESCRIPTION "${BRANDING_PROJECT_NAME} it is tv player."
   CACHE STRING "Description of ${BRANDING_PROJECT_NAME}")
 SET(BRANDING_PROJECT_COPYRIGHT "Copyright (C) 2014-2017 ${BRANDING_PROJECT_COMPANYNAME} All Rights Reserved."
   CACHE STRING "Copyright notice for ${BRANDING_PROJECT_NAME}") #default
