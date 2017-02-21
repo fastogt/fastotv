@@ -8,6 +8,7 @@ AppOptions::AppOptions()
     : autorotate(false),
       audio_disable(false),
       video_disable(false),
+      seek_by_bytes(-1),
       start_time(AV_NOPTS_VALUE),
       duration(AV_NOPTS_VALUE),
       default_width(width),

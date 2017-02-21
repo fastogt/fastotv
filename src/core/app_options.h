@@ -26,6 +26,7 @@ struct AppOptions {
   bool audio_disable;
   bool video_disable;
 
+  int seek_by_bytes;
   int64_t start_time;
   int64_t duration;
   int default_width;
@@ -58,9 +59,6 @@ struct AppOptions {
   std::vector<std::string> vfilters_list;
   std::string afilters;
 #endif
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(AppOptions);
 };
 
 struct ComplexOptions {

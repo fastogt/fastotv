@@ -23,8 +23,6 @@ struct PlayerOptions {
   bool exit_on_keydown;
   bool exit_on_mousedown;
   bool is_full_screen;
-  int seek_by_bytes;
-  std::string window_title;
 };
 
 class Player : public VideoStateHandler {
@@ -39,20 +37,21 @@ class Player : public VideoStateHandler {
                              int height,
                              SDL_Renderer** renderer,
                              SDL_Window** window) override;
-  virtual void OnDiscoveryStream(VideoState* stream, AVFormatContext* context) override;
 
  private:
   bool ChangePlayListLocation(const common::uri::Uri& location);
+  common::scoped_ptr<VideoState> CreateNextStream();
+  common::scoped_ptr<VideoState> CreatePrevStream();
 
   PlayerOptions options_;
   core::AppOptions* opt_;
   core::ComplexOptions* copt_;
   std::vector<Url> play_list_;
-  common::scoped_ptr<VideoState> stream_;
 
   SDL_Renderer* renderer_;
   SDL_Window* window_;
   bool cursor_hidden_;
   int64_t cursor_last_shown_;
   int64_t last_mouse_left_click_;
+  size_t curent_stream_pos_;
 };

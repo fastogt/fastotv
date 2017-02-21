@@ -18,5 +18,4 @@ class VideoStateHandler {
                              int height,
                              SDL_Renderer** renderer,
                              SDL_Window** window) = 0;
-  virtual void OnDiscoveryStream(VideoState* stream, AVFormatContext* context) = 0;
 };

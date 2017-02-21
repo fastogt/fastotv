@@ -25,6 +25,7 @@ extern "C" {
 #include <common/url.h>
 
 #include "core/audio_params.h"  // for AudioParams
+#include "core/types.h"
 
 namespace common {
 namespace threads {
@@ -86,14 +87,16 @@ class VideoStateHandler;
 class VideoState {
  public:
   enum { invalid_stream_index = -1 };
-  VideoState(const common::uri::Uri& uri,
-             core::AppOptions* opt,
+  VideoState(core::stream_id id,
+             const common::uri::Uri& uri,
+             const core::AppOptions& opt,
              core::ComplexOptions* copt,
              VideoStateHandler* handler);
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
   bool IsAborted() const;
-  const common::uri::Uri& uri() const;
+  core::stream_id Id() const;
+  const common::uri::Uri& Uri() const;
   virtual ~VideoState();
 
   void SetFullScreen(bool full_screen);
@@ -104,15 +107,16 @@ class VideoState {
   void ToggleAudioDisplay();
   void TryRefreshVideo(double* remaining_time);
 
+  int Volume() const;
   void UpdateVolume(int sign, int step);
 
   void StepToNextFrame();
   void StreamCycleChannel(AVMediaType codec_type);
-  void StreamSeekPos(double x, int seek_by_bytes);
-  void StreemSeek(double incr, int seek_by_bytes);
+  void StreamSeekPos(double x);
+  void StreemSeek(double incr);
 
-  void MoveToNextFragment(double incr, int seek_by_bytes);
-  void MoveToPreviousFragment(double incr, int seek_by_bytes);
+  void MoveToNextFragment(double incr);
+  void MoveToPreviousFragment(double incr);
 
   virtual void HandleWindowEvent(SDL_WindowEvent* event);
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
@@ -177,8 +181,10 @@ class VideoState {
   int VideoThread();
   int AudioThread();
 
+  const core::stream_id id_;
   const common::uri::Uri uri_;
-  core::AppOptions* const opt_;
+
+  common::scoped_ptr<core::AppOptions> const opt_;
   core::ComplexOptions* const copt_;
   int64_t audio_callback_time_;
 

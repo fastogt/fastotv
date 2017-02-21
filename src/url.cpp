@@ -6,7 +6,7 @@
 #define URL_FIELD "url"
 #define NAME_FIELD "name"
 
-Url::Url(const std::string& json_data) : id_(invalid_id), uri_(), name_() {
+Url::Url(const std::string& json_data) : id_(core::invalid_stream_id), uri_(), name_() {
   json_object* obj = json_tokener_parse(json_data.c_str());
   if (!obj) {
     return;
@@ -40,13 +40,17 @@ Url::Url(const std::string& json_data) : id_(invalid_id), uri_(), name_() {
 }
 
 bool Url::IsValid() const {
-  return id_ != invalid_id && uri_.isValid();
+  return id_ != core::invalid_stream_id && uri_.isValid();
 }
 
-common::uri::Uri Url::url() const {
+common::uri::Uri Url::GetUrl() const {
   return uri_;
 }
 
-std::string Url::name() const {
+std::string Url::Name() const {
   return name_;
+}
+
+core::stream_id Url::Id() const {
+  return id_;
 }

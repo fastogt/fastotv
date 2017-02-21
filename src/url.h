@@ -4,17 +4,19 @@
 
 #include <common/url.h>
 
+#include "core/types.h"
+
 class Url {
  public:
-  enum { invalid_id = std::numeric_limits<uint64_t>::max() };
   Url(const std::string& json_data);
 
   bool IsValid() const;
-  common::uri::Uri url() const;
-  std::string name() const;
+  common::uri::Uri GetUrl() const;
+  std::string Name() const;
+  core::stream_id Id() const;
 
  private:
-  uint64_t id_;
+  core::stream_id id_;
   common::uri::Uri uri_;
   std::string name_;
 };

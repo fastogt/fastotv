@@ -126,12 +126,14 @@ SDL_Texture* CreateTexture(SDL_Renderer* renderer,
 }
 }
 
-VideoState::VideoState(const common::uri::Uri& uri,
-                       core::AppOptions* opt,
+VideoState::VideoState(core::stream_id id,
+                       const common::uri::Uri& uri,
+                       const core::AppOptions& opt,
                        core::ComplexOptions* copt,
                        VideoStateHandler* handler)
-    : uri_(uri),
-      opt_(opt),
+    : id_(id),
+      uri_(uri),
+      opt_(new core::AppOptions(opt)),
       copt_(copt),
       audio_callback_time_(0),
       read_tid_(THREAD_MANAGER()->createThread(&VideoState::ReadThread, this)),
@@ -206,8 +208,10 @@ VideoState::VideoState(const common::uri::Uri& uri,
       window_(NULL),
       stats_(),
       handler_(handler) {
-  CHECK(handler);
-  audio_volume_ = opt->startup_volume;
+  CHECK(handler_);
+  CHECK(opt_);
+  audio_volume_ = opt_->startup_volume;
+  CHECK(id_ != core::invalid_stream_id);
 }
 
 VideoState::~VideoState() {
@@ -684,7 +688,7 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
   }
 
   int w, h;
-  if (opt_->screen_width) {
+  if (opt_->screen_width && opt_->screen_height) {
     w = opt_->screen_width;
     h = opt_->screen_height;
   } else {
@@ -736,7 +740,10 @@ int VideoState::AllocPicture() {
 /* display the current picture, if any */
 void VideoState::VideoDisplay() {
   if (!renderer_) {
-    VideoOpen(NULL);
+    int res = VideoOpen(NULL);
+    if (res == ERROR_RESULT_VALUE) {
+      return;
+    }
   }
 
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
@@ -894,7 +901,11 @@ bool VideoState::IsAborted() const {
   return abort_request_;
 }
 
-const common::uri::Uri& VideoState::uri() const {
+core::stream_id VideoState::Id() const {
+  return id_;
+}
+
+const common::uri::Uri& VideoState::Uri() const {
   return uri_;
 }
 
@@ -923,6 +934,10 @@ void VideoState::TogglePause() {
 
 void VideoState::ToggleMute() {
   muted_ = !muted_;
+}
+
+int VideoState::Volume() const {
+  return audio_volume_;
 }
 
 void VideoState::UpdateVolume(int sign, int step) {
@@ -1059,8 +1074,8 @@ the_end:
   StreamComponentOpen(stream_index);
 }
 
-void VideoState::StreamSeekPos(double x, int seek_by_bytes) {
-  if (seek_by_bytes || ic_->duration <= 0) {
+void VideoState::StreamSeekPos(double x) {
+  if (opt_->seek_by_bytes || ic_->duration <= 0) {
     const int64_t size = avio_size(ic_->pb);
     const int64_t pos = size * x / width_;
     StreamSeek(pos, 0, 1);
@@ -1087,8 +1102,8 @@ void VideoState::StreamSeekPos(double x, int seek_by_bytes) {
   }
 }
 
-void VideoState::StreemSeek(double incr, int seek_by_bytes) {
-  if (seek_by_bytes) {
+void VideoState::StreemSeek(double incr) {
+  if (opt_->seek_by_bytes) {
     int pos = -1;
     if (pos < 0 && vstream_->IsOpened()) {
       int64_t lpos = 0;
@@ -1133,18 +1148,18 @@ void VideoState::StreemSeek(double incr, int seek_by_bytes) {
   }
 }
 
-void VideoState::MoveToNextFragment(double incr, int seek_by_bytes) {
+void VideoState::MoveToNextFragment(double incr) {
   if (ic_->nb_chapters <= 1) {
     incr = 600.0;
-    StreemSeek(incr, seek_by_bytes);
+    StreemSeek(incr);
   }
   SeekChapter(1);
 }
 
-void VideoState::MoveToPreviousFragment(double incr, int seek_by_bytes) {
+void VideoState::MoveToPreviousFragment(double incr) {
   if (ic_->nb_chapters <= 1) {
     incr = -600.0;
-    StreemSeek(incr, seek_by_bytes);
+    StreemSeek(incr);
   }
   SeekChapter(-1);
 }
@@ -1156,8 +1171,8 @@ void VideoState::HandleWindowEvent(SDL_WindowEvent* event) {
 
   switch (event->event) {
     case SDL_WINDOWEVENT_RESIZED: {
-      opt_->screen_width = width_ = event->data1;
-      opt_->screen_height = height_ = event->data2;
+      width_ = event->data1;
+      height_ = event->data2;
       force_refresh_ = true;
       break;
     }
@@ -1567,7 +1582,10 @@ int VideoState::ReadThread() {
   }
 
   max_frame_duration_ = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
-  handler_->OnDiscoveryStream(this, ic);
+  if (opt_->seek_by_bytes < 0) {
+    opt_->seek_by_bytes =
+        !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
+  }
 
   /* if seeking requested, we execute it */
   if (opt_->start_time != AV_NOPTS_VALUE) {
