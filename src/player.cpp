@@ -15,7 +15,6 @@ extern "C" {
 #include "video_state.h"
 
 #include "core/app_options.h"
-#include "core/utils.h"
 
 /* Step size for volume control */
 #define SDL_VOLUME_STEP (SDL_MIX_MAXVOLUME / 50)
@@ -27,37 +26,6 @@ extern "C" {
 #define IMG_PATH "offline.png"
 
 namespace {
-SDL_Texture* CreateTexture(SDL_Renderer* renderer,
-                           Uint32 new_format,
-                           int new_width,
-                           int new_height,
-                           SDL_BlendMode blendmode,
-                           bool init_texture) {
-  SDL_Texture* ltexture =
-      SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
-  if (!ltexture) {
-    NOTREACHED();
-    return nullptr;
-  }
-  if (SDL_SetTextureBlendMode(ltexture, blendmode) < 0) {
-    NOTREACHED();
-    SDL_DestroyTexture(ltexture);
-    return nullptr;
-  }
-  if (init_texture) {
-    void* pixels;
-    int pitch;
-    if (SDL_LockTexture(ltexture, NULL, &pixels, &pitch) < 0) {
-      NOTREACHED();
-      SDL_DestroyTexture(ltexture);
-      return nullptr;
-    }
-    memset(pixels, 0, pitch * new_height);
-    SDL_UnlockTexture(ltexture);
-  }
-
-  return ltexture;
-}
 typedef common::file_system::ascii_string_path file_path;
 bool ReadPlaylistFromFile(const file_path& location, std::vector<Url>* urls = nullptr) {
   if (!location.isValid()) {
@@ -260,28 +228,16 @@ int Player::Exec() {
 #endif
           }
 
-#define SUR 0
           SDL_Surface* surface =
-#if SUR
-              SDL_CreateRGBSurface(SDL_SWSURFACE, img_width, img_height, bit_depth * num_channels,
-                                   Rmask, Gmask, Bmask, Amask);
-#else
               SDL_CreateRGBSurfaceFrom(png_reader->row_pointers, img_width, img_height,
                                        bit_depth * num_channels, pitch, Rmask, Gmask, Bmask, Amask);
-#endif
           if (surface) {
             SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
             SDL_RenderClear(renderer_);
             {
               SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface);
-              AVRational sar;
-              SDL_Rect rect;
-              core::calculate_display_rect(&rect, 0, 0, opt_->default_width, opt_->default_height,
-                                           img_width, img_height, sar);
-#if SUR
-              SDL_UpdateTexture(img, &rect, png_reader->row_pointers, pitch);
-#endif
-              res = SDL_RenderCopyEx(renderer_, img, NULL, &rect, 0, NULL, SDL_FLIP_NONE);
+
+              res = SDL_RenderCopy(renderer_, img, NULL, NULL);
               SDL_FreeSurface(surface);
               SDL_DestroyTexture(img);
             }
