@@ -30,14 +30,6 @@ SET(SOURCES_CORE
   core/video_frame.cpp
 )
 
-SET(HEADERS_PNG
-  png/png_reader.h
-)
-
-SET(SOURCES_PNG
-  png/png_reader.c
-)
-
 SET_DESKTOP_TARGET()
 
 FIND_LIBRARY(VA_LIBRARY NAMES va)
@@ -164,7 +156,7 @@ SET(MAIN_SOURCES
   cmdutils.h cmdutils.cpp
   url.h url.cpp
 )
-SET(EXE_SOURCES main.cpp ${MAIN_SOURCES} ${HEADERS_PNG} ${SOURCES_PNG})
+SET(EXE_SOURCES main.cpp ${MAIN_SOURCES})
 SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
 
 IF(MINGW OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGCXX)
