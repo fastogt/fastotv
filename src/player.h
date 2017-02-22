@@ -32,6 +32,7 @@ class Player : public VideoStateHandler {
   Player(const PlayerOptions& options, core::AppOptions* opt, core::ComplexOptions* copt);
   int Exec() WARN_UNUSED_RESULT;
   void Stop();
+  void SetFullScreen(bool full_screen);
   ~Player();
 
  protected:
@@ -47,6 +48,7 @@ class Player : public VideoStateHandler {
   virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
 
  private:
+  Url CurrentUrl() const;
   void SwitchToErrorMode();
 
   bool ChangePlayListLocation(const common::uri::Uri& location);

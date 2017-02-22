@@ -99,7 +99,7 @@ class VideoState {
   const common::uri::Uri& Uri() const;
   virtual ~VideoState();
 
-  void SetFullScreen(bool full_screen);
+  void RefreshRequest();
   /* pause or resume the video */
   void TogglePause();
   void ToggleMute();

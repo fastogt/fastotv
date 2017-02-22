@@ -922,8 +922,7 @@ void VideoState::StreamTogglePause() {
   astream_->SetPaused(paused_);
 }
 
-void VideoState::SetFullScreen(bool full_screen) {
-  SDL_SetWindowFullscreen(window_, full_screen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+void VideoState::RefreshRequest() {
   force_refresh_ = true;
 }
 

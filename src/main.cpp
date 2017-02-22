@@ -484,7 +484,7 @@ int main(int argc, char** argv) {
 #else
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
-  g_options.autorotate = 1;  // fix me
+  g_options.autorotate = true;  // fix me
   DictionaryOptions* dict = do_init(argc, argv);
 
   if (!g_player_options.play_list_location.isValid()) {

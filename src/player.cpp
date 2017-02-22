@@ -5,6 +5,7 @@
 
 extern "C" {
 #include <libavutil/time.h>
+#include "png/png_reader.h"
 }
 
 #include "third-party/json-c/json-c/json.h"  // for json_object_...
@@ -14,6 +15,7 @@ extern "C" {
 #include "video_state.h"
 
 #include "core/app_options.h"
+#include "core/utils.h"
 
 /* Step size for volume control */
 #define SDL_VOLUME_STEP (SDL_MIX_MAXVOLUME / 50)
@@ -22,15 +24,50 @@ extern "C" {
 #define USER_FIELD "user"
 #define URLS_FIELD "urls"
 
+#define IMG_PATH "offline.png"
+
 namespace {
+SDL_Texture* CreateTexture(SDL_Renderer* renderer,
+                           Uint32 new_format,
+                           int new_width,
+                           int new_height,
+                           SDL_BlendMode blendmode,
+                           bool init_texture) {
+  SDL_Texture* ltexture =
+      SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
+  if (!ltexture) {
+    NOTREACHED();
+    return nullptr;
+  }
+  if (SDL_SetTextureBlendMode(ltexture, blendmode) < 0) {
+    NOTREACHED();
+    SDL_DestroyTexture(ltexture);
+    return nullptr;
+  }
+  if (init_texture) {
+    void* pixels;
+    int pitch;
+    if (SDL_LockTexture(ltexture, NULL, &pixels, &pitch) < 0) {
+      NOTREACHED();
+      SDL_DestroyTexture(ltexture);
+      return nullptr;
+    }
+    memset(pixels, 0, pitch * new_height);
+    SDL_UnlockTexture(ltexture);
+  }
+
+  return ltexture;
+}
 typedef common::file_system::ascii_string_path file_path;
 bool ReadPlaylistFromFile(const file_path& location, std::vector<Url>* urls = nullptr) {
   if (!location.isValid()) {
+    ERROR_LOG() << "Invalid config file: empty location!";
     return false;
   }
 
   common::file_system::File pl(location);
   if (!pl.open("r")) {
+    ERROR_LOG() << "Can't open config file: " << location.path();
     return false;
   }
 
@@ -83,7 +120,53 @@ bool ReadPlaylistFromFile(const file_path& location, std::vector<Url>* urls = nu
   pl.close();
   return true;
 }
+
+bool CreateWindow(int width,
+                  int height,
+                  bool is_full_screen,
+                  const std::string& title,
+                  SDL_Renderer** renderer,
+                  SDL_Window** window) {
+  if (!renderer || !window) {  // invalid input
+    return false;
+  }
+
+  Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+  if (is_full_screen) {
+    flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+  }
+  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                         width, height, flags);
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+  SDL_Renderer* lrenderer = NULL;
+  if (lwindow) {
+    SDL_RendererInfo info;
+    lrenderer =
+        SDL_CreateRenderer(lwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (!lrenderer) {
+      WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
+      lrenderer = SDL_CreateRenderer(lwindow, -1, 0);
+    }
+    if (lrenderer) {
+      if (!SDL_GetRendererInfo(lrenderer, &info)) {
+        DEBUG_LOG() << "Initialized " << info.name << " renderer.";
+      }
+    }
+  }
+
+  if (!lwindow || !lrenderer) {
+    ERROR_LOG() << "SDL: could not set video mode - exiting";
+    return false;
+  }
+
+  SDL_SetWindowSize(lwindow, width, height);
+  SDL_SetWindowTitle(lwindow, title.c_str());
+
+  *window = lwindow;
+  *renderer = lrenderer;
+  return true;
 }
+}  // namespace
 
 PlayerOptions::PlayerOptions()
     : exit_on_keydown(false), exit_on_mousedown(false), is_full_screen(false) {}
@@ -102,7 +185,6 @@ Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::Comple
       stop_(false),
       stream_() {
   ChangePlayListLocation(options.play_list_location);
-
   // stable options
   if (opt->startup_volume < 0) {
     WARNING_LOG() << "-volume=" << opt->startup_volume << " < 0, setting to 0";
@@ -116,9 +198,29 @@ Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::Comple
 }
 
 int Player::Exec() {
+  struct PngReader* png_reader = alloc_png_reader();
+  if (!png_reader) {
+    WARNING_LOG() << "Can't alloc png reader!";
+    return EXIT_FAILURE;
+  }
+
+  int res = read_png_file(png_reader, IMG_PATH);
+  if (res == ERROR_RESULT_VALUE) {
+    free_png_reader(&png_reader);
+    WARNING_LOG() << "Can't load stub image, path: " << IMG_PATH;
+    return EXIT_FAILURE;
+  }
+
+  int img_width = png_img_width(png_reader);
+  int img_height = png_img_height(png_reader);
+  int num_channels = png_img_channels(png_reader);
+  int bit_depth = png_img_bit_depth(png_reader);
+  int pitch = png_img_row_bytes(png_reader);
+  // free_png_reader(&png_reader);
+
   stream_ = CreateNextStream();
   if (!stream_) {
-    return EXIT_FAILURE;
+    SwitchToErrorMode();
   }
 
   SDL_Event event;
@@ -136,7 +238,56 @@ int Player::Exec() {
           av_usleep(sleep_time);
         }
         remaining_time = REFRESH_RATE;
-        stream_->TryRefreshVideo(&remaining_time);
+        if (stream_) {
+          stream_->TryRefreshVideo(&remaining_time);
+        } else {
+          Uint32 Rmask = 0;
+          Uint32 Gmask = 0;
+          Uint32 Bmask = 0;
+          Uint32 Amask = 0;
+          if (num_channels >= 3) {
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+            Rmask = 0x000000FF;
+            Gmask = 0x0000FF00;
+            Bmask = 0x00FF0000;
+            Amask = (num_channels == 4) ? 0xFF000000 : 0;
+#else
+            int s = (num_channels == 4) ? 0 : 8;
+            Rmask = 0xFF000000 >> s;
+            Gmask = 0x00FF0000 >> s;
+            Bmask = 0x0000FF00 >> s;
+            Amask = 0x000000FF >> s;
+#endif
+          }
+
+#define SUR 0
+          SDL_Surface* surface =
+#if SUR
+              SDL_CreateRGBSurface(SDL_SWSURFACE, img_width, img_height, bit_depth * num_channels,
+                                   Rmask, Gmask, Bmask, Amask);
+#else
+              SDL_CreateRGBSurfaceFrom(png_reader->row_pointers, img_width, img_height,
+                                       bit_depth * num_channels, pitch, Rmask, Gmask, Bmask, Amask);
+#endif
+          if (surface) {
+            SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+            SDL_RenderClear(renderer_);
+            {
+              SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface);
+              AVRational sar;
+              SDL_Rect rect;
+              core::calculate_display_rect(&rect, 0, 0, opt_->default_width, opt_->default_height,
+                                           img_width, img_height, sar);
+#if SUR
+              SDL_UpdateTexture(img, &rect, png_reader->row_pointers, pitch);
+#endif
+              res = SDL_RenderCopyEx(renderer_, img, NULL, &rect, 0, NULL, SDL_FLIP_NONE);
+              SDL_FreeSurface(surface);
+              SDL_DestroyTexture(img);
+            }
+            SDL_RenderPresent(renderer_);
+          }
+        }
         SDL_PumpEvents();
       }
     }
@@ -161,10 +312,11 @@ int Player::Exec() {
         return EXIT_SUCCESS;
       }
       case FF_QUIT_EVENT: {  // stream want to quit
-        /*stream = CreateNextStream();
-        if (!stream) {
-          return EXIT_FAILURE;
-        }*/
+        VideoState* stream = static_cast<VideoState*>(event.user.data1);
+        if (stream == stream_.get()) {
+          stream_.release();
+          SwitchToErrorMode();
+        }
         break;
       }
       case FF_ALLOC_EVENT: {
@@ -183,6 +335,13 @@ int Player::Exec() {
 
 void Player::Stop() {
   stop_ = true;
+}
+
+void Player::SetFullScreen(bool full_screen) {
+  SDL_SetWindowFullscreen(window_, full_screen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+  if (stream_) {
+    stream_->RefreshRequest();
+  }
 }
 
 Player::~Player() {
@@ -205,37 +364,6 @@ bool Player::RequestWindow(VideoState* stream,
     return false;
   }
 
-  if (!window_) {
-    Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-    if (options_.is_full_screen) {
-      flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-    }
-    window_ = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width,
-                               height, flags);
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-    if (window_) {
-      SDL_RendererInfo info;
-      renderer_ =
-          SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-      if (!renderer_) {
-        WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
-        renderer_ = SDL_CreateRenderer(window_, -1, 0);
-      }
-      if (renderer_) {
-        if (!SDL_GetRendererInfo(renderer_, &info)) {
-          DEBUG_LOG() << "Initialized " << info.name << " renderer.";
-        }
-      }
-    }
-  } else {
-    SDL_SetWindowSize(window_, width, height);
-  }
-
-  if (!window_ || !renderer_) {
-    ERROR_LOG() << "SDL: could not set video mode - exiting";
-    return false;
-  }
-
   std::string name;
   for (size_t i = 0; i < play_list_.size(); ++i) {
     if (play_list_[i].Id() == stream->Id()) {
@@ -244,7 +372,16 @@ bool Player::RequestWindow(VideoState* stream,
     }
   }
 
-  SDL_SetWindowTitle(window_, name.c_str());
+  if (!window_) {
+    bool created = CreateWindow(width, height, options_.is_full_screen, name, &renderer_, &window_);
+    if (!created) {
+      return false;
+    }
+  } else {
+    SDL_SetWindowSize(window_, width, height);
+    SDL_SetWindowTitle(window_, name.c_str());
+  }
+
   *renderer = renderer_;
   *window = window_;
   return true;
@@ -265,7 +402,7 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
     }
     case SDLK_f: {
       bool full_screen = options_.is_full_screen = !options_.is_full_screen;
-      stream_->SetFullScreen(full_screen);
+      SetFullScreen(full_screen);
       break;
     }
     case SDLK_p:
@@ -352,7 +489,7 @@ void Player::HandleMousePressEvent(SDL_MouseButtonEvent* event) {
   if (event->button == SDL_BUTTON_LEFT) {
     if (av_gettime_relative() - last_mouse_left_click_ <= 500000) {  // double click
       bool full_screen = options_.is_full_screen = !options_.is_full_screen;
-      stream_->SetFullScreen(full_screen);
+      SetFullScreen(full_screen);
       last_mouse_left_click_ = 0;
     } else {
       last_mouse_left_click_ = av_gettime_relative();
@@ -394,10 +531,34 @@ void Player::HandleWindowEvent(SDL_WindowEvent* event) {
     opt_->screen_width = event->data1;
     opt_->screen_height = event->data2;
   }
-  stream_->HandleWindowEvent(event);
+  if (stream_) {
+    stream_->HandleWindowEvent(event);
+  }
 }
 
-void Player::SwitchToErrorMode() {}
+Url Player::CurrentUrl() const {
+  size_t pos = curent_stream_pos_;
+  if (pos == play_list_.size()) {
+    pos = 0;
+  }
+  return play_list_[pos];
+}
+
+void Player::SwitchToErrorMode() {
+  Url url = CurrentUrl();
+  if (!window_) {
+    int w, h;
+    if (opt_->screen_width && opt_->screen_height) {
+      w = opt_->screen_width;
+      h = opt_->screen_height;
+    } else {
+      w = opt_->default_width;
+      h = opt_->default_height;
+    }
+    CreateWindow(w, h, options_.is_full_screen, url.Name(), &renderer_, &window_);
+  } else {
+  }
+}
 
 bool Player::ChangePlayListLocation(const common::uri::Uri& location) {
   if (location.scheme() == common::uri::Uri::file) {

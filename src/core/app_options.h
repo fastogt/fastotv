@@ -17,6 +17,8 @@ extern "C" {
 
 namespace core {
 
+// 640x480
+// 1280x720
 struct AppOptions {
   enum { width = 640, height = 480, volume = 100, loop_count = 1 };
   AppOptions();
