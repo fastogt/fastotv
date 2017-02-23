@@ -357,7 +357,7 @@ Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::Comple
       last_mouse_left_click_(0),
       curent_stream_pos_(0),
       stop_(false),
-      stream_() {
+      stream_(nullptr) {
   ChangePlayListLocation(options.play_list_location);
   // stable options
   if (opt->startup_volume < 0) {
@@ -397,7 +397,7 @@ int Player::Exec() {
           stream_->TryRefreshVideo(&remaining_time);
         } else {
           SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface);
-          if (img) {
+          if (img && !opt_->video_disable) {
             SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
             SDL_RenderClear(renderer_);
             SDL_RenderCopy(renderer_, img, NULL, NULL);
@@ -427,8 +427,7 @@ int Player::Exec() {
         break;
       }
       case SDL_QUIT: {
-        SDL_FreeSurface(surface);
-        return EXIT_SUCCESS;
+        goto finish;
       }
       case FF_QUIT_EVENT: {  // stream want to quit
         // VideoState* stream = static_cast<VideoState*>(event.user.data1);
@@ -453,6 +452,10 @@ int Player::Exec() {
       case FF_ALLOC_EVENT: {
         int res = static_cast<VideoState*>(event.user.data1)->HandleAllocPictureEvent();
         if (res == ERROR_RESULT_VALUE) {
+          if (stream_) {
+            stream_->Abort();
+            destroy(&stream_);
+          }
           SDL_FreeSurface(surface);
           return EXIT_FAILURE;
         }
@@ -463,6 +466,11 @@ int Player::Exec() {
     }
   }
 
+finish:
+  if (stream_) {
+    stream_->Abort();
+    destroy(&stream_);
+  }
   SDL_FreeSurface(surface);
   return EXIT_SUCCESS;
 }
@@ -589,9 +597,6 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
       // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
       break;
     case SDLK_w: {
-      if (stream_) {
-        stream_->ToggleWaveDisplay();
-      }
       break;
     }
     case SDLK_PAGEUP:
@@ -663,20 +668,6 @@ void Player::HandleMousePressEvent(SDL_MouseButtonEvent* event) {
     cursor_hidden_ = false;
   }
   cursor_last_shown_ = av_gettime_relative();
-
-  /*double x;
-  if (event->type == SDL_MOUSEBUTTONDOWN) {
-    if (event->button.button != SDL_BUTTON_RIGHT) {
-      return;
-    }
-    x = event->button.x;
-  } else {
-    if (!(event->motion.state & SDL_BUTTON_RMASK)) {
-      return;
-    }
-    x = event->motion.x;
-  }
-  stream_->StreamSeekPos(x);*/
 }
 
 void Player::HandleMouseMoveEvent(SDL_MouseMotionEvent* event) {
@@ -719,7 +710,7 @@ void Player::SwitchToErrorMode() {
   }
 
   if (!window_) {
-    CreateWindow(w, h, options_.is_full_screen, name_str.c_str(), &renderer_, &window_);
+    CreateWindow(w, h, options_.is_full_screen, name_str, &renderer_, &window_);
   } else {
     SDL_SetWindowTitle(window_, name_str.c_str());
   }

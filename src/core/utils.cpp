@@ -249,23 +249,6 @@ void calculate_display_rect(SDL_Rect* rect,
   rect->h = FFMAX(height, 1);
 }
 
-void fill_rectangle(SDL_Renderer* renderer, int x, int y, int w, int h) {
-  if (!renderer || !w || !h) {
-    return;
-  }
-
-  SDL_Rect rect;
-  rect.x = x;
-  rect.y = y;
-  rect.w = w;
-  rect.h = h;
-  SDL_RenderFillRect(renderer, &rect);
-}
-
-int compute_mod(int a, int b) {
-  return a < 0 ? a % b + b : a % b;
-}
-
 int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_convert_ctx) {
   int ret = 0;
   switch (frame->format) {

@@ -95,8 +95,7 @@ void calculate_display_rect(SDL_Rect* rect,
                             int pic_width,
                             int pic_height,
                             AVRational pic_sar);
-void fill_rectangle(SDL_Renderer* renderer, int x, int y, int w, int h);
-int compute_mod(int a, int b);
+
 int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_convert_ctx);
 int audio_open(void* opaque,
                int64_t wanted_channel_layout,

@@ -63,7 +63,6 @@ template <size_t buffer_size>
 class VideoFrameQueue;
 }
 
-#define SAMPLE_ARRAY_SIZE (8 * 65536)
 /* no AV correction is done if too big error */
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
@@ -105,8 +104,6 @@ class VideoState {
   /* pause or resume the video */
   void TogglePause();
   void ToggleMute();
-  void ToggleWaveDisplay();
-  void ToggleAudioDisplay();
   void TryRefreshVideo(double* remaining_time);
 
   int Volume() const;
@@ -114,7 +111,6 @@ class VideoState {
 
   void StepToNextFrame();
   void StreamCycleChannel(AVMediaType codec_type);
-  void StreamSeekPos(double x);
   void StreemSeek(double incr);
 
   void MoveToNextFragment(double incr);
@@ -156,12 +152,9 @@ class VideoState {
                      int new_height,
                      SDL_BlendMode blendmode,
                      bool init_texture);
-  void VideoAudioDisplay();
   void VideoImageDisplay();
 
   void SeekChapter(int incr);
-  /* copy samples for viewing in editor window */
-  void UpdateSampleDisplay(short* samples, int samples_size);
   /* return the wanted number of samples to get better sync if sync_type is video
    * or external master clock */
   int SynchronizeAudio(int nb_samples);
@@ -230,10 +223,6 @@ class VideoState {
 #endif
   struct core::AudioParams audio_tgt_;
   struct SwrContext* swr_ctx_;
-
-  int16_t sample_array_[SAMPLE_ARRAY_SIZE];
-  int sample_array_index_;
-  int last_i_start_;
 
   double last_vis_time_;
 

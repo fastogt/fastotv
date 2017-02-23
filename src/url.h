@@ -8,7 +8,7 @@
 
 class Url {
  public:
-  Url(const std::string& json_data);
+  explicit Url(const std::string& json_data);
 
   bool IsValid() const;
   common::uri::Uri GetUrl() const;

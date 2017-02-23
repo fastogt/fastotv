@@ -172,9 +172,6 @@ VideoState::VideoState(core::stream_id id,
 #endif
       audio_tgt_(),
       swr_ctx_(NULL),
-      sample_array_{0},
-      sample_array_index_(0),
-      last_i_start_(0),
       last_vis_time_(0),
       frame_timer_(0),
       frame_last_returned_time_(0),
@@ -563,7 +560,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
   core::PacketQueue* video_packet_queue = vstream_->Queue();
   core::PacketQueue* audio_packet_queue = astream_->Queue();
 
-  if (!opt_->display_disable && opt_->show_mode != core::SHOW_MODE_VIDEO && audio_st) {
+  if (!opt_->display_disable && audio_st) {
     double time = av_gettime_relative() / 1000000.0;
     if (force_refresh_ || last_vis_time_ < time) {
       VideoDisplay();
@@ -638,8 +635,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
     }
   display:
     /* display picture */
-    if (!opt_->display_disable && force_refresh_ && opt_->show_mode == core::SHOW_MODE_VIDEO &&
-        video_frame_queue_->RindexShown()) {
+    if (!opt_->display_disable && force_refresh_ && video_frame_queue_->RindexShown()) {
       VideoDisplay();
     }
   }
@@ -678,7 +674,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
 }
 
 int VideoState::VideoOpen(core::VideoFrame* vp) {
-  if (vp && vp->width) {
+  if (vp && vp->width && vp->height) {
     SetDefaultWindowSize(vp->width, vp->height, vp->sar);
   }
 
@@ -743,9 +739,7 @@ void VideoState::VideoDisplay() {
 
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
-  if (astream_->IsOpened() && opt_->show_mode != core::SHOW_MODE_VIDEO) {
-    VideoAudioDisplay();
-  } else if (vstream_->IsOpened()) {
+  if (vstream_->IsOpened()) {
     VideoImageDisplay();
   }
   SDL_RenderPresent(renderer_);
@@ -794,88 +788,6 @@ void VideoState::VideoImageDisplay() {
 
     SDL_RenderCopyEx(renderer_, vp->bmp, NULL, &rect, 0, NULL,
                      vp->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
-  }
-}
-
-void VideoState::VideoAudioDisplay() {
-  int i_start, x;
-  int h;
-  /* compute display index : center on currently output samples */
-  const int channels = audio_tgt_.channels;
-  if (!paused_) {
-    int data_used = width_;
-    int n = 2 * channels;
-    int delay = audio_write_buf_size_;
-    delay /= n;
-
-    /* to be more precise, we take into account the time spent since
-       the last buffer computation */
-    if (audio_callback_time_) {
-      int64_t time_diff = av_gettime_relative() - audio_callback_time_;
-      delay -= (time_diff * audio_tgt_.freq) / 1000000;
-    }
-
-    delay += 2 * data_used;
-    if (delay < data_used) {
-      delay = data_used;
-    }
-
-    i_start = x = core::compute_mod(sample_array_index_ - delay * channels, SAMPLE_ARRAY_SIZE);
-    if (opt_->show_mode == core::SHOW_MODE_WAVES) {
-      h = INT_MIN;
-      for (int i = 0; i < 1000; i += channels) {
-        int idx = (SAMPLE_ARRAY_SIZE + x - i) % SAMPLE_ARRAY_SIZE;
-        int a = sample_array_[idx];
-        int b = sample_array_[(idx + 4 * channels) % SAMPLE_ARRAY_SIZE];
-        int c = sample_array_[(idx + 5 * channels) % SAMPLE_ARRAY_SIZE];
-        int d = sample_array_[(idx + 9 * channels) % SAMPLE_ARRAY_SIZE];
-        int score = a - d;
-        if (h < score && (b ^ c) < 0) {
-          h = score;
-          i_start = idx;
-        }
-      }
-    }
-
-    last_i_start_ = i_start;
-  } else {
-    i_start = last_i_start_;
-  }
-
-  int nb_display_channels = channels;
-  if (opt_->show_mode == core::SHOW_MODE_WAVES) {
-    SDL_SetRenderDrawColor(renderer_, 255, 255, 255, 255);
-
-    /* total height for one channel */
-    h = height_ / nb_display_channels;
-    /* graph height / 2 */
-    int h2 = (h * 9) / 20;
-    for (int ch = 0; ch < nb_display_channels; ch++) {
-      int i = i_start + ch;
-      int ys;
-      int y1 = ytop_ + ch * h + (h / 2); /* position of center line */
-      for (x = 0; x < width_; x++) {
-        int y = (sample_array_[i] * h2) >> 15;
-        if (y < 0) {
-          y = -y;
-          ys = y1 - y;
-        } else {
-          ys = y1;
-        }
-        core::fill_rectangle(renderer_, xleft_ + x, ys, 1, y);
-        i += channels;
-        if (i >= SAMPLE_ARRAY_SIZE) {
-          i -= SAMPLE_ARRAY_SIZE;
-        }
-      }
-    }
-
-    SDL_SetRenderDrawColor(renderer_, 0, 0, 255, 255);
-
-    for (int ch = 1; ch < nb_display_channels; ch++) {
-      int y = ytop_ + ch * h;
-      core::fill_rectangle(renderer_, xleft_, y, width_, 1);
-    }
   }
 }
 
@@ -940,37 +852,9 @@ void VideoState::UpdateVolume(int sign, int step) {
   audio_volume_ = av_clip(audio_volume_ + sign * step, 0, SDL_MIX_MAXVOLUME);
 }
 
-void VideoState::ToggleWaveDisplay() {
-#if CONFIG_AVFILTER
-  const size_t nb_vfilters = opt_->vfilters_list.size();
-  if (opt_->show_mode == core::SHOW_MODE_VIDEO && vfilter_idx_ < nb_vfilters - 1) {
-    if (++vfilter_idx_ >= nb_vfilters) {
-      vfilter_idx_ = 0;
-    }
-  } else {
-    vfilter_idx_ = 0;
-    ToggleAudioDisplay();
-  }
-#else
-  ToggleAudioDisplay(cur_stream);
-#endif
-}
-
 void VideoState::TryRefreshVideo(double* remaining_time) {
-  if (opt_->show_mode != core::SHOW_MODE_NONE && (!paused_ || force_refresh_)) {
+  if ((!paused_ || force_refresh_)) {
     VideoRefresh(remaining_time);
-  }
-}
-
-void VideoState::ToggleAudioDisplay() {
-  int next = opt_->show_mode;
-  do {
-    next = (next + 1) % core::SHOW_MODE_NB;
-  } while (next != opt_->show_mode && ((next == core::SHOW_MODE_VIDEO && !vstream_->IsOpened()) ||
-                                       (next != core::SHOW_MODE_VIDEO && !astream_->IsOpened())));
-  if (opt_->show_mode != next) {
-    force_refresh_ = true;
-    opt_->show_mode = static_cast<core::ShowMode>(next);
   }
 }
 
@@ -1070,34 +954,6 @@ the_end:
   StreamComponentOpen(stream_index);
 }
 
-void VideoState::StreamSeekPos(double x) {
-  if (opt_->seek_by_bytes || ic_->duration <= 0) {
-    const int64_t size = avio_size(ic_->pb);
-    const int64_t pos = size * x / width_;
-    StreamSeek(pos, 0, 1);
-  } else {
-    int ns, hh, mm, ss;
-    int tns, thh, tmm, tss;
-    tns = ic_->duration / 1000000LL;
-    thh = tns / 3600;
-    tmm = (tns % 3600) / 60;
-    tss = (tns % 60);
-    float frac = x / width_;
-    ns = frac * tns;
-    hh = ns / 3600;
-    mm = (ns % 3600) / 60;
-    ss = (ns % 60);
-    INFO_LOG() << "Seek to " << frac * 100
-               << common::MemSPrintf(" (%2d:%02d:%02d) of total duration (%2d:%02d:%02d)", hh, mm,
-                                     ss, thh, tmm, tss);
-    int64_t ts = frac * ic_->duration;
-    if (ic_->start_time != AV_NOPTS_VALUE) {
-      ts += ic_->start_time;
-    }
-    StreamSeek(ts, 0, 0);
-  }
-}
-
 void VideoState::StreemSeek(double incr) {
   if (opt_->seek_by_bytes) {
     int pos = -1;
@@ -1181,23 +1037,6 @@ void VideoState::HandleWindowEvent(SDL_WindowEvent* event) {
 
 int VideoState::HandleAllocPictureEvent() {
   return AllocPicture();
-}
-
-void VideoState::UpdateSampleDisplay(short* samples, int samples_size) {
-  int size = samples_size / sizeof(short);
-  while (size > 0) {
-    int len = SAMPLE_ARRAY_SIZE - sample_array_index_;
-    if (len > size) {
-      len = size;
-    }
-    memcpy(sample_array_ + sample_array_index_, samples, len * sizeof(short));
-    samples += len;
-    sample_array_index_ += len;
-    if (sample_array_index_ >= SAMPLE_ARRAY_SIZE) {
-      sample_array_index_ = 0;
-    }
-    size -= len;
-  }
 }
 
 int VideoState::SynchronizeAudio(int nb_samples) {
@@ -1366,9 +1205,6 @@ void VideoState::sdl_audio_callback(void* opaque, Uint8* stream, int len) {
         is->audio_buf_size_ =
             SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt_.frame_size * is->audio_tgt_.frame_size;
       } else {
-        if (is->opt_->show_mode != core::SHOW_MODE_VIDEO) {
-          is->UpdateSampleDisplay(reinterpret_cast<int16_t*>(is->audio_buf_), audio_size);
-        }
         is->audio_buf_size_ = audio_size;
       }
       is->audio_buf_index_ = 0;
@@ -1652,9 +1488,6 @@ int VideoState::ReadThread() {
   ret = -1;
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
     ret = StreamComponentOpen(st_index[AVMEDIA_TYPE_VIDEO]);
-  }
-  if (opt_->show_mode == core::SHOW_MODE_NONE) {
-    opt_->show_mode = ret >= 0 ? core::SHOW_MODE_VIDEO : core::SHOW_MODE_WAVES;
   }
 
   if (!video_stream->IsOpened() && !audio_stream->IsOpened()) {
@@ -1952,11 +1785,7 @@ int VideoState::VideoThread() {
         vfilters = opt_->vfilters_list[vfilter_idx_];
       }
       if ((ret = ConfigureVideoFilters(graph, vfilters, frame)) < 0) {
-        SDL_Event event;
-        event.type = FF_QUIT_EVENT;
-        event.user.data1 = this;
-        event.user.code = ret;
-        SDL_PushEvent(&event);
+        ERROR_LOG() << "Internal video error!";
         goto the_end;
       }
       filt_in = in_video_filter_;

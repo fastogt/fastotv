@@ -36,7 +36,6 @@ struct AppOptions {
   int screen_width;
   int screen_height;
 
-  ShowMode show_mode;
   int framedrop;
   bool genpts;
   AvSyncType av_sync_type;

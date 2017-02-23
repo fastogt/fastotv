@@ -15,7 +15,6 @@ AppOptions::AppOptions()
       default_height(height),
       screen_width(0),
       screen_height(0),
-      show_mode(SHOW_MODE_NONE),
       framedrop(-1),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),

@@ -129,28 +129,6 @@ int opt_duration(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return SUCCESS_RESULT_VALUE;
 }
 
-int opt_show_mode(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  if (strcmp(arg, "video") == 0) {
-    g_options.show_mode = core::SHOW_MODE_VIDEO;
-    return SUCCESS_RESULT_VALUE;
-  }
-
-  if (strcmp(arg, "waves") == 0) {
-    g_options.show_mode = core::SHOW_MODE_WAVES;
-    return SUCCESS_RESULT_VALUE;
-  }
-
-  int mode = 0;
-  if (!parse_number(arg, OPT_INT, 0, core::SHOW_MODE_NB - 1, &mode)) {
-    return ERROR_RESULT_VALUE;
-  }
-  g_options.show_mode = static_cast<core::ShowMode>(mode);
-  return SUCCESS_RESULT_VALUE;
-}
-
 int opt_input_playlist(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
@@ -339,11 +317,6 @@ const OptionDef options[] = {
      "filter_graph"},
     {"af", OPT_STRING | HAS_ARG, {&g_options.afilters}, "set audio filters", "filter_graph"},
 #endif
-    {"showmode",
-     HAS_ARG,
-     {.func_arg = opt_show_mode},
-     "select show mode (0 = video, 1 = waves)",
-     "mode"},
     {"default",
      HAS_ARG | OPT_AUDIO | OPT_VIDEO | OPT_EXPERT,
      {.func_arg = opt_default},
@@ -496,7 +469,7 @@ int main(int argc, char** argv) {
   }
 
   if (g_options.display_disable) {
-    g_options.video_disable = 1;
+    g_options.video_disable = true;
   }
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
   if (g_options.audio_disable) {
