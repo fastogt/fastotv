@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL_events.h>  // for SDL_Event, SDL_PushEvent, etc
+#include <SDL2/SDL_render.h>
 
 #include "video_state_handler.h"
 
@@ -19,12 +20,17 @@ struct ComplexOptions;
 class VideoState;
 
 struct PlayerOptions {
+  enum { width = 640, height = 480 };
   PlayerOptions();
 
   common::uri::Uri play_list_location;
   bool exit_on_keydown;
   bool exit_on_mousedown;
   bool is_full_screen;
+  int default_width;
+  int default_height;
+  int screen_width;
+  int screen_height;
 };
 
 class Player : public VideoStateHandler {
@@ -36,11 +42,10 @@ class Player : public VideoStateHandler {
   ~Player();
 
  protected:
-  virtual bool RequestWindow(VideoState* stream,
-                             int width,
-                             int height,
-                             SDL_Renderer** renderer,
-                             SDL_Window** window) override;
+  virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override;
+  virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override;
+  virtual bool HandleRequestWindow(VideoState* stream) override;
+  virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override;
 
   virtual void HandleKeyPressEvent(SDL_KeyboardEvent* event);
   virtual void HandleWindowEvent(SDL_WindowEvent* event);
@@ -48,6 +53,12 @@ class Player : public VideoStateHandler {
   virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
 
  private:
+  int ReallocTexture(SDL_Texture** texture,
+                     Uint32 new_format,
+                     int new_width,
+                     int new_height,
+                     SDL_BlendMode blendmode,
+                     bool init_texture);
   Url CurrentUrl() const;
   void SwitchToErrorMode();
 
@@ -70,4 +81,9 @@ class Player : public VideoStateHandler {
 
   bool stop_;
   VideoState* stream_;
+
+  int width_;
+  int height_;
+  const int xleft_;
+  const int ytop_;
 };

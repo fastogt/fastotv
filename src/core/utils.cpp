@@ -6,7 +6,7 @@
 #include <string.h>  // for NULL, strcmp, strncmp, etc
 #include <errno.h>   // for ENOMEM
 
-#include <ostream>   // for operator<<, basic_ostream, etc
+#include <ostream>  // for operator<<, basic_ostream, etc
 
 extern "C" {
 #include <libavutil/avutil.h>
@@ -249,7 +249,7 @@ void calculate_display_rect(SDL_Rect* rect,
   rect->h = FFMAX(height, 1);
 }
 
-int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_convert_ctx) {
+int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
   int ret = 0;
   switch (frame->format) {
     case AV_PIX_FMT_YUV420P:
@@ -270,22 +270,6 @@ int upload_texture(SDL_Texture* tex, AVFrame* frame, struct SwsContext** img_con
       }
       break;
     default:
-      /* This should only happen if we are not using avfilter... */
-      *img_convert_ctx = sws_getCachedContext(
-          *img_convert_ctx, frame->width, frame->height, static_cast<AVPixelFormat>(frame->format),
-          frame->width, frame->height, AV_PIX_FMT_BGRA, sws_flags, NULL, NULL, NULL);
-      if (*img_convert_ctx != NULL) {
-        uint8_t* pixels[4];
-        int pitch[4];
-        if (!SDL_LockTexture(tex, NULL, reinterpret_cast<void**>(pixels), pitch)) {
-          sws_scale(*img_convert_ctx, const_cast<const uint8_t* const*>(frame->data),
-                    frame->linesize, 0, frame->height, pixels, pitch);
-          SDL_UnlockTexture(tex);
-        }
-      } else {
-        ERROR_LOG() << "Cannot initialize the conversion context";
-        ret = -1;
-      }
       break;
   }
   return ret;

@@ -69,7 +69,7 @@ static int opt_width(const char* opt, const char* arg, DictionaryOptions* dopt) 
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(), &g_options.screen_width)) {
+  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(), &g_player_options.screen_width)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -79,7 +79,7 @@ int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(), &g_options.screen_height)) {
+  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(), &g_player_options.screen_height)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;

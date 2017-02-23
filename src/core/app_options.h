@@ -20,7 +20,7 @@ namespace core {
 // 640x480
 // 1280x720
 struct AppOptions {
-  enum { width = 640, height = 480, volume = 100, loop_count = 1 };
+  enum { volume = 100, loop_count = 1 };
   AppOptions();
 
   bool autorotate;
@@ -31,10 +31,6 @@ struct AppOptions {
   int seek_by_bytes;
   int64_t start_time;
   int64_t duration;
-  int default_width;
-  int default_height;
-  int screen_width;
-  int screen_height;
 
   int framedrop;
   bool genpts;

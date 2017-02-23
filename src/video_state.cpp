@@ -11,14 +11,7 @@
 #include <ostream>  // for operator<<, basic_ostream, etc
 #include <memory>
 
-#include <SDL2/SDL_audio.h>     // for SDL_MIX_MAXVOLUME, etc
-#include <SDL2/SDL_error.h>     // for SDL_GetError
-#include <SDL2/SDL_events.h>    // for SDL_Event, SDL_PushEvent, etc
-#include <SDL2/SDL_hints.h>     // for SDL_SetHint, etc
-#include <SDL2/SDL_keyboard.h>  // for SDL_Keysym
-#include <SDL2/SDL_keycode.h>   // for ::SDLK_0, ::SDLK_9, etc
-#include <SDL2/SDL_mouse.h>     // for SDL_ShowCursor, etc
-#include <SDL2/SDL_rect.h>      // for SDL_Rect
+#include <SDL2/SDL_events.h>
 
 extern "C" {
 #include <libavcodec/avcodec.h>  // for AVCodecContext, etc
@@ -92,38 +85,6 @@ int decode_interrupt_callback(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
   return is->IsAborted();
 }
-
-SDL_Texture* CreateTexture(SDL_Renderer* renderer,
-                           Uint32 new_format,
-                           int new_width,
-                           int new_height,
-                           SDL_BlendMode blendmode,
-                           bool init_texture) {
-  SDL_Texture* ltexture =
-      SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
-  if (!ltexture) {
-    NOTREACHED();
-    return nullptr;
-  }
-  if (SDL_SetTextureBlendMode(ltexture, blendmode) < 0) {
-    NOTREACHED();
-    SDL_DestroyTexture(ltexture);
-    return nullptr;
-  }
-  if (init_texture) {
-    void* pixels;
-    int pitch;
-    if (SDL_LockTexture(ltexture, NULL, &pixels, &pitch) < 0) {
-      NOTREACHED();
-      SDL_DestroyTexture(ltexture);
-      return nullptr;
-    }
-    memset(pixels, 0, pitch * new_height);
-    SDL_UnlockTexture(ltexture);
-  }
-
-  return ltexture;
-}
 }
 
 VideoState::VideoState(core::stream_id id,
@@ -177,12 +138,6 @@ VideoState::VideoState(core::stream_id id,
       frame_last_returned_time_(0),
       frame_last_filter_delay_(0),
       max_frame_duration_(0),
-      img_convert_ctx_(NULL),
-      sub_convert_ctx_(NULL),
-      width_(0),
-      height_(0),
-      xleft_(0),
-      ytop_(0),
       step_(false),
 #if CONFIG_AVFILTER
       vfilter_idx_(0),
@@ -201,8 +156,6 @@ VideoState::VideoState(core::stream_id id,
       muted_(false),
       eof_(false),
       abort_request_(false),
-      renderer_(NULL),
-      window_(NULL),
       stats_(),
       handler_(handler) {
   CHECK(handler_);
@@ -226,9 +179,6 @@ VideoState::~VideoState() {
   destroy(&vstream_);
 
   avformat_close_input(&ic_);
-
-  sws_freeContext(img_convert_ctx_);
-  sws_freeContext(sub_convert_ctx_);
 }
 
 int VideoState::StreamComponentOpen(int stream_index) {
@@ -675,25 +625,14 @@ void VideoState::VideoRefresh(double* remaining_time) {
 
 int VideoState::VideoOpen(core::VideoFrame* vp) {
   if (vp && vp->width && vp->height) {
-    SetDefaultWindowSize(vp->width, vp->height, vp->sar);
+    handler_->HandleDefaultWindowSize(vp->width, vp->height, vp->sar);
   }
 
-  int w, h;
-  if (opt_->screen_width && opt_->screen_height) {
-    w = opt_->screen_width;
-    h = opt_->screen_height;
-  } else {
-    w = opt_->default_width;
-    h = opt_->default_height;
-  }
-
-  bool res = handler_->RequestWindow(this, w, h, &renderer_, &window_);
+  bool res = handler_->HandleRequestWindow(this);
   if (!res) {
     return ERROR_RESULT_VALUE;
   }
 
-  width_ = w;
-  height_ = h;
   return 0;
 }
 
@@ -705,22 +644,7 @@ int VideoState::AllocPicture() {
     return ERROR_RESULT_VALUE;
   }
 
-  Uint32 sdl_format;
-  if (vp->format == AV_PIX_FMT_YUV420P) {
-    sdl_format = SDL_PIXELFORMAT_YV12;
-  } else {
-    sdl_format = SDL_PIXELFORMAT_ARGB8888;
-  }
-
-  if (ReallocTexture(&vp->bmp, sdl_format, vp->width, vp->height, SDL_BLENDMODE_NONE, false) < 0) {
-    /* SDL allocates a buffer smaller than requested if the video
-     * overlay hardware is unable to support the requested size. */
-
-    ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of "
-                << vp->width << "x" << vp->height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+  if (!handler_->HandleRealocFrame(this, vp)) {
     return ERROR_RESULT_VALUE;
   }
 
@@ -730,64 +654,23 @@ int VideoState::AllocPicture() {
 
 /* display the current picture, if any */
 void VideoState::VideoDisplay() {
-  if (!renderer_) {
-    int res = VideoOpen(NULL);
-    if (res == ERROR_RESULT_VALUE) {
-      return;
-    }
-  }
-
-  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-  SDL_RenderClear(renderer_);
   if (vstream_->IsOpened()) {
     VideoImageDisplay();
   }
-  SDL_RenderPresent(renderer_);
-}
-
-int VideoState::ReallocTexture(SDL_Texture** texture,
-                               Uint32 new_format,
-                               int new_width,
-                               int new_height,
-                               SDL_BlendMode blendmode,
-                               bool init_texture) {
-  Uint32 format;
-  int access, w, h;
-  if (SDL_QueryTexture(*texture, &format, &access, &w, &h) < 0 || new_width != w ||
-      new_height != h || new_format != format) {
-    SDL_DestroyTexture(*texture);
-    *texture = CreateTexture(renderer_, new_format, new_width, new_height, blendmode, init_texture);
-    if (!*texture) {
-      return ERROR_RESULT_VALUE;
-    }
-  }
-  return SUCCESS_RESULT_VALUE;
-}
-
-void VideoState::SetDefaultWindowSize(int width, int height, AVRational sar) {
-  SDL_Rect rect;
-  core::calculate_display_rect(&rect, 0, 0, INT_MAX, height, width, height, sar);
-  opt_->default_width = rect.w;
-  opt_->default_height = rect.h;
 }
 
 void VideoState::VideoImageDisplay() {
   core::VideoFrame* vp = video_frame_queue_->PeekLast();
   if (vp->bmp) {
-    SDL_Rect rect;
-    core::calculate_display_rect(&rect, xleft_, ytop_, width_, height_, vp->width, vp->height,
-                                 vp->sar);
-
     if (!vp->uploaded) {
-      if (core::upload_texture(vp->bmp, vp->frame, &img_convert_ctx_) < 0) {
+      if (core::upload_texture(vp->bmp, vp->frame) < 0) {
         return;
       }
       vp->uploaded = true;
       vp->flip_v = vp->frame->linesize[0] < 0;
     }
 
-    SDL_RenderCopyEx(renderer_, vp->bmp, NULL, &rect, 0, NULL,
-                     vp->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
+    handler_->HanleDisplayFrame(this, vp);
   }
 }
 
@@ -802,8 +685,7 @@ int VideoState::Exec() {
 
 void VideoState::Abort() {
   abort_request_ = true;
-  int res = read_tid_->joinAndGet();
-  DCHECK_EQ(res, 0);
+  read_tid_->join();
 }
 
 bool VideoState::IsAborted() const {
@@ -1016,25 +898,6 @@ void VideoState::MoveToPreviousFragment(double incr) {
   SeekChapter(-1);
 }
 
-void VideoState::HandleWindowEvent(SDL_WindowEvent* event) {
-  if (!event) {
-    return;
-  }
-
-  switch (event->event) {
-    case SDL_WINDOWEVENT_RESIZED: {
-      width_ = event->data1;
-      height_ = event->data2;
-      force_refresh_ = true;
-      break;
-    }
-    case SDL_WINDOWEVENT_EXPOSED: {
-      force_refresh_ = true;
-      break;
-    }
-  }
-}
-
 int VideoState::HandleAllocPictureEvent() {
   return AllocPicture();
 }
@@ -1191,7 +1054,7 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-void VideoState::sdl_audio_callback(void* opaque, Uint8* stream, int len) {
+void VideoState::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
   VideoState* is = static_cast<VideoState*>(opaque);
 
   is->audio_callback_time_ = av_gettime_relative();
@@ -1256,8 +1119,6 @@ int VideoState::QueuePicture(AVFrame* src_frame,
   /* alloc or resize hardware picture buffer */
   if (!vp->bmp || !vp->allocated || vp->width != src_frame->width ||
       vp->height != src_frame->height || vp->format != src_frame->format) {
-    SDL_Event event;
-
     vp->allocated = false;
     vp->width = src_frame->width;
     vp->height = src_frame->height;
@@ -1265,6 +1126,7 @@ int VideoState::QueuePicture(AVFrame* src_frame,
 
     /* the allocation must be done in the main thread to avoid
        locking problems. */
+    SDL_Event event;
     event.type = FF_ALLOC_EVENT;
     event.user.data1 = this;
     SDL_PushEvent(&event);
@@ -1475,8 +1337,8 @@ int VideoState::ReadThread() {
     AVStream* st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
     AVCodecParameters* codecpar = st->codecpar;
     AVRational sar = av_guess_sample_aspect_ratio(ic, st, NULL);
-    if (codecpar->width) {
-      SetDefaultWindowSize(codecpar->width, codecpar->height, sar);
+    if (codecpar->width && codecpar->height) {
+      handler_->HandleDefaultWindowSize(codecpar->width, codecpar->height, sar);
     }
   }
 

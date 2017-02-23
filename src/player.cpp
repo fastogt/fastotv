@@ -15,6 +15,8 @@ extern "C" {
 #include "video_state.h"
 
 #include "core/app_options.h"
+#include "core/utils.h"
+#include "core/video_frame.h"
 
 /* Step size for volume control */
 #define SDL_VOLUME_STEP (SDL_MIX_MAXVOLUME / 50)
@@ -26,6 +28,38 @@ extern "C" {
 #define IMG_PATH "offline.png"
 
 namespace {
+SDL_Texture* CreateTexture(SDL_Renderer* renderer,
+                           Uint32 new_format,
+                           int new_width,
+                           int new_height,
+                           SDL_BlendMode blendmode,
+                           bool init_texture) {
+  SDL_Texture* ltexture =
+      SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
+  if (!ltexture) {
+    NOTREACHED();
+    return nullptr;
+  }
+  if (SDL_SetTextureBlendMode(ltexture, blendmode) < 0) {
+    NOTREACHED();
+    SDL_DestroyTexture(ltexture);
+    return nullptr;
+  }
+  if (init_texture) {
+    void* pixels;
+    int pitch;
+    if (SDL_LockTexture(ltexture, NULL, &pixels, &pitch) < 0) {
+      NOTREACHED();
+      SDL_DestroyTexture(ltexture);
+      return nullptr;
+    }
+    memset(pixels, 0, pitch * new_height);
+    SDL_UnlockTexture(ltexture);
+  }
+
+  return ltexture;
+}
+
 SDL_Surface* IMG_LoadPNG(const char* path) {
   unsigned char header[8];  // 8 is the maximum size that can be checked
   FILE* fp = fopen(path, "rb");
@@ -343,7 +377,13 @@ bool CreateWindow(int width,
 }  // namespace
 
 PlayerOptions::PlayerOptions()
-    : exit_on_keydown(false), exit_on_mousedown(false), is_full_screen(false) {}
+    : exit_on_keydown(false),
+      exit_on_mousedown(false),
+      is_full_screen(false),
+      default_width(width),
+      default_height(height),
+      screen_width(0),
+      screen_height(0) {}
 
 Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::ComplexOptions* copt)
     : options_(options),
@@ -357,7 +397,11 @@ Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::Comple
       last_mouse_left_click_(0),
       curent_stream_pos_(0),
       stop_(false),
-      stream_(nullptr) {
+      stream_(nullptr),
+      width_(0),
+      height_(0),
+      xleft_(0),
+      ytop_(0) {
   ChangePlayListLocation(options.play_list_location);
   // stable options
   if (opt->startup_volume < 0) {
@@ -497,13 +541,57 @@ Player::~Player() {
   }
 }
 
-bool Player::RequestWindow(VideoState* stream,
-                           int width,
-                           int height,
-                           SDL_Renderer** renderer,
-                           SDL_Window** window) {
-  if (!stream || !renderer || !window) {  // invalid input
+bool Player::HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) {
+  UNUSED(stream);
+
+  Uint32 sdl_format;
+  if (frame->format == AV_PIX_FMT_YUV420P) {
+    sdl_format = SDL_PIXELFORMAT_YV12;
+  } else {
+    sdl_format = SDL_PIXELFORMAT_ARGB8888;
+  }
+
+  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
+                     false) < 0) {
+    /* SDL allocates a buffer smaller than requested if the video
+     * overlay hardware is unable to support the requested size. */
+
+    ERROR_LOG() << "Error: the video system does not support an image\n"
+                   "size of "
+                << frame->width << "x" << frame->height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return false;
+  }
+
+  return true;
+}
+
+void Player::HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) {
+  UNUSED(stream);
+  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+  SDL_RenderClear(renderer_);
+
+  SDL_Rect rect;
+  core::calculate_display_rect(&rect, xleft_, ytop_, width_, height_, frame->width, frame->height,
+                               frame->sar);
+  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
+                   frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
+
+  SDL_RenderPresent(renderer_);
+}
+
+bool Player::HandleRequestWindow(VideoState* stream) {
+  if (!stream) {  // invalid input
+    return false;
+  }
+
+  if (options_.screen_width && options_.screen_height) {
+    width_ = options_.screen_width;
+    height_ = options_.screen_height;
+  } else {
+    width_ = options_.default_width;
+    height_ = options_.default_height;
   }
 
   std::string name;
@@ -515,18 +603,24 @@ bool Player::RequestWindow(VideoState* stream,
   }
 
   if (!window_) {
-    bool created = CreateWindow(width, height, options_.is_full_screen, name, &renderer_, &window_);
+    bool created =
+        CreateWindow(width_, height_, options_.is_full_screen, name, &renderer_, &window_);
     if (!created) {
       return false;
     }
   } else {
-    SDL_SetWindowSize(window_, width, height);
+    SDL_SetWindowSize(window_, width_, height_);
     SDL_SetWindowTitle(window_, name.c_str());
   }
 
-  *renderer = renderer_;
-  *window = window_;
   return true;
+}
+
+void Player::HandleDefaultWindowSize(int width, int height, AVRational sar) {
+  SDL_Rect rect;
+  core::calculate_display_rect(&rect, 0, 0, INT_MAX, height, width, height, sar);
+  options_.default_width = rect.w;
+  options_.default_height = rect.h;
 }
 
 void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
@@ -681,11 +775,20 @@ void Player::HandleMouseMoveEvent(SDL_MouseMotionEvent* event) {
 
 void Player::HandleWindowEvent(SDL_WindowEvent* event) {
   if (event->event == SDL_WINDOWEVENT_RESIZED) {
-    opt_->screen_width = event->data1;
-    opt_->screen_height = event->data2;
+    width_ = event->data1;
+    height_ = event->data2;
   }
   if (stream_) {
-    stream_->HandleWindowEvent(event);
+    switch (event->event) {
+      case SDL_WINDOWEVENT_RESIZED: {
+        stream_->RefreshRequest();
+        break;
+      }
+      case SDL_WINDOWEVENT_EXPOSED: {
+        stream_->RefreshRequest();
+        break;
+      }
+    }
   }
 }
 
@@ -697,20 +800,38 @@ Url Player::CurrentUrl() const {
   return play_list_[pos];
 }
 
+int Player::ReallocTexture(SDL_Texture** texture,
+                           Uint32 new_format,
+                           int new_width,
+                           int new_height,
+                           SDL_BlendMode blendmode,
+                           bool init_texture) {
+  Uint32 format;
+  int access, w, h;
+  if (SDL_QueryTexture(*texture, &format, &access, &w, &h) < 0 || new_width != w ||
+      new_height != h || new_format != format) {
+    SDL_DestroyTexture(*texture);
+    *texture = CreateTexture(renderer_, new_format, new_width, new_height, blendmode, init_texture);
+    if (!*texture) {
+      return ERROR_RESULT_VALUE;
+    }
+  }
+  return SUCCESS_RESULT_VALUE;
+}
+
 void Player::SwitchToErrorMode() {
   Url url = CurrentUrl();
   const std::string name_str = url.Name();
-  int w, h;
-  if (opt_->screen_width && opt_->screen_height) {
-    w = opt_->screen_width;
-    h = opt_->screen_height;
+  if (options_.screen_width && options_.screen_height) {
+    width_ = options_.screen_width;
+    height_ = options_.screen_height;
   } else {
-    w = opt_->default_width;
-    h = opt_->default_height;
+    width_ = options_.default_width;
+    height_ = options_.default_height;
   }
 
   if (!window_) {
-    CreateWindow(w, h, options_.is_full_screen, name_str, &renderer_, &window_);
+    CreateWindow(width_, height_, options_.is_full_screen, name_str, &renderer_, &window_);
   } else {
     SDL_SetWindowTitle(window_, name_str.c_str());
   }

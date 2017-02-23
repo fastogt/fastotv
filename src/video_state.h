@@ -5,12 +5,6 @@
 #include <memory>    // for shared_ptr
 #include <string>    // for string
 
-#include <SDL2/SDL_blendmode.h>  // for SDL_BlendMode
-#include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Texture
-#include <SDL2/SDL_stdinc.h>     // for Uint32, Uint8
-#include <SDL2/SDL_video.h>      // for SDL_Window
-#include <SDL2/SDL_events.h>
-
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 
 extern "C" {
@@ -116,7 +110,6 @@ class VideoState {
   void MoveToNextFragment(double incr);
   void MoveToPreviousFragment(double incr);
 
-  virtual void HandleWindowEvent(SDL_WindowEvent* event);
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
  private:
@@ -133,7 +126,6 @@ class VideoState {
   int GetMasterSyncType() const;
   double ComputeTargetDelay(double delay) const;
   double GetMasterClock() const;
-  void SetDefaultWindowSize(int width, int height, AVRational sar);
 #if CONFIG_AVFILTER
   int ConfigureVideoFilters(AVFilterGraph* graph, const std::string& vfilters, AVFrame* frame);
   int ConfigureAudioFilters(const std::string& afilters, int force_output_format);
@@ -146,12 +138,6 @@ class VideoState {
   void VideoDisplay();
   /* called to display each frame */
   void VideoRefresh(double* remaining_time);
-  int ReallocTexture(SDL_Texture** texture,
-                     Uint32 new_format,
-                     int new_width,
-                     int new_height,
-                     SDL_BlendMode blendmode,
-                     bool init_texture);
   void VideoImageDisplay();
 
   void SeekChapter(int incr);
@@ -170,7 +156,7 @@ class VideoState {
   int QueuePicture(AVFrame* src_frame, double pts, double duration, int64_t pos, int serial);
 
   /* prepare a new audio buffer */
-  static void sdl_audio_callback(void* opaque, Uint8* stream, int len);
+  static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
 
   int ReadThread();
   int VideoThread();
@@ -231,13 +217,7 @@ class VideoState {
   double frame_last_filter_delay_;
   double max_frame_duration_;  // maximum duration of a frame - above this, we consider the jump a
                                // timestamp discontinuity
-  struct SwsContext* img_convert_ctx_;
-  struct SwsContext* sub_convert_ctx_;
 
-  int width_;
-  int height_;
-  const int xleft_;
-  const int ytop_;
   bool step_;
 
 #if CONFIG_AVFILTER
@@ -261,8 +241,6 @@ class VideoState {
   bool eof_;
   bool abort_request_;
 
-  SDL_Renderer* renderer_;
-  SDL_Window* window_;
   Stats stats_;
   VideoStateHandler* handler_;
 };
