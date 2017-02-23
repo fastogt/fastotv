@@ -378,8 +378,8 @@ int Player::Exec() {
   }
 
   SDL_Surface* surface = IMG_LoadPNG(IMG_PATH);
-  SDL_Event event;
   while (!stop_) {
+    SDL_Event event;
     {
       double remaining_time = 0.0;
       SDL_PumpEvents();
@@ -408,6 +408,7 @@ int Player::Exec() {
         SDL_PumpEvents();
       }
     }
+    // handle event
     switch (event.type) {
       case SDL_KEYDOWN: {
         HandleKeyPressEvent(&event.key);
@@ -430,11 +431,22 @@ int Player::Exec() {
         return EXIT_SUCCESS;
       }
       case FF_QUIT_EVENT: {  // stream want to quit
-        VideoState* stream = static_cast<VideoState*>(event.user.data1);
-        if (stream == stream_.get()) {
-          stream_.release();
+        // VideoState* stream = static_cast<VideoState*>(event.user.data1);
+        destroy(&stream_);
+        SwitchToErrorMode();
+        break;
+      }
+      case FF_NEXT_STREAM: {
+        stream_ = CreateNextStream();
+        if (!stream_) {
           SwitchToErrorMode();
-        } else {
+        }
+        break;
+      }
+      case FF_PREV_STREAM: {
+        stream_ = CreatePrevStream();
+        if (!stream_) {
+          SwitchToErrorMode();
         }
         break;
       }
@@ -529,61 +541,87 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
     }
     case SDLK_p:
     case SDLK_SPACE:
-      stream_->TogglePause();
+      if (stream_) {
+        stream_->TogglePause();
+      }
       break;
     case SDLK_m:
-      stream_->ToggleMute();
+      if (stream_) {
+        stream_->ToggleMute();
+      }
       break;
     case SDLK_KP_MULTIPLY:
     case SDLK_0:
-      stream_->UpdateVolume(1, SDL_VOLUME_STEP);
-      opt_->startup_volume = stream_->Volume();
+      if (stream_) {
+        stream_->UpdateVolume(1, SDL_VOLUME_STEP);
+        opt_->startup_volume = stream_->Volume();
+      }
       break;
     case SDLK_KP_DIVIDE:
     case SDLK_9:
-      stream_->UpdateVolume(-1, SDL_VOLUME_STEP);
-      opt_->startup_volume = stream_->Volume();
+      if (stream_) {
+        stream_->UpdateVolume(-1, SDL_VOLUME_STEP);
+        opt_->startup_volume = stream_->Volume();
+      }
       break;
     case SDLK_s:  // S: Step to next frame
-      stream_->StepToNextFrame();
+      if (stream_) {
+        stream_->StepToNextFrame();
+      }
       break;
     case SDLK_a:
-      stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+      if (stream_) {
+        stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+      }
       break;
     case SDLK_v:
-      stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
+      if (stream_) {
+        stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
+      }
       break;
     case SDLK_c:
-      stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-      stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+      if (stream_) {
+        stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
+        stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+      }
       break;
     case SDLK_t:
       // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
       break;
     case SDLK_w: {
-      stream_->ToggleWaveDisplay();
+      if (stream_) {
+        stream_->ToggleWaveDisplay();
+      }
       break;
     }
     case SDLK_PAGEUP:
-      stream_->MoveToNextFragment(0);
+      if (stream_) {
+        stream_->MoveToNextFragment(0);
+      }
       break;
     case SDLK_PAGEDOWN:
-      stream_->MoveToPreviousFragment(0);
-      break;
-    case SDLK_LEFTBRACKET:  // change channel
-      stream_ = CreatePrevStream();
-      if (!stream_) {
-        SwitchToErrorMode();
-        return;
+      if (stream_) {
+        stream_->MoveToPreviousFragment(0);
       }
       break;
-    case SDLK_RIGHTBRACKET:  // change channel
-      stream_ = CreateNextStream();
-      if (!stream_) {
-        SwitchToErrorMode();
-        return;
+    case SDLK_LEFTBRACKET: {  // change channel
+      if (stream_) {
+        stream_->Abort();
       }
+      SDL_Event event;
+      event.type = FF_PREV_STREAM;
+      SDL_PushEvent(&event);
       break;
+    }
+    case SDLK_RIGHTBRACKET: {  // change channel
+      if (stream_) {
+        stream_->Abort();
+      }
+      SDL_Event event;
+      event.type = FF_NEXT_STREAM;
+      SDL_PushEvent(&event);
+      break;
+    }
     case SDLK_LEFT:
       incr = -10.0;
       goto do_seek;
@@ -596,7 +634,9 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
     case SDLK_DOWN:
       incr = -60.0;
     do_seek:
-      stream_->StreemSeek(incr);
+      if (stream_) {
+        stream_->StreemSeek(incr);
+      }
       break;
     default:
       break;
@@ -668,17 +708,20 @@ Url Player::CurrentUrl() const {
 
 void Player::SwitchToErrorMode() {
   Url url = CurrentUrl();
-  if (!window_) {
-    int w, h;
-    if (opt_->screen_width && opt_->screen_height) {
-      w = opt_->screen_width;
-      h = opt_->screen_height;
-    } else {
-      w = opt_->default_width;
-      h = opt_->default_height;
-    }
-    CreateWindow(w, h, options_.is_full_screen, url.Name(), &renderer_, &window_);
+  const std::string name_str = url.Name();
+  int w, h;
+  if (opt_->screen_width && opt_->screen_height) {
+    w = opt_->screen_width;
+    h = opt_->screen_height;
   } else {
+    w = opt_->default_width;
+    h = opt_->default_height;
+  }
+
+  if (!window_) {
+    CreateWindow(w, h, options_.is_full_screen, name_str.c_str(), &renderer_, &window_);
+  } else {
+    SDL_SetWindowTitle(window_, name_str.c_str());
   }
 }
 
@@ -692,23 +735,23 @@ bool Player::ChangePlayListLocation(const common::uri::Uri& location) {
   return false;
 }
 
-common::scoped_ptr<VideoState> Player::CreateCurrentStream() {
+VideoState* Player::CreateCurrentStream() {
   Url url = play_list_[curent_stream_pos_];
-  common::scoped_ptr<VideoState> stream =
-      common::make_scoped<VideoState>(url.Id(), url.GetUrl(), *opt_, copt_, this);
+  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), *opt_, copt_, this);
 
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
-    return common::scoped_ptr<VideoState>();
+    delete stream;
+    return nullptr;
   }
 
   return stream;
 }
 
-common::scoped_ptr<VideoState> Player::CreateNextStream() {
+VideoState* Player::CreateNextStream() {
   // check is executed in main thread?
   if (play_list_.empty()) {
-    return common::scoped_ptr<VideoState>();
+    return nullptr;
   }
 
   if (curent_stream_pos_ + 1 == play_list_.size()) {
@@ -717,35 +760,35 @@ common::scoped_ptr<VideoState> Player::CreateNextStream() {
     curent_stream_pos_++;
   }
   Url url = play_list_[curent_stream_pos_];
-  common::scoped_ptr<VideoState> stream =
-      common::make_scoped<VideoState>(url.Id(), url.GetUrl(), *opt_, copt_, this);
+  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), *opt_, copt_, this);
 
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
-    return common::scoped_ptr<VideoState>();
+    delete stream;
+    return nullptr;
   }
 
   return stream;
 }
 
-common::scoped_ptr<VideoState> Player::CreatePrevStream() {
+VideoState* Player::CreatePrevStream() {
   // check is executed in main thread?
   if (play_list_.empty()) {
-    return common::scoped_ptr<VideoState>();
+    return nullptr;
   }
 
   if (curent_stream_pos_ == 0) {
-    curent_stream_pos_ = play_list_.size();
+    curent_stream_pos_ = play_list_.size() - 1;
   } else {
     --curent_stream_pos_;
   }
   Url url = play_list_[curent_stream_pos_];
-  common::scoped_ptr<VideoState> stream =
-      common::make_scoped<VideoState>(url.Id(), url.GetUrl(), *opt_, copt_, this);
+  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), *opt_, copt_, this);
 
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
-    return common::scoped_ptr<VideoState>();
+    delete stream;
+    return nullptr;
   }
 
   return stream;

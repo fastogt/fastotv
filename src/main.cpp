@@ -30,6 +30,7 @@ extern "C" {
 #include <common/log_levels.h>  // for LEVEL_LOG, etc
 #include <common/logger.h>      // for LogMessage, etc
 #include <common/macros.h>      // for UNUSED, etc
+#include <common/file_system.h>
 
 #include "cmdutils.h"          // for HAS_ARG, OPT_EXPERT, etc
 #include "core/app_options.h"  // for AppOptions, ComplexOptions

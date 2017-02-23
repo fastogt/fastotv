@@ -52,9 +52,9 @@ class Player : public VideoStateHandler {
   void SwitchToErrorMode();
 
   bool ChangePlayListLocation(const common::uri::Uri& location);
-  common::scoped_ptr<VideoState> CreateCurrentStream();
-  common::scoped_ptr<VideoState> CreateNextStream();
-  common::scoped_ptr<VideoState> CreatePrevStream();
+  VideoState* CreateCurrentStream();
+  VideoState* CreateNextStream();
+  VideoState* CreatePrevStream();
 
   PlayerOptions options_;
   core::AppOptions* opt_;
@@ -69,5 +69,5 @@ class Player : public VideoStateHandler {
   size_t curent_stream_pos_;
 
   bool stop_;
-  common::scoped_ptr<VideoState> stream_;
+  VideoState* stream_;
 };

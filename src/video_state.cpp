@@ -215,11 +215,6 @@ VideoState::VideoState(core::stream_id id,
 }
 
 VideoState::~VideoState() {
-  /* XXX: use a special url_shutdown call to abort parse cleanly */
-  Abort();
-  int res = read_tid_->joinAndGet();
-  DCHECK_EQ(res, 0);
-
   /* close each stream */
   if (vstream_->IsOpened()) {
     StreamComponentClose(vstream_->Index());
@@ -895,6 +890,8 @@ int VideoState::Exec() {
 
 void VideoState::Abort() {
   abort_request_ = true;
+  int res = read_tid_->joinAndGet();
+  DCHECK_EQ(res, 0);
 }
 
 bool VideoState::IsAborted() const {
@@ -1525,6 +1522,7 @@ int VideoState::ReadThread() {
     SDL_Event event;
     event.type = FF_QUIT_EVENT;
     event.user.data1 = this;
+    event.user.code = err;
     SDL_PushEvent(&event);
     return -1;
   }
@@ -1532,16 +1530,17 @@ int VideoState::ReadThread() {
     av_dict_set(&copt_->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
   }
 
-  AVDictionaryEntry* t = av_dict_get(copt_->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX);
+  /*AVDictionaryEntry* t = av_dict_get(copt_->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX);
   if (t) {
     ERROR_LOG() << "Option " << t->key << " not found.";
     avformat_close_input(&ic);
     SDL_Event event;
     event.type = FF_QUIT_EVENT;
     event.user.data1 = this;
+    event.user.code = AVERROR_OPTION_NOT_FOUND;
     SDL_PushEvent(&event);
     return AVERROR_OPTION_NOT_FOUND;
-  }
+  }*/
   ic_ = ic;
 
   core::VideoStream* video_stream = vstream_;
@@ -1784,12 +1783,11 @@ int VideoState::ReadThread() {
 
   ret = 0;
 fail:
-  if (ret != 0) {
-    SDL_Event event;
-    event.type = FF_QUIT_EVENT;
-    event.user.data1 = this;
-    SDL_PushEvent(&event);
-  }
+  SDL_Event event;
+  event.type = FF_QUIT_EVENT;
+  event.user.data1 = this;
+  event.user.code = ret;
+  SDL_PushEvent(&event);
   return 0;
 }
 
@@ -1957,6 +1955,7 @@ int VideoState::VideoThread() {
         SDL_Event event;
         event.type = FF_QUIT_EVENT;
         event.user.data1 = this;
+        event.user.code = ret;
         SDL_PushEvent(&event);
         goto the_end;
       }
