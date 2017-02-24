@@ -390,6 +390,7 @@ Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::Comple
       opt_(opt),
       copt_(copt),
       play_list_(),
+      audio_params_(nullptr),
       renderer_(NULL),
       window_(NULL),
       cursor_hidden_(false),
@@ -531,6 +532,9 @@ void Player::SetFullScreen(bool full_screen) {
 }
 
 Player::~Player() {
+  SDL_CloseAudio();
+  destroy(&audio_params_);
+
   if (renderer_) {
     SDL_DestroyRenderer(renderer_);
     renderer_ = NULL;
@@ -539,6 +543,32 @@ Player::~Player() {
     SDL_DestroyWindow(window_);
     window_ = NULL;
   }
+}
+
+bool Player::HandleRequestAudio(VideoState* stream,
+                                int64_t wanted_channel_layout,
+                                int wanted_nb_channels,
+                                int wanted_sample_rate,
+                                core::AudioParams* audio_hw_params) {
+  UNUSED(stream);
+
+  if (audio_params_) {
+    *audio_hw_params = *audio_params_;
+    return true;
+  }
+
+  /* prepare audio output */
+  core::AudioParams laudio_hw_params;
+  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
+                             &laudio_hw_params, sdl_audio_callback);
+  if (ret < 0) {
+    return false;
+  }
+
+  SDL_PauseAudio(0);
+  audio_params_ = new core::AudioParams(laudio_hw_params);
+  *audio_hw_params = *audio_params_;
+  return true;
 }
 
 bool Player::HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) {
@@ -586,13 +616,7 @@ bool Player::HandleRequestWindow(VideoState* stream) {
     return false;
   }
 
-  if (options_.screen_width && options_.screen_height) {
-    width_ = options_.screen_width;
-    height_ = options_.screen_height;
-  } else {
-    width_ = options_.default_width;
-    height_ = options_.default_height;
-  }
+  CalculateDispalySize();
 
   std::string name;
   for (size_t i = 0; i < play_list_.size(); ++i) {
@@ -800,6 +824,16 @@ Url Player::CurrentUrl() const {
   return play_list_[pos];
 }
 
+void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
+  Player* player = static_cast<Player*>(opaque);
+  if (player->stream_ && player->stream_->IsAudioReady()) {
+    VideoState* st = player->stream_;  // static_cast<VideoState*>(opaque);
+    st->UpdateAudioBuffer(stream, len);
+  } else {
+    memset(stream, 0, len);
+  }
+}
+
 int Player::ReallocTexture(SDL_Texture** texture,
                            Uint32 new_format,
                            int new_width,
@@ -822,18 +856,26 @@ int Player::ReallocTexture(SDL_Texture** texture,
 void Player::SwitchToErrorMode() {
   Url url = CurrentUrl();
   const std::string name_str = url.Name();
+  CalculateDispalySize();
+
+  if (!window_) {
+    CreateWindow(width_, height_, options_.is_full_screen, name_str, &renderer_, &window_);
+  } else {
+    SDL_SetWindowTitle(window_, name_str.c_str());
+  }
+}
+
+void Player::CalculateDispalySize() {
+  if (width_ && height_) {
+    return;
+  }
+
   if (options_.screen_width && options_.screen_height) {
     width_ = options_.screen_width;
     height_ = options_.screen_height;
   } else {
     width_ = options_.default_width;
     height_ = options_.default_height;
-  }
-
-  if (!window_) {
-    CreateWindow(width_, height_, options_.is_full_screen, name_str, &renderer_, &window_);
-  } else {
-    SDL_SetWindowTitle(window_, name_str.c_str());
   }
 }
 

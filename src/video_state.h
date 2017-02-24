@@ -98,6 +98,8 @@ class VideoState {
   /* pause or resume the video */
   void TogglePause();
   void ToggleMute();
+
+  bool IsVideoReady() const;
   void TryRefreshVideo(double* remaining_time);
 
   int Volume() const;
@@ -111,6 +113,9 @@ class VideoState {
   void MoveToPreviousFragment(double incr);
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
+
+  bool IsAudioReady() const;
+  void UpdateAudioBuffer(uint8_t* stream, int len);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoState);
@@ -138,7 +143,6 @@ class VideoState {
   void VideoDisplay();
   /* called to display each frame */
   void VideoRefresh(double* remaining_time);
-  void VideoImageDisplay();
 
   void SeekChapter(int incr);
   /* return the wanted number of samples to get better sync if sync_type is video
@@ -155,9 +159,6 @@ class VideoState {
   int GetVideoFrame(AVFrame* frame);
   int QueuePicture(AVFrame* src_frame, double pts, double duration, int64_t pos, int serial);
 
-  /* prepare a new audio buffer */
-  static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
-
   int ReadThread();
   int VideoThread();
   int AudioThread();
@@ -167,7 +168,6 @@ class VideoState {
 
   common::scoped_ptr<core::AppOptions> const opt_;
   core::ComplexOptions* const copt_;
-  int64_t audio_callback_time_;
 
   common::shared_ptr<common::threads::Thread<int>> read_tid_;
   bool force_refresh_;

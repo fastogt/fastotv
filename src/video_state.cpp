@@ -96,7 +96,6 @@ VideoState::VideoState(core::stream_id id,
       uri_(uri),
       opt_(new core::AppOptions(opt)),
       copt_(copt),
-      audio_callback_time_(0),
       read_tid_(THREAD_MANAGER()->createThread(&VideoState::ReadThread, this)),
       force_refresh_(false),
       queue_attachments_req_(false),
@@ -339,10 +338,9 @@ int VideoState::StreamComponentOpen(int stream_index) {
       channel_layout = avctx->channel_layout;
 #endif
 
-      /* prepare audio output */
-      ret = audio_open(this, channel_layout, nb_channels, sample_rate, &audio_tgt_,
-                       sdl_audio_callback);
-      if (ret < 0) {
+      bool audio_opened =
+          handler_->HandleRequestAudio(this, channel_layout, nb_channels, sample_rate, &audio_tgt_);
+      if (!audio_opened) {
         avcodec_free_context(&avctx);
         av_dict_free(&opts);
         return ret;
@@ -374,7 +372,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
         destroy(&auddec_);
         goto out;
       }
-      SDL_PauseAudio(0);
+      // SDL_PauseAudio(0);
       break;
     }
     case AVMEDIA_TYPE_SUBTITLE: {
@@ -420,7 +418,7 @@ void VideoState::StreamComponentClose(int stream_index) {
       adecoder_tid_ = NULL;
       destroy(&auddec_);
       destroy(&audio_frame_queue_);
-      SDL_CloseAudio();
+      // SDL_CloseAudio();
       swr_free(&swr_ctx_);
       av_freep(&audio_buf1_);
       audio_buf1_size_ = 0;
@@ -519,7 +517,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
     *remaining_time = FFMIN(*remaining_time, last_vis_time_ - time);
   }
 
-  if (video_st) {
+  if (video_st && video_frame_queue_) {
   retry:
     if (video_frame_queue_->IsEmpty()) {
       // nothing to do, no picture to display in the queue
@@ -654,23 +652,19 @@ int VideoState::AllocPicture() {
 
 /* display the current picture, if any */
 void VideoState::VideoDisplay() {
-  if (vstream_->IsOpened()) {
-    VideoImageDisplay();
-  }
-}
-
-void VideoState::VideoImageDisplay() {
-  core::VideoFrame* vp = video_frame_queue_->PeekLast();
-  if (vp->bmp) {
-    if (!vp->uploaded) {
-      if (core::upload_texture(vp->bmp, vp->frame) < 0) {
-        return;
+  if (vstream_->IsOpened() && video_frame_queue_) {
+    core::VideoFrame* vp = video_frame_queue_->PeekLast();
+    if (vp->bmp) {
+      if (!vp->uploaded) {
+        if (core::upload_texture(vp->bmp, vp->frame) < 0) {
+          return;
+        }
+        vp->uploaded = true;
+        vp->flip_v = vp->frame->linesize[0] < 0;
       }
-      vp->uploaded = true;
-      vp->flip_v = vp->frame->linesize[0] < 0;
-    }
 
-    handler_->HanleDisplayFrame(this, vp);
+      handler_->HanleDisplayFrame(this, vp);
+    }
   }
 }
 
@@ -732,6 +726,10 @@ int VideoState::Volume() const {
 
 void VideoState::UpdateVolume(int sign, int step) {
   audio_volume_ = av_clip(audio_volume_ + sign * step, 0, SDL_MIX_MAXVOLUME);
+}
+
+bool VideoState::IsVideoReady() const {
+  return vstream_->IsOpened();
 }
 
 void VideoState::TryRefreshVideo(double* remaining_time) {
@@ -1054,47 +1052,48 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-void VideoState::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
-  VideoState* is = static_cast<VideoState*>(opaque);
+bool VideoState::IsAudioReady() const {
+  return astream_->IsOpened();
+}
 
-  is->audio_callback_time_ = av_gettime_relative();
+void VideoState::UpdateAudioBuffer(uint8_t* stream, int len) {
+  const int64_t audio_callback_time = av_gettime_relative();
 
   while (len > 0) {
-    if (is->audio_buf_index_ >= is->audio_buf_size_) {
-      int audio_size = is->AudioDecodeFrame();
+    if (audio_buf_index_ >= audio_buf_size_) {
+      int audio_size = AudioDecodeFrame();
       if (audio_size < 0) {
         /* if error, just output silence */
-        is->audio_buf_ = NULL;
-        is->audio_buf_size_ =
-            SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt_.frame_size * is->audio_tgt_.frame_size;
+        audio_buf_ = NULL;
+        audio_buf_size_ = SDL_AUDIO_MIN_BUFFER_SIZE / audio_tgt_.frame_size * audio_tgt_.frame_size;
       } else {
-        is->audio_buf_size_ = audio_size;
+        audio_buf_size_ = audio_size;
       }
-      is->audio_buf_index_ = 0;
+      audio_buf_index_ = 0;
     }
-    int len1 = is->audio_buf_size_ - is->audio_buf_index_;
+    int len1 = audio_buf_size_ - audio_buf_index_;
     if (len1 > len) {
       len1 = len;
     }
-    if (!is->muted_ && is->audio_buf_ && is->audio_volume_ == SDL_MIX_MAXVOLUME) {
-      memcpy(stream, is->audio_buf_ + is->audio_buf_index_, len1);
+    if (!muted_ && audio_buf_ && audio_volume_ == SDL_MIX_MAXVOLUME) {
+      memcpy(stream, audio_buf_ + audio_buf_index_, len1);
     } else {
       memset(stream, 0, len1);
-      if (!is->muted_ && is->audio_buf_) {
-        SDL_MixAudio(stream, is->audio_buf_ + is->audio_buf_index_, len1, is->audio_volume_);
+      if (!muted_ && audio_buf_) {
+        SDL_MixAudio(stream, audio_buf_ + audio_buf_index_, len1, audio_volume_);
       }
     }
     len -= len1;
     stream += len1;
-    is->audio_buf_index_ += len1;
+    audio_buf_index_ += len1;
   }
-  is->audio_write_buf_size_ = is->audio_buf_size_ - is->audio_buf_index_;
+  audio_write_buf_size_ = audio_buf_size_ - audio_buf_index_;
   /* Let's assume the audio driver that is used by SDL has two periods. */
-  if (!std::isnan(is->audio_clock_)) {
-    const double pts = is->audio_clock_ -
-                       static_cast<double>(2 * is->audio_hw_buf_size_ + is->audio_write_buf_size_) /
-                           is->audio_tgt_.bytes_per_sec;
-    is->astream_->SetClockAt(pts, is->audio_clock_serial_, is->audio_callback_time_ / 1000000.0);
+  if (!std::isnan(audio_clock_)) {
+    const double pts = audio_clock_ -
+                       static_cast<double>(2 * audio_hw_buf_size_ + audio_write_buf_size_) /
+                           audio_tgt_.bytes_per_sec;
+    astream_->SetClockAt(pts, audio_clock_serial_, audio_callback_time / 1000000.0);
   }
 }
 

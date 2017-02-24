@@ -42,6 +42,12 @@ class Player : public VideoStateHandler {
   ~Player();
 
  protected:
+  virtual bool HandleRequestAudio(VideoState* stream,
+                                  int64_t wanted_channel_layout,
+                                  int wanted_nb_channels,
+                                  int wanted_sample_rate,
+                                  core::AudioParams* audio_hw_params) override;
+
   virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override;
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override;
   virtual bool HandleRequestWindow(VideoState* stream) override;
@@ -53,6 +59,9 @@ class Player : public VideoStateHandler {
   virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
 
  private:
+  /* prepare a new audio buffer */
+  static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
+
   int ReallocTexture(SDL_Texture** texture,
                      Uint32 new_format,
                      int new_width,
@@ -61,6 +70,7 @@ class Player : public VideoStateHandler {
                      bool init_texture);
   Url CurrentUrl() const;
   void SwitchToErrorMode();
+  void CalculateDispalySize();
 
   bool ChangePlayListLocation(const common::uri::Uri& location);
   VideoState* CreateCurrentStream();
@@ -71,6 +81,8 @@ class Player : public VideoStateHandler {
   core::AppOptions* opt_;
   core::ComplexOptions* copt_;
   std::vector<Url> play_list_;
+
+  core::AudioParams* audio_params_;
 
   SDL_Renderer* renderer_;
   SDL_Window* window_;
