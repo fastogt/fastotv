@@ -76,6 +76,7 @@ class Player : public VideoStateHandler {
   VideoState* CreateCurrentStream();
   VideoState* CreateNextStream();
   VideoState* CreatePrevStream();
+  VideoState* CreateStreamInner();
 
   PlayerOptions options_;
   core::AppOptions* opt_;

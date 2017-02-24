@@ -889,10 +889,39 @@ bool Player::ChangePlayListLocation(const common::uri::Uri& location) {
   return false;
 }
 
-VideoState* Player::CreateCurrentStream() {
+VideoState* Player::CreateStreamInner() {
   Url url = play_list_[curent_stream_pos_];
-  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), *opt_, copt_, this);
+  core::ComplexOptions* copy = new core::ComplexOptions;
+  if (copt_->sws_dict) {
+    int res = av_dict_copy(&copy->sws_dict, copt_->sws_dict, 0);
+    if (res < 0) {
+      WARNING_LOG() << "Failed to copy sws_dict!";
+    }
+  }
+  if (copt_->swr_opts) {
+    int res = av_dict_copy(&copy->swr_opts, copt_->swr_opts, 0);
+    if (res < 0) {
+      WARNING_LOG() << "Failed to copy swr_opts!";
+    }
+  }
+  if (copt_->format_opts) {
+    int res = av_dict_copy(&copy->format_opts, copt_->format_opts, 0);
+    if (res < 0) {
+      WARNING_LOG() << "Failed to copy format_opts!";
+    }
+  }
+  if (copt_->codec_opts) {
+    int res = av_dict_copy(&copy->codec_opts, copt_->codec_opts, 0);
+    if (res < 0) {
+      WARNING_LOG() << "Failed to copy codec_opts!";
+    }
+  }
+  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), *opt_, copy, this);
+  return stream;
+}
 
+VideoState* Player::CreateCurrentStream() {
+  VideoState* stream = CreateStreamInner();
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
     delete stream;
@@ -913,8 +942,7 @@ VideoState* Player::CreateNextStream() {
   } else {
     curent_stream_pos_++;
   }
-  Url url = play_list_[curent_stream_pos_];
-  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), *opt_, copt_, this);
+  VideoState* stream = CreateStreamInner();
 
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
@@ -936,8 +964,7 @@ VideoState* Player::CreatePrevStream() {
   } else {
     --curent_stream_pos_;
   }
-  Url url = play_list_[curent_stream_pos_];
-  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), *opt_, copt_, this);
+  VideoState* stream = CreateStreamInner();
 
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {

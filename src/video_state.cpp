@@ -729,7 +729,7 @@ void VideoState::UpdateVolume(int sign, int step) {
 }
 
 bool VideoState::IsVideoReady() const {
-  return vstream_->IsOpened();
+  return vstream_ && vstream_->IsOpened();
 }
 
 void VideoState::TryRefreshVideo(double* remaining_time) {
@@ -1053,7 +1053,7 @@ int VideoState::AudioDecodeFrame() {
 }
 
 bool VideoState::IsAudioReady() const {
-  return astream_->IsOpened();
+  return astream_ && astream_->IsOpened();
 }
 
 void VideoState::UpdateAudioBuffer(uint8_t* stream, int len) {
