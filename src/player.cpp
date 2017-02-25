@@ -19,7 +19,7 @@ extern "C" {
 #include "core/video_frame.h"
 
 /* Step size for volume control */
-#define SDL_VOLUME_STEP (SDL_MIX_MAXVOLUME / 50)
+#define SDL_VOLUME_STEP 1
 #define CURSOR_HIDE_DELAY 1000000
 
 #define USER_FIELD "user"
@@ -385,7 +385,9 @@ PlayerOptions::PlayerOptions()
       screen_width(0),
       screen_height(0) {}
 
-Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::ComplexOptions* copt)
+Player::Player(const PlayerOptions& options,
+               const core::AppOptions& opt,
+               const core::ComplexOptions& copt)
     : options_(options),
       opt_(opt),
       copt_(copt),
@@ -405,15 +407,15 @@ Player::Player(const PlayerOptions& options, core::AppOptions* opt, core::Comple
       ytop_(0) {
   ChangePlayListLocation(options.play_list_location);
   // stable options
-  if (opt->startup_volume < 0) {
-    WARNING_LOG() << "-volume=" << opt->startup_volume << " < 0, setting to 0";
+  if (opt_.startup_volume < 0) {
+    WARNING_LOG() << "-volume=" << opt_.startup_volume << " < 0, setting to 0";
   }
-  if (opt->startup_volume > 100) {
-    WARNING_LOG() << "-volume=" << opt->startup_volume << " > 100, setting to 100";
+  if (opt_.startup_volume > 100) {
+    WARNING_LOG() << "-volume=" << opt_.startup_volume << " > 100, setting to 100";
   }
-  opt->startup_volume = av_clip(opt->startup_volume, 0, 100);
-  opt->startup_volume =
-      av_clip(SDL_MIX_MAXVOLUME * opt->startup_volume / 100, 0, SDL_MIX_MAXVOLUME);
+  opt_.startup_volume = av_clip(opt_.startup_volume, 0, 100);
+  opt_.startup_volume =
+      av_clip(SDL_MIX_MAXVOLUME * opt_.startup_volume / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
 int Player::Exec() {
@@ -442,7 +444,7 @@ int Player::Exec() {
           stream_->TryRefreshVideo(&remaining_time);
         } else {
           SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface);
-          if (img && !opt_->video_disable) {
+          if (img && !opt_.video_disable) {
             SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
             SDL_RenderClear(renderer_);
             SDL_RenderCopy(renderer_, img, NULL, NULL);
@@ -680,14 +682,14 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
     case SDLK_0:
       if (stream_) {
         stream_->UpdateVolume(1, SDL_VOLUME_STEP);
-        opt_->startup_volume = stream_->Volume();
+        opt_.startup_volume = stream_->Volume();
       }
       break;
     case SDLK_KP_DIVIDE:
     case SDLK_9:
       if (stream_) {
         stream_->UpdateVolume(-1, SDL_VOLUME_STEP);
-        opt_->startup_volume = stream_->Volume();
+        opt_.startup_volume = stream_->Volume();
       }
       break;
     case SDLK_s:  // S: Step to next frame
@@ -891,32 +893,7 @@ bool Player::ChangePlayListLocation(const common::uri::Uri& location) {
 
 VideoState* Player::CreateStreamInner() {
   Url url = play_list_[curent_stream_pos_];
-  core::ComplexOptions* copy = new core::ComplexOptions;
-  if (copt_->sws_dict) {
-    int res = av_dict_copy(&copy->sws_dict, copt_->sws_dict, 0);
-    if (res < 0) {
-      WARNING_LOG() << "Failed to copy sws_dict!";
-    }
-  }
-  if (copt_->swr_opts) {
-    int res = av_dict_copy(&copy->swr_opts, copt_->swr_opts, 0);
-    if (res < 0) {
-      WARNING_LOG() << "Failed to copy swr_opts!";
-    }
-  }
-  if (copt_->format_opts) {
-    int res = av_dict_copy(&copy->format_opts, copt_->format_opts, 0);
-    if (res < 0) {
-      WARNING_LOG() << "Failed to copy format_opts!";
-    }
-  }
-  if (copt_->codec_opts) {
-    int res = av_dict_copy(&copy->codec_opts, copt_->codec_opts, 0);
-    if (res < 0) {
-      WARNING_LOG() << "Failed to copy codec_opts!";
-    }
-  }
-  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), *opt_, copy, this);
+  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), opt_, copt_, this);
   return stream;
 }
 

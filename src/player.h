@@ -10,12 +10,7 @@
 #include <common/smart_ptr.h>
 #include <common/url.h>
 
-namespace core {
-struct AppOptions;
-}
-namespace core {
-struct ComplexOptions;
-}
+#include "core/app_options.h"
 
 class VideoState;
 
@@ -35,7 +30,9 @@ struct PlayerOptions {
 
 class Player : public VideoStateHandler {
  public:
-  Player(const PlayerOptions& options, core::AppOptions* opt, core::ComplexOptions* copt);
+  Player(const PlayerOptions& options,
+         const core::AppOptions& opt,
+         const core::ComplexOptions& copt);
   int Exec() WARN_UNUSED_RESULT;
   void Stop();
   void SetFullScreen(bool full_screen);
@@ -79,8 +76,8 @@ class Player : public VideoStateHandler {
   VideoState* CreateStreamInner();
 
   PlayerOptions options_;
-  core::AppOptions* opt_;
-  core::ComplexOptions* copt_;
+  core::AppOptions opt_;
+  const core::ComplexOptions copt_;
   std::vector<Url> play_list_;
 
   core::AudioParams* audio_params_;

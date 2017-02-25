@@ -20,6 +20,7 @@ extern "C" {
 
 #include "core/audio_params.h"  // for AudioParams
 #include "core/types.h"
+#include "core/app_options.h"
 
 namespace common {
 namespace threads {
@@ -38,12 +39,6 @@ class VideoDecoder;
 }
 namespace core {
 class VideoStream;
-}
-namespace core {
-struct AppOptions;
-}
-namespace core {
-struct ComplexOptions;
 }
 namespace core {
 struct VideoFrame;
@@ -85,7 +80,7 @@ class VideoState {
   VideoState(core::stream_id id,
              const common::uri::Uri& uri,
              const core::AppOptions& opt,
-             core::ComplexOptions* copt,
+             const core::ComplexOptions& copt,
              VideoStateHandler* handler);
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
@@ -166,8 +161,8 @@ class VideoState {
   const core::stream_id id_;
   const common::uri::Uri uri_;
 
-  common::scoped_ptr<core::AppOptions> const opt_;
-  core::ComplexOptions* const copt_;
+  core::AppOptions opt_;
+  core::ComplexOptions copt_;
 
   common::shared_ptr<common::threads::Thread<int>> read_tid_;
   bool force_refresh_;

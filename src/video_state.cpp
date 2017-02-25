@@ -90,11 +90,11 @@ int decode_interrupt_callback(void* user_data) {
 VideoState::VideoState(core::stream_id id,
                        const common::uri::Uri& uri,
                        const core::AppOptions& opt,
-                       core::ComplexOptions* copt,
+                       const core::ComplexOptions& copt,
                        VideoStateHandler* handler)
     : id_(id),
       uri_(uri),
-      opt_(new core::AppOptions(opt)),
+      opt_(opt),
       copt_(copt),
       read_tid_(THREAD_MANAGER()->createThread(&VideoState::ReadThread, this)),
       force_refresh_(false),
@@ -158,8 +158,7 @@ VideoState::VideoState(core::stream_id id,
       stats_(),
       handler_(handler) {
   CHECK(handler_);
-  CHECK(opt_);
-  audio_volume_ = opt_->startup_volume;
+  audio_volume_ = opt_.startup_volume;
   CHECK(id_ != core::invalid_stream_id);
 }
 
@@ -205,12 +204,12 @@ int VideoState::StreamComponentOpen(int stream_index) {
   switch (avctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO: {
       last_video_stream_ = stream_index;
-      forced_codec_name = common::utils::c_strornull(opt_->video_codec_name);
+      forced_codec_name = common::utils::c_strornull(opt_.video_codec_name);
       break;
     }
     case AVMEDIA_TYPE_AUDIO: {
       last_audio_stream_ = stream_index;
-      forced_codec_name = common::utils::c_strornull(opt_->audio_codec_name);
+      forced_codec_name = common::utils::c_strornull(opt_.audio_codec_name);
       break;
     }
     case AVMEDIA_TYPE_SUBTITLE: {
@@ -245,7 +244,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     return ret;
   }
 
-  int stream_lowres = opt_->lowres;
+  int stream_lowres = opt_.lowres;
   avctx->codec_id = codec->id;
   if (stream_lowres > av_codec_get_max_lowres(codec)) {
     WARNING_LOG() << "The maximum value for lowres supported by the decoder is "
@@ -259,7 +258,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     avctx->flags |= CODEC_FLAG_EMU_EDGE;
   }
 #endif
-  if (opt_->fast) {
+  if (opt_.fast) {
     avctx->flags2 |= AV_CODEC_FLAG2_FAST;
   }
 #if FF_API_EMU_EDGE
@@ -269,7 +268,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
 #endif
 
   AVDictionary* opts =
-      core::filter_codec_opts(copt_->codec_opts, avctx->codec_id, ic_, stream, codec);
+      core::filter_codec_opts(copt_.codec_opts, avctx->codec_id, ic_, stream, codec);
   if (!av_dict_get(opts, "threads", NULL, 0)) {
     av_dict_set(&opts, "threads", "auto", 0);
   }
@@ -304,7 +303,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
       UNUSED(opened);
       core::PacketQueue* packet_queue = vstream_->Queue();
       video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
-      viddec_ = new core::VideoDecoder(avctx, packet_queue, opt_->decoder_reorder_pts);
+      viddec_ = new core::VideoDecoder(avctx, packet_queue, opt_.decoder_reorder_pts);
       viddec_->Start();
       if (!vdecoder_tid_->start()) {
         destroy(&viddec_);
@@ -321,7 +320,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
         audio_filter_src_.channel_layout =
             core::get_valid_channel_layout(avctx->channel_layout, avctx->channels);
         audio_filter_src_.fmt = avctx->sample_fmt;
-        ret = ConfigureAudioFilters(opt_->afilters, 0);
+        ret = ConfigureAudioFilters(opt_.afilters, 0);
         if (ret < 0) {
           avcodec_free_context(&avctx);
           av_dict_free(&opts);
@@ -463,7 +462,7 @@ void VideoState::StepToNextFrame() {
 }
 
 int VideoState::GetMasterSyncType() const {
-  return opt_->av_sync_type;
+  return opt_.av_sync_type;
 }
 
 double VideoState::ComputeTargetDelay(double delay) const {
@@ -508,7 +507,7 @@ void VideoState::VideoRefresh(double* remaining_time) {
   core::PacketQueue* video_packet_queue = vstream_->Queue();
   core::PacketQueue* audio_packet_queue = astream_->Queue();
 
-  if (!opt_->display_disable && audio_st) {
+  if (!opt_.display_disable && audio_st) {
     double time = av_gettime_relative() / 1000000.0;
     if (force_refresh_ || last_vis_time_ < time) {
       VideoDisplay();
@@ -565,8 +564,8 @@ void VideoState::VideoRefresh(double* remaining_time) {
       core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
       if (nextvp) {
         double duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
-        if (!step_ && (opt_->framedrop > 0 ||
-                       (opt_->framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) &&
+        if (!step_ && (opt_.framedrop > 0 ||
+                       (opt_.framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) &&
             time > frame_timer_ + duration) {
           stats_.frame_drops_late++;
           video_frame_queue_->MoveToNext();
@@ -583,12 +582,12 @@ void VideoState::VideoRefresh(double* remaining_time) {
     }
   display:
     /* display picture */
-    if (!opt_->display_disable && force_refresh_ && video_frame_queue_->RindexShown()) {
+    if (!opt_.display_disable && force_refresh_ && video_frame_queue_->RindexShown()) {
       VideoDisplay();
     }
   }
   force_refresh_ = false;
-  if (opt_->show_status) {
+  if (opt_.show_status) {
     static int64_t last_time;
     int64_t cur_time = av_gettime_relative();
     if (!last_time || (cur_time - last_time) >= 30000) {
@@ -835,7 +834,7 @@ the_end:
 }
 
 void VideoState::StreemSeek(double incr) {
-  if (opt_->seek_by_bytes) {
+  if (opt_.seek_by_bytes) {
     int pos = -1;
     if (pos < 0 && vstream_->IsOpened()) {
       int64_t lpos = 0;
@@ -1167,8 +1166,8 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
 
     frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(ic_, vstream_->AvStream(), frame);
 
-    if (opt_->framedrop > 0 ||
-        (opt_->framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) {
+    if (opt_.framedrop > 0 ||
+        (opt_.framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) {
       if (frame->pts != AV_NOPTS_VALUE) {
         double diff = dpts - GetMasterClock();
         core::PacketQueue* video_packet_queue = vstream_->Queue();
@@ -1202,11 +1201,11 @@ int VideoState::ReadThread() {
   }
   ic->interrupt_callback.callback = decode_interrupt_callback;
   ic->interrupt_callback.opaque = this;
-  if (!av_dict_get(copt_->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
-    av_dict_set(&copt_->format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
+  if (!av_dict_get(copt_.format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
+    av_dict_set(&copt_.format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
     scan_all_pmts_set = true;
   }
-  int err = avformat_open_input(&ic, in_filename, NULL, &copt_->format_opts);  // autodetect format
+  int err = avformat_open_input(&ic, in_filename, NULL, &copt_.format_opts);  // autodetect format
   if (err < 0) {
     char errbuf[128];
     const char* errbuf_ptr = errbuf;
@@ -1224,7 +1223,7 @@ int VideoState::ReadThread() {
     return -1;
   }
   if (scan_all_pmts_set) {
-    av_dict_set(&copt_->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
+    av_dict_set(&copt_.format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
   }
 
   /*AVDictionaryEntry* t = av_dict_get(copt_->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX);
@@ -1247,13 +1246,13 @@ int VideoState::ReadThread() {
   int st_index[AVMEDIA_TYPE_NB];
   memset(st_index, -1, sizeof(st_index));
 
-  if (opt_->genpts) {
+  if (opt_.genpts) {
     ic->flags |= AVFMT_FLAG_GENPTS;
   }
 
   av_format_inject_global_side_data(ic);
 
-  AVDictionary** opts = core::setup_find_stream_info_opts(ic, copt_->codec_opts);
+  AVDictionary** opts = core::setup_find_stream_info_opts(ic, copt_.codec_opts);
   unsigned int orig_nb_streams = ic->nb_streams;
 
   err = avformat_find_stream_info(ic, opts);
@@ -1277,14 +1276,14 @@ int VideoState::ReadThread() {
   }
 
   max_frame_duration_ = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
-  if (opt_->seek_by_bytes < 0) {
-    opt_->seek_by_bytes =
+  if (opt_.seek_by_bytes < 0) {
+    opt_.seek_by_bytes =
         !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
   }
 
   /* if seeking requested, we execute it */
-  if (opt_->start_time != AV_NOPTS_VALUE) {
-    int64_t timestamp = opt_->start_time;
+  if (opt_.start_time != AV_NOPTS_VALUE) {
+    int64_t timestamp = opt_.start_time;
     /* add the stream start time */
     if (ic->start_time != AV_NOPTS_VALUE) {
       timestamp += ic->start_time;
@@ -1298,7 +1297,7 @@ int VideoState::ReadThread() {
 
   realtime_ = core::is_realtime(ic);
 
-  if (opt_->show_status) {
+  if (opt_.show_status) {
     av_dump_format(ic, 0, in_filename, 0);
   }
 
@@ -1306,7 +1305,7 @@ int VideoState::ReadThread() {
     AVStream* st = ic->streams[i];
     enum AVMediaType type = st->codecpar->codec_type;
     st->discard = AVDISCARD_ALL;
-    const char* want_spec = common::utils::c_strornull(opt_->wanted_stream_spec[type]);
+    const char* want_spec = common::utils::c_strornull(opt_.wanted_stream_spec[type]);
     if (type >= 0 && want_spec && st_index[type] == -1) {
       if (avformat_match_stream_specifier(ic, st, want_spec) > 0) {
         st_index[type] = i;
@@ -1314,7 +1313,7 @@ int VideoState::ReadThread() {
     }
   }
   for (int i = 0; i < static_cast<int>(AVMEDIA_TYPE_NB); i++) {
-    const char* want_spec = common::utils::c_strornull(opt_->wanted_stream_spec[i]);
+    const char* want_spec = common::utils::c_strornull(opt_.wanted_stream_spec[i]);
     if (want_spec && st_index[i] == -1) {
       ERROR_LOG() << "Stream specifier " << want_spec << " does not match any "
                   << av_get_media_type_string(static_cast<AVMediaType>(i)) << " stream";
@@ -1322,11 +1321,11 @@ int VideoState::ReadThread() {
     }
   }
 
-  if (!opt_->video_disable) {
+  if (!opt_.video_disable) {
     st_index[AVMEDIA_TYPE_VIDEO] =
         av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
   }
-  if (!opt_->audio_disable) {
+  if (!opt_.audio_disable) {
     st_index[AVMEDIA_TYPE_AUDIO] =
         av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO],
                             st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
@@ -1357,8 +1356,8 @@ int VideoState::ReadThread() {
     goto fail;
   }
 
-  if (opt_->infinite_buffer < 0 && realtime_) {
-    opt_->infinite_buffer = 1;
+  if (opt_.infinite_buffer < 0 && realtime_) {
+    opt_.infinite_buffer = 1;
   }
 
   while (!IsAborted()) {
@@ -1421,7 +1420,7 @@ int VideoState::ReadThread() {
     }
 
     /* if the queue are full, no need to read more */
-    if (opt_->infinite_buffer < 1 &&
+    if (opt_.infinite_buffer < 1 &&
         (video_packet_queue->Size() + audio_packet_queue->Size() > MAX_QUEUE_SIZE ||
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
       continue;
@@ -1430,9 +1429,9 @@ int VideoState::ReadThread() {
                                    audio_frame_queue_->IsEmpty())) &&
         (!video_st ||
          (viddec_->Finished() == video_packet_queue->Serial() && video_frame_queue_->IsEmpty()))) {
-      if (opt_->loop != 1 && (!opt_->loop || --opt_->loop)) {
-        StreamSeek(opt_->start_time != AV_NOPTS_VALUE ? opt_->start_time : 0, 0, 0);
-      } else if (opt_->autoexit) {
+      if (opt_.loop != 1 && (!opt_.loop || --opt_.loop)) {
+        StreamSeek(opt_.start_time != AV_NOPTS_VALUE ? opt_.start_time : 0, 0, 0);
+      } else if (opt_.autoexit) {
         ret = AVERROR_EOF;
         goto fail;
       }
@@ -1459,12 +1458,12 @@ int VideoState::ReadThread() {
     int64_t stream_start_time = ic->streams[pkt->stream_index]->start_time;
     int64_t pkt_ts = pkt->pts == AV_NOPTS_VALUE ? pkt->dts : pkt->pts;
     bool pkt_in_play_range =
-        opt_->duration == AV_NOPTS_VALUE ||
+        opt_.duration == AV_NOPTS_VALUE ||
         (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
                     av_q2d(ic->streams[pkt->stream_index]->time_base) -
-                static_cast<double>(opt_->start_time != AV_NOPTS_VALUE ? opt_->start_time : 0) /
+                static_cast<double>(opt_.start_time != AV_NOPTS_VALUE ? opt_.start_time : 0) /
                     1000000 <=
-            (static_cast<double>(opt_->duration) / 1000000);
+            (static_cast<double>(opt_.duration) / 1000000);
     if (pkt->stream_index == audio_stream->Index() && pkt_in_play_range) {
       audio_packet_queue->Put(pkt);
     } else if (pkt->stream_index == video_stream->Index() && pkt_in_play_range &&
@@ -1539,7 +1538,7 @@ int VideoState::AudioThread() {
         audio_filter_src_.freq = frame->sample_rate;
         last_serial = auddec_->GetPktSerial();
 
-        if ((ret = ConfigureAudioFilters(opt_->afilters, 1)) < 0) {
+        if ((ret = ConfigureAudioFilters(opt_.afilters, 1)) < 0) {
           break;
         }
       }
@@ -1642,8 +1641,8 @@ int VideoState::VideoThread() {
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
       std::string vfilters;
-      if (!opt_->vfilters_list.empty()) {
-        vfilters = opt_->vfilters_list[vfilter_idx_];
+      if (!opt_.vfilters_list.empty()) {
+        vfilters = opt_.vfilters_list[vfilter_idx_];
       }
       if ((ret = ConfigureVideoFilters(graph, vfilters, frame)) < 0) {
         ERROR_LOG() << "Internal video error!";
@@ -1710,7 +1709,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph,
                                       AVFrame* frame) {
   static const enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_YUV420P, AV_PIX_FMT_BGRA,
                                                 AV_PIX_FMT_NONE};
-  AVDictionary* sws_dict = copt_->sws_dict;
+  AVDictionary* sws_dict = copt_.sws_dict;
   AVDictionaryEntry* e = NULL;
   char sws_flags_str[512] = {0};
   while ((e = av_dict_get(sws_dict, "", e, AV_DICT_IGNORE_SUFFIX))) {
@@ -1781,7 +1780,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph,
     last_filter = filt_ctx;                                                                        \
   } while (0)
 
-  if (opt_->autorotate) {
+  if (opt_.autorotate) {
     double theta = core::get_rotation(video_st);
 
     if (fabs(theta - 90) < 1.0) {
@@ -1817,7 +1816,7 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
 
   AVDictionaryEntry* e = NULL;
   char aresample_swr_opts[512] = "";
-  AVDictionary* swr_opts = copt_->swr_opts;
+  AVDictionary* swr_opts = copt_.swr_opts;
   while ((e = av_dict_get(swr_opts, "", e, AV_DICT_IGNORE_SUFFIX))) {
     av_strlcatf(aresample_swr_opts, sizeof(aresample_swr_opts), "%s=%s:", e->key, e->value);
   }

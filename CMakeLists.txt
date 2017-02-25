@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3.0) # deb package fix in 3.3.0
 ###################### Branding ##########################
 
-SET(BRANDING_PROJECT_NAME "fastotv" CACHE STRING "Branding for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_NAME "FastoTV" CACHE STRING "Branding for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_VERSION "0.1.0.3" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "rc" CACHE STRING "Build version type for ${BRANDING_PROJECT_NAME}") #default
   #possible variables: alfa, beta, rc, release

@@ -69,7 +69,8 @@ static int opt_width(const char* opt, const char* arg, DictionaryOptions* dopt) 
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(), &g_player_options.screen_width)) {
+  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(),
+                    &g_player_options.screen_width)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -79,7 +80,8 @@ int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(), &g_player_options.screen_height)) {
+  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(),
+                    &g_player_options.screen_height)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -499,12 +501,8 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
-  core::ComplexOptions copt;
-  copt.swr_opts = dict->swr_opts;
-  copt.sws_dict = dict->sws_dict;
-  copt.format_opts = dict->format_opts;
-  copt.codec_opts = dict->codec_opts;
-  Player* player = new Player(g_player_options, &g_options, &copt);
+  core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+  Player* player = new Player(g_player_options, g_options, copt);
   int res = player->Exec();
   destroy(&player);
   do_exit(&dict);
