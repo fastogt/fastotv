@@ -23,6 +23,11 @@ class VideoStateHandler {
                                   int wanted_nb_channels,
                                   int wanted_sample_rate,
                                   core::AudioParams* audio_hw_params) = 0;
+  virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
+                             const uint8_t* src,
+                             uint32_t len,
+                             int volume) = 0;
+
   virtual bool HandleRequestWindow(VideoState* stream) = 0;
   virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) = 0;
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) = 0;

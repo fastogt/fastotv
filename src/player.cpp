@@ -19,7 +19,7 @@ extern "C" {
 #include "core/video_frame.h"
 
 /* Step size for volume control */
-#define SDL_VOLUME_STEP 1
+#define VOLUME_STEP 1
 #define CURSOR_HIDE_DELAY 1000000
 
 #define USER_FIELD "user"
@@ -28,6 +28,12 @@ extern "C" {
 #define IMG_PATH "offline.png"
 
 namespace {
+
+int ConvertToSDLVolume(int val) {
+  val = av_clip(val, 0, 100);
+  return av_clip(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
+}
+
 SDL_Texture* CreateTexture(SDL_Renderer* renderer,
                            Uint32 new_format,
                            int new_width,
@@ -383,7 +389,8 @@ PlayerOptions::PlayerOptions()
       default_width(width),
       default_height(height),
       screen_width(0),
-      screen_height(0) {}
+      screen_height(0),
+      audio_volume(volume) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -407,15 +414,13 @@ Player::Player(const PlayerOptions& options,
       ytop_(0) {
   ChangePlayListLocation(options.play_list_location);
   // stable options
-  if (opt_.startup_volume < 0) {
-    WARNING_LOG() << "-volume=" << opt_.startup_volume << " < 0, setting to 0";
+  if (options_.audio_volume < 0) {
+    WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
   }
-  if (opt_.startup_volume > 100) {
-    WARNING_LOG() << "-volume=" << opt_.startup_volume << " > 100, setting to 100";
+  if (options_.audio_volume > 100) {
+    WARNING_LOG() << "-volume=" << options_.audio_volume << " > 100, setting to 100";
   }
-  opt_.startup_volume = av_clip(opt_.startup_volume, 0, 100);
-  opt_.startup_volume =
-      av_clip(SDL_MIX_MAXVOLUME * opt_.startup_volume / 100, 0, SDL_MIX_MAXVOLUME);
+  options_.audio_volume = av_clip(options_.audio_volume, 0, 100);
 }
 
 int Player::Exec() {
@@ -573,6 +578,10 @@ bool Player::HandleRequestAudio(VideoState* stream,
   return true;
 }
 
+void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) {
+  SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
+}
+
 bool Player::HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) {
   UNUSED(stream);
 
@@ -680,17 +689,11 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
       break;
     case SDLK_KP_MULTIPLY:
     case SDLK_0:
-      if (stream_) {
-        stream_->UpdateVolume(1, SDL_VOLUME_STEP);
-        opt_.startup_volume = stream_->Volume();
-      }
+      UpdateVolume(VOLUME_STEP);
       break;
     case SDLK_KP_DIVIDE:
     case SDLK_9:
-      if (stream_) {
-        stream_->UpdateVolume(-1, SDL_VOLUME_STEP);
-        opt_.startup_volume = stream_->Volume();
-      }
+      UpdateVolume(-VOLUME_STEP);
       break;
     case SDLK_s:  // S: Step to next frame
       if (stream_) {
@@ -829,11 +832,15 @@ Url Player::CurrentUrl() const {
 void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
   Player* player = static_cast<Player*>(opaque);
   if (player->stream_ && player->stream_->IsAudioReady()) {
-    VideoState* st = player->stream_;  // static_cast<VideoState*>(opaque);
-    st->UpdateAudioBuffer(stream, len);
+    VideoState* st = player->stream_;
+    st->UpdateAudioBuffer(stream, len, player->options_.audio_volume);
   } else {
     memset(stream, 0, len);
   }
+}
+
+void Player::UpdateVolume(int step) {
+  options_.audio_volume = av_clip(options_.audio_volume + step, 0, 100);
 }
 
 int Player::ReallocTexture(SDL_Texture** texture,

@@ -14,7 +14,6 @@ AppOptions::AppOptions()
       framedrop(-1),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
-      startup_volume(volume),
       display_disable(false),
       loop(loop_count),
       autoexit(false),

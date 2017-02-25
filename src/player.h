@@ -15,7 +15,7 @@
 class VideoState;
 
 struct PlayerOptions {
-  enum { width = 640, height = 480 };
+  enum { width = 640, height = 480, volume = 100 };
   PlayerOptions();
 
   common::uri::Uri play_list_location;
@@ -26,6 +26,8 @@ struct PlayerOptions {
   int default_height;
   int screen_width;
   int screen_height;
+
+  int audio_volume;  // Range: 0 - 100
 };
 
 class Player : public VideoStateHandler {
@@ -44,6 +46,10 @@ class Player : public VideoStateHandler {
                                   int wanted_nb_channels,
                                   int wanted_sample_rate,
                                   core::AudioParams* audio_hw_params) override;
+  virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
+                             const uint8_t* src,
+                             uint32_t len,
+                             int volume);
 
   virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override;
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override;
@@ -59,6 +65,7 @@ class Player : public VideoStateHandler {
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
 
+  void UpdateVolume(int step);
   int ReallocTexture(SDL_Texture** texture,
                      Uint32 new_format,
                      int new_width,

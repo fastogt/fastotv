@@ -263,7 +263,7 @@ const OptionDef options[] = {
     {"nodisp", OPT_BOOL, {&g_options.display_disable}, "disable graphical display"},
     {"volume",
      OPT_INT | HAS_ARG,
-     {&g_options.startup_volume},
+     {&g_player_options.audio_volume},
      "set startup volume 0=min 100=max",
      "volume"},
     {"pix_fmt",

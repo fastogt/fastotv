@@ -20,7 +20,7 @@ namespace core {
 // 640x480
 // 1280x720
 struct AppOptions {
-  enum { volume = 100, loop_count = 1 };
+  enum { loop_count = 1 };
   AppOptions();
 
   bool autorotate;
@@ -35,7 +35,6 @@ struct AppOptions {
   int framedrop;
   bool genpts;
   AvSyncType av_sync_type;
-  int startup_volume;
   bool display_disable;
   int loop;
   bool autoexit;

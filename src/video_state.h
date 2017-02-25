@@ -97,9 +97,6 @@ class VideoState {
   bool IsVideoReady() const;
   void TryRefreshVideo(double* remaining_time);
 
-  int Volume() const;
-  void UpdateVolume(int sign, int step);
-
   void StepToNextFrame();
   void StreamCycleChannel(AVMediaType codec_type);
   void StreemSeek(double incr);
@@ -110,7 +107,7 @@ class VideoState {
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
   bool IsAudioReady() const;
-  void UpdateAudioBuffer(uint8_t* stream, int len);
+  void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoState);
@@ -197,7 +194,6 @@ class VideoState {
   unsigned int audio_buf1_size_;
   int audio_buf_index_; /* in bytes */
   int audio_write_buf_size_;
-  int audio_volume_;
   struct core::AudioParams audio_src_;
 #if CONFIG_AVFILTER
   struct core::AudioParams audio_filter_src_;

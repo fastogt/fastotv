@@ -125,7 +125,6 @@ VideoState::VideoState(core::stream_id id,
       audio_buf1_size_(0),
       audio_buf_index_(0),
       audio_write_buf_size_(0),
-      audio_volume_(0),
       audio_src_(),
 #if CONFIG_AVFILTER
       audio_filter_src_(),
@@ -158,7 +157,6 @@ VideoState::VideoState(core::stream_id id,
       stats_(),
       handler_(handler) {
   CHECK(handler_);
-  audio_volume_ = opt_.startup_volume;
   CHECK(id_ != core::invalid_stream_id);
 }
 
@@ -719,14 +717,6 @@ void VideoState::ToggleMute() {
   muted_ = !muted_;
 }
 
-int VideoState::Volume() const {
-  return audio_volume_;
-}
-
-void VideoState::UpdateVolume(int sign, int step) {
-  audio_volume_ = av_clip(audio_volume_ + sign * step, 0, SDL_MIX_MAXVOLUME);
-}
-
 bool VideoState::IsVideoReady() const {
   return vstream_ && vstream_->IsOpened();
 }
@@ -1055,7 +1045,7 @@ bool VideoState::IsAudioReady() const {
   return astream_ && astream_->IsOpened();
 }
 
-void VideoState::UpdateAudioBuffer(uint8_t* stream, int len) {
+void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
   const int64_t audio_callback_time = av_gettime_relative();
 
   while (len > 0) {
@@ -1074,12 +1064,12 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len) {
     if (len1 > len) {
       len1 = len;
     }
-    if (!muted_ && audio_buf_ && audio_volume_ == SDL_MIX_MAXVOLUME) {
+    if (!muted_ && audio_buf_ && audio_volume == 100) {
       memcpy(stream, audio_buf_ + audio_buf_index_, len1);
     } else {
       memset(stream, 0, len1);
       if (!muted_ && audio_buf_) {
-        SDL_MixAudio(stream, audio_buf_ + audio_buf_index_, len1, audio_volume_);
+        handler_->HanleAudioMix(stream, audio_buf_ + audio_buf_index_, len1, audio_volume);
       }
     }
     len -= len1;
