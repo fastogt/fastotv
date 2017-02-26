@@ -103,16 +103,11 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
     return NULL;
   }
 
-/* Set error handling if you are using setjmp/longjmp method (this is
- * the normal method of doing things with libpng).  REQUIRED unless you
- * set up your own error handlers in png_create_read_struct() earlier.
- */
-#ifndef LIBPNG_VERSION_12
-  if (setjmp(*png_set_longjmp_fn(png_ptr, longjmp, sizeof(jmp_buf))))
-#else
-  if (setjmp(png_ptr->jmpbuf))
-#endif
-  {
+  /* Set error handling if you are using setjmp/longjmp method (this is
+   * the normal method of doing things with libpng).  REQUIRED unless you
+   * set up your own error handlers in png_create_read_struct() earlier.
+   */
+  if (setjmp(png_ptr->jmpbuf)) {
     WARNING_LOG() << "Error reading the PNG file.";
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     fclose(fp);
