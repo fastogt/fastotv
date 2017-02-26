@@ -27,6 +27,11 @@ extern "C" {
 
 #define IMG_PATH "offline.png"
 
+#define FF_ALLOC_EVENT (SDL_USEREVENT)
+#define FF_QUIT_EVENT (SDL_USEREVENT + 2)
+#define FF_NEXT_STREAM (SDL_USEREVENT + 3)
+#define FF_PREV_STREAM (SDL_USEREVENT + 4)
+
 namespace {
 
 int ConvertToSDLVolume(int val) {
@@ -552,6 +557,28 @@ Player::~Player() {
   }
 }
 
+void Player::PostEvent(IBaseEvent* event) {
+  if (!event) {
+    return;
+  }
+
+  if (event->eventType() == ALLOC_FRAME_EVENT) {
+    AllocFrameEvent* avent = static_cast<AllocFrameEvent*>(event);
+    SDL_Event event;
+    event.type = FF_ALLOC_EVENT;
+    event.user.data1 = avent->Stream();
+    SDL_PushEvent(&event);
+  } else if (event->eventType() == QUIT_STREAM_EVENT) {
+    QuitStreamEvent* qevent = static_cast<QuitStreamEvent*>(event);
+    SDL_Event event;
+    event.type = FF_QUIT_EVENT;
+    event.user.data1 = qevent->Stream();
+    event.user.code = qevent->Code();
+    SDL_PushEvent(&event);
+  }
+  delete event;
+}
+
 bool Player::HandleRequestAudio(VideoState* stream,
                                 int64_t wanted_channel_layout,
                                 int wanted_nb_channels,
@@ -578,7 +605,10 @@ bool Player::HandleRequestAudio(VideoState* stream,
   return true;
 }
 
-void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) {
+void Player::HanleAudioMix(uint8_t* audio_stream_ptr,
+                           const uint8_t* src,
+                           uint32_t len,
+                           int volume) {
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 

@@ -23,7 +23,7 @@ extern "C" {
 }
 
 /* Minimum SDL audio buffer size, in samples. */
-#define SDL_AUDIO_MIN_BUFFER_SIZE 512
+#define AUDIO_MIN_BUFFER_SIZE 512
 
 struct SwsContext;
 

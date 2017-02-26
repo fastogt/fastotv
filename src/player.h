@@ -41,6 +41,8 @@ class Player : public VideoStateHandler {
   ~Player();
 
  protected:
+  virtual void PostEvent(IBaseEvent* event) override;
+
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,
                                   int wanted_nb_channels,
@@ -49,7 +51,7 @@ class Player : public VideoStateHandler {
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
                              const uint8_t* src,
                              uint32_t len,
-                             int volume);
+                             int volume) override;
 
   virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override;
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override;
@@ -83,7 +85,7 @@ class Player : public VideoStateHandler {
   VideoState* CreateStreamInner();
 
   PlayerOptions options_;
-  core::AppOptions opt_;
+  const core::AppOptions opt_;
   const core::ComplexOptions copt_;
   std::vector<Url> play_list_;
 

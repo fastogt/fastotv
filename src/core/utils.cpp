@@ -308,7 +308,7 @@ int audio_open(void* opaque,
   }
   wanted_spec.format = AUDIO_S16SYS;
   wanted_spec.silence = 0;
-  wanted_spec.samples = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE,
+  wanted_spec.samples = FFMAX(AUDIO_MIN_BUFFER_SIZE,
                               2 << av_log2(wanted_spec.freq / SDL_AUDIO_MAX_CALLBACKS_PER_SEC));
   wanted_spec.callback = cb;
   wanted_spec.userdata = opaque;

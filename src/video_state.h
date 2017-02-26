@@ -59,11 +59,6 @@ class VideoFrameQueue;
 /* polls for possible required screen refresh at least this often, should be less than 1/fps */
 #define REFRESH_RATE 0.01
 
-#define FF_ALLOC_EVENT (SDL_USEREVENT)
-#define FF_QUIT_EVENT (SDL_USEREVENT + 2)
-#define FF_NEXT_STREAM (SDL_USEREVENT + 3)
-#define FF_PREV_STREAM (SDL_USEREVENT + 4)
-
 struct Stats {
   Stats() : frame_drops_early(0), frame_drops_late(0) {}
 

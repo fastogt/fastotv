@@ -158,6 +158,7 @@ SET(MAIN_SOURCES
   video_state.h video_state.cpp
   cmdutils.h cmdutils.cpp
   url.h url.cpp
+  events.h events.cpp
 )
 SET(EXE_SOURCES main.cpp ${MAIN_SOURCES})
 SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})

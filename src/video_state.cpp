@@ -11,8 +11,6 @@
 #include <ostream>  // for operator<<, basic_ostream, etc
 #include <memory>
 
-#include <SDL2/SDL_events.h>
-
 extern "C" {
 #include <libavcodec/avcodec.h>  // for AVCodecContext, etc
 #include <libavcodec/version.h>  // for FF_API_EMU_EDGE
@@ -369,7 +367,6 @@ int VideoState::StreamComponentOpen(int stream_index) {
         destroy(&auddec_);
         goto out;
       }
-      // SDL_PauseAudio(0);
       break;
     }
     case AVMEDIA_TYPE_SUBTITLE: {
@@ -415,7 +412,6 @@ void VideoState::StreamComponentClose(int stream_index) {
       adecoder_tid_ = NULL;
       destroy(&auddec_);
       destroy(&audio_frame_queue_);
-      // SDL_CloseAudio();
       swr_free(&swr_ctx_);
       av_freep(&audio_buf1_);
       audio_buf1_size_ = 0;
@@ -925,38 +921,34 @@ int VideoState::SynchronizeAudio(int nb_samples) {
 }
 
 int VideoState::AudioDecodeFrame() {
-  int data_size, resampled_data_size;
-  int64_t dec_channel_layout;
-  int wanted_nb_samples;
-
   if (paused_) {
-    return -1;
+    return ERROR_RESULT_VALUE;
   }
 
-  core::PacketQueue* audio_packet_queue = astream_->IsOpened() ? astream_->Queue() : NULL;
-  if (!audio_packet_queue) {
-    return -1;
+  if (!IsAudioReady()) {
+    return ERROR_RESULT_VALUE;
   }
 
+  core::PacketQueue* audio_packet_queue = astream_->Queue();
   core::AudioFrame* af = nullptr;
   do {
     af = audio_frame_queue_->GetPeekReadable();
     if (!af) {
-      return -1;
+      return ERROR_RESULT_VALUE;
     }
     audio_frame_queue_->MoveToNext();
   } while (af->serial != audio_packet_queue->Serial());
 
   const AVSampleFormat sample_fmt = static_cast<AVSampleFormat>(af->frame->format);
-  data_size = av_samples_get_buffer_size(NULL, av_frame_get_channels(af->frame),
-                                         af->frame->nb_samples, sample_fmt, 1);
-
-  dec_channel_layout = (af->frame->channel_layout &&
-                        av_frame_get_channels(af->frame) ==
-                            av_get_channel_layout_nb_channels(af->frame->channel_layout))
-                           ? af->frame->channel_layout
-                           : av_get_default_channel_layout(av_frame_get_channels(af->frame));
-  wanted_nb_samples = SynchronizeAudio(af->frame->nb_samples);
+  int data_size = av_samples_get_buffer_size(NULL, av_frame_get_channels(af->frame),
+                                             af->frame->nb_samples, sample_fmt, 1);
+  int64_t dec_channel_layout =
+      (af->frame->channel_layout &&
+       av_frame_get_channels(af->frame) ==
+           av_get_channel_layout_nb_channels(af->frame->channel_layout))
+          ? af->frame->channel_layout
+          : av_get_default_channel_layout(av_frame_get_channels(af->frame));
+  int wanted_nb_samples = SynchronizeAudio(af->frame->nb_samples);
 
   if (af->frame->format != audio_src_.fmt || dec_channel_layout != audio_src_.channel_layout ||
       af->frame->sample_rate != audio_src_.freq ||
@@ -971,7 +963,7 @@ int VideoState::AudioDecodeFrame() {
                   << " Hz " << av_get_sample_fmt_name(audio_tgt_.fmt) << " " << audio_tgt_.channels
                   << " channels!";
       swr_free(&swr_ctx_);
-      return -1;
+      return ERROR_RESULT_VALUE;
     }
     audio_src_.channel_layout = dec_channel_layout;
     audio_src_.channels = av_frame_get_channels(af->frame);
@@ -979,6 +971,7 @@ int VideoState::AudioDecodeFrame() {
     audio_src_.fmt = sample_fmt;
   }
 
+  int resampled_data_size = 0;
   if (swr_ctx_) {
     const uint8_t** in = const_cast<const uint8_t**>(af->frame->extended_data);
     uint8_t** out = &audio_buf1_;
@@ -988,14 +981,14 @@ int VideoState::AudioDecodeFrame() {
         av_samples_get_buffer_size(NULL, audio_tgt_.channels, out_count, audio_tgt_.fmt, 0);
     if (out_size < 0) {
       ERROR_LOG() << "av_samples_get_buffer_size() failed";
-      return -1;
+      return ERROR_RESULT_VALUE;
     }
     if (wanted_nb_samples != af->frame->nb_samples) {
       if (swr_set_compensation(swr_ctx_, (wanted_nb_samples - af->frame->nb_samples) *
                                              audio_tgt_.freq / af->frame->sample_rate,
                                wanted_nb_samples * audio_tgt_.freq / af->frame->sample_rate) < 0) {
         ERROR_LOG() << "swr_set_compensation() failed";
-        return -1;
+        return ERROR_RESULT_VALUE;
       }
     }
     av_fast_malloc(&audio_buf1_, &audio_buf1_size_, out_size);
@@ -1020,9 +1013,6 @@ int VideoState::AudioDecodeFrame() {
     resampled_data_size = data_size;
   }
 
-#ifdef DEBUG
-  double audio_clock0 = audio_clock;
-#endif
   /* update the audio clock with the pts */
   if (!std::isnan(af->pts)) {
     audio_clock_ = af->pts + static_cast<double>(af->frame->nb_samples) / af->frame->sample_rate;
@@ -1030,14 +1020,6 @@ int VideoState::AudioDecodeFrame() {
     audio_clock_ = NAN;
   }
   audio_clock_serial_ = af->serial;
-#ifdef DEBUG
-  {
-    static double last_clock;
-    printf("audio: delay=%0.3f clock=%0.3f clock0=%0.3f\n", audio_clock - last_clock, audio_clock,
-           audio_clock0);
-    last_clock = audio_clock;
-  }
-#endif
   return resampled_data_size;
 }
 
@@ -1054,7 +1036,7 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
       if (audio_size < 0) {
         /* if error, just output silence */
         audio_buf_ = NULL;
-        audio_buf_size_ = SDL_AUDIO_MIN_BUFFER_SIZE / audio_tgt_.frame_size * audio_tgt_.frame_size;
+        audio_buf_size_ = AUDIO_MIN_BUFFER_SIZE / audio_tgt_.frame_size * audio_tgt_.frame_size;
       } else {
         audio_buf_size_ = audio_size;
       }
@@ -1114,10 +1096,8 @@ int VideoState::QueuePicture(AVFrame* src_frame,
 
     /* the allocation must be done in the main thread to avoid
        locking problems. */
-    SDL_Event event;
-    event.type = FF_ALLOC_EVENT;
-    event.user.data1 = this;
-    SDL_PushEvent(&event);
+    AllocFrameEvent* event = new AllocFrameEvent(this, this, vp);
+    handler_->PostEvent(event);
 
     video_frame_queue_->WaitSafeAndNotify([video_packet_queue, vp]() -> bool {
       return !vp->allocated && !video_packet_queue->AbortRequest();
@@ -1177,18 +1157,15 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
 
 /* this thread gets the stream from the disk or the network */
 int VideoState::ReadThread() {
-  bool scan_all_pmts_set = false;
-  const std::string uri_str = uri_.url();
-  const char* in_filename = common::utils::c_strornull(uri_str);
   AVFormatContext* ic = avformat_alloc_context();
   if (!ic) {
     ERROR_LOG() << "Could not allocate context.";
-    SDL_Event event;
-    event.type = FF_QUIT_EVENT;
-    event.user.data1 = this;
-    SDL_PushEvent(&event);
-    return AVERROR(ENOMEM);
+    handler_->PostEvent(new QuitStreamEvent(this, this, AVERROR(ENOMEM)));
+    return ERROR_RESULT_VALUE;
   }
+  bool scan_all_pmts_set = false;
+  const std::string uri_str = uri_.url();
+  const char* in_filename = common::utils::c_strornull(uri_str);
   ic->interrupt_callback.callback = decode_interrupt_callback;
   ic->interrupt_callback.opaque = this;
   if (!av_dict_get(copt_.format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
@@ -1203,14 +1180,9 @@ int VideoState::ReadThread() {
       errbuf_ptr = strerror(AVUNERROR(err));
     }
     ERROR_LOG() << in_filename << ": " << errbuf_ptr;
-
     avformat_close_input(&ic);
-    SDL_Event event;
-    event.type = FF_QUIT_EVENT;
-    event.user.data1 = this;
-    event.user.code = err;
-    SDL_PushEvent(&event);
-    return -1;
+    handler_->PostEvent(new QuitStreamEvent(this, this, err));
+    return ERROR_RESULT_VALUE;
   }
   if (scan_all_pmts_set) {
     av_dict_set(&copt_.format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
@@ -1466,11 +1438,7 @@ int VideoState::ReadThread() {
 
   ret = 0;
 fail:
-  SDL_Event event;
-  event.type = FF_QUIT_EVENT;
-  event.user.data1 = this;
-  event.user.code = ret;
-  SDL_PushEvent(&event);
+  handler_->PostEvent(new QuitStreamEvent(this, this, ret));
   return 0;
 }
 

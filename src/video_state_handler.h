@@ -1,23 +1,23 @@
 #pragma once
 
-#include "ffmpeg_config.h"
-
 extern "C" {
-#include <libavformat/avformat.h>  // for av_find_input_format, etc
+#include <libavutil/rational.h>
 }
+
+#include "events.h"
 
 namespace core {
-struct VideoFrame;
 struct AudioParams;
 }
-
-class VideoState;
 
 class VideoStateHandler {
  public:
   VideoStateHandler();
   virtual ~VideoStateHandler();
 
+  virtual void PostEvent(IBaseEvent* event) = 0;
+
+  // audio
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,
                                   int wanted_nb_channels,
@@ -28,6 +28,7 @@ class VideoStateHandler {
                              uint32_t len,
                              int volume) = 0;
 
+  // video
   virtual bool HandleRequestWindow(VideoState* stream) = 0;
   virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) = 0;
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) = 0;
