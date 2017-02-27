@@ -555,6 +555,18 @@ void VideoState::Abort() {
   read_tid_->join();
 }
 
+bool VideoState::IsReadThread() const {
+  return common::threads::isCurrentThread(read_tid_.get());
+}
+
+bool VideoState::IsVideoThread() const {
+  return common::threads::isCurrentThread(vdecoder_tid_.get());
+}
+
+bool VideoState::IsAudioThread() const {
+  return common::threads::isCurrentThread(adecoder_tid_.get());
+}
+
 bool VideoState::IsAborted() const {
   return abort_request_;
 }

@@ -79,6 +79,11 @@ class VideoState {
              VideoStateHandler* handler);
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
+
+  bool IsReadThread() const;
+  bool IsVideoThread() const;
+  bool IsAudioThread() const;
+
   bool IsAborted() const;
   bool IsStreamReady() const;
   core::stream_id Id() const;
