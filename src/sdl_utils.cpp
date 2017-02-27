@@ -75,7 +75,8 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
  * the normal method of doing things with libpng).  REQUIRED unless you
  * set up your own error handlers in png_create_read_struct() earlier.
  */
-#ifndef LIBPNG_VERSION_12
+#if PROJECT_VERSION_CHECK(PNG_LIBPNG_VER_MAJOR, PNG_LIBPNG_VER_MINOR, PNG_LIBPNG_VER_RELEASE) >= \
+    PROJECT_VERSION_GENERATE(1, 5, 0)
   if (setjmp(*png_set_longjmp_fn(png_ptr, longjmp, sizeof(jmp_buf)))) {
 #else
   if (setjmp(png_ptr->jmpbuf)) {
