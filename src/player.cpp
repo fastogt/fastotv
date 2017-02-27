@@ -20,12 +20,12 @@ extern "C" {
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
-#define CURSOR_HIDE_DELAY 1000000
+#define CURSOR_HIDE_DELAY 1000000  // 1 sec
 
 #define USER_FIELD "user"
 #define URLS_FIELD "urls"
 
-#define IMG_PATH "offline.png"
+#define IMG_PATH "resources/offline.png"
 
 #define FF_ALLOC_EVENT (SDL_USEREVENT)
 #define FF_QUIT_EVENT (SDL_USEREVENT + 2)
@@ -215,13 +215,19 @@ int Player::Exec() {
         if (stream_) {
           stream_->TryRefreshVideo(&remaining_time);
         } else {
-          SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface);
-          if (img && !opt_.video_disable) {
+          if (surface) {
+            SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface);
+            if (img && !opt_.video_disable) {
+              SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+              SDL_RenderClear(renderer_);
+              SDL_RenderCopy(renderer_, img, NULL, NULL);
+              SDL_RenderPresent(renderer_);
+              SDL_DestroyTexture(img);
+            }
+          } else {
             SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
             SDL_RenderClear(renderer_);
-            SDL_RenderCopy(renderer_, img, NULL, NULL);
             SDL_RenderPresent(renderer_);
-            SDL_DestroyTexture(img);
           }
         }
         SDL_PumpEvents();
