@@ -260,7 +260,6 @@ const OptionDef options[] = {
      {&g_options.seek_by_bytes},
      "seek by bytes 0=off 1=on -1=auto",
      "val"},
-    {"nodisp", OPT_BOOL, {&g_options.display_disable}, "disable graphical display"},
     {"volume",
      OPT_INT | HAS_ARG,
      {&g_player_options.audio_volume},
@@ -470,9 +469,6 @@ int main(int argc, char** argv) {
     return EXIT_FAILURE;
   }
 
-  if (g_options.display_disable) {
-    g_options.video_disable = true;
-  }
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
   if (g_options.audio_disable) {
     flags &= ~SDL_INIT_AUDIO;
@@ -483,7 +479,7 @@ int main(int argc, char** argv) {
       SDL_setenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE", "1", 1);
     }
   }
-  if (g_options.display_disable) {
+  if (g_options.video_disable) {
     flags &= ~SDL_INIT_VIDEO;
   }
   if (SDL_Init(flags)) {

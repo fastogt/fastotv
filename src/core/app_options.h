@@ -35,7 +35,6 @@ struct AppOptions {
   int framedrop;
   bool genpts;
   AvSyncType av_sync_type;
-  bool display_disable;
   int loop;
   bool autoexit;
   bool show_status;

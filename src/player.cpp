@@ -157,7 +157,8 @@ PlayerOptions::PlayerOptions()
       default_height(height),
       screen_width(0),
       screen_height(0),
-      audio_volume(volume) {}
+      audio_volume(volume),
+      muted(false) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -212,7 +213,7 @@ int Player::Exec() {
           av_usleep(sleep_time);
         }
         remaining_time = REFRESH_RATE;
-        if (stream_) {
+        if (stream_ && stream_->IsStreamReady()) {
           stream_->TryRefreshVideo(&remaining_time);
         } else {
           if (surface) {
@@ -305,10 +306,15 @@ void Player::Stop() {
 }
 
 void Player::SetFullScreen(bool full_screen) {
+  options_.is_full_screen = full_screen;
   SDL_SetWindowFullscreen(window_, full_screen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
   if (stream_) {
     stream_->RefreshRequest();
   }
+}
+
+void Player::SetMute(bool mute) {
+  options_.muted = mute;
 }
 
 Player::~Player() {
@@ -470,7 +476,7 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
       return;
     }
     case SDLK_f: {
-      bool full_screen = options_.is_full_screen = !options_.is_full_screen;
+      bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);
       break;
     }
@@ -480,11 +486,11 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
         stream_->TogglePause();
       }
       break;
-    case SDLK_m:
-      if (stream_) {
-        stream_->ToggleMute();
-      }
+    case SDLK_m: {
+      bool muted = !options_.muted;
+      SetMute(muted);
       break;
+    }
     case SDLK_KP_MULTIPLY:
     case SDLK_0:
       UpdateVolume(VOLUME_STEP);
@@ -576,7 +582,7 @@ void Player::HandleMousePressEvent(SDL_MouseButtonEvent* event) {
   }
   if (event->button == SDL_BUTTON_LEFT) {
     if (av_gettime_relative() - last_mouse_left_click_ <= 500000) {  // double click
-      bool full_screen = options_.is_full_screen = !options_.is_full_screen;
+      bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);
       last_mouse_left_click_ = 0;
     } else {
@@ -629,8 +635,8 @@ Url Player::CurrentUrl() const {
 
 void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
   Player* player = static_cast<Player*>(opaque);
-  if (player->stream_ && player->stream_->IsAudioReady()) {
-    VideoState* st = player->stream_;
+  VideoState* st = player->stream_;
+  if (!player->options_.muted && st && st->IsStreamReady()) {
     st->UpdateAudioBuffer(stream, len, player->options_.audio_volume);
   } else {
     memset(stream, 0, len);

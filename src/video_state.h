@@ -80,6 +80,7 @@ class VideoState {
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
   bool IsAborted() const;
+  bool IsStreamReady() const;
   core::stream_id Id() const;
   const common::uri::Uri& Uri() const;
   virtual ~VideoState();
@@ -87,10 +88,6 @@ class VideoState {
   void RefreshRequest();
   /* pause or resume the video */
   void TogglePause();
-  void ToggleMute();
-
-  bool IsVideoReady() const;
-  void TryRefreshVideo(double* remaining_time);
 
   void StepToNextFrame();
   void StreamCycleChannel(AVMediaType codec_type);
@@ -101,10 +98,13 @@ class VideoState {
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
-  bool IsAudioReady() const;
+  void TryRefreshVideo(double* remaining_time);
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
  private:
+  bool IsVideoReady() const;
+  bool IsAudioReady() const;
+
   DISALLOW_COPY_AND_ASSIGN(VideoState);
 
   /* open a given stream. Return 0 if OK */
@@ -128,8 +128,6 @@ class VideoState {
      potential locking problems */
   int AllocPicture();
   void VideoDisplay();
-  /* called to display each frame */
-  void VideoRefresh(double* remaining_time);
 
   void SeekChapter(int incr);
   /* return the wanted number of samples to get better sync if sync_type is video
@@ -223,7 +221,6 @@ class VideoState {
 
   bool paused_;
   bool last_paused_;
-  bool muted_;
   bool eof_;
   bool abort_request_;
 

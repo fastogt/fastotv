@@ -28,6 +28,7 @@ struct PlayerOptions {
   int screen_height;
 
   int audio_volume;  // Range: 0 - 100
+  bool muted;
 };
 
 class Player : public VideoStateHandler {
@@ -38,6 +39,7 @@ class Player : public VideoStateHandler {
   int Exec() WARN_UNUSED_RESULT;
   void Stop();
   void SetFullScreen(bool full_screen);
+  void SetMute(bool mute);
   ~Player();
 
  protected:

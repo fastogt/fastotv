@@ -149,7 +149,6 @@ VideoState::VideoState(core::stream_id id,
       adecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::AudioThread, this)),
       paused_(false),
       last_paused_(false),
-      muted_(false),
       eof_(false),
       abort_request_(false),
       stats_(),
@@ -495,125 +494,6 @@ double VideoState::GetMasterClock() const {
   return astream_->GetClock();
 }
 
-void VideoState::VideoRefresh(double* remaining_time) {
-  AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
-  AVStream* audio_st = astream_->IsOpened() ? astream_->AvStream() : NULL;
-  core::PacketQueue* video_packet_queue = vstream_->Queue();
-  core::PacketQueue* audio_packet_queue = astream_->Queue();
-
-  if (!opt_.display_disable && audio_st) {
-    double time = av_gettime_relative() / 1000000.0;
-    if (force_refresh_ || last_vis_time_ < time) {
-      VideoDisplay();
-      last_vis_time_ = time;
-    }
-    *remaining_time = FFMIN(*remaining_time, last_vis_time_ - time);
-  }
-
-  if (video_st && video_frame_queue_) {
-  retry:
-    if (video_frame_queue_->IsEmpty()) {
-      // nothing to do, no picture to display in the queue
-    } else {
-      /* dequeue the picture */
-      core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
-      core::VideoFrame* vp = video_frame_queue_->Peek();
-
-      if (vp->serial != video_packet_queue->Serial()) {
-        video_frame_queue_->MoveToNext();
-        goto retry;
-      }
-
-      if (lastvp->serial != vp->serial) {
-        frame_timer_ = av_gettime_relative() / 1000000.0;
-      }
-
-      if (paused_) {
-        goto display;
-      }
-
-      /* compute nominal last_duration */
-      double last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
-      double delay = ComputeTargetDelay(last_duration);
-      double time = av_gettime_relative() / 1000000.0;
-      if (time < frame_timer_ + delay) {
-        *remaining_time = FFMIN(frame_timer_ + delay - time, *remaining_time);
-        goto display;
-      }
-
-      frame_timer_ += delay;
-      if (delay > 0 && time - frame_timer_ > AV_SYNC_THRESHOLD_MAX) {
-        frame_timer_ = time;
-      }
-
-      {
-        const double pts = vp->pts;
-        const int serial = vp->serial;
-        if (!std::isnan(pts)) {
-          /* update current video pts */
-          vstream_->SetClock(pts, serial);
-        }
-      }
-
-      core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
-      if (nextvp) {
-        double duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
-        if (!step_ && (opt_.framedrop > 0 ||
-                       (opt_.framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) &&
-            time > frame_timer_ + duration) {
-          stats_.frame_drops_late++;
-          video_frame_queue_->MoveToNext();
-          goto retry;
-        }
-      }
-
-      video_frame_queue_->MoveToNext();
-      force_refresh_ = true;
-
-      if (step_ && !paused_) {
-        StreamTogglePause();
-      }
-    }
-  display:
-    /* display picture */
-    if (!opt_.display_disable && force_refresh_ && video_frame_queue_->RindexShown()) {
-      VideoDisplay();
-    }
-  }
-  force_refresh_ = false;
-  if (opt_.show_status) {
-    static int64_t last_time;
-    int64_t cur_time = av_gettime_relative();
-    if (!last_time || (cur_time - last_time) >= 30000) {
-      int aqsize = 0, vqsize = 0;
-      if (video_st) {
-        vqsize = video_packet_queue->Size();
-      }
-      if (audio_st) {
-        aqsize = audio_packet_queue->Size();
-      }
-      double av_diff = 0;
-      if (audio_st && video_st) {
-        av_diff = astream_->GetClock() - vstream_->GetClock();
-      } else if (video_st) {
-        av_diff = GetMasterClock() - vstream_->GetClock();
-      } else if (audio_st) {
-        av_diff = GetMasterClock() - astream_->GetClock();
-      }
-      int64_t fdts = video_st ? viddec_->PtsCorrectionNumFaultyDts() : 0;
-      int64_t fpts = video_st ? viddec_->PtsCorrectionNumFaultyPts() : 0;
-      const char* fmt =
-          (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
-      common::logging::LogMessage(common::logging::L_INFO, false).stream()
-          << GetMasterClock() << " " << fmt << ":" << av_diff << " fd=" << stats_.FrameDrops()
-          << " aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts << "/" << fpts
-          << "\r";
-      fflush(stdout);
-      last_time = cur_time;
-    }
-  }
-}
-
 int VideoState::VideoOpen(core::VideoFrame* vp) {
   if (vp && vp->width && vp->height) {
     handler_->HandleDefaultWindowSize(vp->width, vp->height, vp->sar);
@@ -679,6 +559,10 @@ bool VideoState::IsAborted() const {
   return abort_request_;
 }
 
+bool VideoState::IsStreamReady() const {
+  return IsAudioReady() && IsVideoReady() && !IsAborted();
+}
+
 core::stream_id VideoState::Id() const {
   return id_;
 }
@@ -709,18 +593,20 @@ void VideoState::TogglePause() {
   step_ = false;
 }
 
-void VideoState::ToggleMute() {
-  muted_ = !muted_;
+bool VideoState::IsAudioReady() const {
+  if (opt_.audio_disable) {
+    return true;
+  }
+
+  return astream_ && astream_->IsOpened();
 }
 
 bool VideoState::IsVideoReady() const {
-  return vstream_ && vstream_->IsOpened();
-}
-
-void VideoState::TryRefreshVideo(double* remaining_time) {
-  if ((!paused_ || force_refresh_)) {
-    VideoRefresh(remaining_time);
+  if (opt_.video_disable) {
+    return true;
   }
+
+  return vstream_ && vstream_->IsOpened();
 }
 
 void VideoState::SeekChapter(int incr) {
@@ -1023,8 +909,125 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-bool VideoState::IsAudioReady() const {
-  return astream_ && astream_->IsOpened();
+void VideoState::TryRefreshVideo(double* remaining_time) {
+  if (!paused_ || force_refresh_) {
+    AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
+    AVStream* audio_st = astream_->IsOpened() ? astream_->AvStream() : NULL;
+    core::PacketQueue* video_packet_queue = vstream_->Queue();
+    core::PacketQueue* audio_packet_queue = astream_->Queue();
+
+    if (!opt_.video_disable && audio_st) {
+      double time = av_gettime_relative() / 1000000.0;
+      if (force_refresh_ || last_vis_time_ < time) {
+        VideoDisplay();
+        last_vis_time_ = time;
+      }
+      *remaining_time = FFMIN(*remaining_time, last_vis_time_ - time);
+    }
+
+    if (video_st && video_frame_queue_) {
+    retry:
+      if (video_frame_queue_->IsEmpty()) {
+        // nothing to do, no picture to display in the queue
+      } else {
+        /* dequeue the picture */
+        core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
+        core::VideoFrame* vp = video_frame_queue_->Peek();
+
+        if (vp->serial != video_packet_queue->Serial()) {
+          video_frame_queue_->MoveToNext();
+          goto retry;
+        }
+
+        if (lastvp->serial != vp->serial) {
+          frame_timer_ = av_gettime_relative() / 1000000.0;
+        }
+
+        if (paused_) {
+          goto display;
+        }
+
+        /* compute nominal last_duration */
+        double last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
+        double delay = ComputeTargetDelay(last_duration);
+        double time = av_gettime_relative() / 1000000.0;
+        if (time < frame_timer_ + delay) {
+          *remaining_time = FFMIN(frame_timer_ + delay - time, *remaining_time);
+          goto display;
+        }
+
+        frame_timer_ += delay;
+        if (delay > 0 && time - frame_timer_ > AV_SYNC_THRESHOLD_MAX) {
+          frame_timer_ = time;
+        }
+
+        {
+          const double pts = vp->pts;
+          const int serial = vp->serial;
+          if (!std::isnan(pts)) {
+            /* update current video pts */
+            vstream_->SetClock(pts, serial);
+          }
+        }
+
+        core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
+        if (nextvp) {
+          double duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
+          if (!step_ && (opt_.framedrop > 0 ||
+                         (opt_.framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) &&
+              time > frame_timer_ + duration) {
+            stats_.frame_drops_late++;
+            video_frame_queue_->MoveToNext();
+            goto retry;
+          }
+        }
+
+        video_frame_queue_->MoveToNext();
+        force_refresh_ = true;
+
+        if (step_ && !paused_) {
+          StreamTogglePause();
+        }
+      }
+    display:
+      /* display picture */
+      if (force_refresh_ && video_frame_queue_->RindexShown()) {
+        VideoDisplay();
+      }
+    }
+    force_refresh_ = false;
+    if (opt_.show_status) {
+      static int64_t last_time;
+      int64_t cur_time = av_gettime_relative();
+      if (!last_time || (cur_time - last_time) >= 30000) {
+        int aqsize = 0, vqsize = 0;
+        if (video_st) {
+          vqsize = video_packet_queue->Size();
+        }
+        if (audio_st) {
+          aqsize = audio_packet_queue->Size();
+        }
+        double av_diff = 0;
+        if (audio_st && video_st) {
+          av_diff = astream_->GetClock() - vstream_->GetClock();
+        } else if (video_st) {
+          av_diff = GetMasterClock() - vstream_->GetClock();
+        } else if (audio_st) {
+          av_diff = GetMasterClock() - astream_->GetClock();
+        }
+        int64_t fdts = video_st ? viddec_->PtsCorrectionNumFaultyDts() : 0;
+        int64_t fpts = video_st ? viddec_->PtsCorrectionNumFaultyPts() : 0;
+        const char* fmt =
+            (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
+        common::logging::LogMessage(common::logging::L_INFO, false).stream()
+            << GetMasterClock() << " " << fmt << ":" << av_diff << " fd=" << stats_.FrameDrops()
+            << " aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts << "/"
+            << fpts << "\r";
+        fflush(stdout);
+        last_time = cur_time;
+      }
+    }
+  }
 }
 
 void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
@@ -1046,11 +1049,11 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
     if (len1 > len) {
       len1 = len;
     }
-    if (!muted_ && audio_buf_ && audio_volume == 100) {
+    if (audio_buf_ && audio_volume == 100) {
       memcpy(stream, audio_buf_ + audio_buf_index_, len1);
     } else {
       memset(stream, 0, len1);
-      if (!muted_ && audio_buf_) {
+      if (audio_buf_) {
         handler_->HanleAudioMix(stream, audio_buf_ + audio_buf_index_, len1, audio_volume);
       }
     }
@@ -1073,10 +1076,6 @@ int VideoState::QueuePicture(AVFrame* src_frame,
                              double duration,
                              int64_t pos,
                              int serial) {
-#if defined(DEBUG_SYNC)
-  printf("frame_type=%c pts=%0.3f\n", av_get_picture_type_char(src_frame->pict_type), pts);
-#endif
-
   core::PacketQueue* video_packet_queue = vstream_->Queue();
   core::VideoFrame* vp = video_frame_queue_->GetPeekWritable();
   if (!vp) {
