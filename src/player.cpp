@@ -10,6 +10,7 @@ extern "C" {
 #include "third-party/json-c/json-c/json.h"  // for json_object_...
 
 #include <common/file_system.h>
+#include <common/threads/event_bus.h>
 
 #include "video_state.h"
 #include "sdl_utils.h"
@@ -124,14 +125,13 @@ bool CreateWindow(int width,
     SDL_RendererInfo info;
     lrenderer =
         SDL_CreateRenderer(lwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (!lrenderer) {
-      WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
-      lrenderer = SDL_CreateRenderer(lwindow, -1, 0);
-    }
     if (lrenderer) {
       if (!SDL_GetRendererInfo(lrenderer, &info)) {
         DEBUG_LOG() << "Initialized " << info.name << " renderer.";
       }
+    } else {
+      WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
+      lrenderer = SDL_CreateRenderer(lwindow, -1, 0);
     }
   }
 
@@ -179,7 +179,11 @@ Player::Player(const PlayerOptions& options,
       width_(0),
       height_(0),
       xleft_(0),
-      ytop_(0) {
+      ytop_(0),
+      thread_(EVENT_BUS()->CreateEventThread<EventsType>()) {
+  EVENT_BUS()->Subscribe<AllocFrameEvent>(this);
+  EVENT_BUS()->Subscribe<QuitStreamEvent>(this);
+
   ChangePlayListLocation(options.play_list_location);
   // stable options
   if (options_.audio_volume < 0) {
@@ -329,28 +333,32 @@ Player::~Player() {
     SDL_DestroyWindow(window_);
     window_ = NULL;
   }
+
+  EVENT_BUS()->UnSubscribe<AllocFrameEvent>(this);
+  EVENT_BUS()->UnSubscribe<QuitStreamEvent>(this);
+  EVENT_BUS()->Stop();
 }
 
-void Player::PostEvent(IBaseEvent* event) {
-  if (!event) {
-    return;
-  }
-
-  if (event->eventType() == ALLOC_FRAME_EVENT) {
+void Player::HandleEvent(Event* event) {
+  if (event->eventType() == AllocFrameEvent::EventType) {
     AllocFrameEvent* avent = static_cast<AllocFrameEvent*>(event);
     SDL_Event event;
     event.type = FF_ALLOC_EVENT;
-    event.user.data1 = avent->Stream();
+    event.user.data1 = avent->info().stream_;
     SDL_PushEvent(&event);
-  } else if (event->eventType() == QUIT_STREAM_EVENT) {
+  } else if (event->eventType() == AllocFrameEvent::EventType) {
     QuitStreamEvent* qevent = static_cast<QuitStreamEvent*>(event);
     SDL_Event event;
     event.type = FF_QUIT_EVENT;
-    event.user.data1 = qevent->Stream();
-    event.user.code = qevent->Code();
+    event.user.data1 = qevent->info().stream_;
+    event.user.code = qevent->info().code_;
     SDL_PushEvent(&event);
   }
-  delete event;
+}
+
+void Player::HandleExceptionEvent(Event* event, common::Error err) {
+  UNUSED(event);
+  UNUSED(err);
 }
 
 bool Player::HandleRequestAudio(VideoState* stream,

@@ -41,6 +41,7 @@ extern "C" {
 #include <common/logger.h>  // for LogMessage, etc
 #include <common/macros.h>  // for destroy, ERROR_RESULT_VALUE, etc
 #include <common/threads/thread_manager.h>
+#include <common/threads/event_bus.h>
 #include <common/utils.h>
 #include <common/sprintf.h>
 
@@ -94,7 +95,7 @@ VideoState::VideoState(core::stream_id id,
       uri_(uri),
       opt_(opt),
       copt_(copt),
-      read_tid_(THREAD_MANAGER()->createThread(&VideoState::ReadThread, this)),
+      read_tid_(THREAD_MANAGER()->CreateThread(&VideoState::ReadThread, this)),
       force_refresh_(false),
       queue_attachments_req_(false),
       seek_req_(false),
@@ -145,8 +146,8 @@ VideoState::VideoState(core::stream_id id,
 #endif
       last_video_stream_(invalid_stream_index),
       last_audio_stream_(invalid_stream_index),
-      vdecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::VideoThread, this)),
-      adecoder_tid_(THREAD_MANAGER()->createThread(&VideoState::AudioThread, this)),
+      vdecoder_tid_(THREAD_MANAGER()->CreateThread(&VideoState::VideoThread, this)),
+      adecoder_tid_(THREAD_MANAGER()->CreateThread(&VideoState::AudioThread, this)),
       paused_(false),
       last_paused_(false),
       eof_(false),
@@ -300,7 +301,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
       video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
       viddec_ = new core::VideoDecoder(avctx, packet_queue, opt_.decoder_reorder_pts);
       viddec_->Start();
-      if (!vdecoder_tid_->start()) {
+      if (!vdecoder_tid_->Start()) {
         destroy(&viddec_);
         goto out;
       }
@@ -362,7 +363,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
         auddec_->SetStartPts(stream->start_time, stream->time_base);
       }
       auddec_->Start();
-      if (!adecoder_tid_->start()) {
+      if (!adecoder_tid_->Start()) {
         destroy(&auddec_);
         goto out;
       }
@@ -398,7 +399,7 @@ void VideoState::StreamComponentClose(int stream_index) {
     case AVMEDIA_TYPE_VIDEO: {
       video_frame_queue_->Stop();
       viddec_->Abort();
-      vdecoder_tid_->join();
+      vdecoder_tid_->Join();
       vdecoder_tid_ = NULL;
       destroy(&viddec_);
       destroy(&video_frame_queue_);
@@ -407,7 +408,7 @@ void VideoState::StreamComponentClose(int stream_index) {
     case AVMEDIA_TYPE_AUDIO: {
       audio_frame_queue_->Stop();
       auddec_->Abort();
-      adecoder_tid_->join();
+      adecoder_tid_->Join();
       adecoder_tid_ = NULL;
       destroy(&auddec_);
       destroy(&audio_frame_queue_);
@@ -542,7 +543,7 @@ void VideoState::VideoDisplay() {
 }
 
 int VideoState::Exec() {
-  bool started = read_tid_->start();
+  bool started = read_tid_->Start();
   if (!started) {
     return EXIT_FAILURE;
   }
@@ -552,19 +553,19 @@ int VideoState::Exec() {
 
 void VideoState::Abort() {
   abort_request_ = true;
-  read_tid_->join();
+  read_tid_->Join();
 }
 
 bool VideoState::IsReadThread() const {
-  return common::threads::isCurrentThread(read_tid_.get());
+  return common::threads::IsCurrentThread(read_tid_.get());
 }
 
 bool VideoState::IsVideoThread() const {
-  return common::threads::isCurrentThread(vdecoder_tid_.get());
+  return common::threads::IsCurrentThread(vdecoder_tid_.get());
 }
 
 bool VideoState::IsAudioThread() const {
-  return common::threads::isCurrentThread(adecoder_tid_.get());
+  return common::threads::IsCurrentThread(adecoder_tid_.get());
 }
 
 bool VideoState::IsAborted() const {
@@ -1107,8 +1108,8 @@ int VideoState::QueuePicture(AVFrame* src_frame,
 
     /* the allocation must be done in the main thread to avoid
        locking problems. */
-    AllocFrameEvent* event = new AllocFrameEvent(this, this, vp);
-    handler_->PostEvent(event);
+    AllocFrameEvent* event = new AllocFrameEvent(this, FrameInfo(this, vp));
+    EVENT_BUS()->PostEvent(event);
 
     video_frame_queue_->WaitSafeAndNotify([video_packet_queue, vp]() -> bool {
       return !vp->allocated && !video_packet_queue->AbortRequest();
@@ -1171,7 +1172,8 @@ int VideoState::ReadThread() {
   AVFormatContext* ic = avformat_alloc_context();
   if (!ic) {
     ERROR_LOG() << "Could not allocate context.";
-    handler_->PostEvent(new QuitStreamEvent(this, this, AVERROR(ENOMEM)));
+    QuitStreamEvent* qevent = new QuitStreamEvent(this, QuitInfo(this, AVERROR(ENOMEM)));
+    EVENT_BUS()->PostEvent(qevent);
     return ERROR_RESULT_VALUE;
   }
   bool scan_all_pmts_set = false;
@@ -1192,7 +1194,8 @@ int VideoState::ReadThread() {
     }
     ERROR_LOG() << in_filename << ": " << errbuf_ptr;
     avformat_close_input(&ic);
-    handler_->PostEvent(new QuitStreamEvent(this, this, err));
+    QuitStreamEvent* qevent = new QuitStreamEvent(this, QuitInfo(this, err));
+    EVENT_BUS()->PostEvent(qevent);
     return ERROR_RESULT_VALUE;
   }
   if (scan_all_pmts_set) {
@@ -1449,7 +1452,8 @@ int VideoState::ReadThread() {
 
   ret = 0;
 fail:
-  handler_->PostEvent(new QuitStreamEvent(this, this, ret));
+  QuitStreamEvent* qevent = new QuitStreamEvent(this, QuitInfo(this, ret));
+  EVENT_BUS()->PostEvent(qevent);
   return 0;
 }
 

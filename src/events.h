@@ -8,64 +8,65 @@ struct VideoFrame;
 
 class VideoState;
 
-enum EventsType { ALLOC_FRAME_EVENT, QUIT_STREAM_EVENT };
+enum EventsType { ALLOC_FRAME_EVENT, QUIT_STREAM_EVENT, COUNT_EVENTS };
+#define EVENT_LOOP_ID 1
 
-class IBaseEvent : public common::IEvent<EventsType> {
+namespace common {
+
+template <>
+struct event_traits<EventsType> {
+  typedef IEvent<EventsType> event_t;
+  typedef IExceptionEvent<EventsType> ex_event_t;
+  typedef IListener<EventsType> listener_t;
+  static const unsigned max_count = COUNT_EVENTS;
+  static const unsigned id = EVENT_LOOP_ID;
+};
+}
+
+typedef common::event_traits<EventsType> EventTraits;
+typedef EventTraits::event_t Event;
+typedef EventTraits::listener_t EventListener;
+
+template <EventsType event_t, typename inf_t>
+class EventBaseInfo : public common::Event<EventsType, event_t> {
  public:
-  typedef common::IEvent<EventsType> base_class;
-  typedef base_class::type_t type_t;
-  typedef void senders_t;
+  typedef inf_t info_t;
+  typedef common::Event<EventsType, event_t> base_class_t;
+  typedef typename base_class_t::senders_t senders_t;
 
-  senders_t* sender() const;
-  virtual ~IBaseEvent();
+  EventBaseInfo(senders_t* sender, info_t info) : base_class_t(sender), info_(info) {}
 
- protected:
-  IBaseEvent(senders_t* sender, type_t event_t);
+  info_t info() const { return info_; }
 
  private:
-  senders_t* sender_;
+  const info_t info_;
 };
 
-class StreamEvent : public IBaseEvent {
+template <EventsType event_t>
+class EventBaseInfo<event_t, void> : public common::Event<EventsType, event_t> {
  public:
-  typedef IBaseEvent base_class;
-  typedef base_class::type_t type_t;
-  typedef base_class::senders_t senders_t;
-  typedef VideoState stream_t;
+  typedef void info_t;
+  typedef common::Event<EventsType, event_t> base_class_t;
+  typedef typename base_class_t::senders_t senders_t;
 
-  stream_t* Stream() const;
-
- protected:
-  StreamEvent(senders_t* sender, type_t event_t, stream_t* stream);
-
- private:
-  stream_t* stream_;
+  explicit EventBaseInfo(senders_t* sender) : base_class_t(sender) {}
 };
 
-class AllocFrameEvent : public StreamEvent {
- public:
-  typedef StreamEvent base_class;
-  typedef base_class::type_t type_t;
-  typedef base_class::senders_t senders_t;
-  typedef base_class::stream_t stream_t;
+struct StreamInfo {
+  explicit StreamInfo(VideoState* stream);
 
-  AllocFrameEvent(senders_t* sender, stream_t* stream, core::VideoFrame* frame);
-  core::VideoFrame* Frame() const;
+  VideoState* stream_;
+};
 
- private:
+struct FrameInfo : public StreamInfo {
+  FrameInfo(VideoState* stream, core::VideoFrame* frame);
   core::VideoFrame* frame_;
 };
 
-class QuitStreamEvent : public StreamEvent {
- public:
-  typedef StreamEvent base_class;
-  typedef base_class::type_t type_t;
-  typedef base_class::senders_t senders_t;
-  typedef base_class::stream_t stream_t;
-
-  QuitStreamEvent(senders_t* sender, stream_t* stream, int code);
-  int Code() const;
-
- private:
+struct QuitInfo : public StreamInfo {
+  QuitInfo(VideoState* stream, int code);
   int code_;
 };
+
+typedef EventBaseInfo<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
+typedef EventBaseInfo<QUIT_STREAM_EVENT, QuitInfo> QuitStreamEvent;

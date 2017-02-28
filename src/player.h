@@ -6,13 +6,20 @@
 #include "video_state_handler.h"
 
 #include "url.h"
-
+#include "events.h"
 #include <common/smart_ptr.h>
 #include <common/url.h>
 
 #include "core/app_options.h"
 
 class VideoState;
+
+namespace common {
+namespace threads {
+template <typename type_t>
+class EventThread;
+}
+}
 
 struct PlayerOptions {
   enum { width = 640, height = 480, volume = 100 };
@@ -43,7 +50,8 @@ class Player : public VideoStateHandler {
   ~Player();
 
  protected:
-  virtual void PostEvent(IBaseEvent* event) override;
+  virtual void HandleEvent(Event* event) override;
+  virtual void HandleExceptionEvent(Event* event, common::Error err) override;
 
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,
@@ -107,4 +115,6 @@ class Player : public VideoStateHandler {
   int height_;
   const int xleft_;
   const int ytop_;
+
+  common::threads::EventThread<EventsType>* const thread_;
 };
