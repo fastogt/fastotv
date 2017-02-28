@@ -196,6 +196,7 @@ Player::Player(const PlayerOptions& options,
 }
 
 int Player::Exec() {
+  CHECK(THREAD_MANAGER()->IsMainThread());
   stream_ = CreateCurrentStream();
   if (!stream_) {
     SwitchToErrorMode();
