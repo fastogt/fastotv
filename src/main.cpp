@@ -30,9 +30,10 @@ extern "C" {
 #include "cmdutils.h"          // for HAS_ARG, OPT_EXPERT, etc
 #include "core/app_options.h"  // for AppOptions, ComplexOptions
 #include "core/types.h"
+#include "core/application/sdl2_application.h"
+
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER, etc
 #include "player.h"
-#include "sdl2_application.h"
 
 namespace {
 core::AppOptions g_options;
@@ -380,6 +381,8 @@ void show_help_default(const char* opt, const char* arg) {
       "left double-click   toggle full screen\n");
 }
 
+static DictionaryOptions* dict = NULL;  // FIXME
+
 template <typename B>
 class FFmpegApplication : public B {
  public:
@@ -406,7 +409,7 @@ class FFmpegApplication : public B {
 
     show_banner(argc, argv, options);
     parse_options(argc, argv, options, lopt);
-    dict_ = lopt;
+    dict = dict_ = lopt;
   }
 
   virtual int PreExec() override {
@@ -435,6 +438,8 @@ class FFmpegApplication : public B {
     }
   }
 
+  DictionaryOptions* GetDict() const { return dict_; }
+
  private:
   static int lockmgr(void** mtx, enum AVLockOp op) {
     common::mutex* lmtx = static_cast<common::mutex*>(*mtx);
@@ -461,13 +466,14 @@ class FFmpegApplication : public B {
     }
     return 1;
   }
+
   DictionaryOptions* dict_;
 };
 
 namespace common {
 namespace application {
 IApplicationImpl* CreateApplicationImpl(int argc, char** argv) {
-  return new FFmpegApplication<Sdl2Application>(argc, argv);
+  return new FFmpegApplication<core::application::Sdl2Application>(argc, argv);
 }
 }
 }
@@ -486,7 +492,7 @@ int main(int argc, char** argv) {
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
   common::application::Application app(argc, argv);
-  core::ComplexOptions copt;//(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+  core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
   Player* player = new Player(g_player_options, g_options, copt);
   int res = app.Exec();
   destroy(&player);

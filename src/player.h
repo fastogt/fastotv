@@ -3,16 +3,18 @@
 #include <SDL2/SDL_events.h>  // for SDL_Event, SDL_PushEvent, etc
 #include <SDL2/SDL_render.h>
 
-#include "video_state_handler.h"
-
-#include "url.h"
-#include "events.h"
 #include <common/smart_ptr.h>
 #include <common/url.h>
 
-#include "core/app_options.h"
+#include "url.h"
 
+#include "core/video_state_handler.h"
+#include "core/app_options.h"
+#include "core/events/events.h"
+
+namespace core {
 class VideoState;
+}
 
 namespace common {
 namespace threads {
@@ -38,7 +40,7 @@ struct PlayerOptions {
   bool muted;
 };
 
-class Player : public VideoStateHandler {
+class Player : public core::VideoStateHandler {
  public:
   Player(const PlayerOptions& options,
          const core::AppOptions& opt,
@@ -51,7 +53,7 @@ class Player : public VideoStateHandler {
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
-  virtual bool HandleRequestAudio(VideoState* stream,
+  virtual bool HandleRequestAudio(core::VideoState* stream,
                                   int64_t wanted_channel_layout,
                                   int wanted_nb_channels,
                                   int wanted_sample_rate,
@@ -61,12 +63,12 @@ class Player : public VideoStateHandler {
                              uint32_t len,
                              int volume) override;
 
-  virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override;
-  virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override;
-  virtual bool HandleRequestWindow(VideoState* stream) override;
+  virtual bool HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
+  virtual void HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) override;
+  virtual bool HandleRequestWindow(core::VideoState* stream) override;
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override;
 
-  virtual void HandleKeyPressEvent(SDL_KeyboardEvent* event);
+  virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event);
   virtual void HandleWindowEvent(SDL_WindowEvent* event);
   virtual void HandleMousePressEvent(SDL_MouseButtonEvent* event);
   virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
@@ -87,10 +89,10 @@ class Player : public VideoStateHandler {
   void CalculateDispalySize();
 
   bool ChangePlayListLocation(const common::uri::Uri& location);
-  VideoState* CreateCurrentStream();
-  VideoState* CreateNextStream();
-  VideoState* CreatePrevStream();
-  VideoState* CreateStreamInner();
+  core::VideoState* CreateCurrentStream();
+  core::VideoState* CreateNextStream();
+  core::VideoState* CreatePrevStream();
+  core::VideoState* CreateStreamInner();
 
   PlayerOptions options_;
   const core::AppOptions opt_;
@@ -107,7 +109,7 @@ class Player : public VideoStateHandler {
   size_t curent_stream_pos_;
 
   SDL_Surface* surface_;
-  VideoState* stream_;
+  core::VideoState* stream_;
 
   int width_;
   int height_;

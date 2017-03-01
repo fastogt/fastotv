@@ -1,4 +1,4 @@
-#include "sdl2_application.h"
+#include "core/application/sdl2_application.h"
 
 #include <SDL2/SDL.h>         // for SDL_INIT_AUDIO, etc
 #include <SDL2/SDL_error.h>   // for SDL_GetError
@@ -7,12 +7,17 @@
 
 #include <common/threads/event_bus.h>
 
+#include "core/events/events.h"
+
 #define FF_ALLOC_EVENT (SDL_USEREVENT)
 #define FF_QUIT_EVENT (SDL_USEREVENT + 2)
 #define FF_NEXT_STREAM (SDL_USEREVENT + 3)
 #define FF_PREV_STREAM (SDL_USEREVENT + 4)
 
 #define FASTO_EVENT (SDL_USEREVENT)
+
+namespace core {
+namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
     : common::application::IApplicationImpl(argc, argv), stop_(false), dispatcher_() {}
@@ -36,8 +41,8 @@ int Sdl2Application::Exec() {
     SDL_PumpEvents();
     int res = SDL_WaitEventTimeout(&event, event_timeout_wait_msec);
     if (res == 0) {  // timeout
-      TimeInfo inf;
-      TimerEvent* timer_event = new TimerEvent(this, inf);
+      events::TimeInfo inf;
+      events::TimerEvent* timer_event = new events::TimerEvent(this, inf);
       HandleEvent(timer_event);
       continue;
     }
@@ -60,7 +65,7 @@ int Sdl2Application::Exec() {
         break;
       }
       case FASTO_EVENT: {
-        Event* fevent = static_cast<Event*>(event.user.data1);
+        events::Event* fevent = static_cast<events::Event*>(event.user.data1);
         HandleEvent(fevent);
         break;
       }
@@ -78,11 +83,11 @@ int Sdl2Application::PostExec() {
 }
 
 void Sdl2Application::Subscribe(common::IListener* listener, common::events_size_t id) {
-  dispatcher_.Subscribe(static_cast<EventListener*>(listener), id);
+  dispatcher_.Subscribe(static_cast<events::EventListener*>(listener), id);
 }
 
 void Sdl2Application::UnSubscribe(common::IListener* listener, common::events_size_t id) {
-  dispatcher_.UnSubscribe(static_cast<EventListener*>(listener), id);
+  dispatcher_.UnSubscribe(static_cast<events::EventListener*>(listener), id);
 }
 
 void Sdl2Application::PostEvent(common::IEvent* event) {
@@ -96,14 +101,38 @@ void Sdl2Application::Exit(int result) {
   stop_ = true;
 }
 
-void Sdl2Application::HandleEvent(Event* event) {
+void Sdl2Application::HandleEvent(events::Event* event) {
   dispatcher_.ProcessEvent(event);
 }
 
-void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {}
+namespace {
+Keysym SDLKeySymToOur(SDL_Keysym sks) {
+  Keysym ks;
+  ks.mod = sks.mod;
+  ks.scancode = static_cast<Scancode>(sks.scancode);
+  ks.sym = sks.sym;
+  return ks;
+}
+}
+
+void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
+  if (event->type == SDL_KEYDOWN) {
+    Keysym ks = SDLKeySymToOur(event->keysym);
+    events::KeyPressInfo inf(event->state == SDL_PRESSED, ks);
+    events::KeyPressEvent* key_press = new events::KeyPressEvent(this, inf);
+    dispatcher_.ProcessEvent(key_press);
+  } else if (event->type == SDL_KEYUP) {
+    Keysym ks = SDLKeySymToOur(event->keysym);
+    events::KeyReleaseInfo inf(event->state == SDL_PRESSED, ks);
+    events::KeyReleaseEvent* key_release = new events::KeyReleaseEvent(this, inf);
+    dispatcher_.ProcessEvent(key_release);
+  }
+}
 
 void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {}
 
 void Sdl2Application::HandleMousePressEvent(SDL_MouseButtonEvent* event) {}
 
 void Sdl2Application::HandleMouseMoveEvent(SDL_MouseMotionEvent* event) {}
+}
+}

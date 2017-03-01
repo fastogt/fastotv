@@ -12,12 +12,13 @@ extern "C" {
 #include <common/file_system.h>
 #include <common/application/application.h>
 
-#include "video_state.h"
 #include "sdl_utils.h"
 
+#include "core/video_state.h"
 #include "core/app_options.h"
 #include "core/utils.h"
 #include "core/video_frame.h"
+#include "core/events/events.h"
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
@@ -184,9 +185,10 @@ Player::Player(const PlayerOptions& options,
   }
   options_.audio_volume = av_clip(options_.audio_volume, 0, 100);
 
-  fApp->Subscribe(this, TimerEvent::EventType);
-  fApp->Subscribe(this, AllocFrameEvent::EventType);
-  fApp->Subscribe(this, QuitStreamEvent::EventType);
+  fApp->Subscribe(this, core::events::TimerEvent::EventType);
+  fApp->Subscribe(this, core::events::AllocFrameEvent::EventType);
+  fApp->Subscribe(this, core::events::QuitStreamEvent::EventType);
+  fApp->Subscribe(this, core::events::KeyPressEvent::EventType);
 
   surface_ = IMG_LoadPNG(IMG_PATH);
   stream_ = CreateCurrentStream();
@@ -228,8 +230,8 @@ Player::~Player() {
 }
 
 void Player::HandleEvent(event_t* event) {
-  if (event->GetEventType() == AllocFrameEvent::EventType) {
-    AllocFrameEvent* avent = static_cast<AllocFrameEvent*>(event);
+  if (event->GetEventType() == core::events::AllocFrameEvent::EventType) {
+    core::events::AllocFrameEvent* avent = static_cast<core::events::AllocFrameEvent*>(event);
     int res = avent->info().stream_->HandleAllocPictureEvent();
     if (res == ERROR_RESULT_VALUE) {
       if (stream_) {
@@ -238,8 +240,8 @@ void Player::HandleEvent(event_t* event) {
       }
       fApp->Exit(EXIT_FAILURE);
     }
-  } else if (event->GetEventType() == TimerEvent::EventType) {
-    TimerEvent* tevent = static_cast<TimerEvent*>(event);
+  } else if (event->GetEventType() == core::events::TimerEvent::EventType) {
+    core::events::TimerEvent* tevent = static_cast<core::events::TimerEvent*>(event);
     UNUSED(tevent);
     if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
       SDL_ShowCursor(0);
@@ -264,12 +266,18 @@ void Player::HandleEvent(event_t* event) {
         SDL_RenderPresent(renderer_);
       }
     }
+  } else if (event->GetEventType() == core::events::KeyPressEvent::EventType) {
+    core::events::KeyPressEvent* key_press_event = static_cast<core::events::KeyPressEvent*>(event);
+    HandleKeyPressEvent(key_press_event);
   }
 }
 
-void Player::HandleExceptionEvent(event_t* event, common::Error err) {}
+void Player::HandleExceptionEvent(event_t* event, common::Error err) {
+  UNUSED(event);
+  UNUSED(err);
+}
 
-bool Player::HandleRequestAudio(VideoState* stream,
+bool Player::HandleRequestAudio(core::VideoState* stream,
                                 int64_t wanted_channel_layout,
                                 int wanted_nb_channels,
                                 int wanted_sample_rate,
@@ -302,7 +310,7 @@ void Player::HanleAudioMix(uint8_t* audio_stream_ptr,
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 
-bool Player::HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) {
+bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame) {
   UNUSED(stream);
 
   Uint32 sdl_format;
@@ -328,7 +336,7 @@ bool Player::HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) {
   return true;
 }
 
-void Player::HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) {
+void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) {
   UNUSED(stream);
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
@@ -342,7 +350,7 @@ void Player::HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame
   SDL_RenderPresent(renderer_);
 }
 
-bool Player::HandleRequestWindow(VideoState* stream) {
+bool Player::HandleRequestWindow(core::VideoState* stream) {
   if (!stream) {  // invalid input
     return false;
   }
@@ -378,81 +386,82 @@ void Player::HandleDefaultWindowSize(int width, int height, AVRational sar) {
   options_.default_height = rect.h;
 }
 
-void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
+void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   if (options_.exit_on_keydown) {
     fApp->Exit(EXIT_SUCCESS);
     return;
   }
 
+  core::events::KeyPressInfo inf = event->info();
   double incr = 0;
-  switch (event->keysym.sym) {
-    case SDLK_ESCAPE:
-    case SDLK_q: {
+  switch (inf.ks.sym) {
+    case K_ESCAPE:
+    case K_q: {
       fApp->Exit(EXIT_SUCCESS);
       return;
     }
-    case SDLK_f: {
+    case K_f: {
       bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);
       break;
     }
-    case SDLK_p:
-    case SDLK_SPACE:
+    case K_p:
+    case K_SPACE:
       if (stream_) {
         stream_->TogglePause();
       }
       break;
-    case SDLK_m: {
+    case K_m: {
       bool muted = !options_.muted;
       SetMute(muted);
       break;
     }
-    case SDLK_KP_MULTIPLY:
-    case SDLK_0:
+    case K_KP_MULTIPLY:
+    case K_0:
       UpdateVolume(VOLUME_STEP);
       break;
-    case SDLK_KP_DIVIDE:
-    case SDLK_9:
+    case K_KP_DIVIDE:
+    case K_9:
       UpdateVolume(-VOLUME_STEP);
       break;
-    case SDLK_s:  // S: Step to next frame
+    case K_s:  // S: Step to next frame
       if (stream_) {
         stream_->StepToNextFrame();
       }
       break;
-    case SDLK_a:
+    case K_a:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
       }
       break;
-    case SDLK_v:
+    case K_v:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
       }
       break;
-    case SDLK_c:
+    case K_c:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
         stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
       }
       break;
-    case SDLK_t:
+    case K_t:
       // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
       break;
-    case SDLK_w: {
+    case K_w: {
       break;
     }
-    case SDLK_PAGEUP:
+    case K_PAGEUP:
       if (stream_) {
         stream_->MoveToNextFragment(0);
       }
       break;
-    case SDLK_PAGEDOWN:
+    case K_PAGEDOWN:
       if (stream_) {
         stream_->MoveToPreviousFragment(0);
       }
       break;
-    case SDLK_LEFTBRACKET: {  // change channel
+    case K_LEFTBRACKET: {  // change channel
       if (stream_) {
         stream_->Abort();
       }
@@ -461,7 +470,7 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
       SDL_PushEvent(&event);*/
       break;
     }
-    case SDLK_RIGHTBRACKET: {  // change channel
+    case K_RIGHTBRACKET: {  // change channel
       if (stream_) {
         stream_->Abort();
       }
@@ -470,16 +479,16 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
       SDL_PushEvent(&event);*/
       break;
     }
-    case SDLK_LEFT:
+    case K_LEFT:
       incr = -10.0;
       goto do_seek;
-    case SDLK_RIGHT:
+    case K_RIGHT:
       incr = 10.0;
       goto do_seek;
-    case SDLK_UP:
+    case K_UP:
       incr = 60.0;
       goto do_seek;
-    case SDLK_DOWN:
+    case K_DOWN:
       incr = -60.0;
     do_seek:
       if (stream_) {
@@ -551,7 +560,7 @@ Url Player::CurrentUrl() const {
 
 void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
   Player* player = static_cast<Player*>(opaque);
-  VideoState* st = player->stream_;
+  core::VideoState* st = player->stream_;
   if (!player->options_.muted && st && st->IsStreamReady()) {
     st->UpdateAudioBuffer(stream, len, player->options_.audio_volume);
   } else {
@@ -618,14 +627,14 @@ bool Player::ChangePlayListLocation(const common::uri::Uri& location) {
   return false;
 }
 
-VideoState* Player::CreateStreamInner() {
+core::VideoState* Player::CreateStreamInner() {
   Url url = play_list_[curent_stream_pos_];
-  VideoState* stream = new VideoState(url.Id(), url.GetUrl(), opt_, copt_, this);
+  core::VideoState* stream = new core::VideoState(url.Id(), url.GetUrl(), opt_, copt_, this);
   return stream;
 }
 
-VideoState* Player::CreateCurrentStream() {
-  VideoState* stream = CreateStreamInner();
+core::VideoState* Player::CreateCurrentStream() {
+  core::VideoState* stream = CreateStreamInner();
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
     delete stream;
@@ -635,7 +644,7 @@ VideoState* Player::CreateCurrentStream() {
   return stream;
 }
 
-VideoState* Player::CreateNextStream() {
+core::VideoState* Player::CreateNextStream() {
   // check is executed in main thread?
   if (play_list_.empty()) {
     return nullptr;
@@ -646,7 +655,7 @@ VideoState* Player::CreateNextStream() {
   } else {
     curent_stream_pos_++;
   }
-  VideoState* stream = CreateStreamInner();
+  core::VideoState* stream = CreateStreamInner();
 
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
@@ -657,7 +666,7 @@ VideoState* Player::CreateNextStream() {
   return stream;
 }
 
-VideoState* Player::CreatePrevStream() {
+core::VideoState* Player::CreatePrevStream() {
   // check is executed in main thread?
   if (play_list_.empty()) {
     return nullptr;
@@ -668,7 +677,7 @@ VideoState* Player::CreatePrevStream() {
   } else {
     --curent_stream_pos_;
   }
-  VideoState* stream = CreateStreamInner();
+  core::VideoState* stream = CreateStreamInner();
 
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {

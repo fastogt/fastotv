@@ -13,6 +13,11 @@ SET(HEADERS_CORE
   core/ring_buffer.h
   core/audio_frame.h
   core/video_frame.h
+  core/events/events.h
+  core/events/events_base.h
+  core/application/sdl2_application.h
+  core/video_state.h
+  core/video_state_handler.h
 )
 
 SET(SOURCES_CORE
@@ -28,6 +33,11 @@ SET(SOURCES_CORE
   core/ring_buffer.cpp
   core/audio_frame.cpp
   core/video_frame.cpp
+  core/events/events.cpp
+  core/events/events_base.cpp
+  core/application/sdl2_application.cpp
+  core/video_state.cpp
+  core/video_state_handler.cpp
 )
 
 SET_DESKTOP_TARGET()
@@ -157,14 +167,10 @@ TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}
 )
 
 SET(MAIN_SOURCES
-  video_state_handler.h video_state_handler.cpp
   player.h player.cpp
-  video_state.h video_state.cpp
   cmdutils.h cmdutils.cpp
   url.h url.cpp
-  events.h events.cpp
   sdl_utils.h sdl_utils.cpp
-  sdl2_application.h sdl2_application.cpp
 )
 SET(EXE_SOURCES main.cpp ${MAIN_SOURCES})
 SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
