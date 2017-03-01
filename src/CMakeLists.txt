@@ -164,6 +164,7 @@ SET(MAIN_SOURCES
   url.h url.cpp
   events.h events.cpp
   sdl_utils.h sdl_utils.cpp
+  sdl2_application.h sdl2_application.cpp
 )
 SET(EXE_SOURCES main.cpp ${MAIN_SOURCES})
 SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})

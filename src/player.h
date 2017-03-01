@@ -43,15 +43,13 @@ class Player : public VideoStateHandler {
   Player(const PlayerOptions& options,
          const core::AppOptions& opt,
          const core::ComplexOptions& copt);
-  int Exec() WARN_UNUSED_RESULT;
-  void Stop();
   void SetFullScreen(bool full_screen);
   void SetMute(bool mute);
   ~Player();
 
  protected:
-  virtual void HandleEvent(Event* event) override;
-  virtual void HandleExceptionEvent(Event* event, common::Error err) override;
+  virtual void HandleEvent(event_t* event) override;
+  virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,
@@ -108,13 +106,11 @@ class Player : public VideoStateHandler {
   int64_t last_mouse_left_click_;
   size_t curent_stream_pos_;
 
-  bool stop_;
+  SDL_Surface* surface_;
   VideoState* stream_;
 
   int width_;
   int height_;
   const int xleft_;
   const int ytop_;
-
-  common::threads::EventThread<EventsType>* const thread_;
 };

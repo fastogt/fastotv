@@ -10,7 +10,7 @@ extern "C" {
 #include "third-party/json-c/json-c/json.h"  // for json_object_...
 
 #include <common/file_system.h>
-#include <common/threads/event_bus.h>
+#include <common/application/application.h>
 
 #include "video_state.h"
 #include "sdl_utils.h"
@@ -27,11 +27,6 @@ extern "C" {
 #define URLS_FIELD "urls"
 
 #define IMG_PATH "resources/offline.png"
-
-#define FF_ALLOC_EVENT (SDL_USEREVENT)
-#define FF_QUIT_EVENT (SDL_USEREVENT + 2)
-#define FF_NEXT_STREAM (SDL_USEREVENT + 3)
-#define FF_PREV_STREAM (SDL_USEREVENT + 4)
 
 namespace {
 
@@ -174,16 +169,11 @@ Player::Player(const PlayerOptions& options,
       cursor_last_shown_(0),
       last_mouse_left_click_(0),
       curent_stream_pos_(0),
-      stop_(false),
       stream_(nullptr),
       width_(0),
       height_(0),
       xleft_(0),
-      ytop_(0),
-      thread_(EVENT_BUS()->CreateEventThread<EventsType>()) {
-  EVENT_BUS()->Subscribe<AllocFrameEvent>(this);
-  EVENT_BUS()->Subscribe<QuitStreamEvent>(this);
-
+      ytop_(0) {
   ChangePlayListLocation(options.play_list_location);
   // stable options
   if (options_.audio_volume < 0) {
@@ -193,121 +183,12 @@ Player::Player(const PlayerOptions& options,
     WARNING_LOG() << "-volume=" << options_.audio_volume << " > 100, setting to 100";
   }
   options_.audio_volume = av_clip(options_.audio_volume, 0, 100);
-}
 
-int Player::Exec() {
-  CHECK(THREAD_MANAGER()->IsMainThread());
+  surface_ = IMG_LoadPNG(IMG_PATH);
   stream_ = CreateCurrentStream();
   if (!stream_) {
     SwitchToErrorMode();
   }
-
-  SDL_Surface* surface = IMG_LoadPNG(IMG_PATH);
-  while (!stop_) {
-    SDL_Event event;
-    {
-      double remaining_time = 0.0;
-      SDL_PumpEvents();
-      while (!SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) {
-        if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
-          SDL_ShowCursor(0);
-          cursor_hidden_ = true;
-        }
-        if (remaining_time > 0.0) {
-          const unsigned sleep_time = static_cast<unsigned>(remaining_time * 1000000.0);
-          av_usleep(sleep_time);
-        }
-        remaining_time = REFRESH_RATE;
-        if (stream_ && stream_->IsStreamReady()) {
-          stream_->TryRefreshVideo(&remaining_time);
-        } else {
-          if (surface) {
-            SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface);
-            if (img && !opt_.video_disable) {
-              SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-              SDL_RenderClear(renderer_);
-              SDL_RenderCopy(renderer_, img, NULL, NULL);
-              SDL_RenderPresent(renderer_);
-              SDL_DestroyTexture(img);
-            }
-          } else {
-            SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-            SDL_RenderClear(renderer_);
-            SDL_RenderPresent(renderer_);
-          }
-        }
-        SDL_PumpEvents();
-      }
-    }
-    // handle event
-    switch (event.type) {
-      case SDL_KEYDOWN: {
-        HandleKeyPressEvent(&event.key);
-        break;
-      }
-      case SDL_MOUSEBUTTONDOWN: {
-        HandleMousePressEvent(&event.button);
-        break;
-      }
-      case SDL_MOUSEMOTION: {
-        HandleMouseMoveEvent(&event.motion);
-        break;
-      }
-      case SDL_WINDOWEVENT: {
-        HandleWindowEvent(&event.window);
-        break;
-      }
-      case SDL_QUIT: {
-        goto finish;
-      }
-      case FF_QUIT_EVENT: {  // stream want to quit
-        // VideoState* stream = static_cast<VideoState*>(event.user.data1);
-        destroy(&stream_);
-        SwitchToErrorMode();
-        break;
-      }
-      case FF_NEXT_STREAM: {
-        stream_ = CreateNextStream();
-        if (!stream_) {
-          SwitchToErrorMode();
-        }
-        break;
-      }
-      case FF_PREV_STREAM: {
-        stream_ = CreatePrevStream();
-        if (!stream_) {
-          SwitchToErrorMode();
-        }
-        break;
-      }
-      case FF_ALLOC_EVENT: {
-        int res = static_cast<VideoState*>(event.user.data1)->HandleAllocPictureEvent();
-        if (res == ERROR_RESULT_VALUE) {
-          if (stream_) {
-            stream_->Abort();
-            destroy(&stream_);
-          }
-          SDL_FreeSurface(surface);
-          return EXIT_FAILURE;
-        }
-        break;
-      }
-      default:
-        break;
-    }
-  }
-
-finish:
-  if (stream_) {
-    stream_->Abort();
-    destroy(&stream_);
-  }
-  SDL_FreeSurface(surface);
-  return EXIT_SUCCESS;
-}
-
-void Player::Stop() {
-  stop_ = true;
 }
 
 void Player::SetFullScreen(bool full_screen) {
@@ -323,6 +204,12 @@ void Player::SetMute(bool mute) {
 }
 
 Player::~Player() {
+  if (stream_) {
+    stream_->Abort();
+    destroy(&stream_);
+  }
+  SDL_FreeSurface(surface_);
+
   SDL_CloseAudio();
   destroy(&audio_params_);
 
@@ -334,33 +221,48 @@ Player::~Player() {
     SDL_DestroyWindow(window_);
     window_ = NULL;
   }
-
-  EVENT_BUS()->UnSubscribe<AllocFrameEvent>(this);
-  EVENT_BUS()->UnSubscribe<QuitStreamEvent>(this);
-  EVENT_BUS()->Stop();
 }
 
-void Player::HandleEvent(Event* event) {
+void Player::HandleEvent(event_t* event) {
   if (event->eventType() == AllocFrameEvent::EventType) {
     AllocFrameEvent* avent = static_cast<AllocFrameEvent*>(event);
-    SDL_Event event;
-    event.type = FF_ALLOC_EVENT;
-    event.user.data1 = avent->info().stream_;
-    SDL_PushEvent(&event);
-  } else if (event->eventType() == AllocFrameEvent::EventType) {
-    QuitStreamEvent* qevent = static_cast<QuitStreamEvent*>(event);
-    SDL_Event event;
-    event.type = FF_QUIT_EVENT;
-    event.user.data1 = qevent->info().stream_;
-    event.user.code = qevent->info().code_;
-    SDL_PushEvent(&event);
+    int res = avent->info().stream_->HandleAllocPictureEvent();
+    if (res == ERROR_RESULT_VALUE) {
+      if (stream_) {
+        stream_->Abort();
+        destroy(&stream_);
+      }
+      fApp->Exit(EXIT_FAILURE);
+    }
+  } else if (event->eventType() == TimerEvent::EventType) {
+    TimerEvent* tevent = static_cast<TimerEvent*>(event);
+    if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
+      SDL_ShowCursor(0);
+      cursor_hidden_ = true;
+    }
+    double remaining_time = REFRESH_RATE;
+    if (stream_ && stream_->IsStreamReady()) {
+      stream_->TryRefreshVideo(&remaining_time);
+    } else {
+      if (surface_) {
+        SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface_);
+        if (img && !opt_.video_disable) {
+          SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+          SDL_RenderClear(renderer_);
+          SDL_RenderCopy(renderer_, img, NULL, NULL);
+          SDL_RenderPresent(renderer_);
+          SDL_DestroyTexture(img);
+        }
+      } else {
+        SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+        SDL_RenderClear(renderer_);
+        SDL_RenderPresent(renderer_);
+      }
+    }
   }
 }
 
-void Player::HandleExceptionEvent(Event* event, common::Error err) {
-  UNUSED(event);
-  UNUSED(err);
-}
+void Player::HandleExceptionEvent(event_t* event, common::Error err) {}
 
 bool Player::HandleRequestAudio(VideoState* stream,
                                 int64_t wanted_channel_layout,
@@ -473,7 +375,7 @@ void Player::HandleDefaultWindowSize(int width, int height, AVRational sar) {
 
 void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
   if (options_.exit_on_keydown) {
-    Stop();
+    fApp->Exit(EXIT_SUCCESS);
     return;
   }
 
@@ -481,7 +383,7 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
   switch (event->keysym.sym) {
     case SDLK_ESCAPE:
     case SDLK_q: {
-      Stop();
+      fApp->Exit(EXIT_SUCCESS);
       return;
     }
     case SDLK_f: {
@@ -549,18 +451,18 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
       if (stream_) {
         stream_->Abort();
       }
-      SDL_Event event;
+      /*SDL_Event event;
       event.type = FF_PREV_STREAM;
-      SDL_PushEvent(&event);
+      SDL_PushEvent(&event);*/
       break;
     }
     case SDLK_RIGHTBRACKET: {  // change channel
       if (stream_) {
         stream_->Abort();
       }
-      SDL_Event event;
+      /*SDL_Event event;
       event.type = FF_NEXT_STREAM;
-      SDL_PushEvent(&event);
+      SDL_PushEvent(&event);*/
       break;
     }
     case SDLK_LEFT:
@@ -586,7 +488,7 @@ void Player::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
 
 void Player::HandleMousePressEvent(SDL_MouseButtonEvent* event) {
   if (options_.exit_on_mousedown) {
-    Stop();
+    fApp->Exit(EXIT_SUCCESS);
     return;
   }
   if (event->button == SDL_BUTTON_LEFT) {

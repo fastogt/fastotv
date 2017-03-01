@@ -13,10 +13,10 @@ struct AudioParams;
 class VideoStateHandler : public EventListener {
  public:
   VideoStateHandler();
-  virtual ~VideoStateHandler();
+  virtual void HandleEvent(event_t* event) override = 0;
+  virtual void HandleExceptionEvent(event_t* event, common::Error err) override = 0;
 
-  virtual void HandleEvent(Event* event) override = 0;
-  virtual void HandleExceptionEvent(Event* event, common::Error err) override = 0;
+  virtual ~VideoStateHandler();
 
   // audio
   virtual bool HandleRequestAudio(VideoState* stream,

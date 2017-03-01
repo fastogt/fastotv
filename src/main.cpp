@@ -7,12 +7,6 @@
 #include <ostream>   // for operator<<, basic_ostream
 #include <string>    // for char_traits, string, etc
 
-#include <SDL2/SDL.h>         // for SDL_INIT_AUDIO, etc
-#include <SDL2/SDL_error.h>   // for SDL_GetError
-#include <SDL2/SDL_events.h>  // for SDL_EventState, SDL_IGNORE, etc
-#include <SDL2/SDL_mutex.h>   // for SDL_CreateMutex, etc
-#include <SDL2/SDL_stdinc.h>  // for SDL_getenv, SDL_setenv, etc
-
 #include "ffmpeg_config.h"
 
 extern "C" {
@@ -31,12 +25,14 @@ extern "C" {
 #include <common/logger.h>      // for LogMessage, etc
 #include <common/macros.h>      // for UNUSED, etc
 #include <common/file_system.h>
+#include <common/threads/types.h>
 
 #include "cmdutils.h"          // for HAS_ARG, OPT_EXPERT, etc
 #include "core/app_options.h"  // for AppOptions, ComplexOptions
 #include "core/types.h"
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER, etc
 #include "player.h"
+#include "sdl2_application.h"
 
 namespace {
 core::AppOptions g_options;
@@ -347,68 +343,6 @@ const OptionDef options[] = {
 void show_usage(void) {
   INFO_LOG() << "Simple media player\nusage: " PROJECT_NAME_TITLE " [options] input_file";
 }
-
-int lockmgr(void** mtx, enum AVLockOp op) {
-  SDL_mutex* lmtx = static_cast<SDL_mutex*>(*mtx);
-  switch (op) {
-    case AV_LOCK_CREATE: {
-      *mtx = SDL_CreateMutex();
-      if (!*mtx) {
-        ERROR_LOG() << "SDL_CreateMutex(): " << SDL_GetError();
-        return 1;
-      }
-      return 0;
-    }
-    case AV_LOCK_OBTAIN: {
-      return !!SDL_LockMutex(lmtx);
-    }
-    case AV_LOCK_RELEASE: {
-      return !!SDL_UnlockMutex(lmtx);
-    }
-    case AV_LOCK_DESTROY: {
-      SDL_DestroyMutex(lmtx);
-      return 0;
-    }
-  }
-  return 1;
-}
-
-DictionaryOptions* do_init(int argc, char** argv) {
-  init_dynload();
-
-  parse_loglevel(argc, argv, options);
-
-/* register all codecs, demux and protocols */
-#if CONFIG_AVDEVICE
-  avdevice_register_all();
-#endif
-#if CONFIG_AVFILTER
-  avfilter_register_all();
-#endif
-  av_register_all();
-  avformat_network_init();
-
-  DictionaryOptions* lopt = new DictionaryOptions;
-
-  signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
-  signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
-
-  show_banner(argc, argv, options);
-
-  parse_options(argc, argv, options, lopt);
-  return lopt;
-}
-
-/* handle an event sent by the GUI */
-void do_exit(DictionaryOptions** opt) {
-  av_lockmgr_register(NULL);
-  destroy(opt);
-  avformat_network_deinit();
-  if (g_options.show_status) {
-    printf("\n");
-  }
-  SDL_Quit();
-}
 }
 
 void show_help_default(const char* opt, const char* arg) {
@@ -446,6 +380,98 @@ void show_help_default(const char* opt, const char* arg) {
       "left double-click   toggle full screen\n");
 }
 
+template <typename B>
+class FFmpegApplication : public B {
+ public:
+  typedef B base_class_t;
+  FFmpegApplication(int argc, char** argv) : base_class_t(argc, argv), dict_(NULL) {
+    init_dynload();
+
+    parse_loglevel(argc, argv, options);
+
+/* register all codecs, demux and protocols */
+#if CONFIG_AVDEVICE
+    avdevice_register_all();
+#endif
+#if CONFIG_AVFILTER
+    avfilter_register_all();
+#endif
+    av_register_all();
+    avformat_network_init();
+
+    DictionaryOptions* lopt = new DictionaryOptions;
+
+    signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
+    signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
+
+    show_banner(argc, argv, options);
+    parse_options(argc, argv, options, lopt);
+    dict_ = lopt;
+  }
+
+  virtual int PreExec() override {
+    g_options.autorotate = true;  // fix me
+    if (!g_player_options.play_list_location.isValid()) {
+      show_usage();
+      ERROR_LOG() << "An input file must be specified";
+      ERROR_LOG() << "Use -h to get full help or, even better, run 'man " PROJECT_NAME_TITLE "'";
+      return EXIT_FAILURE;
+    }
+
+    if (av_lockmgr_register(lockmgr)) {
+      ERROR_LOG() << "Could not initialize lock manager!";
+      return EXIT_FAILURE;
+    }
+
+    return base_class_t::PreExec();
+  }
+
+  ~FFmpegApplication() {
+    av_lockmgr_register(NULL);
+    destroy(&dict_);
+    avformat_network_deinit();
+    if (g_options.show_status) {
+      printf("\n");
+    }
+  }
+
+ private:
+  static int lockmgr(void** mtx, enum AVLockOp op) {
+    common::mutex* lmtx = static_cast<common::mutex*>(*mtx);
+    switch (op) {
+      case AV_LOCK_CREATE: {
+        *mtx = new common::mutex;
+        if (!*mtx) {
+          return 1;
+        }
+        return 0;
+      }
+      case AV_LOCK_OBTAIN: {
+        lmtx->lock();
+        return 0;
+      }
+      case AV_LOCK_RELEASE: {
+        lmtx->unlock();
+        return 0;
+      }
+      case AV_LOCK_DESTROY: {
+        delete lmtx;
+        return 0;
+      }
+    }
+    return 1;
+  }
+  DictionaryOptions* dict_;
+};
+
+namespace common {
+namespace application {
+FFmpegApplication<Sdl2Application>* CreateApplicationImpl(int argc, char** argv) {
+  return new FFmpegApplication<Sdl2Application<Event>>(argc, argv);
+}
+}
+}
+
 /* Called from the main */
 int main(int argc, char** argv) {
 #if defined(NDEBUG)
@@ -459,48 +485,10 @@ int main(int argc, char** argv) {
 #else
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
-  g_options.autorotate = true;  // fix me
-  DictionaryOptions* dict = do_init(argc, argv);
-
-  if (!g_player_options.play_list_location.isValid()) {
-    show_usage();
-    ERROR_LOG() << "An input file must be specified";
-    ERROR_LOG() << "Use -h to get full help or, even better, run 'man " PROJECT_NAME_TITLE "'";
-    return EXIT_FAILURE;
-  }
-
-  Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
-  if (g_options.audio_disable) {
-    flags &= ~SDL_INIT_AUDIO;
-  } else {
-    /* Try to work around an occasional ALSA buffer underflow issue when the
-     * period size is NPOT due to ALSA resampling by forcing the buffer size. */
-    if (!SDL_getenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE")) {
-      SDL_setenv("SDL_AUDIO_ALSA_SET_BUFFER_SIZE", "1", 1);
-    }
-  }
-  if (g_options.video_disable) {
-    flags &= ~SDL_INIT_VIDEO;
-  }
-  if (SDL_Init(flags)) {
-    ERROR_LOG() << "Could not initialize SDL - " << SDL_GetError();
-    ERROR_LOG() << "(Did you set the DISPLAY variable?)";
-    return EXIT_FAILURE;
-  }
-
-  SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
-  SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
-
-  if (av_lockmgr_register(lockmgr)) {
-    ERROR_LOG() << "Could not initialize lock manager!";
-    do_exit(&dict);
-    return EXIT_FAILURE;
-  }
-
-  core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+  common::application::Application app(argc, argv);
+  core::ComplexOptions copt;//(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
   Player* player = new Player(g_player_options, g_options, copt);
-  int res = player->Exec();
+  int res = app.Exec();
   destroy(&player);
-  do_exit(&dict);
   return res;
 }

@@ -41,7 +41,7 @@ extern "C" {
 #include <common/logger.h>  // for LogMessage, etc
 #include <common/macros.h>  // for destroy, ERROR_RESULT_VALUE, etc
 #include <common/threads/thread_manager.h>
-#include <common/threads/event_bus.h>
+#include <common/application/application.h>
 #include <common/utils.h>
 #include <common/sprintf.h>
 
@@ -1109,7 +1109,7 @@ int VideoState::QueuePicture(AVFrame* src_frame,
     /* the allocation must be done in the main thread to avoid
        locking problems. */
     AllocFrameEvent* event = new AllocFrameEvent(this, FrameInfo(this, vp));
-    EVENT_BUS()->PostEvent(event);
+    fApp->PostEvent(event);
 
     video_frame_queue_->WaitSafeAndNotify([video_packet_queue, vp]() -> bool {
       return !vp->allocated && !video_packet_queue->AbortRequest();
@@ -1173,7 +1173,7 @@ int VideoState::ReadThread() {
   if (!ic) {
     ERROR_LOG() << "Could not allocate context.";
     QuitStreamEvent* qevent = new QuitStreamEvent(this, QuitInfo(this, AVERROR(ENOMEM)));
-    EVENT_BUS()->PostEvent(qevent);
+    fApp->PostEvent(qevent);
     return ERROR_RESULT_VALUE;
   }
   bool scan_all_pmts_set = false;
@@ -1195,7 +1195,7 @@ int VideoState::ReadThread() {
     ERROR_LOG() << in_filename << ": " << errbuf_ptr;
     avformat_close_input(&ic);
     QuitStreamEvent* qevent = new QuitStreamEvent(this, QuitInfo(this, err));
-    EVENT_BUS()->PostEvent(qevent);
+    fApp->PostEvent(qevent);
     return ERROR_RESULT_VALUE;
   }
   if (scan_all_pmts_set) {
@@ -1453,7 +1453,7 @@ int VideoState::ReadThread() {
   ret = 0;
 fail:
   QuitStreamEvent* qevent = new QuitStreamEvent(this, QuitInfo(this, ret));
-  EVENT_BUS()->PostEvent(qevent);
+  fApp->PostEvent(qevent);
   return 0;
 }
 

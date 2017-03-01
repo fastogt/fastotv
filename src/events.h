@@ -8,7 +8,7 @@ struct VideoFrame;
 
 class VideoState;
 
-enum EventsType { ALLOC_FRAME_EVENT, QUIT_STREAM_EVENT, COUNT_EVENTS };
+enum EventsType { TIMER_EVENT, ALLOC_FRAME_EVENT, QUIT_STREAM_EVENT, COUNT_EVENTS };
 #define EVENT_LOOP_ID 1
 
 namespace common {
@@ -68,5 +68,8 @@ struct QuitInfo : public StreamInfo {
   int code_;
 };
 
+struct TimeInfo {};
+
+typedef EventBaseInfo<TIMER_EVENT, TimeInfo> TimerEvent;
 typedef EventBaseInfo<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
 typedef EventBaseInfo<QUIT_STREAM_EVENT, QuitInfo> QuitStreamEvent;
