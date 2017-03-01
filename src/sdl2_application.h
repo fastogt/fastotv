@@ -3,10 +3,11 @@
 #include <SDL2/SDL_events.h>  // for SDL_EventState, SDL_IGNORE, etc
 
 #include <common/application/application.h>
+#include <common/threads/event_dispatcher.h>
 
 #include "events.h"
 
-class Sdl2Application : public common::application::IApplicationImpl<Event> {
+class Sdl2Application : public common::application::IApplicationImpl {
  public:
   enum { event_timeout_wait_msec = 10 };
   Sdl2Application(int argc, char** argv);
@@ -15,7 +16,9 @@ class Sdl2Application : public common::application::IApplicationImpl<Event> {
   virtual int Exec() override;      // EXIT_FAILURE, EXIT_SUCCESS
   virtual int PostExec() override;  // EXIT_FAILURE, EXIT_SUCCESS
 
-  virtual void PostEvent(Event* event) override;
+  virtual void Subscribe(common::IListener* listener, common::events_size_t id) override;
+  virtual void UnSubscribe(common::IListener* listener, common::events_size_t id) override;
+  virtual void PostEvent(common::IEvent* event) override;
 
   virtual void Exit(int result) override;
 
@@ -28,5 +31,6 @@ class Sdl2Application : public common::application::IApplicationImpl<Event> {
   virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
 
  private:
+  common::threads::EventDispatcher<EventsType> dispatcher_;
   bool stop_;
 };

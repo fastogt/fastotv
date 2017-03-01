@@ -184,6 +184,10 @@ Player::Player(const PlayerOptions& options,
   }
   options_.audio_volume = av_clip(options_.audio_volume, 0, 100);
 
+  fApp->Subscribe(this, TimerEvent::EventType);
+  fApp->Subscribe(this, AllocFrameEvent::EventType);
+  fApp->Subscribe(this, QuitStreamEvent::EventType);
+
   surface_ = IMG_LoadPNG(IMG_PATH);
   stream_ = CreateCurrentStream();
   if (!stream_) {
@@ -224,7 +228,7 @@ Player::~Player() {
 }
 
 void Player::HandleEvent(event_t* event) {
-  if (event->eventType() == AllocFrameEvent::EventType) {
+  if (event->GetEventType() == AllocFrameEvent::EventType) {
     AllocFrameEvent* avent = static_cast<AllocFrameEvent*>(event);
     int res = avent->info().stream_->HandleAllocPictureEvent();
     if (res == ERROR_RESULT_VALUE) {
@@ -234,8 +238,9 @@ void Player::HandleEvent(event_t* event) {
       }
       fApp->Exit(EXIT_FAILURE);
     }
-  } else if (event->eventType() == TimerEvent::EventType) {
+  } else if (event->GetEventType() == TimerEvent::EventType) {
     TimerEvent* tevent = static_cast<TimerEvent*>(event);
+    UNUSED(tevent);
     if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
       SDL_ShowCursor(0);
       cursor_hidden_ = true;

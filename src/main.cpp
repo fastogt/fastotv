@@ -466,8 +466,8 @@ class FFmpegApplication : public B {
 
 namespace common {
 namespace application {
-FFmpegApplication<Sdl2Application>* CreateApplicationImpl(int argc, char** argv) {
-  return new FFmpegApplication<Sdl2Application<Event>>(argc, argv);
+IApplicationImpl* CreateApplicationImpl(int argc, char** argv) {
+  return new FFmpegApplication<Sdl2Application>(argc, argv);
 }
 }
 }

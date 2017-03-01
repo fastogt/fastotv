@@ -15,7 +15,7 @@
 #define FASTO_EVENT (SDL_USEREVENT)
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
-    : common::application::IApplicationImpl(argc, argv), stop_(false) {}
+    : common::application::IApplicationImpl(argc, argv), stop_(false), dispatcher_() {}
 
 int Sdl2Application::PreExec() {
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
@@ -37,8 +37,8 @@ int Sdl2Application::Exec() {
     int res = SDL_WaitEventTimeout(&event, event_timeout_wait_msec);
     if (res == 0) {  // timeout
       TimeInfo inf;
-      TimerEvent timer_event(this, inf);
-      HandleEvent(&timer_event);
+      TimerEvent* timer_event = new TimerEvent(this, inf);
+      HandleEvent(timer_event);
       continue;
     }
 
@@ -62,7 +62,6 @@ int Sdl2Application::Exec() {
       case FASTO_EVENT: {
         Event* fevent = static_cast<Event*>(event.user.data1);
         HandleEvent(fevent);
-        delete fevent;
         break;
       }
       default:
@@ -78,7 +77,15 @@ int Sdl2Application::PostExec() {
   return EXIT_SUCCESS;
 }
 
-void Sdl2Application::PostEvent(Event* event) {
+void Sdl2Application::Subscribe(common::IListener* listener, common::events_size_t id) {
+  dispatcher_.Subscribe(static_cast<EventListener*>(listener), id);
+}
+
+void Sdl2Application::UnSubscribe(common::IListener* listener, common::events_size_t id) {
+  dispatcher_.UnSubscribe(static_cast<EventListener*>(listener), id);
+}
+
+void Sdl2Application::PostEvent(common::IEvent* event) {
   SDL_Event sevent;
   sevent.type = FASTO_EVENT;
   sevent.user.data1 = event;
@@ -90,7 +97,7 @@ void Sdl2Application::Exit(int result) {
 }
 
 void Sdl2Application::HandleEvent(Event* event) {
-
+  dispatcher_.ProcessEvent(event);
 }
 
 void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {}

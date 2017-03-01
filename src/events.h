@@ -15,9 +15,9 @@ namespace common {
 
 template <>
 struct event_traits<EventsType> {
-  typedef IEvent<EventsType> event_t;
+  typedef IEventEx<EventsType> event_t;
   typedef IExceptionEvent<EventsType> ex_event_t;
-  typedef IListener<EventsType> listener_t;
+  typedef IListenerEx<EventsType> listener_t;
   static const unsigned max_count = COUNT_EVENTS;
   static const unsigned id = EVENT_LOOP_ID;
 };
