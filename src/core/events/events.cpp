@@ -17,5 +17,7 @@ TimeInfo::TimeInfo() : time_millisecond(common::time::current_mstime()) {}
 KeyPressInfo::KeyPressInfo(bool pressed, Keysym ks) : is_pressed(pressed), ks(ks) {}
 
 KeyReleaseInfo::KeyReleaseInfo(bool pressed, Keysym ks) : is_pressed(pressed), ks(ks) {}
+
+WindowResizeInfo::WindowResizeInfo(int width, int height) : width(width), height(height) {}
 }
 }

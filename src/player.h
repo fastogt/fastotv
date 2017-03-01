@@ -69,7 +69,8 @@ class Player : public core::VideoStateHandler {
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override;
 
   virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event);
-  virtual void HandleWindowEvent(SDL_WindowEvent* event);
+  virtual void HandleWindowResizeEvent(core::events::WindowResizeEvent* event);
+  virtual void HandleWindowExposeEvent(core::events::WindowExposeEvent* event);
   virtual void HandleMousePressEvent(SDL_MouseButtonEvent* event);
   virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
 

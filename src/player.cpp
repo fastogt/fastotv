@@ -189,6 +189,8 @@ Player::Player(const PlayerOptions& options,
   fApp->Subscribe(this, core::events::AllocFrameEvent::EventType);
   fApp->Subscribe(this, core::events::QuitStreamEvent::EventType);
   fApp->Subscribe(this, core::events::KeyPressEvent::EventType);
+  fApp->Subscribe(this, core::events::WindowResizeEvent::EventType);
+  fApp->Subscribe(this, core::events::WindowExposeEvent::EventType);
 
   surface_ = IMG_LoadPNG(IMG_PATH);
   stream_ = CreateCurrentStream();
@@ -269,6 +271,12 @@ void Player::HandleEvent(event_t* event) {
   } else if (event->GetEventType() == core::events::KeyPressEvent::EventType) {
     core::events::KeyPressEvent* key_press_event = static_cast<core::events::KeyPressEvent*>(event);
     HandleKeyPressEvent(key_press_event);
+  } else if (event->GetEventType() == core::events::WindowResizeEvent::EventType) {
+    core::events::WindowResizeEvent* win_resize_event = static_cast<core::events::WindowResizeEvent*>(event);
+    HandleWindowResizeEvent(win_resize_event);
+  } else if (event->GetEventType() == core::events::WindowExposeEvent::EventType) {
+    core::events::WindowExposeEvent* win_expose = static_cast<core::events::WindowExposeEvent*>(event);
+    HandleWindowExposeEvent(win_expose);
   }
 }
 
@@ -531,22 +539,19 @@ void Player::HandleMouseMoveEvent(SDL_MouseMotionEvent* event) {
   cursor_last_shown_ = av_gettime_relative();
 }
 
-void Player::HandleWindowEvent(SDL_WindowEvent* event) {
-  if (event->event == SDL_WINDOWEVENT_RESIZED) {
-    width_ = event->data1;
-    height_ = event->data2;
-  }
+void Player::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {
+  core::events::WindowResizeInfo inf = event->info();
+  width_ = inf.width;
+  height_ = inf.height;
   if (stream_) {
-    switch (event->event) {
-      case SDL_WINDOWEVENT_RESIZED: {
-        stream_->RefreshRequest();
-        break;
-      }
-      case SDL_WINDOWEVENT_EXPOSED: {
-        stream_->RefreshRequest();
-        break;
-      }
-    }
+    stream_->RefreshRequest();
+  }
+}
+
+void Player::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
+  UNUSED(event);
+  if (stream_) {
+    stream_->RefreshRequest();
   }
 }
 

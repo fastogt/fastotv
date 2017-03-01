@@ -129,7 +129,17 @@ void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
   }
 }
 
-void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {}
+void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {
+  if (event->event == SDL_WINDOWEVENT_RESIZED) {
+    events::WindowResizeInfo inf(event->data1, event->data2);
+    events::WindowResizeEvent* wind_resize = new events::WindowResizeEvent(this, inf);
+    dispatcher_.ProcessEvent(wind_resize);
+  } else if (event->event == SDL_WINDOWEVENT_RESIZED) {
+    events::WindowExposeInfo inf;
+    events::WindowExposeEvent* wind_exp = new events::WindowExposeEvent(this, inf);
+    dispatcher_.ProcessEvent(wind_exp);
+  }
+}
 
 void Sdl2Application::HandleMousePressEvent(SDL_MouseButtonEvent* event) {}
 

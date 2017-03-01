@@ -689,11 +689,22 @@ struct KeyReleaseInfo {
   Keysym ks;
 };
 
+struct WindowResizeInfo {
+  WindowResizeInfo(int width, int height);
+
+  int width;
+  int height;
+};
+
+struct WindowExposeInfo {};
+
 typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
 typedef EventBase<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
 typedef EventBase<QUIT_STREAM_EVENT, QuitInfo> QuitStreamEvent;
 typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;
 typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
+typedef EventBase<WINDOW_RESIZE_EVENT, WindowResizeInfo> WindowResizeEvent;
+typedef EventBase<WINDOW_EXPOSE_EVENT, WindowExposeInfo> WindowExposeEvent;
 
 }  // namespace events {
 }
