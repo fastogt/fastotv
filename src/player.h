@@ -71,7 +71,6 @@ class Player : public core::VideoStateHandler {
 
   virtual void HandleAllocFrameEvent(core::events::AllocFrameEvent* event);
   virtual void HandleQuitStreamEvent(core::events::QuitStreamEvent* event);
-  virtual void HandleChangeStreamEvent(core::events::ChangeStreamEvent* event);
 
   virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event);
 
@@ -103,7 +102,10 @@ class Player : public core::VideoStateHandler {
   core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();
   core::VideoState* CreatePrevStream();
-  core::VideoState* CreateStreamInner();
+  core::VideoState* CreateStreamPos(size_t pos);
+
+  size_t GenerateNextPosition() const;
+  size_t GeneratePrevPosition() const;
 
   PlayerOptions options_;
   const core::AppOptions opt_;

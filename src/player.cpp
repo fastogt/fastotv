@@ -11,6 +11,7 @@ extern "C" {
 
 #include <common/file_system.h>
 #include <common/application/application.h>
+#include <common/threads/thread_manager.h>
 
 #include "sdl_utils.h"
 
@@ -189,7 +190,6 @@ Player::Player(const PlayerOptions& options,
 
   fApp->Subscribe(this, core::events::AllocFrameEvent::EventType);
   fApp->Subscribe(this, core::events::QuitStreamEvent::EventType);
-  fApp->Subscribe(this, core::events::ChangeStreamEvent::EventType);
 
   fApp->Subscribe(this, core::events::KeyPressEvent::EventType);
 
@@ -249,10 +249,6 @@ void Player::HandleEvent(event_t* event) {
     core::events::QuitStreamEvent* quit_stream_event =
         static_cast<core::events::QuitStreamEvent*>(event);
     HandleQuitStreamEvent(quit_stream_event);
-  } else if (event->GetEventType() == core::events::ChangeStreamEvent::EventType) {
-    core::events::ChangeStreamEvent* change_stream_event =
-        static_cast<core::events::ChangeStreamEvent*>(event);
-    HandleChangeStreamEvent(change_stream_event);
   } else if (event->GetEventType() == core::events::TimerEvent::EventType) {
     core::events::TimerEvent* tevent = static_cast<core::events::TimerEvent*>(event);
     HandleTimerEvent(tevent);
@@ -409,24 +405,12 @@ void Player::HandleAllocFrameEvent(core::events::AllocFrameEvent* event) {
 }
 
 void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
-  UNUSED(event);
+  core::events::QuitStreamInfo inf = event->info();
+  if (inf.stream_ && inf.stream_->IsAborted()) {
+    return;
+  }
   destroy(&stream_);
   SwitchToErrorMode();
-}
-
-void Player::HandleChangeStreamEvent(core::events::ChangeStreamEvent* event) {
-  core::events::ChangeStreamInfo inf = event->info();
-  if (inf.direction == core::events::ChangeStreamInfo::NEXT_STREAM) {
-    stream_ = CreateNextStream();
-    if (!stream_) {
-      SwitchToErrorMode();
-    }
-  } else if (inf.direction == core::events::ChangeStreamInfo::PREV_STREAM) {
-    stream_ = CreatePrevStream();
-    if (!stream_) {
-      SwitchToErrorMode();
-    }
-  }
 }
 
 void Player::HandleTimerEvent(core::events::TimerEvent* event) {
@@ -465,100 +449,112 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   core::events::KeyPressInfo inf = event->info();
   double incr = 0;
   switch (inf.ks.sym) {
-    case K_ESCAPE:
-    case K_q: {
+    case FASTO_KEY_ESCAPE:
+    case FASTO_KEY_q: {
       fApp->Exit(EXIT_SUCCESS);
       return;
     }
-    case K_f: {
+    case FASTO_KEY_f: {
       bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);
       break;
     }
-    case K_p:
-    case K_SPACE:
+    case FASTO_KEY_p:
+    case FASTO_KEY_SPACE:
       if (stream_) {
         stream_->TogglePause();
       }
       break;
-    case K_m: {
+    case FASTO_KEY_m: {
       bool muted = !options_.muted;
       SetMute(muted);
       break;
     }
-    case K_KP_MULTIPLY:
-    case K_0:
+    case FASTO_KEY_KP_MULTIPLY:
+    case FASTO_KEY_0:
       UpdateVolume(VOLUME_STEP);
       break;
-    case K_KP_DIVIDE:
-    case K_9:
+    case FASTO_KEY_KP_DIVIDE:
+    case FASTO_KEY_9:
       UpdateVolume(-VOLUME_STEP);
       break;
-    case K_s:  // S: Step to next frame
+    case FASTO_KEY_s:  // S: Step to next frame
       if (stream_) {
         stream_->StepToNextFrame();
       }
       break;
-    case K_a:
+    case FASTO_KEY_a:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
       }
       break;
-    case K_v:
+    case FASTO_KEY_v:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
       }
       break;
-    case K_c:
+    case FASTO_KEY_c:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
         stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
       }
       break;
-    case K_t:
+    case FASTO_KEY_t:
       // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
       break;
-    case K_w: {
+    case FASTO_KEY_w: {
       break;
     }
-    case K_PAGEUP:
+    case FASTO_KEY_PAGEUP:
       if (stream_) {
         stream_->MoveToNextFragment(0);
       }
       break;
-    case K_PAGEDOWN:
+    case FASTO_KEY_PAGEDOWN:
       if (stream_) {
         stream_->MoveToPreviousFragment(0);
       }
       break;
-    case K_LEFTBRACKET: {  // change channel
-      if (stream_) {
-        stream_->Abort();
+    case FASTO_KEY_LEFTBRACKET: {
+      core::VideoState* st = stream_;
+      if (st) {
+        common::thread th([st]() {
+          st->Abort();
+          delete st;
+        });
+        th.detach();
       }
-      core::events::ChangeStreamInfo inf(stream_, core::events::ChangeStreamInfo::PREV_STREAM, 0);
-      core::events::ChangeStreamEvent* ev = new core::events::ChangeStreamEvent(this, inf);
-      fApp->PostEvent(ev);
+      stream_ = CreatePrevStream();
+      if (!stream_) {
+        SwitchToErrorMode();
+      }
       break;
     }
-    case K_RIGHTBRACKET: {  // change channel
-      if (stream_) {
-        stream_->Abort();
+    case FASTO_KEY_RIGHTBRACKET: {
+      core::VideoState* st = stream_;
+      if (st) {
+        common::thread th([st]() {
+          st->Abort();
+          delete st;
+        });
+        th.detach();
       }
-      core::events::ChangeStreamInfo inf(stream_, core::events::ChangeStreamInfo::NEXT_STREAM, 0);
-      core::events::ChangeStreamEvent* ev = new core::events::ChangeStreamEvent(this, inf);
-      fApp->PostEvent(ev);
+      stream_ = CreateNextStream();
+      if (!stream_) {
+        SwitchToErrorMode();
+      }
       break;
     }
-    case K_LEFT:
+    case FASTO_KEY_LEFT:
       incr = -10.0;
       goto do_seek;
-    case K_RIGHT:
+    case FASTO_KEY_RIGHT:
       incr = 10.0;
       goto do_seek;
-    case K_UP:
+    case FASTO_KEY_UP:
       incr = 60.0;
       goto do_seek;
-    case K_DOWN:
+    case FASTO_KEY_DOWN:
       incr = -60.0;
     do_seek:
       if (stream_) {
@@ -706,14 +702,9 @@ bool Player::ChangePlayListLocation(const common::uri::Uri& location) {
   return false;
 }
 
-core::VideoState* Player::CreateStreamInner() {
-  Url url = play_list_[curent_stream_pos_];
-  core::VideoState* stream = new core::VideoState(url.Id(), url.GetUrl(), opt_, copt_, this);
-  return stream;
-}
-
 core::VideoState* Player::CreateCurrentStream() {
-  core::VideoState* stream = CreateStreamInner();
+  size_t pos = curent_stream_pos_;
+  core::VideoState* stream = CreateStreamPos(pos);
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
     delete stream;
@@ -729,13 +720,8 @@ core::VideoState* Player::CreateNextStream() {
     return nullptr;
   }
 
-  if (curent_stream_pos_ + 1 == play_list_.size()) {
-    curent_stream_pos_ = 0;
-  } else {
-    curent_stream_pos_++;
-  }
-  core::VideoState* stream = CreateStreamInner();
-
+  size_t pos = GenerateNextPosition();
+  core::VideoState* stream = CreateStreamPos(pos);
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
     delete stream;
@@ -751,13 +737,8 @@ core::VideoState* Player::CreatePrevStream() {
     return nullptr;
   }
 
-  if (curent_stream_pos_ == 0) {
-    curent_stream_pos_ = play_list_.size() - 1;
-  } else {
-    --curent_stream_pos_;
-  }
-  core::VideoState* stream = CreateStreamInner();
-
+  size_t pos = GeneratePrevPosition();
+  core::VideoState* stream = CreateStreamPos(pos);
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
     delete stream;
@@ -765,4 +746,28 @@ core::VideoState* Player::CreatePrevStream() {
   }
 
   return stream;
+}
+
+core::VideoState* Player::CreateStreamPos(size_t pos) {
+  CHECK(THREAD_MANAGER()->IsMainThread());
+  curent_stream_pos_ = pos;
+  Url url = play_list_[curent_stream_pos_];
+  core::VideoState* stream = new core::VideoState(url.Id(), url.GetUrl(), opt_, copt_, this);
+  return stream;
+}
+
+size_t Player::GenerateNextPosition() const {
+  if (curent_stream_pos_ + 1 == play_list_.size()) {
+    return 0;
+  }
+
+  return curent_stream_pos_ + 1;
+}
+
+size_t Player::GeneratePrevPosition() const {
+  if (curent_stream_pos_ == 0) {
+    return play_list_.size() - 1;
+  }
+
+  return curent_stream_pos_ - 1;
 }

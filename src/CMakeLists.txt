@@ -1,6 +1,15 @@
 INCLUDE (CheckIncludeFiles)
 
 SET(HEADERS_CORE
+  core/events/events_base.h
+  core/events/key_events.h
+  core/events/mouse_events.h
+  core/events/window_events.h
+  core/events/stream_events.h
+  core/events/events.h
+)
+
+SET(HEADERS_CORE
   core/types.h
   core/utils.h
   core/clock.h
@@ -13,11 +22,20 @@ SET(HEADERS_CORE
   core/ring_buffer.h
   core/audio_frame.h
   core/video_frame.h
-  core/events/events.h
-  core/events/events_base.h
   core/application/sdl2_application.h
   core/video_state.h
   core/video_state_handler.h
+
+  ${HEADERS_CORE}
+)
+
+SET(SOURCES_CORE_EVENTS
+  core/events/events_base.cpp
+  core/events/key_events.cpp
+  core/events/mouse_events.cpp
+  core/events/window_events.cpp
+  core/events/stream_events.cpp
+  core/events/events.cpp
 )
 
 SET(SOURCES_CORE
@@ -33,11 +51,11 @@ SET(SOURCES_CORE
   core/ring_buffer.cpp
   core/audio_frame.cpp
   core/video_frame.cpp
-  core/events/events.cpp
-  core/events/events_base.cpp
   core/application/sdl2_application.cpp
   core/video_state.cpp
   core/video_state_handler.cpp
+
+  ${SOURCES_CORE_EVENTS}
 )
 
 SET_DESKTOP_TARGET()
