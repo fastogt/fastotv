@@ -662,12 +662,20 @@ struct StreamInfo {
 
 struct FrameInfo : public StreamInfo {
   FrameInfo(VideoState* stream, core::VideoFrame* frame);
-  core::VideoFrame* frame_;
+  core::VideoFrame* frame;
 };
 
-struct QuitInfo : public StreamInfo {
-  QuitInfo(VideoState* stream, int code);
-  int code_;
+struct QuitStreamInfo : public StreamInfo {
+  QuitStreamInfo(VideoState* stream, int code);
+  int code;
+};
+
+struct ChangeStreamInfo : public StreamInfo {
+  enum ChangeDirection { NEXT_STREAM, PREV_STREAM, SEEK_STREAM };
+  ChangeStreamInfo(VideoState* stream, ChangeDirection direction, size_t pos);
+
+  ChangeDirection direction;
+  size_t pos;
 };
 
 struct TimeInfo {
@@ -697,14 +705,61 @@ struct WindowResizeInfo {
 };
 
 struct WindowExposeInfo {};
+struct WindowCloseInfo {};
+
+struct MouseMoveInfo {};
+
+/**
+ *  Used as a mask when testing buttons in buttonstate.
+ *   - Button 1:  Left mouse button
+ *   - Button 2:  Middle mouse button
+ *   - Button 3:  Right mouse button
+ */
+#define FASTO_BUTTON(X) (1 << ((X)-1))
+#define FASTO_BUTTON_LEFT 1
+#define FASTO_BUTTON_MIDDLE 2
+#define FASTO_BUTTON_RIGHT 3
+#define FASTO_BUTTON_X1 4
+#define FASTO_BUTTON_X2 5
+#define FASTO_BUTTON_LMASK FASTO_BUTTON(FASTO_BUTTON_LEFT)
+#define FASTO_BUTTON_MMASK FASTO_BUTTON(FASTO_BUTTON_MIDDLE)
+#define FASTO_BUTTON_RMASK FASTO_BUTTON(FASTO_BUTTON_RIGHT)
+#define FASTO_BUTTON_X1MASK FASTO_BUTTON(FASTO_BUTTON_X1)
+#define FASTO_BUTTON_X2MASK FASTO_BUTTON(FASTO_BUTTON_X2)
+
+struct MousePressInfo {
+  MousePressInfo(uint8_t button, uint8_t state);
+
+  uint8_t button; /**< The mouse button index */
+  uint8_t state;
+};
+struct MouseReleaseInfo {
+  MouseReleaseInfo(uint8_t button, uint8_t state);
+
+  uint8_t button; /**< The mouse button index */
+  uint8_t state;
+};
+
+struct QuitInfo {};
 
 typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
+
 typedef EventBase<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
-typedef EventBase<QUIT_STREAM_EVENT, QuitInfo> QuitStreamEvent;
+typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
+typedef EventBase<CHANGE_STREAM_EVENT, ChangeStreamInfo> ChangeStreamEvent;
+
 typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;
 typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
+
 typedef EventBase<WINDOW_RESIZE_EVENT, WindowResizeInfo> WindowResizeEvent;
 typedef EventBase<WINDOW_EXPOSE_EVENT, WindowExposeInfo> WindowExposeEvent;
+typedef EventBase<WINDOW_CLOSE_EVENT, WindowCloseInfo> WindowCloseEvent;
+
+typedef EventBase<MOUSE_MOVE_EVENT, MouseMoveInfo> MouseMoveEvent;
+typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
+typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
+
+typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;
 
 }  // namespace events {
 }

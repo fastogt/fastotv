@@ -186,11 +186,21 @@ Player::Player(const PlayerOptions& options,
   options_.audio_volume = av_clip(options_.audio_volume, 0, 100);
 
   fApp->Subscribe(this, core::events::TimerEvent::EventType);
+
   fApp->Subscribe(this, core::events::AllocFrameEvent::EventType);
   fApp->Subscribe(this, core::events::QuitStreamEvent::EventType);
+  fApp->Subscribe(this, core::events::ChangeStreamEvent::EventType);
+
   fApp->Subscribe(this, core::events::KeyPressEvent::EventType);
+
+  fApp->Subscribe(this, core::events::MouseMoveEvent::EventType);
+  fApp->Subscribe(this, core::events::MousePressEvent::EventType);
+
   fApp->Subscribe(this, core::events::WindowResizeEvent::EventType);
   fApp->Subscribe(this, core::events::WindowExposeEvent::EventType);
+  fApp->Subscribe(this, core::events::WindowCloseEvent::EventType);
+
+  fApp->Subscribe(this, core::events::QuitEvent::EventType);
 
   surface_ = IMG_LoadPNG(IMG_PATH);
   stream_ = CreateCurrentStream();
@@ -234,49 +244,42 @@ Player::~Player() {
 void Player::HandleEvent(event_t* event) {
   if (event->GetEventType() == core::events::AllocFrameEvent::EventType) {
     core::events::AllocFrameEvent* avent = static_cast<core::events::AllocFrameEvent*>(event);
-    int res = avent->info().stream_->HandleAllocPictureEvent();
-    if (res == ERROR_RESULT_VALUE) {
-      if (stream_) {
-        stream_->Abort();
-        destroy(&stream_);
-      }
-      fApp->Exit(EXIT_FAILURE);
-    }
+    HandleAllocFrameEvent(avent);
+  } else if (event->GetEventType() == core::events::QuitStreamEvent::EventType) {
+    core::events::QuitStreamEvent* quit_stream_event =
+        static_cast<core::events::QuitStreamEvent*>(event);
+    HandleQuitStreamEvent(quit_stream_event);
+  } else if (event->GetEventType() == core::events::ChangeStreamEvent::EventType) {
+    core::events::ChangeStreamEvent* change_stream_event =
+        static_cast<core::events::ChangeStreamEvent*>(event);
+    HandleChangeStreamEvent(change_stream_event);
   } else if (event->GetEventType() == core::events::TimerEvent::EventType) {
     core::events::TimerEvent* tevent = static_cast<core::events::TimerEvent*>(event);
-    UNUSED(tevent);
-    if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
-      SDL_ShowCursor(0);
-      cursor_hidden_ = true;
-    }
-    double remaining_time = REFRESH_RATE;
-    if (stream_ && stream_->IsStreamReady()) {
-      stream_->TryRefreshVideo(&remaining_time);
-    } else {
-      if (surface_) {
-        SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface_);
-        if (img && !opt_.video_disable) {
-          SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-          SDL_RenderClear(renderer_);
-          SDL_RenderCopy(renderer_, img, NULL, NULL);
-          SDL_RenderPresent(renderer_);
-          SDL_DestroyTexture(img);
-        }
-      } else {
-        SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-        SDL_RenderClear(renderer_);
-        SDL_RenderPresent(renderer_);
-      }
-    }
+    HandleTimerEvent(tevent);
   } else if (event->GetEventType() == core::events::KeyPressEvent::EventType) {
     core::events::KeyPressEvent* key_press_event = static_cast<core::events::KeyPressEvent*>(event);
     HandleKeyPressEvent(key_press_event);
   } else if (event->GetEventType() == core::events::WindowResizeEvent::EventType) {
-    core::events::WindowResizeEvent* win_resize_event = static_cast<core::events::WindowResizeEvent*>(event);
+    core::events::WindowResizeEvent* win_resize_event =
+        static_cast<core::events::WindowResizeEvent*>(event);
     HandleWindowResizeEvent(win_resize_event);
   } else if (event->GetEventType() == core::events::WindowExposeEvent::EventType) {
-    core::events::WindowExposeEvent* win_expose = static_cast<core::events::WindowExposeEvent*>(event);
+    core::events::WindowExposeEvent* win_expose =
+        static_cast<core::events::WindowExposeEvent*>(event);
     HandleWindowExposeEvent(win_expose);
+  } else if (event->GetEventType() == core::events::WindowCloseEvent::EventType) {
+    core::events::WindowCloseEvent* window_close =
+        static_cast<core::events::WindowCloseEvent*>(event);
+    HandleWindowCloseEvent(window_close);
+  } else if (event->GetEventType() == core::events::MouseMoveEvent::EventType) {
+    core::events::MouseMoveEvent* mouse_move = static_cast<core::events::MouseMoveEvent*>(event);
+    HandleMouseMoveEvent(mouse_move);
+  } else if (event->GetEventType() == core::events::MousePressEvent::EventType) {
+    core::events::MousePressEvent* mouse_press = static_cast<core::events::MousePressEvent*>(event);
+    HandleMousePressEvent(mouse_press);
+  } else if (event->GetEventType() == core::events::QuitEvent::EventType) {
+    core::events::QuitEvent* quit_event = static_cast<core::events::QuitEvent*>(event);
+    HandleQuitEvent(quit_event);
   }
 }
 
@@ -394,6 +397,65 @@ void Player::HandleDefaultWindowSize(int width, int height, AVRational sar) {
   options_.default_height = rect.h;
 }
 
+void Player::HandleAllocFrameEvent(core::events::AllocFrameEvent* event) {
+  int res = event->info().stream_->HandleAllocPictureEvent();
+  if (res == ERROR_RESULT_VALUE) {
+    if (stream_) {
+      stream_->Abort();
+      destroy(&stream_);
+    }
+    fApp->Exit(EXIT_FAILURE);
+  }
+}
+
+void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
+  UNUSED(event);
+  destroy(&stream_);
+  SwitchToErrorMode();
+}
+
+void Player::HandleChangeStreamEvent(core::events::ChangeStreamEvent* event) {
+  core::events::ChangeStreamInfo inf = event->info();
+  if (inf.direction == core::events::ChangeStreamInfo::NEXT_STREAM) {
+    stream_ = CreateNextStream();
+    if (!stream_) {
+      SwitchToErrorMode();
+    }
+  } else if (inf.direction == core::events::ChangeStreamInfo::PREV_STREAM) {
+    stream_ = CreatePrevStream();
+    if (!stream_) {
+      SwitchToErrorMode();
+    }
+  }
+}
+
+void Player::HandleTimerEvent(core::events::TimerEvent* event) {
+  UNUSED(event);
+  if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
+    fApp->HideCursor();
+    cursor_hidden_ = true;
+  }
+  double remaining_time = REFRESH_RATE;
+  if (stream_ && stream_->IsStreamReady()) {
+    stream_->TryRefreshVideo(&remaining_time);
+  } else {
+    if (surface_) {
+      SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface_);
+      if (img && !opt_.video_disable) {
+        SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+        SDL_RenderClear(renderer_);
+        SDL_RenderCopy(renderer_, img, NULL, NULL);
+        SDL_RenderPresent(renderer_);
+        SDL_DestroyTexture(img);
+      }
+    } else {
+      SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+      SDL_RenderClear(renderer_);
+      SDL_RenderPresent(renderer_);
+    }
+  }
+}
+
 void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   if (options_.exit_on_keydown) {
     fApp->Exit(EXIT_SUCCESS);
@@ -473,18 +535,18 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       if (stream_) {
         stream_->Abort();
       }
-      /*SDL_Event event;
-      event.type = FF_PREV_STREAM;
-      SDL_PushEvent(&event);*/
+      core::events::ChangeStreamInfo inf(stream_, core::events::ChangeStreamInfo::PREV_STREAM, 0);
+      core::events::ChangeStreamEvent* ev = new core::events::ChangeStreamEvent(this, inf);
+      fApp->PostEvent(ev);
       break;
     }
     case K_RIGHTBRACKET: {  // change channel
       if (stream_) {
         stream_->Abort();
       }
-      /*SDL_Event event;
-      event.type = FF_NEXT_STREAM;
-      SDL_PushEvent(&event);*/
+      core::events::ChangeStreamInfo inf(stream_, core::events::ChangeStreamInfo::NEXT_STREAM, 0);
+      core::events::ChangeStreamEvent* ev = new core::events::ChangeStreamEvent(this, inf);
+      fApp->PostEvent(ev);
       break;
     }
     case K_LEFT:
@@ -508,12 +570,14 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   }
 }
 
-void Player::HandleMousePressEvent(SDL_MouseButtonEvent* event) {
+void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
   if (options_.exit_on_mousedown) {
     fApp->Exit(EXIT_SUCCESS);
     return;
   }
-  if (event->button == SDL_BUTTON_LEFT) {
+
+  core::events::MousePressInfo inf = event->info();
+  if (inf.button == FASTO_BUTTON_LEFT) {
     if (av_gettime_relative() - last_mouse_left_click_ <= 500000) {  // double click
       bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);
@@ -524,16 +588,16 @@ void Player::HandleMousePressEvent(SDL_MouseButtonEvent* event) {
   }
 
   if (cursor_hidden_) {
-    SDL_ShowCursor(1);
+    fApp->ShowCursor();
     cursor_hidden_ = false;
   }
   cursor_last_shown_ = av_gettime_relative();
 }
 
-void Player::HandleMouseMoveEvent(SDL_MouseMotionEvent* event) {
+void Player::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
   UNUSED(event);
   if (cursor_hidden_) {
-    SDL_ShowCursor(1);
+    fApp->ShowCursor();
     cursor_hidden_ = false;
   }
   cursor_last_shown_ = av_gettime_relative();
@@ -553,6 +617,16 @@ void Player::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
   if (stream_) {
     stream_->RefreshRequest();
   }
+}
+
+void Player::HandleWindowCloseEvent(core::events::WindowCloseEvent* event) {
+  UNUSED(event);
+  fApp->Exit(EXIT_SUCCESS);
+}
+
+void Player::HandleQuitEvent(core::events::QuitEvent* event) {
+  UNUSED(event);
+  fApp->Exit(EXIT_SUCCESS);
 }
 
 Url Player::CurrentUrl() const {

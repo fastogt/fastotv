@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SDL2/SDL_events.h>  // for SDL_Event, SDL_PushEvent, etc
 #include <SDL2/SDL_render.h>
 
 #include <common/smart_ptr.h>
@@ -68,11 +67,22 @@ class Player : public core::VideoStateHandler {
   virtual bool HandleRequestWindow(core::VideoState* stream) override;
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override;
 
+  virtual void HandleTimerEvent(core::events::TimerEvent* event);
+
+  virtual void HandleAllocFrameEvent(core::events::AllocFrameEvent* event);
+  virtual void HandleQuitStreamEvent(core::events::QuitStreamEvent* event);
+  virtual void HandleChangeStreamEvent(core::events::ChangeStreamEvent* event);
+
   virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event);
+
   virtual void HandleWindowResizeEvent(core::events::WindowResizeEvent* event);
   virtual void HandleWindowExposeEvent(core::events::WindowExposeEvent* event);
-  virtual void HandleMousePressEvent(SDL_MouseButtonEvent* event);
-  virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
+  virtual void HandleWindowCloseEvent(core::events::WindowCloseEvent* event);
+
+  virtual void HandleMousePressEvent(core::events::MousePressEvent* event);
+  virtual void HandleMouseMoveEvent(core::events::MouseMoveEvent* event);
+
+  virtual void HandleQuitEvent(core::events::QuitEvent* event);
 
  private:
   /* prepare a new audio buffer */

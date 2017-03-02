@@ -25,17 +25,25 @@ class Sdl2Application : public common::application::IApplicationImpl {
 
   virtual void Exit(int result) override;
 
+  virtual void ShowCursor() override;
+  virtual void HideCursor() override;
+
  protected:
   virtual void HandleEvent(core::events::Event* event);
 
   virtual void HandleKeyPressEvent(SDL_KeyboardEvent* event);
   virtual void HandleWindowEvent(SDL_WindowEvent* event);
-  virtual void HandleMousePressEvent(SDL_MouseButtonEvent* event);
+
   virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
+
+  virtual void HandleMousePressEvent(SDL_MouseButtonEvent* event);
+  virtual void HandleMouseReleaseEvent(SDL_MouseButtonEvent* event);
+
+  virtual void HandleQuitEvent(SDL_QuitEvent* event);
 
  private:
   common::threads::EventDispatcher<EventsType> dispatcher_;
   bool stop_;
 };
-
-}}
+}
+}

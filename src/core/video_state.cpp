@@ -1176,7 +1176,7 @@ int VideoState::ReadThread() {
   if (!ic) {
     ERROR_LOG() << "Could not allocate context.";
     events::QuitStreamEvent* qevent =
-        new events::QuitStreamEvent(this, events::QuitInfo(this, AVERROR(ENOMEM)));
+        new events::QuitStreamEvent(this, events::QuitStreamInfo(this, AVERROR(ENOMEM)));
     fApp->PostEvent(qevent);
     return ERROR_RESULT_VALUE;
   }
@@ -1199,7 +1199,7 @@ int VideoState::ReadThread() {
     ERROR_LOG() << in_filename << ": " << errbuf_ptr;
     avformat_close_input(&ic);
     events::QuitStreamEvent* qevent =
-        new events::QuitStreamEvent(this, events::QuitInfo(this, err));
+        new events::QuitStreamEvent(this, events::QuitStreamInfo(this, err));
     fApp->PostEvent(qevent);
     return ERROR_RESULT_VALUE;
   }
@@ -1457,7 +1457,7 @@ int VideoState::ReadThread() {
 
   ret = 0;
 fail:
-  events::QuitStreamEvent* qevent = new events::QuitStreamEvent(this, events::QuitInfo(this, ret));
+  events::QuitStreamEvent* qevent = new events::QuitStreamEvent(this, events::QuitStreamInfo(this, ret));
   fApp->PostEvent(qevent);
   return 0;
 }
