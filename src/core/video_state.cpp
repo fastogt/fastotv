@@ -1036,8 +1036,9 @@ void VideoState::TryRefreshVideo(double* remaining_time) {
         const char* fmt =
             (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
         common::logging::LogMessage(common::logging::L_INFO, false).stream()
-            << GetMasterClock() << " " << fmt << ":" << av_diff << " fd=" << stats_.FrameDrops()
-            << " aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts << "/"
+            << GetMasterClock() << " " << fmt << ":" << av_diff
+            << " fd=(" << stats_.frame_drops_early << "/" << stats_.frame_drops_late
+            << ") aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts << "/"
             << fpts << "\r";
         fflush(stdout);
         last_time = cur_time;
@@ -1457,7 +1458,8 @@ int VideoState::ReadThread() {
 
   ret = 0;
 fail:
-  events::QuitStreamEvent* qevent = new events::QuitStreamEvent(this, events::QuitStreamInfo(this, ret));
+  events::QuitStreamEvent* qevent =
+      new events::QuitStreamEvent(this, events::QuitStreamInfo(this, ret));
   fApp->PostEvent(qevent);
   return 0;
 }
