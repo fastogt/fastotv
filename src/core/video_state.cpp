@@ -989,9 +989,7 @@ void VideoState::TryRefreshVideo(double* remaining_time) {
         core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
         if (nextvp) {
           double duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
-          if (!step_ && (opt_.framedrop > 0 ||
-                         (opt_.framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) &&
-              time > frame_timer_ + duration) {
+          if (!step_ && opt_.framedrop && time > frame_timer_ + duration) {
             stats_.frame_drops_late++;
             video_frame_queue_->MoveToNext();
             goto retry;
@@ -1036,8 +1034,8 @@ void VideoState::TryRefreshVideo(double* remaining_time) {
         const char* fmt =
             (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
         common::logging::LogMessage(common::logging::L_INFO, false).stream()
-            << GetMasterClock() << " " << fmt << ":" << av_diff
-            << " fd=(" << stats_.frame_drops_early << "/" << stats_.frame_drops_late
+            << GetMasterClock() << " " << fmt << ":" << av_diff << " fd=("
+            << stats_.frame_drops_early << "/" << stats_.frame_drops_late
             << ") aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts << "/"
             << fpts << "\r";
         fflush(stdout);
@@ -1144,17 +1142,11 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
   }
 
   if (got_picture) {
-    double dpts = NAN;
-
-    if (frame->pts != AV_NOPTS_VALUE) {
-      dpts = vstream_->q2d() * frame->pts;
-    }
-
     frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(ic_, vstream_->AvStream(), frame);
 
-    if (opt_.framedrop > 0 ||
-        (opt_.framedrop && GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER)) {
+    if (opt_.framedrop) {
       if (frame->pts != AV_NOPTS_VALUE) {
+        double dpts = vstream_->q2d() * frame->pts;
         double diff = dpts - GetMasterClock();
         core::PacketQueue* video_packet_queue = vstream_->Queue();
         if (!std::isnan(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD &&

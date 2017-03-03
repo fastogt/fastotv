@@ -32,7 +32,7 @@ struct AppOptions {
   int64_t start_time;
   int64_t duration;
 
-  int framedrop;
+  bool framedrop;
   bool genpts;
   AvSyncType av_sync_type;
   int loop;

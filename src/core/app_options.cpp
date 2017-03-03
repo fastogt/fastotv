@@ -11,7 +11,7 @@ AppOptions::AppOptions()
       seek_by_bytes(-1),
       start_time(AV_NOPTS_VALUE),
       duration(AV_NOPTS_VALUE),
-      framedrop(-1),
+      framedrop(false),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
       loop(loop_count),
