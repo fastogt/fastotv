@@ -77,7 +77,6 @@ size_t PacketQueue::NbPackets() {
 }
 
 int PacketQueue::Size() {
-  lock_t lock(mutex_);
   return size_;
 }
 
