@@ -16,6 +16,8 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
+#include "core/types.h"
+
 namespace core {
 
 struct SAVPacket {
@@ -38,13 +40,13 @@ class PacketQueue {  // compressed queue data
   void Start();
 
   static AVPacket* FlushPkt();
-  static PacketQueue* MakePacketQueue(common::atomic<int>** ext_serial);
+  static PacketQueue* MakePacketQueue(common::atomic<serial_id_t>** ext_serial);
 
   bool AbortRequest();
   size_t NbPackets();
   int Size();
   int64_t Duration() const;
-  int Serial() const;
+  serial_id_t Serial() const;
 
  private:
   PacketQueue();
@@ -54,7 +56,7 @@ class PacketQueue {  // compressed queue data
 
   SAVPacket* MakePacket(AVPacket* pkt, bool* is_flush);
 
-  common::atomic<int> serial_;
+  common::atomic<serial_id_t> serial_;
   std::deque<SAVPacket*> queue_;
   int size_;
   int64_t duration_;

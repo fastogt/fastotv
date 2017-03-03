@@ -21,6 +21,7 @@ extern "C" {
 #include "core/audio_params.h"  // for AudioParams
 #include "core/types.h"
 #include "core/app_options.h"
+#include "core/clock.h"
 
 struct SwrContext;
 
@@ -107,7 +108,7 @@ class VideoState {
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
-  void TryRefreshVideo(double* remaining_time);
+  void TryRefreshVideo(clock_t* remaining_time);
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
  private:
@@ -125,8 +126,8 @@ class VideoState {
   void StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes);
 
   int GetMasterSyncType() const;
-  double ComputeTargetDelay(double delay) const;
-  double GetMasterClock() const;
+  clock_t ComputeTargetDelay(clock_t delay) const;
+  clock_t GetMasterClock() const;
 #if CONFIG_AVFILTER
   int ConfigureVideoFilters(AVFilterGraph* graph, const std::string& vfilters, AVFrame* frame);
   int ConfigureAudioFilters(const std::string& afilters, int force_output_format);
@@ -151,7 +152,7 @@ class VideoState {
    */
   int AudioDecodeFrame();
   int GetVideoFrame(AVFrame* frame);
-  int QueuePicture(AVFrame* src_frame, double pts, double duration, int64_t pos, int serial);
+  int QueuePicture(AVFrame* src_frame, clock_t pts, clock_t duration, int64_t pos, int serial);
 
   int ReadThread();
   int VideoThread();
@@ -183,9 +184,9 @@ class VideoState {
   core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
   core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
 
-  double audio_clock_;
+  clock_t audio_clock_;
   int audio_clock_serial_;
-  double audio_diff_cum_; /* used for AV difference average computation */
+  clock_t audio_diff_cum_; /* used for AV difference average computation */
   double audio_diff_avg_coef_;
   double audio_diff_threshold_;
   int audio_diff_avg_count_;
@@ -203,13 +204,13 @@ class VideoState {
   struct core::AudioParams audio_tgt_;
   struct SwrContext* swr_ctx_;
 
-  double last_vis_time_;
+  clock_t last_vis_time_;
 
-  double frame_timer_;
-  double frame_last_returned_time_;
-  double frame_last_filter_delay_;
-  double max_frame_duration_;  // maximum duration of a frame - above this, we consider the jump a
-                               // timestamp discontinuity
+  clock_t frame_timer_;
+  clock_t frame_last_returned_time_;
+  clock_t frame_last_filter_delay_;
+  clock_t max_frame_duration_;  // maximum duration of a frame - above this, we consider the jump a
+                                // timestamp discontinuity
 
   bool step_;
 

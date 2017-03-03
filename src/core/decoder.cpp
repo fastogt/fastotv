@@ -33,7 +33,7 @@ Decoder::~Decoder() {
   avcodec_free_context(&avctx_);
 }
 
-int Decoder::GetPktSerial() const {
+serial_id_t Decoder::GetPktSerial() const {
   return pkt_serial_;
 }
 

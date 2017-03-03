@@ -10,38 +10,38 @@ namespace core {
 
 Clock::Clock(const common::atomic<int>& queue_serial)
     : paused_(false), speed_(1.0), queue_serial_(queue_serial) {
-  SetClock(NAN, -1);
+  SetClock(invalid_clock, invalid_serial_id);
 }
 
-void Clock::SetClockAt(double pts, int serial, double time) {
+void Clock::SetClockAt(clock_t pts, serial_id_t serial, clock_t time) {
   pts_ = pts;
   last_updated_ = time;
   pts_drift_ = pts - time;
   serial_ = serial;
 }
 
-void Clock::SetClock(double pts, int serial) {
-  double time = av_gettime_relative() / 1000000.0;
+void Clock::SetClock(clock_t pts, serial_id_t serial) {
+  clock_t time = GetRealClokTime();
   SetClockAt(pts, serial, time);
 }
 
-double Clock::GetClock() const {
+clock_t Clock::GetClock() const {
   if (queue_serial_ != serial_) {
-    return NAN;
+    return invalid_clock;
   }
   if (paused_) {
     return pts_;
   }
 
-  double time = av_gettime_relative() / 1000000.0;
+  clock_t time = GetRealClokTime();
   return pts_drift_ + time - (time - last_updated_) * (1.0 - speed_);
 }
 
-int Clock::Serial() const {
+serial_id_t Clock::Serial() const {
   return serial_;
 }
 
-double Clock::LastUpdated() const {
+clock_t Clock::LastUpdated() const {
   return last_updated_;
 }
 

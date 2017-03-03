@@ -13,6 +13,8 @@ extern "C" {
 
 #include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN
 
+#include "core/clock.h"
+
 namespace core {
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */
@@ -23,8 +25,8 @@ struct VideoFrame {
 
   AVFrame* frame;
   int serial;
-  double pts;      /* presentation timestamp for the frame */
-  double duration; /* estimated duration of the frame */
+  clock_t pts;      /* presentation timestamp for the frame */
+  clock_t duration; /* estimated duration of the frame */
   int64_t pos;     /* byte position of the frame in the input file */
   SDL_Texture* bmp;
   bool allocated;
@@ -35,9 +37,9 @@ struct VideoFrame {
   bool uploaded;
   bool flip_v;
 
-  static double VpDuration(core::VideoFrame* vp,
+  static clock_t VpDuration(core::VideoFrame* vp,
                            core::VideoFrame* nextvp,
-                           double max_frame_duration);
+                           clock_t max_frame_duration);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoFrame);

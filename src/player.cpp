@@ -419,7 +419,7 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
     fApp->HideCursor();
     cursor_hidden_ = true;
   }
-  double remaining_time = REFRESH_RATE;
+  core::clock_t remaining_time = REFRESH_RATE;
   if (stream_) {
     stream_->TryRefreshVideo(&remaining_time);
   } else {

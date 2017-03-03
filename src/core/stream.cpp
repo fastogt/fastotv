@@ -75,15 +75,15 @@ double Stream::q2d() const {
   return av_q2d(stream_st_->time_base);
 }
 
-double Stream::GetClock() const {
+clock_t Stream::GetClock() const {
   return clock_->GetClock();
 }
 
-void Stream::SetClockAt(double pts, int serial, double time) {
+void Stream::SetClockAt(clock_t pts, int serial, clock_t time) {
   clock_->SetClockAt(pts, serial, time);
 }
 
-void Stream::SetClock(double pts, int serial) {
+void Stream::SetClock(clock_t pts, int serial) {
   clock_->SetClock(pts, serial);
 }
 
@@ -91,7 +91,7 @@ void Stream::SetPaused(bool pause) {
   clock_->SetPaused(pause);
 }
 
-double Stream::LastUpdatedClock() const {
+clock_t Stream::LastUpdatedClock() const {
   return clock_->LastUpdated();
 }
 

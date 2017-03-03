@@ -51,7 +51,7 @@ int PacketQueue::Get(AVPacket* pkt, bool block, int* serial) {
   return ret;
 }
 
-PacketQueue* PacketQueue::MakePacketQueue(common::atomic<int>** ext_serial) {
+PacketQueue* PacketQueue::MakePacketQueue(common::atomic<serial_id_t>** ext_serial) {
   PacketQueue* pq = new PacketQueue;
   if (ext_serial) {
     *ext_serial = &pq->serial_;
@@ -84,7 +84,7 @@ int64_t PacketQueue::Duration() const {
   return duration_;
 }
 
-int PacketQueue::Serial() const {
+serial_id_t PacketQueue::Serial() const {
   return serial_;
 }
 

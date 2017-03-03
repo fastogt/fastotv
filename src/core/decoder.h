@@ -9,6 +9,8 @@ extern "C" {
 #include <libavutil/rational.h>  // for AVRational
 }
 
+#include "core/types.h"
+
 namespace core {
 class PacketQueue;
 }
@@ -21,7 +23,7 @@ class Decoder {
 
   void Start();
   void Abort();
-  int GetPktSerial() const;
+  serial_id_t GetPktSerial() const;
 
   bool Finished() const;
   void SetFinished(bool finished);

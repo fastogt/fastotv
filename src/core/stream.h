@@ -8,6 +8,8 @@ extern "C" {
 
 #include <common/macros.h>
 
+#include "core/types.h"
+
 namespace core {
 class Clock;
 class PacketQueue;
@@ -28,13 +30,13 @@ class Stream {
   double q2d() const;
 
   // clock interface
-  double GetClock() const;
+  clock_t GetClock() const;
 
-  void SetClockAt(double pts, int serial, double time);
-  void SetClock(double pts, int serial);
+  void SetClockAt(clock_t pts, int serial, clock_t time);
+  void SetClock(clock_t pts, int serial);
   void SetPaused(bool pause);
 
-  double LastUpdatedClock() const;
+  clock_t LastUpdatedClock() const;
 
   void SyncSerialClock();
 
