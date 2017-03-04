@@ -19,6 +19,10 @@ static const serial_id_t invalid_serial_id = -1;
 typedef uint64_t stream_id;  // must be unique
 static const stream_id invalid_stream_id = std::numeric_limits<stream_id>::max();
 
+typedef int64_t pts_t;
+pts_t invalid_pts();
+bool IsValidPts(pts_t pts);
+
 enum AvSyncType {
   AV_SYNC_AUDIO_MASTER, /* default choice */
   AV_SYNC_VIDEO_MASTER

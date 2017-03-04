@@ -17,7 +17,9 @@ Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
       queue_(queue),
       packet_pending_(false),
       pkt_serial_(0),
-      finished_(false) {}
+      finished_(false) {
+  CHECK(queue);
+}
 
 void Decoder::Start() {
   queue_->Start();
@@ -53,9 +55,9 @@ IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue) : Decode
 
 AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue)
     : IFrameDecoder(avctx, queue),
-      start_pts_(AV_NOPTS_VALUE),
+      start_pts_(invalid_pts()),
       start_pts_tb_{0, 0},
-      next_pts_(AV_NOPTS_VALUE),
+      next_pts_(invalid_pts()),
       next_pts_tb_{0, 0} {
   CHECK(CodecType() == AVMEDIA_TYPE_AUDIO);
 }
@@ -95,12 +97,12 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
     int ret = avcodec_decode_audio4(avctx_, frame, &got_frame, &pkt_temp);
     if (got_frame) {
       AVRational tb = {1, frame->sample_rate};
-      if (frame->pts != AV_NOPTS_VALUE) {
+      if (IsValidPts(frame->pts)) {
         frame->pts = av_rescale_q(frame->pts, av_codec_get_pkt_timebase(avctx_), tb);
-      } else if (next_pts_ != AV_NOPTS_VALUE) {
+      } else if (IsValidPts(next_pts_)) {
         frame->pts = av_rescale_q(next_pts_, next_pts_tb_, tb);
       }
-      if (frame->pts != AV_NOPTS_VALUE) {
+      if (IsValidPts(frame->pts)) {
         next_pts_ = frame->pts + frame->nb_samples;
         next_pts_tb_ = tb;
       }
@@ -109,7 +111,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
     if (ret < 0) {
       packet_pending_ = false;
     } else {
-      pkt_temp.dts = pkt_temp.pts = AV_NOPTS_VALUE;
+      pkt_temp.dts = pkt_temp.pts = invalid_pts();
       if (pkt_temp.data) {
         pkt_temp.data += ret;
         pkt_temp.size -= ret;
@@ -186,7 +188,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
     if (ret < 0) {
       packet_pending_ = false;
     } else {
-      pkt_temp.dts = pkt_temp.pts = AV_NOPTS_VALUE;
+      pkt_temp.dts = pkt_temp.pts = invalid_pts();
       if (pkt_temp.data) {
         ret = pkt_temp.size;
         pkt_temp.data += ret;

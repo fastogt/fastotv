@@ -58,9 +58,9 @@ class AudioDecoder : public IFrameDecoder {
   void SetStartPts(int64_t start_pts, AVRational start_pts_tb);
 
  private:
-  int64_t start_pts_;
+  pts_t start_pts_;
   AVRational start_pts_tb_;
-  int64_t next_pts_;
+  pts_t next_pts_;
   AVRational next_pts_tb_;
 };
 

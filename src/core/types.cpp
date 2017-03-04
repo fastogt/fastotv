@@ -3,6 +3,7 @@
 extern "C" {
 #include <libavutil/channel_layout.h>
 #include <libavutil/time.h>
+#include <libavutil/avutil.h>
 }
 
 #include <common/macros.h>
@@ -23,6 +24,14 @@ int64_t get_valid_channel_layout(int64_t channel_layout, int channels) {
     return channel_layout;
   }
   return 0;
+}
+
+pts_t invalid_pts() {
+  return AV_NOPTS_VALUE;
+}
+
+bool IsValidPts(pts_t pts) {
+  return pts != invalid_pts();
 }
 
 }  // namespace core

@@ -29,8 +29,8 @@ struct AppOptions {
   bool video_disable;
 
   int seek_by_bytes;
-  int64_t start_time;
-  int64_t duration;
+  pts_t start_time;
+  pts_t duration;
 
   bool framedrop;
   bool genpts;

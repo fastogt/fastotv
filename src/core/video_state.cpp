@@ -75,6 +75,7 @@ extern "C" {
 #define EXTERNAL_CLOCK_SPEED_STEP 0.001
 /* we use about AUDIO_DIFF_AVG_NB A-V differences to make the average */
 #define AUDIO_DIFF_AVG_NB 20
+#define SHOW_STATUS_TIMEOUT_MICROSEC 30000
 
 /* NOTE: the size must be big enough to compensate the hardware audio buffersize size */
 /* TODO: We assume that a decoded and resampled frame fits into this buffer */
@@ -758,8 +759,7 @@ void VideoState::StreemSeek(double incr) {
       pos = static_cast<double>(seek_pos_) / AV_TIME_BASE;
     }
     pos += incr;
-    if (ic_->start_time != AV_NOPTS_VALUE &&
-        pos < ic_->start_time / static_cast<double>(AV_TIME_BASE)) {
+    if (IsValidPts(ic_->start_time) && pos < ic_->start_time / static_cast<double>(AV_TIME_BASE)) {
       pos = ic_->start_time / static_cast<double>(AV_TIME_BASE);
     }
     StreamSeek(static_cast<int64_t>(pos * AV_TIME_BASE), static_cast<int64_t>(incr * AV_TIME_BASE),
@@ -1011,9 +1011,9 @@ void VideoState::TryRefreshVideo(clock_t* remaining_time) {
     }
     force_refresh_ = false;
     if (opt_.show_status) {
-      static int64_t last_time;
-      int64_t cur_time = av_gettime_relative();
-      if (!last_time || (cur_time - last_time) >= 30000) {
+      static clock_t last_time = invalid_clock;
+      clock_t cur_time = av_gettime_relative();
+      if (!IsValidClock(last_time) || (cur_time - last_time) >= SHOW_STATUS_TIMEOUT_MICROSEC) {
         int aqsize = 0, vqsize = 0;
         if (video_st) {
           vqsize = video_packet_queue->Size();
@@ -1038,7 +1038,6 @@ void VideoState::TryRefreshVideo(clock_t* remaining_time) {
             << stats_.frame_drops_early << "/" << stats_.frame_drops_late
             << ") aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts << "/"
             << fpts << "\r";
-        fflush(stdout);
         last_time = cur_time;
       }
     }
@@ -1046,8 +1045,7 @@ void VideoState::TryRefreshVideo(clock_t* remaining_time) {
 }
 
 void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
-  const clock_t audio_callback_time = av_gettime_relative();
-
+  const clock_t audio_callback_time = GetRealClockTime();
   while (len > 0) {
     if (audio_buf_index_ >= audio_buf_size_) {
       int audio_size = AudioDecodeFrame();
@@ -1082,7 +1080,7 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
     const clock_t pts = audio_clock_ -
                         static_cast<double>(2 * audio_hw_buf_size_ + audio_write_buf_size_) /
                             audio_tgt_.bytes_per_sec;
-    astream_->SetClockAt(pts, audio_clock_serial_, audio_callback_time / 1000000.0);
+    astream_->SetClockAt(pts, audio_clock_serial_, audio_callback_time);
   }
 }
 
@@ -1090,7 +1088,7 @@ int VideoState::QueuePicture(AVFrame* src_frame,
                              clock_t pts,
                              clock_t duration,
                              int64_t pos,
-                             int serial) {
+                             serial_id_t serial) {
   core::PacketQueue* video_packet_queue = vstream_->Queue();
   core::VideoFrame* vp = video_frame_queue_->GetPeekWritable();
   if (!vp) {
@@ -1145,7 +1143,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
     frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(ic_, vstream_->AvStream(), frame);
 
     if (opt_.framedrop) {
-      if (frame->pts != AV_NOPTS_VALUE) {
+      if (IsValidPts(frame->pts)) {
         clock_t dpts = vstream_->q2d() * frame->pts;
         clock_t diff = dpts - GetMasterClock();
         core::PacketQueue* video_packet_queue = vstream_->Queue();
@@ -1256,10 +1254,10 @@ int VideoState::ReadThread() {
   }
 
   /* if seeking requested, we execute it */
-  if (opt_.start_time != AV_NOPTS_VALUE) {
+  if (IsValidPts(opt_.start_time)) {
     int64_t timestamp = opt_.start_time;
     /* add the stream start time */
-    if (ic->start_time != AV_NOPTS_VALUE) {
+    if (IsValidPts(ic->start_time)) {
       timestamp += ic->start_time;
     }
     ret = avformat_seek_file(ic, -1, INT64_MIN, timestamp, INT64_MAX, 0);
@@ -1404,7 +1402,7 @@ int VideoState::ReadThread() {
         (!video_st ||
          (viddec_->Finished() == video_packet_queue->Serial() && video_frame_queue_->IsEmpty()))) {
       if (opt_.loop != 1 && (!opt_.loop || --opt_.loop)) {
-        StreamSeek(opt_.start_time != AV_NOPTS_VALUE ? opt_.start_time : 0, 0, 0);
+        StreamSeek(IsValidPts(opt_.start_time) ? opt_.start_time : 0, 0, 0);
       } else if (opt_.autoexit) {
         ret = AVERROR_EOF;
         goto fail;
@@ -1430,13 +1428,12 @@ int VideoState::ReadThread() {
     }
     /* check if packet is in play range specified by user, then queue, otherwise discard */
     int64_t stream_start_time = ic->streams[pkt->stream_index]->start_time;
-    int64_t pkt_ts = pkt->pts == AV_NOPTS_VALUE ? pkt->dts : pkt->pts;
+    int64_t pkt_ts = IsValidPts(pkt->pts) ? pkt->pts : pkt->dts;
     bool pkt_in_play_range =
-        opt_.duration == AV_NOPTS_VALUE ||
-        (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
+        !IsValidPts(opt_.duration) ||
+        (pkt_ts - (IsValidPts(stream_start_time) ? stream_start_time : 0)) *
                     av_q2d(ic->streams[pkt->stream_index]->time_base) -
-                static_cast<clock_t>(opt_.start_time != AV_NOPTS_VALUE ? opt_.start_time : 0) /
-                    1000000 <=
+                static_cast<clock_t>(IsValidPts(opt_.start_time) ? opt_.start_time : 0) / 1000000 <=
             (static_cast<clock_t>(opt_.duration) / 1000000);
     if (pkt->stream_index == audio_stream->Index() && pkt_in_play_range) {
       audio_packet_queue->Put(pkt);
@@ -1532,7 +1529,7 @@ int VideoState::AudioThread() {
           return ret;
         }
 
-        af->pts = (frame->pts == AV_NOPTS_VALUE) ? invalid_clock : frame->pts * av_q2d(tb);
+        af->pts = IsValidPts(frame->pts) ? frame->pts * av_q2d(tb) : invalid_clock;
         af->pos = av_frame_get_pkt_pos(frame);
         af->serial = auddec_->GetPktSerial();
         AVRational tmp = {frame->nb_samples, frame->sample_rate};
@@ -1655,7 +1652,7 @@ int VideoState::VideoThread() {
 #endif
       AVRational fr = {frame_rate.den, frame_rate.num};
       duration = (frame_rate.num && frame_rate.den ? av_q2d(fr) : 0);
-      pts = (frame->pts == AV_NOPTS_VALUE) ? invalid_clock : frame->pts * av_q2d(tb);
+      pts = IsValidPts(frame->pts) ? frame->pts * av_q2d(tb) : invalid_clock;
       ret =
           QueuePicture(frame, pts, duration, av_frame_get_pkt_pos(frame), viddec_->GetPktSerial());
       av_frame_unref(frame);
