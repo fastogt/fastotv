@@ -14,7 +14,7 @@ bool IsValidClock(clock_t clock) {
   return res;
 }
 
-clock_t GetRealClokTime() {
+clock_t GetRealClockTime() {
   return av_gettime_relative() / 1000000.0;
 }
 

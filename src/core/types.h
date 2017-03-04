@@ -11,7 +11,7 @@ typedef double clock_t;
 static const clock_t invalid_clock = NAN;
 
 bool IsValidClock(clock_t clock);
-clock_t GetRealClokTime();  // sec
+clock_t GetRealClockTime();  // sec
 
 typedef int serial_id_t;
 static const serial_id_t invalid_serial_id = -1;

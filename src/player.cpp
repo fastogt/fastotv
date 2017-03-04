@@ -23,7 +23,7 @@ extern "C" {
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
-#define CURSOR_HIDE_DELAY 1000000  // 1 sec
+#define CURSOR_HIDE_DELAY_MSEC 1000  // 1 sec
 
 #define USER_FIELD "user"
 #define URLS_FIELD "urls"
@@ -415,7 +415,8 @@ void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
 
 void Player::HandleTimerEvent(core::events::TimerEvent* event) {
   UNUSED(event);
-  if (!cursor_hidden_ && av_gettime_relative() - cursor_last_shown_ > CURSOR_HIDE_DELAY) {
+  common::time64_t diff = common::time::current_mstime() - cursor_last_shown_;
+  if (!cursor_hidden_ && diff > CURSOR_HIDE_DELAY_MSEC) {
     fApp->HideCursor();
     cursor_hidden_ = true;
   }
@@ -572,14 +573,15 @@ void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
     return;
   }
 
+  common::time64_t cur_time = common::time::current_mstime();
   core::events::MousePressInfo inf = event->info();
   if (inf.button == FASTO_BUTTON_LEFT) {
-    if (av_gettime_relative() - last_mouse_left_click_ <= 500000) {  // double click
+    if (cur_time - last_mouse_left_click_ <= 500) {  // double click 0.5 sec
       bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);
       last_mouse_left_click_ = 0;
     } else {
-      last_mouse_left_click_ = av_gettime_relative();
+      last_mouse_left_click_ = cur_time;
     }
   }
 
@@ -587,7 +589,7 @@ void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
     fApp->ShowCursor();
     cursor_hidden_ = false;
   }
-  cursor_last_shown_ = av_gettime_relative();
+  cursor_last_shown_ = cur_time;
 }
 
 void Player::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
@@ -596,7 +598,8 @@ void Player::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
     fApp->ShowCursor();
     cursor_hidden_ = false;
   }
-  cursor_last_shown_ = av_gettime_relative();
+  common::time64_t cur_time = common::time::current_mstime();
+  cursor_last_shown_ = cur_time;
 }
 
 void Player::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {

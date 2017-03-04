@@ -38,7 +38,7 @@ class Decoder {
   PacketQueue* const queue_;
 
   bool packet_pending_;
-  int pkt_serial_;
+  serial_id_t pkt_serial_;
 
  private:
   bool finished_;

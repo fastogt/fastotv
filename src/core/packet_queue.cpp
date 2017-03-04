@@ -2,7 +2,7 @@
 
 namespace core {
 
-SAVPacket::SAVPacket(const AVPacket& p, int serial) : pkt(p), serial(serial) {}
+SAVPacket::SAVPacket(const AVPacket& p, serial_id_t serial) : pkt(p), serial(serial) {}
 
 PacketQueue::PacketQueue()
     : serial_(0), queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
@@ -16,7 +16,7 @@ int PacketQueue::PutNullpacket(int stream_index) {
   return Put(pkt);
 }
 
-int PacketQueue::Get(AVPacket* pkt, bool block, int* serial) {
+int PacketQueue::Get(AVPacket* pkt, bool block, serial_id_t* serial) {
   if (!pkt) {
     return -1;
   }

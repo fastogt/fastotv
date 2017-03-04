@@ -8,7 +8,7 @@ extern "C" {
 
 namespace core {
 
-Clock::Clock(const common::atomic<int>& queue_serial)
+Clock::Clock(const common::atomic<serial_id_t>& queue_serial)
     : paused_(false), speed_(1.0), queue_serial_(queue_serial) {
   SetClock(invalid_clock, invalid_serial_id);
 }
@@ -21,7 +21,7 @@ void Clock::SetClockAt(clock_t pts, serial_id_t serial, clock_t time) {
 }
 
 void Clock::SetClock(clock_t pts, serial_id_t serial) {
-  clock_t time = GetRealClokTime();
+  clock_t time = GetRealClockTime();
   SetClockAt(pts, serial, time);
 }
 
@@ -33,7 +33,7 @@ clock_t Clock::GetClock() const {
     return pts_;
   }
 
-  clock_t time = GetRealClokTime();
+  clock_t time = GetRealClockTime();
   return pts_drift_ + time - (time - last_updated_) * (1.0 - speed_);
 }
 

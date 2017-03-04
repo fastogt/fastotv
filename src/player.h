@@ -4,6 +4,7 @@
 
 #include <common/smart_ptr.h>
 #include <common/url.h>
+#include <common/time.h>
 
 #include "url.h"
 
@@ -117,8 +118,8 @@ class Player : public core::VideoStateHandler {
   SDL_Renderer* renderer_;
   SDL_Window* window_;
   bool cursor_hidden_;
-  int64_t cursor_last_shown_;
-  int64_t last_mouse_left_click_;
+  common::time64_t cursor_last_shown_;
+  common::time64_t last_mouse_left_click_;
   size_t curent_stream_pos_;
 
   SDL_Surface* surface_;

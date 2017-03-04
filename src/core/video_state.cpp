@@ -589,7 +589,7 @@ const common::uri::Uri& VideoState::Uri() const {
 
 void VideoState::StreamTogglePause() {
   if (paused_) {
-    frame_timer_ += GetRealClokTime() - vstream_->LastUpdatedClock();
+    frame_timer_ += GetRealClockTime() - vstream_->LastUpdatedClock();
     if (read_pause_return_ != AVERROR(ENOSYS)) {
       vstream_->SetPaused(false);
     }
@@ -933,7 +933,7 @@ void VideoState::TryRefreshVideo(clock_t* remaining_time) {
     core::PacketQueue* audio_packet_queue = astream_->Queue();
 
     if (!opt_.video_disable && audio_st) {
-      clock_t time = GetRealClokTime();
+      clock_t time = GetRealClockTime();
       if (force_refresh_ || last_vis_time_ < time) {
         VideoDisplay();
         last_vis_time_ = time;
@@ -956,7 +956,7 @@ void VideoState::TryRefreshVideo(clock_t* remaining_time) {
         }
 
         if (lastvp->serial != vp->serial) {
-          frame_timer_ = GetRealClokTime();
+          frame_timer_ = GetRealClockTime();
         }
 
         if (paused_) {
@@ -966,7 +966,7 @@ void VideoState::TryRefreshVideo(clock_t* remaining_time) {
         /* compute nominal last_duration */
         clock_t last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
         clock_t delay = ComputeTargetDelay(last_duration);
-        clock_t time = GetRealClokTime();
+        clock_t time = GetRealClockTime();
         if (time < frame_timer_ + delay) {
           *remaining_time = FFMIN(frame_timer_ + delay - time, *remaining_time);
           goto display;
@@ -1046,7 +1046,7 @@ void VideoState::TryRefreshVideo(clock_t* remaining_time) {
 }
 
 void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
-  const int64_t audio_callback_time = av_gettime_relative();
+  const clock_t audio_callback_time = av_gettime_relative();
 
   while (len > 0) {
     if (audio_buf_index_ >= audio_buf_size_) {
@@ -1459,7 +1459,7 @@ fail:
 int VideoState::AudioThread() {
   core::AudioFrame* af = nullptr;
 #if CONFIG_AVFILTER
-  int last_serial = -1;
+  serial_id_t last_serial = invalid_serial_id;
   int64_t dec_channel_layout;
   int reconfigure;
 #endif
@@ -1580,7 +1580,7 @@ int VideoState::VideoThread() {
   int last_w = 0;
   int last_h = 0;
   enum AVPixelFormat last_format = AV_PIX_FMT_NONE;  //-2
-  int last_serial = -1;
+  serial_id_t last_serial = invalid_serial_id;
   size_t last_vfilter_idx = 0;
   if (!graph) {
     av_frame_free(&frame);
@@ -1636,7 +1636,7 @@ int VideoState::VideoThread() {
     }
 
     while (ret >= 0) {
-      frame_last_returned_time_ = GetRealClokTime();
+      frame_last_returned_time_ = GetRealClockTime();
 
       ret = av_buffersink_get_frame_flags(filt_out, frame, 0);
       if (ret < 0) {
@@ -1647,7 +1647,7 @@ int VideoState::VideoThread() {
         break;
       }
 
-      frame_last_filter_delay_ = GetRealClokTime() - frame_last_returned_time_;
+      frame_last_filter_delay_ = GetRealClockTime() - frame_last_returned_time_;
       if (fabs(frame_last_filter_delay_) > AV_NOSYNC_THRESHOLD / 10.0) {
         frame_last_filter_delay_ = 0;
       }

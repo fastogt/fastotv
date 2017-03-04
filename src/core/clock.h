@@ -10,7 +10,7 @@ namespace core {
 
 class Clock {
  public:
-  explicit Clock(const common::atomic<int>& queue_serial);
+  explicit Clock(const common::atomic<serial_id_t> &queue_serial);
 
   void SetClockAt(clock_t pts, serial_id_t serial, clock_t time);
   void SetClock(clock_t pts, serial_id_t serial);

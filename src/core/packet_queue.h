@@ -21,7 +21,7 @@ extern "C" {
 namespace core {
 
 struct SAVPacket {
-  explicit SAVPacket(const AVPacket& p, int serial);
+  explicit SAVPacket(const AVPacket& p, serial_id_t serial);
 
   AVPacket pkt;
   const int serial;
@@ -36,7 +36,7 @@ class PacketQueue {  // compressed queue data
   int Put(AVPacket* pkt);
   int PutNullpacket(int stream_index);
   /* return < 0 if aborted, 0 if no packet and > 0 if packet.  */
-  int Get(AVPacket* pkt, bool block, int* serial);
+  int Get(AVPacket* pkt, bool block, serial_id_t* serial);
   void Start();
 
   static AVPacket* FlushPkt();
