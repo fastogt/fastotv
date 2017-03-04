@@ -611,18 +611,10 @@ void VideoState::TogglePause() {
 }
 
 bool VideoState::IsAudioReady() const {
-  if (opt_.audio_disable) {
-    return true;
-  }
-
   return astream_ && astream_->IsOpened();
 }
 
 bool VideoState::IsVideoReady() const {
-  if (opt_.video_disable) {
-    return true;
-  }
-
   return vstream_ && vstream_->IsOpened();
 }
 
@@ -925,20 +917,21 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-void VideoState::TryRefreshVideo(clock_t* remaining_time) {
+void VideoState::TryRefreshVideo(common::time64_t* remaining_time) {
   if (!paused_ || force_refresh_) {
     AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
     AVStream* audio_st = astream_->IsOpened() ? astream_->AvStream() : NULL;
     core::PacketQueue* video_packet_queue = vstream_->Queue();
     core::PacketQueue* audio_packet_queue = astream_->Queue();
 
-    if (!opt_.video_disable && audio_st) {
+    if (audio_st) {
       clock_t time = GetRealClockTime();
       if (force_refresh_ || last_vis_time_ < time) {
         VideoDisplay();
         last_vis_time_ = time;
       }
-      *remaining_time = FFMIN(*remaining_time, last_vis_time_ - time);
+      common::time64_t rt = CLockToMsec(last_vis_time_ - time);
+      *remaining_time = FFMIN(*remaining_time, rt);
     }
 
     if (video_st && video_frame_queue_) {
@@ -968,7 +961,8 @@ void VideoState::TryRefreshVideo(clock_t* remaining_time) {
         clock_t delay = ComputeTargetDelay(last_duration);
         clock_t time = GetRealClockTime();
         if (time < frame_timer_ + delay) {
-          *remaining_time = FFMIN(frame_timer_ + delay - time, *remaining_time);
+          common::time64_t rt = CLockToMsec(frame_timer_ + delay - time);
+          *remaining_time = FFMIN(rt, *remaining_time);
           goto display;
         }
 
@@ -1293,15 +1287,11 @@ int VideoState::ReadThread() {
     }
   }
 
-  if (!opt_.video_disable) {
-    st_index[AVMEDIA_TYPE_VIDEO] =
-        av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
-  }
-  if (!opt_.audio_disable) {
-    st_index[AVMEDIA_TYPE_AUDIO] =
-        av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO],
-                            st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
-  }
+  st_index[AVMEDIA_TYPE_VIDEO] =
+      av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
+
+  st_index[AVMEDIA_TYPE_AUDIO] = av_find_best_stream(
+      ic, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
 
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
     AVStream* st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
@@ -1341,15 +1331,6 @@ int VideoState::ReadThread() {
         av_read_play(ic);
       }
     }
-#if CONFIG_RTSP_DEMUXER || CONFIG_MMSH_PROTOCOL
-    if (paused_ &&
-        (!strcmp(ic->iformat->name, "rtsp") || (ic->pb && !strncmp(input_filename, "mmsh:", 5)))) {
-      /* wait 10 ms to avoid trying to get another packet */
-      /* XXX: horrible */
-      SDL_Delay(10);
-      continue;
-    }
-#endif
     if (seek_req_) {
       int64_t seek_target = seek_pos_;
       int64_t seek_min = seek_rel_ > 0 ? seek_target - seek_rel_ + 2 : INT64_MIN;
@@ -1564,8 +1545,6 @@ int VideoState::VideoThread() {
     return AVERROR(ENOMEM);
   }
 
-  clock_t pts;
-  clock_t duration;
   int ret;
   AVStream* video_st = vstream_->AvStream();
   AVRational tb = video_st->time_base;
@@ -1651,8 +1630,8 @@ int VideoState::VideoThread() {
       tb = filt_out->inputs[0]->time_base;
 #endif
       AVRational fr = {frame_rate.den, frame_rate.num};
-      duration = (frame_rate.num && frame_rate.den ? av_q2d(fr) : 0);
-      pts = IsValidPts(frame->pts) ? frame->pts * av_q2d(tb) : invalid_clock;
+      clock_t duration = (frame_rate.num && frame_rate.den ? av_q2d(fr) : 0);
+      clock_t pts = IsValidPts(frame->pts) ? frame->pts * av_q2d(tb) : invalid_clock;
       ret =
           QueuePicture(frame, pts, duration, av_frame_get_pkt_pos(frame), viddec_->GetPktSerial());
       av_frame_unref(frame);

@@ -234,8 +234,6 @@ const OptionDef options[] = {
      "set frame size (WxH or abbreviation)",
      "size"},
     {"fs", OPT_BOOL, {&g_player_options.is_full_screen}, "force full screen"},
-    {"an", OPT_BOOL, {&g_options.audio_disable}, "disable audio"},
-    {"vn", OPT_BOOL, {&g_options.video_disable}, "disable video"},
     {"ast",
      OPT_STRING | HAS_ARG | OPT_EXPERT,
      {&g_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO]},

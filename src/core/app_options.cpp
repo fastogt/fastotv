@@ -6,8 +6,6 @@ namespace core {
 
 AppOptions::AppOptions()
     : autorotate(false),
-      audio_disable(false),
-      video_disable(false),
       seek_by_bytes(-1),
       start_time(invalid_pts()),
       duration(invalid_pts()),

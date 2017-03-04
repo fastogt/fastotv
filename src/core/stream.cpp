@@ -99,7 +99,7 @@ void Stream::SyncSerialClock() {
   SetClock(clock_->GetClock(), clock_->Serial());
 }
 
-int Stream::Serial() const {
+serial_id_t Stream::Serial() const {
   return clock_->Serial();
 }
 

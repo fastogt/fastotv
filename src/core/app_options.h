@@ -25,9 +25,6 @@ struct AppOptions {
 
   bool autorotate;
 
-  bool audio_disable;
-  bool video_disable;
-
   int seek_by_bytes;
   pts_t start_time;
   pts_t duration;

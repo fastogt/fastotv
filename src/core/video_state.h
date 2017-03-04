@@ -60,7 +60,7 @@ class VideoFrameQueue;
 #define SAMPLE_QUEUE_SIZE 9
 
 /* polls for possible required screen refresh at least this often, should be less than 1/fps */
-#define REFRESH_RATE 0.01
+#define REFRESH_RATE_MSEC 10
 
 namespace core {
 
@@ -108,7 +108,7 @@ class VideoState {
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
-  void TryRefreshVideo(clock_t* remaining_time);
+  void TryRefreshVideo(common::time64_t* remaining_time);
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
  private:
@@ -189,7 +189,7 @@ class VideoState {
   core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
 
   clock_t audio_clock_;
-  int audio_clock_serial_;
+  serial_id_t audio_clock_serial_;
   clock_t audio_diff_cum_; /* used for AV difference average computation */
   double audio_diff_avg_coef_;
   double audio_diff_threshold_;

@@ -40,7 +40,7 @@ class Stream {
 
   void SyncSerialClock();
 
-  int Serial() const;
+  serial_id_t Serial() const;
 
   PacketQueue* Queue() const;
 

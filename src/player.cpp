@@ -420,13 +420,13 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
     fApp->HideCursor();
     cursor_hidden_ = true;
   }
-  core::clock_t remaining_time = REFRESH_RATE;
+  common::time64_t remaining_time = REFRESH_RATE_MSEC;
   if (stream_) {
     stream_->TryRefreshVideo(&remaining_time);
   } else {
     if (surface_) {
       SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface_);
-      if (img && !opt_.video_disable) {
+      if (img) {
         SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
         SDL_RenderClear(renderer_);
         SDL_RenderCopy(renderer_, img, NULL, NULL);
