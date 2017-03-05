@@ -3,6 +3,9 @@
 #include <common/event.h>
 
 enum EventsType {
+  PRE_EXEC_EVENT,
+  POST_EXEC_EVENT,
+
   TIMER_EVENT,
 
   ALLOC_FRAME_EVENT,

@@ -68,6 +68,9 @@ class Player : public core::VideoStateHandler {
   virtual bool HandleRequestWindow(core::VideoState* stream) override;
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override;
 
+  virtual void HandlePreExecEvent(core::events::PreExecEvent* event);
+  virtual void HandlePostExecEvent(core::events::PostExecEvent* event);
+
   virtual void HandleTimerEvent(core::events::TimerEvent* event);
 
   virtual void HandleAllocFrameEvent(core::events::AllocFrameEvent* event);
@@ -95,7 +98,7 @@ class Player : public core::VideoStateHandler {
                      int new_height,
                      SDL_BlendMode blendmode,
                      bool init_texture);
-  Url CurrentUrl() const;
+  bool GetCurrentUrl(Url* url) const;
   void SwitchToErrorMode();
   void CalculateDispalySize();
 
@@ -118,8 +121,8 @@ class Player : public core::VideoStateHandler {
   SDL_Renderer* renderer_;
   SDL_Window* window_;
   bool cursor_hidden_;
-  common::time64_t cursor_last_shown_;
-  common::time64_t last_mouse_left_click_;
+  core::msec_t cursor_last_shown_;
+  core::msec_t last_mouse_left_click_;
   size_t curent_stream_pos_;
 
   SDL_Surface* surface_;

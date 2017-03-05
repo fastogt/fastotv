@@ -103,6 +103,15 @@ void Sdl2Application::UnSubscribe(common::IListener* listener, common::events_si
   dispatcher_.UnSubscribe(static_cast<events::EventListener*>(listener), id);
 }
 
+void Sdl2Application::SendEvent(common::IEvent* event) {
+  if (THREAD_MANAGER()->IsMainThread()) {
+    PostEvent(event);
+  } else {
+    events::Event* fevent = static_cast<events::Event*>(event);
+    HandleEvent(fevent);
+  }
+}
+
 void Sdl2Application::PostEvent(common::IEvent* event) {
   SDL_Event sevent;
   sevent.type = FASTO_EVENT;

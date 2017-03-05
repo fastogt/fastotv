@@ -8,6 +8,7 @@
 
 class Url {
  public:
+  Url();
   explicit Url(const std::string& json_data);
 
   bool IsValid() const;

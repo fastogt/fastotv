@@ -6,6 +6,8 @@
 #define URL_FIELD "url"
 #define NAME_FIELD "name"
 
+Url::Url() : id_(core::invalid_stream_id), uri_(), name_() {}
+
 Url::Url(const std::string& json_data) : id_(core::invalid_stream_id), uri_(), name_() {
   json_object* obj = json_tokener_parse(json_data.c_str());
   if (!obj) {

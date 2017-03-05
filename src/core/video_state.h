@@ -108,7 +108,7 @@ class VideoState {
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
-  void TryRefreshVideo(common::time64_t* remaining_time);
+  void TryRefreshVideo(msec_t* remaining_time);
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
  private:

@@ -21,6 +21,8 @@ class Sdl2Application : public common::application::IApplicationImpl {
 
   virtual void Subscribe(common::IListener* listener, common::events_size_t id) override;
   virtual void UnSubscribe(common::IListener* listener, common::events_size_t id) override;
+
+  virtual void SendEvent(common::IEvent* event) override;
   virtual void PostEvent(common::IEvent* event) override;
 
   virtual void Exit(int result) override;

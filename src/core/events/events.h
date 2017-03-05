@@ -18,6 +18,18 @@ struct TimeInfo {
 
 struct QuitInfo {};
 
+struct PreExecInfo {
+  explicit PreExecInfo(int code);
+  int code;
+};
+struct PostExecInfo {
+  explicit PostExecInfo(int code);
+  int code;
+};
+
+typedef EventBase<PRE_EXEC_EVENT, PreExecInfo> PreExecEvent;
+typedef EventBase<POST_EXEC_EVENT, PostExecInfo> PostExecEvent;
+
 typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
 
 typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;

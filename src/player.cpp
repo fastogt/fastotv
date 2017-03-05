@@ -186,6 +186,8 @@ Player::Player(const PlayerOptions& options,
   }
   options_.audio_volume = av_clip(options_.audio_volume, 0, 100);
 
+  fApp->Subscribe(this, core::events::PostExecEvent::EventType);
+  fApp->Subscribe(this, core::events::PreExecEvent::EventType);
   fApp->Subscribe(this, core::events::TimerEvent::EventType);
 
   fApp->Subscribe(this, core::events::AllocFrameEvent::EventType);
@@ -201,12 +203,6 @@ Player::Player(const PlayerOptions& options,
   fApp->Subscribe(this, core::events::WindowCloseEvent::EventType);
 
   fApp->Subscribe(this, core::events::QuitEvent::EventType);
-
-  surface_ = IMG_LoadPNG(IMG_PATH);
-  stream_ = CreateCurrentStream();
-  if (!stream_) {
-    SwitchToErrorMode();
-  }
 }
 
 void Player::SetFullScreen(bool full_screen) {
@@ -221,28 +217,16 @@ void Player::SetMute(bool mute) {
   options_.muted = mute;
 }
 
-Player::~Player() {
-  if (stream_) {
-    stream_->Abort();
-    destroy(&stream_);
-  }
-  SDL_FreeSurface(surface_);
-
-  SDL_CloseAudio();
-  destroy(&audio_params_);
-
-  if (renderer_) {
-    SDL_DestroyRenderer(renderer_);
-    renderer_ = NULL;
-  }
-  if (window_) {
-    SDL_DestroyWindow(window_);
-    window_ = NULL;
-  }
-}
+Player::~Player() {}
 
 void Player::HandleEvent(event_t* event) {
-  if (event->GetEventType() == core::events::AllocFrameEvent::EventType) {
+  if (event->GetEventType() == core::events::PreExecEvent::EventType) {
+    core::events::PreExecEvent* pre_event = static_cast<core::events::PreExecEvent*>(event);
+    HandlePreExecEvent(pre_event);
+  } else if (event->GetEventType() == core::events::PostExecEvent::EventType) {
+    core::events::PostExecEvent* post_event = static_cast<core::events::PostExecEvent*>(event);
+    HandlePostExecEvent(post_event);
+  } else if (event->GetEventType() == core::events::AllocFrameEvent::EventType) {
     core::events::AllocFrameEvent* avent = static_cast<core::events::AllocFrameEvent*>(event);
     HandleAllocFrameEvent(avent);
   } else if (event->GetEventType() == core::events::QuitStreamEvent::EventType) {
@@ -413,14 +397,50 @@ void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
   SwitchToErrorMode();
 }
 
+void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
+  core::events::PreExecInfo inf = event->info();
+  if (inf.code == EXIT_SUCCESS) {
+    surface_ = IMG_LoadPNG(IMG_PATH);
+    stream_ = CreateCurrentStream();
+    if (!stream_) {
+      SwitchToErrorMode();
+    }
+  }
+}
+
+void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
+  core::events::PostExecInfo inf = event->info();
+  if (inf.code == EXIT_SUCCESS) {
+    if (stream_) {
+      stream_->Abort();
+      destroy(&stream_);
+    }
+    SDL_FreeSurface(surface_);
+
+    SDL_CloseAudio();
+    destroy(&audio_params_);
+
+    if (renderer_) {
+      SDL_DestroyRenderer(renderer_);
+      renderer_ = NULL;
+    }
+    if (window_) {
+      SDL_DestroyWindow(window_);
+      window_ = NULL;
+    }
+  } else {
+    NOTREACHED();
+  }
+}
+
 void Player::HandleTimerEvent(core::events::TimerEvent* event) {
   UNUSED(event);
-  common::time64_t diff = common::time::current_mstime() - cursor_last_shown_;
+  core::msec_t diff = core::GetCurrentMsec() - cursor_last_shown_;
   if (!cursor_hidden_ && diff > CURSOR_HIDE_DELAY_MSEC) {
     fApp->HideCursor();
     cursor_hidden_ = true;
   }
-  common::time64_t remaining_time = REFRESH_RATE_MSEC;
+  core::msec_t remaining_time = REFRESH_RATE_MSEC;
   if (stream_) {
     stream_->TryRefreshVideo(&remaining_time);
   } else {
@@ -573,7 +593,7 @@ void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
     return;
   }
 
-  common::time64_t cur_time = common::time::current_mstime();
+  core::msec_t cur_time = core::GetCurrentMsec();
   core::events::MousePressInfo inf = event->info();
   if (inf.button == FASTO_BUTTON_LEFT) {
     if (cur_time - last_mouse_left_click_ <= 500) {  // double click 0.5 sec
@@ -598,7 +618,7 @@ void Player::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
     fApp->ShowCursor();
     cursor_hidden_ = false;
   }
-  common::time64_t cur_time = common::time::current_mstime();
+  core::msec_t cur_time = core::GetCurrentMsec();
   cursor_last_shown_ = cur_time;
 }
 
@@ -628,12 +648,13 @@ void Player::HandleQuitEvent(core::events::QuitEvent* event) {
   fApp->Exit(EXIT_SUCCESS);
 }
 
-Url Player::CurrentUrl() const {
-  size_t pos = curent_stream_pos_;
-  if (pos == play_list_.size()) {
-    pos = 0;
+bool Player::GetCurrentUrl(Url* url) const {
+  if (!url || play_list_.empty()) {
+    return false;
   }
-  return play_list_[pos];
+
+  *url = play_list_[curent_stream_pos_];
+  return true;
 }
 
 void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
@@ -670,8 +691,12 @@ int Player::ReallocTexture(SDL_Texture** texture,
 }
 
 void Player::SwitchToErrorMode() {
-  Url url = CurrentUrl();
-  const std::string name_str = url.Name();
+  Url url;
+  std::string name_str = "Unknown";
+  if (GetCurrentUrl(&url)) {
+    name_str = url.Name();
+  }
+
   CalculateDispalySize();
 
   if (!window_) {
@@ -706,6 +731,10 @@ bool Player::ChangePlayListLocation(const common::uri::Uri& location) {
 }
 
 core::VideoState* Player::CreateCurrentStream() {
+  if (play_list_.empty()) {
+    return nullptr;
+  }
+
   size_t pos = curent_stream_pos_;
   core::VideoState* stream = CreateStreamPos(pos);
   int res = stream->Exec();

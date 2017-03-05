@@ -19,8 +19,16 @@ clock_t GetRealClockTime() {
   return av_gettime_relative() / 1000000.0;
 }
 
-common::time64_t CLockToMsec(clock_t clock) {
+msec_t CLockToMsec(clock_t clock) {
   return clock * 1000.0;
+}
+
+msec_t GetCurrentMsec() {
+  return common::time::current_mstime();
+}
+
+bool IsValidMsec(msec_t msec) {
+  return msec != invalid_msec;
 }
 
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels) {

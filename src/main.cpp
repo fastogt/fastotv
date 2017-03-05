@@ -424,7 +424,19 @@ class FFmpegApplication : public B {
       return EXIT_FAILURE;
     }
 
-    return base_class_t::PreExec();
+    int pre_ret = base_class_t::PreExec();
+    core::events::PreExecInfo inf(pre_ret);
+    core::events::PreExecEvent* pre_event = new core::events::PreExecEvent(this, inf);
+    base_class_t::SendEvent(pre_event);
+    return pre_ret;
+  }
+
+  virtual int PostExec() override {
+    int post_ret = base_class_t::PostExec();
+    core::events::PostExecInfo inf(post_ret);
+    core::events::PostExecEvent* post_event = new core::events::PostExecEvent(this, inf);
+    base_class_t::SendEvent(post_event);
+    return post_ret;
   }
 
   ~FFmpegApplication() {

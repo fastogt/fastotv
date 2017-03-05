@@ -75,7 +75,7 @@ extern "C" {
 #define EXTERNAL_CLOCK_SPEED_STEP 0.001
 /* we use about AUDIO_DIFF_AVG_NB A-V differences to make the average */
 #define AUDIO_DIFF_AVG_NB 20
-#define SHOW_STATUS_TIMEOUT_MICROSEC 30000
+#define SHOW_STATUS_TIMEOUT_MSEC 1000
 
 /* NOTE: the size must be big enough to compensate the hardware audio buffersize size */
 /* TODO: We assume that a decoded and resampled frame fits into this buffer */
@@ -917,7 +917,7 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-void VideoState::TryRefreshVideo(common::time64_t* remaining_time) {
+void VideoState::TryRefreshVideo(msec_t* remaining_time) {
   if (!paused_ || force_refresh_) {
     AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
     AVStream* audio_st = astream_->IsOpened() ? astream_->AvStream() : NULL;
@@ -930,7 +930,7 @@ void VideoState::TryRefreshVideo(common::time64_t* remaining_time) {
         VideoDisplay();
         last_vis_time_ = time;
       }
-      common::time64_t rt = CLockToMsec(last_vis_time_ - time);
+      msec_t rt = CLockToMsec(last_vis_time_ - time);
       *remaining_time = FFMIN(*remaining_time, rt);
     }
 
@@ -961,7 +961,7 @@ void VideoState::TryRefreshVideo(common::time64_t* remaining_time) {
         clock_t delay = ComputeTargetDelay(last_duration);
         clock_t time = GetRealClockTime();
         if (time < frame_timer_ + delay) {
-          common::time64_t rt = CLockToMsec(frame_timer_ + delay - time);
+          msec_t rt = CLockToMsec(frame_timer_ + delay - time);
           *remaining_time = FFMIN(rt, *remaining_time);
           goto display;
         }
@@ -1005,9 +1005,10 @@ void VideoState::TryRefreshVideo(common::time64_t* remaining_time) {
     }
     force_refresh_ = false;
     if (opt_.show_status) {
-      static clock_t last_time = invalid_clock;
-      clock_t cur_time = av_gettime_relative();
-      if (!IsValidClock(last_time) || (cur_time - last_time) >= SHOW_STATUS_TIMEOUT_MICROSEC) {
+      msec_t cur_time = GetCurrentMsec();
+      static msec_t last_time = cur_time;
+      msec_t diff = cur_time - last_time;
+      if (diff >= SHOW_STATUS_TIMEOUT_MSEC) {
         int aqsize = 0, vqsize = 0;
         if (video_st) {
           vqsize = video_packet_queue->Size();
