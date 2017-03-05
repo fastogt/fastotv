@@ -1,27 +1,22 @@
 #pragma once
 
-#include <math.h>
 #include <stdint.h>
 
 #include <limits>
 
 #include <common/time.h>
 
-#define CLOCK_DIV 1000000.0
-
 namespace core {
 
-typedef double clock_t;
-static const clock_t invalid_clock = NAN;
+typedef common::time64_t msec_t;
+typedef msec_t clock_t;
+clock_t invalid_clock();
 
 bool IsValidClock(clock_t clock);
-clock_t GetRealClockTime();  // sec
+clock_t GetRealClockTime();  // msec
 
-typedef common::time64_t msec_t;
-msec_t CLockToMsec(clock_t clock);
+msec_t ClockToMsec(clock_t clock);
 msec_t GetCurrentMsec();
-bool IsValidMsec(msec_t msec);
-static const msec_t invalid_msec = -1;
 
 typedef int serial_id_t;
 static const serial_id_t invalid_serial_id = -1;

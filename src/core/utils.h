@@ -29,6 +29,8 @@ struct SwsContext;
 
 namespace core {
 
+double q2d_diff(AVRational a);
+
 /**
  * Filter out options for given codec.
  *

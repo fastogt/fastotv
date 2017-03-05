@@ -10,25 +10,24 @@ extern "C" {
 
 namespace core {
 
+clock_t invalid_clock() {
+  return -1;
+}
+
 bool IsValidClock(clock_t clock) {
-  bool res = !std::isnan(clock);
-  return res;
+  return clock != invalid_clock();
 }
 
 clock_t GetRealClockTime() {
-  return av_gettime_relative() / CLOCK_DIV;
+  return GetCurrentMsec();
 }
 
-msec_t CLockToMsec(clock_t clock) {
-  return clock * 1000.0;
+msec_t ClockToMsec(clock_t clock) {
+  return clock;
 }
 
 msec_t GetCurrentMsec() {
   return common::time::current_mstime();
-}
-
-bool IsValidMsec(msec_t msec) {
-  return msec != invalid_msec;
 }
 
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels) {

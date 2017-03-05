@@ -3,12 +3,9 @@
 #include <stddef.h>  // for NULL
 #include <atomic>    // for atomic
 
-extern "C" {
-#include <libavutil/rational.h>  // for av_q2d
-}
-
 #include "core/clock.h"
 #include "core/packet_queue.h"
+#include "core/utils.h"
 
 #define MIN_FRAMES 25
 
@@ -72,7 +69,7 @@ AVStream* Stream::AvStream() const {
 }
 
 double Stream::q2d() const {
-  return av_q2d(stream_st_->time_base);
+  return q2d_diff(stream_st_->time_base);
 }
 
 clock_t Stream::GetClock() const {

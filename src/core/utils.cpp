@@ -35,6 +35,10 @@ const unsigned sws_flags = SWS_BICUBIC;
 
 namespace core {
 
+double q2d_diff(AVRational a) {
+  return a.num / (double)a.den * 1000.0;
+}
+
 int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {
   int ret = avformat_match_stream_specifier(s, st, spec);
   if (ret < 0) {
