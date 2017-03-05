@@ -16,7 +16,7 @@ bool IsValidClock(clock_t clock) {
 }
 
 clock_t GetRealClockTime() {
-  return av_gettime_relative() / 1000000.0;
+  return av_gettime_relative() / CLOCK_DIV;
 }
 
 msec_t CLockToMsec(clock_t clock) {

@@ -7,6 +7,8 @@
 
 #include <common/time.h>
 
+#define CLOCK_DIV 1000000.0
+
 namespace core {
 
 typedef double clock_t;
