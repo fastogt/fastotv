@@ -57,22 +57,30 @@ def print_message(progress, message):
 
 def download_file(url):
     file_name = url.split('/')[-1]
-    u = urlopen(url)
+    responce = urlopen(url)
+    if responce.status != 200:
+        raise utils.BuildError(
+            "Can't fetch url: %s, status: %s, responce: %s" % (url, responce.status, responce.reason))
+
     f = open(file_name, 'wb')
-    meta = u.info()
-    file_size = int(meta.getheaders("Content-Length")[0])
+    file_size = 0
+    header = responce.getheader("Content-Length")
+    if header:
+        file_size = int(header)
+
     print("Downloading: %s Bytes: %s" % (file_name, file_size))
 
     file_size_dl = 0
     block_sz = 8192
     while True:
-        buffer = u.read(block_sz)
+        buffer = responce.read(block_sz)
         if not buffer:
             break
 
         file_size_dl += len(buffer)
         f.write(buffer)
-        status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+        perc = 0 if not file_size else file_size_dl * 100. / file_size
+        status = r"%10d  [%3.2f%%]" % (file_size_dl, perc)
         status += chr(8) * (len(status) + 1)
         print(status)
 
