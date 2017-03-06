@@ -7,14 +7,16 @@ from pybuild_utils.base import system_info
 from pybuild_utils.base import run_command
 from pybuild_utils.base import utils
 
+
 def print_usage():
     print("Usage:\n"
-        "[required] argv[1] cmake_root_path\n"
-        "[optional] argv[2] branding_file_path\n"
-        "[optional] argv[3] platform\n"
-        "[optional] argv[4] architecture\n"
-        "[optional] argv[5] build system(\"ninja\", \"make\", \"gmake\")\n"
-        "[optional] argv[6] packages for example(\"DEB RPM\")\n")
+          "[required] argv[1] cmake_root_path\n"
+          "[optional] argv[2] branding_file_path\n"
+          "[optional] argv[3] platform\n"
+          "[optional] argv[4] architecture\n"
+          "[optional] argv[5] build system(\"ninja\", \"make\", \"gmake\")\n"
+          "[optional] argv[6] packages for example(\"DEB RPM\")\n")
+
 
 class BuildSystem:
     def __init__(self, name, cmd_line, cmake_generator_arg, policy):
@@ -32,16 +34,22 @@ class BuildSystem:
     def policy(self):
         return self.policy_
 
-    def cmd_line(self): # cmd + args
+    def cmd_line(self):  # cmd + args
         return self.cmd_line_
 
-SUPPORTED_BUILD_SYSTEMS = [BuildSystem('ninja', ['ninja'], '-GNinja', run_command.NinjaPolicy), BuildSystem('make', ['make', '-j2'], '-GUnix Makefiles', run_command.MakePolicy)]
+
+SUPPORTED_BUILD_SYSTEMS = [BuildSystem('ninja', ['ninja'], '-GNinja', run_command.NinjaPolicy),
+                           BuildSystem('make', ['make', '-j2'], '-GUnix Makefiles', run_command.MakePolicy)]
+
+
 def get_supported_build_system_by_name(name):
     return next((x for x in SUPPORTED_BUILD_SYSTEMS if x.name() == name), None)
 
+
 def print_message(progress, message):
-    print '{0:.1f}% {1}'.format(progress, message)
+    print('{0:.1f}% {1}'.format(progress, message))
     sys.stdout.flush()
+
 
 class ProgressSaver(object):
     def __init__(self, cb):
@@ -63,6 +71,7 @@ class ProgressSaver(object):
         perc = self.progress_min_ + diff * (progress / 100.0)
         if self.cb_:
             self.cb_(perc, message.message())
+
 
 class BuildRequest(object):
     def __init__(self, platform, arch_bit):
@@ -102,7 +111,8 @@ class BuildRequest(object):
         build_system_args = bs.cmd_line()
         build_system_policy = bs.policy()
 
-        saver.update_progress_message_range(0.0, 9.0, "Start building project branding_options:\n{0}".format("\n".join(branding_options)))
+        saver.update_progress_message_range(0.0, 9.0, "Start building project branding_options:\n{0}".format(
+            "\n".join(branding_options)))
 
         pwd = os.getcwd()
         os.mkdir(abs_dir_path)
@@ -125,6 +135,7 @@ class BuildRequest(object):
         def store(cb):
             def closure(progress, message):
                 return cb(progress, message)
+
             return closure
 
         store = store(saver.on_update_progress_message)
@@ -190,15 +201,18 @@ class BuildRequest(object):
                 try:
                     common_policy = run_command.CommonPolicy(store)
                     run_command.run_command_cb(make_cpack, common_policy)
-                    file_names.append(os.path.join(abs_dir_path, filename + '.' + system_info.get_extension_by_package(generator)))
+                    file_names.append(
+                        os.path.join(abs_dir_path, filename + '.' + system_info.get_extension_by_package(generator)))
                 except Exception as ex:
                     os.chdir(pwd)
                     raise ex
 
         os.chdir(pwd)
 
-        saver.update_progress_message_range(100.0, 100.0, "Building finished successfully file_names: {0}".format(file_names))
+        saver.update_progress_message_range(100.0, 100.0,
+                                            "Building finished successfully file_names: {0}".format(file_names))
         return file_names
+
 
 if __name__ == "__main__":
     argc = len(sys.argv)
@@ -241,7 +255,6 @@ if __name__ == "__main__":
         branding_options = utils.read_file_line_by_line(abs_branding_file)
     else:
         branding_options = []
-
 
     saver = ProgressSaver(print_message)
     request.build(cmake_root, branding_options, 'build_' + platform_str, bs, packages, saver)
