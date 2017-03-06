@@ -472,7 +472,7 @@ clock_t VideoState::ComputeTargetDelay(clock_t delay) const {
        if it is the best guess */
     clock_t sync_threshold =
         FFMAX(AV_SYNC_THRESHOLD_MIN_MSEC, FFMIN(AV_SYNC_THRESHOLD_MAX_MSEC, delay));
-    if (IsValidClock(diff) && fabs(diff) < max_frame_duration_) {
+    if (IsValidClock(diff) && std::abs(diff) < max_frame_duration_) {
       if (diff <= -sync_threshold) {
         delay = FFMAX(0, delay + diff);
       } else if (diff >= sync_threshold && delay > AV_SYNC_FRAMEDUP_THRESHOLD_MSEC) {
@@ -781,7 +781,7 @@ int VideoState::SynchronizeAudio(int nb_samples) {
   /* if not master, then we try to remove or add samples to correct the clock */
   if (GetMasterSyncType() != core::AV_SYNC_AUDIO_MASTER) {
     clock_t diff = astream_->GetClock() - GetMasterClock();
-    if (IsValidClock(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD_MSEC) {
+    if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC) {
       audio_diff_cum_ = diff + audio_diff_avg_coef_ * audio_diff_cum_;
       if (audio_diff_avg_count_ < AUDIO_DIFF_AVG_NB) {
         /* not enough measures to have a correct estimate */
@@ -1024,11 +1024,10 @@ void VideoState::TryRefreshVideo(msec_t* remaining_time) {
         int64_t fpts = video_st ? viddec_->PtsCorrectionNumFaultyPts() : 0;
         const char* fmt =
             (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
-        common::logging::LogMessage(common::logging::L_INFO, false).stream()
-            << GetMasterClock() << " " << fmt << ":" << av_diff << " fd=("
-            << stats_.frame_drops_early << "/" << stats_.frame_drops_late
-            << ") aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts << "/"
-            << fpts << "\r";
+        INFO_LOG() << GetMasterClock() << " " << fmt << ":" << av_diff << " msec fd=("
+                   << stats_.frame_drops_early << "/" << stats_.frame_drops_late
+                   << ") aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts
+                   << "/" << fpts;
         last_time = cur_time;
       }
     }
@@ -1138,7 +1137,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
         clock_t dpts = vstream_->q2d() * frame->pts;
         clock_t diff = dpts - GetMasterClock();
         core::PacketQueue* video_packet_queue = vstream_->Queue();
-        if (IsValidClock(diff) && fabs(diff) < AV_NOSYNC_THRESHOLD_MSEC &&
+        if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC &&
             diff - frame_last_filter_delay_ < 0 && viddec_->GetPktSerial() == vstream_->Serial() &&
             video_packet_queue->NbPackets()) {
           stats_.frame_drops_early++;
