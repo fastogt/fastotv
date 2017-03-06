@@ -80,9 +80,9 @@ def download_file(url):
         file_size_dl += len(buffer)
         f.write(buffer)
         perc = 0 if not file_size else file_size_dl * 100. / file_size
-        status = r"%10d  [%3.2f%%]" % (file_size_dl, perc)
+        status = "%10d  [%3.2f%%]" % (file_size_dl, perc)
         status += chr(8) * (len(status) + 1)
-        print(status)
+        print(status, end="\t")
 
     f.close()
     return file_name
