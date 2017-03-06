@@ -80,10 +80,10 @@ def download_file(url):
 
         file_size_dl += len(buffer)
         f.write(buffer)
-        perc = 0 if not file_size else file_size_dl * 100. / file_size
-        status = r"%10d  [%3.2f%%]" % (file_size_dl, perc)
+        percent = 0 if not file_size else file_size_dl * 100. / file_size
+        status = r"%10d  [%3.2f%%]" % (file_size_dl, percent)
         status += chr(8) * (len(status) + 1)
-        print(status,)
+        print(status, end='/r')
 
     f.close()
     return file_name
@@ -157,7 +157,6 @@ class BuildRequest(object):
         if os.path.exists(abs_dir_path):
             shutil.rmtree(abs_dir_path)
 
-        pwd = os.getcwd()
         os.mkdir(abs_dir_path)
         os.chdir(abs_dir_path)
 
@@ -166,15 +165,15 @@ class BuildRequest(object):
         dep_libs = []
 
         if platform_name == 'linux':
-            distr = linux_get_dist()
-            if distr == 'DEBIAN':
+            distribution = linux_get_dist()
+            if distribution == 'DEBIAN':
                 dep_libs = ['gcc', 'g++', 'yasm', 'pkg-config', 'libtool',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
-            elif distr == 'RHEL':
+            elif distribution == 'RHEL':
                 dep_libs = ['gcc', 'gcc-c++', 'yasm', 'pkgconfig', 'libtoolize',
                             'libz-devel', 'libbz2-devel', 'pcre-devel',
                             'libasound2-dev',
@@ -183,9 +182,9 @@ class BuildRequest(object):
                             'xorg-x11-server-devel', 'xserver-xorg', 'xinit']
 
             for lib in dep_libs:
-                if distr == 'DEBIAN':
+                if distribution == 'DEBIAN':
                     subprocess.call(['apt-get', '-y', '--force-yes', 'install', lib])
-                elif distr == 'RHEL':
+                elif distribution == 'RHEL':
                     subprocess.call(['yum', '-y', 'install', lib])
             build_from_sources(CMAKE_SRC_PATH, prefix_path)
         elif platform_name == 'windows':
