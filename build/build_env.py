@@ -8,6 +8,7 @@ import platform
 from pybuild_utils.base import system_info, utils
 
 # defines
+CMAKE_SRC_PATH = "https://cmake.org/files/v3.7/cmake-3.7.2.tar.gz"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
 
@@ -80,9 +81,9 @@ def download_file(url):
         file_size_dl += len(buffer)
         f.write(buffer)
         perc = 0 if not file_size else file_size_dl * 100. / file_size
-        status = "%10d  [%3.2f%%]" % (file_size_dl, perc)
+        status = r"%10d  [%3.2f%%]" % (file_size_dl, perc)
         status += chr(8) * (len(status) + 1)
-        print(status, end="\t")
+        print(status,)
 
     f.close()
     return file_name
@@ -117,6 +118,17 @@ def git_clone(url):
     subprocess.call(common_git_clone_init_line)
     os.chdir(pwd)
     return os.path.join(pwd, cloned_dir)
+
+
+def build_from_sources(url, prefix_path):
+    pwd = os.getcwd()
+    file = download_file(url)
+    folder = extract_file(file)
+    os.chdir(folder)
+    subprocess.call(['./configure', '--prefix={0}'.format(prefix_path)])
+    subprocess.call(['make', 'install'])
+    os.chdir(pwd)
+    shutil.rmtree(folder)
 
 
 class BuildRequest(object):
@@ -156,14 +168,14 @@ class BuildRequest(object):
         if platform_name == 'linux':
             distr = linux_get_dist()
             if distr == 'DEBIAN':
-                dep_libs = ['gcc', 'g++', 'yasm', 'cmake', 'pkg-config', 'libtool',
+                dep_libs = ['gcc', 'g++', 'yasm', 'pkg-config', 'libtool',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
             elif distr == 'RHEL':
-                dep_libs = ['gcc', 'gcc-c++', 'yasm', 'cmake', 'pkgconfig', 'libtoolize',
+                dep_libs = ['gcc', 'gcc-c++', 'yasm', 'pkgconfig', 'libtoolize',
                             'libz-devel', 'libbz2-devel', 'pcre-devel',
                             'libasound2-dev',
                             'libx11-devel',
@@ -175,6 +187,7 @@ class BuildRequest(object):
                     subprocess.call(['apt-get', '-y', '--force-yes', 'install', lib])
                 elif distr == 'RHEL':
                     subprocess.call(['yum', '-y', 'install', lib])
+            build_from_sources(CMAKE_SRC_PATH, prefix_path)
         elif platform_name == 'windows':
             if arch.bit() == 64:
                 dep_libs = ['mingw-w64-x86_64-toolchain', 'mingw-w64-x86_64-yasm']
@@ -207,15 +220,8 @@ class BuildRequest(object):
 
         # build from sources
         source_urls = ['{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)]
-
         for url in source_urls:
-            file = download_file(url)
-            folder = extract_file(file)
-            os.chdir(folder)
-            subprocess.call(['./configure', '--prefix={0}'.format(prefix_path)])
-            subprocess.call(['make', 'install'])
-            os.chdir(abs_dir_path)
-            shutil.rmtree(folder)
+            build_from_sources(url, abs_dir_path, prefix_path)
 
         build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT), prefix_path)
 
