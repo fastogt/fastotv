@@ -167,14 +167,14 @@ class BuildRequest(object):
         if platform_name == 'linux':
             distribution = linux_get_dist()
             if distribution == 'DEBIAN':
-                dep_libs = ['gcc', 'g++', 'yasm', 'pkg-config', 'libtool',
+                dep_libs = ['gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
             elif distribution == 'RHEL':
-                dep_libs = ['gcc', 'gcc-c++', 'yasm', 'pkgconfig', 'libtoolize',
+                dep_libs = ['gcc', 'gcc-c++', 'yasm', 'ninja', 'pkgconfig', 'libtoolize',
                             'libz-devel', 'libbz2-devel', 'pcre-devel',
                             'libasound2-dev',
                             'libx11-devel',
