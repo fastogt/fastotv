@@ -7,12 +7,9 @@ namespace core {
 AppOptions::AppOptions()
     : autorotate(false),
       seek_by_bytes(-1),
-      start_time(invalid_pts()),
-      duration(invalid_pts()),
       framedrop(false),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
-      loop(loop_count),
       autoexit(false),
       show_status(true),
       infinite_buffer(-1),
@@ -20,8 +17,7 @@ AppOptions::AppOptions()
       lowres(0),
       fast(false),
       audio_codec_name(),
-      video_codec_name(),
-      decoder_reorder_pts(-1)
+      video_codec_name()
 #if CONFIG_AVFILTER
       ,
       vfilters_list(),

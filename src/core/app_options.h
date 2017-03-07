@@ -20,19 +20,15 @@ namespace core {
 // 640x480
 // 1280x720
 struct AppOptions {
-  enum { loop_count = 1 };
   AppOptions();
 
   bool autorotate;
 
   int seek_by_bytes;
-  pts_t start_time;
-  pts_t duration;
 
   bool framedrop;
   bool genpts;
   AvSyncType av_sync_type;
-  int loop;
   bool autoexit;
   bool show_status;
   int infinite_buffer;
@@ -43,8 +39,6 @@ struct AppOptions {
   bool fast;
   std::string audio_codec_name;
   std::string video_codec_name;
-
-  int decoder_reorder_pts;
 
 #if CONFIG_AVFILTER
   void InitAvFilters(const std::string& arg);

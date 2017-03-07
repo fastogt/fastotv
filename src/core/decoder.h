@@ -60,13 +60,11 @@ class AudioDecoder : public IFrameDecoder {
  private:
   pts_t start_pts_;
   AVRational start_pts_tb_;
-  pts_t next_pts_;
-  AVRational next_pts_tb_;
 };
 
 class VideoDecoder : public IFrameDecoder {
  public:
-  VideoDecoder(AVCodecContext* avctx, PacketQueue* queue, int decoder_reorder_pts);
+  VideoDecoder(AVCodecContext* avctx, PacketQueue* queue);
 
   int width() const;
   int height() const;
@@ -75,8 +73,5 @@ class VideoDecoder : public IFrameDecoder {
   int64_t PtsCorrectionNumFaultyPts() const;
 
   int DecodeFrame(AVFrame* frame) override;
-
- private:
-  int decoder_reorder_pts_;
 };
 }

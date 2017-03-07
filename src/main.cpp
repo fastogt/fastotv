@@ -106,28 +106,6 @@ int opt_sync(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return 0;
 }
 
-int opt_seek(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  if (!parse_time(arg, true, &g_options.start_time)) {
-    return ERROR_RESULT_VALUE;
-  }
-
-  return SUCCESS_RESULT_VALUE;
-}
-
-int opt_duration(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  if (!parse_time(arg, true, &g_options.duration)) {
-    return ERROR_RESULT_VALUE;
-  }
-
-  return SUCCESS_RESULT_VALUE;
-}
-
 int opt_input_playlist(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
@@ -227,12 +205,6 @@ const OptionDef options[] = {
      {&g_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO]},
      "select desired video stream",
      "stream_specifier"},
-    {"ss", HAS_ARG, {.func_arg = opt_seek}, "seek to a given position in seconds", "pos"},
-    {"t",
-     HAS_ARG,
-     {.func_arg = opt_duration},
-     "play  \"duration\" seconds of audio/video",
-     "duration"},
     {"bytes",
      OPT_INT | HAS_ARG,
      {&g_options.seek_by_bytes},
@@ -251,11 +223,6 @@ const OptionDef options[] = {
     {"stats", OPT_BOOL | OPT_EXPERT, {&g_options.show_status}, "show status", ""},
     {"fast", OPT_BOOL | OPT_EXPERT, {&g_options.fast}, "non spec compliant optimizations", ""},
     {"genpts", OPT_BOOL | OPT_EXPERT, {&g_options.genpts}, "generate pts", ""},
-    {"drp",
-     OPT_INT | HAS_ARG | OPT_EXPERT,
-     {&g_options.decoder_reorder_pts},
-     "let decoder reorder pts 0=off 1=on -1=auto",
-     ""},
     {"lowres", OPT_INT | HAS_ARG | OPT_EXPERT, {&g_options.lowres}, "", ""},
     {"sync",
      HAS_ARG | OPT_EXPERT,
@@ -273,11 +240,6 @@ const OptionDef options[] = {
      {&g_player_options.exit_on_mousedown},
      "exit on mouse down",
      ""},
-    {"loop",
-     OPT_INT | HAS_ARG | OPT_EXPERT,
-     {&g_options.loop},
-     "set number of times the playback shall be looped",
-     "loop count"},
     {"framedrop",
      OPT_BOOL | OPT_EXPERT,
      {&g_options.framedrop},

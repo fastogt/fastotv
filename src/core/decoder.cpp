@@ -54,11 +54,7 @@ AVMediaType Decoder::CodecType() const {
 IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue) : Decoder(avctx, queue) {}
 
 AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue)
-    : IFrameDecoder(avctx, queue),
-      start_pts_(invalid_pts()),
-      start_pts_tb_{0, 0},
-      next_pts_(invalid_pts()),
-      next_pts_tb_{0, 0} {
+    : IFrameDecoder(avctx, queue), start_pts_(invalid_pts()), start_pts_tb_{0, 0} {
   CHECK(CodecType() == AVMEDIA_TYPE_AUDIO);
 }
 
@@ -85,8 +81,6 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
         if (lpkt.data == fls->data) {
           avcodec_flush_buffers(avctx_);
           SetFinished(false);
-          next_pts_ = start_pts_;
-          next_pts_tb_ = start_pts_tb_;
         }
       } while (lpkt.data == fls->data || queue_->Serial() != pkt_serial_);
       av_packet_unref(&pkt_);
@@ -98,13 +92,10 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
     if (got_frame) {
       AVRational tb = {1, frame->sample_rate};
       if (IsValidPts(frame->pts)) {
-        frame->pts = av_rescale_q(frame->pts, av_codec_get_pkt_timebase(avctx_), tb);
-      } else if (IsValidPts(next_pts_)) {
-        frame->pts = av_rescale_q(next_pts_, next_pts_tb_, tb);
-      }
-      if (IsValidPts(frame->pts)) {
-        next_pts_ = frame->pts + frame->nb_samples;
-        next_pts_tb_ = tb;
+        AVRational stb = av_codec_get_pkt_timebase(avctx_);
+        frame->pts = av_rescale_q(frame->pts, stb, tb);
+      } else {
+        NOTREACHED();
       }
     }
 
@@ -130,8 +121,8 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
   return got_frame;
 }
 
-VideoDecoder::VideoDecoder(AVCodecContext* avctx, PacketQueue* queue, int decoder_reorder_pts)
-    : IFrameDecoder(avctx, queue), decoder_reorder_pts_(decoder_reorder_pts) {
+VideoDecoder::VideoDecoder(AVCodecContext* avctx, PacketQueue* queue)
+    : IFrameDecoder(avctx, queue) {
   CHECK(CodecType() == AVMEDIA_TYPE_VIDEO);
 }
 
@@ -178,11 +169,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
 
     int ret = avcodec_decode_video2(avctx_, frame, &got_frame, &pkt_temp);
     if (got_frame) {
-      if (decoder_reorder_pts_ == -1) {
-        frame->pts = av_frame_get_best_effort_timestamp(frame);
-      } else if (!decoder_reorder_pts_) {
-        frame->pts = frame->pkt_dts;
-      }
+      frame->pts = av_frame_get_best_effort_timestamp(frame);
     }
 
     if (ret < 0) {

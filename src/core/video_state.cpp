@@ -296,7 +296,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     UNUSED(opened);
     core::PacketQueue* packet_queue = vstream_->Queue();
     video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
-    viddec_ = new core::VideoDecoder(avctx, packet_queue, opt_.decoder_reorder_pts);
+    viddec_ = new core::VideoDecoder(avctx, packet_queue);
     viddec_->Start();
     if (!vdecoder_tid_->Start()) {
       destroy(&viddec_);
@@ -883,7 +883,9 @@ int VideoState::AudioDecodeFrame() {
 
   /* update the audio clock with the pts */
   if (IsValidClock(af->pts)) {
-    audio_clock_ = af->pts + static_cast<double>(af->frame->nb_samples) / af->frame->sample_rate;
+    const double div = static_cast<double>(af->frame->nb_samples) / af->frame->sample_rate;
+    const clock_t dur = div * 1000;
+    audio_clock_ = af->pts + dur;
   } else {
     audio_clock_ = invalid_clock();
   }
@@ -1104,7 +1106,7 @@ int VideoState::QueuePicture(AVFrame* src_frame,
 int VideoState::GetVideoFrame(AVFrame* frame) {
   int got_picture = viddec_->DecodeFrame(frame);
   if (got_picture < 0) {
-    return -1;
+    return ERROR_RESULT_VALUE;
   }
 
   if (got_picture) {
@@ -1219,20 +1221,6 @@ int VideoState::ReadThread() {
   if (opt_.seek_by_bytes < 0) {
     opt_.seek_by_bytes =
         !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
-  }
-
-  /* if seeking requested, we execute it */
-  if (IsValidPts(opt_.start_time)) {
-    int64_t timestamp = opt_.start_time;
-    /* add the stream start time */
-    if (IsValidPts(ic->start_time)) {
-      timestamp += ic->start_time;
-    }
-    ret = avformat_seek_file(ic, -1, INT64_MIN, timestamp, INT64_MAX, 0);
-    if (ret < 0) {
-      WARNING_LOG() << in_filename << ": could not seek to position "
-                    << static_cast<double>(timestamp) / AV_TIME_BASE;
-    }
   }
 
   realtime_ = core::is_realtime(ic);
@@ -1356,9 +1344,7 @@ int VideoState::ReadThread() {
                                    audio_frame_queue_->IsEmpty())) &&
         (!video_st ||
          (viddec_->Finished() == video_packet_queue->Serial() && video_frame_queue_->IsEmpty()))) {
-      if (opt_.loop != 1 && (!opt_.loop || --opt_.loop)) {
-        StreamSeek(IsValidPts(opt_.start_time) ? opt_.start_time : 0, 0, 0);
-      } else if (opt_.autoexit) {
+      if (opt_.autoexit) {
         ret = AVERROR_EOF;
         goto fail;
       }
@@ -1381,18 +1367,10 @@ int VideoState::ReadThread() {
     } else {
       eof_ = false;
     }
-    /* check if packet is in play range specified by user, then queue, otherwise discard */
-    int64_t stream_start_time = ic->streams[pkt->stream_index]->start_time;
-    int64_t pkt_ts = IsValidPts(pkt->pts) ? pkt->pts : pkt->dts;
-    bool pkt_in_play_range =
-        !IsValidPts(opt_.duration) ||
-        (pkt_ts - (IsValidPts(stream_start_time) ? stream_start_time : 0)) *
-                    q2d_diff(ic->streams[pkt->stream_index]->time_base) -
-                static_cast<clock_t>(IsValidPts(opt_.start_time) ? opt_.start_time : 0) / 1000 <=
-            (static_cast<clock_t>(opt_.duration) / 1000);
-    if (pkt->stream_index == audio_stream->Index() && pkt_in_play_range) {
+
+    if (pkt->stream_index == audio_stream->Index()) {
       audio_packet_queue->Put(pkt);
-    } else if (pkt->stream_index == video_stream->Index() && pkt_in_play_range &&
+    } else if (pkt->stream_index == video_stream->Index() &&
                !(video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
       video_packet_queue->Put(pkt);
     } else {
@@ -1519,11 +1497,6 @@ int VideoState::VideoThread() {
     return AVERROR(ENOMEM);
   }
 
-  int ret;
-  AVStream* video_st = vstream_->AvStream();
-  AVRational tb = video_st->time_base;
-  AVRational frame_rate = av_guess_frame_rate(ic_, video_st, NULL);
-
 #if CONFIG_AVFILTER
   AVFilterGraph* graph = avfilter_graph_alloc();
   AVFilterContext *filt_out = NULL, *filt_in = NULL;
@@ -1538,6 +1511,10 @@ int VideoState::VideoThread() {
   }
 #endif
 
+  int ret;
+  AVStream* video_st = vstream_->AvStream();
+  AVRational tb = video_st->time_base;
+  AVRational frame_rate = av_guess_frame_rate(ic_, video_st, NULL);
   while (true) {
     ret = GetVideoFrame(frame);
     if (ret < 0) {
