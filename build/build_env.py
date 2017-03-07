@@ -220,7 +220,7 @@ class BuildRequest(object):
         # build from sources
         source_urls = ['{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)]
         for url in source_urls:
-            build_from_sources(url, abs_dir_path, prefix_path)
+            build_from_sources(url, prefix_path)
 
         build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT), prefix_path)
 
