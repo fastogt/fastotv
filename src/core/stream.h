@@ -19,6 +19,7 @@ namespace core {
 
 class Stream {
  public:
+  enum { minimum_frames = 25 };
   bool HasEnoughPackets() const;
   virtual bool Open(int index, AVStream* av_stream_st);
   bool IsOpened() const;

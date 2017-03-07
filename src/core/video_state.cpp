@@ -291,96 +291,78 @@ int VideoState::StreamComponentOpen(int stream_index) {
   int64_t channel_layout = 0;
   eof_ = false;
   stream->discard = AVDISCARD_DEFAULT;
-  switch (avctx->codec_type) {
-    case AVMEDIA_TYPE_VIDEO: {
-      bool opened = vstream_->Open(stream_index, stream);
-      UNUSED(opened);
-      core::PacketQueue* packet_queue = vstream_->Queue();
-      video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
-      viddec_ = new core::VideoDecoder(avctx, packet_queue, opt_.decoder_reorder_pts);
-      viddec_->Start();
-      if (!vdecoder_tid_->Start()) {
-        destroy(&viddec_);
-        goto out;
-      }
-      queue_attachments_req_ = true;
-      break;
+  if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+    bool opened = vstream_->Open(stream_index, stream);
+    UNUSED(opened);
+    core::PacketQueue* packet_queue = vstream_->Queue();
+    video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
+    viddec_ = new core::VideoDecoder(avctx, packet_queue, opt_.decoder_reorder_pts);
+    viddec_->Start();
+    if (!vdecoder_tid_->Start()) {
+      destroy(&viddec_);
+      goto out;
     }
-    case AVMEDIA_TYPE_AUDIO: {
+    queue_attachments_req_ = true;
+  } else if (avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
 #if CONFIG_AVFILTER
-      {
-        audio_filter_src_.freq = avctx->sample_rate;
-        audio_filter_src_.channels = avctx->channels;
-        audio_filter_src_.channel_layout =
-            core::get_valid_channel_layout(avctx->channel_layout, avctx->channels);
-        audio_filter_src_.fmt = avctx->sample_fmt;
-        ret = ConfigureAudioFilters(opt_.afilters, 0);
-        if (ret < 0) {
-          avcodec_free_context(&avctx);
-          av_dict_free(&opts);
-          return ret;
-        }
-        AVFilterLink* link = out_audio_filter_->inputs[0];
-        sample_rate = link->sample_rate;
-        nb_channels = avfilter_link_get_channels(link);
-        channel_layout = link->channel_layout;
-      }
-#else
-      sample_rate = avctx->sample_rate;
-      nb_channels = avctx->channels;
-      channel_layout = avctx->channel_layout;
-#endif
-
-      bool audio_opened =
-          handler_->HandleRequestAudio(this, channel_layout, nb_channels, sample_rate, &audio_tgt_);
-      if (!audio_opened) {
+    {
+      audio_filter_src_.freq = avctx->sample_rate;
+      audio_filter_src_.channels = avctx->channels;
+      audio_filter_src_.channel_layout =
+          core::get_valid_channel_layout(avctx->channel_layout, avctx->channels);
+      audio_filter_src_.fmt = avctx->sample_fmt;
+      ret = ConfigureAudioFilters(opt_.afilters, 0);
+      if (ret < 0) {
         avcodec_free_context(&avctx);
         av_dict_free(&opts);
         return ret;
       }
-
-      audio_hw_buf_size_ = ret;
-      audio_src_ = audio_tgt_;
-      audio_buf_size_ = 0;
-      audio_buf_index_ = 0;
-
-      /* init averaging filter */
-      audio_diff_avg_coef_ = exp(log(0.01) / AUDIO_DIFF_AVG_NB);
-      DCHECK(0 <= audio_diff_avg_coef_ && audio_diff_avg_coef_ <= 1);
-      audio_diff_avg_count_ = 0;
-      /* since we do not have a precise anough audio FIFO fullness,
-         we correct audio sync only if larger than this threshold */
-      audio_diff_threshold_ =
-          static_cast<double>(audio_hw_buf_size_) / static_cast<double>(audio_tgt_.bytes_per_sec);
-      bool opened = astream_->Open(stream_index, stream);
-      UNUSED(opened);
-      core::PacketQueue* packet_queue = astream_->Queue();
-      audio_frame_queue_ = new core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
-      auddec_ = new core::AudioDecoder(avctx, packet_queue);
-      if ((ic_->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
-          !ic_->iformat->read_seek) {
-        auddec_->SetStartPts(stream->start_time, stream->time_base);
-      }
-      auddec_->Start();
-      if (!adecoder_tid_->Start()) {
-        destroy(&auddec_);
-        goto out;
-      }
-      break;
+      AVFilterLink* link = out_audio_filter_->inputs[0];
+      sample_rate = link->sample_rate;
+      nb_channels = avfilter_link_get_channels(link);
+      channel_layout = link->channel_layout;
     }
-    case AVMEDIA_TYPE_SUBTITLE: {
-      break;
+#else
+    sample_rate = avctx->sample_rate;
+    nb_channels = avctx->channels;
+    channel_layout = avctx->channel_layout;
+#endif
+
+    bool audio_opened =
+        handler_->HandleRequestAudio(this, channel_layout, nb_channels, sample_rate, &audio_tgt_);
+    if (!audio_opened) {
+      avcodec_free_context(&avctx);
+      av_dict_free(&opts);
+      return ret;
     }
-    case AVMEDIA_TYPE_UNKNOWN:
-      break;
-    case AVMEDIA_TYPE_ATTACHMENT:
-      break;
-    case AVMEDIA_TYPE_DATA:
-      break;
-    case AVMEDIA_TYPE_NB:
-      break;
-    default:
-      break;
+
+    audio_hw_buf_size_ = ret;
+    audio_src_ = audio_tgt_;
+    audio_buf_size_ = 0;
+    audio_buf_index_ = 0;
+
+    /* init averaging filter */
+    audio_diff_avg_coef_ = exp(log(0.01) / AUDIO_DIFF_AVG_NB);
+    DCHECK(0 <= audio_diff_avg_coef_ && audio_diff_avg_coef_ <= 1);
+    audio_diff_avg_count_ = 0;
+    /* since we do not have a precise anough audio FIFO fullness,
+       we correct audio sync only if larger than this threshold */
+    audio_diff_threshold_ =
+        static_cast<double>(audio_hw_buf_size_) / static_cast<double>(audio_tgt_.bytes_per_sec);
+    bool opened = astream_->Open(stream_index, stream);
+    UNUSED(opened);
+    core::PacketQueue* packet_queue = astream_->Queue();
+    audio_frame_queue_ = new core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
+    auddec_ = new core::AudioDecoder(avctx, packet_queue);
+    if ((ic_->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
+        !ic_->iformat->read_seek) {
+      auddec_->SetStartPts(stream->start_time, stream->time_base);
+    }
+    auddec_->Start();
+    if (!adecoder_tid_->Start()) {
+      destroy(&auddec_);
+      goto out;
+    }
   }
 out:
   av_dict_free(&opts);
@@ -713,13 +695,11 @@ the_end:
 void VideoState::StreemSeek(double incr) {
   if (opt_.seek_by_bytes) {
     int pos = -1;
-    if (pos < 0 && vstream_->IsOpened()) {
+    if (vstream_->IsOpened()) {
       int64_t lpos = 0;
       core::PacketQueue* vqueue = vstream_->Queue();
       if (video_frame_queue_->GetLastUsedPos(&lpos, vqueue->Serial())) {
         pos = lpos;
-      } else {
-        pos = -1;
       }
     }
     if (pos < 0 && astream_->IsOpened()) {
@@ -727,8 +707,6 @@ void VideoState::StreemSeek(double incr) {
       core::PacketQueue* aqueue = astream_->Queue();
       if (audio_frame_queue_->GetLastUsedPos(&lpos, aqueue->Serial())) {
         pos = lpos;
-      } else {
-        pos = -1;
       }
     }
     if (pos < 0) {

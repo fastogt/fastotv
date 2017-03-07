@@ -7,8 +7,6 @@
 #include "core/packet_queue.h"
 #include "core/utils.h"
 
-#define MIN_FRAMES 25
-
 namespace core {
 
 Stream::Stream() : packet_queue_(nullptr), clock_(nullptr), stream_index_(-1), stream_st_(NULL) {
@@ -49,8 +47,8 @@ bool Stream::HasEnoughPackets() const {
     return false;
   }
 
-  return (packet_queue_->NbPackets() > MIN_FRAMES &&
-          (!packet_queue_->Duration() || q2d() * packet_queue_->Duration() > 1.0));
+  return (packet_queue_->NbPackets() > minimum_frames &&
+          (!packet_queue_->Duration() || q2d() * packet_queue_->Duration() > 1000));
 }
 
 Stream::~Stream() {
