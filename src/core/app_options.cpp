@@ -10,7 +10,6 @@ AppOptions::AppOptions()
       framedrop(false),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
-      autoexit(false),
       show_status(true),
       infinite_buffer(-1),
       wanted_stream_spec(),

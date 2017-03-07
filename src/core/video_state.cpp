@@ -1142,7 +1142,12 @@ int VideoState::ReadThread() {
     return ERROR_RESULT_VALUE;
   }
   bool scan_all_pmts_set = false;
-  const std::string uri_str = uri_.url();
+  std::string uri_str;
+  if (uri_.scheme() == common::uri::Uri::file) {
+    uri_str = uri_.path().path();
+  } else {
+    uri_str = uri_.url();
+  }
   const char* in_filename = common::utils::c_strornull(uri_str);
   ic->interrupt_callback.callback = decode_interrupt_callback;
   ic->interrupt_callback.opaque = this;
@@ -1340,14 +1345,9 @@ int VideoState::ReadThread() {
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
       continue;
     }
-    if (!paused_ && (!audio_st || (auddec_->Finished() == audio_packet_queue->Serial() &&
-                                   audio_frame_queue_->IsEmpty())) &&
-        (!video_st ||
-         (viddec_->Finished() == video_packet_queue->Serial() && video_frame_queue_->IsEmpty()))) {
-      if (opt_.autoexit) {
-        ret = AVERROR_EOF;
-        goto fail;
-      }
+    if (!paused_ && (!audio_st || (auddec_->Finished())) && (!video_st || (viddec_->Finished()))) {
+      ret = AVERROR_EOF;
+      goto fail;
     }
     ret = av_read_frame(ic, pkt);
     if (ret < 0) {

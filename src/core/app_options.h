@@ -29,7 +29,6 @@ struct AppOptions {
   bool framedrop;
   bool genpts;
   AvSyncType av_sync_type;
-  bool autoexit;
   bool show_status;
   int infinite_buffer;
   std::string wanted_stream_spec[AVMEDIA_TYPE_NB];
