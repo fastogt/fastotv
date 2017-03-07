@@ -217,7 +217,9 @@ void Player::SetMute(bool mute) {
   options_.muted = mute;
 }
 
-Player::~Player() {}
+Player::~Player() {
+  fApp->UnSubscribe(this);
+}
 
 void Player::HandleEvent(event_t* event) {
   if (event->GetEventType() == core::events::PreExecEvent::EventType) {

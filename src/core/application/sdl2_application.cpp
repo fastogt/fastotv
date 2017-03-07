@@ -103,6 +103,10 @@ void Sdl2Application::UnSubscribe(common::IListener* listener, common::events_si
   dispatcher_.UnSubscribe(static_cast<events::EventListener*>(listener), id);
 }
 
+void Sdl2Application::UnSubscribe(common::IListener* listener) {
+  dispatcher_.UnSubscribe(static_cast<events::EventListener*>(listener));
+}
+
 void Sdl2Application::SendEvent(common::IEvent* event) {
   if (THREAD_MANAGER()->IsMainThread()) {
     PostEvent(event);

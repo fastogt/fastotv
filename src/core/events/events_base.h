@@ -3,7 +3,7 @@
 #include <common/event.h>
 
 enum EventsType {
-  PRE_EXEC_EVENT,
+  PRE_EXEC_EVENT = 0,
   POST_EXEC_EVENT,
 
   TIMER_EVENT,
