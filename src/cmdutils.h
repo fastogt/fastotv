@@ -66,11 +66,6 @@ void exit_program(int ret) av_noreturn;
 void init_dynload(void);
 
 /**
- * Override the cpuflags.
- */
-int opt_cpuflags(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
  * Fallback for options that are not explicitly handled, these will be
  * parsed through AVOptions.
  */
@@ -81,15 +76,7 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt);
  */
 int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt);
 
-int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt);
-
 int opt_codec_debug(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-#if CONFIG_OPENCL
-int opt_opencl(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-int opt_opencl_bench(const char* opt, const char* arg, DictionaryOptions* dopt);
-#endif
 
 bool parse_bool(const std::string& bool_str, bool* result);
 

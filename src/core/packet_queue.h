@@ -44,7 +44,7 @@ class PacketQueue {  // compressed queue data
 
   bool AbortRequest();
   size_t NbPackets();
-  int Size();
+  int Size() const;
   int64_t Duration() const;
   serial_id_t Serial() const;
 

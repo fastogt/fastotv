@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 #include <limits>
 
 #include <common/time.h>
@@ -9,7 +7,7 @@
 namespace core {
 
 typedef common::time64_t msec_t;
-typedef msec_t clock_t;
+typedef common::time64_t clock_t;
 clock_t invalid_clock();
 
 bool IsValidClock(clock_t clock);

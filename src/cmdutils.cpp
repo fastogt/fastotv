@@ -942,38 +942,9 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return AVERROR_OPTION_NOT_FOUND;
 }
 
-int opt_cpuflags(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  int flags = av_get_cpu_flags();
-  unsigned int* uflags = reinterpret_cast<unsigned int*>(&flags);
-  int ret = av_parse_cpu_caps(uflags, arg);
-  if (ret < 0) {
-    return ret;
-  }
-
-  av_force_cpu_flags(flags);
-  return 0;
-}
-
 int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   return opt_loglevel_inner(opt, arg, NULL);
-}
-
-int opt_max_alloc(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  char* tail = NULL;
-  size_t max = strtoull(arg, &tail, 10);
-  if (*tail) {
-    ERROR_LOG() << "Invalid max_alloc \"" << arg << "\".";
-    return ERROR_RESULT_VALUE;
-  }
-  av_max_alloc(max);
-  return SUCCESS_RESULT_VALUE;
 }
 
 void show_banner(int argc, char** argv, const OptionDef* options) {
