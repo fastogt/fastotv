@@ -16,39 +16,37 @@
     along with SiteOnYourDevice.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/server_host.h"
-
-#include <unistd.h>
+#pragma once
 
 #include <string>
 
-#include <common/threads/thread_manager.h>
-#include <common/logger.h>
-
-#define BUF_SIZE 4096
-
 namespace fasto {
 namespace fastotv {
-namespace server {
 
-ServerHandlerHost::ServerHandlerHost(ServerHost* parent)
-    : tcp::ITcpLoopObserver(), parent_(parent) {}
+struct UserAuthInfo {
+  UserAuthInfo();
+  UserAuthInfo(const std::string& login,
+               const std::string& password);
 
-void ServerHandlerHost::accepted(tcp::TcpClient* client) {}
+  bool isValid() const;
 
-void ServerHandlerHost::closed(tcp::TcpClient* client) {}
+  std::string login;
+  std::string password;
+};
 
-void ServerHandlerHost::dataReceived(tcp::TcpClient* client) {}
-
-ServerHandlerHost::~ServerHandlerHost() {}
-
-ServerHost::ServerHost(const common::net::HostAndPort& host, ServerHandlerHost* observer)
-    : tcp::TcpServer(host, observer) {}
-
-void ServerHost::setConfig(const Config& conf) {
-  rstorage_.setConfig(conf.server.redis);
+inline bool operator==(const UserAuthInfo& lhs, const UserAuthInfo& rhs) {
+  return lhs.login == rhs.login && lhs.password == rhs.password;
 }
 
-}  // namespace server
+inline bool operator!=(const UserAuthInfo& x, const UserAuthInfo& y) {
+  return !(x == y);
+}
+
 }  // namespace fastotv
 }  // namespace fasto
+
+namespace common {
+
+std::string ConvertToString(const fasto::fastotv::UserAuthInfo& uinfo);
+
+}  // namespace common
