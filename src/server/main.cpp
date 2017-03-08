@@ -36,39 +36,48 @@
 #define SBUF_SIZE 256
 #define BUF_SIZE 4096
 
+#define HOST_PATH "/"
+#define CHANNEL_COMMANDS_IN_NAME "COMMANDS_IN"
+#define CHANNEL_COMMANDS_OUT_NAME "COMMANDS_OUT"
+#define CHANNEL_CLIENTS_STATE_NAME "CLIENTS_STATE"
+
 /*
-  [service]
+  [server]
   redis_server=localhost:6479
   redis_unix_path=/var/run/redis/redis.sock
 */
 
-namespace {
-
 const common::net::HostAndPort redis_default_host = common::net::HostAndPort::createLocalHost(6379);
+const std::string redis_default_unix_path = "/var/run/redis/redis.sock";
+
 sig_atomic_t is_stop = 0;
-size_t total_clients = 0;
 const char* config_path = CONFIG_FILE_PATH;
 
-struct configuration_t {};
-
-configuration_t config;
+fasto::fastotv::server::Config config;
 
 int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  configuration_t* pconfig = reinterpret_cast<configuration_t*>(user);
+  fasto::fastotv::server::Config* pconfig = reinterpret_cast<fasto::fastotv::server::Config*>(user);
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-  if (MATCH("service", "redis_server")) {
-    pconfig->redis_config_.redis_host = common::ConvertFromString<common::net::HostAndPort>(value);
+  if (MATCH("server", "redis_server")) {
+    pconfig->server.redis.redis_host = common::ConvertFromString<common::net::HostAndPort>(value);
     return 1;
-  } else if (MATCH("service", "redis_unix_path")) {
-    pconfig->redis_config_.redis_unix_socket = value;
+  } else if (MATCH("server", "redis_unix_path")) {
+    pconfig->server.redis.redis_unix_socket = value;
+    return 1;
+  } else if (MATCH("server", "redis_channel_in_name")) {
+    pconfig->server.redis.channel_in = value;
+    return 1;
+  } else if (MATCH("server", "redis_channel_out_name")) {
+    pconfig->server.redis.channel_out = value;
+    return 1;
+  } else if (MATCH("server", "redis_channel_clients_state_name")) {
+    pconfig->server.redis.channel_clients_state = value;
     return 1;
   } else {
     return 0; /* unknown section/name, error */
   }
 }
-
-}  // namespace
 
 fasto::fastotv::server::ServerHost* server = NULL;
 
@@ -94,11 +103,6 @@ int main(int argc, char* argv[]) {
 
   if (daemon_mode) {
     common::create_as_daemon();
-    for (int i = 0; i < argc; i++) {
-      if (strcmp(argv[i], "-c") == 0) {
-        config_path = argv[++i];
-      }
-    }
   }
   signal(SIGHUP, signal_handler);
   signal(SIGQUIT, signal_handler);
@@ -109,14 +113,13 @@ int main(int argc, char* argv[]) {
   common::logging::LEVEL_LOG level = common::logging::L_DEBUG;
 #endif
 #if defined(LOG_TO_FILE)
-  std::string log_path = common::file_system::prepare_path("~/" PROJECT_NAME_LOWERCASE ".log");
+  std::string log_path =
+      common::file_system::prepare_path("/var/log/" PROJECT_NAME_LOWERCASE ".log");
   INIT_LOGGER(PROJECT_NAME_TITLE, log_path, level);
 #else
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
-  server = new fasto::fastotv::server::ServerHost(fasto::fastotv::server::g_http_host,
-                                                  fasto::fastotv::server::g_inner_host,
-                                                  fasto::fastotv::server::g_websocket_host);
+  server = new fasto::fastotv::server::ServerHost(fasto::fastotv::server::g_service_host, nullptr);
 
   sync_config();
 
@@ -144,25 +147,19 @@ void signal_handler(int sig) {
 
 void sync_config() {
   /*{
-    "name": "Alex",
-    "password": "1234",
-    "hosts": [
-      "fastoredis.com:8080",
-      "fastonosql.com:8080",
-      "fastogt.com:8080"
-    ]
+    "user": "atopilski@gmail.com",
+    "password": "1234"
   }*/
 
-  // HSET users alex json
-
-  config.redis_config_.redis_host = redis_default_host;
-  config.redis_config_.channel_in = CHANNEL_COMMANDS_IN_NAME;
-  config.redis_config_.channel_out = CHANNEL_COMMANDS_OUT_NAME;
-  config.redis_config_.channel_clients_state = CHANNEL_CLIENTS_STATE_NAME;
+  config.server.redis.redis_host = redis_default_host;
+  config.server.redis.redis_unix_socket = redis_default_unix_path;
+  config.server.redis.channel_in = CHANNEL_COMMANDS_IN_NAME;
+  config.server.redis.channel_out = CHANNEL_COMMANDS_OUT_NAME;
+  config.server.redis.channel_clients_state = CHANNEL_CLIENTS_STATE_NAME;
   // try to parse settings file
   if (ini_parse(config_path, ini_handler_fasto, &config) < 0) {
     INFO_LOG() << "Can't load config " << config_path << ", use default settings.";
   }
 
-  server->setStorageConfig(config.redis_config_);
+  server->setConfig(config);
 }

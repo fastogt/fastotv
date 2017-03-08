@@ -20,22 +20,32 @@
 
 #include <string>
 
+#include <common/threads/thread.h>
+
 #include "network/tcp/tcp_server.h"
 
-#include <common/threads/thread.h>
+#include "redis/redis_helpers.h"
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 
+struct Settings {
+  redis_sub_configuration_t redis;
+};
+
+struct Config {
+  Settings server;
+};
+
 class ServerHost;
 
 class ServerHandlerHost : public tcp::ITcpLoopObserver {
  public:
-  typedef tcp::TcpServer server_t;
+  typedef ServerHost server_t;
   typedef tcp::TcpClient client_t;
 
-  ServerHandlerHost(server_t* parent);
+  ServerHandlerHost(ServerHost* parent);
   virtual void accepted(tcp::TcpClient* client) override;
   virtual void closed(tcp::TcpClient* client) override;
   virtual void dataReceived(tcp::TcpClient* client) override;
@@ -47,7 +57,13 @@ class ServerHandlerHost : public tcp::ITcpLoopObserver {
 };
 
 class ServerHost : public tcp::TcpServer {
+ public:
+  explicit ServerHost(const common::net::HostAndPort& host, ServerHandlerHost* observer);
 
+  void setConfig(const Config& conf);
+
+ private:
+  RedisStorage rstorage_;
 };
 
 }  // namespace server
