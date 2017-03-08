@@ -58,6 +58,14 @@ SET(SOURCES_CORE
   ${SOURCES_CORE_EVENTS}
 )
 
+SET(HEADERS_COMMANDS
+  commands/commands.h
+)
+
+SET(SOURCES_COMMANDS
+  commands/commands.cpp
+)
+
 SET_DESKTOP_TARGET()
 
 FIND_LIBRARY(VA_LIBRARY NAMES va)
@@ -193,7 +201,10 @@ TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}_network ${PLATFORM_LIBRARIES} libe
 
 # core
 ADD_SUBDIRECTORY(third-party/json-c)
-ADD_LIBRARY(${PROJECT_CORE_LIBRARY} STATIC ${HEADERS_CORE} ${SOURCES_CORE})
+ADD_LIBRARY(${PROJECT_CORE_LIBRARY} STATIC
+  ${HEADERS_CORE} ${SOURCES_CORE}
+  ${HEADERS_COMMANDS} ${SOURCES_COMMANDS}
+)
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_CORE_LIBRARY} PRIVATE ${INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}
   ${FFMPEG_LIBRARIES}
@@ -261,9 +272,34 @@ IF(BUILD_SERVER)
   SET(SOURCES_REDIS
     redis/redis_helpers.cpp
   )
+
+  SET(HEADERS_INNER
+    inner/inner_server_command_seq_parser.h
+    inner/inner_client.h
+  )
+
+  SET(SOURCES_INNER
+    inner/inner_server_command_seq_parser.cpp
+    inner/inner_client.cpp
+  )
+
+  SET(HEADERS_INNER_SERVER
+    server/inner/inner_tcp_server.h
+    server/inner/inner_tcp_client.h
+  )
+
+  SET(SOURCES_INNER_SERVER
+    server/inner/inner_tcp_server.cpp
+    server/inner/inner_tcp_client.cpp
+  )
+
   SET(BUILD_SERVER_SOURCES
     server/server_host.cpp server/server_host.h infos.h infos.cpp
     ${HEADERS_REDIS} ${SOURCES_REDIS}
+    ${HEADERS_COMMANDS} ${SOURCES_COMMANDS}
+    ${HEADERS_INNER} ${SOURCES_INNER}
+    ${HEADERS_INNER_SERVER} ${SOURCES_INNER_SERVER}
+    ${HEADERS_PARSE_COMMANDS} ${SOURCES_PARSE_COMMANDS}
   )
   ADD_DEFINITIONS(-DCONFIG_FILE_PATH="/etc/${PROJECT_SERVER_NAME}.conf")
   ADD_DEFINITIONS(-DPROJECT_NAME_SERVER_TITLE="${PROJECT_NAME}")

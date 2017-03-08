@@ -19,16 +19,23 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
-#include <common/threads/thread.h>
+#include <common/threads/types.h>
 
-#include "network/tcp/tcp_server.h"
+#include "server/inner/inner_tcp_server.h"
+
+#include "inner/inner_server_command_seq_parser.h"
 
 #include "redis/redis_helpers.h"
 
 namespace fasto {
 namespace fastotv {
 namespace server {
+
+namespace inner {
+class InnerTcpServerClient;
+}  // namespace inner
 
 struct Settings {
   redis_sub_configuration_t redis;
@@ -38,34 +45,22 @@ struct Config {
   Settings server;
 };
 
-class ServerHandlerHost : public tcp::ITcpLoopObserver {
- public:
-  typedef tcp::TcpServer server_t;
-  typedef tcp::TcpClient client_t;
-
-  ServerHandlerHost();
-  virtual void preLooped(tcp::ITcpLoop* server) override;
-
-  virtual void accepted(tcp::TcpClient* client) override;
-  virtual void moved(tcp::TcpClient* client) override;
-  virtual void closed(tcp::TcpClient* client) override;
-  virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
-
-  virtual void dataReceived(tcp::TcpClient* client) override;
-  virtual void dataReadyToWrite(tcp::TcpClient* client) override;
-
-  virtual void postLooped(tcp::ITcpLoop *server) override;
-
-  virtual ~ServerHandlerHost();
-};
-
 class ServerHost {
  public:
+  enum { timeout_seconds = 1 };
+  typedef std::unordered_map<std::string, inner::InnerTcpServerClient*> inner_connections_type;
+
   explicit ServerHost(const common::net::HostAndPort& host);
   ~ServerHost();
 
   void stop();
   int exec();
+
+  bool unRegisterInnerConnectionByHost(tcp::TcpClient* connection) WARN_UNUSED_RESULT;
+  bool registerInnerConnectionByUser(const UserAuthInfo& user,
+                                     tcp::TcpClient* connection) WARN_UNUSED_RESULT;
+  bool findUser(const UserAuthInfo& user) const;
+  inner::InnerTcpServerClient* findInnerConnectionByLogin(const std::string& login) const;
   void setConfig(const Config& conf);
 
  private:
@@ -73,9 +68,10 @@ class ServerHost {
   std::condition_variable stop_cond_;
   bool stop_;
 
-  tcp::TcpServer* server_;
-  ServerHandlerHost* handler_;
+  inner::InnerServerHandlerHost* handler_;
+  inner::InnerTcpServer* server_;
 
+  inner_connections_type connections_;
   RedisStorage rstorage_;
 };
 
