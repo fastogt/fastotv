@@ -31,19 +31,69 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-ServerHandlerHost::ServerHandlerHost(ServerHost* parent)
-    : tcp::ITcpLoopObserver(), parent_(parent) {}
+namespace {
+int exec_server(tcp::TcpServer* server) {
+  common::Error err = server->bind();
+  if (err && err->isError()) {
+    DEBUG_MSG_ERROR(err);
+    return EXIT_FAILURE;
+  }
+
+  err = server->listen(5);
+  if (err && err->isError()) {
+    DEBUG_MSG_ERROR(err);
+    return EXIT_FAILURE;
+  }
+
+  return server->exec();
+}
+}
+
+ServerHandlerHost::ServerHandlerHost() : tcp::ITcpLoopObserver() {}
+
+void ServerHandlerHost::preLooped(tcp::ITcpLoop* server) {}
 
 void ServerHandlerHost::accepted(tcp::TcpClient* client) {}
 
+void ServerHandlerHost::moved(tcp::TcpClient* client) {}
+
 void ServerHandlerHost::closed(tcp::TcpClient* client) {}
+
+void ServerHandlerHost::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {}
 
 void ServerHandlerHost::dataReceived(tcp::TcpClient* client) {}
 
+void ServerHandlerHost::dataReadyToWrite(tcp::TcpClient* client) {}
+
+void ServerHandlerHost::postLooped(tcp::ITcpLoop* server) {}
+
 ServerHandlerHost::~ServerHandlerHost() {}
 
-ServerHost::ServerHost(const common::net::HostAndPort& host, ServerHandlerHost* observer)
-    : tcp::TcpServer(host, observer) {}
+ServerHost::ServerHost(const common::net::HostAndPort& host)
+    : stop_(false), server_(nullptr), handler_(nullptr) {
+  handler_ = new ServerHandlerHost;
+  server_ = new tcp::TcpServer(host);
+}
+
+ServerHost::~ServerHost() {
+  destroy(&server_);
+  destroy(&handler_);
+}
+
+void ServerHost::stop() {
+  stop_ = true;
+  server_->stop();
+}
+
+int ServerHost::exec() {
+  std::shared_ptr<common::threads::Thread<int> > connection_thread =
+      THREAD_MANAGER()->CreateThread(&exec_server, server_);
+  while (!stop_) {
+  }
+
+  connection_thread->JoinAndGet();
+  return EXIT_SUCCESS;
+}
 
 void ServerHost::setConfig(const Config& conf) {
   rstorage_.setConfig(conf.server.redis);

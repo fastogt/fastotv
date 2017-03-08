@@ -38,31 +38,42 @@ struct Config {
   Settings server;
 };
 
-class ServerHost;
-
 class ServerHandlerHost : public tcp::ITcpLoopObserver {
  public:
-  typedef ServerHost server_t;
+  typedef tcp::TcpServer server_t;
   typedef tcp::TcpClient client_t;
 
-  ServerHandlerHost(ServerHost* parent);
+  ServerHandlerHost();
+  virtual void preLooped(tcp::ITcpLoop* server) override;
+
   virtual void accepted(tcp::TcpClient* client) override;
+  virtual void moved(tcp::TcpClient* client) override;
   virtual void closed(tcp::TcpClient* client) override;
+  virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
+
   virtual void dataReceived(tcp::TcpClient* client) override;
+  virtual void dataReadyToWrite(tcp::TcpClient* client) override;
+
+  virtual void postLooped(tcp::ITcpLoop *server) override;
 
   virtual ~ServerHandlerHost();
-
- private:
-  ServerHost* const parent_;
 };
 
-class ServerHost : public tcp::TcpServer {
+class ServerHost {
  public:
-  explicit ServerHost(const common::net::HostAndPort& host, ServerHandlerHost* observer);
+  explicit ServerHost(const common::net::HostAndPort& host);
+  ~ServerHost();
 
+  void stop();
+  int exec();
   void setConfig(const Config& conf);
 
  private:
+  bool stop_;
+
+  tcp::TcpServer* server_;
+  ServerHandlerHost* handler_;
+
   RedisStorage rstorage_;
 };
 

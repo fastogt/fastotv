@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
 #else
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
-  server = new fasto::fastotv::server::ServerHost(fasto::fastotv::server::g_service_host, nullptr);
+  server = new fasto::fastotv::server::ServerHost(fasto::fastotv::server::g_service_host);
 
   sync_config();
 
