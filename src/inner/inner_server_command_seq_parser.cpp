@@ -26,7 +26,7 @@
 #include "inner/inner_client.h"
 
 extern "C" {
-#include <hiredis/sds.h>
+#include "sds.h"
 }
 
 #define GB (1024 * 1024 * 1024)

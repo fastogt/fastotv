@@ -44,16 +44,16 @@ class InnerServerHandlerHost : public fasto::fastotv::inner::InnerServerCommandS
 
   explicit InnerServerHandlerHost(ServerHost* parent);
 
-  virtual void preLooped(tcp::ITcpLoop* server);
+  virtual void preLooped(tcp::ITcpLoop* server) override;
 
-  virtual void accepted(tcp::TcpClient* client);
-  virtual void moved(tcp::TcpClient* client);
-  virtual void closed(tcp::TcpClient* client);
+  virtual void accepted(tcp::TcpClient* client) override;
+  virtual void moved(tcp::TcpClient* client) override;
+  virtual void closed(tcp::TcpClient* client) override;
 
-  virtual void dataReceived(tcp::TcpClient* client);
-  virtual void dataReadyToWrite(tcp::TcpClient* client);
-  virtual void postLooped(tcp::ITcpLoop* server);
-  virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id);
+  virtual void dataReceived(tcp::TcpClient* client) override;
+  virtual void dataReadyToWrite(tcp::TcpClient* client) override;
+  virtual void postLooped(tcp::ITcpLoop* server) override;
+  virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
 
   virtual ~InnerServerHandlerHost();
 
@@ -63,15 +63,15 @@ class InnerServerHandlerHost : public fasto::fastotv::inner::InnerServerCommandS
   virtual void handleInnerRequestCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
-                                         char* argv[]);
+                                         char* argv[]) override;
   virtual void handleInnerResponceCommand(fastotv::inner::InnerClient* connection,
                                           cmd_seq_t id,
                                           int argc,
-                                          char* argv[]);
+                                          char* argv[]) override;
   virtual void handleInnerApproveCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
-                                         char* argv[]);
+                                         char* argv[]) override;
 
   ServerHost* const parent_;
 
@@ -88,7 +88,7 @@ class InnerTcpServer : public tcp::TcpServer {
   virtual const char* className() const;
 
  private:
-  virtual tcp::TcpClient* createClient(const common::net::socket_info& info);
+  virtual tcp::TcpClient* createClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner

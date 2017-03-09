@@ -118,7 +118,9 @@ bool RedisStorage::findUser(const UserAuthInfo& user) const {
   return false;
 }
 
-RedisSub::RedisSub(RedisSubHandler* handler) : stop_(false), handler_(handler) {}
+RedisSubHandler::~RedisSubHandler() {}
+
+RedisSub::RedisSub(RedisSubHandler* handler) : handler_(handler), stop_(false) {}
 
 void RedisSub::setConfig(const redis_sub_configuration_t& config) {
   config_ = config;

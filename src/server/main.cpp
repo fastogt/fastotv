@@ -101,11 +101,13 @@ int main(int argc, char* argv[]) {
     }
   }
 
+#ifdef OS_POSIX
   if (daemon_mode) {
     common::create_as_daemon();
   }
   signal(SIGHUP, signal_handler);
   signal(SIGQUIT, signal_handler);
+#endif
 
 #if defined(NDEBUG)
   common::logging::LEVEL_LOG level = common::logging::L_INFO;
@@ -136,6 +138,7 @@ exit:
   return return_code;
 }
 
+#ifdef OS_POSIX
 void signal_handler(int sig) {
   if (sig == SIGHUP) {
     sync_config();
@@ -144,6 +147,7 @@ void signal_handler(int sig) {
     server->stop();
   }
 }
+#endif
 
 void sync_config() {
   /*{
