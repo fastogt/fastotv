@@ -6,6 +6,8 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 Clock::Clock(const common::atomic<serial_id_t>& queue_serial)
@@ -50,3 +52,5 @@ void Clock::SetPaused(bool paused) {
 }
 
 }  // namespace core
+}
+}

@@ -9,6 +9,8 @@ extern "C" {
 
 #include "core/packet_queue.h"  // for PacketQueu
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
@@ -196,3 +198,5 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
 }
 
 }  // namespace core
+}
+}

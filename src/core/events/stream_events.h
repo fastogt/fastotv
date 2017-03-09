@@ -2,12 +2,11 @@
 
 #include "core/events/events_base.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 struct VideoFrame;
 class VideoState;
-}
-
-namespace core {
 namespace events {
 
 struct StreamInfo {
@@ -30,4 +29,6 @@ typedef EventBase<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
 typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
 
 }  // namespace events {
+}
+}
 }

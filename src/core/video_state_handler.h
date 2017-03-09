@@ -6,13 +6,13 @@ extern "C" {
 
 #include "core/events/events_base.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
+
 struct AudioParams;
 class VideoState;
 struct VideoFrame;
-}
-
-namespace core {
 
 class VideoStateHandler : public core::events::EventListener {
  public:
@@ -39,4 +39,6 @@ class VideoStateHandler : public core::events::EventListener {
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) = 0;
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) = 0;
 };
+}
+}
 }

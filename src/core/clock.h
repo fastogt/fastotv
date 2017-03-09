@@ -6,6 +6,8 @@
 
 #include "core/types.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 class Clock {
@@ -32,4 +34,6 @@ class Clock {
       queue_serial_; /* pointer to the current packet queue serial, used for obsolete clock
            detection */
 };
+}
+}
 }

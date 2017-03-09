@@ -6,6 +6,8 @@
 
 #include "core/types.h"
 
+namespace fasto {
+namespace fastotv {
 class Url {
  public:
   Url();
@@ -21,3 +23,5 @@ class Url {
   common::uri::Uri uri_;
   std::string name_;
 };
+}
+}

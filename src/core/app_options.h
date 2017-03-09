@@ -15,6 +15,8 @@ extern "C" {
 
 #include "core/types.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 // 640x480
@@ -64,3 +66,5 @@ struct ComplexOptions {
 };
 
 }  // namespace core
+}
+}

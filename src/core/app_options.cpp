@@ -2,6 +2,8 @@
 
 #include <stddef.h>  // for NULL
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 AppOptions::AppOptions()
@@ -98,3 +100,5 @@ ComplexOptions& ComplexOptions::operator=(const ComplexOptions& rhs) {
 }
 
 }  // namespace core
+}
+}

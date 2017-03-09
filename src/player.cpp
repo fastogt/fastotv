@@ -30,6 +30,9 @@ extern "C" {
 
 #define IMG_PATH "resources/offline.png"
 
+namespace fasto {
+namespace fastotv {
+
 namespace {
 
 int ConvertToSDLVolume(int val) {
@@ -804,4 +807,6 @@ size_t Player::GeneratePrevPosition() const {
   }
 
   return curent_stream_pos_ - 1;
+}
+}
 }

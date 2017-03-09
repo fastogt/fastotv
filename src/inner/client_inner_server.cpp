@@ -16,29 +16,24 @@
     along with SiteOnYourDevice.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include "inner/client_inner_server.h"
 
 #include "network/tcp/tcp_client.h"
-
-#include "commands/commands.h"
 
 namespace fasto {
 namespace fastotv {
 namespace inner {
 
-class InnerClient : public tcp::TcpClient {
- public:
-  InnerClient(tcp::ITcpLoop* server, const common::net::socket_info& info);
-  const char* ClassName() const override;
+ProxyInnerServer::ProxyInnerServer(tcp::ITcpLoopObserver* observer) : ITcpLoop(observer) {}
 
-  common::Error write(const cmd_request_t& request, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  common::Error write(const cmd_responce_t& responce, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  common::Error write(const cmd_approve_t& approve, ssize_t* nwrite) WARN_UNUSED_RESULT;
+const char* ProxyInnerServer::ClassName() const {
+  return "ProxyInnerServer";
+}
 
- private:
-  using tcp::TcpClient::write;
-};
+tcp::TcpClient* ProxyInnerServer::createClient(const common::net::socket_info& info) {
+  return new tcp::TcpClient(this, info);
+}
 
 }  // namespace inner
-}  // namespace fastotv
+}  // namespace siteonyourdevice
 }  // namespace fasto

@@ -42,5 +42,5 @@ common::Error InnerClient::write(const cmd_approve_t& approve, ssize_t* nwrite) 
 }
 
 }  // namespace inner
-}  // namespace siteonyourdevice
+}  // namespace fastotv
 }  // namespace fasto

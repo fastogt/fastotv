@@ -18,27 +18,46 @@
 
 #pragma once
 
-#include "network/tcp/tcp_client.h"
+#include <common/threads/types.h>
 
-#include "commands/commands.h"
+#include <string>
+
+#include "infos.h"
+
+#include "network/loop_controller.h"
+#include "tv_config.h"
 
 namespace fasto {
 namespace fastotv {
-namespace inner {
+namespace network {
 
-class InnerClient : public tcp::TcpClient {
+class NetworkController : private ILoopThreadController {
  public:
-  InnerClient(tcp::ITcpLoop* server, const common::net::socket_info& info);
-  const char* ClassName() const override;
+  NetworkController(int argc, char* argv[]);
+  ~NetworkController();
 
-  common::Error write(const cmd_request_t& request, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  common::Error write(const cmd_responce_t& responce, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  common::Error write(const cmd_approve_t& approve, ssize_t* nwrite) WARN_UNUSED_RESULT;
+  void exit(int result);
+
+  void connect();
+  void disConnect();
+
+  UserAuthInfo authInfo() const;
+  TvConfig config() const;
+  void setConfig(const TvConfig& config);
 
  private:
-  using tcp::TcpClient::write;
+  void readConfig();
+  void saveConfig();
+
+  virtual tcp::ITcpLoopObserver* createHandler() override;
+  virtual tcp::ITcpLoop* createServer(tcp::ITcpLoopObserver* handler) override;
+
+  ILoopThreadController* server_;
+
+  std::string config_path_;
+  TvConfig config_;
 };
 
-}  // namespace inner
+}  // namespace network
 }  // namespace fastotv
 }  // namespace fasto

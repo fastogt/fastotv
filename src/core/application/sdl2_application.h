@@ -7,6 +7,8 @@
 
 #include "core/events/events_base.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 namespace application {
 
@@ -48,5 +50,7 @@ class Sdl2Application : public common::application::IApplicationImpl {
   common::threads::EventDispatcher<EventsType> dispatcher_;
   bool stop_;
 };
+}
+}
 }
 }

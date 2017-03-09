@@ -31,6 +31,16 @@ template <typename RT>
 class Thread;
 }
 }
+
+/* no AV correction is done if too big error */
+#define VIDEO_PICTURE_QUEUE_SIZE 3
+#define SAMPLE_QUEUE_SIZE 9
+
+/* polls for possible required screen refresh at least this often, should be less than 1/fps */
+#define REFRESH_RATE_MSEC 10
+
+namespace fasto {
+namespace fastotv {
 namespace core {
 class AudioDecoder;
 }
@@ -54,14 +64,6 @@ namespace core {
 template <size_t buffer_size>
 class VideoFrameQueue;
 }
-
-/* no AV correction is done if too big error */
-#define VIDEO_PICTURE_QUEUE_SIZE 3
-#define SAMPLE_QUEUE_SIZE 9
-
-/* polls for possible required screen refresh at least this often, should be less than 1/fps */
-#define REFRESH_RATE_MSEC 10
-
 namespace core {
 
 struct Stats {
@@ -243,3 +245,5 @@ class VideoState {
 };
 
 }  // namespace core
+}
+}

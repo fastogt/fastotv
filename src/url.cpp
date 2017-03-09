@@ -6,6 +6,8 @@
 #define URL_FIELD "url"
 #define NAME_FIELD "name"
 
+namespace fasto {
+namespace fastotv {
 Url::Url() : id_(core::invalid_stream_id), uri_(), name_() {}
 
 Url::Url(const std::string& json_data) : id_(core::invalid_stream_id), uri_(), name_() {
@@ -55,4 +57,6 @@ std::string Url::Name() const {
 
 core::stream_id Url::Id() const {
   return id_;
+}
+}
 }

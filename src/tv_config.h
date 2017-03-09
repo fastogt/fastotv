@@ -18,27 +18,26 @@
 
 #pragma once
 
-#include "network/tcp/tcp_client.h"
+#include <utility>
+#include <vector>
+#include <string>
 
-#include "commands/commands.h"
+#include <common/net/types.h>
+#include <common/url.h>
+
+#define SETTINGS_SECTION_LABEL "settings"
+
+//
+#define LOGIN_SETTING_LABEL "login"
+#define PASSWORD_SETTING_LABEL "password"
 
 namespace fasto {
 namespace fastotv {
-namespace inner {
 
-class InnerClient : public tcp::TcpClient {
- public:
-  InnerClient(tcp::ITcpLoop* server, const common::net::socket_info& info);
-  const char* ClassName() const override;
-
-  common::Error write(const cmd_request_t& request, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  common::Error write(const cmd_responce_t& responce, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  common::Error write(const cmd_approve_t& approve, ssize_t* nwrite) WARN_UNUSED_RESULT;
-
- private:
-  using tcp::TcpClient::write;
+struct TvConfig {
+  std::string login;
+  std::string password;
 };
 
-}  // namespace inner
-}  // namespace fastotv
+}  // namespace siteonyourdevice
 }  // namespace fasto

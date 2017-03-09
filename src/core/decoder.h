@@ -11,12 +11,10 @@ extern "C" {
 
 #include "core/types.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 class PacketQueue;
-}
-
-namespace core {
-
 class Decoder {
  public:
   virtual ~Decoder();
@@ -74,4 +72,6 @@ class VideoDecoder : public IFrameDecoder {
 
   int DecodeFrame(AVFrame* frame) override;
 };
+}
+}
 }

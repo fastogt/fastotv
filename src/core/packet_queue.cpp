@@ -1,5 +1,7 @@
 #include "core/packet_queue.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 SAVPacket::SAVPacket(const AVPacket& p, serial_id_t serial) : pkt(p), serial(serial) {}
@@ -155,3 +157,5 @@ int PacketQueue::PutPrivate(SAVPacket* pkt1) {
 }
 
 }  // namespace core
+}
+}

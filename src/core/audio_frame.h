@@ -10,6 +10,8 @@ extern "C" {
 
 #include "core/types.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 struct AudioFrame {
@@ -29,3 +31,5 @@ struct AudioFrame {
 };
 
 }  // namespace core
+}
+}

@@ -33,6 +33,8 @@ namespace {
 const unsigned sws_flags = SWS_BICUBIC;
 }
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 double q2d_diff(AVRational a) {
@@ -317,8 +319,8 @@ int audio_open(void* opaque,
   wanted_spec.callback = cb;
   wanted_spec.userdata = opaque;
   while (SDL_OpenAudio(&wanted_spec, &spec) < 0) {
-    WARNING_LOG() << "SDL_OpenAudio (" << static_cast<int>(wanted_spec.channels) << " channels, " << wanted_spec.freq
-                  << " Hz): " << SDL_GetError();
+    WARNING_LOG() << "SDL_OpenAudio (" << static_cast<int>(wanted_spec.channels) << " channels, "
+                  << wanted_spec.freq << " Hz): " << SDL_GetError();
     wanted_spec.channels = next_nb_channels[FFMIN(7, wanted_spec.channels)];
     if (!wanted_spec.channels) {
       wanted_spec.freq = next_sample_rates[next_sample_rate_idx--];
@@ -381,3 +383,5 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1,
 }
 
 }  // namespace core
+}
+}

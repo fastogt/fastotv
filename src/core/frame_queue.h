@@ -7,6 +7,8 @@
 #include "core/audio_frame.h"
 #include "core/video_frame.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 template <size_t buffer_size>
@@ -78,3 +80,5 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
 };
 
 }  // namespace core
+}
+}

@@ -12,15 +12,17 @@
 #include "core/app_options.h"
 #include "core/events/events.h"
 
-namespace core {
-class VideoState;
-}
-
 namespace common {
 namespace threads {
 template <typename type_t>
 class EventThread;
 }
+}
+
+namespace fasto {
+namespace fastotv {
+namespace core {
+class VideoState;
 }
 
 struct PlayerOptions {
@@ -133,3 +135,5 @@ class Player : public core::VideoStateHandler {
   const int xleft_;
   const int ytop_;
 };
+}
+}

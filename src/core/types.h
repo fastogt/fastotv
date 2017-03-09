@@ -4,6 +4,8 @@
 
 #include <common/time.h>
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 typedef common::time64_t msec_t;
@@ -32,4 +34,6 @@ enum AvSyncType {
 };
 
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels);
+}
+}
 }

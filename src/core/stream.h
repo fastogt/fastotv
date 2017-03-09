@@ -10,12 +10,11 @@ extern "C" {
 
 #include "core/types.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 class Clock;
 class PacketQueue;
-}  // lines 12-12
-
-namespace core {
 
 class Stream {
  public:
@@ -70,3 +69,5 @@ class AudioStream : public Stream {
 };
 
 }  // namespace core
+}
+}

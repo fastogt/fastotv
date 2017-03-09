@@ -7,6 +7,8 @@
 #include "core/events/window_events.h"
 #include "core/events/stream_events.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 namespace events {
 
@@ -35,4 +37,6 @@ typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
 typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;
 
 }  // namespace events {
+}
+}
 }
