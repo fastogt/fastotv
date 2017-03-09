@@ -20,6 +20,8 @@
 #define FASTO_BUTTON_X1MASK FASTO_BUTTON(FASTO_BUTTON_X1)
 #define FASTO_BUTTON_X2MASK FASTO_BUTTON(FASTO_BUTTON_X2)
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 namespace events {
 
@@ -43,4 +45,6 @@ typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
 typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
 
 }  // namespace events {
+}
+}
 }

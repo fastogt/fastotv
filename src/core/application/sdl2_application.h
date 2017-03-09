@@ -7,6 +7,11 @@
 
 #include "core/events/events_base.h"
 
+namespace fasto {
+namespace fastotv {
+namespace network {
+class NetworkController;
+}
 namespace core {
 namespace application {
 
@@ -14,6 +19,7 @@ class Sdl2Application : public common::application::IApplicationImpl {
  public:
   enum { event_timeout_wait_msec = 10 };
   Sdl2Application(int argc, char** argv);
+  ~Sdl2Application();
 
   virtual int PreExec() override;   // EXIT_FAILURE, EXIT_SUCCESS
   virtual int Exec() override;      // EXIT_FAILURE, EXIT_SUCCESS
@@ -47,6 +53,9 @@ class Sdl2Application : public common::application::IApplicationImpl {
  private:
   common::threads::EventDispatcher<EventsType> dispatcher_;
   bool stop_;
+  network::NetworkController* controller_;
 };
+}
+}
 }
 }

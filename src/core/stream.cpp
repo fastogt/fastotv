@@ -7,6 +7,8 @@
 #include "core/packet_queue.h"
 #include "core/utils.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 Stream::Stream() : packet_queue_(nullptr), clock_(nullptr), stream_index_(-1), stream_st_(NULL) {
@@ -111,3 +113,5 @@ AudioStream::AudioStream() : Stream() {}
 AudioStream::AudioStream(int index, AVStream* av_stream_st) : Stream(index, av_stream_st) {}
 
 }  // namespace core
+}
+}

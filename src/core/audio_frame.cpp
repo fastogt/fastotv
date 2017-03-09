@@ -1,5 +1,7 @@
 #include "core/audio_frame.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 AudioFrame::AudioFrame() : frame(av_frame_alloc()), serial(0), pts(0), duration(0), pos(0) {}
@@ -14,3 +16,5 @@ void AudioFrame::ClearFrame() {
 }
 
 }  // namespace core
+}
+}

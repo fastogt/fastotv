@@ -18,6 +18,8 @@ extern "C" {
 
 #include "core/types.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 struct SAVPacket {
@@ -67,3 +69,5 @@ class PacketQueue {  // compressed queue data
 };
 
 }  // namespace core
+}
+}

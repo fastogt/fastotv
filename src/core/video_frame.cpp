@@ -3,6 +3,8 @@
 #include <math.h>    // for isnan
 #include <stddef.h>  // for NULL
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 VideoFrame::VideoFrame()
@@ -49,3 +51,5 @@ clock_t VideoFrame::VpDuration(core::VideoFrame* vp,
 }
 
 }  // namespace core
+}
+}

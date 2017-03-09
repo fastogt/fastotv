@@ -20,6 +20,10 @@ enum EventsType {
   MOUSE_PRESS_EVENT,
   MOUSE_RELEASE_EVENT,
   QUIT_EVENT,
+
+  CLIENT_CONNECT_EVENT,
+  CLIENT_DISCONNECT_EVENT,
+  CLIENT_CONFIG_CHANGE_EVENT,
   COUNT_EVENTS
 };
 #define EVENT_LOOP_ID 1
@@ -36,6 +40,8 @@ struct event_traits<EventsType> {
 };
 }
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 namespace events {
 
@@ -68,5 +74,7 @@ class EventBase<event_t, void> : public common::Event<EventsType, event_t> {
 
   explicit EventBase(senders_t* sender) : base_class_t(sender) {}
 };
+}
+}
 }
 }

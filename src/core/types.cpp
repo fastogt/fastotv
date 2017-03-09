@@ -8,6 +8,8 @@ extern "C" {
 
 #include <common/macros.h>
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 clock_t invalid_clock() {
@@ -46,3 +48,5 @@ bool IsValidPts(pts_t pts) {
 }
 
 }  // namespace core
+}
+}

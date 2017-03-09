@@ -12,15 +12,17 @@
 #include "core/app_options.h"
 #include "core/events/events.h"
 
-namespace core {
-class VideoState;
-}
-
 namespace common {
 namespace threads {
 template <typename type_t>
 class EventThread;
 }
+}
+
+namespace fasto {
+namespace fastotv {
+namespace core {
+class VideoState;
 }
 
 struct PlayerOptions {
@@ -87,6 +89,9 @@ class Player : public core::VideoStateHandler {
 
   virtual void HandleQuitEvent(core::events::QuitEvent* event);
 
+  virtual void HandleClientConnectedEvent(core::events::ClientConnectedEvent* event);
+  virtual void HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event);
+  virtual void HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event);
  private:
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
@@ -133,3 +138,5 @@ class Player : public core::VideoStateHandler {
   const int xleft_;
   const int ytop_;
 };
+}
+}

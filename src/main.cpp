@@ -36,8 +36,8 @@ extern "C" {
 #include "player.h"
 
 namespace {
-core::AppOptions g_options;
-PlayerOptions g_player_options;
+fasto::fastotv::core::AppOptions g_options;
+fasto::fastotv::PlayerOptions g_player_options;
 #if CONFIG_AVFILTER
 int opt_add_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
@@ -96,9 +96,9 @@ int opt_sync(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
 
   if (!strcmp(arg, "audio")) {
-    g_options.av_sync_type = core::AV_SYNC_AUDIO_MASTER;
+    g_options.av_sync_type = fasto::fastotv::core::AV_SYNC_AUDIO_MASTER;
   } else if (!strcmp(arg, "video")) {
-    g_options.av_sync_type = core::AV_SYNC_VIDEO_MASTER;
+    g_options.av_sync_type = fasto::fastotv::core::AV_SYNC_VIDEO_MASTER;
   } else {
     ERROR_LOG() << "Unknown value for " << opt << ": " << arg;
     exit(1);
@@ -369,16 +369,18 @@ class FFmpegApplication : public B {
     }
 
     int pre_ret = base_class_t::PreExec();
-    core::events::PreExecInfo inf(pre_ret);
-    core::events::PreExecEvent* pre_event = new core::events::PreExecEvent(this, inf);
+    fasto::fastotv::core::events::PreExecInfo inf(pre_ret);
+    fasto::fastotv::core::events::PreExecEvent* pre_event =
+        new fasto::fastotv::core::events::PreExecEvent(this, inf);
     base_class_t::SendEvent(pre_event);
     return pre_ret;
   }
 
   virtual int PostExec() override {
     int post_ret = base_class_t::PostExec();
-    core::events::PostExecInfo inf(post_ret);
-    core::events::PostExecEvent* post_event = new core::events::PostExecEvent(this, inf);
+    fasto::fastotv::core::events::PostExecInfo inf(post_ret);
+    fasto::fastotv::core::events::PostExecEvent* post_event =
+        new fasto::fastotv::core::events::PostExecEvent(this, inf);
     base_class_t::SendEvent(post_event);
     return post_ret;
   }
@@ -424,12 +426,8 @@ class FFmpegApplication : public B {
   DictionaryOptions* dict_;
 };
 
-namespace common {
-namespace application {
-IApplicationImpl* CreateApplicationImpl(int argc, char** argv) {
-  return new FFmpegApplication<core::application::Sdl2Application>(argc, argv);
-}
-}
+common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** argv) {
+  return new FFmpegApplication<fasto::fastotv::core::application::Sdl2Application>(argc, argv);
 }
 
 /* Called from the main */
@@ -445,9 +443,10 @@ int main(int argc, char** argv) {
 #else
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
-  common::application::Application app(argc, argv);
-  core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
-  Player* player = new Player(g_player_options, g_options, copt);
+  common::application::Application app(argc, argv, &CreateApplicationImpl);
+  fasto::fastotv::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
+                                            dict->codec_opts);
+  fasto::fastotv::Player* player = new fasto::fastotv::Player(g_player_options, g_options, copt);
   int res = app.Exec();
   destroy(&player);
   return res;

@@ -15,6 +15,8 @@ extern "C" {
 
 #include "core/clock.h"
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */
@@ -46,3 +48,5 @@ struct VideoFrame {
 };
 
 }  // namespace core
+}
+}

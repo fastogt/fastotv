@@ -7,3 +7,9 @@
 [submodule "src/third-party/json-c"]
 	path = src/third-party/json-c
 	url = https://github.com/fastogt/json-c.git
+[submodule "src/third-party/ini/inih"]
+	path = src/third-party/ini/inih
+	url = https://github.com/benhoyt/inih.git
+[submodule "src/third-party/libev/src"]
+	path = src/third-party/libev/src
+	url = https://github.com/fastogt/libev.git

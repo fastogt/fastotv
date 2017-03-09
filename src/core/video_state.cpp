@@ -75,6 +75,8 @@ extern "C" {
 /* TODO: We assume that a decoded and resampled frame fits into this buffer */
 #define MAX_QUEUE_SIZE (15 * 1024 * 1024)
 
+namespace fasto {
+namespace fastotv {
 namespace core {
 
 namespace {
@@ -1801,3 +1803,5 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
 #endif /* CONFIG_AVFILTER */
 
 }  // namespace core
+}
+}
