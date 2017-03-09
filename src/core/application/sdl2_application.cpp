@@ -9,6 +9,8 @@
 
 #include "core/events/events.h"
 
+#include "network_controller.h"
+
 #define FASTO_EVENT (SDL_USEREVENT)
 
 namespace {
@@ -27,7 +29,16 @@ namespace core {
 namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
-    : common::application::IApplicationImpl(argc, argv), dispatcher_(), stop_(false) {}
+    : common::application::IApplicationImpl(argc, argv),
+      dispatcher_(),
+      stop_(false),
+      controller_(nullptr) {
+  controller_ = new network::NetworkController(argc, argv);
+}
+
+Sdl2Application::~Sdl2Application() {
+  destroy(&controller_);
+}
 
 int Sdl2Application::PreExec() {
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
@@ -43,6 +54,7 @@ int Sdl2Application::PreExec() {
 }
 
 int Sdl2Application::Exec() {
+  controller_->Start();
   while (!stop_) {
     SDL_Event event;
     SDL_PumpEvents();

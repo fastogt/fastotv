@@ -37,8 +37,7 @@
 namespace {
 
 int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  fasto::fastotv::TvConfig* pconfig =
-      reinterpret_cast<fasto::fastotv::TvConfig*>(user);
+  fasto::fastotv::TvConfig* pconfig = reinterpret_cast<fasto::fastotv::TvConfig*>(user);
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
   if (MATCH(SETTINGS_SECTION_LABEL, LOGIN_SETTING_LABEL)) {
@@ -57,8 +56,7 @@ namespace fasto {
 namespace fastotv {
 namespace network {
 
-NetworkController::NetworkController(int argc, char* argv[])
-    : ILoopThreadController(), server_(nullptr), config_() {
+NetworkController::NetworkController(int argc, char* argv[]) : ILoopThreadController(), config_() {
   bool daemon_mode = false;
 #ifdef OS_MACOSX
   std::string config_path = PROJECT_NAME ".app/Contents/Resources/" CONFIG_FILE_NAME;
@@ -80,48 +78,14 @@ NetworkController::NetworkController(int argc, char* argv[])
   }
 #endif
   readConfig();
+}
 
+void NetworkController::Start() {
   ILoopThreadController::start();
 }
 
 NetworkController::~NetworkController() {
-  delete server_;
-
   saveConfig();
-}
-
-void NetworkController::exit(int result) {
-  UNUSED(result);
-  disConnect();
-}
-
-void NetworkController::connect() {
-  if (server_) {  // if connected
-    return;
-  }
-
-  /*const http_server_t server_type = config_.server_type;
-  const common::net::HostAndPort externalHost = config_.external_host;
-  if (server_type == FASTO_SERVER) {
-    server_ = new LocalHttpServerController(auth_checker_, config_);
-    server_->start();
-  } else if (server_type == EXTERNAL_SERVER && externalHost.isValid()) {
-    server_ = new ExternalHttpServerController(auth_checker_, config_);
-    server_->start();
-  } else {
-    NOTREACHED();
-  }*/
-}
-
-void NetworkController::disConnect() {
-  if (!server_) {  // if connect dosen't clicked
-    return;
-  }
-
-  server_->stop();
-  server_->join();
-  delete server_;
-  server_ = nullptr;
 }
 
 UserAuthInfo NetworkController::authInfo() const {
@@ -175,7 +139,8 @@ void NetworkController::readConfig() {
 }
 
 tcp::ITcpLoopObserver* NetworkController::createHandler() {
-  inner::InnerServerHandler* handler = new inner::InnerServerHandler(server::g_service_host, config_);
+  inner::InnerServerHandler* handler =
+      new inner::InnerServerHandler(server::g_service_host, config_);
   return handler;
 }
 

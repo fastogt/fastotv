@@ -77,6 +77,7 @@ void ServerHost::stop() {
 int ServerHost::exec() {
   std::shared_ptr<common::threads::Thread<int> > connection_thread =
       THREAD_MANAGER()->CreateThread(&exec_server, server_);
+  connection_thread->Start();
   while (!stop_) {
     std::unique_lock<std::mutex> lock(stop_mutex_);
     std::cv_status interrupt_status =

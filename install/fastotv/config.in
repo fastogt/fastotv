@@ -1,14 +1,3 @@
-[http_server]
+[settings]
 login=@USER_SPECIFIC_DEFAULT_LOGIN@
 password=@USER_SPECIFIC_DEFAULT_PASSWORD@
-
-local_host=@USER_SPECIFIC_DEFAULT_LOCAL_DOMAIN@
-content_path=@USER_SPECIFIC_CONTENT_PATH@
-
-external_host=@USER_SPECIFIC_DEFAULT_EXTERNAL_DOMAIN@
-
-private_site=@USER_SPECIFIC_DEFAULT_PRIVATE_SITE@
-
-server_type=@USER_SPECIFIC_SERVER_TYPE@
-[http_handlers_utls]
-[http_server_sockets]

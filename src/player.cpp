@@ -19,7 +19,6 @@ extern "C" {
 #include "core/app_options.h"
 #include "core/utils.h"
 #include "core/video_frame.h"
-#include "core/events/events.h"
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
@@ -206,6 +205,10 @@ Player::Player(const PlayerOptions& options,
   fApp->Subscribe(this, core::events::WindowCloseEvent::EventType);
 
   fApp->Subscribe(this, core::events::QuitEvent::EventType);
+
+  fApp->Subscribe(this, core::events::ClientDisconnectedEvent::EventType);
+  fApp->Subscribe(this, core::events::ClientConnectedEvent::EventType);
+  fApp->Subscribe(this, core::events::ClientConfigChangeEvent::EventType);
 }
 
 void Player::SetFullScreen(bool full_screen) {
@@ -265,6 +268,18 @@ void Player::HandleEvent(event_t* event) {
   } else if (event->GetEventType() == core::events::QuitEvent::EventType) {
     core::events::QuitEvent* quit_event = static_cast<core::events::QuitEvent*>(event);
     HandleQuitEvent(quit_event);
+  } else if (event->GetEventType() == core::events::ClientConnectedEvent::EventType) {
+    core::events::ClientConnectedEvent* connect_event =
+        static_cast<core::events::ClientConnectedEvent*>(event);
+    HandleClientConnectedEvent(connect_event);
+  } else if (event->GetEventType() == core::events::ClientDisconnectedEvent::EventType) {
+    core::events::ClientDisconnectedEvent* disc_event =
+        static_cast<core::events::ClientDisconnectedEvent*>(event);
+    HandleClientDisconnectedEvent(disc_event);
+  } else if (event->GetEventType() == core::events::ClientConfigChangeEvent::EventType) {
+    core::events::ClientConfigChangeEvent* conf_change_event =
+        static_cast<core::events::ClientConfigChangeEvent*>(event);
+    HandleClientConfigChangeEvent(conf_change_event);
   }
 }
 
@@ -651,6 +666,18 @@ void Player::HandleWindowCloseEvent(core::events::WindowCloseEvent* event) {
 void Player::HandleQuitEvent(core::events::QuitEvent* event) {
   UNUSED(event);
   fApp->Exit(EXIT_SUCCESS);
+}
+
+void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* event) {
+
+}
+
+void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {
+
+}
+
+void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event) {
+
 }
 
 bool Player::GetCurrentUrl(Url* url) const {

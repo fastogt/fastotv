@@ -89,6 +89,9 @@ class Player : public core::VideoStateHandler {
 
   virtual void HandleQuitEvent(core::events::QuitEvent* event);
 
+  virtual void HandleClientConnectedEvent(core::events::ClientConnectedEvent* event);
+  virtual void HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event);
+  virtual void HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event);
  private:
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);

@@ -36,11 +36,7 @@ class NetworkController : private ILoopThreadController {
   NetworkController(int argc, char* argv[]);
   ~NetworkController();
 
-  void exit(int result);
-
-  void connect();
-  void disConnect();
-
+  void Start();
   UserAuthInfo authInfo() const;
   TvConfig config() const;
   void setConfig(const TvConfig& config);
@@ -51,8 +47,6 @@ class NetworkController : private ILoopThreadController {
 
   virtual tcp::ITcpLoopObserver* createHandler() override;
   virtual tcp::ITcpLoop* createServer(tcp::ITcpLoopObserver* handler) override;
-
-  ILoopThreadController* server_;
 
   std::string config_path_;
   TvConfig config_;
