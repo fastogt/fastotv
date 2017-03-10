@@ -31,19 +31,13 @@ namespace tcp {
 class TcpServer;
 }  // namespace tcp
 
-namespace inner {
-class InnerServerCommandSeqParser;
-}  // namespace inner
-
 namespace server {
 namespace inner {
-class InnerServerHandlerHost;
-class InnerTcpServerClient;
 
-class InnerTcpServerClient : public fastotv::inner::InnerClient {
+class InnerTcpClient : public fastotv::inner::InnerClient {
  public:
-  InnerTcpServerClient(tcp::TcpServer* server, const common::net::socket_info& info);
-  ~InnerTcpServerClient();
+  InnerTcpClient(tcp::TcpServer* server, const common::net::socket_info& info);
+  ~InnerTcpClient();
 
   virtual const char* className() const;
 

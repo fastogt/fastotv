@@ -18,60 +18,71 @@
 
 #pragma once
 
-#include "infos.h"
+#include <common/threads/thread.h>
+#include <common/threads/types.h>
 
 #include "inner/inner_server_command_seq_parser.h"
 
+#include "redis/redis_helpers.h"
+
 #include "network/tcp/tcp_server.h"
 
-#include "tv_config.h"
+#include "infos.h"
 
 namespace fasto {
 namespace fastotv {
+namespace server {
+class ServerHost;
 namespace inner {
 
-class InnerServerHandler : public InnerServerCommandSeqParser, public tcp::ITcpLoopObserver {
+class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqParser,
+                               public tcp::ITcpLoopObserver {
  public:
   enum {
-    ping_timeout_server = 30  // sec
+    ping_timeout_clients = 60  // sec
   };
 
-  explicit InnerServerHandler(const common::net::HostAndPort& innerHost, const TvConfig& config);
-  ~InnerServerHandler();
-
-  UserAuthInfo authInfo() const;
-  void setConfig(const TvConfig& config);
+  explicit InnerTcpHandlerHost(ServerHost* parent);
 
   virtual void preLooped(tcp::ITcpLoop* server) override;
+
   virtual void accepted(tcp::TcpClient* client) override;
   virtual void moved(tcp::TcpClient* client) override;
   virtual void closed(tcp::TcpClient* client) override;
+
   virtual void dataReceived(tcp::TcpClient* client) override;
   virtual void dataReadyToWrite(tcp::TcpClient* client) override;
   virtual void postLooped(tcp::ITcpLoop* server) override;
   virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
 
+  virtual ~InnerTcpHandlerHost();
+
+  void setStorageConfig(const redis_sub_configuration_t& config);
+
  private:
-  virtual void handleInnerRequestCommand(InnerClient* connection,
+  virtual void handleInnerRequestCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
-  virtual void handleInnerResponceCommand(InnerClient* connection,
+  virtual void handleInnerResponceCommand(fastotv::inner::InnerClient* connection,
                                           cmd_seq_t id,
                                           int argc,
                                           char* argv[]) override;
-  virtual void handleInnerApproveCommand(InnerClient* connection,
+  virtual void handleInnerApproveCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
 
-  TvConfig config_;
-  InnerClient* inner_connection_;
-  timer_id_t ping_server_id_timer_;
+  ServerHost* const parent_;
 
-  const common::net::HostAndPort innerHost_;
+  class InnerSubHandler;
+  RedisSub* sub_commands_in_;
+  InnerSubHandler* handler_;
+  std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
+  timer_id_t ping_client_id_timer_;
 };
 
 }  // namespace inner
+}  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

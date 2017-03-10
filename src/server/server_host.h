@@ -23,9 +23,7 @@
 
 #include <common/threads/types.h>
 
-#include "server/inner/inner_tcp_server.h"
-
-#include "inner/inner_server_command_seq_parser.h"
+#include "network/tcp/tcp_client.h"
 
 #include "redis/redis_helpers.h"
 
@@ -34,7 +32,9 @@ namespace fastotv {
 namespace server {
 
 namespace inner {
-class InnerTcpServerClient;
+class InnerTcpClient;
+class InnerTcpHandlerHost;
+class InnerTcpServer;
 }  // namespace inner
 
 struct Settings {
@@ -48,7 +48,7 @@ struct Config {
 class ServerHost {
  public:
   enum { timeout_seconds = 1 };
-  typedef std::unordered_map<std::string, inner::InnerTcpServerClient*> inner_connections_type;
+  typedef std::unordered_map<std::string, inner::InnerTcpClient*> inner_connections_type;
 
   explicit ServerHost(const common::net::HostAndPort& host);
   ~ServerHost();
@@ -60,7 +60,7 @@ class ServerHost {
   bool registerInnerConnectionByUser(const UserAuthInfo& user,
                                      tcp::TcpClient* connection) WARN_UNUSED_RESULT;
   bool findUser(const UserAuthInfo& user) const;
-  inner::InnerTcpServerClient* findInnerConnectionByLogin(const std::string& login) const;
+  inner::InnerTcpClient* findInnerConnectionByLogin(const std::string& login) const;
   void setConfig(const Config& conf);
 
  private:
@@ -68,7 +68,7 @@ class ServerHost {
   std::condition_variable stop_cond_;
   bool stop_;
 
-  inner::InnerServerHandlerHost* handler_;
+  inner::InnerTcpHandlerHost* handler_;
   inner::InnerTcpServer* server_;
 
   inner_connections_type connections_;

@@ -22,18 +22,20 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace inner {
 
-ProxyInnerServer::ProxyInnerServer(tcp::ITcpLoopObserver* observer) : ITcpLoop(observer) {}
+InnerTcpServer::InnerTcpServer(tcp::ITcpLoopObserver* observer) : ITcpLoop(observer) {}
 
-const char* ProxyInnerServer::ClassName() const {
-  return "ProxyInnerServer";
+const char* InnerTcpServer::ClassName() const {
+  return "InnerTcpServer";
 }
 
-tcp::TcpClient* ProxyInnerServer::createClient(const common::net::socket_info& info) {
+tcp::TcpClient* InnerTcpServer::createClient(const common::net::socket_info& info) {
   return new tcp::TcpClient(this, info);
 }
 
 }  // namespace inner
+}
 }  // namespace siteonyourdevice
 }  // namespace fasto

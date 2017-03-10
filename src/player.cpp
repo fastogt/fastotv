@@ -29,6 +29,8 @@ extern "C" {
 
 #define IMG_PATH "resources/offline.png"
 
+#undef ERROR
+
 namespace fasto {
 namespace fastotv {
 
@@ -102,12 +104,12 @@ bool ReadPlaylistFromFile(const file_path& location, std::vector<Url>* urls = nu
   return true;
 }
 
-bool CreateWindow(int width,
-                  int height,
-                  bool is_full_screen,
-                  const std::string& title,
-                  SDL_Renderer** renderer,
-                  SDL_Window** window) {
+bool CreateWindowFunc(int width,
+                      int height,
+                      bool is_full_screen,
+                      const std::string& title,
+                      SDL_Renderer** renderer,
+                      SDL_Window** window) {
   if (!renderer || !window) {  // invalid input
     return false;
   }
@@ -378,7 +380,7 @@ bool Player::HandleRequestWindow(core::VideoState* stream) {
 
   if (!window_) {
     bool created =
-        CreateWindow(width_, height_, options_.is_full_screen, name, &renderer_, &window_);
+        CreateWindowFunc(width_, height_, options_.is_full_screen, name, &renderer_, &window_);
     if (!created) {
       return false;
     }
@@ -668,17 +670,11 @@ void Player::HandleQuitEvent(core::events::QuitEvent* event) {
   fApp->Exit(EXIT_SUCCESS);
 }
 
-void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* event) {
+void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* event) {}
 
-}
+void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {}
 
-void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {
-
-}
-
-void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event) {
-
-}
+void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event) {}
 
 bool Player::GetCurrentUrl(Url* url) const {
   if (!url || play_list_.empty()) {
@@ -732,7 +728,7 @@ void Player::SwitchToErrorMode() {
   CalculateDispalySize();
 
   if (!window_) {
-    CreateWindow(width_, height_, options_.is_full_screen, name_str, &renderer_, &window_);
+    CreateWindowFunc(width_, height_, options_.is_full_screen, name_str, &renderer_, &window_);
   } else {
     SDL_SetWindowTitle(window_, name_str.c_str());
   }

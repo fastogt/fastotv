@@ -31,6 +31,8 @@
 #define GET_ALL_USERS_REDIS_REQUEST "HGETALL users"
 #define GET_USER_1S "HGET users %s"
 
+#undef ERROR
+
 namespace fasto {
 namespace fastotv {
 namespace server {

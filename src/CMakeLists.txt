@@ -222,31 +222,30 @@ TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}
 )
 
 #project
+SET(CLIENT_SERVER_SOURCES infos.h infos.cpp server/server_config.h) # server and client common sources
 SET(HEADERS_INNER
   inner/inner_server_command_seq_parser.h
   inner/inner_client.h
-  inner/inner_server_handler.h
 )
 
 SET(SOURCES_INNER
   inner/inner_server_command_seq_parser.cpp
   inner/inner_client.cpp
-  inner/inner_server_handler.cpp
 )
 
 SET(HEADERS_INNER_CLIENT
   client/inner/inner_tcp_server.h
+  client/inner/inner_tcp_handler.h
 )
 
 SET(SOURCES_INNER_CLIENT
   client/inner/inner_tcp_server.cpp
+  client/inner/inner_tcp_handler.cpp
 )
 
 SET(SOURCES_SDS
   third-party/sds/sds.c
 )
-
-SET(CLIENT_SERVER_SOURCES infos.h infos.cpp server/server_config.h) # server and client common sources
 
 # User specific
 SET(USER_SPECIFIC_DEFAULT_LOGIN anon@fastogt.com CACHE STRING "Default login")
@@ -322,11 +321,13 @@ IF(BUILD_SERVER)
   SET(HEADERS_INNER_SERVER
     server/inner/inner_tcp_server.h
     server/inner/inner_tcp_client.h
+    server/inner/inner_tcp_handler.h
   )
 
   SET(SOURCES_INNER_SERVER
     server/inner/inner_tcp_server.cpp
     server/inner/inner_tcp_client.cpp
+    server/inner/inner_tcp_handler.cpp
   )
 
   SET(BUILD_SERVER_SOURCES

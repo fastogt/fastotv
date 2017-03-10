@@ -23,64 +23,12 @@
 
 #include "inner/inner_server_command_seq_parser.h"
 
-#include "redis/redis_helpers.h"
-
 #include "network/tcp/tcp_server.h"
-
-#include "infos.h"
 
 namespace fasto {
 namespace fastotv {
 namespace server {
-class ServerHost;
 namespace inner {
-
-class InnerServerHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqParser,
-                               public tcp::ITcpLoopObserver {
- public:
-  enum {
-    ping_timeout_clients = 60  // sec
-  };
-
-  explicit InnerServerHandlerHost(ServerHost* parent);
-
-  virtual void preLooped(tcp::ITcpLoop* server) override;
-
-  virtual void accepted(tcp::TcpClient* client) override;
-  virtual void moved(tcp::TcpClient* client) override;
-  virtual void closed(tcp::TcpClient* client) override;
-
-  virtual void dataReceived(tcp::TcpClient* client) override;
-  virtual void dataReadyToWrite(tcp::TcpClient* client) override;
-  virtual void postLooped(tcp::ITcpLoop* server) override;
-  virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
-
-  virtual ~InnerServerHandlerHost();
-
-  void setStorageConfig(const redis_sub_configuration_t& config);
-
- private:
-  virtual void handleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                         cmd_seq_t id,
-                                         int argc,
-                                         char* argv[]) override;
-  virtual void handleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                          cmd_seq_t id,
-                                          int argc,
-                                          char* argv[]) override;
-  virtual void handleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                         cmd_seq_t id,
-                                         int argc,
-                                         char* argv[]) override;
-
-  ServerHost* const parent_;
-
-  class InnerSubHandler;
-  RedisSub* sub_commands_in_;
-  InnerSubHandler* handler_;
-  std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
-  timer_id_t ping_client_id_timer_;
-};
 
 class InnerTcpServer : public tcp::TcpServer {
  public:

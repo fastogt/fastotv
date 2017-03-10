@@ -24,11 +24,12 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace inner {
 
-class ProxyInnerServer : public tcp::ITcpLoop {
+class InnerTcpServer : public tcp::ITcpLoop {
  public:
-  explicit ProxyInnerServer(tcp::ITcpLoopObserver* observer);
+  explicit InnerTcpServer(tcp::ITcpLoopObserver* observer);
   virtual const char* ClassName() const override;
 
  protected:
@@ -36,5 +37,6 @@ class ProxyInnerServer : public tcp::ITcpLoop {
 };
 
 }  // namespace inner
+}
 }  // namespace siteonyourdevice
 }  // namespace fasto

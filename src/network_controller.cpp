@@ -27,7 +27,7 @@
 #include <common/logger.h>
 #include <common/utils.h>
 
-#include "inner/inner_server_handler.h"
+#include "client/inner/inner_tcp_handler.h"
 #include "client/inner/inner_tcp_server.h"
 
 #include <common/application/application.h>
@@ -98,7 +98,8 @@ TvConfig NetworkController::config() const {
 
 void NetworkController::setConfig(const TvConfig& config) {
   config_ = config;
-  inner::InnerServerHandler* handler = dynamic_cast<inner::InnerServerHandler*>(handler_);
+  client::inner::InnerTcpHandler* handler =
+      dynamic_cast<client::inner::InnerTcpHandler*>(handler_);
   if (handler) {
     handler->setConfig(config);
   }
@@ -139,13 +140,13 @@ void NetworkController::readConfig() {
 }
 
 tcp::ITcpLoopObserver* NetworkController::createHandler() {
-  inner::InnerServerHandler* handler =
-      new inner::InnerServerHandler(server::g_service_host, config_);
+  client::inner::InnerTcpHandler* handler =
+      new client::inner::InnerTcpHandler(server::g_service_host, config_);
   return handler;
 }
 
 tcp::ITcpLoop* NetworkController::createServer(tcp::ITcpLoopObserver* handler) {
-  inner::ProxyInnerServer* serv = new inner::ProxyInnerServer(handler);
+  client::inner::InnerTcpServer* serv = new client::inner::InnerTcpServer(handler);
   serv->setName("local_inner_server");
   return serv;
 }

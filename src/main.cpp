@@ -35,6 +35,8 @@ extern "C" {
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER, etc
 #include "player.h"
 
+#undef ERROR
+
 namespace {
 fasto::fastotv::core::AppOptions g_options;
 fasto::fastotv::PlayerOptions g_player_options;

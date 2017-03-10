@@ -13,6 +13,8 @@
 
 #define FASTO_EVENT (SDL_USEREVENT)
 
+#undef ERROR
+
 namespace {
 Keysym SDLKeySymToOur(SDL_Keysym sks) {
   Keysym ks;

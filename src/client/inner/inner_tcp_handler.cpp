@@ -16,7 +16,7 @@
     along with SiteOnYourDevice.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "inner/inner_server_handler.h"
+#include "client/inner/inner_tcp_handler.h"
 
 #include <string>
 
@@ -40,21 +40,21 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace inner {
 
-InnerServerHandler::InnerServerHandler(const common::net::HostAndPort& innerHost,
-                                       const TvConfig& config)
+InnerTcpHandler::InnerTcpHandler(const common::net::HostAndPort& innerHost, const TvConfig& config)
     : config_(config),
       inner_connection_(nullptr),
       ping_server_id_timer_(INVALID_TIMER_ID),
       innerHost_(innerHost) {}
 
-InnerServerHandler::~InnerServerHandler() {
+InnerTcpHandler::~InnerTcpHandler() {
   delete inner_connection_;
   inner_connection_ = nullptr;
 }
 
-void InnerServerHandler::preLooped(tcp::ITcpLoop* server) {
+void InnerTcpHandler::preLooped(tcp::ITcpLoop* server) {
   ping_server_id_timer_ = server->createTimer(ping_timeout_server, ping_timeout_server);
   CHECK(!inner_connection_);
 
@@ -69,20 +69,21 @@ void InnerServerHandler::preLooped(tcp::ITcpLoop* server) {
     return;
   }
 
-  InnerClient* connection = new InnerClient(server, client_info);
+  fasto::fastotv::inner::InnerClient* connection =
+      new fasto::fastotv::inner::InnerClient(server, client_info);
   inner_connection_ = connection;
   server->registerClient(connection);
 }
 
-void InnerServerHandler::accepted(tcp::TcpClient* client) {
+void InnerTcpHandler::accepted(tcp::TcpClient* client) {
   UNUSED(client);
 }
 
-void InnerServerHandler::moved(tcp::TcpClient* client) {
+void InnerTcpHandler::moved(tcp::TcpClient* client) {
   UNUSED(client);
 }
 
-void InnerServerHandler::closed(tcp::TcpClient* client) {
+void InnerTcpHandler::closed(tcp::TcpClient* client) {
   if (client == inner_connection_) {
     fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, authInfo()));
     inner_connection_ = nullptr;
@@ -90,7 +91,7 @@ void InnerServerHandler::closed(tcp::TcpClient* client) {
   }
 }
 
-void InnerServerHandler::dataReceived(tcp::TcpClient* client) {
+void InnerTcpHandler::dataReceived(tcp::TcpClient* client) {
   char buff[MAX_COMMAND_SIZE] = {0};
   ssize_t nread = 0;
   common::Error err = client->read(buff, MAX_COMMAND_SIZE, &nread);
@@ -101,24 +102,28 @@ void InnerServerHandler::dataReceived(tcp::TcpClient* client) {
     return;
   }
 
-  handleInnerDataReceived(dynamic_cast<InnerClient*>(client), buff, nread);
+  handleInnerDataReceived(dynamic_cast<fasto::fastotv::inner::InnerClient*>(client), buff, nread);
 }
 
-void InnerServerHandler::dataReadyToWrite(tcp::TcpClient* client) {}
+void InnerTcpHandler::dataReadyToWrite(tcp::TcpClient* client) {
+  UNUSED(client);
+}
 
-void InnerServerHandler::postLooped(tcp::ITcpLoop* server) {
+void InnerTcpHandler::postLooped(tcp::ITcpLoop* server) {
+  UNUSED(server);
   if (inner_connection_) {
-    InnerClient* connection = inner_connection_;
+    fasto::fastotv::inner::InnerClient* connection = inner_connection_;
     connection->close();
     delete connection;
   }
 }
 
-void InnerServerHandler::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
+void InnerTcpHandler::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
+  UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
     const cmd_request_t ping_request = make_request(PING_COMMAND_REQ);
     ssize_t nwrite = 0;
-    InnerClient* client = inner_connection_;
+    fasto::fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->write(ping_request, &nwrite);
     if (err && err->isError()) {
       DEBUG_MSG_ERROR(err);
@@ -128,18 +133,18 @@ void InnerServerHandler::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
   }
 }
 
-UserAuthInfo InnerServerHandler::authInfo() const {
+UserAuthInfo InnerTcpHandler::authInfo() const {
   return UserAuthInfo(config_.login, config_.password);
 }
 
-void InnerServerHandler::setConfig(const TvConfig& config) {
+void InnerTcpHandler::setConfig(const TvConfig& config) {
   config_ = config;
 }
 
-void InnerServerHandler::handleInnerRequestCommand(InnerClient* connection,
-                                                   cmd_seq_t id,
-                                                   int argc,
-                                                   char* argv[]) {
+void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
+                                                cmd_seq_t id,
+                                                int argc,
+                                                char* argv[]) {
   ssize_t nwrite = 0;
   char* command = argv[0];
 
@@ -244,10 +249,10 @@ void InnerServerHandler::handleInnerRequestCommand(InnerClient* connection,
   }
 }
 
-void InnerServerHandler::handleInnerResponceCommand(InnerClient* connection,
-                                                    cmd_seq_t id,
-                                                    int argc,
-                                                    char* argv[]) {
+void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerClient* connection,
+                                                 cmd_seq_t id,
+                                                 int argc,
+                                                 char* argv[]) {
   ssize_t nwrite = 0;
   char* state_command = argv[0];
 
@@ -289,10 +294,10 @@ void InnerServerHandler::handleInnerResponceCommand(InnerClient* connection,
   }
 }
 
-void InnerServerHandler::handleInnerApproveCommand(InnerClient* connection,
-                                                   cmd_seq_t id,
-                                                   int argc,
-                                                   char* argv[]) {
+void InnerTcpHandler::handleInnerApproveCommand(fasto::fastotv::inner::InnerClient* connection,
+                                                cmd_seq_t id,
+                                                int argc,
+                                                char* argv[]) {
   UNUSED(connection);
   UNUSED(id);
   char* command = argv[0];
@@ -312,5 +317,6 @@ void InnerServerHandler::handleInnerApproveCommand(InnerClient* connection,
 }
 
 }  // namespace inner
+}
 }  // namespace fastotv
 }  // namespace fasto

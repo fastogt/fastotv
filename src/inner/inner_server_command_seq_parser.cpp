@@ -88,8 +88,9 @@ void InnerServerCommandSeqParser::subscribeRequest(const RequestCallback& req) {
 }
 
 void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connection,
-                                                          char* buff,
-                                                          uint32_t buff_len) {
+                                                          const char* buff,
+                                                          size_t buff_len) {
+  UNUSED(buff_len);
   ssize_t nwrite = 0;
   char* end = strstr(buff, END_OF_COMMAND);
   if (!end) {

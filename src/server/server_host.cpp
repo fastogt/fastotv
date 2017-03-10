@@ -30,6 +30,10 @@
 #include "network/tcp/tcp_client.h"
 
 #include "inner/inner_tcp_client.h"
+#include "inner/inner_server_command_seq_parser.h"
+
+#include "server/inner/inner_tcp_server.h"
+#include "server/inner/inner_tcp_handler.h"
 
 #define BUF_SIZE 4096
 #define UNKNOWN_CLIENT_NAME "Unknown"
@@ -58,7 +62,7 @@ int exec_server(tcp::TcpServer* server) {
 
 ServerHost::ServerHost(const common::net::HostAndPort& host)
     : stop_(false), server_(nullptr), handler_(nullptr) {
-  handler_ = new inner::InnerServerHandlerHost(this);
+  handler_ = new inner::InnerTcpHandlerHost(this);
   server_ = new inner::InnerTcpServer(host, handler_);
   server_->setName("inner_server");
 }
@@ -96,7 +100,7 @@ int ServerHost::exec() {
 }
 
 bool ServerHost::unRegisterInnerConnectionByHost(tcp::TcpClient* connection) {
-  inner::InnerTcpServerClient* iconnection = dynamic_cast<inner::InnerTcpServerClient*>(connection);
+  inner::InnerTcpClient* iconnection = dynamic_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     return false;
   }
@@ -114,7 +118,7 @@ bool ServerHost::unRegisterInnerConnectionByHost(tcp::TcpClient* connection) {
 bool ServerHost::registerInnerConnectionByUser(const UserAuthInfo& user,
                                                tcp::TcpClient* connection) {
   CHECK(user.isValid());
-  inner::InnerTcpServerClient* iconnection = dynamic_cast<inner::InnerTcpServerClient*>(connection);
+  inner::InnerTcpClient* iconnection = dynamic_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     return false;
   }
@@ -131,7 +135,8 @@ bool ServerHost::findUser(const UserAuthInfo& user) const {
   return rstorage_.findUser(user);
 }
 
-inner::InnerTcpServerClient* ServerHost::findInnerConnectionByLogin(const std::string& login) const {
+inner::InnerTcpClient* ServerHost::findInnerConnectionByLogin(
+    const std::string& login) const {
   inner_connections_type::const_iterator hs = connections_.find(login);
   if (hs == connections_.end()) {
     return nullptr;

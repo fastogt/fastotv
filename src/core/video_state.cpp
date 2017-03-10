@@ -56,6 +56,8 @@ extern "C" {
 #include "core/packet_queue.h"
 #include "core/events/events.h"
 
+#undef ERROR
+
 /* no AV sync correction is done if below the minimum AV sync threshold */
 #define AV_SYNC_THRESHOLD_MIN_MSEC 40
 /* AV sync correction is done if above the maximum AV sync threshold */

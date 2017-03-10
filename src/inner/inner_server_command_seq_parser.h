@@ -58,7 +58,7 @@ class InnerServerCommandSeqParser {
   void subscribeRequest(const RequestCallback& req);
 
  protected:
-  void handleInnerDataReceived(InnerClient* connection, char* buff, uint32_t buff_len);
+  void handleInnerDataReceived(InnerClient* connection, const char* buff, size_t buff_len);
 
   template <typename... Args>
   cmd_responce_t make_responce(cmd_seq_t id, const char* cmd_fmt, Args... args) {
