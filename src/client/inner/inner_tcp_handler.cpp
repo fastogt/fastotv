@@ -38,6 +38,11 @@
 
 #include "core/events/network_events.h"
 
+#define STATUS_OS_FIELD "os"
+#define STATUS_CPU_FIELD "cpu"
+#define STATUS_RAM_TOTAL_FIELD "ram_total"
+#define STATUS_RAM_FREE_FIELD "ram_free"
+
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -175,10 +180,10 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     std::string os = common::MemSPrintf("%s %s(%s)", os_name, os_version, os_arch);
 
     json_object* info_json = json_object_new_object();
-    json_object_object_add(info_json, "os", json_object_new_string(os.c_str()));
-    json_object_object_add(info_json, "cpu", json_object_new_string(brand.c_str()));
-    json_object_object_add(info_json, "ram_total", json_object_new_int64(ram_total));
-    json_object_object_add(info_json, "ram_free", json_object_new_int64(ram_free));
+    json_object_object_add(info_json, STATUS_OS_FIELD, json_object_new_string(os.c_str()));
+    json_object_object_add(info_json, STATUS_CPU_FIELD, json_object_new_string(brand.c_str()));
+    json_object_object_add(info_json, STATUS_RAM_TOTAL_FIELD, json_object_new_int64(ram_total));
+    json_object_object_add(info_json, STATUS_RAM_FREE_FIELD, json_object_new_int64(ram_free));
 
     const char* info_json_string = json_object_get_string(info_json);
     cmd_responce_t resp =

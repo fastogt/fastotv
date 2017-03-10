@@ -88,12 +88,13 @@ void InnerServerCommandSeqParser::subscribeRequest(const RequestCallback& req) {
 }
 
 void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connection,
-                                                          const char* buff,
+                                                          char* buff,
                                                           size_t buff_len) {
   UNUSED(buff_len);
   ssize_t nwrite = 0;
-  char* end = strstr(buff, END_OF_COMMAND);
-  if (!end) {
+  size_t new_len = buff_len - (sizeof(END_OF_COMMAND) - 1);  // last part of command must be END_OF_COMMAND
+  char* end_ptr = buff + new_len;
+  if (strncmp(end_ptr, END_OF_COMMAND, sizeof(END_OF_COMMAND) - 1) != 0) {
     WARNING_LOG() << "UNKNOWN SEQUENCE: " << buff;
     const cmd_responce_t resp = make_responce(next_id(), STATE_COMMAND_RESP_FAIL_1S, buff);
     common::Error err = connection->write(resp, &nwrite);
@@ -105,7 +106,7 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
     return;
   }
 
-  *end = 0;
+  *end_ptr = 0;
 
   char* star_seq = NULL;
   cmd_id_t seq = strtoul(buff, &star_seq, 10);
@@ -134,7 +135,7 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
     return;
   }
 
-  size_t len_seq = id_ptr - (star_seq + 1);
+  ptrdiff_t len_seq = id_ptr - (star_seq + 1);
   cmd_seq_t id = std::string(star_seq + 1, len_seq);
   const char* cmd = id_ptr;
 
@@ -162,7 +163,9 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
   } else if (seq == APPROVE_COMMAND) {
     handleInnerApproveCommand(connection, id, argc, argv);
   } else {
-    NOTREACHED();
+    DNOTREACHED();
+    connection->close();
+    delete connection;
   }
   sdsfreesplitres(argv, argc);
 }
