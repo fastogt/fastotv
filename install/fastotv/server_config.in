@@ -1,0 +1,3 @@
+[server]
+redis_server=localhost:6379
+redis_unix_path=/var/run/redis/redis.sock

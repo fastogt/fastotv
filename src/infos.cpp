@@ -51,14 +51,9 @@ fasto::fastotv::UserAuthInfo ConvertFromString(const std::string& uinfo_str) {
     return fasto::fastotv::UserAuthInfo();
   }
 
-  size_t ph = uinfo_str.find_first_of(':', up + 1);
-  if (ph == std::string::npos) {
-    return fasto::fastotv::UserAuthInfo();
-  }
-
   fasto::fastotv::UserAuthInfo uinfo;
   uinfo.login = uinfo_str.substr(0, up);
-  uinfo.password = uinfo_str.substr(up + 1, ph - up - 1);
+  uinfo.password = uinfo_str.substr(up + 1);
 
   return uinfo;
 }

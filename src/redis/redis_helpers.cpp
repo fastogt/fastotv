@@ -37,14 +37,32 @@ namespace server {
 namespace {
 
 redisContext* redis_connect(const redis_configuration_t& config) {
-  common::net::HostAndPort redisHost = config.redis_host;
+  const common::net::HostAndPort redisHost = config.redis_host;
   const std::string unixPath = config.redis_unix_socket;
 
-  redisContext* redis = NULL;
+  if (!redisHost.isValid() && unixPath.empty()) {
+    return NULL;
+  }
+
+  struct redisContext* redis = NULL;
   if (unixPath.empty()) {
     redis = redisConnect(redisHost.host.c_str(), redisHost.port);
   } else {
     redis = redisConnectUnix(unixPath.c_str());
+    if (!redis || redis->err) {
+      if (redis) {
+        ERROR_LOG() << "REDIS UNIX CONNECTION ERROR: " << redis->errstr;
+        redisFree(redis);
+        redis = NULL;
+      }
+      redis = redisConnect(redisHost.host.c_str(), redisHost.port);
+    }
+  }
+
+  if (redis->err) {
+    ERROR_LOG() << "REDIS CONNECTION ERROR: " << redis->errstr;
+    redisFree(redis);
+    return NULL;
   }
 
   return redis;

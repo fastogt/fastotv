@@ -87,6 +87,8 @@ namespace fastotv {
 typedef std::string cmd_seq_t;
 typedef uint8_t cmd_id_t;
 
+std::string CmdIdToString(cmd_id_t id);
+
 template <cmd_id_t cmd_id>
 class InnerCmd {
  public:

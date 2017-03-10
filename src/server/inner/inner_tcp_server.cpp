@@ -71,7 +71,10 @@ class InnerServerHandlerHost::InnerSubHandler : public RedisSubHandler {
     }
   }
 
-  virtual void handleMessage(char* channel, size_t channel_len, char* msg, size_t msg_len) override {
+  virtual void handleMessage(char* channel,
+                             size_t channel_len,
+                             char* msg,
+                             size_t msg_len) override {
     // [std::string]site [hex_string]seq [std::string]command args ...
     // [hex_string]seq OK/FAIL [std::string]command args ..
     INFO_LOG() << "InnerSubHandler channel: " << channel << ", msg: " << msg;
@@ -388,7 +391,8 @@ const char* InnerTcpServer::className() const {
 }
 
 tcp::TcpClient* InnerTcpServer::createClient(const common::net::socket_info& info) {
-  return new InnerTcpServerClient(this, info);
+  InnerTcpServerClient* client = new InnerTcpServerClient(this, info);
+  return client;
 }
 
 }  // namespace inner

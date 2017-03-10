@@ -32,6 +32,7 @@
 #include "inner/inner_tcp_client.h"
 
 #define BUF_SIZE 4096
+#define UNKNOWN_CLIENT_NAME "Unknown"
 
 namespace fasto {
 namespace fastotv {
@@ -122,6 +123,7 @@ bool ServerHost::registerInnerConnectionByUser(const UserAuthInfo& user,
 
   std::string login = user.login;
   connections_[login] = iconnection;
+  connection->setName(login);
   return true;
 }
 
@@ -140,6 +142,7 @@ inner::InnerTcpServerClient* ServerHost::findInnerConnectionByLogin(const std::s
 
 void ServerHost::setConfig(const Config& conf) {
   rstorage_.setConfig(conf.server.redis);
+  handler_->setStorageConfig(conf.server.redis);
 }
 
 }  // namespace server

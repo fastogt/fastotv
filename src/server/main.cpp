@@ -43,7 +43,7 @@
 
 /*
   [server]
-  redis_server=localhost:6479
+  redis_server=localhost:6379
   redis_unix_path=/var/run/redis/redis.sock
 */
 
@@ -51,7 +51,7 @@ const common::net::HostAndPort redis_default_host = common::net::HostAndPort::cr
 const std::string redis_default_unix_path = "/var/run/redis/redis.sock";
 
 sig_atomic_t is_stop = 0;
-const char* config_path = CONFIG_FILE_PATH;
+const char* config_path = SERVER_CONFIG_FILE_PATH;
 
 fasto::fastotv::server::Config config;
 

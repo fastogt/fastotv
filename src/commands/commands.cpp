@@ -17,3 +17,12 @@
 */
 
 #include "commands/commands.h"
+
+namespace fasto {
+namespace fastotv {
+std::string CmdIdToString(cmd_id_t id) {
+  static const std::string seq_names[] = {"REQUEST", "RESPONCE", "APPROVE"};
+  return seq_names[id];
+}
+}
+}
