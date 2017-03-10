@@ -135,8 +135,7 @@ bool ServerHost::findUser(const UserAuthInfo& user) const {
   return rstorage_.findUser(user);
 }
 
-inner::InnerTcpClient* ServerHost::findInnerConnectionByLogin(
-    const std::string& login) const {
+inner::InnerTcpClient* ServerHost::findInnerConnectionByLogin(const std::string& login) const {
   inner_connections_type::const_iterator hs = connections_.find(login);
   if (hs == connections_.end()) {
     return nullptr;

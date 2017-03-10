@@ -92,7 +92,8 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
                                                           size_t buff_len) {
   UNUSED(buff_len);
   ssize_t nwrite = 0;
-  size_t new_len = buff_len - (sizeof(END_OF_COMMAND) - 1);  // last part of command must be END_OF_COMMAND
+  size_t new_len =
+      buff_len - (sizeof(END_OF_COMMAND) - 1);  // last part of command must be END_OF_COMMAND
   char* end_ptr = buff + new_len;
   if (strncmp(end_ptr, END_OF_COMMAND, sizeof(END_OF_COMMAND) - 1) != 0) {
     WARNING_LOG() << "UNKNOWN SEQUENCE: " << buff;

@@ -195,4 +195,5 @@ class RingBuffer {
 };
 
 }  // namespace core
-}}
+}
+}

@@ -25,8 +25,7 @@ namespace fastotv {
 
 struct UserAuthInfo {
   UserAuthInfo();
-  UserAuthInfo(const std::string& login,
-               const std::string& password);
+  UserAuthInfo(const std::string& login, const std::string& password);
 
   bool isValid() const;
 

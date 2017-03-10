@@ -20,4 +20,5 @@ struct AudioParams {
 };
 
 }  // namespace core
-}}
+}
+}

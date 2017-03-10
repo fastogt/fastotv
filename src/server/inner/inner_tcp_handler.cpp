@@ -244,9 +244,9 @@ void InnerTcpHandlerHost::setStorageConfig(const redis_sub_configuration_t& conf
 }
 
 void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                                       cmd_seq_t id,
-                                                       int argc,
-                                                       char* argv[]) {
+                                                    cmd_seq_t id,
+                                                    int argc,
+                                                    char* argv[]) {
   char* command = argv[0];
 
   if (IS_EQUAL_COMMAND(command, PING_COMMAND)) {
@@ -259,9 +259,9 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
 }
 
 void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                                        cmd_seq_t id,
-                                                        int argc,
-                                                        char* argv[]) {
+                                                     cmd_seq_t id,
+                                                     int argc,
+                                                     char* argv[]) {
   ssize_t nwrite = 0;
   char* state_command = argv[0];
 
@@ -364,9 +364,9 @@ fail:
 }
 
 void InnerTcpHandlerHost::handleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                                       cmd_seq_t id,
-                                                       int argc,
-                                                       char* argv[]) {
+                                                    cmd_seq_t id,
+                                                    int argc,
+                                                    char* argv[]) {
   char* command = argv[0];
 
   if (IS_EQUAL_COMMAND(command, SUCCESS_COMMAND)) {

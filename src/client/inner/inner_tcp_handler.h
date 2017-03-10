@@ -32,7 +32,7 @@ namespace client {
 namespace inner {
 
 class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParser,
-                           public tcp::ITcpLoopObserver {
+                        public tcp::ITcpLoopObserver {
  public:
   enum {
     ping_timeout_server = 30  // sec

@@ -98,8 +98,7 @@ TvConfig NetworkController::config() const {
 
 void NetworkController::setConfig(const TvConfig& config) {
   config_ = config;
-  client::inner::InnerTcpHandler* handler =
-      dynamic_cast<client::inner::InnerTcpHandler*>(handler_);
+  client::inner::InnerTcpHandler* handler = dynamic_cast<client::inner::InnerTcpHandler*>(handler_);
   if (handler) {
     handler->setConfig(config);
   }
