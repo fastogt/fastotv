@@ -16,7 +16,7 @@
     along with SiteOnYourDevice.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "inner/client_inner_server.h"
+#include "client/inner/inner_tcp_server.h"
 
 #include "network/tcp/tcp_client.h"
 

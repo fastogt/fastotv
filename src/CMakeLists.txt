@@ -226,21 +226,27 @@ SET(HEADERS_INNER
   inner/inner_server_command_seq_parser.h
   inner/inner_client.h
   inner/inner_server_handler.h
-  inner/client_inner_server.h
 )
 
 SET(SOURCES_INNER
   inner/inner_server_command_seq_parser.cpp
   inner/inner_client.cpp
   inner/inner_server_handler.cpp
-  inner/client_inner_server.cpp
+)
+
+SET(HEADERS_INNER_CLIENT
+  client/inner/inner_tcp_server.h
+)
+
+SET(SOURCES_INNER_CLIENT
+  client/inner/inner_tcp_server.cpp
 )
 
 SET(SOURCES_SDS
   third-party/sds/sds.c
 )
 
-SET(CLIENT_SERVER_SOURCES infos.h infos.cpp server/server_config.h)
+SET(CLIENT_SERVER_SOURCES infos.h infos.cpp server/server_config.h) # server and client common sources
 
 # User specific
 SET(USER_SPECIFIC_DEFAULT_LOGIN anon@fastogt.com CACHE STRING "Default login")
@@ -260,6 +266,7 @@ SET(MAIN_SOURCES
   network_controller.h network_controller.cpp
   tv_config.h
   ${HEADERS_INNER} ${SOURCES_INNER} ${SOURCES_SDS} ${CLIENT_SERVER_SOURCES}
+  ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}
 )
 SET(EXE_SOURCES main.cpp ${MAIN_SOURCES})
 SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})

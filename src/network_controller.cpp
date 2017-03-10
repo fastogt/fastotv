@@ -28,7 +28,7 @@
 #include <common/utils.h>
 
 #include "inner/inner_server_handler.h"
-#include "inner/client_inner_server.h"
+#include "client/inner/inner_tcp_server.h"
 
 #include <common/application/application.h>
 
