@@ -40,11 +40,11 @@ const char* InnerTcpClient::className() const {
 
 InnerTcpClient::~InnerTcpClient() {}
 
-void InnerTcpClient::setServerHostInfo(const UserAuthInfo& info) {
+void InnerTcpClient::setServerHostInfo(const AuthInfo& info) {
   hinfo_ = info;
 }
 
-UserAuthInfo InnerTcpClient::serverHostInfo() const {
+AuthInfo InnerTcpClient::serverHostInfo() const {
   return hinfo_;
 }
 

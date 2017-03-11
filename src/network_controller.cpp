@@ -88,8 +88,8 @@ NetworkController::~NetworkController() {
   saveConfig();
 }
 
-UserAuthInfo NetworkController::authInfo() const {
-  return UserAuthInfo(config_.login, config_.password);
+AuthInfo NetworkController::authInfo() const {
+  return AuthInfo(config_.login, config_.password);
 }
 
 TvConfig NetworkController::config() const {

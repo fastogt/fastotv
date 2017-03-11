@@ -41,69 +41,6 @@ int ConvertToSDLVolume(int val) {
   return av_clip(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
-typedef common::file_system::ascii_string_path file_path;
-bool ReadPlaylistFromFile(const file_path& location, std::vector<Url>* urls = nullptr) {
-  if (!location.isValid()) {
-    ERROR_LOG() << "Invalid config file: empty location!";
-    return false;
-  }
-
-  common::file_system::File pl(location);
-  if (!pl.open("r")) {
-    ERROR_LOG() << "Can't open config file: " << location.path();
-    return false;
-  }
-
-  std::string line;
-  std::string full_config;
-  while (!pl.isEof() && pl.readLine(&line)) {
-    full_config += line;
-  }
-
-  json_object* obj = json_tokener_parse(full_config.c_str());
-  if (!obj) {
-    ERROR_LOG() << "Invalid config file: " << location.path();
-    pl.close();
-    return false;
-  }
-
-  json_object* juser = NULL;
-  json_bool juser_exists = json_object_object_get_ex(obj, USER_FIELD, &juser);
-  if (!juser_exists) {
-    ERROR_LOG() << "Invalid config(user field) file: " << location.path();
-    json_object_put(obj);
-    pl.close();
-    return false;
-  }
-
-  json_object* jurls = NULL;
-  json_bool jurls_exists = json_object_object_get_ex(obj, URLS_FIELD, &jurls);
-  if (!jurls_exists) {
-    ERROR_LOG() << "Invalid config(urls field) file: " << location.path();
-    json_object_put(obj);
-    pl.close();
-    return false;
-  }
-
-  int array_len = json_object_array_length(jurls);
-  std::vector<Url> lurls;
-  for (int i = 0; i < array_len; ++i) {
-    json_object* jpath = json_object_array_get_idx(jurls, i);
-    const std::string path = json_object_get_string(jpath);
-    Url ur(path);
-    if (ur.IsValid()) {
-      lurls.push_back(ur);
-    }
-  }
-
-  if (urls) {
-    *urls = lurls;
-  }
-  json_object_put(obj);
-  pl.close();
-  return true;
-}
-
 bool CreateWindowFunc(int width,
                       int height,
                       bool is_full_screen,
@@ -180,7 +117,6 @@ Player::Player(const PlayerOptions& options,
       height_(0),
       xleft_(0),
       ytop_(0) {
-  ChangePlayListLocation(options.play_list_location);
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -746,16 +682,6 @@ void Player::CalculateDispalySize() {
     width_ = options_.default_width;
     height_ = options_.default_height;
   }
-}
-
-bool Player::ChangePlayListLocation(const common::uri::Uri& location) {
-  if (location.scheme() == common::uri::Uri::file) {
-    common::uri::Upath up = location.path();
-    file_path apath(up.path());
-    return ReadPlaylistFromFile(apath, &play_list_);
-  }
-
-  return false;
 }
 
 core::VideoState* Player::CreateCurrentStream() {

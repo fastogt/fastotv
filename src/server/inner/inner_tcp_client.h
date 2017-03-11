@@ -41,11 +41,11 @@ class InnerTcpClient : public fastotv::inner::InnerClient {
 
   virtual const char* className() const;
 
-  void setServerHostInfo(const UserAuthInfo& info);
-  UserAuthInfo serverHostInfo() const;
+  void setServerHostInfo(const AuthInfo& info);
+  AuthInfo serverHostInfo() const;
 
  private:
-  UserAuthInfo hinfo_;
+  AuthInfo hinfo_;
 };
 
 }  // namespace inner

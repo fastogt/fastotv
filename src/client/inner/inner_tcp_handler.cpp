@@ -138,8 +138,8 @@ void InnerTcpHandler::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
   }
 }
 
-UserAuthInfo InnerTcpHandler::authInfo() const {
-  return UserAuthInfo(config_.login, config_.password);
+AuthInfo InnerTcpHandler::authInfo() const {
+  return AuthInfo(config_.login, config_.password);
 }
 
 void InnerTcpHandler::setConfig(const TvConfig& config) {
@@ -160,8 +160,12 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       DEBUG_MSG_ERROR(err);
     }
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
-    std::string authStr = common::ConvertToString(authInfo());
-    cmd_responce_t iAm = make_responce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1S, authStr);
+    AuthInfo ainf = authInfo();
+    json_object* jain = AuthInfo::MakeJobject(ainf);
+    std::string auth_str = json_object_get_string(jain);
+    json_object_put(jain);
+    std::string enc_auth = common::HexEncode(auth_str, false);
+    cmd_responce_t iAm = make_responce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1S, enc_auth);
     common::Error err = connection->write(iAm, &nwrite);
     if (err && err->isError()) {
       DEBUG_MSG_ERROR(err);

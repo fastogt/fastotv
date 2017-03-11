@@ -70,7 +70,7 @@ redisContext* redis_connect(const redis_configuration_t& config) {
   return redis;
 }
 
-bool parse_user_json(const std::string& login, const char* userJson, UserAuthInfo* out_info) {
+bool parse_user_json(const std::string& login, const char* userJson, UserInfo* out_info) {
   if (!userJson || !out_info) {
     return false;
   }
@@ -80,19 +80,7 @@ bool parse_user_json(const std::string& login, const char* userJson, UserAuthInf
     return false;
   }
 
-  /*json_object* jname = NULL;
-  json_object_object_get_ex(obj, "name", &jname);
-  if(jname){
-    info.name_ = json_object_get_string(jname);
-  }*/
-
-  json_object* jpass = NULL;
-  json_object_object_get_ex(obj, "password", &jpass);
-  if (jpass) {
-    out_info->password = json_object_get_string(jpass);
-  }
-
-  out_info->login = login;
+  *out_info = UserInfo::MakeClass(obj);
   json_object_put(obj);
   return true;
 }
@@ -105,8 +93,8 @@ void RedisStorage::setConfig(const redis_configuration_t& config) {
   config_ = config;
 }
 
-bool RedisStorage::findUser(const UserAuthInfo& user) const {
-  if (!user.isValid()) {
+bool RedisStorage::findUserAuth(const AuthInfo& user) const {
+  if (!user.IsValid()) {
     return false;
   }
 
@@ -124,9 +112,9 @@ bool RedisStorage::findUser(const UserAuthInfo& user) const {
   }
 
   const char* userJson = reply->str;
-  UserAuthInfo info;
+  UserInfo info;
   if (parse_user_json(login, userJson, &info)) {
-    if (user.password == info.password) {
+    if (user.password == info.GetPassword()) {
       freeReplyObject(reply);
       redisFree(redis);
       return true;

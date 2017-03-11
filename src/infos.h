@@ -19,33 +19,56 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
+#include "url.h"
 
 namespace fasto {
 namespace fastotv {
 
-struct UserAuthInfo {
-  UserAuthInfo();
-  UserAuthInfo(const std::string& login, const std::string& password);
+struct AuthInfo {
+  AuthInfo();
+  AuthInfo(const std::string& login, const std::string& password);
 
-  bool isValid() const;
+  bool IsValid() const;
 
-  std::string login;
+  static json_object* MakeJobject(const AuthInfo& ainf);  // allocate json_object
+  static AuthInfo MakeClass(json_object* obj);            // pass valid json obj
+
+  std::string login;  // unique
   std::string password;
 };
 
-inline bool operator==(const UserAuthInfo& lhs, const UserAuthInfo& rhs) {
+inline bool operator==(const AuthInfo& lhs, const AuthInfo& rhs) {
   return lhs.login == rhs.login && lhs.password == rhs.password;
 }
 
-inline bool operator!=(const UserAuthInfo& x, const UserAuthInfo& y) {
+inline bool operator!=(const AuthInfo& x, const AuthInfo& y) {
+  return !(x == y);
+}
+
+struct UserInfo {
+  UserInfo();
+  explicit UserInfo(const AuthInfo& a, const std::vector<Url>& ch);
+
+  bool IsValid() const;
+  std::string GetLogin() const;
+  std::string GetPassword() const;
+
+  static json_object* MakeJobject(const UserInfo& url);  // allocate json_object
+  static UserInfo MakeClass(json_object* obj);           // pass valid json obj
+
+  AuthInfo auth;
+  std::vector<Url> channels;
+};
+
+inline bool operator==(const UserInfo& lhs, const UserInfo& rhs) {
+  return lhs.auth == rhs.auth;
+}
+
+inline bool operator!=(const UserInfo& x, const UserInfo& y) {
   return !(x == y);
 }
 
 }  // namespace fastotv
 }  // namespace fasto
-
-namespace common {
-
-std::string ConvertToString(const fasto::fastotv::UserAuthInfo& uinfo);
-
-}  // namespace common

@@ -24,6 +24,9 @@
 extern "C" {
 #include "sds.h"
 }
+
+#include "third-party/json-c/json-c/json.h"  // for json_object_...
+
 #undef ERROR
 #include <common/net/net.h>
 #include <common/logger.h>
@@ -190,10 +193,9 @@ void InnerTcpHandlerHost::closed(tcp::TcpClient* client) {
   if (isOk) {
     InnerTcpClient* iconnection = dynamic_cast<InnerTcpClient*>(client);
     if (iconnection) {
-      UserAuthInfo hinf = iconnection->serverHostInfo();
-      std::string hoststr = hinf.login;
-      std::string connected_resp =
-          common::MemSPrintf(SERVER_NOTIFY_CLIENT_DISCONNECTED_1S, hoststr);
+      AuthInfo hinf = iconnection->serverHostInfo();
+      std::string login = hinf.login;
+      std::string connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_DISCONNECTED_1S, login);
       bool res = sub_commands_in_->publish_clients_state(connected_resp);
       if (!res) {
         std::string err_str = common::MemSPrintf(
@@ -281,15 +283,26 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
           goto fail;
         }
 
-        UserAuthInfo uauth = common::ConvertFromString<UserAuthInfo>(uauthstr);
-        if (!uauth.isValid()) {
+        common::buffer_t buff = common::HexDecode(uauthstr);
+        std::string buff_str(buff.begin(), buff.end());
+        json_object* obj = json_tokener_parse(buff_str.c_str());
+        if (!obj) {
           cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1S,
                                                      CAUSE_INVALID_USER);
           connection->write(resp, &nwrite);
           goto fail;
         }
 
-        bool isOk = parent_->findUser(uauth);
+        AuthInfo uauth = AuthInfo::MakeClass(obj);
+        json_object_put(obj);
+        if (!uauth.IsValid()) {
+          cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1S,
+                                                     CAUSE_INVALID_USER);
+          connection->write(resp, &nwrite);
+          goto fail;
+        }
+
+        bool isOk = parent_->findUserAuth(uauth);
         if (!isOk) {
           cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1S,
                                                      CAUSE_UNREGISTERED_USER);

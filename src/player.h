@@ -29,7 +29,6 @@ struct PlayerOptions {
   enum { width = 640, height = 480, volume = 100 };
   PlayerOptions();
 
-  common::uri::Uri play_list_location;
   bool exit_on_keydown;
   bool exit_on_mousedown;
   bool is_full_screen;
@@ -108,7 +107,6 @@ class Player : public core::VideoStateHandler {
   void SwitchToErrorMode();
   void CalculateDispalySize();
 
-  bool ChangePlayListLocation(const common::uri::Uri& location);
   core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();
   core::VideoState* CreatePrevStream();

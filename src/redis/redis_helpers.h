@@ -44,7 +44,7 @@ class RedisStorage {
   RedisStorage();
   void setConfig(const redis_configuration_t& config);
 
-  bool findUser(const UserAuthInfo& user) const WARN_UNUSED_RESULT;
+  bool findUserAuth(const AuthInfo& user) const WARN_UNUSED_RESULT;  // check password
 
  private:
   redis_configuration_t config_;

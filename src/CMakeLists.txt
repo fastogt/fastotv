@@ -222,7 +222,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_CORE_LIBRARY}
 )
 
 #project
-SET(CLIENT_SERVER_SOURCES infos.h infos.cpp server/server_config.h) # server and client common sources
+SET(CLIENT_SERVER_SOURCES infos.h infos.cpp server/server_config.h url.h url.cpp) # server and client common sources
 SET(HEADERS_INNER
   inner/inner_server_command_seq_parser.h
   inner/inner_client.h
@@ -260,7 +260,6 @@ ADD_SUBDIRECTORY(third-party/ini)
 SET(MAIN_SOURCES
   player.h player.cpp
   cmdutils.h cmdutils.cpp
-  url.h url.cpp
   sdl_utils.h sdl_utils.cpp
   network_controller.h network_controller.cpp
   tv_config.h

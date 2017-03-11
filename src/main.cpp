@@ -108,24 +108,6 @@ int opt_sync(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return 0;
 }
 
-int opt_input_playlist(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  if (g_player_options.play_list_location.isValid()) {
-    ERROR_LOG() << "Argument '" << g_player_options.play_list_location.url()
-                << " provided as input playlist file, but '"
-                << "' was already specified.";
-    return AVERROR(EINVAL);
-  }
-
-  if (strcmp(arg, "-") == 0) {
-    arg = "pipe:";
-  }
-  g_player_options.play_list_location = common::uri::Uri(arg);
-  return 0;
-}
-
 int opt_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
 
@@ -264,11 +246,6 @@ const OptionDef options[] = {
      {.func_arg = opt_default},
      "generic catch all option",
      ""},
-    {"i",
-     HAS_ARG,
-     {.func_arg = opt_input_playlist},
-     "read specified playlist",
-     "input_play_list_url"},
     {"codec", HAS_ARG, {.func_arg = opt_codec}, "force decoder", "decoder_name"},
     {"acodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
@@ -358,13 +335,6 @@ class FFmpegApplication : public B {
 
   virtual int PreExec() override {
     g_options.autorotate = true;  // fix me
-    if (!g_player_options.play_list_location.isValid()) {
-      show_usage();
-      ERROR_LOG() << "An input file must be specified";
-      ERROR_LOG() << "Use -h to get full help or, even better, run 'man " PROJECT_NAME_TITLE "'";
-      return EXIT_FAILURE;
-    }
-
     if (av_lockmgr_register(lockmgr)) {
       ERROR_LOG() << "Could not initialize lock manager!";
       return EXIT_FAILURE;
