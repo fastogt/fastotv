@@ -91,7 +91,10 @@ typedef uint8_t cmd_id_t;
 std::string CmdIdToString(cmd_id_t id);
 
 common::Error StableCommand(const std::string& command, std::string* stabled_command);
-common::Error ParseCommand(const std::string& command, cmd_id_t* seq);
+common::Error ParseCommand(const std::string& command,
+                           cmd_id_t* cmd_id,
+                           cmd_seq_t* seq_id,
+                           std::string* cmd_str);
 
 template <cmd_id_t cmd_id>
 class InnerCmd {

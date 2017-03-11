@@ -43,12 +43,15 @@ common::Error StableCommand(const std::string& command, std::string* stabled_com
     return common::make_error_value("UNKNOWN SEQUENCE: " + command, common::Value::E_ERROR);
   }
 
-  *stabled_command = command.substr(pos);
+  *stabled_command = command.substr(0, pos - 1);
   return common::Error();
 }
 
-common::Error ParseCommand(const std::string& command, cmd_id_t* seq) {
-  if (command.empty() || !seq) {
+common::Error ParseCommand(const std::string& command,
+                           cmd_id_t* cmd_id,
+                           cmd_seq_t* seq_id,
+                           std::string* cmd_str) {
+  if (command.empty() || !cmd_id || !seq_id || !cmd_str) {
     return common::make_error_value("Invalid input", common::Value::E_ERROR);
   }
 
@@ -58,17 +61,25 @@ common::Error ParseCommand(const std::string& command, cmd_id_t* seq) {
     return err;
   }
 
-  std::vector<std::string> parts;
-  size_t argc = common::Tokenize(stabled_command, " ", &parts);
-  if (!argc) {
-    return common::make_error_value("Invaid command line.", common::ErrorValue::E_ERROR);
+  char* star_seq = NULL;
+  cmd_id_t lcmd_id = strtoul(stabled_command.c_str(), &star_seq, 10);
+  if (*star_seq != ' ') {
+    return common::make_error_value("PROBLEM EXTRACTING SEQUENCE: " + command,
+                                    common::Value::E_ERROR);
   }
 
-  cmd_id_t lseq = common::ConvertFromString<cmd_id_t>(parts[0]);
+  const char* id_ptr = strchr(star_seq + 1, ' ');
+  if (!id_ptr) {
+    return common::make_error_value("PROBLEM EXTRACTING ID: " + command, common::Value::E_ERROR);
+  }
 
-  *seq = lseq;
+  ptrdiff_t len_seq = id_ptr - (star_seq + 1);
+  cmd_seq_t lseq_id = cmd_seq_t(star_seq + 1, len_seq);
+
+  *cmd_id = lcmd_id;
+  *seq_id = lseq_id;
+  *cmd_str = id_ptr + 1;
   return common::Error();
 }
-
 }
 }

@@ -52,7 +52,7 @@ class RedisStorage {
 
 class RedisSubHandler {
  public:
-  virtual void handleMessage(char* channel, size_t channel_len, char* msg, size_t msg_len) = 0;
+  virtual void handleMessage(const std::string& channel, const std::string& msg) = 0;
   virtual ~RedisSubHandler();
 };
 

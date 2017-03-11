@@ -45,17 +45,13 @@ class InnerTcpHandlerHost::InnerSubHandler : public RedisSubHandler {
   explicit InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) {}
 
   void processSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {
-    sds join = sdsempty();
-    join = sdscatfmt(join, "%s ", request_id.c_str());
+    std::string join = request_id;
     for (int i = 0; i < argc; ++i) {
-      join = sdscat(join, argv[i]);
-      if (i != argc - 1) {
-        join = sdscatlen(join, " ", 1);
-      }
+      join += " ";
+      join += argv[i];
     }
 
-    publish_command_out(join, sdslen(join));
-    sdsfree(join);
+    publish_command_out(join);
   }
 
   void publish_command_out(const std::string& msg) {
@@ -71,70 +67,58 @@ class InnerTcpHandlerHost::InnerSubHandler : public RedisSubHandler {
     }
   }
 
-  virtual void handleMessage(char* channel,
-                             size_t channel_len,
-                             char* msg,
-                             size_t msg_len) override {
-    // [std::string]site [hex_string]seq [std::string]command args ...
-    // [hex_string]seq OK/FAIL [std::string]command args ..
+  virtual void handleMessage(const std::string& channel, const std::string& msg) override {
+    // [std::string]site [cmd_id_t]seq [std::string]command args ...
+    // [cmd_id_t]seq OK/FAIL [std::string]command args ..
     INFO_LOG() << "InnerSubHandler channel: " << channel << ", msg: " << msg;
-    char* space = strchr(msg, ' ');
-    if (!space) {
+    size_t space_pos = msg.find_first_of(' ');
+    if (space_pos == std::string::npos) {
       const std::string resp = common::MemSPrintf("UNKNOWN COMMAND: %s", msg);
       WARNING_LOG() << resp;
       publish_command_out(resp);
       return;
     }
 
-    *space = 0;
-
-    char buff[MAX_COMMAND_SIZE] = {0};
-    int len = snprintf(buff, sizeof(buff), STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND,
-                       space + 1);  // only REQUEST_COMMAND
-
-    char* star_seq = NULL;
-    cmd_id_t seq = strtoul(buff, &star_seq, 10);
-    if (*star_seq != ' ') {
-      std::string resp = common::MemSPrintf("PROBLEM EXTRACTING SEQUENCE: %s", space + 1);
+    const std::string login = msg.substr(0, space_pos);
+    const std::string cmd = msg.substr(space_pos + 1);
+    const std::string input_command =
+        common::MemSPrintf(STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND, cmd);
+    cmd_id_t seq;
+    cmd_seq_t id;
+    std::string cmd_str;
+    common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
+    if (err && err->isError()) {
+      std::string resp = err->description();
       WARNING_LOG() << resp;
       publish_command_out(resp);
       return;
     }
 
-    const char* id_ptr = strchr(star_seq + 1, ' ');
-    if (!id_ptr) {
-      std::string resp = common::MemSPrintf("PROBLEM EXTRACTING ID: %s", space + 1);
-      WARNING_LOG() << resp;
-      publish_command_out(resp);
-      return;
-    }
-
-    size_t len_seq = id_ptr - (star_seq + 1);
-    cmd_seq_t id = std::string(star_seq + 1, len_seq);
-    const char* cmd = id_ptr;
-
-    InnerTcpClient* fclient = parent_->parent_->findInnerConnectionByLogin(msg);
+    InnerTcpClient* fclient = parent_->parent_->findInnerConnectionByLogin(login);
     if (!fclient) {
       int argc;
-      sds* argv = sdssplitargs(cmd, &argc);
+      sds* argv = sdssplitargs(cmd_str.c_str(), &argc);
       char* command = argv[0];
 
       std::string resp =
           common::MemSPrintf(SERVER_COMMANDS_OUT_FAIL_2US(CAUSE_NOT_CONNECTED), id, command);
+      WARNING_LOG() << resp;
       publish_command_out(resp);
       sdsfreesplitres(argv, argc);
       return;
     }
 
     ssize_t nwrite = 0;
-    common::Error err = fclient->TcpClient::write(buff, len, &nwrite);
+    cmd_request_t req(id, input_command);
+    err = fclient->write(req, &nwrite);
     if (err && err->isError()) {
       int argc;
-      sds* argv = sdssplitargs(cmd, &argc);
+      sds* argv = sdssplitargs(cmd_str.c_str(), &argc);
       char* command = argv[0];
 
       std::string resp =
           common::MemSPrintf(SERVER_COMMANDS_OUT_FAIL_2US(CAUSE_NOT_HANDLED), id, command);
+      WARNING_LOG() << resp;
       publish_command_out(resp);
       sdsfreesplitres(argv, argc);
       return;

@@ -6,9 +6,15 @@ using namespace fasto::fastotv;
 
 TEST(commands, parse_commands) {
   char buff[MAX_COMMAND_SIZE] = {0};
-  int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, PING_COMMAND_RESP_SUCCESS, RESPONCE_COMMAND, 0);
-  cmd_id_t id;
-  common::Error err = ParseCommand(buff, &id);
+  const cmd_seq_t seq_id_const = "10";
+  int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, PING_COMMAND_RESP_SUCCESS, RESPONCE_COMMAND, seq_id_const);
+  cmd_id_t cmd_id;
+  cmd_seq_t seq_id;
+  std::string command_str;
+  common::Error err = ParseCommand(buff, &cmd_id, &seq_id, &command_str);
 
   ASSERT_TRUE(!err);
+  ASSERT_EQ(cmd_id, RESPONCE_COMMAND);
+  ASSERT_EQ(seq_id, seq_id_const);
+  ASSERT_EQ(command_str, PING_COMMAND_RESP_SUCCESS);
 }

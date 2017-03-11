@@ -90,13 +90,15 @@ void InnerServerCommandSeqParser::subscribeRequest(const RequestCallback& req) {
 void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connection,
                                                           char* buff,
                                                           size_t buff_len) {
-  UNUSED(buff_len);
+  const std::string input_command(buff, buff_len);
   ssize_t nwrite = 0;
-  size_t new_len =
-      buff_len - (sizeof(END_OF_COMMAND) - 1);  // last part of command must be END_OF_COMMAND
-  char* end_ptr = buff + new_len;
-  if (strncmp(end_ptr, END_OF_COMMAND, sizeof(END_OF_COMMAND) - 1) != 0) {
-    WARNING_LOG() << "UNKNOWN SEQUENCE: " << buff;
+  cmd_id_t seq;
+  cmd_seq_t id;
+  std::string cmd_str;
+
+  common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
+  if (err && err->isError()) {
+    WARNING_LOG() << err->description();
     const cmd_responce_t resp = make_responce(next_id(), STATE_COMMAND_RESP_FAIL_1S, buff);
     common::Error err = connection->write(resp, &nwrite);
     if (err && err->isError()) {
@@ -106,42 +108,9 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
     delete connection;
     return;
   }
-
-  *end_ptr = 0;
-
-  char* star_seq = NULL;
-  cmd_id_t seq = strtoul(buff, &star_seq, 10);
-  if (*star_seq != ' ') {
-    WARNING_LOG() << "PROBLEM EXTRACTING SEQUENCE: " << buff;
-    const cmd_responce_t resp = make_responce(next_id(), STATE_COMMAND_RESP_FAIL_1S, buff);
-    common::Error err = connection->write(resp, &nwrite);
-    if (err && err->isError()) {
-      DEBUG_MSG_ERROR(err);
-    }
-    connection->close();
-    delete connection;
-    return;
-  }
-
-  const char* id_ptr = strchr(star_seq + 1, ' ');
-  if (!id_ptr) {
-    WARNING_LOG() << "PROBLEM EXTRACTING ID: " << buff;
-    const cmd_responce_t resp = make_responce(next_id(), STATE_COMMAND_RESP_FAIL_1S, buff);
-    common::Error err = connection->write(resp, &nwrite);
-    if (err && err->isError()) {
-      DEBUG_MSG_ERROR(err);
-    }
-    connection->close();
-    delete connection;
-    return;
-  }
-
-  ptrdiff_t len_seq = id_ptr - (star_seq + 1);
-  cmd_seq_t id = std::string(star_seq + 1, len_seq);
-  const char* cmd = id_ptr;
 
   int argc;
-  sds* argv = sdssplitargs(cmd, &argc);
+  sds* argv = sdssplitargs(cmd_str.c_str(), &argc);
   processRequest(id, argc, argv);
   if (argv == NULL) {
     WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << buff;
@@ -156,7 +125,7 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
   }
 
   INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->formatedName()
-             << "] seq: " << CmdIdToString(seq) << ", id:" << id << ", cmd: " << cmd;
+             << "] seq: " << CmdIdToString(seq) << ", id:" << id << ", cmd: " << cmd_str;
   if (seq == REQUEST_COMMAND) {
     handleInnerRequestCommand(connection, id, argc, argv);
   } else if (seq == RESPONCE_COMMAND) {
