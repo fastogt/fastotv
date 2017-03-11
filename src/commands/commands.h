@@ -22,6 +22,7 @@
 #include <string>
 
 #include <common/sprintf.h>
+#include <common/error.h>
 
 #define END_OF_COMMAND "\r\n"
 
@@ -88,6 +89,9 @@ typedef std::string cmd_seq_t;
 typedef uint8_t cmd_id_t;
 
 std::string CmdIdToString(cmd_id_t id);
+
+common::Error StableCommand(const std::string& command, std::string* stabled_command);
+common::Error ParseCommand(const std::string& command, cmd_id_t* seq);
 
 template <cmd_id_t cmd_id>
 class InnerCmd {

@@ -431,12 +431,12 @@ ENDIF(DEVELOPER_CHECK_STYLE)
 IF(DEVELOPER_ENABLE_TESTS)
 ########## PREPARE GTEST LIBRARY ##########
   ADD_DEFINITIONS(-DPROJECT_TEST_SOURCES_DIR="${CMAKE_SOURCE_DIR}/tests")
-  ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/tests/gtest gtest)
+  ADD_SUBDIRECTORY(${CMAKE_HOME_DIRECTORY}/tests/googletest googletest)
   INCLUDE_DIRECTORIES(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 ########## PREPARE GTEST LIBRARY ##########
 
   ADD_EXECUTABLE(unit_tests
-    #${CMAKE_SOURCE_DIR}/tests/unit_tests/test_fasto_objects.cpp
+    ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp
   )
 
   TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main ${PROJECT_CORE_LIBRARY} common)
@@ -444,10 +444,10 @@ IF(DEVELOPER_ENABLE_TESTS)
   SET_PROPERTY(TARGET unit_tests PROPERTY FOLDER "Unit tests")
 
   #Mock tests
-  ADD_EXECUTABLE(mock_tests
+  #ADD_EXECUTABLE(mock_tests
     #${CMAKE_SOURCE_DIR}/tests/mock_tests/test_connections.cpp
-  )
-  TARGET_LINK_LIBRARIES(mock_tests gmock gmock_main ${PROJECT_CORE_LIBRARY} common)
-  ADD_TEST_TARGET(mock_tests)
-  SET_PROPERTY(TARGET mock_tests PROPERTY FOLDER "Mock tests")
+  #)
+  #TARGET_LINK_LIBRARIES(mock_tests gmock gmock_main ${PROJECT_CORE_LIBRARY} common)
+  #ADD_TEST_TARGET(mock_tests)
+  #SET_PROPERTY(TARGET mock_tests PROPERTY FOLDER "Mock tests")
 ENDIF(DEVELOPER_ENABLE_TESTS)
