@@ -25,7 +25,6 @@
 #include <common/convert2string.h>
 #include <common/file_system.h>
 #include <common/logger.h>
-#include <common/utils.h>
 
 #include "client/inner/inner_tcp_handler.h"
 #include "client/inner/inner_tcp_server.h"
@@ -56,27 +55,9 @@ namespace fasto {
 namespace fastotv {
 namespace network {
 
-NetworkController::NetworkController(int argc, char* argv[]) : ILoopThreadController(), config_() {
-  bool daemon_mode = false;
-#ifdef OS_MACOSX
-  std::string config_path = PROJECT_NAME ".app/Contents/Resources/" CONFIG_FILE_NAME;
-#else
-  std::string config_path = CONFIG_FILE_NAME;
-#endif
-  for (int i = 0; i < argc; ++i) {
-    if (strcmp(argv[i], "-c") == 0) {
-      config_path = argv[++i];
-    } else if (strcmp(argv[i], "-d") == 0) {
-      daemon_mode = true;
-    }
-  }
-
+NetworkController::NetworkController(const std::string& config_path)
+    : ILoopThreadController(), config_() {
   config_path_ = config_path;
-#if defined(OS_POSIX)
-  if (daemon_mode) {
-    common::create_as_daemon();
-  }
-#endif
   readConfig();
 }
 
@@ -101,6 +82,14 @@ void NetworkController::setConfig(const TvConfig& config) {
   client::inner::InnerTcpHandler* handler = dynamic_cast<client::inner::InnerTcpHandler*>(handler_);
   if (handler) {
     handler->setConfig(config);
+  }
+}
+
+void NetworkController::RequestChannels() const {
+  client::inner::InnerTcpHandler* handler = dynamic_cast<client::inner::InnerTcpHandler*>(handler_);
+  if (handler) {
+    auto cb = [handler]() { handler->RequestChannels(); };
+    execInLoopThread(cb);
   }
 }
 

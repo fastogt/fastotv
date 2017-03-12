@@ -185,6 +185,7 @@ ADD_SUBDIRECTORY(third-party/libev)
 SET(HEADERS_NETWORK
   network/loop_controller.h
   network/event_loop.h
+  network/types.h
   network/tcp/tcp_server.h
   network/tcp/tcp_client.h
 )
@@ -192,6 +193,7 @@ SET(HEADERS_NETWORK
 SET(SOURCES_NETWORK
   network/loop_controller.cpp
   network/event_loop.cpp
+  network/types.cpp
   network/tcp/tcp_server.cpp
   network/tcp/tcp_client.cpp
 )
@@ -236,6 +238,7 @@ SET(SOURCES_INNER
 SET(HEADERS_INNER_CLIENT
   client/inner/inner_tcp_server.h
   client/inner/inner_tcp_handler.h
+  client/commands.h
 )
 
 SET(SOURCES_INNER_CLIENT
@@ -318,6 +321,7 @@ IF(BUILD_SERVER)
   )
 
   SET(HEADERS_INNER_SERVER
+    server/commands.h
     server/inner/inner_tcp_server.h
     server/inner/inner_tcp_client.h
     server/inner/inner_tcp_handler.h

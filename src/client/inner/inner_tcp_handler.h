@@ -44,6 +44,8 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   AuthInfo authInfo() const;
   void setConfig(const TvConfig& config);
 
+  void RequestChannels();  // should be execute in network thread
+
   virtual void preLooped(tcp::ITcpLoop* server) override;
   virtual void accepted(tcp::TcpClient* client) override;
   virtual void moved(tcp::TcpClient* client) override;

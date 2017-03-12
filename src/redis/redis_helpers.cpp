@@ -94,7 +94,12 @@ void RedisStorage::setConfig(const redis_configuration_t& config) {
 }
 
 bool RedisStorage::findUserAuth(const AuthInfo& user) const {
-  if (!user.IsValid()) {
+  UserInfo uinf;
+  return findUser(user, &uinf);
+}
+
+bool RedisStorage::findUser(const AuthInfo& user, UserInfo* uinf) const {
+  if (!user.IsValid() || !uinf) {
     return false;
   }
 
@@ -112,9 +117,10 @@ bool RedisStorage::findUserAuth(const AuthInfo& user) const {
   }
 
   const char* userJson = reply->str;
-  UserInfo info;
-  if (parse_user_json(login, userJson, &info)) {
-    if (user.password == info.GetPassword()) {
+  UserInfo linfo;
+  if (parse_user_json(login, userJson, &linfo)) {
+    if (user.password == linfo.GetPassword()) {
+      *uinf = linfo;
       freeReplyObject(reply);
       redisFree(redis);
       return true;

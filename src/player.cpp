@@ -14,6 +14,7 @@ extern "C" {
 #include <common/threads/thread_manager.h>
 
 #include "sdl_utils.h"
+#include "network_controller.h"
 
 #include "core/video_state.h"
 #include "core/app_options.h"
@@ -88,7 +89,8 @@ bool CreateWindowFunc(int width,
 }  // namespace
 
 PlayerOptions::PlayerOptions()
-    : exit_on_keydown(false),
+    : config_path(),
+      exit_on_keydown(false),
       exit_on_mousedown(false),
       is_full_screen(false),
       default_width(width),
@@ -96,7 +98,13 @@ PlayerOptions::PlayerOptions()
       screen_width(0),
       screen_height(0),
       audio_volume(volume),
-      muted(false) {}
+      muted(false) {
+#ifdef OS_MACOSX
+  config_path = PROJECT_NAME ".app/Contents/Resources/" CONFIG_FILE_NAME;
+#else
+  config_path = CONFIG_FILE_NAME;
+#endif
+}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -116,8 +124,11 @@ Player::Player(const PlayerOptions& options,
       width_(0),
       height_(0),
       xleft_(0),
-      ytop_(0) {
+      ytop_(0),
+      controller_(nullptr) {
   // stable options
+  controller_ = new network::NetworkController(options.config_path);
+
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
   }
@@ -147,6 +158,7 @@ Player::Player(const PlayerOptions& options,
   fApp->Subscribe(this, core::events::ClientDisconnectedEvent::EventType);
   fApp->Subscribe(this, core::events::ClientConnectedEvent::EventType);
   fApp->Subscribe(this, core::events::ClientConfigChangeEvent::EventType);
+  fApp->Subscribe(this, core::events::ReceiveChannelsEvent::EventType);
 }
 
 void Player::SetFullScreen(bool full_screen) {
@@ -162,6 +174,7 @@ void Player::SetMute(bool mute) {
 }
 
 Player::~Player() {
+  destroy(&controller_);
   fApp->UnSubscribe(this);
 }
 
@@ -218,6 +231,10 @@ void Player::HandleEvent(event_t* event) {
     core::events::ClientConfigChangeEvent* conf_change_event =
         static_cast<core::events::ClientConfigChangeEvent*>(event);
     HandleClientConfigChangeEvent(conf_change_event);
+  } else if (event->GetEventType() == core::events::ReceiveChannelsEvent::EventType) {
+    core::events::ReceiveChannelsEvent* channels_event =
+        static_cast<core::events::ReceiveChannelsEvent*>(event);
+    HandleReceiveChannelsEvent(channels_event);
   }
 }
 
@@ -359,10 +376,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
     surface_ = IMG_LoadPNG(IMG_PATH);
-    stream_ = CreateCurrentStream();
-    if (!stream_) {
-      SwitchToErrorMode();
-    }
+    controller_->Start();
   }
 }
 
@@ -606,11 +620,24 @@ void Player::HandleQuitEvent(core::events::QuitEvent* event) {
   fApp->Exit(EXIT_SUCCESS);
 }
 
-void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* event) {}
+void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* event) {
+  UNUSED(event);
+
+  controller_->RequestChannels();
+}
 
 void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {}
 
 void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event) {}
+
+void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event) {
+  channels_t chan = event->info();
+  play_list_ = chan;
+  stream_ = CreateCurrentStream();
+  if (!stream_) {
+    SwitchToErrorMode();
+  }
+}
 
 bool Player::GetCurrentUrl(Url* url) const {
   if (!url || play_list_.empty()) {

@@ -20,14 +20,12 @@
 
 #include <ev.h>
 
-#include <functional>
-
 #include <common/threads/platform_thread.h>
+
+#include "network/types.h"
 
 namespace fasto {
 namespace fastotv {
-
-typedef std::function<void()> async_loop_exec_function_t;
 
 class EvLoopObserver {
  public:
@@ -51,7 +49,7 @@ class LibEvLoop {
   void start_timer(ev_timer* timer);
   void stop_timer(ev_timer* timer);
 
-  void execInLoopThread(async_loop_exec_function_t async_cb);
+  void execInLoopThread(async_loop_exec_function_t async_cb) const;
 
   int exec();
   void stop();

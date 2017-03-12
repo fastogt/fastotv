@@ -18,42 +18,12 @@
 
 #pragma once
 
-#include <common/threads/types.h>
-
-#include <string>
-
-#include "infos.h"
-
-#include "network/loop_controller.h"
-#include "tv_config.h"
+#include <functional>
 
 namespace fasto {
 namespace fastotv {
-namespace network {
 
-class NetworkController : private ILoopThreadController {
- public:
-  NetworkController(const std::string& config_path);
-  ~NetworkController();
+typedef std::function<void()> async_loop_exec_function_t;
 
-  void Start();
-  AuthInfo authInfo() const;
-  TvConfig config() const;
-  void setConfig(const TvConfig& config);
-
-  void RequestChannels() const;
-
- private:
-  void readConfig();
-  void saveConfig();
-
-  virtual tcp::ITcpLoopObserver* createHandler() override;
-  virtual tcp::ITcpLoop* createServer(tcp::ITcpLoopObserver* handler) override;
-
-  std::string config_path_;
-  TvConfig config_;
-};
-
-}  // namespace network
 }  // namespace fastotv
 }  // namespace fasto

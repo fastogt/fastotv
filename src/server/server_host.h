@@ -60,6 +60,8 @@ class ServerHost {
   bool registerInnerConnectionByUser(const AuthInfo& user,
                                      tcp::TcpClient* connection) WARN_UNUSED_RESULT;
   bool findUserAuth(const AuthInfo& user) const;
+  bool findUser(const AuthInfo& auth, UserInfo* uinf);
+
   inner::InnerTcpClient* findInnerConnectionByLogin(const std::string& login) const;
   void setConfig(const Config& conf);
 

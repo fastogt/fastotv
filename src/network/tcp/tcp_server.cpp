@@ -260,6 +260,7 @@ void ITcpLoop::timer_cb(struct ev_loop* loop, struct ev_timer* timer, int revent
 }
 
 void ITcpLoop::preLooped(LibEvLoop* loop) {
+  UNUSED(loop);
   {
     lock_t loc(g_exists_loops_mutex_);
     g_exists_loops_.push_back(this);
@@ -271,6 +272,7 @@ void ITcpLoop::preLooped(LibEvLoop* loop) {
 }
 
 void ITcpLoop::stoped(LibEvLoop* loop) {
+  UNUSED(loop);
   const std::vector<LoopTimer*> timers = timers_;
   for (size_t i = 0; i < timers.size(); ++i) {
     LoopTimer* timer = timers[i];
@@ -287,6 +289,7 @@ void ITcpLoop::stoped(LibEvLoop* loop) {
 }
 
 void ITcpLoop::postLooped(LibEvLoop* loop) {
+  UNUSED(loop);
   {
     lock_t loc(g_exists_loops_mutex_);
     g_exists_loops_.erase(std::remove(g_exists_loops_.begin(), g_exists_loops_.end(), this),

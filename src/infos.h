@@ -47,6 +47,11 @@ inline bool operator!=(const AuthInfo& x, const AuthInfo& y) {
   return !(x == y);
 }
 
+typedef std::vector<Url> channels_t;
+
+json_object* MakeJobjectFromChannels(const channels_t& channels);  // allocate json_object
+channels_t MakeChannelsClass(json_object* obj);                // pass valid json obj
+
 struct UserInfo {
   UserInfo();
   explicit UserInfo(const AuthInfo& a, const std::vector<Url>& ch);
@@ -59,7 +64,7 @@ struct UserInfo {
   static UserInfo MakeClass(json_object* obj);           // pass valid json obj
 
   AuthInfo auth;
-  std::vector<Url> channels;
+  channels_t channels;
 };
 
 inline bool operator==(const UserInfo& lhs, const UserInfo& rhs) {

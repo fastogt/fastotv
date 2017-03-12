@@ -26,6 +26,7 @@ extern "C" {
 #include <common/macros.h>      // for UNUSED, etc
 #include <common/file_system.h>
 #include <common/threads/types.h>
+#include <common/utils.h>
 
 #include "cmdutils.h"          // for HAS_ARG, OPT_EXPERT, etc
 #include "core/app_options.h"  // for AppOptions, ComplexOptions
@@ -404,6 +405,20 @@ common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** ar
 
 /* Called from the main */
 int main(int argc, char** argv) {
+  bool daemon_mode = false;
+  for (int i = 0; i < argc; ++i) {
+    if (strcmp(argv[i], "-c") == 0) {
+      g_player_options.config_path = argv[++i];
+    } else if (strcmp(argv[i], "-d") == 0) {
+      daemon_mode = true;
+    }
+  }
+#if defined(OS_POSIX)
+  if (daemon_mode) {
+    common::create_as_daemon();
+  }
+#endif
+
 #if defined(NDEBUG)
   common::logging::LEVEL_LOG level = common::logging::L_INFO;
 #else

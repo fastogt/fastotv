@@ -33,6 +33,7 @@ struct fasto_async_cb {
 };
 
 void async_exec_cb(struct ev_loop* loop, struct ev_async* watcher, int revents) {
+  UNUSED(revents);
   ev_async_stop(loop, watcher);
   fasto_async_cb* ioclient = reinterpret_cast<fasto_async_cb*>(watcher);
   ioclient->func();
@@ -86,7 +87,7 @@ void LibEvLoop::stop_timer(ev_timer* timer) {
   ev_timer_stop(loop_, timer);
 }
 
-void LibEvLoop::execInLoopThread(async_loop_exec_function_t async_cb) {
+void LibEvLoop::execInLoopThread(async_loop_exec_function_t async_cb) const {
   if (isLoopThread()) {
     async_cb();
   } else {
@@ -122,6 +123,8 @@ void LibEvLoop::stop() {
 }
 
 void LibEvLoop::stop_cb(struct ev_loop* loop, struct ev_async* watcher, int revents) {
+  UNUSED(watcher);
+  UNUSED(revents);
   LibEvLoop* evloop = reinterpret_cast<LibEvLoop*>(ev_userdata(loop));
   ev_async_stop(loop, evloop->async_stop_);
   if (evloop->observer_) {

@@ -60,6 +60,12 @@ void ILoopController::stop() {
   stoped();
 }
 
+void ILoopController::execInLoopThread(async_loop_exec_function_t func) const {
+  if (loop_) {
+    loop_->execInLoopThread(func);
+  }
+}
+
 ILoopController::~ILoopController() {
   delete loop_;
   delete handler_;
@@ -76,7 +82,8 @@ int ILoopThreadController::join() {
 }
 
 void ILoopThreadController::started() {
-  loop_thread_->Start();
+  bool result = loop_thread_->Start();
+  DCHECK(result);
 }
 
 void ILoopThreadController::stoped() {

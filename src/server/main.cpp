@@ -155,8 +155,8 @@ void sync_config() {
     "password": "1234"
   }*/
 
-  config.server.redis.redis_host = redis_default_host;
-  config.server.redis.redis_unix_socket = redis_default_unix_path;
+  //config.server.redis.redis_host = redis_default_host;
+  //config.server.redis.redis_unix_socket = redis_default_unix_path;
   config.server.redis.channel_in = CHANNEL_COMMANDS_IN_NAME;
   config.server.redis.channel_out = CHANNEL_COMMANDS_OUT_NAME;
   config.server.redis.channel_clients_state = CHANNEL_CLIENTS_STATE_NAME;

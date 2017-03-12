@@ -21,13 +21,20 @@ class EventThread;
 
 namespace fasto {
 namespace fastotv {
+
 namespace core {
 class VideoState;
+}
+
+namespace network {
+class NetworkController;
 }
 
 struct PlayerOptions {
   enum { width = 640, height = 480, volume = 100 };
   PlayerOptions();
+
+  std::string config_path;
 
   bool exit_on_keydown;
   bool exit_on_mousedown;
@@ -91,6 +98,7 @@ class Player : public core::VideoStateHandler {
   virtual void HandleClientConnectedEvent(core::events::ClientConnectedEvent* event);
   virtual void HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event);
   virtual void HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event);
+  virtual void HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event);
 
  private:
   /* prepare a new audio buffer */
@@ -118,7 +126,7 @@ class Player : public core::VideoStateHandler {
   PlayerOptions options_;
   const core::AppOptions opt_;
   const core::ComplexOptions copt_;
-  std::vector<Url> play_list_;
+  channels_t play_list_;
 
   core::AudioParams* audio_params_;
 
@@ -136,6 +144,8 @@ class Player : public core::VideoStateHandler {
   int height_;
   const int xleft_;
   const int ytop_;
+
+  network::NetworkController* controller_;
 };
 }
 }

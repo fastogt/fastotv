@@ -9,9 +9,6 @@
 
 namespace fasto {
 namespace fastotv {
-namespace network {
-class NetworkController;
-}
 namespace core {
 namespace application {
 
@@ -53,7 +50,6 @@ class Sdl2Application : public common::application::IApplicationImpl {
  private:
   common::threads::EventDispatcher<EventsType> dispatcher_;
   bool stop_;
-  network::NetworkController* controller_;
 };
 }
 }

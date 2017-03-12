@@ -83,6 +83,24 @@ bool UserInfo::IsValid() const {
   return auth.IsValid();
 }
 
+json_object* MakeJobjectFromChannels(const channels_t& channels) {
+  json_object* jchannels = json_object_new_array();
+  for (size_t i = 0; i < channels.size(); ++i) {
+    Url url = channels[i];
+    json_object_array_add(jchannels, Url::MakeJobject(url));
+  }
+  return jchannels;
+}
+
+channels_t MakeChannelsClass(json_object* obj) {
+  channels_t chan;
+  int len = json_object_array_length(obj);
+  for (int i = 0; i < len; ++i) {
+    chan.push_back(Url::MakeClass(json_object_array_get_idx(obj, i)));
+  }
+  return chan;
+}
+
 json_object* UserInfo::MakeJobject(const UserInfo& uinfo) {
   json_object* obj = json_object_new_object();
 
@@ -92,17 +110,13 @@ json_object* UserInfo::MakeJobject(const UserInfo& uinfo) {
   json_object_object_add(obj, LOGIN_FIELD, json_object_new_string(login_str.c_str()));
   json_object_object_add(obj, PASSWORD_FIELD, json_object_new_string(password_str.c_str()));
 
-  json_object* channels = json_object_new_array();
-  for (size_t i = 0; i < uinfo.channels.size(); ++i) {
-    Url url = uinfo.channels[i];
-    json_object_array_add(channels, Url::MakeJobject(url));
-  }
-  json_object_object_add(obj, CHANNELS_FIELD, channels);
+  json_object* jchannels = MakeJobjectFromChannels(uinfo.channels);
+  json_object_object_add(obj, CHANNELS_FIELD, jchannels);
   return obj;
 }
 
 UserInfo UserInfo::MakeClass(json_object* obj) {
-  std::vector<Url> chan;
+  channels_t chan;
   json_object* jchan = NULL;
   json_bool jchan_exists = json_object_object_get_ex(obj, CHANNELS_FIELD, &jchan);
   if (jchan_exists) {

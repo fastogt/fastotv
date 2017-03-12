@@ -33,6 +33,7 @@ extern "C" {
 #include <common/threads/thread_manager.h>
 #include <common/convert2string.h>
 
+#include "server/commands.h"
 #include "server/server_host.h"
 #include "server/server_commands.h"
 
@@ -167,7 +168,7 @@ void InnerTcpHandlerHost::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
     std::vector<tcp::TcpClient*> online_clients = server->clients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
       tcp::TcpClient* client = online_clients[i];
-      const cmd_request_t ping_request = make_request(PING_COMMAND_REQ);
+      const cmd_request_t ping_request = make_request(SERVER_PING_COMMAND_REQ);
       ssize_t nwrite = 0;
       common::Error err = client->write(ping_request.data(), ping_request.size(), &nwrite);
       INFO_LOG() << "Pinged sended " << nwrite << " byte, client[" << client->formatedName()
@@ -222,7 +223,9 @@ void InnerTcpHandlerHost::dataReceived(tcp::TcpClient* client) {
   handleInnerDataReceived(iclient, buff, nread);
 }
 
-void InnerTcpHandlerHost::dataReadyToWrite(tcp::TcpClient* client) {}
+void InnerTcpHandlerHost::dataReadyToWrite(tcp::TcpClient* client) {
+  UNUSED(client);
+}
 
 void InnerTcpHandlerHost::setStorageConfig(const redis_sub_configuration_t& config) {
   sub_commands_in_->setConfig(config);
@@ -234,11 +237,35 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
                                                     int argc,
                                                     char* argv[]) {
   char* command = argv[0];
+  ssize_t nwrite = 0;
 
-  if (IS_EQUAL_COMMAND(command, PING_COMMAND)) {
-    cmd_responce_t pong = make_responce(id, PING_COMMAND_RESP_SUCCESS);
-    ssize_t nwrite = 0;
+  if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
+    cmd_responce_t pong = make_responce(id, SERVER_PING_COMMAND_RESP_SUCCSESS);
     connection->write(pong, &nwrite);
+  } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
+    inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
+    AuthInfo hinf = client->serverHostInfo();
+    UserInfo user;
+    bool is_ok = parent_->findUser(hinf, &user);
+    if (!is_ok) {
+      cmd_responce_t resp =
+          make_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1S, CAUSE_UNREGISTERED_USER);
+      connection->write(resp, &nwrite);
+      connection->close();
+      delete connection;
+    }
+
+    json_object* jchannels = MakeJobjectFromChannels(user.channels);
+    std::string channels_str = json_object_get_string(jchannels);
+    json_object_put(jchannels);
+    std::string hex_channels = common::HexEncode(channels_str, false);
+    cmd_responce_t channels_responce = make_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1S, hex_channels);
+    common::Error err = connection->write(channels_responce, &nwrite);
+    if (err && err->isError()) {
+      cmd_approve_t resp2 =
+          make_approve_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1S, err->description());
+      connection->write(resp2, &nwrite);
+    }
   } else {
     WARNING_LOG() << "UNKNOWN COMMAND: " << command;
   }
@@ -253,24 +280,24 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
 
   if (IS_EQUAL_COMMAND(state_command, SUCCESS_COMMAND) && argc > 1) {
     char* command = argv[1];
-    if (IS_EQUAL_COMMAND(command, PING_COMMAND)) {
+    if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
       if (argc > 2) {
         const char* pong = argv[2];
         if (!pong) {
           cmd_approve_t resp =
-              make_approve_responce(id, PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+              make_approve_responce(id, SERVER_PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
           connection->write(resp, &nwrite);
           goto fail;
         }
 
-        cmd_approve_t resp = make_approve_responce(id, PING_COMMAND_APPROVE_SUCCESS);
+        cmd_approve_t resp = make_approve_responce(id, SERVER_PING_COMMAND_APPROVE_SUCCESS);
         common::Error err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           goto fail;
         }
       } else {
         cmd_approve_t resp =
-            make_approve_responce(id, PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+            make_approve_responce(id, SERVER_PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
         connection->write(resp, &nwrite);
       }
     } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
@@ -369,7 +396,7 @@ void InnerTcpHandlerHost::handleInnerApproveCommand(fastotv::inner::InnerClient*
   if (IS_EQUAL_COMMAND(command, SUCCESS_COMMAND)) {
     if (argc > 1) {
       const char* okrespcommand = argv[1];
-      if (IS_EQUAL_COMMAND(okrespcommand, PING_COMMAND)) {
+      if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
       }
     }

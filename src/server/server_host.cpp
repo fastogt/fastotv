@@ -115,8 +115,7 @@ bool ServerHost::unRegisterInnerConnectionByHost(tcp::TcpClient* connection) {
   return true;
 }
 
-bool ServerHost::registerInnerConnectionByUser(const AuthInfo& user,
-                                               tcp::TcpClient* connection) {
+bool ServerHost::registerInnerConnectionByUser(const AuthInfo& user, tcp::TcpClient* connection) {
   CHECK(user.IsValid());
   inner::InnerTcpClient* iconnection = dynamic_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
@@ -133,6 +132,10 @@ bool ServerHost::registerInnerConnectionByUser(const AuthInfo& user,
 
 bool ServerHost::findUserAuth(const AuthInfo& user) const {
   return rstorage_.findUserAuth(user);
+}
+
+bool ServerHost::findUser(const AuthInfo& auth, UserInfo* uinf) {
+  return rstorage_.findUser(auth, uinf);
 }
 
 inner::InnerTcpClient* ServerHost::findInnerConnectionByLogin(const std::string& login) const {

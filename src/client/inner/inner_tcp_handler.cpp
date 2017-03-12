@@ -34,7 +34,7 @@
 
 #include "inner/inner_client.h"
 
-#include "client_commands.h"
+#include "client/commands.h"
 
 #include "core/events/network_events.h"
 
@@ -126,7 +126,7 @@ void InnerTcpHandler::postLooped(tcp::ITcpLoop* server) {
 void InnerTcpHandler::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
-    const cmd_request_t ping_request = make_request(PING_COMMAND_REQ);
+    const cmd_request_t ping_request = make_request(CLIENT_PING_COMMAND_REQ);
     ssize_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->write(ping_request, &nwrite);
@@ -146,6 +146,20 @@ void InnerTcpHandler::setConfig(const TvConfig& config) {
   config_ = config;
 }
 
+void InnerTcpHandler::RequestChannels() {
+  if (inner_connection_) {
+    const cmd_request_t channels_request = make_request(CLIENT_GET_CHANNELS_REQ);
+    ssize_t nwrite = 0;
+    fasto::fastotv::inner::InnerClient* client = inner_connection_;
+    common::Error err = client->write(channels_request, &nwrite);
+    if (err && err->isError()) {
+      DEBUG_MSG_ERROR(err);
+      client->close();
+      delete client;
+    }
+  }
+}
+
 void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
                                                 cmd_seq_t id,
                                                 int argc,
@@ -153,8 +167,8 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
   ssize_t nwrite = 0;
   char* command = argv[0];
 
-  if (IS_EQUAL_COMMAND(command, PING_COMMAND)) {
-    const cmd_responce_t pong = make_responce(id, PING_COMMAND_RESP_SUCCESS);
+  if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
+    const cmd_responce_t pong = make_responce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS);
     common::Error err = connection->write(pong, &nwrite);
     if (err && err->isError()) {
       DEBUG_MSG_ERROR(err);
@@ -225,7 +239,6 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       TvConfig new_config;
       new_config.login = config_.login;
       new_config.password = config_.password;
-
       if (new_config.password != config_.password) {
         cmd_responce_t resp =
             make_responce(id, CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_FAIL_1S, CAUSE_INVALID_ARGS);
@@ -243,7 +256,6 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
         DEBUG_MSG_ERROR(err);
       }
       json_object_put(config_json);
-
       fApp->PostEvent(new core::events::ClientConfigChangeEvent(this, new_config));
     } else {
       cmd_responce_t resp =
@@ -267,12 +279,12 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
 
   if (IS_EQUAL_COMMAND(state_command, SUCCESS_COMMAND) && argc > 1) {
     char* command = argv[1];
-    if (IS_EQUAL_COMMAND(command, PING_COMMAND)) {
+    if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
       if (argc > 2) {
         const char* pong = argv[2];
         if (!pong) {
           cmd_approve_t resp =
-              make_approve_responce(id, PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+              make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
           common::Error err = connection->write(resp, &nwrite);
           if (err && err->isError()) {
             DEBUG_MSG_ERROR(err);
@@ -280,7 +292,7 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
           return;
         }
 
-        const cmd_approve_t resp = make_approve_responce(id, PING_COMMAND_APPROVE_SUCCESS);
+        const cmd_approve_t resp = make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_SUCCESS);
         common::Error err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           DEBUG_MSG_ERROR(err);
@@ -288,7 +300,46 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         }
       } else {
         cmd_approve_t resp =
-            make_approve_responce(id, PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+            make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+        common::Error err = connection->write(resp, &nwrite);
+        if (err && err->isError()) {
+          DEBUG_MSG_ERROR(err);
+        }
+      }
+    } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
+      if (argc > 2) {
+        const char* hex_encoded_channels = argv[2];
+        if (!hex_encoded_channels) {
+          cmd_approve_t resp =
+              make_approve_responce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+          common::Error err = connection->write(resp, &nwrite);
+          if (err && err->isError()) {
+            DEBUG_MSG_ERROR(err);
+          }
+          return;
+        }
+
+        common::buffer_t buff = common::HexDecode(hex_encoded_channels);
+        std::string buff_str(buff.begin(), buff.end());
+        json_object* obj = json_tokener_parse(buff_str.c_str());
+        if (!obj) {
+          cmd_approve_t resp =
+              make_approve_responce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+          connection->write(resp, &nwrite);
+          return;
+        }
+
+        channels_t channels = MakeChannelsClass(obj);
+        fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, channels));
+        const cmd_approve_t resp = make_approve_responce(id, CLIENT_GET_CHANNELS_APPROVE_SUCCESS);
+        common::Error err = connection->write(resp, &nwrite);
+        if (err && err->isError()) {
+          DEBUG_MSG_ERROR(err);
+          return;
+        }
+      } else {
+        cmd_approve_t resp =
+            make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
         common::Error err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           DEBUG_MSG_ERROR(err);
@@ -314,7 +365,7 @@ void InnerTcpHandler::handleInnerApproveCommand(fasto::fastotv::inner::InnerClie
   if (IS_EQUAL_COMMAND(command, SUCCESS_COMMAND)) {
     if (argc > 1) {
       const char* okrespcommand = argv[1];
-      if (IS_EQUAL_COMMAND(okrespcommand, PING_COMMAND)) {
+      if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
         fApp->PostEvent(new core::events::ClientConnectedEvent(this, authInfo()));
       }

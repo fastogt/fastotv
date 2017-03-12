@@ -21,6 +21,8 @@
 #include <common/smart_ptr.h>
 #include <common/threads/thread.h>
 
+#include "network/types.h"
+
 namespace fasto {
 namespace fastotv {
 
@@ -37,6 +39,7 @@ class ILoopController {
   void start();
   int exec();
   void stop();
+  void execInLoopThread(async_loop_exec_function_t func) const;
 
  protected:
   tcp::ITcpLoop* loop_;
