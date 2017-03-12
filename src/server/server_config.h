@@ -20,8 +20,8 @@
 
 #include <common/net/types.h>
 
-#define SERVICE_HOST_NAME "localhost"
-#define SERVICE_HOST_PORT 8040
+#define SERVICE_HOST_NAME "siteonyourdevice.com"
+#define SERVICE_HOST_PORT 7040
 
 namespace fasto {
 namespace fastotv {
