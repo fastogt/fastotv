@@ -246,21 +246,23 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
     AuthInfo hinf = client->serverHostInfo();
     UserInfo user;
-    bool is_ok = parent_->findUser(hinf, &user);
-    if (!is_ok) {
+    common::Error err = parent_->findUser(hinf, &user);
+    if (err && err->isError()) {
       cmd_responce_t resp =
-          make_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1S, CAUSE_UNREGISTERED_USER);
+          make_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1S, err->description());
       connection->write(resp, &nwrite);
       connection->close();
       delete connection;
+      return;
     }
 
     json_object* jchannels = MakeJobjectFromChannels(user.channels);
     std::string channels_str = json_object_get_string(jchannels);
     json_object_put(jchannels);
     std::string hex_channels = common::HexEncode(channels_str, false);
-    cmd_responce_t channels_responce = make_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1S, hex_channels);
-    common::Error err = connection->write(channels_responce, &nwrite);
+    cmd_responce_t channels_responce =
+        make_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1S, hex_channels);
+    err = connection->write(channels_responce, &nwrite);
     if (err && err->isError()) {
       cmd_approve_t resp2 =
           make_approve_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1S, err->description());
@@ -329,10 +331,10 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
           goto fail;
         }
 
-        bool isOk = parent_->findUserAuth(uauth);
-        if (!isOk) {
+        common::Error err = parent_->findUserAuth(uauth);
+        if (err && err->isError()) {
           cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1S,
-                                                     CAUSE_UNREGISTERED_USER);
+                                                     err->description());
           connection->write(resp, &nwrite);
           goto fail;
         }
@@ -347,7 +349,7 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         }
 
         cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_SUCCESS);
-        common::Error err = connection->write(resp, &nwrite);
+        err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           cmd_approve_t resp2 = make_approve_responce(
               id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1S, err->description());
@@ -355,7 +357,7 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
           goto fail;
         }
 
-        isOk = parent_->registerInnerConnectionByUser(uauth, connection);
+        bool isOk = parent_->registerInnerConnectionByUser(uauth, connection);
         if (isOk) {
           std::string connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_CONNECTED_1S, login);
           bool res = sub_commands_in_->publish_clients_state(connected_resp);

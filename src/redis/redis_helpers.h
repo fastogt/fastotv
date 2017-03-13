@@ -21,6 +21,7 @@
 #include <string>
 
 #include <common/net/types.h>
+#include <common/error.h>
 
 #include "infos.h"
 
@@ -44,8 +45,8 @@ class RedisStorage {
   RedisStorage();
   void setConfig(const redis_configuration_t& config);
 
-  bool findUserAuth(const AuthInfo& user) const WARN_UNUSED_RESULT;              // check password
-  bool findUser(const AuthInfo& user, UserInfo* uinf) const WARN_UNUSED_RESULT;  // check password
+  common::Error findUserAuth(const AuthInfo& user) const WARN_UNUSED_RESULT;              // check password
+  common::Error findUser(const AuthInfo& user, UserInfo* uinf) const WARN_UNUSED_RESULT;  // check password
 
  private:
   redis_configuration_t config_;

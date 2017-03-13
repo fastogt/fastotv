@@ -88,8 +88,16 @@ bool CreateWindowFunc(int width,
 }
 }  // namespace
 
+std::string default_config_file_path() {
+#ifdef OS_MACOSX
+  return PROJECT_NAME ".app/Contents/Resources/" CONFIG_FILE_NAME;
+#else
+  return CONFIG_FILE_NAME;
+#endif
+}
+
 PlayerOptions::PlayerOptions()
-    : config_path(),
+    : config_path(default_config_file_path()),
       exit_on_keydown(false),
       exit_on_mousedown(false),
       is_full_screen(false),
@@ -98,13 +106,7 @@ PlayerOptions::PlayerOptions()
       screen_width(0),
       screen_height(0),
       audio_volume(volume),
-      muted(false) {
-#ifdef OS_MACOSX
-  config_path = PROJECT_NAME ".app/Contents/Resources/" CONFIG_FILE_NAME;
-#else
-  config_path = CONFIG_FILE_NAME;
-#endif
-}
+      muted(false) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,

@@ -31,6 +31,11 @@
 #define LOGIN_SETTING_LABEL "login"
 #define PASSWORD_SETTING_LABEL "password"
 
+/*[settings]
+login=x
+password=y  //md5 hash
+*/
+
 namespace fasto {
 namespace fastotv {
 

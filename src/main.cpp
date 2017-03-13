@@ -87,6 +87,22 @@ int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return SUCCESS_RESULT_VALUE;
 }
 
+int opt_input_config_filepath(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
+  UNUSED(opt);
+
+  if (!g_player_options.config_path.empty() &&
+      g_player_options.config_path != fasto::fastotv::default_config_file_path()) {
+    ERROR_LOG() << "Argument '" << g_player_options.config_path
+                << " provided as input playlist file, but '"
+                << "' was already specified.";
+    return AVERROR(EINVAL);
+  }
+
+  g_player_options.config_path = arg;
+  return 0;
+}
+
 int opt_frame_pix_fmt(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
@@ -247,6 +263,11 @@ const OptionDef options[] = {
      {.func_arg = opt_default},
      "generic catch all option",
      ""},
+    {"config",
+     HAS_ARG,
+     {.func_arg = opt_input_config_filepath},
+     "read specified config file",
+     "file path"},
     {"codec", HAS_ARG, {.func_arg = opt_codec}, "force decoder", "decoder_name"},
     {"acodec",
      HAS_ARG | OPT_STRING | OPT_EXPERT,
@@ -407,9 +428,7 @@ common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** ar
 int main(int argc, char** argv) {
   bool daemon_mode = false;
   for (int i = 0; i < argc; ++i) {
-    if (strcmp(argv[i], "-c") == 0) {
-      g_player_options.config_path = argv[++i];
-    } else if (strcmp(argv[i], "-d") == 0) {
+    if (strcmp(argv[i], "-d") == 0) {
       daemon_mode = true;
     }
   }

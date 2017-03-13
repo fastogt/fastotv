@@ -70,19 +70,19 @@ redisContext* redis_connect(const redis_configuration_t& config) {
   return redis;
 }
 
-bool parse_user_json(const std::string& login, const char* userJson, UserInfo* out_info) {
+common::Error parse_user_json(const char* userJson, UserInfo* out_info) {
   if (!userJson || !out_info) {
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
   json_object* obj = json_tokener_parse(userJson);
   if (!obj) {
-    return false;
+    return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);
   }
 
   *out_info = UserInfo::MakeClass(obj);
   json_object_put(obj);
-  return true;
+  return common::Error();
 }
 
 }  // namespace
@@ -93,19 +93,19 @@ void RedisStorage::setConfig(const redis_configuration_t& config) {
   config_ = config;
 }
 
-bool RedisStorage::findUserAuth(const AuthInfo& user) const {
+common::Error RedisStorage::findUserAuth(const AuthInfo& user) const {
   UserInfo uinf;
   return findUser(user, &uinf);
 }
 
-bool RedisStorage::findUser(const AuthInfo& user, UserInfo* uinf) const {
+common::Error RedisStorage::findUser(const AuthInfo& user, UserInfo* uinf) const {
   if (!user.IsValid() || !uinf) {
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
   redisContext* redis = redis_connect(config_);
   if (!redis) {
-    return false;
+    return common::make_error_value("Can't connect to user database", common::ErrorValue::E_ERROR);
   }
 
   std::string login = user.login;
@@ -113,23 +113,28 @@ bool RedisStorage::findUser(const AuthInfo& user, UserInfo* uinf) const {
   redisReply* reply = reinterpret_cast<redisReply*>(redisCommand(redis, GET_USER_1S, login_str));
   if (!reply) {
     redisFree(redis);
-    return false;
+    return common::make_error_value("User not found", common::ErrorValue::E_ERROR);
   }
 
   const char* userJson = reply->str;
   UserInfo linfo;
-  if (parse_user_json(login, userJson, &linfo)) {
-    if (user.password == linfo.GetPassword()) {
-      *uinf = linfo;
-      freeReplyObject(reply);
-      redisFree(redis);
-      return true;
-    }
+  common::Error err = parse_user_json(userJson, &linfo);
+  if (err && err->isError()) {
+    freeReplyObject(reply);
+    redisFree(redis);
+    return err;
   }
 
+  if (user.password != linfo.GetPassword()) {
+    freeReplyObject(reply);
+    redisFree(redis);
+    return common::make_error_value("Password missmatch", common::ErrorValue::E_ERROR);
+  }
+
+  *uinf = linfo;
   freeReplyObject(reply);
   redisFree(redis);
-  return false;
+  return common::Error();
 }
 
 RedisSubHandler::~RedisSubHandler() {}
