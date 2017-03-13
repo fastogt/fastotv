@@ -79,14 +79,14 @@ TvConfig NetworkController::config() const {
 
 void NetworkController::setConfig(const TvConfig& config) {
   config_ = config;
-  client::inner::InnerTcpHandler* handler = dynamic_cast<client::inner::InnerTcpHandler*>(handler_);
+  client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
   if (handler) {
     handler->setConfig(config);
   }
 }
 
 void NetworkController::RequestChannels() const {
-  client::inner::InnerTcpHandler* handler = dynamic_cast<client::inner::InnerTcpHandler*>(handler_);
+  client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
   if (handler) {
     auto cb = [handler]() { handler->RequestChannels(); };
     execInLoopThread(cb);
@@ -121,7 +121,7 @@ void NetworkController::readConfig() {
 
   // try to parse settings file
   if (ini_parse(path, ini_handler_fasto, &config) < 0) {
-    INFO_LOG() << "Can't load config path: " << path << " , use default settings.";
+    INFO_LOG() << "Can't load config path: " << path << ", use default settings.";
   }
 
   setConfig(config);

@@ -318,7 +318,7 @@ ITcpLoop* TcpServer::findExistServerByHost(const common::net::HostAndPort& host)
   }
 
   auto find_by_host = [host](ITcpLoop* loop) -> bool {
-    TcpServer* server = dynamic_cast<TcpServer*>(loop);
+    TcpServer* server = static_cast<TcpServer*>(loop);
     if (!server) {
       return false;
     }

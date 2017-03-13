@@ -91,7 +91,6 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
                                                           char* buff,
                                                           size_t buff_len) {
   const std::string input_command(buff, buff_len);
-  ssize_t nwrite = 0;
   cmd_id_t seq;
   cmd_seq_t id;
   std::string cmd_str;
@@ -99,11 +98,6 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
   common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
   if (err && err->isError()) {
     WARNING_LOG() << err->description();
-    const cmd_responce_t resp = make_responce(next_id(), STATE_COMMAND_RESP_FAIL_1E, buff);
-    common::Error err = connection->write(resp, &nwrite);
-    if (err && err->isError()) {
-      DEBUG_MSG_ERROR(err);
-    }
     connection->close();
     delete connection;
     return;
@@ -114,11 +108,6 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
   processRequest(id, argc, argv);
   if (argv == NULL) {
     WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << buff;
-    const cmd_responce_t resp = make_responce(id, STATE_COMMAND_RESP_FAIL_1E, buff);
-    common::Error err = connection->write(resp, &nwrite);
-    if (err && err->isError()) {
-      DEBUG_MSG_ERROR(err);
-    }
     connection->close();
     delete connection;
     return;

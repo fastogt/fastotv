@@ -107,7 +107,7 @@ void InnerTcpHandler::dataReceived(tcp::TcpClient* client) {
     return;
   }
 
-  handleInnerDataReceived(dynamic_cast<fasto::fastotv::inner::InnerClient*>(client), buff, nread);
+  handleInnerDataReceived(static_cast<fasto::fastotv::inner::InnerClient*>(client), buff, nread);
 }
 
 void InnerTcpHandler::dataReadyToWrite(tcp::TcpClient* client) {

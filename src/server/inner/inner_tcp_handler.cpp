@@ -191,7 +191,7 @@ void InnerTcpHandlerHost::accepted(tcp::TcpClient* client) {
 void InnerTcpHandlerHost::closed(tcp::TcpClient* client) {
   bool isOk = parent_->unRegisterInnerConnectionByHost(client);
   if (isOk) {
-    InnerTcpClient* iconnection = dynamic_cast<InnerTcpClient*>(client);
+    InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
     if (iconnection) {
       AuthInfo hinf = iconnection->serverHostInfo();
       std::string login = hinf.login;
@@ -216,9 +216,7 @@ void InnerTcpHandlerHost::dataReceived(tcp::TcpClient* client) {
     return;
   }
 
-  InnerTcpClient* iclient = dynamic_cast<InnerTcpClient*>(client);
-  CHECK(iclient);
-
+  InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
   handleInnerDataReceived(iclient, buff, nread);
 }
 
@@ -239,7 +237,7 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
   ssize_t nwrite = 0;
 
   if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
-    cmd_responce_t pong = make_responce(id, SERVER_PING_COMMAND_RESP_SUCCSESS);
+    cmd_responce_t pong = make_responce(id, SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS);
     connection->write(pong, &nwrite);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);

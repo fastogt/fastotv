@@ -100,8 +100,9 @@ int ServerHost::exec() {
 }
 
 bool ServerHost::unRegisterInnerConnectionByHost(tcp::TcpClient* connection) {
-  inner::InnerTcpClient* iconnection = dynamic_cast<inner::InnerTcpClient*>(connection);
+  inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
+    DNOTREACHED();
     return false;
   }
 
@@ -117,7 +118,7 @@ bool ServerHost::unRegisterInnerConnectionByHost(tcp::TcpClient* connection) {
 
 bool ServerHost::registerInnerConnectionByUser(const AuthInfo& user, tcp::TcpClient* connection) {
   CHECK(user.IsValid());
-  inner::InnerTcpClient* iconnection = dynamic_cast<inner::InnerTcpClient*>(connection);
+  inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
     return false;
