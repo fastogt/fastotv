@@ -99,7 +99,7 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
   common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
   if (err && err->isError()) {
     WARNING_LOG() << err->description();
-    const cmd_responce_t resp = make_responce(next_id(), STATE_COMMAND_RESP_FAIL_1S, buff);
+    const cmd_responce_t resp = make_responce(next_id(), STATE_COMMAND_RESP_FAIL_1E, buff);
     common::Error err = connection->write(resp, &nwrite);
     if (err && err->isError()) {
       DEBUG_MSG_ERROR(err);
@@ -110,11 +110,11 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
   }
 
   int argc;
-  sds* argv = sdssplitargs(cmd_str.c_str(), &argc);
+  sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
   processRequest(id, argc, argv);
   if (argv == NULL) {
     WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << buff;
-    const cmd_responce_t resp = make_responce(id, STATE_COMMAND_RESP_FAIL_1S, buff);
+    const cmd_responce_t resp = make_responce(id, STATE_COMMAND_RESP_FAIL_1E, buff);
     common::Error err = connection->write(resp, &nwrite);
     if (err && err->isError()) {
       DEBUG_MSG_ERROR(err);

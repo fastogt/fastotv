@@ -29,7 +29,7 @@
 #include "third-party/json-c/json-c/json.h"
 
 #define GET_ALL_USERS_REDIS_REQUEST "HGETALL tvusers"
-#define GET_USER_1S "HGET tvusers %s"
+#define GET_USER_1E "HGET tvusers %s"
 
 #undef ERROR
 
@@ -110,7 +110,7 @@ common::Error RedisStorage::findUser(const AuthInfo& user, UserInfo* uinf) const
 
   std::string login = user.login;
   const char* login_str = login.c_str();
-  redisReply* reply = reinterpret_cast<redisReply*>(redisCommand(redis, GET_USER_1S, login_str));
+  redisReply* reply = reinterpret_cast<redisReply*>(redisCommand(redis, GET_USER_1E, login_str));
   if (!reply) {
     redisFree(redis);
     return common::make_error_value("User not found", common::ErrorValue::E_ERROR);

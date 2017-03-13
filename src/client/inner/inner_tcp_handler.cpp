@@ -179,7 +179,7 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     std::string auth_str = json_object_get_string(jain);
     json_object_put(jain);
     std::string enc_auth = common::HexEncode(auth_str, false);
-    cmd_responce_t iAm = make_responce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1S, enc_auth);
+    cmd_responce_t iAm = make_responce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1E, enc_auth);
     common::Error err = connection->write(iAm, &nwrite);
     if (err && err->isError()) {
       DEBUG_MSG_ERROR(err);
@@ -228,7 +228,7 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       json_object* config_json = json_tokener_parse(config_json_str);
       if (!config_json) {
         cmd_responce_t resp =
-            make_responce(id, CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_FAIL_1S, CAUSE_INVALID_ARGS);
+            make_responce(id, CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_FAIL_1E, "");
         common::Error err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           DEBUG_MSG_ERROR(err);
@@ -241,7 +241,7 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       new_config.password = config_.password;
       if (new_config.password != config_.password) {
         cmd_responce_t resp =
-            make_responce(id, CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_FAIL_1S, CAUSE_INVALID_ARGS);
+            make_responce(id, CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_FAIL_1E, "Invalid input argument(s)");
         common::Error err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           DEBUG_MSG_ERROR(err);
@@ -259,7 +259,7 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       fApp->PostEvent(new core::events::ClientConfigChangeEvent(this, new_config));
     } else {
       cmd_responce_t resp =
-          make_responce(id, CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_FAIL_1S, CAUSE_INVALID_ARGS);
+          make_responce(id, CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_FAIL_1E, "Invalid input argument(s)");
       common::Error err = connection->write(resp, &nwrite);
       if (err && err->isError()) {
         DEBUG_MSG_ERROR(err);
@@ -284,7 +284,7 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         const char* pong = argv[2];
         if (!pong) {
           cmd_approve_t resp =
-              make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+              make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1E, "Invalid input argument(s)");
           common::Error err = connection->write(resp, &nwrite);
           if (err && err->isError()) {
             DEBUG_MSG_ERROR(err);
@@ -300,7 +300,7 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         }
       } else {
         cmd_approve_t resp =
-            make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+            make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1E, "Invalid input argument(s)");
         common::Error err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           DEBUG_MSG_ERROR(err);
@@ -311,7 +311,7 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         const char* hex_encoded_channels = argv[2];
         if (!hex_encoded_channels) {
           cmd_approve_t resp =
-              make_approve_responce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+              make_approve_responce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1E, "Invalid input argument(s)");
           common::Error err = connection->write(resp, &nwrite);
           if (err && err->isError()) {
             DEBUG_MSG_ERROR(err);
@@ -324,7 +324,7 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         json_object* obj = json_tokener_parse(buff_str.c_str());
         if (!obj) {
           cmd_approve_t resp =
-              make_approve_responce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+              make_approve_responce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1E, "Invalid input argument(s)");
           connection->write(resp, &nwrite);
           return;
         }
@@ -339,7 +339,7 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         }
       } else {
         cmd_approve_t resp =
-            make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1S, CAUSE_INVALID_ARGS);
+            make_approve_responce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1E, "Invalid input argument(s)");
         common::Error err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           DEBUG_MSG_ERROR(err);

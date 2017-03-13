@@ -61,7 +61,7 @@ int exec_server(tcp::TcpServer* server) {
 }
 
 ServerHost::ServerHost(const common::net::HostAndPort& host)
-    : stop_(false), server_(nullptr), handler_(nullptr) {
+    : stop_(false), handler_(nullptr), server_(nullptr) {
   handler_ = new inner::InnerTcpHandlerHost(this);
   server_ = new inner::InnerTcpServer(host, handler_);
   server_->setName("inner_server");

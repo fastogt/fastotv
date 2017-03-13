@@ -21,7 +21,7 @@
 #include <common/logger.h>
 
 #include "server/inner/inner_tcp_server.h"
-#include "server/server_commands.h"
+#include "server/commands.h"
 #include "server/server_config.h"
 
 #define BUF_SIZE 4096
