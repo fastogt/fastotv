@@ -476,10 +476,10 @@ IF(DEVELOPER_ENABLE_TESTS)
 ########## PREPARE GTEST LIBRARY ##########
 
   ADD_EXECUTABLE(unit_tests
-    ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp
+    ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp commands/commands.cpp client/commands.cpp
   )
 
-  TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main ${PROJECT_CORE_LIBRARY} common)
+  TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main common)
   ADD_TEST_TARGET(unit_tests)
   SET_PROPERTY(TARGET unit_tests PROPERTY FOLDER "Unit tests")
 
