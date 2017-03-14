@@ -277,6 +277,7 @@ IF(BUILD_CLIENT)  # build client
   SET(SOURCES_INNER_CLIENT
     client/inner/inner_tcp_server.cpp
     client/inner/inner_tcp_handler.cpp
+    client/commands.cpp
   )
 
   # User specific
@@ -420,6 +421,7 @@ IF(BUILD_SERVER)  # build server
     server/inner/inner_tcp_server.cpp
     server/inner/inner_tcp_client.cpp
     server/inner/inner_tcp_handler.cpp
+    server/commands.cpp
   )
 
   SET(BUILD_SERVER_SOURCES

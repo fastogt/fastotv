@@ -76,10 +76,11 @@ class InnerServerCommandSeqParser {
     return cmd_approve_t(id, buff);
   }
 
+  cmd_seq_t next_id();
+
  private:
   void processRequest(cmd_seq_t request_id, int argc, char* argv[]);
 
-  cmd_seq_t next_id();
   virtual void handleInnerRequestCommand(
       InnerClient* connection,
       cmd_seq_t id,

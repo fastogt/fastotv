@@ -158,16 +158,20 @@ void InnerTcpHandlerHost::preLooped(tcp::ITcpLoop* server) {
   ping_client_id_timer_ = server->createTimer(ping_timeout_clients, ping_timeout_clients);
 }
 
-void InnerTcpHandlerHost::moved(tcp::TcpClient* client) {}
+void InnerTcpHandlerHost::moved(tcp::TcpClient* client) {
+  UNUSED(client);
+}
 
-void InnerTcpHandlerHost::postLooped(tcp::ITcpLoop* server) {}
+void InnerTcpHandlerHost::postLooped(tcp::ITcpLoop* server) {
+  UNUSED(server);
+}
 
 void InnerTcpHandlerHost::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
   if (ping_client_id_timer_ == id) {
     std::vector<tcp::TcpClient*> online_clients = server->clients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
       tcp::TcpClient* client = online_clients[i];
-      const cmd_request_t ping_request = make_request(SERVER_PING_COMMAND_REQ);
+      const cmd_request_t ping_request = PingRequest(next_id());
       ssize_t nwrite = 0;
       common::Error err = client->write(ping_request.data(), ping_request.size(), &nwrite);
       INFO_LOG() << "Pinged sended " << nwrite << " byte, client[" << client->formatedName()
@@ -184,8 +188,11 @@ void InnerTcpHandlerHost::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
 
 void InnerTcpHandlerHost::accepted(tcp::TcpClient* client) {
   ssize_t nwrite = 0;
-  cmd_request_t whoareyou = make_request(SERVER_WHO_ARE_YOU_COMMAND_REQ);
-  client->write(whoareyou.data(), whoareyou.size(), &nwrite);
+  cmd_request_t whoareyou = WhoAreYouRequest(next_id());
+  common::Error err = client->write(whoareyou.data(), whoareyou.size(), &nwrite);
+  if (err && err->isError()) {
+    DEBUG_MSG_ERROR(err);
+  }
 }
 
 void InnerTcpHandlerHost::closed(tcp::TcpClient* client) {
@@ -237,7 +244,7 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
   ssize_t nwrite = 0;
 
   if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
-    cmd_responce_t pong = make_responce(id, SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS);
+    cmd_responce_t pong = PingResponceSuccsess(id);
     connection->write(pong, &nwrite);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
@@ -245,8 +252,7 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
     UserInfo user;
     common::Error err = parent_->findUser(hinf, &user);
     if (err && err->isError()) {
-      cmd_responce_t resp =
-          make_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E, err->description());
+      cmd_responce_t resp = GetChannelsResponceFail(id, err->description());
       connection->write(resp, &nwrite);
       connection->close();
       delete connection;
@@ -257,12 +263,10 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
     std::string channels_str = json_object_get_string(jchannels);
     json_object_put(jchannels);
     std::string hex_channels = common::HexEncode(channels_str, false);
-    cmd_responce_t channels_responce =
-        make_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E, hex_channels);
+    cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, hex_channels);
     err = connection->write(channels_responce, &nwrite);
     if (err && err->isError()) {
-      cmd_approve_t resp2 =
-          make_approve_responce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E, err->description());
+      cmd_responce_t resp2 = GetChannelsResponceFail(id, err->description());
       connection->write(resp2, &nwrite);
     }
   } else {
@@ -283,28 +287,25 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
       if (argc > 2) {
         const char* pong = argv[2];
         if (!pong) {
-          cmd_approve_t resp = make_approve_responce(id, SERVER_PING_COMMAND_APPROVE_FAIL_1E,
-                                                     "Invalid input argument(s)");
+          cmd_approve_t resp = PingApproveResponceFail(id, "Invalid input argument(s)");
           connection->write(resp, &nwrite);
           goto fail;
         }
 
-        cmd_approve_t resp = make_approve_responce(id, SERVER_PING_COMMAND_APPROVE_SUCCESS);
+        cmd_approve_t resp = PingApproveResponceSuccsess(id);
         common::Error err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           goto fail;
         }
       } else {
-        cmd_approve_t resp = make_approve_responce(id, SERVER_PING_COMMAND_APPROVE_FAIL_1E,
-                                                   "Invalid input argument(s)");
+        cmd_approve_t resp = PingApproveResponceFail(id, "Invalid input argument(s)");
         connection->write(resp, &nwrite);
       }
     } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
       if (argc > 2) {
         const char* uauthstr = argv[2];
         if (!uauthstr) {
-          cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E,
-                                                     "Invalid input argument(s)");
+          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
           connection->write(resp, &nwrite);
           goto fail;
         }
@@ -313,8 +314,7 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         std::string buff_str(buff.begin(), buff.end());
         json_object* obj = json_tokener_parse(buff_str.c_str());
         if (!obj) {
-          cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E,
-                                                     "Invalid input argument(s)");
+          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
           connection->write(resp, &nwrite);
           goto fail;
         }
@@ -322,16 +322,14 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         AuthInfo uauth = AuthInfo::MakeClass(obj);
         json_object_put(obj);
         if (!uauth.IsValid()) {
-          cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E,
-                                                     "Invalid input argument(s)");
+          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
           connection->write(resp, &nwrite);
           goto fail;
         }
 
         common::Error err = parent_->findUserAuth(uauth);
         if (err && err->isError()) {
-          cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E,
-                                                     err->description());
+          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->description());
           connection->write(resp, &nwrite);
           goto fail;
         }
@@ -339,17 +337,15 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         std::string login = uauth.login;
         InnerTcpClient* fclient = parent_->findInnerConnectionByLogin(login);
         if (fclient) {
-          cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E,
-                                                     "Double connection reject");
+          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Double connection reject");
           connection->write(resp, &nwrite);
           goto fail;
         }
 
-        cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_SUCCESS);
+        cmd_approve_t resp = WhoAreYouApproveResponceSuccsess(id);
         err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
-          cmd_approve_t resp2 = make_approve_responce(
-              id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E, err->description());
+          cmd_approve_t resp2 = WhoAreYouApproveResponceFail(id, err->description());
           connection->write(resp2, &nwrite);
           goto fail;
         }
@@ -365,12 +361,10 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
           }
         }
       } else {
-        cmd_approve_t resp = make_approve_responce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E,
-                                                   "Invalid input argument(s)");
+        cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
         connection->write(resp, &nwrite);
       }
     } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {
-    } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_CONFIG_COMMAND)) {
     } else {
       WARNING_LOG() << "UNKNOWN RESPONCE COMMAND: " << command;
     }

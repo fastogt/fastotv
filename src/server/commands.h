@@ -20,37 +20,6 @@
 
 #include "commands/commands.h"
 
-//requests
-// who are you
-#define SERVER_WHO_ARE_YOU_COMMAND_REQ GENERATE_FMT(SERVER_WHO_ARE_YOU_COMMAND, "")
-#define SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E \
-  GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
-#define SERVER_WHO_ARE_YOU_COMMAND_APPROVE_SUCCESS \
-  GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU_COMMAND, "")
-
-// system info
-#define SERVER_PLEASE_SYSTEM_INFO_COMMAND_REQ GENERATE_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "")
-#define SERVER_PLEASE_SYSTEM_INFO_COMMAND_APPROVE_FAIL_1E \
-  GENERATE_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "'%s'")
-#define SERVER_PLEASE_SYSTEM_INFO_COMMAND_APPROVE_SUCCESS \
-  GENERATE_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "")
-
-// ping
-#define SERVER_PING_COMMAND_REQ GENERATE_FMT(SERVER_PING_COMMAND, "")
-#define SERVER_PING_COMMAND_APPROVE_FAIL_1E GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "'%s'")
-#define SERVER_PING_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "")
-
-// responces
-// get_channels
-#define SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_CHANNELS, "'%s'")
-#define SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E \
-  GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "'%s'")
-
-// ping
-#define SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING_COMMAND, "'%s'")
-#define SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "pong")
-
-
 // publish COMMANDS_IN 'host 0 1 ping' 0 => request
 // publish COMMANDS_OUT '1 [OK|FAIL] ping args...'
 
@@ -60,3 +29,36 @@
 
 #define SERVER_NOTIFY_CLIENT_CONNECTED_1S "%s connected"
 #define SERVER_NOTIFY_CLIENT_DISCONNECTED_1S "%s disconnected"
+
+namespace fasto {
+namespace fastotv {
+namespace server {
+
+// requests
+// who are you
+cmd_request_t WhoAreYouRequest(cmd_seq_t id);
+cmd_approve_t WhoAreYouApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t WhoAreYouApproveResponceFail(cmd_seq_t id, const std::string& error_text);
+
+// system info
+cmd_request_t SystemInfoRequest(cmd_seq_t id);
+cmd_approve_t SystemInfoApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t SystemInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text);
+
+// ping
+cmd_request_t PingRequest(cmd_seq_t id);
+cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text);
+
+// responces
+// get_channels
+cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const std::string& channels);
+cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text);
+
+// ping
+cmd_responce_t PingResponceSuccsess(cmd_seq_t id);
+cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text);
+
+}
+}
+}

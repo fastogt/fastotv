@@ -52,8 +52,6 @@
 #define SERVER_PING_COMMAND "server_ping"
 #define SERVER_WHO_ARE_YOU_COMMAND "who_are_you"
 #define SERVER_PLEASE_SYSTEM_INFO_COMMAND "plz_system_info"
-#define SERVER_PLEASE_CONFIG_COMMAND "plz_config"
-#define SERVER_PLEASE_SET_CONFIG_COMMAND "plz_set_config"
 
 // request
 // [uint8_t](0) [hex_string]seq [std::string]command args ...
@@ -101,6 +99,30 @@ class InnerCmd {
 typedef InnerCmd<REQUEST_COMMAND> cmd_request_t;
 typedef InnerCmd<RESPONCE_COMMAND> cmd_responce_t;
 typedef InnerCmd<APPROVE_COMMAND> cmd_approve_t;
+
+template <typename... Args>
+cmd_request_t MakeRequest(cmd_seq_t id, const char* cmd_fmt, Args... args) {
+  char buff[MAX_COMMAND_SIZE] = {0};
+  int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, REQUEST_COMMAND, id, args...);
+  CHECK_NE(res, -1);
+  return cmd_request_t(id, buff);
+}
+
+template <typename... Args>
+cmd_approve_t MakeApproveResponce(cmd_seq_t id, const char* cmd_fmt, Args... args) {
+  char buff[MAX_COMMAND_SIZE] = {0};
+  int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, APPROVE_COMMAND, id, args...);
+  CHECK_NE(res, -1);
+  return cmd_approve_t(id, buff);
+}
+
+template <typename... Args>
+cmd_responce_t MakeResponce(cmd_seq_t id, const char* cmd_fmt, Args... args) {
+  char buff[MAX_COMMAND_SIZE] = {0};
+  int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, RESPONCE_COMMAND, id, args...);
+  CHECK_NE(res, -1);
+  return cmd_responce_t(id, buff);
+}
 
 }  // namespace fastotv
 }  // namespace fasto

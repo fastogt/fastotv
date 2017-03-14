@@ -20,42 +20,27 @@
 
 #include "commands/commands.h"
 
+namespace fasto {
+namespace fastotv {
+namespace client {
+
 // requests
 // ping
-#define CLIENT_PING_COMMAND_REQ GENERATE_FMT(CLIENT_PING_COMMAND, "")
-#define CLIENT_PING_COMMAND_APPROVE_FAIL_1E GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "'%s'")
-#define CLIENT_PING_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "")
-
+cmd_request_t PingRequest(cmd_seq_t id);
+cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text);
 // get_channels
-#define CLIENT_GET_CHANNELS_REQ GENERATE_FMT(CLIENT_GET_CHANNELS, "")
-#define CLIENT_GET_CHANNELS_APPROVE_FAIL_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "'%s'")
-#define CLIENT_GET_CHANNELS_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "")
+cmd_request_t GetChannelsRequest(cmd_seq_t id);
+cmd_approve_t GetChannelsApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& error_text);
 
 // responces
 // who are you
-#define CLIENT_WHO_ARE_YOU_COMMAND_RESP_FAIL_1E \
-  GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
-#define CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1E \
-  GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
-
+cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const std::string& auth);
 // system info
-#define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_FAIL_1E \
-  GENEATATE_FAIL_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "'%s'")
-#define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1J \
-  GENEATATE_SUCCESS_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "'%s'")
-
-// config
-#define CLIENT_PLEASE_CONFIG_COMMAND_RESP_FAIL_1E \
-  GENEATATE_FAIL_FMT(SERVER_PLEASE_CONFIG_COMMAND, "'%s'")
-#define CLIENT_PLEASE_CONFIG_COMMAND_RESP_SUCCSESS_1J \
-  GENEATATE_SUCCESS_FMT(SERVER_PLEASE_CONFIG_COMMAND, "'%s'")
-
-// set_config
-#define CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_FAIL_1E \
-  GENEATATE_FAIL_FMT(SERVER_PLEASE_SET_CONFIG_COMMAND, "'%s'")
-#define CLIENT_PLEASE_SET_CONFIG_COMMAND_RESP_SUCCSESS \
-  GENEATATE_SUCCESS_FMT(SERVER_PLEASE_SET_CONFIG_COMMAND, "")
-
+cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info);
 // ping
-#define CLIENT_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING_COMMAND, "'%s'")
-#define CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "pong")
+cmd_responce_t PingResponceSuccsess(cmd_seq_t id);
+}
+}
+}
