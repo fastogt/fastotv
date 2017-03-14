@@ -57,12 +57,16 @@ namespace network {
 
 NetworkController::NetworkController(const std::string& config_path)
     : ILoopThreadController(), config_() {
-  config_path_ = config_path;
+  config_path_ = common::file_system::realpath_from_filename(config_path);
   readConfig();
 }
 
 void NetworkController::Start() {
   ILoopThreadController::start();
+}
+
+void NetworkController::Stop() {
+  ILoopThreadController::stop();
 }
 
 NetworkController::~NetworkController() {
@@ -107,13 +111,7 @@ void NetworkController::saveConfig() {
 }
 
 void NetworkController::readConfig() {
-#ifdef OS_MACOSX
-  const std::string spath = fApp->appDir() + config_path_;
-  const char* path = spath.c_str();
-#else
   const char* path = config_path_.c_str();
-#endif
-
   TvConfig config;
   // default settings
   config.login = USER_SPECIFIC_DEFAULT_LOGIN;

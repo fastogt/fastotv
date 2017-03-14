@@ -37,6 +37,7 @@ class NetworkController : private ILoopThreadController {
   ~NetworkController();
 
   void Start();
+  void Stop();
   AuthInfo authInfo() const;
   TvConfig config() const;
   void setConfig(const TvConfig& config);

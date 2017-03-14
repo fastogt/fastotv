@@ -114,7 +114,7 @@ void Sdl2Application::UnSubscribe(common::IListener* listener) {
 }
 
 void Sdl2Application::SendEvent(common::IEvent* event) {
-  if (THREAD_MANAGER()->IsMainThread()) {
+  if (!THREAD_MANAGER()->IsMainThread()) {
     PostEvent(event);
   } else {
     events::Event* fevent = static_cast<events::Event*>(event);

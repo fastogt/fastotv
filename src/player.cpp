@@ -385,6 +385,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
 void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
   core::events::PostExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
+    controller_->Stop();
     if (stream_) {
       stream_->Abort();
       destroy(&stream_);
