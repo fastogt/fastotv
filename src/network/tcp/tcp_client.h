@@ -43,8 +43,8 @@ class TcpClient : common::IMetaClassInfo {
   common::net::socket_info info() const;
   int fd() const;
 
-  virtual common::Error write(const char* data, uint16_t size, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  virtual common::Error read(char* out, uint16_t max_size, ssize_t* nread) WARN_UNUSED_RESULT;
+  virtual common::Error write(const char* data, size_t size, ssize_t* nwrite) WARN_UNUSED_RESULT;
+  virtual common::Error read(char* out, size_t max_size, ssize_t* nread) WARN_UNUSED_RESULT;
 
   void close();
 

@@ -141,11 +141,11 @@ RedisSubHandler::~RedisSubHandler() {}
 
 RedisSub::RedisSub(RedisSubHandler* handler) : handler_(handler), stop_(false) {}
 
-void RedisSub::setConfig(const redis_sub_configuration_t& config) {
+void RedisSub::SetConfig(const redis_sub_configuration_t& config) {
   config_ = config;
 }
 
-void RedisSub::listen() {
+void RedisSub::Listen() {
   redisContext* redis_sub = redis_connect(config_);
   if (!redis_sub) {
     return;
@@ -187,23 +187,23 @@ void RedisSub::listen() {
   redisFree(redis_sub);
 }
 
-void RedisSub::stop() {
+void RedisSub::Stop() {
   stop_ = true;
 }
 
-bool RedisSub::publish_clients_state(const std::string& msg) {
+bool RedisSub::PublishStateToChannel(const std::string& msg) {
   const char* channel = common::utils::c_strornull(config_.channel_clients_state);
   size_t chn_len = config_.channel_clients_state.length();
-  return publish(channel, chn_len, msg.c_str(), msg.length());
+  return Publish(channel, chn_len, msg.c_str(), msg.length());
 }
 
-bool RedisSub::publish_command_out(const char* msg, size_t msg_len) {
+bool RedisSub::PublishToChannelOut(const std::string& msg) {
   const char* channel = common::utils::c_strornull(config_.channel_out);
   size_t chn_len = config_.channel_out.length();
-  return publish(channel, chn_len, msg, msg_len);
+  return Publish(channel, chn_len, msg.c_str(), msg.length());
 }
 
-bool RedisSub::publish(const char* chn, size_t chn_len, const char* msg, size_t msg_len) {
+bool RedisSub::Publish(const char* chn, size_t chn_len, const char* msg, size_t msg_len) {
   if (!chn || chn_len == 0) {
     return false;
   }

@@ -55,10 +55,10 @@ InnerServerCommandSeqParser::InnerServerCommandSeqParser() : id_() {}
 
 InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
 
-cmd_seq_t InnerServerCommandSeqParser::next_id() {
-  size_t next_id = id_++;
+cmd_seq_t InnerServerCommandSeqParser::NextId() {
+  size_t NextId = id_++;
   char bytes[sizeof(size_t)];
-  betoh_memcpy(&bytes, &next_id, sizeof(bytes));
+  betoh_memcpy(&bytes, &NextId, sizeof(bytes));
   std::string hex = common::HexEncode(&bytes, sizeof(bytes), true);
   return hex;
 }
@@ -76,18 +76,18 @@ bool exec_reqest(RequestCallback req, cmd_seq_t request_id, int argc, char* argv
 
 }  // namespace
 
-void InnerServerCommandSeqParser::processRequest(cmd_seq_t request_id, int argc, char* argv[]) {
+void InnerServerCommandSeqParser::ProcessRequest(cmd_seq_t request_id, int argc, char* argv[]) {
   subscribed_requests_.erase(
       std::remove_if(subscribed_requests_.begin(), subscribed_requests_.end(),
                      std::bind(&exec_reqest, std::placeholders::_1, request_id, argc, argv)),
       subscribed_requests_.end());
 }
 
-void InnerServerCommandSeqParser::subscribeRequest(const RequestCallback& req) {
+void InnerServerCommandSeqParser::SubscribeRequest(const RequestCallback& req) {
   subscribed_requests_.push_back(req);
 }
 
-void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connection,
+void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connection,
                                                           char* buff,
                                                           size_t buff_len) {
   const std::string input_command(buff, buff_len);
@@ -105,7 +105,7 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
 
   int argc;
   sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
-  processRequest(id, argc, argv);
+  ProcessRequest(id, argc, argv);
   if (argv == NULL) {
     WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << buff;
     connection->close();
@@ -116,11 +116,11 @@ void InnerServerCommandSeqParser::handleInnerDataReceived(InnerClient* connectio
   INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->formatedName()
              << "] seq: " << CmdIdToString(seq) << ", id:" << id << ", cmd: " << cmd_str;
   if (seq == REQUEST_COMMAND) {
-    handleInnerRequestCommand(connection, id, argc, argv);
+    HandleInnerRequestCommand(connection, id, argc, argv);
   } else if (seq == RESPONCE_COMMAND) {
-    handleInnerResponceCommand(connection, id, argc, argv);
+    HandleInnerResponceCommand(connection, id, argc, argv);
   } else if (seq == APPROVE_COMMAND) {
-    handleInnerApproveCommand(connection, id, argc, argv);
+    HandleInnerApproveCommand(connection, id, argc, argv);
   } else {
     DNOTREACHED();
     connection->close();

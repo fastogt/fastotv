@@ -32,7 +32,7 @@ namespace tcp {
 
 TcpClient::TcpClient(ITcpLoop* server, const common::net::socket_info& info, flags_t flags)
     : server_(server),
-      read_write_io_((struct ev_io*)calloc(1, sizeof(struct ev_io))),
+      read_write_io_(static_cast<struct ev_io*>(calloc(1, sizeof(struct ev_io)))),
       flags_(flags),
       sock_(info),
       name_(),
@@ -48,11 +48,11 @@ int TcpClient::fd() const {
   return sock_.fd();
 }
 
-common::Error TcpClient::write(const char* data, uint16_t size, ssize_t* nwrite) {
+common::Error TcpClient::write(const char* data, size_t size, ssize_t* nwrite) {
   return sock_.write(data, size, nwrite);
 }
 
-common::Error TcpClient::read(char* out, uint16_t max_size, ssize_t* nread) {
+common::Error TcpClient::read(char* out, size_t max_size, ssize_t* nread) {
   return sock_.read(out, max_size, nread);
 }
 

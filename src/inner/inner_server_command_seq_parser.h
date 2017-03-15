@@ -46,52 +46,27 @@ class InnerServerCommandSeqParser {
   InnerServerCommandSeqParser();
   virtual ~InnerServerCommandSeqParser();
 
-  template <typename... Args>
-  cmd_request_t make_request(const char* cmd_fmt, Args... args) {
-    char buff[MAX_COMMAND_SIZE] = {0};
-    cmd_seq_t id = next_id();
-    int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, REQUEST_COMMAND, id, args...);
-    CHECK_NE(res, -1);
-    return cmd_request_t(id, buff);
-  }
-
-  void subscribeRequest(const RequestCallback& req);
+  void SubscribeRequest(const RequestCallback& req);
 
  protected:
-  void handleInnerDataReceived(InnerClient* connection, char* buff, size_t buff_len);
+  void HandleInnerDataReceived(InnerClient* connection, char* buff, size_t buff_len);
 
-  template <typename... Args>
-  cmd_responce_t make_responce(cmd_seq_t id, const char* cmd_fmt, Args... args) {
-    char buff[MAX_COMMAND_SIZE] = {0};
-    int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, RESPONCE_COMMAND, id, args...);
-    CHECK_NE(res, -1);
-    return cmd_responce_t(id, buff);
-  }
-
-  template <typename... Args>
-  cmd_approve_t make_approve_responce(cmd_seq_t id, const char* cmd_fmt, Args... args) {
-    char buff[MAX_COMMAND_SIZE] = {0};
-    int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, APPROVE_COMMAND, id, args...);
-    CHECK_NE(res, -1);
-    return cmd_approve_t(id, buff);
-  }
-
-  cmd_seq_t next_id();
+  cmd_seq_t NextId();  // for requests
 
  private:
-  void processRequest(cmd_seq_t request_id, int argc, char* argv[]);
+  void ProcessRequest(cmd_seq_t request_id, int argc, char* argv[]);
 
-  virtual void handleInnerRequestCommand(
+  virtual void HandleInnerRequestCommand(
       InnerClient* connection,
       cmd_seq_t id,
       int argc,
       char* argv[]) = 0;  // called when argv not NULL and argc > 0 , only responce
-  virtual void handleInnerResponceCommand(
+  virtual void HandleInnerResponceCommand(
       InnerClient* connection,
       cmd_seq_t id,
       int argc,
       char* argv[]) = 0;  // called when argv not NULL and argc > 0, only approve responce
-  virtual void handleInnerApproveCommand(
+  virtual void HandleInnerApproveCommand(
       InnerClient* connection,
       cmd_seq_t id,
       int argc,

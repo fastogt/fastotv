@@ -107,7 +107,7 @@ void InnerTcpHandler::dataReceived(tcp::TcpClient* client) {
     return;
   }
 
-  handleInnerDataReceived(static_cast<fasto::fastotv::inner::InnerClient*>(client), buff, nread);
+  HandleInnerDataReceived(static_cast<fasto::fastotv::inner::InnerClient*>(client), buff, nread);
 }
 
 void InnerTcpHandler::dataReadyToWrite(tcp::TcpClient* client) {
@@ -126,7 +126,7 @@ void InnerTcpHandler::postLooped(tcp::ITcpLoop* server) {
 void InnerTcpHandler::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
-    const cmd_request_t ping_request = PingRequest(next_id());
+    const cmd_request_t ping_request = PingRequest(NextId());
     ssize_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->write(ping_request, &nwrite);
@@ -148,7 +148,7 @@ void InnerTcpHandler::setConfig(const TvConfig& config) {
 
 void InnerTcpHandler::RequestChannels() {
   if (inner_connection_) {
-    const cmd_request_t channels_request = GetChannelsRequest(next_id());
+    const cmd_request_t channels_request = GetChannelsRequest(NextId());
     ssize_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->write(channels_request, &nwrite);
@@ -160,7 +160,7 @@ void InnerTcpHandler::RequestChannels() {
   }
 }
 
-void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
+void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
                                                 cmd_seq_t id,
                                                 int argc,
                                                 char* argv[]) {
@@ -216,7 +216,7 @@ void InnerTcpHandler::handleInnerRequestCommand(fasto::fastotv::inner::InnerClie
   }
 }
 
-void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerClient* connection,
+void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerClient* connection,
                                                  cmd_seq_t id,
                                                  int argc,
                                                  char* argv[]) {
@@ -298,7 +298,7 @@ void InnerTcpHandler::handleInnerResponceCommand(fasto::fastotv::inner::InnerCli
   }
 }
 
-void InnerTcpHandler::handleInnerApproveCommand(fasto::fastotv::inner::InnerClient* connection,
+void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClient* connection,
                                                 cmd_seq_t id,
                                                 int argc,
                                                 char* argv[]) {

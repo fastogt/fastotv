@@ -56,15 +56,15 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
 
  private:
-  virtual void handleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
+  virtual void HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
-  virtual void handleInnerResponceCommand(fasto::fastotv::inner::InnerClient* connection,
+  virtual void HandleInnerResponceCommand(fasto::fastotv::inner::InnerClient* connection,
                                           cmd_seq_t id,
                                           int argc,
                                           char* argv[]) override;
-  virtual void handleInnerApproveCommand(fasto::fastotv::inner::InnerClient* connection,
+  virtual void HandleInnerApproveCommand(fasto::fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;

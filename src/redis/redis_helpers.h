@@ -62,13 +62,13 @@ class RedisSub {
  public:
   explicit RedisSub(RedisSubHandler* handler);
 
-  void setConfig(const redis_sub_configuration_t& config);
-  void listen();
-  void stop();
+  void SetConfig(const redis_sub_configuration_t& config);
+  void Listen();
+  void Stop();
 
-  bool publish_clients_state(const std::string& msg) WARN_UNUSED_RESULT;
-  bool publish_command_out(const char* msg, size_t msg_len) WARN_UNUSED_RESULT;
-  bool publish(const char* chn, size_t chn_len, const char* msg, size_t msg_len) WARN_UNUSED_RESULT;
+  bool PublishStateToChannel(const std::string& msg) WARN_UNUSED_RESULT;
+  bool PublishToChannelOut(const std::string& msg) WARN_UNUSED_RESULT;
+  bool Publish(const char* chn, size_t chn_len, const char* msg, size_t msg_len) WARN_UNUSED_RESULT;
 
  private:
   RedisSubHandler* const handler_;

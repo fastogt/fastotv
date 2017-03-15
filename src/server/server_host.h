@@ -66,8 +66,8 @@ class ServerHost {
   void setConfig(const Config& conf);
 
  private:
-  std::mutex stop_mutex_;
-  std::condition_variable stop_cond_;
+  common::mutex stop_mutex_;
+  common::condition_variable stop_cond_;
   bool stop_;
 
   inner::InnerTcpHandlerHost* handler_;

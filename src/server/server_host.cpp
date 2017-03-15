@@ -40,8 +40,6 @@
 
 namespace fasto {
 namespace fastotv {
-namespace server {
-
 namespace {
 int exec_server(tcp::TcpServer* server) {
   common::Error err = server->bind();
@@ -59,6 +57,7 @@ int exec_server(tcp::TcpServer* server) {
   return server->exec();
 }
 }
+namespace server {
 
 ServerHost::ServerHost(const common::net::HostAndPort& host)
     : stop_(false), handler_(nullptr), server_(nullptr) {
@@ -80,23 +79,27 @@ void ServerHost::stop() {
 }
 
 int ServerHost::exec() {
-  std::shared_ptr<common::threads::Thread<int> > connection_thread =
+  common::shared_ptr<common::threads::Thread<int> > connection_thread =
       THREAD_MANAGER()->CreateThread(&exec_server, server_);
-  connection_thread->Start();
+  bool result = connection_thread->Start();
+  if (!result) {
+    NOTREACHED();
+    return EXIT_FAILURE;
+  }
+
   while (!stop_) {
-    std::unique_lock<std::mutex> lock(stop_mutex_);
+    common::unique_lock<common::mutex> lock(stop_mutex_);
     std::cv_status interrupt_status =
         stop_cond_.wait_for(lock, std::chrono::seconds(timeout_seconds));
     if (interrupt_status == std::cv_status::no_timeout) {  // if notify
       if (stop_) {
         break;
       }
-    } else {
+    } else {  // timeout
     }
   }
 
-  connection_thread->JoinAndGet();
-  return EXIT_SUCCESS;
+  return connection_thread->JoinAndGet();
 }
 
 bool ServerHost::unRegisterInnerConnectionByHost(tcp::TcpClient* connection) {

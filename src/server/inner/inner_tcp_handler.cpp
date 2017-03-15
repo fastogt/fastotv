@@ -21,10 +21,6 @@
 #include <string>
 #include <vector>
 
-extern "C" {
-#include "sds.h"
-}
-
 #include "third-party/json-c/json-c/json.h"  // for json_object_...
 
 #undef ERROR
@@ -38,103 +34,15 @@ extern "C" {
 
 #include "server/inner/inner_tcp_client.h"
 
+#include "server/inner/inner_external_notifier.h"
+
+#define SERVER_NOTIFY_CLIENT_CONNECTED_1S "%s connected"
+#define SERVER_NOTIFY_CLIENT_DISCONNECTED_1S "%s disconnected"
+
 namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
-
-class InnerTcpHandlerHost::InnerSubHandler : public RedisSubHandler {
- public:
-  explicit InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) {}
-
-  void processSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {
-    std::string join = request_id;
-    for (int i = 0; i < argc; ++i) {
-      join += " ";
-      join += argv[i];
-    }
-
-    publish_command_out(join);
-  }
-
-  void publish_command_out(const std::string& msg) {
-    publish_command_out(msg.c_str(), msg.length());
-  }
-
-  void publish_command_out(const char* msg, size_t msg_len) {
-    bool res = parent_->sub_commands_in_->publish_command_out(msg, msg_len);
-    if (!res) {
-      std::string err_str = common::MemSPrintf(
-          "publish_command_out with args: msg = %s, msg_len = " PRIu64 " failed!", msg, msg_len);
-      ERROR_LOG() << err_str;
-    }
-  }
-
-  virtual void handleMessage(const std::string& channel, const std::string& msg) override {
-    // [std::string]site [cmd_id_t]seq [std::string]command args ...
-    // [cmd_id_t]seq OK/FAIL [std::string]command args ..
-    INFO_LOG() << "InnerSubHandler channel: " << channel << ", msg: " << msg;
-    size_t space_pos = msg.find_first_of(' ');
-    if (space_pos == std::string::npos) {
-      const std::string resp = common::MemSPrintf("UNKNOWN COMMAND: %s", msg);
-      WARNING_LOG() << resp;
-      publish_command_out(resp);
-      return;
-    }
-
-    const std::string login = msg.substr(0, space_pos);
-    const std::string cmd = msg.substr(space_pos + 1);
-    const std::string input_command =
-        common::MemSPrintf(STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND, cmd);
-    cmd_id_t seq;
-    cmd_seq_t id;
-    std::string cmd_str;
-    common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
-    if (err && err->isError()) {
-      std::string resp = err->description();
-      WARNING_LOG() << resp;
-      publish_command_out(resp);
-      return;
-    }
-
-    InnerTcpClient* fclient = parent_->parent_->findInnerConnectionByLogin(login);
-    if (!fclient) {
-      int argc;
-      sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
-      char* command = argv[0];
-
-      std::string resp =
-          common::MemSPrintf(SERVER_COMMANDS_OUT_FAIL_3SEE, id, command, "Not connected");
-      WARNING_LOG() << resp;
-      publish_command_out(resp);
-      sdsfreesplitres(argv, argc);
-      return;
-    }
-
-    ssize_t nwrite = 0;
-    cmd_request_t req(id, input_command);
-    err = fclient->write(req, &nwrite);
-    if (err && err->isError()) {
-      int argc;
-      sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
-      char* command = argv[0];
-
-      std::string resp =
-          common::MemSPrintf(SERVER_COMMANDS_OUT_FAIL_3SEE, id, command, "Not handled");
-      WARNING_LOG() << resp;
-      publish_command_out(resp);
-      sdsfreesplitres(argv, argc);
-      return;
-    }
-
-    auto cb = std::bind(&InnerSubHandler::processSubscribed, this, std::placeholders::_1,
-                        std::placeholders::_2, std::placeholders::_3);
-    fasto::fastotv::inner::RequestCallback rc(id, cb);
-    parent_->subscribeRequest(rc);
-  }
-
-  InnerTcpHandlerHost* parent_;
-};
 
 InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent)
     : parent_(parent),
@@ -144,11 +52,11 @@ InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent)
   handler_ = new InnerSubHandler(this);
   sub_commands_in_ = new RedisSub(handler_);
   redis_subscribe_command_in_thread_ =
-      THREAD_MANAGER()->CreateThread(&RedisSub::listen, sub_commands_in_);
+      THREAD_MANAGER()->CreateThread(&RedisSub::Listen, sub_commands_in_);
 }
 
 InnerTcpHandlerHost::~InnerTcpHandlerHost() {
-  sub_commands_in_->stop();
+  sub_commands_in_->Stop();
   redis_subscribe_command_in_thread_->Join();
   delete sub_commands_in_;
   delete handler_;
@@ -171,7 +79,7 @@ void InnerTcpHandlerHost::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
     std::vector<tcp::TcpClient*> online_clients = server->clients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
       tcp::TcpClient* client = online_clients[i];
-      const cmd_request_t ping_request = PingRequest(next_id());
+      const cmd_request_t ping_request = PingRequest(NextId());
       ssize_t nwrite = 0;
       common::Error err = client->write(ping_request.data(), ping_request.size(), &nwrite);
       INFO_LOG() << "Pinged sended " << nwrite << " byte, client[" << client->formatedName()
@@ -188,7 +96,7 @@ void InnerTcpHandlerHost::timerEmited(tcp::ITcpLoop* server, timer_id_t id) {
 
 void InnerTcpHandlerHost::accepted(tcp::TcpClient* client) {
   ssize_t nwrite = 0;
-  cmd_request_t whoareyou = WhoAreYouRequest(next_id());
+  cmd_request_t whoareyou = WhoAreYouRequest(NextId());
   common::Error err = client->write(whoareyou.data(), whoareyou.size(), &nwrite);
   if (err && err->isError()) {
     DEBUG_MSG_ERROR(err);
@@ -196,19 +104,14 @@ void InnerTcpHandlerHost::accepted(tcp::TcpClient* client) {
 }
 
 void InnerTcpHandlerHost::closed(tcp::TcpClient* client) {
-  bool isOk = parent_->unRegisterInnerConnectionByHost(client);
-  if (isOk) {
+  bool is_ok = parent_->unRegisterInnerConnectionByHost(client);
+  if (is_ok) {
     InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
     if (iconnection) {
       AuthInfo hinf = iconnection->serverHostInfo();
       std::string login = hinf.login;
-      std::string connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_DISCONNECTED_1S, login);
-      bool res = sub_commands_in_->publish_clients_state(connected_resp);
-      if (!res) {
-        std::string err_str = common::MemSPrintf(
-            "publish_clients_state with args: connected_resp = %s failed!", connected_resp);
-        ERROR_LOG() << err_str;
-      }
+
+      PublishStateToChannel(login, false);
     }
   }
 }
@@ -224,7 +127,7 @@ void InnerTcpHandlerHost::dataReceived(tcp::TcpClient* client) {
   }
 
   InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
-  handleInnerDataReceived(iclient, buff, nread);
+  HandleInnerDataReceived(iclient, buff, nread);
 }
 
 void InnerTcpHandlerHost::dataReadyToWrite(tcp::TcpClient* client) {
@@ -232,20 +135,49 @@ void InnerTcpHandlerHost::dataReadyToWrite(tcp::TcpClient* client) {
 }
 
 void InnerTcpHandlerHost::setStorageConfig(const redis_sub_configuration_t& config) {
-  sub_commands_in_->setConfig(config);
-  redis_subscribe_command_in_thread_->Start();
+  sub_commands_in_->SetConfig(config);
+  bool result = redis_subscribe_command_in_thread_->Start();
+  if (!result) {
+    WARNING_LOG() << "Don't started listen thread for external commands.";
+  }
 }
 
-void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient* connection,
+bool InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
+  return sub_commands_in_->PublishToChannelOut(msg);
+}
+
+void InnerTcpHandlerHost::PublishStateToChannel(const std::string& login, bool connected) {
+  std::string connected_resp;
+  if (!connected) {
+    connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_DISCONNECTED_1S, login);
+  } else {
+    connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_CONNECTED_1S, login);
+  }
+  bool res = sub_commands_in_->PublishStateToChannel(connected_resp);
+  if (!res) {
+    WARNING_LOG() << "Publish message: " << connected_resp << " to channel clients state failed.";
+  }
+}
+
+inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByLogin(
+    const std::string& login) const {
+  return parent_->findInnerConnectionByLogin(login);
+}
+
+void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
                                                     cmd_seq_t id,
                                                     int argc,
                                                     char* argv[]) {
+  UNUSED(argc);
   char* command = argv[0];
   ssize_t nwrite = 0;
 
   if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
     cmd_responce_t pong = PingResponceSuccsess(id);
-    connection->write(pong, &nwrite);
+    common::Error err = connection->write(pong, &nwrite);
+    if (err && err->isError()) {
+      DEBUG_MSG_ERROR(err);
+    }
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
     AuthInfo hinf = client->serverHostInfo();
@@ -253,7 +185,10 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
     common::Error err = parent_->findUser(hinf, &user);
     if (err && err->isError()) {
       cmd_responce_t resp = GetChannelsResponceFail(id, err->description());
-      connection->write(resp, &nwrite);
+      common::Error err = connection->write(resp, &nwrite);
+      if (err && err->isError()) {
+        DEBUG_MSG_ERROR(err);
+      }
       connection->close();
       delete connection;
       return;
@@ -267,14 +202,17 @@ void InnerTcpHandlerHost::handleInnerRequestCommand(fastotv::inner::InnerClient*
     err = connection->write(channels_responce, &nwrite);
     if (err && err->isError()) {
       cmd_responce_t resp2 = GetChannelsResponceFail(id, err->description());
-      connection->write(resp2, &nwrite);
+      err = connection->write(resp2, &nwrite);
+      if (err && err->isError()) {
+        DEBUG_MSG_ERROR(err);
+      }
     }
   } else {
     WARNING_LOG() << "UNKNOWN COMMAND: " << command;
   }
 }
 
-void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient* connection,
+void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
                                                      cmd_seq_t id,
                                                      int argc,
                                                      char* argv[]) {
@@ -288,7 +226,10 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         const char* pong = argv[2];
         if (!pong) {
           cmd_approve_t resp = PingApproveResponceFail(id, "Invalid input argument(s)");
-          connection->write(resp, &nwrite);
+          common::Error err = connection->write(resp, &nwrite);
+          if (err && err->isError()) {
+            DEBUG_MSG_ERROR(err);
+          }
           goto fail;
         }
 
@@ -299,14 +240,20 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         }
       } else {
         cmd_approve_t resp = PingApproveResponceFail(id, "Invalid input argument(s)");
-        connection->write(resp, &nwrite);
+        common::Error err = connection->write(resp, &nwrite);
+        if (err && err->isError()) {
+          DEBUG_MSG_ERROR(err);
+        }
       }
     } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
       if (argc > 2) {
         const char* uauthstr = argv[2];
         if (!uauthstr) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-          connection->write(resp, &nwrite);
+          common::Error err = connection->write(resp, &nwrite);
+          if (err && err->isError()) {
+            DEBUG_MSG_ERROR(err);
+          }
           goto fail;
         }
 
@@ -315,7 +262,10 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         json_object* obj = json_tokener_parse(buff_str.c_str());
         if (!obj) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-          connection->write(resp, &nwrite);
+          common::Error err = connection->write(resp, &nwrite);
+          if (err && err->isError()) {
+            DEBUG_MSG_ERROR(err);
+          }
           goto fail;
         }
 
@@ -323,14 +273,20 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         json_object_put(obj);
         if (!uauth.IsValid()) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-          connection->write(resp, &nwrite);
+          common::Error err = connection->write(resp, &nwrite);
+          if (err && err->isError()) {
+            DEBUG_MSG_ERROR(err);
+          }
           goto fail;
         }
 
         common::Error err = parent_->findUserAuth(uauth);
         if (err && err->isError()) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->description());
-          connection->write(resp, &nwrite);
+          common::Error err = connection->write(resp, &nwrite);
+          if (err && err->isError()) {
+            DEBUG_MSG_ERROR(err);
+          }
           goto fail;
         }
 
@@ -338,7 +294,10 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         InnerTcpClient* fclient = parent_->findInnerConnectionByLogin(login);
         if (fclient) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Double connection reject");
-          connection->write(resp, &nwrite);
+          common::Error err = connection->write(resp, &nwrite);
+          if (err && err->isError()) {
+            DEBUG_MSG_ERROR(err);
+          }
           goto fail;
         }
 
@@ -346,23 +305,23 @@ void InnerTcpHandlerHost::handleInnerResponceCommand(fastotv::inner::InnerClient
         err = connection->write(resp, &nwrite);
         if (err && err->isError()) {
           cmd_approve_t resp2 = WhoAreYouApproveResponceFail(id, err->description());
-          connection->write(resp2, &nwrite);
+          common::Error err = connection->write(resp2, &nwrite);
+          if (err && err->isError()) {
+            DEBUG_MSG_ERROR(err);
+          }
           goto fail;
         }
 
-        bool isOk = parent_->registerInnerConnectionByUser(uauth, connection);
-        if (isOk) {
-          std::string connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_CONNECTED_1S, login);
-          bool res = sub_commands_in_->publish_clients_state(connected_resp);
-          if (!res) {
-            std::string err_str = common::MemSPrintf(
-                "publish_clients_state with args: connected_resp = %s failed!", connected_resp);
-            ERROR_LOG() << err_str;
-          }
+        bool is_ok = parent_->registerInnerConnectionByUser(uauth, connection);
+        if (is_ok) {
+          PublishStateToChannel(login, true);
         }
       } else {
         cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-        connection->write(resp, &nwrite);
+        common::Error err = connection->write(resp, &nwrite);
+        if (err && err->isError()) {
+          DEBUG_MSG_ERROR(err);
+        }
       }
     } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {
     } else {
@@ -380,10 +339,12 @@ fail:
   delete connection;
 }
 
-void InnerTcpHandlerHost::handleInnerApproveCommand(fastotv::inner::InnerClient* connection,
+void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
                                                     cmd_seq_t id,
                                                     int argc,
                                                     char* argv[]) {
+  UNUSED(connection);
+  UNUSED(id);
   char* command = argv[0];
 
   if (IS_EQUAL_COMMAND(command, SUCCESS_COMMAND)) {

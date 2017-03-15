@@ -416,12 +416,14 @@ IF(BUILD_SERVER)  # build server
     server/inner/inner_tcp_server.h
     server/inner/inner_tcp_client.h
     server/inner/inner_tcp_handler.h
+    server/inner/inner_external_notifier.h
   )
 
   SET(SOURCES_INNER_SERVER
     server/inner/inner_tcp_server.cpp
     server/inner/inner_tcp_client.cpp
     server/inner/inner_tcp_handler.cpp
+    server/inner/inner_external_notifier.cpp
     server/commands.cpp
   )
 

@@ -35,6 +35,9 @@ namespace server {
 class ServerHost;
 namespace inner {
 
+class InnerTcpClient;
+class InnerSubHandler;
+
 class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqParser,
                             public tcp::ITcpLoopObserver {
  public:
@@ -59,23 +62,27 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   void setStorageConfig(const redis_sub_configuration_t& config);
 
+  bool PublishToChannelOut(const std::string& msg);
+  inner::InnerTcpClient* FindInnerConnectionByLogin(const std::string& login) const;
+
  private:
-  virtual void handleInnerRequestCommand(fastotv::inner::InnerClient* connection,
+  void PublishStateToChannel(const std::string& login, bool connected);
+
+  virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
-  virtual void handleInnerResponceCommand(fastotv::inner::InnerClient* connection,
+  virtual void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
                                           cmd_seq_t id,
                                           int argc,
                                           char* argv[]) override;
-  virtual void handleInnerApproveCommand(fastotv::inner::InnerClient* connection,
+  virtual void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
 
   ServerHost* const parent_;
 
-  class InnerSubHandler;
   RedisSub* sub_commands_in_;
   InnerSubHandler* handler_;
   std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;

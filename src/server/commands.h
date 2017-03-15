@@ -20,16 +20,6 @@
 
 #include "commands/commands.h"
 
-// publish COMMANDS_IN 'host 0 1 ping' 0 => request
-// publish COMMANDS_OUT '1 [OK|FAIL] ping args...'
-
-// for publish only
-// id cmd cuase
-#define SERVER_COMMANDS_OUT_FAIL_3SEE "%s " FAIL_COMMAND " '%s' '%s'"
-
-#define SERVER_NOTIFY_CLIENT_CONNECTED_1S "%s connected"
-#define SERVER_NOTIFY_CLIENT_DISCONNECTED_1S "%s disconnected"
-
 namespace fasto {
 namespace fastotv {
 namespace server {
