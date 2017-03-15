@@ -21,8 +21,8 @@ class Url {
   std::string Name() const;
   core::stream_id Id() const;
 
-  static json_object* MakeJobject(const Url& url);       // allocate json_object
-  static Url MakeClass(json_object* obj);  // pass valid json obj
+  static json_object* MakeJobject(const Url& url);  // allocate json_object
+  static Url MakeClass(json_object* obj);           // pass valid json obj
 
  private:
   core::stream_id id_;

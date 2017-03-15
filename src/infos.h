@@ -50,7 +50,7 @@ inline bool operator!=(const AuthInfo& x, const AuthInfo& y) {
 typedef std::vector<Url> channels_t;
 
 json_object* MakeJobjectFromChannels(const channels_t& channels);  // allocate json_object
-channels_t MakeChannelsClass(json_object* obj);                // pass valid json obj
+channels_t MakeChannelsClass(json_object* obj);                    // pass valid json obj
 
 struct UserInfo {
   UserInfo();

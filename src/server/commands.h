@@ -48,7 +48,6 @@ cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_te
 // ping
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id);
 cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text);
-
 }
 }
 }

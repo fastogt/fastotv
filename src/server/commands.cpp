@@ -89,13 +89,12 @@ cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_te
   return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E, error_text);
 }
 
-cmd_responce_t PingResponceSuccsess(cmd_seq_t id){
+cmd_responce_t PingResponceSuccsess(cmd_seq_t id) {
   return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS);
 }
-cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text){
+cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E, error_text);
 }
-
 }
 }
 }
