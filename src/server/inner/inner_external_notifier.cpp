@@ -93,7 +93,7 @@ void InnerSubHandler::handleMessage(const std::string& channel, const std::strin
 
   ssize_t nwrite = 0;
   cmd_request_t req(id, input_command);
-  err = fclient->write(req, &nwrite);
+  err = fclient->Write(req, &nwrite);
   if (err && err->isError()) {
     int argc;
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);

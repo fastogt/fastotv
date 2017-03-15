@@ -47,20 +47,20 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   explicit InnerTcpHandlerHost(ServerHost* parent);
 
-  virtual void preLooped(tcp::ITcpLoop* server) override;
+  virtual void PreLooped(tcp::ITcpLoop* server) override;
 
-  virtual void accepted(tcp::TcpClient* client) override;
-  virtual void moved(tcp::TcpClient* client) override;
-  virtual void closed(tcp::TcpClient* client) override;
+  virtual void Accepted(tcp::TcpClient* client) override;
+  virtual void Moved(tcp::TcpClient* client) override;
+  virtual void Closed(tcp::TcpClient* client) override;
 
-  virtual void dataReceived(tcp::TcpClient* client) override;
-  virtual void dataReadyToWrite(tcp::TcpClient* client) override;
-  virtual void postLooped(tcp::ITcpLoop* server) override;
-  virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
+  virtual void DataReceived(tcp::TcpClient* client) override;
+  virtual void DataReadyToWrite(tcp::TcpClient* client) override;
+  virtual void PostLooped(tcp::ITcpLoop* server) override;
+  virtual void TimerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
 
   virtual ~InnerTcpHandlerHost();
 
-  void setStorageConfig(const redis_sub_configuration_t& config);
+  void SetStorageConfig(const redis_sub_configuration_t& config);
 
   bool PublishToChannelOut(const std::string& msg);
   inner::InnerTcpClient* FindInnerConnectionByLogin(const std::string& login) const;

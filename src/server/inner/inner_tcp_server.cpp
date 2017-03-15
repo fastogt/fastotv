@@ -33,7 +33,7 @@ const char* InnerTcpServer::className() const {
   return "InnerTcpServer";
 }
 
-tcp::TcpClient* InnerTcpServer::createClient(const common::net::socket_info& info) {
+tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
   InnerTcpClient* client = new InnerTcpClient(this, info);
   return client;
 }

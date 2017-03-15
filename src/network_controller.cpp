@@ -93,7 +93,7 @@ void NetworkController::RequestChannels() const {
   client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
   if (handler) {
     auto cb = [handler]() { handler->RequestChannels(); };
-    execInLoopThread(cb);
+    ExecInLoopThread(cb);
   }
 }
 
@@ -133,7 +133,7 @@ tcp::ITcpLoopObserver* NetworkController::createHandler() {
 
 tcp::ITcpLoop* NetworkController::createServer(tcp::ITcpLoopObserver* handler) {
   client::inner::InnerTcpServer* serv = new client::inner::InnerTcpServer(handler);
-  serv->setName("local_inner_server");
+  serv->SetName("local_inner_server");
   return serv;
 }
 

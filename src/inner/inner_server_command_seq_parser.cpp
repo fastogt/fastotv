@@ -98,7 +98,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
   if (err && err->isError()) {
     WARNING_LOG() << err->description();
-    connection->close();
+    connection->Close();
     delete connection;
     return;
   }
@@ -108,12 +108,12 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   ProcessRequest(id, argc, argv);
   if (argv == NULL) {
     WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << buff;
-    connection->close();
+    connection->Close();
     delete connection;
     return;
   }
 
-  INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->formatedName()
+  INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->FormatedName()
              << "] seq: " << CmdIdToString(seq) << ", id:" << id << ", cmd: " << cmd_str;
   if (seq == REQUEST_COMMAND) {
     HandleInnerRequestCommand(connection, id, argc, argv);
@@ -123,7 +123,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
     HandleInnerApproveCommand(connection, id, argc, argv);
   } else {
     DNOTREACHED();
-    connection->close();
+    connection->Close();
     delete connection;
   }
   sdsfreesplitres(argv, argc);

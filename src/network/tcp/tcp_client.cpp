@@ -40,19 +40,19 @@ TcpClient::TcpClient(ITcpLoop* server, const common::net::socket_info& info, fla
   read_write_io_->data = this;
 }
 
-common::net::socket_info TcpClient::info() const {
+common::net::socket_info TcpClient::Info() const {
   return sock_.info();
 }
 
-int TcpClient::fd() const {
+int TcpClient::Fd() const {
   return sock_.fd();
 }
 
-common::Error TcpClient::write(const char* data, size_t size, ssize_t* nwrite) {
+common::Error TcpClient::Write(const char* data, size_t size, ssize_t* nwrite) {
   return sock_.write(data, size, nwrite);
 }
 
-common::Error TcpClient::read(char* out, size_t max_size, ssize_t* nread) {
+common::Error TcpClient::Read(char* out, size_t max_size, ssize_t* nread) {
   return sock_.read(out, max_size, nread);
 }
 
@@ -61,13 +61,13 @@ TcpClient::~TcpClient() {
   read_write_io_ = NULL;
 }
 
-ITcpLoop* TcpClient::server() const {
+ITcpLoop* TcpClient::Server() const {
   return server_;
 }
 
-void TcpClient::close() {
+void TcpClient::Close() {
   if (server_) {
-    server_->closeClient(this);
+    server_->CloseClient(this);
   }
 
   common::Error err = sock_.close();
@@ -76,24 +76,24 @@ void TcpClient::close() {
   }
 }
 
-void TcpClient::setName(const std::string& name) {
+void TcpClient::SetName(const std::string& name) {
   name_ = name;
 }
 
-std::string TcpClient::name() const {
+std::string TcpClient::Name() const {
   return name_;
 }
 
-TcpClient::flags_t TcpClient::flags() const {
+TcpClient::flags_t TcpClient::Flags() const {
   return flags_;
 }
 
-void TcpClient::setFlags(flags_t flags) {
+void TcpClient::SetFlags(flags_t flags) {
   flags_ = flags;
-  server_->changeFlags(this);
+  server_->ChangeFlags(this);
 }
 
-common::patterns::id_counter<TcpClient>::type_t TcpClient::id() const {
+common::patterns::id_counter<TcpClient>::type_t TcpClient::Id() const {
   return id_.id();
 }
 
@@ -101,8 +101,8 @@ const char* TcpClient::ClassName() const {
   return "TcpClient";
 }
 
-std::string TcpClient::formatedName() const {
-  return common::MemSPrintf("[%s][%s(%" PRIuMAX ")]", name(), ClassName(), id());
+std::string TcpClient::FormatedName() const {
+  return common::MemSPrintf("[%s][%s(%" PRIuMAX ")]", Name(), ClassName(), Id());
 }
 
 }  // namespace tcp

@@ -36,7 +36,7 @@ class InnerTcpServer : public tcp::TcpServer {
   virtual const char* className() const;
 
  private:
-  virtual tcp::TcpClient* createClient(const common::net::socket_info& info) override;
+  virtual tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner

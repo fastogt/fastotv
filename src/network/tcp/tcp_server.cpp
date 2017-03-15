@@ -97,57 +97,57 @@ void ITcpLoop::stop() {
   loop_->stop();
 }
 
-void ITcpLoop::registerClient(const common::net::socket_info& info) {
-  TcpClient* client = createClient(info);
-  registerClient(client);
+void ITcpLoop::RegisterClient(const common::net::socket_info& info) {
+  TcpClient* client = CreateClient(info);
+  RegisterClient(client);
 }
 
-void ITcpLoop::unregisterClient(TcpClient* client) {
-  CHECK(client->server() == this);
+void ITcpLoop::UnRegisterClient(TcpClient* client) {
+  CHECK(client->Server() == this);
   loop_->stop_io(client->read_write_io_);
 
   if (observer_) {
-    observer_->moved(client);
+    observer_->Moved(client);
   }
 
   client->server_ = nullptr;
   clients_.erase(std::remove(clients_.begin(), clients_.end(), client), clients_.end());
-  INFO_LOG() << "Successfully unregister client[" << client->formatedName() << "], from server["
-             << formatedName() << "], " << clients_.size() << " client(s) connected.";
+  INFO_LOG() << "Successfully unregister client[" << client->FormatedName() << "], from server["
+             << FormatedName() << "], " << clients_.size() << " client(s) connected.";
 }
 
-void ITcpLoop::registerClient(TcpClient* client) {
-  if (client->server()) {
-    CHECK(client->server() == this);
+void ITcpLoop::RegisterClient(TcpClient* client) {
+  if (client->Server()) {
+    CHECK(client->Server() == this);
   }
 
   // Initialize and start watcher to read client requests
-  ev_io_init(client->read_write_io_, read_write_cb, client->fd(), client->flags());
+  ev_io_init(client->read_write_io_, read_write_cb, client->Fd(), client->Flags());
   loop_->start_io(client->read_write_io_);
 
   if (observer_) {
-    observer_->accepted(client);
+    observer_->Accepted(client);
   }
 
   client->server_ = this;
   clients_.push_back(client);
-  INFO_LOG() << "Successfully connected with client[" << client->formatedName() << "], from server["
-             << formatedName() << "], " << clients_.size() << " client(s) connected.";
+  INFO_LOG() << "Successfully connected with client[" << client->FormatedName() << "], from server["
+             << FormatedName() << "], " << clients_.size() << " client(s) connected.";
 }
 
-void ITcpLoop::closeClient(TcpClient* client) {
-  CHECK(client->server() == this);
+void ITcpLoop::CloseClient(TcpClient* client) {
+  CHECK(client->Server() == this);
   loop_->stop_io(client->read_write_io_);
 
   if (observer_) {
-    observer_->closed(client);
+    observer_->Closed(client);
   }
   clients_.erase(std::remove(clients_.begin(), clients_.end(), client), clients_.end());
-  INFO_LOG() << "Successfully disconnected client[" << client->formatedName() << "], from server["
-             << formatedName() << "], " << clients_.size() << " client(s) connected.";
+  INFO_LOG() << "Successfully disconnected client[" << client->FormatedName() << "], from server["
+             << FormatedName() << "], " << clients_.size() << " client(s) connected.";
 }
 
-timer_id_t ITcpLoop::createTimer(double sec, double repeat) {
+timer_id_t ITcpLoop::CreateTimer(double sec, double repeat) {
   LoopTimer* timer = new LoopTimer(this);
   ev_timer_init(timer->timer_, timer_cb, sec, repeat);
   loop_->start_timer(timer->timer_);
@@ -155,7 +155,7 @@ timer_id_t ITcpLoop::createTimer(double sec, double repeat) {
   return timer->id();
 }
 
-void ITcpLoop::removeTimer(timer_id_t id) {
+void ITcpLoop::RemoveTimer(timer_id_t id) {
   for (std::vector<LoopTimer*>::iterator it = timers_.begin(); it != timers_.end(); ++it) {
     LoopTimer* timer = *it;
     if (timer->id() == id) {
@@ -170,23 +170,23 @@ common::patterns::id_counter<ITcpLoop>::type_t ITcpLoop::id() const {
   return id_.id();
 }
 
-void ITcpLoop::execInLoopThread(async_loop_exec_function_t func) {
-  loop_->execInLoopThread(func);
+void ITcpLoop::ExecInLoopThread(async_loop_exec_function_t func) {
+  loop_->ExecInLoopThread(func);
 }
 
-bool ITcpLoop::isLoopThread() const {
-  return loop_->isLoopThread();
+bool ITcpLoop::IsLoopThread() const {
+  return loop_->IsLoopThread();
 }
 
-void ITcpLoop::changeFlags(TcpClient* client) {
-  if (client->flags() != client->read_write_io_->events) {
+void ITcpLoop::ChangeFlags(TcpClient* client) {
+  if (client->Flags() != client->read_write_io_->events) {
     loop_->stop_io(client->read_write_io_);
-    ev_io_set(client->read_write_io_, client->fd(), client->flags());
+    ev_io_set(client->read_write_io_, client->Fd(), client->Flags());
     loop_->start_io(client->read_write_io_);
   }
 }
 
-ITcpLoop* ITcpLoop::findExistLoopByPredicate(std::function<bool(ITcpLoop*)> pred) {
+ITcpLoop* ITcpLoop::FindExistLoopByPredicate(std::function<bool(ITcpLoop*)> pred) {
   if (!pred) {
     return nullptr;
   }
@@ -202,25 +202,25 @@ ITcpLoop* ITcpLoop::findExistLoopByPredicate(std::function<bool(ITcpLoop*)> pred
   return nullptr;
 }
 
-std::vector<TcpClient*> ITcpLoop::clients() const {
+std::vector<TcpClient*> ITcpLoop::Clients() const {
   return clients_;
 }
 
-void ITcpLoop::setName(const std::string& name) {
+void ITcpLoop::SetName(const std::string& name) {
   name_ = name;
 }
 
-std::string ITcpLoop::name() const {
+std::string ITcpLoop::Name() const {
   return name_;
 }
 
-std::string ITcpLoop::formatedName() const {
-  return common::MemSPrintf("[%s][%s(%llu)]", name(), ClassName(), id());
+std::string ITcpLoop::FormatedName() const {
+  return common::MemSPrintf("[%s][%s(%llu)]", Name(), ClassName(), id());
 }
 
 void ITcpLoop::read_write_cb(struct ev_loop* loop, struct ev_io* watcher, int revents) {
   TcpClient* pclient = reinterpret_cast<TcpClient*>(watcher->data);
-  ITcpLoop* pserver = pclient->server();
+  ITcpLoop* pserver = pclient->Server();
   LibEvLoop* evloop = reinterpret_cast<LibEvLoop*>(ev_userdata(loop));
   CHECK(pserver && pserver->loop_ == evloop);
 
@@ -231,13 +231,13 @@ void ITcpLoop::read_write_cb(struct ev_loop* loop, struct ev_io* watcher, int re
 
   if (revents & EV_READ) {
     if (pserver->observer_) {
-      pserver->observer_->dataReceived(pclient);
+      pserver->observer_->DataReceived(pclient);
     }
   }
 
   if (revents & EV_WRITE) {
     if (pserver->observer_) {
-      pserver->observer_->dataReadyToWrite(pclient);
+      pserver->observer_->DataReadyToWrite(pclient);
     }
   }
 }
@@ -255,11 +255,11 @@ void ITcpLoop::timer_cb(struct ev_loop* loop, struct ev_timer* timer, int revent
 
   DCHECK(revents & EV_TIMEOUT);
   if (pserver->observer_) {
-    pserver->observer_->timerEmited(pserver, ptimer->id());
+    pserver->observer_->TimerEmited(pserver, ptimer->id());
   }
 }
 
-void ITcpLoop::preLooped(LibEvLoop* loop) {
+void ITcpLoop::PreLooped(LibEvLoop* loop) {
   UNUSED(loop);
   {
     lock_t loc(g_exists_loops_mutex_);
@@ -267,28 +267,28 @@ void ITcpLoop::preLooped(LibEvLoop* loop) {
   }
 
   if (observer_) {
-    observer_->preLooped(this);
+    observer_->PreLooped(this);
   }
 }
 
-void ITcpLoop::stoped(LibEvLoop* loop) {
+void ITcpLoop::Stoped(LibEvLoop* loop) {
   UNUSED(loop);
   const std::vector<LoopTimer*> timers = timers_;
   for (size_t i = 0; i < timers.size(); ++i) {
     LoopTimer* timer = timers[i];
-    removeTimer(timer->id());
+    RemoveTimer(timer->id());
   }
 
-  const std::vector<TcpClient*> cl = clients();
+  const std::vector<TcpClient*> cl = Clients();
 
   for (size_t i = 0; i < cl.size(); ++i) {
     TcpClient* client = cl[i];
-    client->close();
+    client->Close();
     delete client;
   }
 }
 
-void ITcpLoop::postLooped(LibEvLoop* loop) {
+void ITcpLoop::PostLooped(LibEvLoop* loop) {
   UNUSED(loop);
   {
     lock_t loc(g_exists_loops_mutex_);
@@ -297,7 +297,7 @@ void ITcpLoop::postLooped(LibEvLoop* loop) {
   }
 
   if (observer_) {
-    observer_->postLooped(this);
+    observer_->PostLooped(this);
   }
 }
 
@@ -326,32 +326,32 @@ ITcpLoop* TcpServer::findExistServerByHost(const common::net::HostAndPort& host)
     return server->host() == host;
   };
 
-  return findExistLoopByPredicate(find_by_host);
+  return FindExistLoopByPredicate(find_by_host);
 }
 
-TcpClient* TcpServer::createClient(const common::net::socket_info& info) {
+TcpClient* TcpServer::CreateClient(const common::net::socket_info& info) {
   return new TcpClient(this, info);
 }
 
-void TcpServer::preLooped(LibEvLoop* loop) {
+void TcpServer::PreLooped(LibEvLoop* loop) {
   int fd = sock_.fd();
   ev_io_init(accept_io_, accept_cb, fd, EV_READ);
   loop->start_io(accept_io_);
-  ITcpLoop::preLooped(loop);
+  ITcpLoop::PreLooped(loop);
 }
 
-void TcpServer::postLooped(LibEvLoop* loop) {
-  ITcpLoop::postLooped(loop);
+void TcpServer::PostLooped(LibEvLoop* loop) {
+  ITcpLoop::PostLooped(loop);
 }
 
-void TcpServer::stoped(LibEvLoop* loop) {
+void TcpServer::Stoped(LibEvLoop* loop) {
   common::Error err = sock_.close();
   if (err && err->isError()) {
     DEBUG_MSG_ERROR(err);
   }
 
   loop->stop_io(accept_io_);
-  ITcpLoop::stoped(loop);
+  ITcpLoop::Stoped(loop);
 }
 
 common::Error TcpServer::bind() {
@@ -394,8 +394,8 @@ void TcpServer::accept_cb(struct ev_loop* loop, struct ev_io* watcher, int reven
     return;
   }
 
-  TcpClient* pclient = pserver->createClient(sinfo);
-  pserver->registerClient(pclient);
+  TcpClient* pclient = pserver->CreateClient(sinfo);
+  pserver->RegisterClient(pclient);
 }
 
 ITcpLoopObserver::~ITcpLoopObserver() {}

@@ -46,14 +46,14 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
 
   void RequestChannels();  // should be execute in network thread
 
-  virtual void preLooped(tcp::ITcpLoop* server) override;
-  virtual void accepted(tcp::TcpClient* client) override;
-  virtual void moved(tcp::TcpClient* client) override;
-  virtual void closed(tcp::TcpClient* client) override;
-  virtual void dataReceived(tcp::TcpClient* client) override;
-  virtual void dataReadyToWrite(tcp::TcpClient* client) override;
-  virtual void postLooped(tcp::ITcpLoop* server) override;
-  virtual void timerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
+  virtual void PreLooped(tcp::ITcpLoop* server) override;
+  virtual void Accepted(tcp::TcpClient* client) override;
+  virtual void Moved(tcp::TcpClient* client) override;
+  virtual void Closed(tcp::TcpClient* client) override;
+  virtual void DataReceived(tcp::TcpClient* client) override;
+  virtual void DataReadyToWrite(tcp::TcpClient* client) override;
+  virtual void PostLooped(tcp::ITcpLoop* server) override;
+  virtual void TimerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
 
  private:
   virtual void HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,

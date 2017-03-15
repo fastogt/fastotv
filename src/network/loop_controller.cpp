@@ -60,9 +60,9 @@ void ILoopController::stop() {
   stoped();
 }
 
-void ILoopController::execInLoopThread(async_loop_exec_function_t func) const {
+void ILoopController::ExecInLoopThread(async_loop_exec_function_t func) const {
   if (loop_) {
-    loop_->execInLoopThread(func);
+    loop_->ExecInLoopThread(func);
   }
 }
 

@@ -39,7 +39,7 @@ class ILoopController {
   void start();
   int exec();
   void stop();
-  void execInLoopThread(async_loop_exec_function_t func) const;
+  void ExecInLoopThread(async_loop_exec_function_t func) const;
 
  protected:
   tcp::ITcpLoop* loop_;

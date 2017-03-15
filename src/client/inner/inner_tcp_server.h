@@ -33,7 +33,7 @@ class InnerTcpServer : public tcp::ITcpLoop {
   virtual const char* ClassName() const override;
 
  protected:
-  tcp::TcpClient* createClient(const common::net::socket_info& info) override;
+  tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner

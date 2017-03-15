@@ -63,7 +63,7 @@ ServerHost::ServerHost(const common::net::HostAndPort& host)
     : stop_(false), handler_(nullptr), server_(nullptr) {
   handler_ = new inner::InnerTcpHandlerHost(this);
   server_ = new inner::InnerTcpServer(host, handler_);
-  server_->setName("inner_server");
+  server_->SetName("inner_server");
 }
 
 ServerHost::~ServerHost() {
@@ -131,7 +131,7 @@ bool ServerHost::registerInnerConnectionByUser(const AuthInfo& user, tcp::TcpCli
 
   std::string login = user.login;
   connections_[login] = iconnection;
-  connection->setName(login);
+  connection->SetName(login);
   return true;
 }
 
@@ -154,7 +154,7 @@ inner::InnerTcpClient* ServerHost::findInnerConnectionByLogin(const std::string&
 
 void ServerHost::setConfig(const Config& conf) {
   rstorage_.setConfig(conf.server.redis);
-  handler_->setStorageConfig(conf.server.redis);
+  handler_->SetStorageConfig(conf.server.redis);
 }
 
 }  // namespace server

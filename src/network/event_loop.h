@@ -31,9 +31,9 @@ class EvLoopObserver {
  public:
   virtual ~EvLoopObserver();
 
-  virtual void preLooped(class LibEvLoop* loop) = 0;
-  virtual void stoped(class LibEvLoop* loop) = 0;
-  virtual void postLooped(class LibEvLoop* loop) = 0;
+  virtual void PreLooped(class LibEvLoop* loop) = 0;
+  virtual void Stoped(class LibEvLoop* loop) = 0;
+  virtual void PostLooped(class LibEvLoop* loop) = 0;
 };
 
 class LibEvLoop {
@@ -49,12 +49,12 @@ class LibEvLoop {
   void start_timer(ev_timer* timer);
   void stop_timer(ev_timer* timer);
 
-  void execInLoopThread(async_loop_exec_function_t async_cb) const;
+  void ExecInLoopThread(async_loop_exec_function_t async_cb) const;
 
   int exec();
   void stop();
 
-  bool isLoopThread() const;
+  bool IsLoopThread() const;
 
  private:
   static void stop_cb(struct ev_loop* loop, struct ev_async* watcher, int revents);

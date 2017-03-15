@@ -38,25 +38,25 @@ class TcpClient : common::IMetaClassInfo {
   TcpClient(ITcpLoop* server, const common::net::socket_info& info, flags_t flags = EV_READ);
   virtual ~TcpClient();
 
-  ITcpLoop* server() const;
+  ITcpLoop* Server() const;
 
-  common::net::socket_info info() const;
-  int fd() const;
+  common::net::socket_info Info() const;
+  int Fd() const;
 
-  virtual common::Error write(const char* data, size_t size, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  virtual common::Error read(char* out, size_t max_size, ssize_t* nread) WARN_UNUSED_RESULT;
+  virtual common::Error Write(const char* data, size_t size, ssize_t* nwrite) WARN_UNUSED_RESULT;
+  virtual common::Error Read(char* out, size_t max_size, ssize_t* nread) WARN_UNUSED_RESULT;
 
-  void close();
+  void Close();
 
-  void setName(const std::string& name);
-  std::string name() const;
+  void SetName(const std::string& name);
+  std::string Name() const;
 
-  flags_t flags() const;
-  void setFlags(flags_t flags);
+  flags_t Flags() const;
+  void SetFlags(flags_t flags);
 
-  common::patterns::id_counter<TcpClient>::type_t id() const;
+  common::patterns::id_counter<TcpClient>::type_t Id() const;
   virtual const char* ClassName() const override;
-  std::string formatedName() const;
+  std::string FormatedName() const;
 
  private:
   ITcpLoop* server_;
