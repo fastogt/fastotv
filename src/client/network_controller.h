@@ -16,38 +16,45 @@
     along with SiteOnYourDevice.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/inner/inner_tcp_client.h"
+#pragma once
 
-#include <common/logger.h>
+#include <common/threads/types.h>
 
-#include "server/inner/inner_tcp_server.h"
-#include "server/commands.h"
+#include <string>
 
-#define BUF_SIZE 4096
+#include "infos.h"
+
+#include "network/loop_controller.h"
+#include "tv_config.h"
 
 namespace fasto {
 namespace fastotv {
-namespace server {
-namespace inner {
+namespace network {
 
-InnerTcpClient::InnerTcpClient(tcp::TcpServer* server, const common::net::socket_info& info)
-    : InnerClient(server, info), hinfo_() {}
+class NetworkController : private ILoopThreadController {
+ public:
+  NetworkController(const std::string& config_path);
+  ~NetworkController();
 
-const char* InnerTcpClient::className() const {
-  return "InnerTcpClient";
-}
+  void Start();
+  void Stop();
+  AuthInfo authInfo() const;
+  TvConfig config() const;
+  void setConfig(const TvConfig& config);
 
-InnerTcpClient::~InnerTcpClient() {}
+  void RequestChannels() const;
 
-void InnerTcpClient::setServerHostInfo(const AuthInfo& info) {
-  hinfo_ = info;
-}
+ private:
+  void readConfig();
+  void saveConfig();
 
-AuthInfo InnerTcpClient::serverHostInfo() const {
-  return hinfo_;
-}
+  virtual tcp::ITcpLoopObserver* CreateHandler() override;
+  virtual tcp::ITcpLoop* CreateServer(tcp::ITcpLoopObserver* handler) override;
 
-}  // namespace inner
-}  // namespace server
+  std::string config_path_;
+  TvConfig config_;
+};
+
+}  // namespace network
 }  // namespace fastotv
 }  // namespace fasto

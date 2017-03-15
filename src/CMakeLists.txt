@@ -49,7 +49,12 @@ SET(LIBS_NETWORK
 
 )
 
-SET(CLIENT_SERVER_SOURCES infos.h infos.cpp server/server_config.h url.h url.cpp) # server and client common sources
+SET(CLIENT_SERVER_SOURCES
+  infos.h infos.cpp
+  server_config.h
+  url.h url.cpp
+  common_types.h common_types.cpp
+) # server and client common sources
 
 IF(OS_WINDOWS)
   SET(PLATFORM_HDRS)
@@ -124,61 +129,61 @@ IF(BUILD_CLIENT)  # build client
   ENDIF(OS_WINDOWS)
 
   SET(HEADERS_CORE_EVENTS
-    core/events/events_base.h
-    core/events/key_events.h
-    core/events/mouse_events.h
-    core/events/window_events.h
-    core/events/stream_events.h
-    core/events/events.h
-    core/events/network_events.h
+    client/core/events/events_base.h
+    client/core/events/key_events.h
+    client/core/events/mouse_events.h
+    client/core/events/window_events.h
+    client/core/events/stream_events.h
+    client/core/events/events.h
+    client/core/events/network_events.h
   )
 
   SET(HEADERS_CORE
-    core/types.h
-    core/utils.h
-    core/clock.h
-    core/packet_queue.h
-    core/frame_queue.h
-    core/decoder.h
-    core/app_options.h
-    core/audio_params.h
-    core/stream.h
-    core/ring_buffer.h
-    core/audio_frame.h
-    core/video_frame.h
-    core/application/sdl2_application.h
-    core/video_state.h
-    core/video_state_handler.h
+    client/core/types.h
+    client/core/utils.h
+    client/core/clock.h
+    client/core/packet_queue.h
+    client/core/frame_queue.h
+    client/core/decoder.h
+    client/core/app_options.h
+    client/core/audio_params.h
+    client/core/stream.h
+    client/core/ring_buffer.h
+    client/core/audio_frame.h
+    client/core/video_frame.h
+    client/core/application/sdl2_application.h
+    client/core/video_state.h
+    client/core/video_state_handler.h
 
     ${HEADERS_CORE_EVENTS}
   )
 
   SET(SOURCES_CORE_EVENTS
-    core/events/events_base.cpp
-    core/events/key_events.cpp
-    core/events/mouse_events.cpp
-    core/events/window_events.cpp
-    core/events/stream_events.cpp
-    core/events/events.cpp
-    core/events/network_events.cpp
+    client/core/events/events_base.cpp
+    client/core/events/key_events.cpp
+    client/core/events/mouse_events.cpp
+    client/core/events/window_events.cpp
+    client/core/events/stream_events.cpp
+    client/core/events/events.cpp
+    client/core/events/network_events.cpp
   )
 
   SET(SOURCES_CORE
-    core/types.cpp
-    core/utils.cpp
-    core/clock.cpp
-    core/packet_queue.cpp
-    core/frame_queue.cpp
-    core/decoder.cpp
-    core/app_options.cpp
-    core/audio_params.cpp
-    core/stream.cpp
-    core/ring_buffer.cpp
-    core/audio_frame.cpp
-    core/video_frame.cpp
-    core/application/sdl2_application.cpp
-    core/video_state.cpp
-    core/video_state_handler.cpp
+    client/core/types.cpp
+    client/core/utils.cpp
+    client/core/clock.cpp
+    client/core/packet_queue.cpp
+    client/core/frame_queue.cpp
+    client/core/decoder.cpp
+    client/core/app_options.cpp
+    client/core/audio_params.cpp
+    client/core/stream.cpp
+    client/core/ring_buffer.cpp
+    client/core/audio_frame.cpp
+    client/core/video_frame.cpp
+    client/core/application/sdl2_application.cpp
+    client/core/video_state.cpp
+    client/core/video_state_handler.cpp
 
     ${SOURCES_CORE_EVENTS}
   )
@@ -228,7 +233,7 @@ IF(BUILD_CLIENT)  # build client
   ENDIF(FFMPEG_LIBSWRESAMPLE)
 
   CHECK_INCLUDE_FILES("sys/resource.h;sys/time.h" HAVE_SYS_RESOURCE_H)
-  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/ffmpeg_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/client/ffmpeg_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h)
 
   FIND_PACKAGE(LibLZMA)
   IF(LIBLZMA_FOUND)
@@ -287,15 +292,15 @@ IF(BUILD_CLIENT)  # build client
   )
 
   SET(BUILD_CLIENT_SOURCES
-    player.h player.cpp
-    cmdutils.h cmdutils.cpp
-    sdl_utils.h sdl_utils.cpp
-    network_controller.h network_controller.cpp
-    tv_config.h
+    client/player.h client/player.cpp
+    client/cmdutils.h client/cmdutils.cpp
+    client/sdl_utils.h client/sdl_utils.cpp
+    client/network_controller.h client/network_controller.cpp
+    client/tv_config.h
     ${HEADERS_INNER} ${SOURCES_INNER} ${CLIENT_SERVER_SOURCES}
     ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}
   )
-  SET(EXE_SOURCES main.cpp ${BUILD_CLIENT_SOURCES} ${SOURCES_SDS})
+  SET(EXE_SOURCES client/main.cpp ${BUILD_CLIENT_SOURCES} ${SOURCES_SDS})
   SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${RESOURCE_OS})
 
   IF(MINGW OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANGCXX)

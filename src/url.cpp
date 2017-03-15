@@ -8,13 +8,13 @@
 
 namespace fasto {
 namespace fastotv {
-Url::Url() : id_(core::invalid_stream_id), uri_(), name_() {}
+Url::Url() : id_(invalid_stream_id), uri_(), name_() {}
 
-Url::Url(core::stream_id id, const common::uri::Uri& uri, const std::string& name)
+Url::Url(stream_id id, const common::uri::Uri& uri, const std::string& name)
     : id_(id), uri_(uri), name_(name) {}
 
 bool Url::IsValid() const {
-  return id_ != core::invalid_stream_id && uri_.isValid();
+  return id_ != invalid_stream_id && uri_.isValid();
 }
 
 common::uri::Uri Url::GetUrl() const {
@@ -25,7 +25,7 @@ std::string Url::Name() const {
   return name_;
 }
 
-core::stream_id Url::Id() const {
+stream_id Url::Id() const {
   return id_;
 }
 

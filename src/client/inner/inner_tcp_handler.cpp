@@ -36,7 +36,7 @@
 
 #include "client/commands.h"
 
-#include "core/events/network_events.h"
+#include "client/core/events/network_events.h"
 
 #define STATUS_OS_FIELD "os"
 #define STATUS_CPU_FIELD "cpu"

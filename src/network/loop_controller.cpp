@@ -33,12 +33,12 @@ int ILoopController::exec() {
   CHECK(!handler_);
   CHECK(!loop_);
 
-  handler_ = createHandler();
+  handler_ = CreateHandler();
   if (!handler_) {
     return EXIT_FAILURE;
   }
 
-  loop_ = createServer(handler_);
+  loop_ = CreateServer(handler_);
   if (!loop_) {
     delete handler_;
     handler_ = nullptr;

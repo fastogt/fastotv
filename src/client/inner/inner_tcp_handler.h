@@ -24,7 +24,7 @@
 
 #include "network/tcp/tcp_server.h"
 
-#include "tv_config.h"
+#include "client/tv_config.h"
 
 namespace fasto {
 namespace fastotv {

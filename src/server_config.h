@@ -16,38 +16,17 @@
     along with SiteOnYourDevice.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/inner/inner_tcp_client.h"
+#pragma once
 
-#include <common/logger.h>
+#include <common/net/types.h>
 
-#include "server/inner/inner_tcp_server.h"
-#include "server/commands.h"
-
-#define BUF_SIZE 4096
+#define SERVICE_HOST_NAME "siteonyourdevice.com"
+#define SERVICE_HOST_PORT 7040
 
 namespace fasto {
 namespace fastotv {
-namespace server {
-namespace inner {
 
-InnerTcpClient::InnerTcpClient(tcp::TcpServer* server, const common::net::socket_info& info)
-    : InnerClient(server, info), hinfo_() {}
+const common::net::HostAndPort g_service_host(SERVICE_HOST_NAME, SERVICE_HOST_PORT);
 
-const char* InnerTcpClient::className() const {
-  return "InnerTcpClient";
-}
-
-InnerTcpClient::~InnerTcpClient() {}
-
-void InnerTcpClient::setServerHostInfo(const AuthInfo& info) {
-  hinfo_ = info;
-}
-
-AuthInfo InnerTcpClient::serverHostInfo() const {
-  return hinfo_;
-}
-
-}  // namespace inner
-}  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

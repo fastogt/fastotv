@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "tv_config.h"
+#include "client/tv_config.h"
 
 #include "network/tcp/tcp_server.h"
 

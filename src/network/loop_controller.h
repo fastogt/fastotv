@@ -46,8 +46,8 @@ class ILoopController {
   tcp::ITcpLoopObserver* handler_;
 
  private:
-  virtual tcp::ITcpLoopObserver* createHandler() = 0;
-  virtual tcp::ITcpLoop* createServer(tcp::ITcpLoopObserver* handler) = 0;
+  virtual tcp::ITcpLoopObserver* CreateHandler() = 0;
+  virtual tcp::ITcpLoop* CreateServer(tcp::ITcpLoopObserver* handler) = 0;
   virtual void started() = 0;
   virtual void stoped() = 0;
 };
@@ -62,8 +62,8 @@ class ILoopThreadController : public ILoopController {
  private:
   using ILoopController::exec;
 
-  virtual tcp::ITcpLoopObserver* createHandler() override = 0;
-  virtual tcp::ITcpLoop* createServer(tcp::ITcpLoopObserver* handler) override = 0;
+  virtual tcp::ITcpLoopObserver* CreateHandler() override = 0;
+  virtual tcp::ITcpLoop* CreateServer(tcp::ITcpLoopObserver* handler) override = 0;
 
   virtual void started() override;
   virtual void stoped() override;
