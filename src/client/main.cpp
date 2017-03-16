@@ -33,7 +33,6 @@ extern "C" {
 #include "client/core/types.h"
 #include "client/core/application/sdl2_application.h"
 
-#include "ffmpeg_config.h"  // for CONFIG_AVFILTER, etc
 #include "client/player.h"
 
 #undef ERROR
