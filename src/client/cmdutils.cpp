@@ -119,10 +119,6 @@ void show_help_filter(const char* name) {
     printf("        none (sink filter)\n");
   }
 
-  if (f->priv_class) {
-    show_help_children(f->priv_class, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_FILTERING_PARAM |
-                                          AV_OPT_FLAG_AUDIO_PARAM);
-  }
   if (f->flags & AVFILTER_FLAG_SUPPORT_TIMELINE) {
     printf("This filter has support for timeline through the 'enable' option.\n");
   }
@@ -342,10 +338,6 @@ void show_help_demuxer(const char* name) {
   if (fmt->extensions) {
     printf("    Common extensions: %s.\n", fmt->extensions);
   }
-
-  if (fmt->priv_class) {
-    show_help_children(fmt->priv_class, AV_OPT_FLAG_DECODING_PARAM);
-  }
 }
 
 void show_help_muxer(const char* name) {
@@ -374,10 +366,6 @@ void show_help_muxer(const char* name) {
   if (fmt->subtitle_codec != AV_CODEC_ID_NONE &&
       (desc = avcodec_descriptor_get(fmt->subtitle_codec))) {
     printf("    Default subtitle codec: %s.\n", desc->name);
-  }
-
-  if (fmt->priv_class) {
-    show_help_children(fmt->priv_class, AV_OPT_FLAG_ENCODING_PARAM);
   }
 }
 
@@ -597,10 +585,6 @@ void print_codec(const AVCodec* c) {
   PRINT_CODEC_SUPPORTED(c, sample_fmts, enum AVSampleFormat, "sample formats", AV_SAMPLE_FMT_NONE,
                         GET_SAMPLE_FMT_NAME);
   PRINT_CODEC_SUPPORTED(c, channel_layouts, uint64_t, "channel layouts", 0, GET_CH_LAYOUT_DESC);
-
-  if (c->priv_class) {
-    show_help_children(c->priv_class, AV_OPT_FLAG_ENCODING_PARAM | AV_OPT_FLAG_DECODING_PARAM);
-  }
 }
 
 void show_help_codec(const char* name, int encoder) {
@@ -737,18 +721,6 @@ void show_help_options(const OptionDef* options,
     printf("-%-17s  %s\n", buf, po->help);
   }
   printf("\n");
-}
-
-void show_help_children(const AVClass* cl, int flags) {
-  if (cl->option) {
-    av_opt_show2(&cl, NULL, flags, 0);
-    printf("\n");
-  }
-
-  const AVClass* child = NULL;
-  while ((child = av_opt_child_class_next(cl, child))) {
-    show_help_children(child, flags);
-  }
 }
 
 int parse_option(const char* opt,
