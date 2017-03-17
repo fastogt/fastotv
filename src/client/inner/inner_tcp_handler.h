@@ -32,7 +32,7 @@ namespace client {
 namespace inner {
 
 class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParser,
-                        public tcp::ITcpLoopObserver {
+                        public network::tcp::ITcpLoopObserver {
  public:
   enum {
     ping_timeout_server = 30  // sec
@@ -41,19 +41,19 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   explicit InnerTcpHandler(const common::net::HostAndPort& innerHost, const TvConfig& config);
   ~InnerTcpHandler();
 
-  AuthInfo authInfo() const;
-  void setConfig(const TvConfig& config);
+  AuthInfo GetAuthInfo() const;
+  void SetConfig(const TvConfig& config);
 
   void RequestChannels();  // should be execute in network thread
 
-  virtual void PreLooped(tcp::ITcpLoop* server) override;
-  virtual void Accepted(tcp::TcpClient* client) override;
-  virtual void Moved(tcp::TcpClient* client) override;
-  virtual void Closed(tcp::TcpClient* client) override;
-  virtual void DataReceived(tcp::TcpClient* client) override;
-  virtual void DataReadyToWrite(tcp::TcpClient* client) override;
-  virtual void PostLooped(tcp::ITcpLoop* server) override;
-  virtual void TimerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
+  virtual void PreLooped(network::tcp::ITcpLoop* server) override;
+  virtual void Accepted(network::tcp::TcpClient* client) override;
+  virtual void Moved(network::tcp::TcpClient* client) override;
+  virtual void Closed(network::tcp::TcpClient* client) override;
+  virtual void DataReceived(network::tcp::TcpClient* client) override;
+  virtual void DataReadyToWrite(network::tcp::TcpClient* client) override;
+  virtual void PostLooped(network::tcp::ITcpLoop* server) override;
+  virtual void TimerEmited(network::tcp::ITcpLoop* server, network::timer_id_t id) override;
 
  private:
   virtual void HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
@@ -71,7 +71,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
 
   TvConfig config_;
   fasto::fastotv::inner::InnerClient* inner_connection_;
-  timer_id_t ping_server_id_timer_;
+  network::timer_id_t ping_server_id_timer_;
 
   const common::net::HostAndPort innerHost_;
 };

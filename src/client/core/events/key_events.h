@@ -648,6 +648,7 @@ struct Keysym {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 namespace events {
 
@@ -668,6 +669,7 @@ typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;
 typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
 
 }  // namespace events {
+}
 }
 }
 }

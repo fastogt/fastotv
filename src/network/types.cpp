@@ -19,5 +19,7 @@
 #include "network/types.h"
 
 namespace fasto {
-namespace fastotv {}  // namespace fastotv
+namespace fastotv {
+namespace network {}
+}  // namespace fastotv
 }  // namespace fasto

@@ -79,6 +79,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 namespace {
@@ -1805,5 +1806,6 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
 #endif /* CONFIG_AVFILTER */
 
 }  // namespace core
+}
 }
 }

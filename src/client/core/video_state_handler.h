@@ -8,6 +8,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 struct AudioParams;
@@ -39,6 +40,7 @@ class VideoStateHandler : public core::events::EventListener {
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) = 0;
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) = 0;
 };
+}
 }
 }
 }

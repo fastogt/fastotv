@@ -43,6 +43,7 @@ class Thread;
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 class AudioDecoder;
 }
@@ -247,5 +248,6 @@ class VideoState {
 };
 
 }  // namespace core
+}
 }
 }

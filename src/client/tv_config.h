@@ -38,11 +38,13 @@ password=y  //md5 hash
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 
 struct TvConfig {
   std::string login;
   std::string password;
 };
 
+}  // namespace client
 }  // namespace siteonyourdevice
 }  // namespace fasto

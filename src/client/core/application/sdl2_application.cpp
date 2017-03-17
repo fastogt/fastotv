@@ -25,6 +25,7 @@ Keysym SDLKeySymToOur(SDL_Keysym sks) {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 namespace application {
 
@@ -202,6 +203,7 @@ void Sdl2Application::HandleQuitEvent(SDL_QuitEvent* event) {
   events::QuitInfo inf;
   events::QuitEvent* quit_event = new events::QuitEvent(this, inf);
   HandleEvent(quit_event);
+}
 }
 }
 }

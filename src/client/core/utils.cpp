@@ -35,6 +35,7 @@ const unsigned sws_flags = SWS_BICUBIC;
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 double q2d_diff(AVRational a) {
@@ -383,5 +384,6 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1,
 }
 
 }  // namespace core
+}
 }
 }

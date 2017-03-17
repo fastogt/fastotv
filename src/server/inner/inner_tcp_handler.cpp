@@ -62,23 +62,23 @@ InnerTcpHandlerHost::~InnerTcpHandlerHost() {
   delete handler_;
 }
 
-void InnerTcpHandlerHost::PreLooped(tcp::ITcpLoop* server) {
+void InnerTcpHandlerHost::PreLooped(network::tcp::ITcpLoop* server) {
   ping_client_id_timer_ = server->CreateTimer(ping_timeout_clients, ping_timeout_clients);
 }
 
-void InnerTcpHandlerHost::Moved(tcp::TcpClient* client) {
+void InnerTcpHandlerHost::Moved(network::tcp::TcpClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandlerHost::PostLooped(tcp::ITcpLoop* server) {
+void InnerTcpHandlerHost::PostLooped(network::tcp::ITcpLoop* server) {
   UNUSED(server);
 }
 
-void InnerTcpHandlerHost::TimerEmited(tcp::ITcpLoop* server, timer_id_t id) {
+void InnerTcpHandlerHost::TimerEmited(network::tcp::ITcpLoop* server, network::timer_id_t id) {
   if (ping_client_id_timer_ == id) {
-    std::vector<tcp::TcpClient*> online_clients = server->Clients();
+    std::vector<network::tcp::TcpClient*> online_clients = server->Clients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
-      tcp::TcpClient* client = online_clients[i];
+      network::tcp::TcpClient* client = online_clients[i];
       const cmd_request_t ping_request = PingRequest(NextId());
       ssize_t nwrite = 0;
       common::Error err = client->Write(ping_request.data(), ping_request.size(), &nwrite);
@@ -94,7 +94,7 @@ void InnerTcpHandlerHost::TimerEmited(tcp::ITcpLoop* server, timer_id_t id) {
   }
 }
 
-void InnerTcpHandlerHost::Accepted(tcp::TcpClient* client) {
+void InnerTcpHandlerHost::Accepted(network::tcp::TcpClient* client) {
   ssize_t nwrite = 0;
   cmd_request_t whoareyou = WhoAreYouRequest(NextId());
   common::Error err = client->Write(whoareyou.data(), whoareyou.size(), &nwrite);
@@ -103,12 +103,12 @@ void InnerTcpHandlerHost::Accepted(tcp::TcpClient* client) {
   }
 }
 
-void InnerTcpHandlerHost::Closed(tcp::TcpClient* client) {
-  bool is_ok = parent_->unRegisterInnerConnectionByHost(client);
+void InnerTcpHandlerHost::Closed(network::tcp::TcpClient* client) {
+  bool is_ok = parent_->UnRegisterInnerConnectionByHost(client);
   if (is_ok) {
     InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
     if (iconnection) {
-      AuthInfo hinf = iconnection->serverHostInfo();
+      AuthInfo hinf = iconnection->ServerHostInfo();
       std::string login = hinf.login;
 
       PublishStateToChannel(login, false);
@@ -116,7 +116,7 @@ void InnerTcpHandlerHost::Closed(tcp::TcpClient* client) {
   }
 }
 
-void InnerTcpHandlerHost::DataReceived(tcp::TcpClient* client) {
+void InnerTcpHandlerHost::DataReceived(network::tcp::TcpClient* client) {
   char buff[MAX_COMMAND_SIZE] = {0};
   ssize_t nread = 0;
   common::Error err = client->Read(buff, MAX_COMMAND_SIZE, &nread);
@@ -130,7 +130,7 @@ void InnerTcpHandlerHost::DataReceived(tcp::TcpClient* client) {
   HandleInnerDataReceived(iclient, buff, nread);
 }
 
-void InnerTcpHandlerHost::DataReadyToWrite(tcp::TcpClient* client) {
+void InnerTcpHandlerHost::DataReadyToWrite(network::tcp::TcpClient* client) {
   UNUSED(client);
 }
 
@@ -161,7 +161,7 @@ void InnerTcpHandlerHost::PublishStateToChannel(const std::string& login, bool c
 
 inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByLogin(
     const std::string& login) const {
-  return parent_->findInnerConnectionByLogin(login);
+  return parent_->FindInnerConnectionByLogin(login);
 }
 
 void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
@@ -180,9 +180,9 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     }
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
-    AuthInfo hinf = client->serverHostInfo();
+    AuthInfo hinf = client->ServerHostInfo();
     UserInfo user;
-    common::Error err = parent_->findUser(hinf, &user);
+    common::Error err = parent_->FindUser(hinf, &user);
     if (err && err->isError()) {
       cmd_responce_t resp = GetChannelsResponceFail(id, err->description());
       common::Error err = connection->Write(resp, &nwrite);
@@ -280,7 +280,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
           goto fail;
         }
 
-        common::Error err = parent_->findUserAuth(uauth);
+        common::Error err = parent_->FindUserAuth(uauth);
         if (err && err->isError()) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->description());
           common::Error err = connection->Write(resp, &nwrite);
@@ -291,7 +291,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
         }
 
         std::string login = uauth.login;
-        InnerTcpClient* fclient = parent_->findInnerConnectionByLogin(login);
+        InnerTcpClient* fclient = parent_->FindInnerConnectionByLogin(login);
         if (fclient) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Double connection reject");
           common::Error err = connection->Write(resp, &nwrite);
@@ -312,7 +312,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
           goto fail;
         }
 
-        bool is_ok = parent_->registerInnerConnectionByUser(uauth, connection);
+        bool is_ok = parent_->RegisterInnerConnectionByUser(uauth, connection);
         if (is_ok) {
           PublishStateToChannel(login, true);
         }

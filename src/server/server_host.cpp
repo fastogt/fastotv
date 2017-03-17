@@ -41,20 +41,20 @@
 namespace fasto {
 namespace fastotv {
 namespace {
-int exec_server(tcp::TcpServer* server) {
-  common::Error err = server->bind();
+int exec_server(network::tcp::TcpServer* server) {
+  common::Error err = server->Bind();
   if (err && err->isError()) {
     DEBUG_MSG_ERROR(err);
     return EXIT_FAILURE;
   }
 
-  err = server->listen(5);
+  err = server->Listen(5);
   if (err && err->isError()) {
     DEBUG_MSG_ERROR(err);
     return EXIT_FAILURE;
   }
 
-  return server->exec();
+  return server->Exec();
 }
 }
 namespace server {
@@ -74,7 +74,7 @@ ServerHost::~ServerHost() {
 void ServerHost::stop() {
   std::unique_lock<std::mutex> lock(stop_mutex_);
   stop_ = true;
-  server_->stop();
+  server_->Stop();
   stop_cond_.notify_all();
 }
 
@@ -102,14 +102,14 @@ int ServerHost::exec() {
   return connection_thread->JoinAndGet();
 }
 
-bool ServerHost::unRegisterInnerConnectionByHost(tcp::TcpClient* connection) {
+bool ServerHost::UnRegisterInnerConnectionByHost(network::tcp::TcpClient* connection) {
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
     return false;
   }
 
-  AuthInfo hinf = iconnection->serverHostInfo();
+  AuthInfo hinf = iconnection->ServerHostInfo();
   if (!hinf.IsValid()) {
     return false;
   }
@@ -119,7 +119,7 @@ bool ServerHost::unRegisterInnerConnectionByHost(tcp::TcpClient* connection) {
   return true;
 }
 
-bool ServerHost::registerInnerConnectionByUser(const AuthInfo& user, tcp::TcpClient* connection) {
+bool ServerHost::RegisterInnerConnectionByUser(const AuthInfo& user, network::tcp::TcpClient* connection) {
   CHECK(user.IsValid());
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
@@ -127,7 +127,7 @@ bool ServerHost::registerInnerConnectionByUser(const AuthInfo& user, tcp::TcpCli
     return false;
   }
 
-  iconnection->setServerHostInfo(user);
+  iconnection->SetServerHostInfo(user);
 
   std::string login = user.login;
   connections_[login] = iconnection;
@@ -135,15 +135,15 @@ bool ServerHost::registerInnerConnectionByUser(const AuthInfo& user, tcp::TcpCli
   return true;
 }
 
-common::Error ServerHost::findUserAuth(const AuthInfo& user) const {
-  return rstorage_.findUserAuth(user);
+common::Error ServerHost::FindUserAuth(const AuthInfo& user) const {
+  return rstorage_.FindUserAuth(user);
 }
 
-common::Error ServerHost::findUser(const AuthInfo& auth, UserInfo* uinf) const {
-  return rstorage_.findUser(auth, uinf);
+common::Error ServerHost::FindUser(const AuthInfo& auth, UserInfo* uinf) const {
+  return rstorage_.FindUser(auth, uinf);
 }
 
-inner::InnerTcpClient* ServerHost::findInnerConnectionByLogin(const std::string& login) const {
+inner::InnerTcpClient* ServerHost::FindInnerConnectionByLogin(const std::string& login) const {
   inner_connections_type::const_iterator hs = connections_.find(login);
   if (hs == connections_.end()) {
     return nullptr;
@@ -152,8 +152,8 @@ inner::InnerTcpClient* ServerHost::findInnerConnectionByLogin(const std::string&
   return (*hs).second;
 }
 
-void ServerHost::setConfig(const Config& conf) {
-  rstorage_.setConfig(conf.server.redis);
+void ServerHost::SetConfig(const Config& conf) {
+  rstorage_.SetConfig(conf.server.redis);
   handler_->SetStorageConfig(conf.server.redis);
 }
 

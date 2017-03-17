@@ -25,14 +25,14 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
-InnerTcpServer::InnerTcpServer(tcp::ITcpLoopObserver* observer) : ITcpLoop(observer) {}
+InnerTcpServer::InnerTcpServer(network::tcp::ITcpLoopObserver* observer) : ITcpLoop(observer) {}
 
 const char* InnerTcpServer::ClassName() const {
   return "InnerTcpServer";
 }
 
-tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
-  return new tcp::TcpClient(this, info);
+network::tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
+  return new network::tcp::TcpClient(this, info);
 }
 
 }  // namespace inner

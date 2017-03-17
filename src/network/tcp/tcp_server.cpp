@@ -56,12 +56,13 @@ struct SigIgnInit {
 
 typedef common::unique_lock<common::mutex> lock_t;
 common::mutex g_exists_loops_mutex_;
-std::vector<fasto::fastotv::tcp::ITcpLoop*> g_exists_loops_;
+std::vector<fasto::fastotv::network::tcp::ITcpLoop*> g_exists_loops_;
 
 }  // namespace
 
 namespace fasto {
 namespace fastotv {
+namespace network {
 namespace tcp {
 
 class LoopTimer : public common::patterns::id_counter<LoopTimer, timer_id_t> {
@@ -88,13 +89,13 @@ ITcpLoop::~ITcpLoop() {
   delete loop_;
 }
 
-int ITcpLoop::exec() {
-  int res = loop_->exec();
+int ITcpLoop::Exec() {
+  int res = loop_->Exec();
   return res;
 }
 
-void ITcpLoop::stop() {
-  loop_->stop();
+void ITcpLoop::Stop() {
+  loop_->Stop();
 }
 
 void ITcpLoop::RegisterClient(const common::net::socket_info& info) {
@@ -104,7 +105,7 @@ void ITcpLoop::RegisterClient(const common::net::socket_info& info) {
 
 void ITcpLoop::UnRegisterClient(TcpClient* client) {
   CHECK(client->Server() == this);
-  loop_->stop_io(client->read_write_io_);
+  loop_->StopIO(client->read_write_io_);
 
   if (observer_) {
     observer_->Moved(client);
@@ -123,7 +124,7 @@ void ITcpLoop::RegisterClient(TcpClient* client) {
 
   // Initialize and start watcher to read client requests
   ev_io_init(client->read_write_io_, read_write_cb, client->Fd(), client->Flags());
-  loop_->start_io(client->read_write_io_);
+  loop_->StartIO(client->read_write_io_);
 
   if (observer_) {
     observer_->Accepted(client);
@@ -137,7 +138,7 @@ void ITcpLoop::RegisterClient(TcpClient* client) {
 
 void ITcpLoop::CloseClient(TcpClient* client) {
   CHECK(client->Server() == this);
-  loop_->stop_io(client->read_write_io_);
+  loop_->StopIO(client->read_write_io_);
 
   if (observer_) {
     observer_->Closed(client);
@@ -150,7 +151,7 @@ void ITcpLoop::CloseClient(TcpClient* client) {
 timer_id_t ITcpLoop::CreateTimer(double sec, double repeat) {
   LoopTimer* timer = new LoopTimer(this);
   ev_timer_init(timer->timer_, timer_cb, sec, repeat);
-  loop_->start_timer(timer->timer_);
+  loop_->StartTimer(timer->timer_);
   timers_.push_back(timer);
   return timer->id();
 }
@@ -166,7 +167,7 @@ void ITcpLoop::RemoveTimer(timer_id_t id) {
   }
 }
 
-common::patterns::id_counter<ITcpLoop>::type_t ITcpLoop::id() const {
+common::patterns::id_counter<ITcpLoop>::type_t ITcpLoop::GetId() const {
   return id_.id();
 }
 
@@ -180,9 +181,9 @@ bool ITcpLoop::IsLoopThread() const {
 
 void ITcpLoop::ChangeFlags(TcpClient* client) {
   if (client->Flags() != client->read_write_io_->events) {
-    loop_->stop_io(client->read_write_io_);
+    loop_->StopIO(client->read_write_io_);
     ev_io_set(client->read_write_io_, client->Fd(), client->Flags());
-    loop_->start_io(client->read_write_io_);
+    loop_->StartIO(client->read_write_io_);
   }
 }
 
@@ -215,7 +216,7 @@ std::string ITcpLoop::Name() const {
 }
 
 std::string ITcpLoop::FormatedName() const {
-  return common::MemSPrintf("[%s][%s(%llu)]", Name(), ClassName(), id());
+  return common::MemSPrintf("[%s][%s(%llu)]", Name(), ClassName(), GetId());
 }
 
 void ITcpLoop::read_write_cb(struct ev_loop* loop, struct ev_io* watcher, int revents) {
@@ -336,7 +337,7 @@ TcpClient* TcpServer::CreateClient(const common::net::socket_info& info) {
 void TcpServer::PreLooped(LibEvLoop* loop) {
   int fd = sock_.fd();
   ev_io_init(accept_io_, accept_cb, fd, EV_READ);
-  loop->start_io(accept_io_);
+  loop->StartIO(accept_io_);
   ITcpLoop::PreLooped(loop);
 }
 
@@ -350,15 +351,15 @@ void TcpServer::Stoped(LibEvLoop* loop) {
     DEBUG_MSG_ERROR(err);
   }
 
-  loop->stop_io(accept_io_);
+  loop->StopIO(accept_io_);
   ITcpLoop::Stoped(loop);
 }
 
-common::Error TcpServer::bind() {
+common::Error TcpServer::Bind() {
   return sock_.bind();
 }
 
-common::Error TcpServer::listen(int backlog) {
+common::Error TcpServer::Listen(int backlog) {
   return sock_.listen(backlog);
 }
 
@@ -401,5 +402,6 @@ void TcpServer::accept_cb(struct ev_loop* loop, struct ev_io* watcher, int reven
 ITcpLoopObserver::~ITcpLoopObserver() {}
 
 }  // namespace tcp
+}
 }  // namespace fastotv
 }  // namespace fasto

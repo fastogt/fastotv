@@ -2,6 +2,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 namespace events {
 
@@ -11,6 +12,7 @@ FrameInfo::FrameInfo(VideoState* stream, core::VideoFrame* frame)
     : StreamInfo(stream), frame(frame) {}
 
 QuitStreamInfo::QuitStreamInfo(VideoState* stream, int code) : StreamInfo(stream), code(code) {}
+}
 }
 }
 }

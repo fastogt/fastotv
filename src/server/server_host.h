@@ -56,16 +56,17 @@ class ServerHost {
   void stop();
   int exec();
 
-  bool unRegisterInnerConnectionByHost(tcp::TcpClient* connection) WARN_UNUSED_RESULT;
-  bool registerInnerConnectionByUser(const AuthInfo& user,
-                                     tcp::TcpClient* connection) WARN_UNUSED_RESULT;
-  common::Error findUserAuth(const AuthInfo& user) const WARN_UNUSED_RESULT;
-  common::Error findUser(const AuthInfo& auth, UserInfo* uinf) const WARN_UNUSED_RESULT;
+  bool UnRegisterInnerConnectionByHost(network::tcp::TcpClient* connection) WARN_UNUSED_RESULT;
+  bool RegisterInnerConnectionByUser(const AuthInfo& user,
+                                     network::tcp::TcpClient* connection) WARN_UNUSED_RESULT;
+  common::Error FindUserAuth(const AuthInfo& user) const WARN_UNUSED_RESULT;
+  common::Error FindUser(const AuthInfo& auth, UserInfo* uinf) const WARN_UNUSED_RESULT;
 
-  inner::InnerTcpClient* findInnerConnectionByLogin(const std::string& login) const;
-  void setConfig(const Config& conf);
+  inner::InnerTcpClient* FindInnerConnectionByLogin(const std::string& login) const;
+  void SetConfig(const Config& conf);
 
  private:
+  DISALLOW_COPY_AND_ASSIGN(ServerHost);
   common::mutex stop_mutex_;
   common::condition_variable stop_cond_;
   bool stop_;

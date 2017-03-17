@@ -26,10 +26,11 @@
 
 namespace fasto {
 namespace fastotv {
+namespace network {
 
 ILoopController::ILoopController() : loop_(nullptr), handler_(nullptr) {}
 
-int ILoopController::exec() {
+int ILoopController::Exec() {
   CHECK(!handler_);
   CHECK(!loop_);
 
@@ -45,19 +46,19 @@ int ILoopController::exec() {
     return EXIT_FAILURE;
   }
 
-  return loop_->exec();
+  return loop_->Exec();
 }
 
-void ILoopController::start() {
-  started();
+void ILoopController::Start() {
+  Started();
 }
 
-void ILoopController::stop() {
+void ILoopController::Stop() {
   if (loop_) {
-    loop_->stop();
+    loop_->Stop();
   }
 
-  stoped();
+  Stoped();
 }
 
 void ILoopController::ExecInLoopThread(async_loop_exec_function_t func) const {
@@ -72,23 +73,24 @@ ILoopController::~ILoopController() {
 }
 
 ILoopThreadController::ILoopThreadController() : ILoopController(), loop_thread_() {
-  loop_thread_ = THREAD_MANAGER()->CreateThread(&ILoopController::exec, this);
+  loop_thread_ = THREAD_MANAGER()->CreateThread(&ILoopController::Exec, this);
 }
 
 ILoopThreadController::~ILoopThreadController() {}
 
-int ILoopThreadController::join() {
+int ILoopThreadController::Join() {
   return loop_thread_->JoinAndGet();
 }
 
-void ILoopThreadController::started() {
+void ILoopThreadController::Started() {
   bool result = loop_thread_->Start();
   DCHECK(result);
 }
 
-void ILoopThreadController::stoped() {
-  join();
+void ILoopThreadController::Stoped() {
+  Join();
 }
 
+}
 }  // namespace fastotv
 }  // namespace fasto

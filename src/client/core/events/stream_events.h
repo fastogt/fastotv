@@ -4,6 +4,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 struct VideoFrame;
 class VideoState;
@@ -29,6 +30,7 @@ typedef EventBase<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
 typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
 
 }  // namespace events {
+}
 }
 }
 }

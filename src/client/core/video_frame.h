@@ -17,6 +17,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+  namespace client {
 namespace core {
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */
@@ -48,5 +49,6 @@ struct VideoFrame {
 };
 
 }  // namespace core
+}
 }
 }

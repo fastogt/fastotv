@@ -8,6 +8,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 class Clock {
@@ -34,6 +35,7 @@ class Clock {
       queue_serial_; /* pointer to the current packet queue serial, used for obsolete clock
            detection */
 };
+}
 }
 }
 }

@@ -34,6 +34,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 
 namespace {
 
@@ -129,7 +130,7 @@ Player::Player(const PlayerOptions& options,
       ytop_(0),
       controller_(nullptr) {
   // stable options
-  controller_ = new network::NetworkController(options.config_path);
+  controller_ = new NetworkController(options.config_path);
 
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -629,9 +630,13 @@ void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* even
   controller_->RequestChannels();
 }
 
-void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {}
+void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {
+  UNUSED(event);
+}
 
-void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event) {}
+void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event) {
+  UNUSED(event);
+}
 
 void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event) {
   channels_t chan = event->info();
@@ -786,6 +791,7 @@ size_t Player::GeneratePrevPosition() const {
   }
 
   return curent_stream_pos_ - 1;
+}
 }
 }
 }

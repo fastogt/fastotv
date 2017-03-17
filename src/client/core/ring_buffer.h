@@ -10,6 +10,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 template <typename T, size_t buffer_size>
@@ -195,5 +196,6 @@ class RingBuffer {
 };
 
 }  // namespace core
+}
 }
 }

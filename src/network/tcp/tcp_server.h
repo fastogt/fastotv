@@ -32,7 +32,7 @@
 
 namespace fasto {
 namespace fastotv {
-
+namespace network {
 typedef int timer_id_t;
 
 namespace tcp {
@@ -46,8 +46,8 @@ class ITcpLoop : public EvLoopObserver, common::IMetaClassInfo {
   explicit ITcpLoop(ITcpLoopObserver* observer = nullptr);
   virtual ~ITcpLoop();
 
-  int exec() WARN_UNUSED_RESULT;
-  virtual void stop();
+  int Exec() WARN_UNUSED_RESULT;
+  virtual void Stop();
 
   void RegisterClient(const common::net::socket_info& info);
   void RegisterClient(TcpClient* client);
@@ -59,7 +59,7 @@ class ITcpLoop : public EvLoopObserver, common::IMetaClassInfo {
 
   void ChangeFlags(TcpClient* client);
 
-  common::patterns::id_counter<ITcpLoop>::type_t id() const;
+  common::patterns::id_counter<ITcpLoop>::type_t GetId() const;
 
   void SetName(const std::string& name);
   std::string Name() const;
@@ -119,8 +119,8 @@ class TcpServer : public ITcpLoop {
   explicit TcpServer(const common::net::HostAndPort& host, ITcpLoopObserver* observer = nullptr);
   virtual ~TcpServer();
 
-  common::Error bind() WARN_UNUSED_RESULT;
-  common::Error listen(int backlog) WARN_UNUSED_RESULT;
+  common::Error Bind() WARN_UNUSED_RESULT;
+  common::Error Listen(int backlog) WARN_UNUSED_RESULT;
 
   const char* ClassName() const override;
   common::net::HostAndPort host() const;
@@ -143,5 +143,6 @@ class TcpServer : public ITcpLoop {
 };
 
 }  // namespace tcp
+}
 }  // namespace fastotv
 }  // namespace fasto

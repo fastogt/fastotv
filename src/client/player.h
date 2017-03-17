@@ -21,14 +21,13 @@ class EventThread;
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 
 namespace core {
 class VideoState;
 }
 
-namespace network {
 class NetworkController;
-}
 
 std::string default_config_file_path();
 
@@ -147,7 +146,8 @@ class Player : public core::VideoStateHandler {
   const int xleft_;
   const int ytop_;
 
-  network::NetworkController* controller_;
+  NetworkController* controller_;
 };
+}
 }
 }

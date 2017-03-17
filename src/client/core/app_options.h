@@ -17,6 +17,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 // 640x480
@@ -66,5 +67,6 @@ struct ComplexOptions {
 };
 
 }  // namespace core
+}
 }
 }

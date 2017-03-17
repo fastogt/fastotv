@@ -27,6 +27,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace network {
 namespace tcp {
 
 class ITcpLoop;
@@ -69,5 +70,6 @@ class TcpClient : common::IMetaClassInfo {
 };
 
 }  // namespace tcp
+}
 }  // namespace fastotv
 }  // namespace fasto

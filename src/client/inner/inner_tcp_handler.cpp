@@ -59,7 +59,7 @@ InnerTcpHandler::~InnerTcpHandler() {
   inner_connection_ = nullptr;
 }
 
-void InnerTcpHandler::PreLooped(tcp::ITcpLoop* server) {
+void InnerTcpHandler::PreLooped(network::tcp::ITcpLoop* server) {
   ping_server_id_timer_ = server->CreateTimer(ping_timeout_server, ping_timeout_server);
   CHECK(!inner_connection_);
 
@@ -69,7 +69,7 @@ void InnerTcpHandler::PreLooped(tcp::ITcpLoop* server) {
   if (err && err->isError()) {
     DEBUG_MSG_ERROR(err);
     auto ex_event =
-        make_exception_event(new core::events::ClientConnectedEvent(this, authInfo()), err);
+        make_exception_event(new core::events::ClientConnectedEvent(this, GetAuthInfo()), err);
     fApp->PostEvent(ex_event);
     return;
   }
@@ -80,23 +80,23 @@ void InnerTcpHandler::PreLooped(tcp::ITcpLoop* server) {
   server->RegisterClient(connection);
 }
 
-void InnerTcpHandler::Accepted(tcp::TcpClient* client) {
+void InnerTcpHandler::Accepted(network::tcp::TcpClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Moved(tcp::TcpClient* client) {
+void InnerTcpHandler::Moved(network::tcp::TcpClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Closed(tcp::TcpClient* client) {
+void InnerTcpHandler::Closed(network::tcp::TcpClient* client) {
   if (client == inner_connection_) {
-    fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, authInfo()));
+    fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, GetAuthInfo()));
     inner_connection_ = nullptr;
     return;
   }
 }
 
-void InnerTcpHandler::DataReceived(tcp::TcpClient* client) {
+void InnerTcpHandler::DataReceived(network::tcp::TcpClient* client) {
   char buff[MAX_COMMAND_SIZE] = {0};
   ssize_t nread = 0;
   common::Error err = client->Read(buff, MAX_COMMAND_SIZE, &nread);
@@ -110,11 +110,11 @@ void InnerTcpHandler::DataReceived(tcp::TcpClient* client) {
   HandleInnerDataReceived(static_cast<fasto::fastotv::inner::InnerClient*>(client), buff, nread);
 }
 
-void InnerTcpHandler::DataReadyToWrite(tcp::TcpClient* client) {
+void InnerTcpHandler::DataReadyToWrite(network::tcp::TcpClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::PostLooped(tcp::ITcpLoop* server) {
+void InnerTcpHandler::PostLooped(network::tcp::ITcpLoop* server) {
   UNUSED(server);
   if (inner_connection_) {
     fasto::fastotv::inner::InnerClient* connection = inner_connection_;
@@ -123,7 +123,7 @@ void InnerTcpHandler::PostLooped(tcp::ITcpLoop* server) {
   }
 }
 
-void InnerTcpHandler::TimerEmited(tcp::ITcpLoop* server, timer_id_t id) {
+void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer_id_t id) {
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
     const cmd_request_t ping_request = PingRequest(NextId());
@@ -138,11 +138,11 @@ void InnerTcpHandler::TimerEmited(tcp::ITcpLoop* server, timer_id_t id) {
   }
 }
 
-AuthInfo InnerTcpHandler::authInfo() const {
+AuthInfo InnerTcpHandler::GetAuthInfo() const {
   return AuthInfo(config_.login, config_.password);
 }
 
-void InnerTcpHandler::setConfig(const TvConfig& config) {
+void InnerTcpHandler::SetConfig(const TvConfig& config) {
   config_ = config;
 }
 
@@ -175,7 +175,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       DEBUG_MSG_ERROR(err);
     }
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
-    AuthInfo ainf = authInfo();
+    AuthInfo ainf = GetAuthInfo();
     json_object* jain = AuthInfo::MakeJobject(ainf);
     std::string auth_str = json_object_get_string(jain);
     json_object_put(jain);
@@ -311,7 +311,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       const char* okrespcommand = argv[1];
       if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
-        fApp->PostEvent(new core::events::ClientConnectedEvent(this, authInfo()));
+        fApp->PostEvent(new core::events::ClientConnectedEvent(this, GetAuthInfo()));
       }
     }
   } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {

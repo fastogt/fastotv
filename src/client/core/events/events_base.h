@@ -43,6 +43,7 @@ struct event_traits<EventsType> {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 namespace events {
 
@@ -75,6 +76,7 @@ class EventBase<event_t, void> : public common::Event<EventsType, event_t> {
 
   explicit EventBase(senders_t* sender) : base_class_t(sender) {}
 };
+}
 }
 }
 }

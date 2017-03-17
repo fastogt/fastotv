@@ -9,6 +9,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 namespace application {
 
@@ -51,6 +52,7 @@ class Sdl2Application : public common::application::IApplicationImpl {
   common::threads::EventDispatcher<EventsType> dispatcher_;
   bool stop_;
 };
+}
 }
 }
 }

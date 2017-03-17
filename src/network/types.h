@@ -22,8 +22,9 @@
 
 namespace fasto {
 namespace fastotv {
+namespace network {
 
 typedef std::function<void()> async_loop_exec_function_t;
-
+}
 }  // namespace fastotv
 }  // namespace fasto

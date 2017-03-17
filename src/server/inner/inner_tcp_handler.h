@@ -39,7 +39,7 @@ class InnerTcpClient;
 class InnerSubHandler;
 
 class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqParser,
-                            public tcp::ITcpLoopObserver {
+                            public network::tcp::ITcpLoopObserver {
  public:
   enum {
     ping_timeout_clients = 60  // sec
@@ -47,16 +47,16 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   explicit InnerTcpHandlerHost(ServerHost* parent);
 
-  virtual void PreLooped(tcp::ITcpLoop* server) override;
+  virtual void PreLooped(network::tcp::ITcpLoop* server) override;
 
-  virtual void Accepted(tcp::TcpClient* client) override;
-  virtual void Moved(tcp::TcpClient* client) override;
-  virtual void Closed(tcp::TcpClient* client) override;
+  virtual void Accepted(network::tcp::TcpClient* client) override;
+  virtual void Moved(network::tcp::TcpClient* client) override;
+  virtual void Closed(network::tcp::TcpClient* client) override;
 
-  virtual void DataReceived(tcp::TcpClient* client) override;
-  virtual void DataReadyToWrite(tcp::TcpClient* client) override;
-  virtual void PostLooped(tcp::ITcpLoop* server) override;
-  virtual void TimerEmited(tcp::ITcpLoop* server, timer_id_t id) override;
+  virtual void DataReceived(network::tcp::TcpClient* client) override;
+  virtual void DataReadyToWrite(network::tcp::TcpClient* client) override;
+  virtual void PostLooped(network::tcp::ITcpLoop* server) override;
+  virtual void TimerEmited(network::tcp::ITcpLoop* server, network::timer_id_t id) override;
 
   virtual ~InnerTcpHandlerHost();
 
@@ -86,7 +86,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
   RedisSub* sub_commands_in_;
   InnerSubHandler* handler_;
   std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
-  timer_id_t ping_client_id_timer_;
+  network::timer_id_t ping_client_id_timer_;
 };
 
 }  // namespace inner

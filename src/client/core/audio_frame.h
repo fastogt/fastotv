@@ -12,6 +12,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 struct AudioFrame {
@@ -31,5 +32,6 @@ struct AudioFrame {
 };
 
 }  // namespace core
+}
 }
 }

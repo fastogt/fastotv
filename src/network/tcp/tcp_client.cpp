@@ -28,6 +28,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace network {
 namespace tcp {
 
 TcpClient::TcpClient(ITcpLoop* server, const common::net::socket_info& info, flags_t flags)
@@ -106,5 +107,6 @@ std::string TcpClient::FormatedName() const {
 }
 
 }  // namespace tcp
+}
 }  // namespace fastotv
 }  // namespace fasto

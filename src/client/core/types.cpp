@@ -10,6 +10,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 clock_t invalid_clock() {
@@ -48,5 +49,6 @@ bool IsValidPts(pts_t pts) {
 }
 
 }  // namespace core
+}
 }
 }

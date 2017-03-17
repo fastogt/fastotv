@@ -43,10 +43,10 @@ struct redis_sub_configuration_t : public redis_configuration_t {
 class RedisStorage {
  public:
   RedisStorage();
-  void setConfig(const redis_configuration_t& config);
+  void SetConfig(const redis_configuration_t& config);
 
-  common::Error findUserAuth(const AuthInfo& user) const WARN_UNUSED_RESULT;  // check password
-  common::Error findUser(const AuthInfo& user,
+  common::Error FindUserAuth(const AuthInfo& user) const WARN_UNUSED_RESULT;  // check password
+  common::Error FindUser(const AuthInfo& user,
                          UserInfo* uinf) const WARN_UNUSED_RESULT;  // check password
 
  private:

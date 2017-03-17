@@ -26,9 +26,9 @@ namespace fasto {
 namespace fastotv {
 namespace inner {
 
-class InnerClient : public tcp::TcpClient {
+class InnerClient : public network::tcp::TcpClient {
  public:
-  InnerClient(tcp::ITcpLoop* server, const common::net::socket_info& info);
+  InnerClient(network::tcp::ITcpLoop* server, const common::net::socket_info& info);
   const char* ClassName() const override;
 
   common::Error Write(const cmd_request_t& request, ssize_t* nwrite) WARN_UNUSED_RESULT;
@@ -36,7 +36,7 @@ class InnerClient : public tcp::TcpClient {
   common::Error Write(const cmd_approve_t& approve, ssize_t* nwrite) WARN_UNUSED_RESULT;
 
  private:
-  using tcp::TcpClient::Write;
+  using network::tcp::TcpClient::Write;
 };
 
 }  // namespace inner

@@ -26,6 +26,8 @@
 
 namespace fasto {
 namespace fastotv {
+namespace network {
+
 
 class EvLoopObserver {
  public:
@@ -43,16 +45,16 @@ class LibEvLoop {
 
   void setObserver(EvLoopObserver* observer);
 
-  void start_io(ev_io* io);
-  void stop_io(ev_io* io);
+  void StartIO(ev_io* io);
+  void StopIO(ev_io* io);
 
-  void start_timer(ev_timer* timer);
-  void stop_timer(ev_timer* timer);
+  void StartTimer(ev_timer* timer);
+  void StopTimer(ev_timer* timer);
 
   void ExecInLoopThread(async_loop_exec_function_t async_cb) const;
 
-  int exec();
-  void stop();
+  int Exec();
+  void Stop();
 
   bool IsLoopThread() const;
 
@@ -65,5 +67,6 @@ class LibEvLoop {
   ev_async* async_stop_;
 };
 
+}
 }  // namespace fastotv
 }  // namespace fasto

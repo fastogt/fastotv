@@ -27,22 +27,24 @@
 
 namespace fasto {
 namespace fastotv {
+namespace network {
 namespace tcp {
 class TcpServer;
 }  // namespace tcp
+}
 
 namespace server {
 namespace inner {
 
 class InnerTcpClient : public fastotv::inner::InnerClient {
  public:
-  InnerTcpClient(tcp::TcpServer* server, const common::net::socket_info& info);
+  InnerTcpClient(network::tcp::TcpServer* server, const common::net::socket_info& info);
   ~InnerTcpClient();
 
-  virtual const char* className() const;
+  virtual const char* ClassName() const override;
 
-  void setServerHostInfo(const AuthInfo& info);
-  AuthInfo serverHostInfo() const;
+  void SetServerHostInfo(const AuthInfo& info);
+  AuthInfo ServerHostInfo() const;
 
  private:
   AuthInfo hinfo_;

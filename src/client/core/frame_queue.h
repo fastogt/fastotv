@@ -9,6 +9,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 template <size_t buffer_size>
@@ -80,5 +81,6 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
 };
 
 }  // namespace core
+}
 }
 }

@@ -2,6 +2,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 AudioFrame::AudioFrame() : frame(av_frame_alloc()), serial(0), pts(0), duration(0), pos(0) {}
@@ -16,5 +17,6 @@ void AudioFrame::ClearFrame() {
 }
 
 }  // namespace core
+}
 }
 }

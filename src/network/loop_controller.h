@@ -25,6 +25,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace network {
 
 namespace tcp {
 class ITcpLoop;
@@ -36,9 +37,9 @@ class ILoopController {
   ILoopController();
   virtual ~ILoopController();
 
-  void start();
-  int exec();
-  void stop();
+  void Start();
+  int Exec();
+  void Stop();
   void ExecInLoopThread(async_loop_exec_function_t func) const;
 
  protected:
@@ -48,8 +49,8 @@ class ILoopController {
  private:
   virtual tcp::ITcpLoopObserver* CreateHandler() = 0;
   virtual tcp::ITcpLoop* CreateServer(tcp::ITcpLoopObserver* handler) = 0;
-  virtual void started() = 0;
-  virtual void stoped() = 0;
+  virtual void Started() = 0;
+  virtual void Stoped() = 0;
 };
 
 class ILoopThreadController : public ILoopController {
@@ -57,19 +58,20 @@ class ILoopThreadController : public ILoopController {
   ILoopThreadController();
   virtual ~ILoopThreadController();
 
-  int join();
+  int Join();
 
  private:
-  using ILoopController::exec;
+  using ILoopController::Exec;
 
   virtual tcp::ITcpLoopObserver* CreateHandler() override = 0;
   virtual tcp::ITcpLoop* CreateServer(tcp::ITcpLoopObserver* handler) override = 0;
 
-  virtual void started() override;
-  virtual void stoped() override;
+  virtual void Started() override;
+  virtual void Stoped() override;
 
   common::shared_ptr<common::threads::Thread<int> > loop_thread_;
 };
 
+}
 }  // namespace fastotv
 }  // namespace fasto

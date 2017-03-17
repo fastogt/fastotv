@@ -2,6 +2,8 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {}  // namespace core
+}
 }
 }

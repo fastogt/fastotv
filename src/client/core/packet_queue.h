@@ -20,6 +20,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 struct SAVPacket {
@@ -69,5 +70,6 @@ class PacketQueue {  // compressed queue data
 };
 
 }  // namespace core
+}
 }
 }

@@ -36,7 +36,8 @@
 namespace {
 
 int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  fasto::fastotv::TvConfig* pconfig = reinterpret_cast<fasto::fastotv::TvConfig*>(user);
+  fasto::fastotv::client::TvConfig* pconfig =
+      reinterpret_cast<fasto::fastotv::client::TvConfig*>(user);
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
   if (MATCH(SETTINGS_SECTION_LABEL, LOGIN_SETTING_LABEL)) {
@@ -53,20 +54,21 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
 
 namespace fasto {
 namespace fastotv {
-namespace network {
+namespace client {
 
 NetworkController::NetworkController(const std::string& config_path)
-    : ILoopThreadController(), config_() {
-  config_path_ = common::file_system::realpath_from_filename(config_path);
+    : ILoopThreadController(),
+      config_path_(common::file_system::realpath_from_filename(config_path)),
+      config_() {
   readConfig();
 }
 
 void NetworkController::Start() {
-  ILoopThreadController::start();
+  ILoopThreadController::Start();
 }
 
 void NetworkController::Stop() {
-  ILoopThreadController::stop();
+  ILoopThreadController::Stop();
 }
 
 NetworkController::~NetworkController() {
@@ -81,11 +83,11 @@ TvConfig NetworkController::config() const {
   return config_;
 }
 
-void NetworkController::setConfig(const TvConfig& config) {
+void NetworkController::SetConfig(const TvConfig& config) {
   config_ = config;
   client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
   if (handler) {
-    handler->setConfig(config);
+    handler->SetConfig(config);
   }
 }
 
@@ -122,16 +124,16 @@ void NetworkController::readConfig() {
     INFO_LOG() << "Can't load config path: " << path << ", use default settings.";
   }
 
-  setConfig(config);
+  SetConfig(config);
 }
 
-tcp::ITcpLoopObserver* NetworkController::CreateHandler() {
+network::tcp::ITcpLoopObserver* NetworkController::CreateHandler() {
   client::inner::InnerTcpHandler* handler =
       new client::inner::InnerTcpHandler(g_service_host, config_);
   return handler;
 }
 
-tcp::ITcpLoop* NetworkController::CreateServer(tcp::ITcpLoopObserver* handler) {
+network::tcp::ITcpLoop* NetworkController::CreateServer(network::tcp::ITcpLoopObserver* handler) {
   client::inner::InnerTcpServer* serv = new client::inner::InnerTcpServer(handler);
   serv->SetName("local_inner_server");
   return serv;

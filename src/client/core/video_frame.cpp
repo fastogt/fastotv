@@ -5,6 +5,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 VideoFrame::VideoFrame()
@@ -51,5 +52,6 @@ clock_t VideoFrame::VpDuration(core::VideoFrame* vp,
 }
 
 }  // namespace core
+}
 }
 }

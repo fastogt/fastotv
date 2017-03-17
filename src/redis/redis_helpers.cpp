@@ -89,16 +89,16 @@ common::Error parse_user_json(const char* userJson, UserInfo* out_info) {
 
 RedisStorage::RedisStorage() : config_() {}
 
-void RedisStorage::setConfig(const redis_configuration_t& config) {
+void RedisStorage::SetConfig(const redis_configuration_t& config) {
   config_ = config;
 }
 
-common::Error RedisStorage::findUserAuth(const AuthInfo& user) const {
+common::Error RedisStorage::FindUserAuth(const AuthInfo& user) const {
   UserInfo uinf;
-  return findUser(user, &uinf);
+  return FindUser(user, &uinf);
 }
 
-common::Error RedisStorage::findUser(const AuthInfo& user, UserInfo* uinf) const {
+common::Error RedisStorage::FindUser(const AuthInfo& user, UserInfo* uinf) const {
   if (!user.IsValid() || !uinf) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }

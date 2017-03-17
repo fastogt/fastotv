@@ -165,5 +165,5 @@ void sync_config() {
     INFO_LOG() << "Can't load config " << config_path << ", use default settings.";
   }
 
-  server->setConfig(config);
+  server->SetConfig(config);
 }

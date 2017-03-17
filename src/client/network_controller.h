@@ -29,9 +29,9 @@
 
 namespace fasto {
 namespace fastotv {
-namespace network {
+namespace client {
 
-class NetworkController : private ILoopThreadController {
+class NetworkController : private fasto::fastotv::network::ILoopThreadController {
  public:
   NetworkController(const std::string& config_path);
   ~NetworkController();
@@ -40,7 +40,7 @@ class NetworkController : private ILoopThreadController {
   void Stop();
   AuthInfo authInfo() const;
   TvConfig config() const;
-  void setConfig(const TvConfig& config);
+  void SetConfig(const TvConfig& config);
 
   void RequestChannels() const;
 
@@ -48,10 +48,10 @@ class NetworkController : private ILoopThreadController {
   void readConfig();
   void saveConfig();
 
-  virtual tcp::ITcpLoopObserver* CreateHandler() override;
-  virtual tcp::ITcpLoop* CreateServer(tcp::ITcpLoopObserver* handler) override;
+  virtual network::tcp::ITcpLoopObserver* CreateHandler() override;
+  virtual network::tcp::ITcpLoop* CreateServer(network::tcp::ITcpLoopObserver* handler) override;
 
-  std::string config_path_;
+  const std::string config_path_;
   TvConfig config_;
 };
 

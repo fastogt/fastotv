@@ -26,14 +26,14 @@ namespace server {
 namespace inner {
 
 InnerTcpServer::InnerTcpServer(const common::net::HostAndPort& host,
-                               tcp::ITcpLoopObserver* observer)
+                               network::tcp::ITcpLoopObserver* observer)
     : TcpServer(host, observer) {}
 
-const char* InnerTcpServer::className() const {
+const char* InnerTcpServer::ClassName() const {
   return "InnerTcpServer";
 }
 
-tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
+network::tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
   InnerTcpClient* client = new InnerTcpClient(this, info);
   return client;
 }

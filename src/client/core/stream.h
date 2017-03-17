@@ -12,6 +12,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 class Clock;
 class PacketQueue;
@@ -69,5 +70,6 @@ class AudioStream : public Stream {
 };
 
 }  // namespace core
+}
 }
 }

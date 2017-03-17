@@ -1,3 +1,9 @@
 #include "client/core/frame_queue.h"
 
-namespace core {}  // namespace core
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {}
+}
+}
+}

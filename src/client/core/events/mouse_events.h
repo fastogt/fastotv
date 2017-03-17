@@ -22,6 +22,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 namespace events {
 
@@ -45,6 +46,7 @@ typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
 typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
 
 }  // namespace events {
+}
 }
 }
 }

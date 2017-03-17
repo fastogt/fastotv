@@ -29,7 +29,7 @@ namespace {
 
 struct fasto_async_cb {
   ev_async async;
-  fasto::fastotv::async_loop_exec_function_t func;
+  fasto::fastotv::network::async_loop_exec_function_t func;
 };
 
 void async_exec_cb(struct ev_loop* loop, struct ev_async* watcher, int revents) {
@@ -44,6 +44,8 @@ void async_exec_cb(struct ev_loop* loop, struct ev_async* watcher, int revents) 
 
 namespace fasto {
 namespace fastotv {
+namespace network {
+
 
 EvLoopObserver::~EvLoopObserver() {}
 
@@ -51,7 +53,7 @@ LibEvLoop::LibEvLoop()
     : loop_(ev_loop_new(0)),
       observer_(nullptr),
       exec_id_(),
-      async_stop_((struct ev_async*)calloc(1, sizeof(struct ev_async))) {
+      async_stop_(static_cast<struct ev_async*>(calloc(1, sizeof(struct ev_async)))) {
   ev_async_init(async_stop_, stop_cb);
   ev_set_userdata(loop_, this);
 }
@@ -67,22 +69,22 @@ void LibEvLoop::setObserver(EvLoopObserver* observer) {
   observer_ = observer;
 }
 
-void LibEvLoop::start_io(ev_io* io) {
+void LibEvLoop::StartIO(ev_io* io) {
   CHECK(IsLoopThread());
   ev_io_start(loop_, io);
 }
 
-void LibEvLoop::stop_io(ev_io* io) {
+void LibEvLoop::StopIO(ev_io* io) {
   CHECK(IsLoopThread());
   ev_io_stop(loop_, io);
 }
 
-void LibEvLoop::start_timer(ev_timer* timer) {
+void LibEvLoop::StartTimer(ev_timer* timer) {
   CHECK(IsLoopThread());
   ev_timer_start(loop_, timer);
 }
 
-void LibEvLoop::stop_timer(ev_timer* timer) {
+void LibEvLoop::StopTimer(ev_timer* timer) {
   CHECK(IsLoopThread());
   ev_timer_stop(loop_, timer);
 }
@@ -91,7 +93,8 @@ void LibEvLoop::ExecInLoopThread(async_loop_exec_function_t async_cb) const {
   if (IsLoopThread()) {
     async_cb();
   } else {
-    fasto_async_cb* cb = (struct fasto_async_cb*)calloc(1, sizeof(struct fasto_async_cb));
+    fasto_async_cb* cb =
+        static_cast<struct fasto_async_cb*>(calloc(1, sizeof(struct fasto_async_cb)));
     cb->func = async_cb;
 
     ev_async_cb_init_fasto(cb, async_exec_cb);
@@ -100,7 +103,7 @@ void LibEvLoop::ExecInLoopThread(async_loop_exec_function_t async_cb) const {
   }
 }
 
-int LibEvLoop::exec() {
+int LibEvLoop::Exec() {
   exec_id_ = common::threads::PlatformThread::currentId();
 
   ev_async_start(loop_, async_stop_);
@@ -118,7 +121,7 @@ bool LibEvLoop::IsLoopThread() const {
   return exec_id_ == common::threads::PlatformThread::currentId();
 }
 
-void LibEvLoop::stop() {
+void LibEvLoop::Stop() {
   ev_async_send(loop_, async_stop_);
 }
 
@@ -133,5 +136,6 @@ void LibEvLoop::stop_cb(struct ev_loop* loop, struct ev_async* watcher, int reve
   ev_unloop(loop, EVUNLOOP_ONE);
 }
 
+}
 }  // namespace fastotv
 }  // namespace fasto

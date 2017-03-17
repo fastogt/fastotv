@@ -11,6 +11,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
@@ -198,5 +199,6 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
 }
 
 }  // namespace core
+}
 }
 }

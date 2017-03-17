@@ -10,6 +10,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 namespace events {
 
@@ -38,6 +39,7 @@ typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
 typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;
 
 }  // namespace events {
+}
 }
 }
 }

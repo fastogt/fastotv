@@ -4,6 +4,7 @@
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 AppOptions::AppOptions()
@@ -100,5 +101,6 @@ ComplexOptions& ComplexOptions::operator=(const ComplexOptions& rhs) {
 }
 
 }  // namespace core
+}
 }
 }

@@ -8,6 +8,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
+namespace client {
 namespace core {
 
 Clock::Clock(const common::atomic<serial_id_t>& queue_serial)
@@ -52,5 +53,6 @@ void Clock::SetPaused(bool paused) {
 }
 
 }  // namespace core
+}
 }
 }

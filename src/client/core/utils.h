@@ -29,6 +29,7 @@ struct SwsContext;
 
 namespace fasto {
 namespace fastotv {
+  namespace client {
 namespace core {
 
 double q2d_diff(AVRational a);
@@ -116,5 +117,6 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1,
                    int64_t channel_count2);
 
 }  // namespace core
+}
 }
 }

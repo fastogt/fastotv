@@ -30,20 +30,20 @@ namespace fastotv {
 namespace server {
 namespace inner {
 
-InnerTcpClient::InnerTcpClient(tcp::TcpServer* server, const common::net::socket_info& info)
+InnerTcpClient::InnerTcpClient(network::tcp::TcpServer* server, const common::net::socket_info& info)
     : InnerClient(server, info), hinfo_() {}
 
-const char* InnerTcpClient::className() const {
+const char* InnerTcpClient::ClassName() const {
   return "InnerTcpClient";
 }
 
 InnerTcpClient::~InnerTcpClient() {}
 
-void InnerTcpClient::setServerHostInfo(const AuthInfo& info) {
+void InnerTcpClient::SetServerHostInfo(const AuthInfo& info) {
   hinfo_ = info;
 }
 
-AuthInfo InnerTcpClient::serverHostInfo() const {
+AuthInfo InnerTcpClient::ServerHostInfo() const {
   return hinfo_;
 }
 
