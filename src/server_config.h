@@ -20,7 +20,7 @@
 
 #include <common/net/types.h>
 
-#define SERVICE_HOST_NAME "siteonyourdevice.com"
+#define SERVICE_HOST_NAME "46.101.148.105"
 #define SERVICE_HOST_PORT 7040
 
 namespace fasto {
