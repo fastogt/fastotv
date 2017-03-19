@@ -347,7 +347,7 @@ bool Player::HandleRequestWindow(core::VideoState* stream) {
   std::string name;
   for (size_t i = 0; i < play_list_.size(); ++i) {
     if (play_list_[i].Id() == stream->Id()) {
-      name = play_list_[i].Name();
+      name = play_list_[i].GetName();
       break;
     }
   }
@@ -711,7 +711,7 @@ void Player::SwitchToErrorMode() {
   Url url;
   std::string name_str = "Unknown";
   if (GetCurrentUrl(&url)) {
-    name_str = url.Name();
+    name_str = url.GetName();
   }
 
   CalculateDispalySize();

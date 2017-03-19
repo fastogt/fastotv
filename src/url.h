@@ -36,7 +36,7 @@ class Url {
 
   bool IsValid() const;
   common::uri::Uri GetUrl() const;
-  std::string Name() const;
+  std::string GetName() const;
   stream_id Id() const;
 
   static json_object* MakeJobject(const Url& url);  // allocate json_object
