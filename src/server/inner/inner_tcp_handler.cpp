@@ -144,12 +144,12 @@ bool InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
   return sub_commands_in_->PublishToChannelOut(msg);
 }
 
-void InnerTcpHandlerHost::PublishStateToChannel(const std::string& login, bool connected) {
+void InnerTcpHandlerHost::PublishStateToChannel(user_id_t uid, bool connected) {
   std::string connected_resp;
   if (!connected) {
-    connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_DISCONNECTED_1S, login);
+    connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_DISCONNECTED_1S, uid);
   } else {
-    connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_CONNECTED_1S, login);
+    connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_CONNECTED_1S, uid);
   }
   bool res = sub_commands_in_->PublishStateToChannel(connected_resp);
   if (!res) {
@@ -314,7 +314,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
 
         bool is_ok = parent_->RegisterInnerConnectionByUser(uid, uauth, connection);
         if (is_ok) {
-          PublishStateToChannel(login, true);
+          PublishStateToChannel(uid, true);
         }
       } else {
         cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
