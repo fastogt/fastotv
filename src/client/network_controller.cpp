@@ -20,8 +20,6 @@
 
 #include <string>
 
-#include "inih/ini.h"
-
 #include <common/convert2string.h>
 #include <common/file_system.h>
 #include <common/logger.h>
@@ -33,35 +31,11 @@
 
 #include "server_config.h"
 
-namespace {
-
-int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  fasto::fastotv::client::TvConfig* pconfig =
-      reinterpret_cast<fasto::fastotv::client::TvConfig*>(user);
-
-#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-  if (MATCH(SETTINGS_SECTION_LABEL, LOGIN_SETTING_LABEL)) {
-    pconfig->login = value;
-    return 1;
-  } else if (MATCH(SETTINGS_SECTION_LABEL, PASSWORD_SETTING_LABEL)) {
-    pconfig->password = value;
-    return 1;
-  } else {
-    return 0;
-  }
-}
-}  // namespace
-
 namespace fasto {
 namespace fastotv {
 namespace client {
 
-NetworkController::NetworkController(const std::string& config_path)
-    : ILoopThreadController(),
-      config_path_(common::file_system::realpath_from_filename(config_path)),
-      config_() {
-  readConfig();
-}
+NetworkController::NetworkController() : ILoopThreadController() {}
 
 void NetworkController::Start() {
   ILoopThreadController::Start();
@@ -71,24 +45,10 @@ void NetworkController::Stop() {
   ILoopThreadController::Stop();
 }
 
-NetworkController::~NetworkController() {
-  saveConfig();
-}
+NetworkController::~NetworkController() {}
 
-AuthInfo NetworkController::authInfo() const {
-  return AuthInfo(config_.login, config_.password);
-}
-
-TvConfig NetworkController::config() const {
-  return config_;
-}
-
-void NetworkController::SetConfig(const TvConfig& config) {
-  config_ = config;
-  client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
-  if (handler) {
-    handler->SetConfig(config);
-  }
+AuthInfo NetworkController::GetAuthInfo() {
+  return AuthInfo(USER_SPECIFIC_DEFAULT_LOGIN, USER_SPECIFIC_DEFAULT_PASSWORD);
 }
 
 void NetworkController::RequestChannels() const {
@@ -99,37 +59,9 @@ void NetworkController::RequestChannels() const {
   }
 }
 
-void NetworkController::saveConfig() {
-  common::file_system::ascii_string_path configPath(config_path_);
-  common::file_system::File configSave(configPath);
-  if (!configSave.open("w")) {
-    return;
-  }
-
-  configSave.write("[" SETTINGS_SECTION_LABEL "]\n");
-  configSave.writeFormated(LOGIN_SETTING_LABEL "=%s\n", config_.login);
-  configSave.writeFormated(PASSWORD_SETTING_LABEL "=%s\n", config_.password);
-  configSave.close();
-}
-
-void NetworkController::readConfig() {
-  const char* path = config_path_.c_str();
-  TvConfig config;
-  // default settings
-  config.login = USER_SPECIFIC_DEFAULT_LOGIN;
-  config.password = USER_SPECIFIC_DEFAULT_PASSWORD;
-
-  // try to parse settings file
-  if (ini_parse(path, ini_handler_fasto, &config) < 0) {
-    INFO_LOG() << "Can't load config path: " << path << ", use default settings.";
-  }
-
-  SetConfig(config);
-}
-
 network::tcp::ITcpLoopObserver* NetworkController::CreateHandler() {
   client::inner::InnerTcpHandler* handler =
-      new client::inner::InnerTcpHandler(g_service_host, config_);
+      new client::inner::InnerTcpHandler(g_service_host, GetAuthInfo());
   return handler;
 }
 

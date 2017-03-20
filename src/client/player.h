@@ -47,13 +47,9 @@ class VideoState;
 
 class NetworkController;
 
-std::string default_config_file_path();
-
 struct PlayerOptions {
   enum { width = 640, height = 480, volume = 100 };
   PlayerOptions();
-
-  std::string config_path;
 
   bool exit_on_keydown;
   bool exit_on_mousedown;

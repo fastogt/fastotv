@@ -107,17 +107,8 @@ bool CreateWindowFunc(int width,
 }
 }  // namespace
 
-std::string default_config_file_path() {
-#ifdef OS_MACOSX
-  return PROJECT_NAME ".app/Contents/Resources/" CONFIG_FILE_NAME;
-#else
-  return CONFIG_FILE_NAME;
-#endif
-}
-
 PlayerOptions::PlayerOptions()
-    : config_path(default_config_file_path()),
-      exit_on_keydown(false),
+    : exit_on_keydown(false),
       exit_on_mousedown(false),
       is_full_screen(false),
       default_width(width),
@@ -146,10 +137,8 @@ Player::Player(const PlayerOptions& options,
       height_(0),
       xleft_(0),
       ytop_(0),
-      controller_(nullptr) {
+      controller_(new NetworkController) {
   // stable options
-  controller_ = new NetworkController(options.config_path);
-
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
   }

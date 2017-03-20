@@ -25,7 +25,6 @@
 #include "infos.h"
 
 #include "network/loop_controller.h"
-#include "tv_config.h"
 
 namespace fasto {
 namespace fastotv {
@@ -33,26 +32,18 @@ namespace client {
 
 class NetworkController : private fasto::fastotv::network::ILoopThreadController {
  public:
-  NetworkController(const std::string& config_path);
+  NetworkController();
   ~NetworkController();
 
   void Start();
   void Stop();
-  AuthInfo authInfo() const;
-  TvConfig config() const;
-  void SetConfig(const TvConfig& config);
+  static AuthInfo GetAuthInfo();
 
   void RequestChannels() const;
 
  private:
-  void readConfig();
-  void saveConfig();
-
   virtual network::tcp::ITcpLoopObserver* CreateHandler() override;
   virtual network::tcp::ITcpLoop* CreateServer(network::tcp::ITcpLoopObserver* handler) override;
-
-  const std::string config_path_;
-  TvConfig config_;
 };
 
 }  // namespace network

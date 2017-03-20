@@ -24,8 +24,6 @@
 
 #include "network/tcp/tcp_server.h"
 
-#include "client/tv_config.h"
-
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -38,11 +36,8 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
     ping_timeout_server = 30  // sec
   };
 
-  explicit InnerTcpHandler(const common::net::HostAndPort& innerHost, const TvConfig& config);
+  explicit InnerTcpHandler(const common::net::HostAndPort& innerHost, const AuthInfo& ainf);
   ~InnerTcpHandler();
-
-  AuthInfo GetAuthInfo() const;
-  void SetConfig(const TvConfig& config);
 
   void RequestChannels();  // should be execute in network thread
 
@@ -69,11 +64,11 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
                                          int argc,
                                          char* argv[]) override;
 
-  TvConfig config_;
   fasto::fastotv::inner::InnerClient* inner_connection_;
   network::timer_id_t ping_server_id_timer_;
 
   const common::net::HostAndPort innerHost_;
+  const AuthInfo ainf_;
 };
 
 }  // namespace inner

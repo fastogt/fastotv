@@ -48,11 +48,11 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
-InnerTcpHandler::InnerTcpHandler(const common::net::HostAndPort& innerHost, const TvConfig& config)
-    : config_(config),
-      inner_connection_(nullptr),
+InnerTcpHandler::InnerTcpHandler(const common::net::HostAndPort& innerHost, const AuthInfo& ainf)
+    : inner_connection_(nullptr),
       ping_server_id_timer_(INVALID_TIMER_ID),
-      innerHost_(innerHost) {}
+      innerHost_(innerHost),
+      ainf_(ainf) {}
 
 InnerTcpHandler::~InnerTcpHandler() {
   delete inner_connection_;
@@ -69,7 +69,7 @@ void InnerTcpHandler::PreLooped(network::tcp::ITcpLoop* server) {
   if (err && err->isError()) {
     DEBUG_MSG_ERROR(err);
     auto ex_event =
-        make_exception_event(new core::events::ClientConnectedEvent(this, GetAuthInfo()), err);
+        make_exception_event(new core::events::ClientConnectedEvent(this, ainf_), err);
     fApp->PostEvent(ex_event);
     return;
   }
@@ -90,7 +90,7 @@ void InnerTcpHandler::Moved(network::tcp::TcpClient* client) {
 
 void InnerTcpHandler::Closed(network::tcp::TcpClient* client) {
   if (client == inner_connection_) {
-    fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, GetAuthInfo()));
+    fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, ainf_));
     inner_connection_ = nullptr;
     return;
   }
@@ -138,14 +138,6 @@ void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer
   }
 }
 
-AuthInfo InnerTcpHandler::GetAuthInfo() const {
-  return AuthInfo(config_.login, config_.password);
-}
-
-void InnerTcpHandler::SetConfig(const TvConfig& config) {
-  config_ = config;
-}
-
 void InnerTcpHandler::RequestChannels() {
   if (inner_connection_) {
     const cmd_request_t channels_request = GetChannelsRequest(NextId());
@@ -175,8 +167,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       DEBUG_MSG_ERROR(err);
     }
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
-    AuthInfo ainf = GetAuthInfo();
-    json_object* jain = AuthInfo::MakeJobject(ainf);
+    json_object* jain = AuthInfo::MakeJobject(ainf_);
     std::string auth_str = json_object_get_string(jain);
     json_object_put(jain);
     std::string enc_auth = common::HexEncode(auth_str, false);
@@ -311,7 +302,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       const char* okrespcommand = argv[1];
       if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
-        fApp->PostEvent(new core::events::ClientConnectedEvent(this, GetAuthInfo()));
+        fApp->PostEvent(new core::events::ClientConnectedEvent(this, ainf_));
       }
     }
   } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {

@@ -21,11 +21,11 @@
 #include "client/core/events/events_base.h"
 
 #include "infos.h"
-#include "client/tv_config.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+class TvConfig {};
 namespace core {
 namespace events {
 
