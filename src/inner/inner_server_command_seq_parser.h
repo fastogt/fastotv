@@ -33,8 +33,8 @@ class RequestCallback {
  public:
   typedef std::function<void(cmd_seq_t request_id, int argc, char* argv[])> callback_t;
   RequestCallback(cmd_seq_t request_id, callback_t cb);
-  cmd_seq_t request_id() const;
-  void execute(int argc, char* argv[]);
+  cmd_seq_t GetRequestID() const;
+  void Execute(int argc, char* argv[]);
 
  private:
   cmd_seq_t request_id_;
@@ -43,6 +43,8 @@ class RequestCallback {
 
 class InnerServerCommandSeqParser {
  public:
+  typedef uintmax_t id_t;
+
   InnerServerCommandSeqParser();
   virtual ~InnerServerCommandSeqParser();
 
@@ -51,7 +53,7 @@ class InnerServerCommandSeqParser {
  protected:
   void HandleInnerDataReceived(InnerClient* connection, char* buff, size_t buff_len);
 
-  cmd_seq_t NextId();  // for requests
+  cmd_seq_t NextRequestID();  // for requests
 
  private:
   void ProcessRequest(cmd_seq_t request_id, int argc, char* argv[]);
@@ -72,7 +74,7 @@ class InnerServerCommandSeqParser {
       int argc,
       char* argv[]) = 0;  // called when argv not NULL and argc > 0
 
-  common::atomic<uintmax_t> id_;
+  common::atomic<id_t> id_;
   std::vector<RequestCallback> subscribed_requests_;
 };
 

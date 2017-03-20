@@ -39,11 +39,11 @@ namespace inner {
 RequestCallback::RequestCallback(cmd_seq_t request_id, callback_t cb)
     : request_id_(request_id), cb_(cb) {}
 
-cmd_seq_t RequestCallback::request_id() const {
+cmd_seq_t RequestCallback::GetRequestID() const {
   return request_id_;
 }
 
-void RequestCallback::execute(int argc, char* argv[]) {
+void RequestCallback::Execute(int argc, char* argv[]) {
   if (!cb_) {
     return;
   }
@@ -55,19 +55,19 @@ InnerServerCommandSeqParser::InnerServerCommandSeqParser() : id_() {}
 
 InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
 
-cmd_seq_t InnerServerCommandSeqParser::NextId() {
-  size_t NextId = id_++;
-  char bytes[sizeof(size_t)];
-  betoh_memcpy(&bytes, &NextId, sizeof(bytes));
-  std::string hex = common::HexEncode(&bytes, sizeof(bytes), true);
-  return hex;
+cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
+  id_t next_id = id_++;
+  std::array<char, sizeof(id_t)> bytes;
+  betoh_memcpy(&bytes, &next_id, sizeof(id_t));
+  cmd_seq_t hexed = common::HexEncode(&bytes, bytes.size(), true);
+  return hexed;
 }
 
 namespace {
 
 bool exec_reqest(RequestCallback req, cmd_seq_t request_id, int argc, char* argv[]) {
-  if (request_id == req.request_id()) {
-    req.execute(argc, argv);
+  if (request_id == req.GetRequestID()) {
+    req.Execute(argc, argv);
     return true;
   }
 

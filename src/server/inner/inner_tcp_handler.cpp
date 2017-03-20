@@ -79,7 +79,7 @@ void InnerTcpHandlerHost::TimerEmited(network::tcp::ITcpLoop* server, network::t
     std::vector<network::tcp::TcpClient*> online_clients = server->Clients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
       network::tcp::TcpClient* client = online_clients[i];
-      const cmd_request_t ping_request = PingRequest(NextId());
+      const cmd_request_t ping_request = PingRequest(NextRequestID());
       ssize_t nwrite = 0;
       common::Error err = client->Write(ping_request.data(), ping_request.size(), &nwrite);
       INFO_LOG() << "Pinged sended " << nwrite << " byte, client[" << client->FormatedName()
@@ -96,7 +96,7 @@ void InnerTcpHandlerHost::TimerEmited(network::tcp::ITcpLoop* server, network::t
 
 void InnerTcpHandlerHost::Accepted(network::tcp::TcpClient* client) {
   ssize_t nwrite = 0;
-  cmd_request_t whoareyou = WhoAreYouRequest(NextId());
+  cmd_request_t whoareyou = WhoAreYouRequest(NextRequestID());
   common::Error err = client->Write(whoareyou.data(), whoareyou.size(), &nwrite);
   if (err && err->isError()) {
     DEBUG_MSG_ERROR(err);

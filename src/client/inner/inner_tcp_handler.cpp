@@ -68,8 +68,7 @@ void InnerTcpHandler::PreLooped(network::tcp::ITcpLoop* server) {
       common::net::connect(innerHost_, common::net::ST_SOCK_STREAM, 0, &client_info);
   if (err && err->isError()) {
     DEBUG_MSG_ERROR(err);
-    auto ex_event =
-        make_exception_event(new core::events::ClientConnectedEvent(this, ainf_), err);
+    auto ex_event = make_exception_event(new core::events::ClientConnectedEvent(this, ainf_), err);
     fApp->PostEvent(ex_event);
     return;
   }
@@ -126,7 +125,7 @@ void InnerTcpHandler::PostLooped(network::tcp::ITcpLoop* server) {
 void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer_id_t id) {
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
-    const cmd_request_t ping_request = PingRequest(NextId());
+    const cmd_request_t ping_request = PingRequest(NextRequestID());
     ssize_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->Write(ping_request, &nwrite);
@@ -140,7 +139,7 @@ void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer
 
 void InnerTcpHandler::RequestChannels() {
   if (inner_connection_) {
-    const cmd_request_t channels_request = GetChannelsRequest(NextId());
+    const cmd_request_t channels_request = GetChannelsRequest(NextRequestID());
     ssize_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->Write(channels_request, &nwrite);
@@ -293,7 +292,6 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
                                                 cmd_seq_t id,
                                                 int argc,
                                                 char* argv[]) {
-  UNUSED(connection);
   UNUSED(id);
   char* command = argv[0];
 
@@ -302,6 +300,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       const char* okrespcommand = argv[1];
       if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
+        connection->SetName(ainf_.login);
         fApp->PostEvent(new core::events::ClientConnectedEvent(this, ainf_));
       }
     }
