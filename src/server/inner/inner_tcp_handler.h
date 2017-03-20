@@ -66,7 +66,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
   inner::InnerTcpClient* FindInnerConnectionByID(const std::string& login) const;
 
  private:
-  void PublishStateToChannel(const std::string& login, bool connected);
+  void PublishStateToChannel(user_id_t uid, bool connected);
 
   virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
