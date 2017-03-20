@@ -48,7 +48,7 @@ struct Config {
 class ServerHost {
  public:
   enum { timeout_seconds = 1 };
-  typedef std::unordered_map<std::string, inner::InnerTcpClient*> inner_connections_type;
+  typedef std::unordered_map<user_id_t, inner::InnerTcpClient*> inner_connections_type;
 
   explicit ServerHost(const common::net::HostAndPort& host);
   ~ServerHost();
@@ -57,12 +57,15 @@ class ServerHost {
   int exec();
 
   bool UnRegisterInnerConnectionByHost(network::tcp::TcpClient* connection) WARN_UNUSED_RESULT;
-  bool RegisterInnerConnectionByUser(const AuthInfo& user,
+  bool RegisterInnerConnectionByUser(user_id_t user_id,
+                                     const AuthInfo& user,
                                      network::tcp::TcpClient* connection) WARN_UNUSED_RESULT;
-  common::Error FindUserAuth(const AuthInfo& user) const WARN_UNUSED_RESULT;
-  common::Error FindUser(const AuthInfo& auth, UserInfo* uinf) const WARN_UNUSED_RESULT;
+  common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;
+  common::Error FindUser(const AuthInfo& auth,
+                         user_id_t* uid,
+                         UserInfo* uinf) const WARN_UNUSED_RESULT;
 
-  inner::InnerTcpClient* FindInnerConnectionByLogin(const std::string& login) const;
+  inner::InnerTcpClient* FindInnerConnectionByID(user_id_t user_id) const;
   void SetConfig(const Config& conf);
 
  private:

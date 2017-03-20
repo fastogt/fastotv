@@ -109,17 +109,18 @@ bool ServerHost::UnRegisterInnerConnectionByHost(network::tcp::TcpClient* connec
     return false;
   }
 
-  AuthInfo hinf = iconnection->ServerHostInfo();
-  if (!hinf.IsValid()) {
+  user_id_t uid = iconnection->GetUid();
+  if (uid.empty()) {
     return false;
   }
 
-  std::string login = hinf.login;
-  connections_.erase(login);
+  connections_.erase(uid);
   return true;
 }
 
-bool ServerHost::RegisterInnerConnectionByUser(const AuthInfo& user, network::tcp::TcpClient* connection) {
+bool ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
+                                               const AuthInfo& user,
+                                               network::tcp::TcpClient* connection) {
   CHECK(user.IsValid());
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
@@ -128,23 +129,24 @@ bool ServerHost::RegisterInnerConnectionByUser(const AuthInfo& user, network::tc
   }
 
   iconnection->SetServerHostInfo(user);
+  iconnection->SetUid(user_id);
 
   std::string login = user.login;
-  connections_[login] = iconnection;
+  connections_[user_id] = iconnection;
   connection->SetName(login);
   return true;
 }
 
-common::Error ServerHost::FindUserAuth(const AuthInfo& user) const {
-  return rstorage_.FindUserAuth(user);
+common::Error ServerHost::FindUserAuth(const AuthInfo& user, user_id_t* uid) const {
+  return rstorage_.FindUserAuth(user, uid);
 }
 
-common::Error ServerHost::FindUser(const AuthInfo& auth, UserInfo* uinf) const {
-  return rstorage_.FindUser(auth, uinf);
+common::Error ServerHost::FindUser(const AuthInfo& auth, user_id_t* uid, UserInfo* uinf) const {
+  return rstorage_.FindUser(auth, uid, uinf);
 }
 
-inner::InnerTcpClient* ServerHost::FindInnerConnectionByLogin(const std::string& login) const {
-  inner_connections_type::const_iterator hs = connections_.find(login);
+inner::InnerTcpClient* ServerHost::FindInnerConnectionByID(user_id_t user_id) const {
+  inner_connections_type::const_iterator hs = connections_.find(user_id);
   if (hs == connections_.end()) {
     return nullptr;
   }

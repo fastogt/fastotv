@@ -70,8 +70,8 @@ redisContext* redis_connect(const redis_configuration_t& config) {
   return redis;
 }
 
-common::Error parse_user_json(const char* userJson, UserInfo* out_info) {
-  if (!userJson || !out_info) {
+common::Error parse_user_json(const char* userJson, user_id_t* out_uid, UserInfo* out_info) {
+  if (!userJson || !out_uid || !out_info) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
@@ -80,6 +80,14 @@ common::Error parse_user_json(const char* userJson, UserInfo* out_info) {
     return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);
   }
 
+  json_object* jid = NULL;
+  json_bool jid_exists = json_object_object_get_ex(obj, "id", &jid); // mongodb id
+  if (!jid_exists) {
+    json_object_put(obj);
+    return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);
+  }
+
+  *out_uid = json_object_get_string(jid);
   *out_info = UserInfo::MakeClass(obj);
   json_object_put(obj);
   return common::Error();
@@ -93,13 +101,13 @@ void RedisStorage::SetConfig(const redis_configuration_t& config) {
   config_ = config;
 }
 
-common::Error RedisStorage::FindUserAuth(const AuthInfo& user) const {
+common::Error RedisStorage::FindUserAuth(const AuthInfo& user, user_id_t* uid) const {
   UserInfo uinf;
-  return FindUser(user, &uinf);
+  return FindUser(user, uid, &uinf);
 }
 
-common::Error RedisStorage::FindUser(const AuthInfo& user, UserInfo* uinf) const {
-  if (!user.IsValid() || !uinf) {
+common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserInfo* uinf) const {
+  if (!user.IsValid() || !uid || !uinf) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
@@ -118,7 +126,8 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, UserInfo* uinf) const
 
   const char* userJson = reply->str;
   UserInfo linfo;
-  common::Error err = parse_user_json(userJson, &linfo);
+  user_id_t luid;
+  common::Error err = parse_user_json(userJson, &luid, &linfo);
   if (err && err->isError()) {
     freeReplyObject(reply);
     redisFree(redis);
@@ -131,6 +140,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, UserInfo* uinf) const
     return common::make_error_value("Password missmatch", common::ErrorValue::E_ERROR);
   }
 
+  *uid = luid;
   *uinf = linfo;
   freeReplyObject(reply);
   redisFree(redis);

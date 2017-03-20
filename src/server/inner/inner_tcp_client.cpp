@@ -30,8 +30,9 @@ namespace fastotv {
 namespace server {
 namespace inner {
 
-InnerTcpClient::InnerTcpClient(network::tcp::TcpServer* server, const common::net::socket_info& info)
-    : InnerClient(server, info), hinfo_() {}
+InnerTcpClient::InnerTcpClient(network::tcp::TcpServer* server,
+                               const common::net::socket_info& info)
+    : InnerClient(server, info), hinfo_(), uid_() {}
 
 const char* InnerTcpClient::ClassName() const {
   return "InnerTcpClient";
@@ -45,6 +46,14 @@ void InnerTcpClient::SetServerHostInfo(const AuthInfo& info) {
 
 AuthInfo InnerTcpClient::ServerHostInfo() const {
   return hinfo_;
+}
+
+void InnerTcpClient::SetUid(user_id_t id) {
+  uid_ = id;
+}
+
+user_id_t InnerTcpClient::GetUid() const {
+  return uid_;
 }
 
 }  // namespace inner

@@ -46,8 +46,12 @@ class InnerTcpClient : public fastotv::inner::InnerClient {
   void SetServerHostInfo(const AuthInfo& info);
   AuthInfo ServerHostInfo() const;
 
+  void SetUid(user_id_t id);
+  user_id_t GetUid() const;
+
  private:
   AuthInfo hinfo_;
+  user_id_t uid_;
 };
 
 }  // namespace inner

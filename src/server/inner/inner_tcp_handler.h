@@ -63,7 +63,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
   void SetStorageConfig(const redis_sub_configuration_t& config);
 
   bool PublishToChannelOut(const std::string& msg);
-  inner::InnerTcpClient* FindInnerConnectionByLogin(const std::string& login) const;
+  inner::InnerTcpClient* FindInnerConnectionByID(const std::string& login) const;
 
  private:
   void PublishStateToChannel(const std::string& login, bool connected);

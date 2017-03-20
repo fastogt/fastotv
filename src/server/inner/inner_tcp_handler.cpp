@@ -108,10 +108,8 @@ void InnerTcpHandlerHost::Closed(network::tcp::TcpClient* client) {
   if (is_ok) {
     InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
     if (iconnection) {
-      AuthInfo hinf = iconnection->ServerHostInfo();
-      std::string login = hinf.login;
-
-      PublishStateToChannel(login, false);
+      user_id_t uid = iconnection->GetUid();
+      PublishStateToChannel(uid, false);
     }
   }
 }
@@ -159,9 +157,9 @@ void InnerTcpHandlerHost::PublishStateToChannel(const std::string& login, bool c
   }
 }
 
-inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByLogin(
+inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByID(
     const std::string& login) const {
-  return parent_->FindInnerConnectionByLogin(login);
+  return parent_->FindInnerConnectionByID(login);
 }
 
 void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
@@ -182,7 +180,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
     AuthInfo hinf = client->ServerHostInfo();
     UserInfo user;
-    common::Error err = parent_->FindUser(hinf, &user);
+    user_id_t uid;
+    common::Error err = parent_->FindUser(hinf, &uid, &user);
     if (err && err->isError()) {
       cmd_responce_t resp = GetChannelsResponceFail(id, err->description());
       common::Error err = connection->Write(resp, &nwrite);
@@ -280,7 +279,8 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
           goto fail;
         }
 
-        common::Error err = parent_->FindUserAuth(uauth);
+        user_id_t uid;
+        common::Error err = parent_->FindUserAuth(uauth, &uid);
         if (err && err->isError()) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->description());
           common::Error err = connection->Write(resp, &nwrite);
@@ -291,7 +291,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
         }
 
         std::string login = uauth.login;
-        InnerTcpClient* fclient = parent_->FindInnerConnectionByLogin(login);
+        InnerTcpClient* fclient = parent_->FindInnerConnectionByID(login);
         if (fclient) {
           cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Double connection reject");
           common::Error err = connection->Write(resp, &nwrite);
@@ -312,7 +312,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
           goto fail;
         }
 
-        bool is_ok = parent_->RegisterInnerConnectionByUser(uauth, connection);
+        bool is_ok = parent_->RegisterInnerConnectionByUser(uid, uauth, connection);
         if (is_ok) {
           PublishStateToChannel(login, true);
         }

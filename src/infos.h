@@ -26,6 +26,8 @@
 namespace fasto {
 namespace fastotv {
 
+typedef std::string user_id_t;
+
 struct AuthInfo {
   AuthInfo();
   AuthInfo(const std::string& login, const std::string& password);

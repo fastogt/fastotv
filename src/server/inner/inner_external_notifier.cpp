@@ -62,7 +62,7 @@ void InnerSubHandler::handleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  const std::string login = msg.substr(0, space_pos);
+  const user_id_t uid = msg.substr(0, space_pos);
   const std::string cmd = msg.substr(space_pos + 1);
   const std::string input_command =
       common::MemSPrintf(STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND, cmd);
@@ -77,7 +77,7 @@ void InnerSubHandler::handleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  InnerTcpClient* fclient = parent_->FindInnerConnectionByLogin(login);
+  InnerTcpClient* fclient = parent_->FindInnerConnectionByID(uid);
   if (!fclient) {
     int argc;
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
