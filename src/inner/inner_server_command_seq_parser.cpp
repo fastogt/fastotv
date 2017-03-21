@@ -57,9 +57,9 @@ InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
 
 cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
   id_t next_id = id_++;
-  std::array<char, sizeof(id_t)> bytes;
+  char bytes[sizeof(id_t)];
   betoh_memcpy(&bytes, &next_id, sizeof(id_t));
-  cmd_seq_t hexed = common::HexEncode(&bytes, bytes.size(), true);
+  cmd_seq_t hexed = common::HexEncode(&bytes, sizeof(id_t), true);
   return hexed;
 }
 
