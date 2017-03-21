@@ -205,8 +205,8 @@ class BuildRequest(object):
                 subprocess.call(['pacman', '-S', lib])
         elif platform_name == 'macosx':
             ffmpeg_platform_args = ['--cc=clang', '--cxx=clang++']
-            dep_libs = ['yasm']
-            
+            dep_libs = ['libpng','yasm']
+
             for lib in dep_libs:
                 subprocess.call(['port', 'install', lib])
 
