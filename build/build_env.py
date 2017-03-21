@@ -9,6 +9,9 @@ from pybuild_utils.base import system_info, utils
 
 # Script for building enviroment on clean machine
 
+# Known issues
+# For windows 32 please specify architecture 32
+
 # defines
 CMAKE_SRC_PATH = "https://cmake.org/files/v3.7/cmake-3.7.2.tar.gz"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
@@ -174,14 +177,14 @@ class BuildRequest(object):
             ffmpeg_platform_args = ['--disable-libxcb']
             distribution = linux_get_dist()
             if distribution == 'DEBIAN':
-                dep_libs = ['gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
+                dep_libs = ['git', 'gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
             elif distribution == 'RHEL':
-                dep_libs = ['gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build', 'make',
+                dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build', 'make',
                             'zlib-dev', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
                             'libx11-devel',
@@ -199,23 +202,23 @@ class BuildRequest(object):
         elif platform_name == 'windows':
             ffmpeg_platform_args = []
             if arch.bit() == 64:
-                dep_libs = ['mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
+                dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
                             'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja']
             elif arch.bit() == 32:
-                dep_libs = ['mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
+                dep_libs = ['git', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
                             'mingw-w64-i686-make', 'mingw-w64-i686-ninja']
 
             for lib in dep_libs:
-                subprocess.call(['pacman', '-S', lib])
+                subprocess.call(['pacman', '-SYq', lib])
         elif platform_name == 'macosx':
             ffmpeg_platform_args = ['--cc=clang', '--cxx=clang++']
-            dep_libs = ['yasm', 'make', 'ninja']
+            dep_libs = ['git', 'yasm', 'make', 'ninja']
 
             for lib in dep_libs:
                 subprocess.call(['port', 'install', lib])
 
         # build from sources
-        source_urls = ['{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT), PNG_SRC_PATH, CMAKE_SRC_PATH]
+        source_urls = [PNG_SRC_PATH, CMAKE_SRC_PATH, '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)]
         for url in source_urls:
             build_from_sources(url, prefix_path)
 
