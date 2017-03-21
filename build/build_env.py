@@ -95,12 +95,14 @@ def extract_file(file):
     return splitext(file)
 
 
-def build_ffmpeg(url, prefix_path):
+def build_ffmpeg(url, prefix_path, other_args):
     pwd = os.getcwd()
     file = download_file(url)
     folder = extract_file(file)
     os.chdir(folder)
-    subprocess.call(['./configure', '--prefix={0}'.format(prefix_path), '--disable-libxcb'])
+    ffmpeg_cmd = ['./configure', '--prefix={0}'.format(prefix_path)]
+    ffmpeg_cmd.extend(other_args)
+    subprocess.call(ffmpeg_cmd)
     subprocess.call(['make', 'install'])
     os.chdir(pwd)
     shutil.rmtree(folder)
@@ -163,8 +165,10 @@ class BuildRequest(object):
         platform_name = self.platform_.name()
         arch = self.platform_.arch()
         dep_libs = []
+        ffmpeg_platform_args = []
 
         if platform_name == 'linux':
+            ffmpeg_platform_args = ['--disable-libxcb']
             distribution = linux_get_dist()
             if distribution == 'DEBIAN':
                 dep_libs = ['gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
@@ -191,6 +195,7 @@ class BuildRequest(object):
                 subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
             build_from_sources(CMAKE_SRC_PATH, prefix_path)
         elif platform_name == 'windows':
+            ffmpeg_platform_args = []
             if arch.bit() == 64:
                 dep_libs = ['mingw-w64-x86_64-toolchain', 'mingw-w64-x86_64-yasm']
             elif arch.bit() == 32:
@@ -198,6 +203,8 @@ class BuildRequest(object):
 
             for lib in dep_libs:
                 subprocess.call(['pacman', '-S', lib])
+        elif platform_name == 'macosx':
+            ffmpeg_platform_args = ['--use-clang']
 
         # project static options
         prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(prefix_path)
@@ -225,7 +232,7 @@ class BuildRequest(object):
         for url in source_urls:
             build_from_sources(url, prefix_path)
 
-        build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT), prefix_path)
+        build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT), prefix_path, ffmpeg_platform_args)
 
 
 if __name__ == "__main__":

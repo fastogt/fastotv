@@ -15,7 +15,7 @@
 #cmakedefine01 HAVE_SYS_RESOURCE_H
 #cmakedefine01 HAVE_COMMANDLINETOARGVW
 
-#define FFMPEG_CONFIGURATION "--disable-libxcb"
+#define FFMPEG_CONFIGURATION ""
 #define CC_IDENT "gcc 4.9.2 (Debian 4.9.2-10)"
 #define FFMPEG_DATADIR "/usr/local/share/ffmpeg"
 #endif /* GPU_PLAYER_CONFIG_H */
