@@ -204,7 +204,7 @@ class BuildRequest(object):
             for lib in dep_libs:
                 subprocess.call(['pacman', '-S', lib])
         elif platform_name == 'macosx':
-            ffmpeg_platform_args = ['--use-clang']
+            ffmpeg_platform_args = ['--cc=clang', '--cxx=clang++']
 
         # project static options
         prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(prefix_path)
