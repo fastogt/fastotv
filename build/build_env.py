@@ -171,10 +171,14 @@ class BuildRequest(object):
         platform_name = self.platform_.name()
         arch = self.platform_.arch()
         dep_libs = []
-        ffmpeg_platform_args = []
+        ffmpeg_platform_args = ['--disable-opencl',
+                                '--disable-lzma', '--disable-iconv',
+                                '--disable-shared', '--enable-static',
+                                '--disable-debug', '--disable-ffserver',
+                                '--extra-cflags=--static', '--extra-version=static']
 
         if platform_name == 'linux':
-            ffmpeg_platform_args = ['--disable-libxcb']
+            ffmpeg_platform_args.extend(['--disable-libxcb'])
             distribution = linux_get_dist()
             if distribution == 'DEBIAN':
                 dep_libs = ['git', 'gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
@@ -200,7 +204,7 @@ class BuildRequest(object):
             if distribution == 'RHEL':
                 subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
         elif platform_name == 'windows':
-            ffmpeg_platform_args = []
+            #ffmpeg_platform_args.extend([])
             if arch.bit() == 64:
                 dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
                             'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja']
@@ -211,7 +215,7 @@ class BuildRequest(object):
             for lib in dep_libs:
                 subprocess.call(['pacman', '-SYq', lib])
         elif platform_name == 'macosx':
-            ffmpeg_platform_args = ['--cc=clang', '--cxx=clang++']
+            ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
             dep_libs = ['git', 'yasm', 'make', 'ninja']
 
             for lib in dep_libs:
