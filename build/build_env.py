@@ -85,7 +85,7 @@ def download_file(url):
         percent = 0 if not file_size else file_size_dl * 100. / file_size
         status = r"%10d  [%3.2f%%]" % (file_size_dl, percent)
         status += chr(8) * (len(status) + 1)
-        print(status, end='/r')
+        print(status, end='\r')
 
     f.close()
     return file_name
@@ -136,61 +136,36 @@ def build_from_sources(url, prefix_path):
 
 
 class BuildRequest(object):
-    def __init__(self, platform, arch_bit, dir_path, prefix_path):
+    def __init__(self, platform, arch_name, dir_path, prefix_path):
         platform_or_none = system_info.get_supported_platform_by_name(platform)
 
         if not platform_or_none:
             raise utils.BuildError('invalid platform')
 
-        arch = platform_or_none.architecture_by_bit(arch_bit)
-        if not arch:
+        build_arch = platform_or_none.architecture_by_arch_name(arch_name)
+        if not build_arch:
             raise utils.BuildError('invalid arch')
 
-        self.platform_ = system_info.Platform(platform_or_none.name(), arch, platform_or_none.package_types())
-        abs_dir_path = os.path.abspath(dir_path)
-        if os.path.exists(abs_dir_path):
-            shutil.rmtree(abs_dir_path)
-
-        os.mkdir(abs_dir_path)
-        os.chdir(abs_dir_path)
-        self.abs_dir_path = abs_dir_path
-
         if not prefix_path:
-            prefix_path = self.platform_.arch().default_install_prefix_path()
+            prefix_path = build_arch.default_install_prefix_path()
 
-        self.prefix_path = prefix_path;
-        print("Build request for platform: {0}, arch: {1} created".format(platform, arch.name()))
+        build_platform = system_info.Platform(platform_or_none.name(), build_arch, platform_or_none.package_types())
 
-    def build_common(self):
-        cmake_project_root_abs_path = '..'
-        if not os.path.exists(cmake_project_root_abs_path):
-            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
+        self.platform_ = build_platform
+        build_dir_path = os.path.abspath(dir_path)
+        if os.path.exists(build_dir_path):
+            shutil.rmtree(build_dir_path)
 
-        # project static options
-        prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(prefix_path)
+        os.mkdir(build_dir_path)
+        os.chdir(build_dir_path)
 
-        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
-                      prefix_args]
-        try:
-            cloned_dir = git_clone('https://github.com/fastogt/common.git')
-            os.chdir(cloned_dir)
-
-            os.mkdir('build_cmake_release')
-            os.chdir('build_cmake_release')
-            common_cmake_line = list(cmake_line)
-            common_cmake_line.append('-DQT_ENABLED=OFF')
-            subprocess.call(common_cmake_line)
-            subprocess.call(['make', 'install'])
-            os.chdir(self.abs_dir_path)
-            shutil.rmtree(cloned_dir)
-        except Exception as ex:
-            os.chdir(self.abs_dir_path)
-            raise ex
+        self.build_dir_path_ = build_dir_path
+        self.prefix_path_ = prefix_path
+        print("Build request for platform: {0}({1}) created".format(build_platform.name(), build_arch.name()))
 
     def install_system(self):
         platform_name = self.platform_.name()
         arch = self.platform_.arch()
-        dep_libs = []
         if platform_name == 'linux':
             distribution = linux_get_dist()
             if distribution == 'DEBIAN':
@@ -218,10 +193,10 @@ class BuildRequest(object):
             if distribution == 'RHEL':
                 subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
         elif platform_name == 'windows':
-            if arch.bit() == 64:
+            if arch.name() == 'x86_64':
                 dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
                             'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja']
-            elif arch.bit() == 32:
+            elif arch.name() == 'i386':
                 dep_libs = ['git', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
                             'mingw-w64-i686-make', 'mingw-w64-i686-ninja']
 
@@ -234,7 +209,8 @@ class BuildRequest(object):
                 subprocess.call(['port', 'install', lib])
 
     def build_ffmpeg(self, ffmpeg_version):
-        ffmpeg_platform_args = ['--disable-opencl',
+        ffmpeg_platform_args = ['--disable-doc',
+                                '--disable-opencl',
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
                                 '--disable-debug', '--disable-ffserver',
@@ -248,19 +224,45 @@ class BuildRequest(object):
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
 
         build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT),
-                     prefix_path, ffmpeg_platform_args)
+                     self.prefix_path_, ffmpeg_platform_args)
 
     def build_sdl2(self, version):
-        build_from_sources('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), self.prefix_path)
+        build_from_sources('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), self.prefix_path_)
 
     def build_libpng(self, version):
-        build_from_sources('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), self.prefix_path)
+        build_from_sources('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), self.prefix_path_)
 
     def build_cmake(self, version):
         stabled_version_array = version.split(".")
         stabled_version = 'v{0}.{1}'.format(stabled_version_array[0], stabled_version_array[1])
         build_from_sources('{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT),
-                           self.prefix_path)
+                           self.prefix_path_)
+
+    def build_common(self):
+        cmake_project_root_abs_path = '..'
+        if not os.path.exists(cmake_project_root_abs_path):
+            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
+
+        # project static options
+        prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
+
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
+                      prefix_args]
+        try:
+            cloned_dir = git_clone('https://github.com/fastogt/common.git')
+            os.chdir(cloned_dir)
+
+            os.mkdir('build_cmake_release')
+            os.chdir('build_cmake_release')
+            common_cmake_line = list(cmake_line)
+            common_cmake_line.append('-DQT_ENABLED=OFF')
+            subprocess.call(common_cmake_line)
+            subprocess.call(['make', 'install'])
+            os.chdir(self.build_dir_path_)
+            shutil.rmtree(cloned_dir)
+        except Exception as ex:
+            os.chdir(self.build_dir_path_)
+            raise ex
 
 
 if __name__ == "__main__":
@@ -270,7 +272,7 @@ if __name__ == "__main__":
     cmake_default_version = '3.7.2'
 
     host_os = system_info.get_os()
-    arch_host_os = system_info.get_arch_bit()
+    arch_host_os = system_info.get_arch_name()
     parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
     parser.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',
                         action='store_true')
@@ -319,9 +321,9 @@ if __name__ == "__main__":
 
     platform_str = argv.platform
     prefix_path = argv.prefix_path
-    arch_bit_str = argv.architecture
+    architecture = argv.architecture
 
-    request = BuildRequest(platform_str, int(arch_bit_str), 'build_' + platform_str + '_env', prefix_path)
+    request = BuildRequest(platform_str, architecture, 'build_' + platform_str + '_env', prefix_path)
     if argv.with_system:
         request.install_system()
 
