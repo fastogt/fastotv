@@ -5,6 +5,7 @@ import subprocess
 import os
 import shutil
 import platform
+import argparse
 from pybuild_utils.base import system_info, utils
 
 # Script for building enviroment on clean machine
@@ -13,11 +14,15 @@ from pybuild_utils.base import system_info, utils
 # For windows 32 please specify architecture 32
 
 # defines
-CMAKE_SRC_PATH = "https://cmake.org/files/v3.7/cmake-3.7.2.tar.gz"
+CMAKE_SRC_ROOT = "https://cmake.org/files/"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
-PNG_SRC_PATH = "https://downloads.sourceforge.net/project/libpng/libpng16/1.6.29/libpng-1.6.29.tar.xz"
+PNG_SRC_ROOT = "https://downloads.sourceforge.net/project/libpng/libpng16/"
 
+ARCH_CMAKE_COMP = "gz"
+ARCH_CMAKE_EXT = "tar." + ARCH_CMAKE_COMP
+ARCH_PNG_COMP = "xz"
+ARCH_PNG_EXT = "tar." + ARCH_PNG_COMP
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
 ARCH_FFMPEG_COMP = "bz2"
@@ -46,15 +51,6 @@ def splitext(path):
         if path.endswith(ext):
             return path[:-len(ext)]
     return os.path.splitext(path)[0]
-
-
-def print_usage():
-    print("Usage:\n"
-          "[required] argv[1] sdl2 version(2.0.5)\n"
-          "[required] argv[2] ffmpeg version(3.2.4)\n"
-          "[optional] argv[3] platform\n"
-          "[optional] argv[4] architecture\n"
-          "[optional] argv[5] prefix path\n")
 
 
 def print_message(progress, message):
@@ -140,7 +136,7 @@ def build_from_sources(url, prefix_path):
 
 
 class BuildRequest(object):
-    def __init__(self, platform, arch_bit):
+    def __init__(self, platform, arch_bit, dir_path, prefix_path):
         platform_or_none = system_info.get_supported_platform_by_name(platform)
 
         if not platform_or_none:
@@ -151,83 +147,24 @@ class BuildRequest(object):
             raise utils.BuildError('invalid arch')
 
         self.platform_ = system_info.Platform(platform_or_none.name(), arch, platform_or_none.package_types())
-        print("Build request for platform: {0}, arch: {1} created".format(platform, arch.name()))
-
-    def build(self, dir_path, prefix_path):
-        cmake_project_root_abs_path = '..'
-        if not os.path.exists(cmake_project_root_abs_path):
-            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
-
-        if not prefix_path:
-            prefix_path = self.platform_.arch().default_install_prefix_path()
-
         abs_dir_path = os.path.abspath(dir_path)
         if os.path.exists(abs_dir_path):
             shutil.rmtree(abs_dir_path)
 
         os.mkdir(abs_dir_path)
         os.chdir(abs_dir_path)
+        self.abs_dir_path = abs_dir_path
 
-        platform_name = self.platform_.name()
-        arch = self.platform_.arch()
-        dep_libs = []
-        ffmpeg_platform_args = ['--disable-opencl',
-                                '--disable-lzma', '--disable-iconv',
-                                '--disable-shared', '--enable-static',
-                                '--disable-debug', '--disable-ffserver',
-                                '--extra-cflags=--static', '--extra-version=static']
+        if not prefix_path:
+            prefix_path = self.platform_.arch().default_install_prefix_path()
 
-        if platform_name == 'linux':
-            ffmpeg_platform_args.extend(['--disable-libxcb'])
-            distribution = linux_get_dist()
-            if distribution == 'DEBIAN':
-                dep_libs = ['git', 'gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
-                            'libz-dev', 'libbz2-dev', 'libpcre3-dev',
-                            'libasound2-dev',
-                            'libx11-dev',
-                            'libdrm-dev', 'libdri2-dev', 'libump-dev',
-                            'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
-            elif distribution == 'RHEL':
-                dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build', 'make',
-                            'zlib-dev', 'bzip2-devel', 'pcre-devel',
-                            'alsa-lib-devel',
-                            'libx11-devel',
-                            'libdrm-devel', 'libdri2-devel', 'libump-devel',
-                            'xorg-x11-server-devel', 'xserver-xorg', 'xinit']
+        self.prefix_path = prefix_path;
+        print("Build request for platform: {0}, arch: {1} created".format(platform, arch.name()))
 
-            for lib in dep_libs:
-                if distribution == 'DEBIAN':
-                    subprocess.call(['apt-get', '-y', '--force-yes', 'install', lib])
-                elif distribution == 'RHEL':
-                    subprocess.call(['yum', '-y', 'install', lib])
-
-            if distribution == 'RHEL':
-                subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
-        elif platform_name == 'windows':
-            #ffmpeg_platform_args.extend([])
-            if arch.bit() == 64:
-                dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
-                            'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja']
-            elif arch.bit() == 32:
-                dep_libs = ['git', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
-                            'mingw-w64-i686-make', 'mingw-w64-i686-ninja']
-
-            for lib in dep_libs:
-                subprocess.call(['pacman', '-SYq', lib])
-        elif platform_name == 'macosx':
-            ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
-            dep_libs = ['git', 'yasm', 'make', 'ninja']
-
-            for lib in dep_libs:
-                subprocess.call(['port', 'install', lib])
-
-        # build from sources
-        source_urls = [PNG_SRC_PATH, CMAKE_SRC_PATH, '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, sdl_version, ARCH_SDL_EXT)]
-        for url in source_urls:
-            build_from_sources(url, prefix_path)
-
-        build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT),
-                     prefix_path, ffmpeg_platform_args)
+    def build_common(self):
+        cmake_project_root_abs_path = '..'
+        if not os.path.exists(cmake_project_root_abs_path):
+            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
 
         # project static options
         prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(prefix_path)
@@ -244,42 +181,158 @@ class BuildRequest(object):
             common_cmake_line.append('-DQT_ENABLED=OFF')
             subprocess.call(common_cmake_line)
             subprocess.call(['make', 'install'])
-            os.chdir(abs_dir_path)
+            os.chdir(self.abs_dir_path)
             shutil.rmtree(cloned_dir)
         except Exception as ex:
-            os.chdir(abs_dir_path)
+            os.chdir(self.abs_dir_path)
             raise ex
+
+    def install_system(self):
+        platform_name = self.platform_.name()
+        arch = self.platform_.arch()
+        dep_libs = []
+        if platform_name == 'linux':
+            distribution = linux_get_dist()
+            if distribution == 'DEBIAN':
+                dep_libs = ['git', 'gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
+                            'libz-dev', 'libbz2-dev', 'libpcre3-dev',
+                            'libasound2-dev',
+                            'libx11-dev',
+                            'libdrm-dev', 'libdri2-dev', 'libump-dev',
+                            'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
+            elif distribution == 'RHEL':
+                dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
+                            'make',
+                            'zlib-dev', 'bzip2-devel', 'pcre-devel',
+                            'alsa-lib-devel',
+                            'libx11-devel',
+                            'libdrm-devel', 'libdri2-devel', 'libump-devel',
+                            'xorg-x11-server-devel', 'xserver-xorg', 'xinit']
+
+            for lib in dep_libs:
+                if distribution == 'DEBIAN':
+                    subprocess.call(['apt-get', '-y', '--force-yes', 'install', lib])
+                elif distribution == 'RHEL':
+                    subprocess.call(['yum', '-y', 'install', lib])
+
+            if distribution == 'RHEL':
+                subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
+        elif platform_name == 'windows':
+            if arch.bit() == 64:
+                dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
+                            'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja']
+            elif arch.bit() == 32:
+                dep_libs = ['git', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
+                            'mingw-w64-i686-make', 'mingw-w64-i686-ninja']
+
+            for lib in dep_libs:
+                subprocess.call(['pacman', '-SYq', lib])
+        elif platform_name == 'macosx':
+            dep_libs = ['git', 'yasm', 'make', 'ninja']
+
+            for lib in dep_libs:
+                subprocess.call(['port', 'install', lib])
+
+    def build_ffmpeg(self, ffmpeg_version):
+        ffmpeg_platform_args = ['--disable-opencl',
+                                '--disable-lzma', '--disable-iconv',
+                                '--disable-shared', '--enable-static',
+                                '--disable-debug', '--disable-ffserver',
+                                '--extra-cflags=--static', '--extra-version=static']
+        platform_name = self.platform_.name()
+        if platform_name == 'linux':
+            ffmpeg_platform_args.extend(['--disable-libxcb'])
+        elif platform_name == 'windows':
+            ffmpeg_platform_args = ffmpeg_platform_args
+        elif platform_name == 'macosx':
+            ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
+
+        build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT),
+                     prefix_path, ffmpeg_platform_args)
+
+    def build_sdl2(self, version):
+        build_from_sources('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), self.prefix_path)
+
+    def build_libpng(self, version):
+        build_from_sources('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), self.prefix_path)
+
+    def build_cmake(self, version):
+        stabled_version_array = version.split(".")
+        stabled_version = 'v{0}.{1}'.format(stabled_version_array[0], stabled_version_array[1])
+        build_from_sources('{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT),
+                           self.prefix_path)
 
 
 if __name__ == "__main__":
-    argc = len(sys.argv)
+    libpng_default_version = '1.6.29'
+    sdl2_default_version = '2.0.5'
+    ffmpeg_default_version = '3.2.4'
+    cmake_default_version = '3.7.2'
 
-    if argc > 1:
-        sdl_version = sys.argv[1]
-    else:
-        print_usage()
-        sys.exit(1)
+    host_os = system_info.get_os()
+    arch_host_os = system_info.get_arch_bit()
+    parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
+    parser.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',
+                        action='store_true')
+    parser.add_argument('--without-system', help='build without system dependencies', dest='with_system',
+                        action='store_false')
+    parser.set_defaults(with_system=True)
 
-    if argc > 2:
-        ffmpeg_version = sys.argv[2]
-    else:
-        print_usage()
-        sys.exit(1)
+    parser.add_argument('--with-libpng', help='build libpng (default, version:{0})'.format(libpng_default_version),
+                        dest='with_libpng', action='store_true')
+    parser.add_argument('--without-libpng', help='build without libpng', dest='with_libpng', action='store_false')
+    parser.add_argument('--libpng-version', help='libpng version (default: {0})'.format(libpng_default_version),
+                        default=libpng_default_version)
+    parser.set_defaults(with_libpng=True)
 
-    if argc > 3:
-        platform_str = sys.argv[3]
-    else:
-        platform_str = system_info.get_os()
+    parser.add_argument('--with-sdl2', help='build sdl2 (default, version:{0})'.format(sdl2_default_version),
+                        dest='with_sdl2', action='store_true')
+    parser.add_argument('--without-sdl2', help='build without sdl2', dest='with_sdl2', action='store_false')
+    parser.add_argument('--sdl2-version', help='sdl2 version (default: {0})'.format(sdl2_default_version),
+                        default=sdl2_default_version)
+    parser.set_defaults(with_sdl2=True)
 
-    if argc > 4:
-        arch_bit_str = sys.argv[4]
-    else:
-        arch_bit_str = system_info.get_arch_bit()
+    parser.add_argument('--with-ffmpeg', help='build ffmpeg (default, version:{0})'.format(ffmpeg_default_version),
+                        dest='with_ffmpeg', action='store_true')
+    parser.add_argument('--without-ffmpeg', help='build without ffmpeg', dest='with_ffmpeg', action='store_false')
+    parser.add_argument('--ffmpeg-version', help='ffmpeg version (default: {0})'.format(ffmpeg_default_version),
+                        default=ffmpeg_default_version)
+    parser.set_defaults(with_ffmpeg=True)
 
-    if argc > 5:
-        prefix_path = sys.argv[5]
-    else:
-        prefix_path = None
+    parser.add_argument('--with-cmake', help='build cmake (default, version:{0})'.format(cmake_default_version),
+                        dest='with_cmake', action='store_true')
+    parser.add_argument('--without-cmake', help='build without cmake', dest='with_cmake', action='store_false')
+    parser.add_argument('--cmake-version', help='cmake version (default: {0})'.format(cmake_default_version),
+                        default=cmake_default_version)
+    parser.set_defaults(with_cmake=True)
 
-    request = BuildRequest(platform_str, int(arch_bit_str))
-    request.build('build_' + platform_str + '_env', prefix_path)
+    parser.add_argument('--with-common', help='build common (default, version: git master)', dest='with_common',
+                        action='store_true')
+    parser.add_argument('--without-common', help='build without common', dest='with_common', action='store_false')
+    parser.set_defaults(with_common=True)
+
+    parser.add_argument('--platform', help='build for platform (default: {0})'.format(host_os), default=host_os)
+    parser.add_argument('--architecture', help='architecture (default: {0})'.format(arch_host_os), default=arch_host_os)
+    parser.add_argument('--prefix_path', help='prefix_path (default: None)', default=None)
+
+    argv = parser.parse_args()
+
+    platform_str = argv.platform
+    prefix_path = argv.prefix_path
+    arch_bit_str = argv.architecture
+
+    request = BuildRequest(platform_str, int(arch_bit_str), 'build_' + platform_str + '_env', prefix_path)
+    if argv.with_system:
+        request.install_system()
+
+    if argv.with_libpng:
+        request.build_libpng(argv.libpng_version)
+    if argv.with_sdl2:
+        request.build_sdl2(argv.sdl2_version)
+    if argv.with_ffmpeg:
+        request.build_ffmpeg(argv.ffmpeg_version)
+
+    if argv.with_cmake:
+        request.build_cmake(argv.cmake_version)
+    if argv.with_common:
+        request.build_common()
