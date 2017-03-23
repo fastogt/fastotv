@@ -70,8 +70,8 @@ void InnerSubHandler::handleMessage(const std::string& channel, const std::strin
   cmd_seq_t id;
   std::string cmd_str;
   common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
-  if (err && err->isError()) {
-    std::string resp = err->description();
+  if (err && err->IsError()) {
+    std::string resp = err->Description();
     WARNING_LOG() << resp;
     PublishToChannelOut(resp);
     return;
@@ -94,7 +94,7 @@ void InnerSubHandler::handleMessage(const std::string& channel, const std::strin
   ssize_t nwrite = 0;
   cmd_request_t req(id, input_command);
   err = fclient->Write(req, &nwrite);
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     int argc;
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
     char* command = argv[0];

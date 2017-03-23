@@ -32,7 +32,7 @@ Url::Url(stream_id id, const common::uri::Uri& uri, const std::string& name)
     : id_(id), uri_(uri), name_(name) {}
 
 bool Url::IsValid() const {
-  return id_ != invalid_stream_id && uri_.isValid();
+  return id_ != invalid_stream_id && uri_.IsValid();
 }
 
 common::uri::Uri Url::GetUrl() const {
@@ -52,7 +52,7 @@ struct json_object* Url::MakeJobject(const Url& url) {
   std::string id_str = url.Id();
   json_object_object_add(obj, ID_FIELD, json_object_new_string(id_str.c_str()));
   common::uri::Uri uri = url.GetUrl();
-  const std::string url_str = uri.url();
+  const std::string url_str = uri.Url();
   json_object_object_add(obj, URL_FIELD, json_object_new_string(url_str.c_str()));
   const std::string name_str = url.GetName();
   json_object_object_add(obj, NAME_FIELD, json_object_new_string(name_str.c_str()));

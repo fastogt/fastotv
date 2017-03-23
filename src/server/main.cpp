@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
 
   common::Error err = common::file_system::change_directory(HOST_PATH);
   int return_code = EXIT_FAILURE;
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     goto exit;
   }
 

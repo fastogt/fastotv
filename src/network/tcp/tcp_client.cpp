@@ -72,7 +72,7 @@ void TcpClient::Close() {
   }
 
   common::Error err = sock_.close();
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
   }
 }

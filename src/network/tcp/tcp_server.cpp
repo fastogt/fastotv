@@ -314,7 +314,7 @@ TcpServer::~TcpServer() {
 }
 
 ITcpLoop* TcpServer::findExistServerByHost(const common::net::HostAndPort& host) {
-  if (!host.isValid()) {
+  if (!host.IsValid()) {
     return nullptr;
   }
 
@@ -347,7 +347,7 @@ void TcpServer::PostLooped(LibEvLoop* loop) {
 
 void TcpServer::Stoped(LibEvLoop* loop) {
   common::Error err = sock_.close();
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
   }
 
@@ -390,7 +390,7 @@ void TcpServer::accept_cb(struct ev_loop* loop, struct ev_io* watcher, int reven
   common::net::socket_info sinfo;
   common::Error err = pserver->accept(&sinfo);
 
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
     return;
   }

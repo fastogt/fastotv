@@ -57,7 +57,7 @@ common::Error ParseCommand(const std::string& command,
 
   std::string stabled_command;
   common::Error err = StableCommand(command, &stabled_command);
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     return err;
   }
 

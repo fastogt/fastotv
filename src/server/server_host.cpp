@@ -43,13 +43,13 @@ namespace fastotv {
 namespace {
 int exec_server(network::tcp::TcpServer* server) {
   common::Error err = server->Bind();
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
     return EXIT_FAILURE;
   }
 
   err = server->Listen(5);
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
     return EXIT_FAILURE;
   }

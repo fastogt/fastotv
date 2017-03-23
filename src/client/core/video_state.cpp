@@ -1166,10 +1166,11 @@ int VideoState::ReadThread() {
   }
   bool scan_all_pmts_set = false;
   std::string uri_str;
-  if (uri_.scheme() == common::uri::Uri::file) {
-    uri_str = uri_.path().path();
+  if (uri_.Scheme() == common::uri::Uri::file) {
+    common::uri::Upath upath = uri_.Path();
+    uri_str = upath.Path();
   } else {
-    uri_str = uri_.url();
+    uri_str = uri_.Url();
   }
   const char* in_filename = common::utils::c_strornull(uri_str);
   ic->interrupt_callback.callback = decode_interrupt_callback;

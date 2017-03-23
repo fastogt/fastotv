@@ -42,7 +42,7 @@ redisContext* redis_connect(const redis_configuration_t& config) {
   const common::net::HostAndPort redisHost = config.redis_host;
   const std::string unixPath = config.redis_unix_socket;
 
-  if (!redisHost.isValid() && unixPath.empty()) {
+  if (!redisHost.IsValid() && unixPath.empty()) {
     return NULL;
   }
 
@@ -128,7 +128,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
   UserInfo linfo;
   user_id_t luid;
   common::Error err = parse_user_json(userJson, &luid, &linfo);
-  if (err && err->isError()) {
+  if (err && err->IsError()) {
     freeReplyObject(reply);
     redisFree(redis);
     return err;
