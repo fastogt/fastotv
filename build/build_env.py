@@ -214,7 +214,7 @@ class BuildRequest(object):
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
                                 '--disable-debug', '--disable-ffserver',
-                                '--extra-cflags=--static', '--extra-version=static']
+                                '--extra-version=static']  # '--extra-cflags=--static'
         platform_name = self.platform_.name()
         if platform_name == 'linux':
             ffmpeg_platform_args.extend(['--disable-libxcb'])
