@@ -105,7 +105,11 @@ bool parse_number(const std::string& number_str, int type, T min, T max, T* resu
     return false;
   }
 
-  T lresult = common::ConvertFromString<T>(number_str);
+  T lresult;
+  if (common::ConvertFromString(number_str, &lresult)) {
+    return false;
+  }
+
   if (lresult < min || lresult > max) {
     WARNING_LOG() << "The value for " << number_str << " was " << lresult << " which is not within "
                   << min << " - " << max;

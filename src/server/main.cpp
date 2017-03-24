@@ -60,7 +60,12 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
   if (MATCH("server", "redis_server")) {
-    pconfig->server.redis.redis_host = common::ConvertFromString<common::net::HostAndPort>(value);
+    common::net::HostAndPort hs;
+    bool res = common::ConvertFromString(std::string(value), &hs);
+    if (!res) {
+      return 0;
+    }
+    pconfig->server.redis.redis_host = hs;
     return 1;
   } else if (MATCH("server", "redis_unix_path")) {
     pconfig->server.redis.redis_unix_socket = value;
@@ -79,7 +84,7 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
   }
 }
 
-fasto::fastotv::server::ServerHost* server = NULL;
+static fasto::fastotv::server::ServerHost* server = NULL;
 
 void signal_handler(int sig);
 void sync_config();
@@ -155,8 +160,8 @@ void sync_config() {
     "password": "1234"
   }*/
 
-  //config.server.redis.redis_host = redis_default_host;
-  //config.server.redis.redis_unix_socket = redis_default_unix_path;
+  // config.server.redis.redis_host = redis_default_host;
+  // config.server.redis.redis_unix_socket = redis_default_unix_path;
   config.server.redis.channel_in = CHANNEL_COMMANDS_IN_NAME;
   config.server.redis.channel_out = CHANNEL_COMMANDS_OUT_NAME;
   config.server.redis.channel_clients_state = CHANNEL_CLIENTS_STATE_NAME;
