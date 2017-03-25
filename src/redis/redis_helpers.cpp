@@ -28,8 +28,7 @@
 
 #include "third-party/json-c/json-c/json.h"
 
-#define GET_ALL_USERS_REDIS_REQUEST "HGETALL users"
-#define GET_USER_1E "HGET users %s"
+#define GET_USER_1E "GET %s"
 
 #undef ERROR
 
