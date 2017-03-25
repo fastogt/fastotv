@@ -142,6 +142,9 @@ class SupportedDevice(object):
         self.sdl2_flags_ = sdl2_flags
         self.post_install_ = post_install
 
+    def name(self):
+        return self.name_
+
     def sdl2_flags(self):
         return self.sdl2_flags_
 
@@ -161,6 +164,10 @@ SUPPORTED_DEVICES = [SupportedDevice('pc', [], []),
 
 def get_device():
     return SUPPORTED_DEVICES[0]
+
+
+def get_supported_device_by_name(name):
+    return next((x for x in SUPPORTED_DEVICES if x.name() == name), None)
 
 
 def linux_get_dist():
@@ -329,7 +336,7 @@ if __name__ == "__main__":
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
-    default_device = get_device()
+    default_device = get_device().name()
 
     parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
     parser.add_argument('--device', help='device (default: {0})'.format(default_device), default=default_device)
@@ -382,7 +389,9 @@ if __name__ == "__main__":
     platform_str = argv.platform
     prefix_path = argv.prefix_path
     architecture = argv.architecture
-    device = argv.device
+    device = get_supported_device_by_name(argv.device)
+    if not device:
+        raise utils.BuildError('invalid device')
 
     request = BuildRequest(device, platform_str, architecture, 'build_' + platform_str + '_env', prefix_path)
     if argv.with_system:
