@@ -29,33 +29,11 @@ ARCH_FFMPEG_COMP = "bz2"
 ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 
 
-def linux_get_dist():
-    """
-    Return the running distribution group
-    RHEL: RHEL, CENTOS, FEDORA
-    DEBIAN: UBUNTU, DEBIAN
-    """
-    linux_tuple = platform.linux_distribution()
-    dist_name = linux_tuple[0]
-    dist_name_upper = dist_name.upper()
-
-    if dist_name_upper in ["RHEL", "CENTOS", "FEDORA"]:
-        return "RHEL"
-    elif dist_name_upper in ["DEBIAN", "UBUNTU"]:
-        return "DEBIAN"
-    raise NotImplemented("Unknown platform '%s'" % dist_name)
-
-
 def splitext(path):
     for ext in ['.tar.gz', '.tar.bz2', '.tar.xz']:
         if path.endswith(ext):
             return path[:-len(ext)]
     return os.path.splitext(path)[0]
-
-
-def print_message(progress, message):
-    print(message.message())
-    sys.stdout.flush()
 
 
 def download_file(url):
@@ -87,8 +65,8 @@ def download_file(url):
         status += chr(8) * (len(status) + 1)
         print(status, end='\r')
 
-    f.close()
-    return file_name
+        f.close()
+        return file_name
 
 
 def extract_file(file):
@@ -124,19 +102,86 @@ def git_clone(url):
     return os.path.join(pwd, cloned_dir)
 
 
-def build_from_sources(url, prefix_path):
+def build_from_sources(url, prefix_path, other_args):
     pwd = os.getcwd()
     file = download_file(url)
     folder = extract_file(file)
     os.chdir(folder)
-    subprocess.call(['./configure', '--prefix={0}'.format(prefix_path)])
+    source_build_cmd = ['./configure', '--prefix={0}'.format(prefix_path)]
+    source_build_cmd.extend(other_args)
+    subprocess.call(source_build_cmd)
     subprocess.call(['make', 'install'])
     os.chdir(pwd)
     shutil.rmtree(folder)
 
 
+def post_install_orange_pi():
+    pwd = os.getcwd()
+    try:
+        cloned_dir = git_clone('https://github.com/linux-sunxi/sunxi-mali.git')
+        os.chdir(cloned_dir)
+        subprocess.call(['make', 'config'])
+        subprocess.call(['make', 'install'])
+        os.chdir(pwd)
+        shutil.rmtree(cloned_dir)
+    except Exception as ex:
+        os.chdir(pwd)
+        raise ex
+
+    with open('/etc/udev/rules.d/50-mali.rules', 'w') as f:
+        f.write(r'KERNEL=="mali", MODE="0660", GROUP="video"\nKERNEL=="ump", MODE="0660", GROUP="video"')
+
+    with open('/etc/asound.conf', 'w') as f:
+        f.write(r'pcm.!default { type hw card 1 }\nctl.!default { type hw card 1 }')
+
+
+class SupportedDevice(object):
+    def __init__(self, name, system_libs, sdl2_flags, post_install=None):
+        self.name_ = name
+        self.system_libs_ = system_libs
+        self.sdl2_flags_ = sdl2_flags
+        self.post_install_ = post_install
+
+    def sdl2_flags(self):
+        return self.sdl2_flags_
+
+    def system_libs(self, platform):
+        return self.system_libs_
+
+    def post_install(self):
+        if self.post_install_:
+            return self.post_install_()
+
+
+SUPPORTED_DEVICES = [SupportedDevice('pc', [], []),
+                     SupportedDevice('orange_pi', ['libgles2-mesa-dev'],
+                                     ['--disable-video-opengl', '--disable-video-opengles1',
+                                      '--enable-video-opengles2'], post_install_orange_pi)]
+
+
+def get_device():
+    return SUPPORTED_DEVICES[0]
+
+
+def linux_get_dist():
+    """
+    Return the running distribution group
+    RHEL: RHEL, CENTOS, FEDORA
+    DEBIAN: UBUNTU, DEBIAN
+    """
+    linux_tuple = platform.linux_distribution()
+    dist_name = linux_tuple[0]
+    dist_name_upper = dist_name.upper()
+
+    if dist_name_upper in ["RHEL", "CENTOS", "FEDORA"]:
+        return "RHEL"
+    elif dist_name_upper in ["DEBIAN", "UBUNTU"]:
+        return "DEBIAN"
+    raise NotImplemented("Unknown platform '%s'" % dist_name)
+
+
 class BuildRequest(object):
-    def __init__(self, platform, arch_name, dir_path, prefix_path):
+    def __init__(self, device, platform, arch_name, dir_path, prefix_path):
         platform_or_none = system_info.get_supported_platform_by_name(platform)
 
         if not platform_or_none:
@@ -151,6 +196,7 @@ class BuildRequest(object):
 
         build_platform = system_info.Platform(platform_or_none.name(), build_arch, platform_or_none.package_types())
 
+        self.device = device
         self.platform_ = build_platform
         build_dir_path = os.path.abspath(dir_path)
         if os.path.exists(build_dir_path):
@@ -166,6 +212,8 @@ class BuildRequest(object):
     def install_system(self):
         platform_name = self.platform_.name()
         arch = self.platform_.arch()
+        device = self.device_
+
         if platform_name == 'linux':
             distribution = linux_get_dist()
             if distribution == 'DEBIAN':
@@ -183,6 +231,8 @@ class BuildRequest(object):
                             'libx11-devel',
                             'libdrm-devel', 'libdri2-devel', 'libump-devel',
                             'xorg-x11-server-devel', 'xserver-xorg', 'xinit']
+
+            dep_libs.extend(device.system_libs(platform_name))
 
             for lib in dep_libs:
                 if distribution == 'DEBIAN':
@@ -208,6 +258,8 @@ class BuildRequest(object):
             for lib in dep_libs:
                 subprocess.call(['port', 'install', lib])
 
+        device.post_install()
+
     def build_ffmpeg(self, ffmpeg_version):
         ffmpeg_platform_args = ['--disable-doc',
                                 '--disable-opencl',
@@ -227,16 +279,20 @@ class BuildRequest(object):
                      self.prefix_path_, ffmpeg_platform_args)
 
     def build_sdl2(self, version):
-        build_from_sources('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), self.prefix_path_)
+        device = self.device_
+        build_from_sources('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), self.prefix_path_,
+                           device.sdl2_flags())
 
     def build_libpng(self, version):
-        build_from_sources('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), self.prefix_path_)
+        build_from_sources('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), self.prefix_path_,
+                           [])
 
     def build_cmake(self, version):
         stabled_version_array = version.split(".")
         stabled_version = 'v{0}.{1}'.format(stabled_version_array[0], stabled_version_array[1])
-        build_from_sources('{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT),
-                           self.prefix_path_)
+        build_from_sources(
+            '{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT, []),
+            self.prefix_path_)
 
     def build_common(self):
         cmake_project_root_abs_path = '..'
@@ -273,7 +329,10 @@ if __name__ == "__main__":
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
+    default_device = get_device()
+
     parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
+    parser.add_argument('--device', help='device (default: {0})'.format(default_device), default=default_device)
     parser.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',
                         action='store_true')
     parser.add_argument('--without-system', help='build without system dependencies', dest='with_system',
@@ -314,7 +373,8 @@ if __name__ == "__main__":
     parser.set_defaults(with_common=True)
 
     parser.add_argument('--platform', help='build for platform (default: {0})'.format(host_os), default=host_os)
-    parser.add_argument('--architecture', help='architecture (default: {0})'.format(arch_host_os), default=arch_host_os)
+    parser.add_argument('--architecture', help='architecture (default: {0})'.format(arch_host_os),
+                        default=arch_host_os)
     parser.add_argument('--prefix_path', help='prefix_path (default: None)', default=None)
 
     argv = parser.parse_args()
@@ -322,8 +382,9 @@ if __name__ == "__main__":
     platform_str = argv.platform
     prefix_path = argv.prefix_path
     architecture = argv.architecture
+    device = argv.device
 
-    request = BuildRequest(platform_str, architecture, 'build_' + platform_str + '_env', prefix_path)
+    request = BuildRequest(device, platform_str, architecture, 'build_' + platform_str + '_env', prefix_path)
     if argv.with_system:
         request.install_system()
 

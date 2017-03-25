@@ -80,7 +80,7 @@ class BuildRequest(object):
         if platform_or_none == None:
             raise utils.BuildError('invalid platform')
 
-        arch = platform_or_none.architecture_by_bit(arch_bit)
+        arch = platform_or_none.architecture_by_arch_name(arch_bit)
         if arch == None:
             raise utils.BuildError('invalid arch')
 
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     if argc > 4:
         arch_bit_str = sys.argv[4]
     else:
-        arch_bit_str = system_info.get_arch_bit()
+        arch_bit_str = system_info.get_arch_name()
 
     if argc > 5:
         bs_str = sys.argv[5]
@@ -249,7 +249,7 @@ if __name__ == "__main__":
     else:
         packages = []
 
-    request = BuildRequest(platform_str, int(arch_bit_str))
+    request = BuildRequest(platform_str, arch_bit_str)
     if branding_file_path != '/dev/null':
         abs_branding_file = os.path.abspath(branding_file_path)
         branding_options = utils.read_file_line_by_line(abs_branding_file)
