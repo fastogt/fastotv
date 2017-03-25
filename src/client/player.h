@@ -30,13 +30,6 @@
 #include "client/core/app_options.h"
 #include "client/core/events/events.h"
 
-namespace common {
-namespace threads {
-template <typename type_t>
-class EventThread;
-}
-}
-
 namespace fasto {
 namespace fastotv {
 namespace client {

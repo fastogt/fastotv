@@ -61,8 +61,9 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
   if (MATCH("server", "redis_server")) {
     common::net::HostAndPort hs;
-    bool res = common::ConvertFromString(std::string(value), &hs);
+    bool res = common::ConvertFromString(value, &hs);
     if (!res) {
+      WARNING_LOG() << "Invalid host value: " << value;
       return 0;
     }
     pconfig->server.redis.redis_host = hs;

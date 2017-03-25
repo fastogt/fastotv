@@ -107,6 +107,7 @@ bool parse_number(const std::string& number_str, int type, T min, T max, T* resu
 
   T lresult;
   if (common::ConvertFromString(number_str, &lresult)) {
+    WARNING_LOG() << "Can't parse value(number) value: " << number_str;
     return false;
   }
 
