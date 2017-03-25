@@ -130,12 +130,12 @@ def install_orange_pi():
         raise ex
 
     with open('/etc/udev/rules.d/50-mali.rules', 'w') as f:
-        f.write(r'KERNEL=="mali", MODE="0660", GROUP="video"\n'
-                r'KERNEL=="ump", MODE="0660", GROUP="video"')
+        f.write('KERNEL=="mali", MODE="0660", GROUP="video"\n'
+                'KERNEL=="ump", MODE="0660", GROUP="video"')
 
     with open('/etc/asound.conf', 'w') as f:
-        f.write(r'pcm.!default { type hw card 1 }\n'
-                r'ctl.!default { type hw card 1 }')
+        f.write('pcm.!default { type hw card 1 }\n'
+                'ctl.!default { type hw card 1 }')
 
 
 class SupportedDevice(object):
