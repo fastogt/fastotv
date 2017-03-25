@@ -344,10 +344,13 @@ if __name__ == "__main__":
     default_device = get_device().name()
 
     parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
-    parser.add_argument('--with-device', help='build dependencies for device (default, device:{0})'.format(default_device),
+    parser.add_argument('--with-device',
+                        help='build dependencies for device (default, device:{0})'.format(default_device),
                         dest='with_device', action='store_true')
-    parser.add_argument('--without-device', help='build without device', dest='with_device', action='store_false')
+    parser.add_argument('--without-device', help='build without device dependencies', dest='with_device',
+                        action='store_false')
     parser.add_argument('--device', help='device (default: {0})'.format(default_device), default=default_device)
+    parser.set_defaults(with_device=True)
 
     parser.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',
                         action='store_true')
