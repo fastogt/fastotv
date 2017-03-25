@@ -196,7 +196,7 @@ class BuildRequest(object):
 
         build_platform = system_info.Platform(platform_or_none.name(), build_arch, platform_or_none.package_types())
 
-        self.device = device
+        self.device_ = device
         self.platform_ = build_platform
         build_dir_path = os.path.abspath(dir_path)
         if os.path.exists(build_dir_path):
