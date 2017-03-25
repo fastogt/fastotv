@@ -115,7 +115,8 @@ def build_from_sources(url, prefix_path, other_args):
     shutil.rmtree(folder)
 
 
-def post_install_orange_pi():
+def install_orange_pi():
+    subprocess.call(['modprobe', 'mali'])
     pwd = os.getcwd()
     try:
         cloned_dir = git_clone('https://github.com/linux-sunxi/sunxi-mali.git')
@@ -129,18 +130,20 @@ def post_install_orange_pi():
         raise ex
 
     with open('/etc/udev/rules.d/50-mali.rules', 'w') as f:
-        f.write(r'KERNEL=="mali", MODE="0660", GROUP="video"\nKERNEL=="ump", MODE="0660", GROUP="video"')
+        f.write(r'KERNEL=="mali", MODE="0660", GROUP="video"\n'
+                r'KERNEL=="ump", MODE="0660", GROUP="video"')
 
     with open('/etc/asound.conf', 'w') as f:
-        f.write(r'pcm.!default { type hw card 1 }\nctl.!default { type hw card 1 }')
+        f.write(r'pcm.!default { type hw card 1 }\n'
+                r'ctl.!default { type hw card 1 }')
 
 
 class SupportedDevice(object):
-    def __init__(self, name, system_libs, sdl2_flags, post_install=None):
+    def __init__(self, name, system_libs, sdl2_flags, install_specific=None):
         self.name_ = name
         self.system_libs_ = system_libs
         self.sdl2_flags_ = sdl2_flags
-        self.post_install_ = post_install
+        self.install_specific_ = install_specific
 
     def name(self):
         return self.name_
@@ -151,15 +154,15 @@ class SupportedDevice(object):
     def system_libs(self, platform):
         return self.system_libs_
 
-    def post_install(self):
-        if self.post_install_:
-            return self.post_install_()
+    def install_specific(self):
+        if self.install_specific_:
+            return self.install_specific_()
 
 
 SUPPORTED_DEVICES = [SupportedDevice('pc', [], []),
-                     SupportedDevice('orange_pi', ['libgles2-mesa-dev'],
+                     SupportedDevice('orange-pi', ['libgles2-mesa-dev'],
                                      ['--disable-video-opengl', '--disable-video-opengles1',
-                                      '--enable-video-opengles2'], post_install_orange_pi)]
+                                      '--enable-video-opengles2'], install_orange_pi)]
 
 
 def get_device():
@@ -214,7 +217,11 @@ class BuildRequest(object):
 
         self.build_dir_path_ = build_dir_path
         self.prefix_path_ = prefix_path
-        print("Build request for platform: {0}({1}) created".format(build_platform.name(), build_arch.name()))
+        print("Build request for device: {0}, platform: {1}({2}) created".format(device.name(), build_platform.name(),
+                                                                                 build_arch.name()))
+
+    def install_device_specific(self):
+        device.install_specific()
 
     def install_system(self):
         platform_name = self.platform_.name()
@@ -264,8 +271,6 @@ class BuildRequest(object):
 
             for lib in dep_libs:
                 subprocess.call(['port', 'install', lib])
-
-        device.post_install()
 
     def build_ffmpeg(self, ffmpeg_version):
         ffmpeg_platform_args = ['--disable-doc',
@@ -339,7 +344,11 @@ if __name__ == "__main__":
     default_device = get_device().name()
 
     parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
+    parser.add_argument('--with-device', help='build dependencies for device (default, device:{0})'.format(default_device),
+                        dest='with_device', action='store_true')
+    parser.add_argument('--without-device', help='build without device', dest='with_device', action='store_false')
     parser.add_argument('--device', help='device (default: {0})'.format(default_device), default=default_device)
+
     parser.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',
                         action='store_true')
     parser.add_argument('--without-system', help='build without system dependencies', dest='with_system',
@@ -396,6 +405,9 @@ if __name__ == "__main__":
     request = BuildRequest(device, platform_str, architecture, 'build_' + platform_str + '_env', prefix_path)
     if argv.with_system:
         request.install_system()
+
+    if argv.with_device:
+        request.install_device_specific()
 
     if argv.with_libpng:
         request.build_libpng(argv.libpng_version)
