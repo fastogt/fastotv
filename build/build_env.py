@@ -134,16 +134,18 @@ def install_orange_pi():
                 'KERNEL=="ump", MODE="0660", GROUP="video"')
 
     with open('/etc/asound.conf', 'w') as f:
-        f.write('pcm.!default {'
-                'type hw'
-                'card 1'
+        f.write('pcm.!default {\n'
+                'type hw\n'
+                'card 1\n'
                 '}\n'
-                'ctl.!default {'
-                'type hw'
-                'card 1'
+                'ctl.!default {\n'
+                'type hw\n'
+                'card 1\n'
                 '}')
 
-    shutil.move('/usr/lib/arm-linux-gnueabihf/mesa-egl/', '/usr/lib/arm-linux-gnueabihf/.mesa-egl/')
+    standart_egl_path = '/usr/lib/arm-linux-gnueabihf/mesa-egl/'
+    if os.path.exists(standart_egl_path):
+        shutil.move(standart_egl_path, '/usr/lib/arm-linux-gnueabihf/.mesa-egl/')
     #os.symlink('/usr/lib/libMali.so', '/usr/lib/libGLESv2.so')
 
 
