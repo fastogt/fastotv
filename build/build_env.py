@@ -292,7 +292,7 @@ class BuildRequest(object):
                                 '--disable-shared', '--enable-static',
                                 '--disable-debug', '--disable-ffserver',
                                 '--enable-avfilter', '--enable-avcodec', '--enable-avdevice', '--enable-avformat',
-                                '--enable-swscale', '--enable-swresample'
+                                '--enable-swscale', '--enable-swresample',
                                 '--extra-version=static']  # '--extra-cflags=--static'
         platform_name = self.platform_.name()
         if platform_name == 'linux':
