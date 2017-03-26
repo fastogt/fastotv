@@ -83,6 +83,7 @@ def build_ffmpeg(url, prefix_path, other_args):
     ffmpeg_cmd = ['./configure', '--prefix={0}'.format(prefix_path)]
     ffmpeg_cmd.extend(other_args)
     subprocess.call(ffmpeg_cmd)
+    subprocess.call(['make', '-j2'])
     subprocess.call(['make', 'install'])
     os.chdir(pwd)
     shutil.rmtree(folder)
@@ -110,6 +111,7 @@ def build_from_sources(url, prefix_path, other_args):
     source_build_cmd = ['./configure', '--prefix={0}'.format(prefix_path)]
     source_build_cmd.extend(other_args)
     subprocess.call(source_build_cmd)
+    subprocess.call(['make', '-j2'])
     subprocess.call(['make', 'install'])
     os.chdir(pwd)
     shutil.rmtree(folder)
@@ -146,7 +148,7 @@ def install_orange_pi():
     standart_egl_path = '/usr/lib/arm-linux-gnueabihf/mesa-egl/'
     if os.path.exists(standart_egl_path):
         shutil.move(standart_egl_path, '/usr/lib/arm-linux-gnueabihf/.mesa-egl/')
-    #os.symlink('/usr/lib/libMali.so', '/usr/lib/libGLESv2.so')
+        # os.symlink('/usr/lib/libMali.so', '/usr/lib/libGLESv2.so')
 
 
 class SupportedDevice(object):
@@ -289,6 +291,8 @@ class BuildRequest(object):
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
                                 '--disable-debug', '--disable-ffserver',
+                                '--enable-avfilter', '--enable-avcodec', '--enable-avdevice', '--enable-avformat',
+                                '--enable-swscale', '--enable-swresample'
                                 '--extra-version=static']  # '--extra-cflags=--static'
         platform_name = self.platform_.name()
         if platform_name == 'linux':
