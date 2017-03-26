@@ -134,8 +134,17 @@ def install_orange_pi():
                 'KERNEL=="ump", MODE="0660", GROUP="video"')
 
     with open('/etc/asound.conf', 'w') as f:
-        f.write('pcm.!default { type hw card 1 }\n'
-                'ctl.!default { type hw card 1 }')
+        f.write('pcm.!default {'
+                'type hw'
+                'card 1'
+                '}\n'
+                'ctl.!default {'
+                'type hw'
+                'card 1'
+                '}')
+
+    shutil.move('/usr/lib/arm-linux-gnueabihf/mesa-egl/', '/usr/lib/arm-linux-gnueabihf/.mesa-egl/')
+    #os.symlink('/usr/lib/libMali.so', '/usr/lib/libGLESv2.so')
 
 
 class SupportedDevice(object):
@@ -160,7 +169,7 @@ class SupportedDevice(object):
 
 
 SUPPORTED_DEVICES = [SupportedDevice('pc', [], []),
-                     SupportedDevice('orange-pi', ['libgles2-mesa-dev'],
+                     SupportedDevice('orange-pi', ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo'],
                                      ['--disable-video-opengl', '--disable-video-opengles1',
                                       '--enable-video-opengles2'], install_orange_pi)]
 
