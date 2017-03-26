@@ -65,8 +65,8 @@ def download_file(url):
         status += chr(8) * (len(status) + 1)
         print(status, end='\r')
 
-        f.close()
-        return file_name
+    f.close()
+    return file_name
 
 
 def extract_file(file):
