@@ -72,6 +72,7 @@ common::Error InnerClient::ReadCommand(std::string* out) {
     return err;
   }
 
+  message_size = ntohl(message_size);  // stable
   char* msg = static_cast<char*>(malloc(message_size));
   ssize_t nread;
   err = ReadMessage(msg, message_size, &nread);
