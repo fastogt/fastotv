@@ -50,6 +50,7 @@ int TcpClient::Fd() const {
 }
 
 common::Error TcpClient::Write(const char* data, size_t size, size_t* nwrite) {
+#if 0
   size_t total = 0;          // how many bytes we've sent
   size_t bytes_left = size;  // how many we have left to send
 
@@ -65,6 +66,9 @@ common::Error TcpClient::Write(const char* data, size_t size, size_t* nwrite) {
 
   *nwrite = total;  // return number actually sent here
   return common::Error();
+#else
+  return  sock_.write(data, size, nwrite);
+#endif
 }
 
 common::Error TcpClient::Read(char* out, size_t max_size, ssize_t* nread) {

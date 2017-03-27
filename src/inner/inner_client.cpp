@@ -91,8 +91,8 @@ common::Error InnerClient::WriteInner(const char* data, size_t size, size_t* nwr
   const size_t protocoled_data_len = size + sizeof(protocoled_size_t);
 
   char* protocoled_data = static_cast<char*>(malloc(protocoled_data_len));
-  betoh_memcpy(protocoled_data, &data_size, sizeof(protocoled_size_t));
-  betoh_memcpy(protocoled_data + sizeof(protocoled_size_t), data, data_size);
+  memcpy(protocoled_data, &data_size, sizeof(protocoled_size_t));
+  memcpy(protocoled_data + sizeof(protocoled_size_t), data, data_size);
   common::Error err = TcpClient::Write(protocoled_data, protocoled_data_len, nwrite);
   free(protocoled_data);
   return err;
