@@ -939,14 +939,13 @@ void VideoState::TryRefreshVideo(msec_t* remaining_time) {
         // nothing to do, no picture to display in the queue
       } else {
         /* dequeue the picture */
-        core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
         core::VideoFrame* vp = video_frame_queue_->Peek();
-
         if (vp->serial != video_packet_queue->Serial()) {
           video_frame_queue_->MoveToNext();
           goto retry;
         }
 
+        core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
         if (lastvp->serial != vp->serial) {
           frame_timer_ = GetRealClockTime();
         }
@@ -982,7 +981,8 @@ void VideoState::TryRefreshVideo(msec_t* remaining_time) {
         core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
         if (nextvp) {
           clock_t duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
-          if (!step_ && opt_.framedrop && time > frame_timer_ + duration) {
+          if (!step_ && (opt_.framedrop || (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER &&
+                                            time > frame_timer_ + duration))) {
             stats_.frame_drops_late++;
             video_frame_queue_->MoveToNext();
             goto retry;
@@ -1135,7 +1135,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
   if (got_picture) {
     frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(ic_, vstream_->AvStream(), frame);
 
-    if (opt_.framedrop) {
+    if (opt_.framedrop || GetMasterSyncType() != AV_SYNC_VIDEO_MASTER) {
       if (IsValidPts(frame->pts)) {
         clock_t dpts = vstream_->q2d() * frame->pts;
         clock_t diff = dpts - GetMasterClock();
@@ -1246,7 +1246,7 @@ int VideoState::ReadThread() {
         0;  // FIXME hack, ffplay maybe should not use avio_feof() to test for the end
   }
 
-  max_frame_duration_ = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
+  max_frame_duration_ = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10000 : 3600000;
   if (opt_.seek_by_bytes < 0) {
     opt_.seek_by_bytes =
         !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
@@ -1599,7 +1599,7 @@ int VideoState::VideoThread() {
       }
 
       frame_last_filter_delay_ = GetRealClockTime() - frame_last_returned_time_;
-      if (fabs(frame_last_filter_delay_) > AV_NOSYNC_THRESHOLD_MSEC / 10) {
+      if (fabs(frame_last_filter_delay_) > AV_NOSYNC_THRESHOLD_MSEC) {
         frame_last_filter_delay_ = 0;
       }
       tb = filt_out->inputs[0]->time_base;
