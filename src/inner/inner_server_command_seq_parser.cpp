@@ -88,9 +88,7 @@ void InnerServerCommandSeqParser::SubscribeRequest(const RequestCallback& req) {
 }
 
 void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connection,
-                                                          char* buff,
-                                                          size_t buff_len) {
-  const std::string input_command(buff, buff_len);
+                                                          const std::string& input_command) {
   cmd_id_t seq;
   cmd_seq_t id;
   std::string cmd_str;
@@ -107,7 +105,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
   ProcessRequest(id, argc, argv);
   if (argv == NULL) {
-    WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << buff;
+    WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << input_command;
     connection->Close();
     delete connection;
     return;

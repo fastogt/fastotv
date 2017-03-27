@@ -91,7 +91,7 @@ void InnerSubHandler::handleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  ssize_t nwrite = 0;
+  size_t nwrite = 0;
   cmd_request_t req(id, input_command);
   err = fclient->Write(req, &nwrite);
   if (err && err->IsError()) {

@@ -44,9 +44,6 @@ class TcpClient : common::IMetaClassInfo {
   common::net::socket_info Info() const;
   int Fd() const;
 
-  virtual common::Error Write(const char* data, size_t size, ssize_t* nwrite) WARN_UNUSED_RESULT;
-  virtual common::Error Read(char* out, size_t max_size, ssize_t* nread) WARN_UNUSED_RESULT;
-
   void Close();
 
   void SetName(const std::string& name);
@@ -58,6 +55,10 @@ class TcpClient : common::IMetaClassInfo {
   common::patterns::id_counter<TcpClient>::type_t Id() const;
   virtual const char* ClassName() const override;
   std::string FormatedName() const;
+
+ protected:
+  virtual common::Error Write(const char* data, size_t size, size_t* nwrite) WARN_UNUSED_RESULT;
+  virtual common::Error Read(char* out, size_t max_size, ssize_t* nread) WARN_UNUSED_RESULT;
 
  private:
   ITcpLoop* server_;

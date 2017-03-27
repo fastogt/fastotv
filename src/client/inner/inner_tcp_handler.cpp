@@ -96,17 +96,18 @@ void InnerTcpHandler::Closed(network::tcp::TcpClient* client) {
 }
 
 void InnerTcpHandler::DataReceived(network::tcp::TcpClient* client) {
-  char buff[MAX_COMMAND_SIZE] = {0};
-  ssize_t nread = 0;
-  common::Error err = client->Read(buff, MAX_COMMAND_SIZE, &nread);
-  if ((err && err->IsError()) || nread == 0) {
+  std::string buff;
+  fasto::fastotv::inner::InnerClient* iclient =
+      static_cast<fasto::fastotv::inner::InnerClient*>(client);
+  common::Error err = iclient->ReadCommand(&buff);
+  if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
     client->Close();
     delete client;
     return;
   }
 
-  HandleInnerDataReceived(static_cast<fasto::fastotv::inner::InnerClient*>(client), buff, nread);
+  HandleInnerDataReceived(iclient, buff);
 }
 
 void InnerTcpHandler::DataReadyToWrite(network::tcp::TcpClient* client) {
@@ -126,7 +127,7 @@ void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
     const cmd_request_t ping_request = PingRequest(NextRequestID());
-    ssize_t nwrite = 0;
+    size_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->Write(ping_request, &nwrite);
     if (err && err->IsError()) {
@@ -140,7 +141,7 @@ void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer
 void InnerTcpHandler::RequestChannels() {
   if (inner_connection_) {
     const cmd_request_t channels_request = GetChannelsRequest(NextRequestID());
-    ssize_t nwrite = 0;
+    size_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->Write(channels_request, &nwrite);
     if (err && err->IsError()) {
@@ -156,7 +157,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
                                                 int argc,
                                                 char* argv[]) {
   UNUSED(argc);
-  ssize_t nwrite = 0;
+  size_t nwrite = 0;
   char* command = argv[0];
 
   if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
@@ -210,7 +211,7 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
                                                  cmd_seq_t id,
                                                  int argc,
                                                  char* argv[]) {
-  ssize_t nwrite = 0;
+  size_t nwrite = 0;
   char* state_command = argv[0];
 
   if (IS_EQUAL_COMMAND(state_command, SUCCESS_COMMAND) && argc > 1) {

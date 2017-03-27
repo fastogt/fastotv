@@ -79,27 +79,33 @@ void InnerTcpHandlerHost::TimerEmited(network::tcp::ITcpLoop* server, network::t
     std::vector<network::tcp::TcpClient*> online_clients = server->Clients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
       network::tcp::TcpClient* client = online_clients[i];
-      const cmd_request_t ping_request = PingRequest(NextRequestID());
-      ssize_t nwrite = 0;
-      common::Error err = client->Write(ping_request.data(), ping_request.size(), &nwrite);
-      INFO_LOG() << "Pinged sended " << nwrite << " byte, client[" << client->FormatedName()
-                 << "], from server[" << server->FormatedName() << "], " << online_clients.size()
-                 << " client(s) connected.";
-      if (err && err->IsError()) {
-        DEBUG_MSG_ERROR(err);
-        client->Close();
-        delete client;
+      InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
+      if (iclient) {
+        const cmd_request_t ping_request = PingRequest(NextRequestID());
+        size_t nwrite = 0;
+        common::Error err = iclient->Write(ping_request, &nwrite);
+        INFO_LOG() << "Pinged sended " << nwrite << " byte, client[" << client->FormatedName()
+                   << "], from server[" << server->FormatedName() << "], " << online_clients.size()
+                   << " client(s) connected.";
+        if (err && err->IsError()) {
+          DEBUG_MSG_ERROR(err);
+          client->Close();
+          delete client;
+        }
       }
     }
   }
 }
 
 void InnerTcpHandlerHost::Accepted(network::tcp::TcpClient* client) {
-  ssize_t nwrite = 0;
+  size_t nwrite = 0;
   cmd_request_t whoareyou = WhoAreYouRequest(NextRequestID());
-  common::Error err = client->Write(whoareyou.data(), whoareyou.size(), &nwrite);
-  if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+  InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
+  if (iclient) {
+    common::Error err = iclient->Write(whoareyou, &nwrite);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    }
   }
 }
 
@@ -115,17 +121,17 @@ void InnerTcpHandlerHost::Closed(network::tcp::TcpClient* client) {
 }
 
 void InnerTcpHandlerHost::DataReceived(network::tcp::TcpClient* client) {
-  char buff[MAX_COMMAND_SIZE] = {0};
-  ssize_t nread = 0;
-  common::Error err = client->Read(buff, MAX_COMMAND_SIZE, &nread);
-  if ((err && err->IsError()) || nread == 0) {
+  std::string buff;
+  InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
+  common::Error err = iclient->ReadCommand(&buff);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
     client->Close();
     delete client;
     return;
   }
 
-  InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
-  HandleInnerDataReceived(iclient, buff, nread);
+  HandleInnerDataReceived(iclient, buff);
 }
 
 void InnerTcpHandlerHost::DataReadyToWrite(network::tcp::TcpClient* client) {
@@ -168,7 +174,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
                                                     char* argv[]) {
   UNUSED(argc);
   char* command = argv[0];
-  ssize_t nwrite = 0;
+  size_t nwrite = 0;
 
   if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
     cmd_responce_t pong = PingResponceSuccsess(id);
@@ -215,7 +221,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
                                                      cmd_seq_t id,
                                                      int argc,
                                                      char* argv[]) {
-  ssize_t nwrite = 0;
+  size_t nwrite = 0;
   char* state_command = argv[0];
 
   if (IS_EQUAL_COMMAND(state_command, SUCCESS_COMMAND) && argc > 1) {

@@ -29,7 +29,6 @@
 #define FAIL_COMMAND "fail"
 #define SUCCESS_COMMAND "ok"
 
-#define MAX_COMMAND_SIZE 1024
 #define IS_EQUAL_COMMAND(BUF, CMD) BUF&& strncmp(BUF, CMD, sizeof(CMD) - 1) == 0
 
 #define CID_FMT PRIu8
@@ -102,25 +101,19 @@ typedef InnerCmd<APPROVE_COMMAND> cmd_approve_t;
 
 template <typename... Args>
 cmd_request_t MakeRequest(cmd_seq_t id, const char* cmd_fmt, Args... args) {
-  char buff[MAX_COMMAND_SIZE] = {0};
-  int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, REQUEST_COMMAND, id, args...);
-  CHECK_NE(res, -1);
+  std::string buff = common::MemSPrintf(cmd_fmt, REQUEST_COMMAND, id, args...);
   return cmd_request_t(id, buff);
 }
 
 template <typename... Args>
 cmd_approve_t MakeApproveResponce(cmd_seq_t id, const char* cmd_fmt, Args... args) {
-  char buff[MAX_COMMAND_SIZE] = {0};
-  int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, APPROVE_COMMAND, id, args...);
-  CHECK_NE(res, -1);
+  std::string buff = common::MemSPrintf(cmd_fmt, APPROVE_COMMAND, id, args...);
   return cmd_approve_t(id, buff);
 }
 
 template <typename... Args>
 cmd_responce_t MakeResponce(cmd_seq_t id, const char* cmd_fmt, Args... args) {
-  char buff[MAX_COMMAND_SIZE] = {0};
-  int res = common::SNPrintf(buff, MAX_COMMAND_SIZE, cmd_fmt, RESPONCE_COMMAND, id, args...);
-  CHECK_NE(res, -1);
+  std::string buff = common::MemSPrintf(cmd_fmt, RESPONCE_COMMAND, id, args...);
   return cmd_responce_t(id, buff);
 }
 

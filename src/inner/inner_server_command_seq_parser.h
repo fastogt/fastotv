@@ -51,7 +51,7 @@ class InnerServerCommandSeqParser {
   void SubscribeRequest(const RequestCallback& req);
 
  protected:
-  void HandleInnerDataReceived(InnerClient* connection, char* buff, size_t buff_len);
+  void HandleInnerDataReceived(InnerClient* connection, const std::string& input_command);
 
   cmd_seq_t NextRequestID();  // for requests
 
