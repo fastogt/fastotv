@@ -33,11 +33,7 @@ namespace client {
 namespace core {
 
 Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
-    : avctx_(avctx),
-      pkt_(),
-      queue_(queue),
-      packet_pending_(false),
-      finished_(false) {
+    : avctx_(avctx), pkt_(), queue_(queue), packet_pending_(false), finished_(false) {
   CHECK(queue);
 }
 
@@ -82,7 +78,7 @@ void AudioDecoder::SetStartPts(int64_t start_pts, AVRational start_pts_tb) {
 int AudioDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
   AVPacket pkt_temp;
-  static const AVPacket* fls = PacketQueue::FlushPkt();
+
   do {
     if (queue_->IsAborted()) {
       return -1;
@@ -90,15 +86,9 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
 
     if (!packet_pending_) {
       AVPacket lpkt;
-      do {
-        if (queue_->Get(&lpkt) < 0) {
-          return -1;
-        }
-        if (lpkt.data == fls->data) {
-          avcodec_flush_buffers(avctx_);
-          SetFinished(false);
-        }
-      } while (lpkt.data == fls->data);
+      if (queue_->Get(&lpkt) < 0) {
+        return -1;
+      }
       av_packet_unref(&pkt_);
       pkt_temp = pkt_ = lpkt;
       packet_pending_ = true;
@@ -153,7 +143,6 @@ int VideoDecoder::height() const {
 int VideoDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
   AVPacket pkt_temp;
-  static const AVPacket* fls = PacketQueue::FlushPkt();
   do {
     if (queue_->IsAborted()) {
       return -1;
@@ -161,15 +150,9 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
 
     if (!packet_pending_) {
       AVPacket lpkt;
-      do {
-        if (queue_->Get(&lpkt) < 0) {
-          return -1;
-        }
-        if (lpkt.data == fls->data) {
-          avcodec_flush_buffers(avctx_);
-          SetFinished(false);
-        }
-      } while (lpkt.data == fls->data);
+      if (queue_->Get(&lpkt) < 0) {
+        return -1;
+      }
       av_packet_unref(&pkt_);
       pkt_temp = pkt_ = lpkt;
       packet_pending_ = true;

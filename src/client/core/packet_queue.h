@@ -60,8 +60,6 @@ class PacketQueue {  // compressed queue data
   int Get(AVPacket* pkt);
   void Start();
 
-  static AVPacket* FlushPkt();
-
   bool IsAborted();
   size_t NbPackets();
   int Size() const;

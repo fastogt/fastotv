@@ -66,13 +66,6 @@ int PacketQueue::Get(AVPacket* pkt) {
   return ret;
 }
 
-AVPacket* PacketQueue::FlushPkt() {
-  static AVPacket fls;
-  av_init_packet(&fls);
-  fls.data = reinterpret_cast<uint8_t*>(&fls);
-  return &fls;
-}
-
 bool PacketQueue::IsAborted() {
   lock_t lock(mutex_);
   return abort_request_;
@@ -92,11 +85,8 @@ int64_t PacketQueue::Duration() const {
 }
 
 void PacketQueue::Start() {
-  SAVPacket* sav = new SAVPacket(*FlushPkt());
-
   lock_t lock(mutex_);
   abort_request_ = false;
-  PutPrivate(sav);
   cond_.notify_one();
 }
 
