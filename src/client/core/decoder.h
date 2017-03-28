@@ -50,10 +50,7 @@ class Decoder {
   Decoder(AVCodecContext* avctx, PacketQueue* queue);
 
   AVCodecContext* avctx_;
-  AVPacket pkt_;
   PacketQueue* const queue_;
-
-  bool packet_pending_;
 
  private:
   bool finished_;

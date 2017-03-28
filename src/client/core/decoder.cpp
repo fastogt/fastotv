@@ -33,7 +33,7 @@ namespace client {
 namespace core {
 
 Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
-    : avctx_(avctx), pkt_(), queue_(queue), packet_pending_(false), finished_(false) {
+    : avctx_(avctx), queue_(queue), finished_(false) {
   CHECK(queue);
 }
 
@@ -47,7 +47,6 @@ void Decoder::Abort() {
 }
 
 Decoder::~Decoder() {
-  av_packet_unref(&pkt_);
   avcodec_free_context(&avctx_);
 }
 
@@ -78,20 +77,19 @@ void AudioDecoder::SetStartPts(int64_t start_pts, AVRational start_pts_tb) {
 int AudioDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
   AVPacket pkt_temp;
-
+  bool packet_pending =false;
   do {
     if (queue_->IsAborted()) {
       return -1;
     }
 
-    if (!packet_pending_) {
+    if (!packet_pending) {
       AVPacket lpkt;
       if (queue_->Get(&lpkt) < 0) {
         return -1;
       }
-      av_packet_unref(&pkt_);
-      pkt_temp = pkt_ = lpkt;
-      packet_pending_ = true;
+      pkt_temp = lpkt;
+      packet_pending = true;
     }
 
     int ret = avcodec_decode_audio4(avctx_, frame, &got_frame, &pkt_temp);
@@ -106,18 +104,18 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
     }
 
     if (ret < 0) {
-      packet_pending_ = false;
+      packet_pending = false;
     } else {
       pkt_temp.dts = pkt_temp.pts = invalid_pts();
       if (pkt_temp.data) {
         pkt_temp.data += ret;
         pkt_temp.size -= ret;
         if (pkt_temp.size <= 0) {
-          packet_pending_ = false;
+          packet_pending = false;
         }
       } else {
         if (!got_frame) {
-          packet_pending_ = false;
+          packet_pending = false;
           SetFinished(true);
         }
       }
@@ -143,19 +141,19 @@ int VideoDecoder::height() const {
 int VideoDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
   AVPacket pkt_temp;
+  bool packet_pending =false;
   do {
     if (queue_->IsAborted()) {
       return -1;
     }
 
-    if (!packet_pending_) {
+    if (!packet_pending) {
       AVPacket lpkt;
       if (queue_->Get(&lpkt) < 0) {
         return -1;
       }
-      av_packet_unref(&pkt_);
-      pkt_temp = pkt_ = lpkt;
-      packet_pending_ = true;
+      pkt_temp = lpkt;
+      packet_pending = true;
     }
 
     int ret = avcodec_decode_video2(avctx_, frame, &got_frame, &pkt_temp);
@@ -164,7 +162,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
     }
 
     if (ret < 0) {
-      packet_pending_ = false;
+      packet_pending = false;
     } else {
       pkt_temp.dts = pkt_temp.pts = invalid_pts();
       if (pkt_temp.data) {
@@ -172,11 +170,11 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
         pkt_temp.data += ret;
         pkt_temp.size -= ret;
         if (pkt_temp.size <= 0) {
-          packet_pending_ = false;
+          packet_pending = false;
         }
       } else {
         if (!got_frame) {
-          packet_pending_ = false;
+          packet_pending = false;
           SetFinished(true);
         }
       }
