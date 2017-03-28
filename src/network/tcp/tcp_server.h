@@ -125,7 +125,7 @@ class TcpServer : public ITcpLoop {
   const char* ClassName() const override;
   common::net::HostAndPort host() const;
 
-  static ITcpLoop* findExistServerByHost(const common::net::HostAndPort& host);
+  static ITcpLoop* FindExistServerByHost(const common::net::HostAndPort& host);
 
  private:
   virtual TcpClient* CreateClient(const common::net::socket_info& info) override;

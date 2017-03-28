@@ -141,8 +141,6 @@ class RingBuffer {
 
   bool IsEmpty() const { return IsEmptyInner(); }
 
-  int NbRemaining() const { return NbRemainingInner(); }
-
   size_t RindexShown() const { return RindexShownInner(); }
 
  protected:

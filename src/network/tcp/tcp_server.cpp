@@ -313,7 +313,7 @@ TcpServer::~TcpServer() {
   accept_io_ = NULL;
 }
 
-ITcpLoop* TcpServer::findExistServerByHost(const common::net::HostAndPort& host) {
+ITcpLoop* TcpServer::FindExistServerByHost(const common::net::HostAndPort& host) {
   if (!host.IsValid()) {
     return nullptr;
   }

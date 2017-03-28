@@ -367,8 +367,6 @@ class FFmpegApplication : public B {
     }
   }
 
-  DictionaryOptions* GetDict() const { return dict_; }
-
  private:
   static int lockmgr(void** mtx, enum AVLockOp op) {
     common::mutex* lmtx = static_cast<common::mutex*>(*mtx);

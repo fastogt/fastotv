@@ -90,8 +90,6 @@ namespace core {
 struct Stats {
   Stats() : frame_drops_early(0), frame_drops_late(0) {}
 
-  int FrameDrops() const { return frame_drops_early + frame_drops_late; }
-
   int frame_drops_early;
   int frame_drops_late;
 };

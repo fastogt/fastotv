@@ -38,19 +38,6 @@ class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {
 
   explicit VideoFrameQueue(bool keep_last) : base_class(keep_last) {}
 
-  bool GetLastUsedPos(int64_t* pos, int serial) {
-    if (!pos) {
-      return false;
-    }
-
-    pointer_type fp = base_class::RindexElementInner();
-    if (base_class::RindexShownInner() && fp->serial == serial) {
-      *pos = fp->pos;
-      return true;
-    }
-    return false;
-  }
-
   void MoveToNext() {
     pointer_type fp = base_class::MoveToNextInner();
     if (!fp) {
@@ -69,19 +56,6 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
   typedef typename base_class::pointer_type pointer_type;
 
   explicit AudioFrameQueue(bool keep_last) : base_class(keep_last) {}
-
-  bool GetLastUsedPos(int64_t* pos, int serial) {
-    if (!pos) {
-      return false;
-    }
-
-    pointer_type fp = base_class::RindexElementInner();
-    if (base_class::RindexShownInner() && fp->serial == serial) {
-      *pos = fp->pos;
-      return true;
-    }
-    return false;
-  }
 
   void MoveToNext() {
     pointer_type fp = base_class::MoveToNextInner();
