@@ -58,7 +58,7 @@ class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {
     }
     fp->ClearFrame();
     base_class::RindexUpInner();
-    base_class::queue_cond_.notify_one();
+    base_class::Signal();
   }
 };
 
@@ -90,7 +90,7 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
     }
     fp->ClearFrame();
     base_class::RindexUpInner();
-    base_class::queue_cond_.notify_one();
+    base_class::Signal();
   }
 };
 
