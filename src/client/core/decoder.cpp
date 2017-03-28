@@ -76,50 +76,30 @@ void AudioDecoder::SetStartPts(int64_t start_pts, AVRational start_pts_tb) {
 
 int AudioDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
-  AVPacket pkt_temp;
-  bool packet_pending =false;
   do {
-    if (queue_->IsAborted()) {
+    AVPacket packet;
+    if (queue_->Get(&packet) < 0) {
       return -1;
     }
 
-    if (!packet_pending) {
-      AVPacket lpkt;
-      if (queue_->Get(&lpkt) < 0) {
-        return -1;
-      }
-      pkt_temp = lpkt;
-      packet_pending = true;
+    int retcd = avcodec_send_packet(avctx_, &packet);
+    if (retcd < 0 && retcd != AVERROR_EOF) {
+      continue;
     }
 
-    int ret = avcodec_decode_audio4(avctx_, frame, &got_frame, &pkt_temp);
-    if (got_frame) {
-      AVRational tb = {1, frame->sample_rate};
-      if (IsValidPts(frame->pts)) {
-        AVRational stb = av_codec_get_pkt_timebase(avctx_);
-        frame->pts = av_rescale_q(frame->pts, stb, tb);
-      } else {
-        NOTREACHED();
-      }
+    retcd = avcodec_receive_frame(avctx_, frame);
+    if (retcd < 0) {
+      continue;
     }
 
-    if (ret < 0) {
-      packet_pending = false;
+    AVRational tb = {1, frame->sample_rate};
+    if (IsValidPts(frame->pts)) {
+      AVRational stb = av_codec_get_pkt_timebase(avctx_);
+      frame->pts = av_rescale_q(frame->pts, stb, tb);
     } else {
-      pkt_temp.dts = pkt_temp.pts = invalid_pts();
-      if (pkt_temp.data) {
-        pkt_temp.data += ret;
-        pkt_temp.size -= ret;
-        if (pkt_temp.size <= 0) {
-          packet_pending = false;
-        }
-      } else {
-        if (!got_frame) {
-          packet_pending = false;
-          SetFinished(true);
-        }
-      }
+      NOTREACHED();
     }
+    got_frame = 1;
   } while (!got_frame && !Finished());
 
   return got_frame;
@@ -140,45 +120,24 @@ int VideoDecoder::height() const {
 
 int VideoDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
-  AVPacket pkt_temp;
-  bool packet_pending =false;
   do {
-    if (queue_->IsAborted()) {
+    AVPacket packet;
+    if (queue_->Get(&packet) < 0) {
       return -1;
     }
 
-    if (!packet_pending) {
-      AVPacket lpkt;
-      if (queue_->Get(&lpkt) < 0) {
-        return -1;
-      }
-      pkt_temp = lpkt;
-      packet_pending = true;
+    int retcd = avcodec_send_packet(avctx_, &packet);
+    if (retcd < 0 && retcd != AVERROR_EOF) {
+      continue;
     }
 
-    int ret = avcodec_decode_video2(avctx_, frame, &got_frame, &pkt_temp);
-    if (got_frame) {
-      frame->pts = av_frame_get_best_effort_timestamp(frame);
+    retcd = avcodec_receive_frame(avctx_, frame);
+    if (retcd < 0) {
+      continue;
     }
 
-    if (ret < 0) {
-      packet_pending = false;
-    } else {
-      pkt_temp.dts = pkt_temp.pts = invalid_pts();
-      if (pkt_temp.data) {
-        ret = pkt_temp.size;
-        pkt_temp.data += ret;
-        pkt_temp.size -= ret;
-        if (pkt_temp.size <= 0) {
-          packet_pending = false;
-        }
-      } else {
-        if (!got_frame) {
-          packet_pending = false;
-          SetFinished(true);
-        }
-      }
-    }
+    frame->pts = av_frame_get_best_effort_timestamp(frame);
+    got_frame = 1;
   } while (!got_frame && !Finished());
 
   return got_frame;
