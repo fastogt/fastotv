@@ -31,13 +31,10 @@ namespace client {
 namespace core {
 
 Stream::Stream() : packet_queue_(nullptr), clock_(nullptr), stream_index_(-1), stream_st_(NULL) {
-  common::atomic<int>* ext_serial = NULL;
+  common::atomic<serial_id_t>* ext_serial = NULL;
   packet_queue_ = PacketQueue::MakePacketQueue(&ext_serial);
   clock_ = new Clock(*ext_serial);
 }
-
-Stream::Stream(int index, AVStream* av_stream_st)
-    : packet_queue_(nullptr), clock_(nullptr), stream_index_(index), stream_st_(av_stream_st) {}
 
 bool Stream::Open(int index, AVStream* av_stream_st) {
   stream_index_ = index;
@@ -55,11 +52,11 @@ void Stream::Close() {
 }
 
 bool Stream::HasEnoughPackets() const {
-  if (stream_index_ < 0) {
+  if (!IsOpened()) {
     return false;
   }
 
-  if (packet_queue_->AbortRequest()) {
+  if (packet_queue_->IsAborted()) {
     return false;
   }
 
@@ -125,11 +122,7 @@ PacketQueue* Stream::Queue() const {
 
 VideoStream::VideoStream() : Stream() {}
 
-VideoStream::VideoStream(int index, AVStream* av_stream_st) : Stream(index, av_stream_st) {}
-
 AudioStream::AudioStream() : Stream() {}
-
-AudioStream::AudioStream(int index, AVStream* av_stream_st) : Stream(index, av_stream_st) {}
 
 }  // namespace core
 }

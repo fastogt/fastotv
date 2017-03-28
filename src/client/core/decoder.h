@@ -86,9 +86,6 @@ class VideoDecoder : public IFrameDecoder {
   int width() const;
   int height() const;
 
-  int64_t PtsCorrectionNumFaultyDts() const;
-  int64_t PtsCorrectionNumFaultyPts() const;
-
   int DecodeFrame(AVFrame* frame) override;
 };
 }

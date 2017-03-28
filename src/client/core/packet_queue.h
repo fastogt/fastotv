@@ -63,7 +63,7 @@ class PacketQueue {  // compressed queue data
   static AVPacket* FlushPkt();
   static PacketQueue* MakePacketQueue(common::atomic<serial_id_t>** ext_serial);
 
-  bool AbortRequest();
+  bool IsAborted();
   size_t NbPackets();
   int Size() const;
   int64_t Duration() const;

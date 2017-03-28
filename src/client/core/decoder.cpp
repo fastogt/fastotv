@@ -89,7 +89,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
   AVPacket pkt_temp;
   static const AVPacket* fls = PacketQueue::FlushPkt();
   do {
-    if (queue_->AbortRequest()) {
+    if (queue_->IsAborted()) {
       return -1;
     }
 
@@ -155,20 +155,12 @@ int VideoDecoder::height() const {
   return avctx_->height;
 }
 
-int64_t VideoDecoder::PtsCorrectionNumFaultyDts() const {
-  return avctx_->pts_correction_num_faulty_dts;
-}
-
-int64_t VideoDecoder::PtsCorrectionNumFaultyPts() const {
-  return avctx_->pts_correction_num_faulty_pts;
-}
-
 int VideoDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
   AVPacket pkt_temp;
   static const AVPacket* fls = PacketQueue::FlushPkt();
   do {
-    if (queue_->AbortRequest()) {
+    if (queue_->IsAborted()) {
       return -1;
     }
 

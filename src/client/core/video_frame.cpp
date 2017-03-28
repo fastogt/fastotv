@@ -61,12 +61,10 @@ clock_t VideoFrame::VpDuration(core::VideoFrame* vp,
     clock_t duration = nextvp->pts - vp->pts;
     if (!IsValidClock(duration) || duration <= 0 || duration > max_frame_duration) {
       return vp->duration;
-    } else {
-      return duration;
     }
-  } else {
-    return 0.0;
+    return duration;
   }
+  return 0.0;
 }
 
 }  // namespace core

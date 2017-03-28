@@ -87,7 +87,7 @@ AVPacket* PacketQueue::FlushPkt() {
   return &fls;
 }
 
-bool PacketQueue::AbortRequest() {
+bool PacketQueue::IsAborted() {
   lock_t lock(mutex_);
   return abort_request_;
 }

@@ -1023,14 +1023,11 @@ void VideoState::TryRefreshVideo(msec_t* remaining_time) {
         } else if (audio_st) {
           av_diff = GetMasterClock() - astream_->GetClock();
         }
-        int64_t fdts = video_st ? viddec_->PtsCorrectionNumFaultyDts() : 0;
-        int64_t fpts = video_st ? viddec_->PtsCorrectionNumFaultyPts() : 0;
         const char* fmt =
             (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
         INFO_LOG() << GetMasterClock() << " " << fmt << ":" << av_diff << " msec fd=("
                    << stats_.frame_drops_early << "/" << stats_.frame_drops_late
-                   << ") aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB f=" << fdts
-                   << "/" << fpts;
+                   << ") aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB";
         last_time = cur_time;
       }
     }
@@ -1105,10 +1102,10 @@ int VideoState::QueuePicture(AVFrame* src_frame,
     fApp->PostEvent(event);
 
     video_frame_queue_->WaitSafeAndNotify([video_packet_queue, vp]() -> bool {
-      return !vp->allocated && !video_packet_queue->AbortRequest();
+      return !vp->allocated && !video_packet_queue->IsAborted();
     });
 
-    if (video_packet_queue->AbortRequest()) {
+    if (video_packet_queue->IsAborted()) {
       return ERROR_RESULT_VALUE;
     }
   }

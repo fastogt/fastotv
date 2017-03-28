@@ -65,7 +65,6 @@ class Stream {
 
  protected:
   Stream();
-  Stream(int index, AVStream* av_stream_st);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Stream);
@@ -78,13 +77,11 @@ class Stream {
 class VideoStream : public Stream {
  public:
   VideoStream();
-  VideoStream(int index, AVStream* av_stream_st);
 };
 
 class AudioStream : public Stream {
  public:
   AudioStream();
-  AudioStream(int index, AVStream* av_stream_st);
 };
 
 }  // namespace core
