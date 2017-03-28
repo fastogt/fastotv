@@ -37,7 +37,7 @@ int PacketQueue::PutNullpacket(int stream_index) {
   return Put(pkt);
 }
 
-int PacketQueue::Get(AVPacket* pkt, bool block) {
+int PacketQueue::Get(AVPacket* pkt) {
   if (!pkt) {
     return -1;
   }
@@ -59,19 +59,11 @@ int PacketQueue::Get(AVPacket* pkt, bool block) {
       delete pkt1;
       ret = 1;
       break;
-    } else if (!block) {
-      ret = 0;
-      break;
     } else {
       cond_.wait(lock);
     }
   }
   return ret;
-}
-
-PacketQueue* PacketQueue::MakePacketQueue() {
-  PacketQueue* pq = new PacketQueue;
-  return pq;
 }
 
 AVPacket* PacketQueue::FlushPkt() {
@@ -109,15 +101,12 @@ void PacketQueue::Start() {
 }
 
 int PacketQueue::Put(AVPacket* pkt) {
-  bool is_flush = false;
-  SAVPacket* sav = MakePacket(pkt, &is_flush);
+  SAVPacket* sav = new SAVPacket(*pkt);
   lock_t lock(mutex_);
   if (abort_request_) {
-    if (!is_flush) {
-      av_packet_unref(pkt);
-      delete sav;
-      return -1;
-    }
+    av_packet_unref(pkt);
+    delete sav;
+    return -1;
   }
 
   int ret = PutPrivate(sav);
@@ -145,15 +134,6 @@ void PacketQueue::Abort() {
 
 PacketQueue::~PacketQueue() {
   Flush();
-}
-
-SAVPacket* PacketQueue::MakePacket(AVPacket* pkt, bool* is_flush) {
-  if (pkt == FlushPkt()) {
-    *is_flush = true;
-  }
-  SAVPacket* pkt1 = new SAVPacket(*pkt);
-  *is_flush = false;
-  return pkt1;
 }
 
 int PacketQueue::PutPrivate(SAVPacket* pkt1) {

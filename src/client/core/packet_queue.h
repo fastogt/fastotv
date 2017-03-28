@@ -49,6 +49,7 @@ struct SAVPacket {
 
 class PacketQueue {  // compressed queue data
  public:
+  PacketQueue();
   ~PacketQueue();
 
   void Flush();
@@ -56,11 +57,10 @@ class PacketQueue {  // compressed queue data
   int Put(AVPacket* pkt);
   int PutNullpacket(int stream_index);
   /* return < 0 if aborted, 0 if no packet and > 0 if packet.  */
-  int Get(AVPacket* pkt, bool block);
+  int Get(AVPacket* pkt);
   void Start();
 
   static AVPacket* FlushPkt();
-  static PacketQueue* MakePacketQueue();
 
   bool IsAborted();
   size_t NbPackets();
@@ -68,12 +68,8 @@ class PacketQueue {  // compressed queue data
   int64_t Duration() const;
 
  private:
-  PacketQueue();
-
   DISALLOW_COPY_AND_ASSIGN(PacketQueue);
   int PutPrivate(SAVPacket* pkt1);
-
-  SAVPacket* MakePacket(AVPacket* pkt, bool* is_flush);
 
   std::deque<SAVPacket*> queue_;
   int size_;

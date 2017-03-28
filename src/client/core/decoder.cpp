@@ -91,7 +91,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
     if (!packet_pending_) {
       AVPacket lpkt;
       do {
-        if (queue_->Get(&lpkt, true) < 0) {
+        if (queue_->Get(&lpkt) < 0) {
           return -1;
         }
         if (lpkt.data == fls->data) {
@@ -162,7 +162,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
     if (!packet_pending_) {
       AVPacket lpkt;
       do {
-        if (queue_->Get(&lpkt, true) < 0) {
+        if (queue_->Get(&lpkt) < 0) {
           return -1;
         }
         if (lpkt.data == fls->data) {
