@@ -24,6 +24,7 @@
 #include <common/macros.h>         // for DCHECK
 #include <common/threads/types.h>  // for condition_variable, mutex
 
+#include <atomic>
 #include <mutex>  // for unique_lock
 
 namespace fasto {
@@ -106,8 +107,8 @@ class RingBuffer {
   }
 
   void Push() {
-    lock_t lock(queue_mutex_);
     WindexUpInner();
+    lock_t lock(queue_mutex_);
     queue_cond_.notify_one();
   }
 
@@ -118,17 +119,14 @@ class RingBuffer {
   }
 
   pointer_type PeekLast() {
-    lock_t lock(queue_mutex_);
     return RindexElementInner();
   }
 
   pointer_type Peek() {
-    lock_t lock(queue_mutex_);
     return PeekInner();
   }
 
   pointer_type PeekNextOrNull() {
-    lock_t lock(queue_mutex_);
     if (IsEmptyInner()) {
       return nullptr;
     }
@@ -136,22 +134,18 @@ class RingBuffer {
   }
 
   pointer_type Windex() {
-    lock_t lock(queue_mutex_);
     return WindexElementInner();
   }
 
   bool IsEmpty() {
-    lock_t lock(queue_mutex_);
     return IsEmptyInner();
   }
 
   int NbRemaining() {
-    lock_t lock(queue_mutex_);
     return NbRemainingInner();
   }
 
   size_t RindexShown() {
-    lock_t lock(queue_mutex_);
     return RindexShownInner();
   }
 
@@ -208,8 +202,8 @@ class RingBuffer {
   size_t rindex_shown_;
   const bool keep_last_;
   size_t rindex_;
-  size_t windex_;
-  size_t size_;
+  std::atomic<size_t> windex_;
+  std::atomic<size_t> size_;
   bool stoped_;
 };
 

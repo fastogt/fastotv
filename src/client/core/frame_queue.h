@@ -43,7 +43,6 @@ class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {
       return false;
     }
 
-    typename base_class::lock_t lock(base_class::queue_mutex_);
     pointer_type fp = base_class::RindexElementInner();
     if (base_class::RindexShownInner() && fp->serial == serial) {
       *pos = fp->pos;
@@ -53,7 +52,6 @@ class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {
   }
 
   void MoveToNext() {
-    typename base_class::lock_t lock(base_class::queue_mutex_);
     pointer_type fp = base_class::MoveToNextInner();
     if (!fp) {
       return;
@@ -77,7 +75,6 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
       return false;
     }
 
-    typename base_class::lock_t lock(base_class::queue_mutex_);
     pointer_type fp = base_class::RindexElementInner();
     if (base_class::RindexShownInner() && fp->serial == serial) {
       *pos = fp->pos;
@@ -87,7 +84,6 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
   }
 
   void MoveToNext() {
-    typename base_class::lock_t lock(base_class::queue_mutex_);
     pointer_type fp = base_class::MoveToNextInner();
     if (!fp) {
       return;
