@@ -106,7 +106,7 @@ class RingBuffer {
   }
 
   void Push() {
-    //lock_t lock(queue_mutex_);
+    lock_t lock(queue_mutex_);
     WindexUpInner();
     queue_cond_.notify_one();
   }
@@ -123,12 +123,12 @@ class RingBuffer {
   }
 
   pointer_type Peek() {
-    //lock_t lock(queue_mutex_);
+    lock_t lock(queue_mutex_);
     return PeekInner();
   }
 
   pointer_type PeekNextOrNull() {
-    //lock_t lock(queue_mutex_);
+    lock_t lock(queue_mutex_);
     if (IsEmptyInner()) {
       return nullptr;
     }
@@ -136,22 +136,22 @@ class RingBuffer {
   }
 
   pointer_type Windex() {
-    //lock_t lock(queue_mutex_);
+    lock_t lock(queue_mutex_);
     return WindexElementInner();
   }
 
   bool IsEmpty() {
-    //lock_t lock(queue_mutex_);
+    lock_t lock(queue_mutex_);
     return IsEmptyInner();
   }
 
   int NbRemaining() {
-    //lock_t lock(queue_mutex_);
+    lock_t lock(queue_mutex_);
     return NbRemainingInner();
   }
 
   size_t RindexShown() {
-    //lock_t lock(queue_mutex_);
+    lock_t lock(queue_mutex_);
     return RindexShownInner();
   }
 
