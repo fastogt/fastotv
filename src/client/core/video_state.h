@@ -124,10 +124,6 @@ class VideoState {
 
   void StepToNextFrame();
   void StreamCycleChannel(AVMediaType codec_type);
-  void StreemSeek(double incr);
-
-  void MoveToNextFragment(double incr);
-  void MoveToPreviousFragment(double incr);
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
@@ -145,9 +141,6 @@ class VideoState {
   void StreamComponentClose(int stream_index);
   void StreamTogglePause();
 
-  /* seek in the stream */
-  void StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes);
-
   int GetMasterSyncType() const;
   clock_t ComputeTargetDelay(clock_t delay) const;
   clock_t GetMasterClock() const;
@@ -162,7 +155,6 @@ class VideoState {
   int AllocPicture();
   void VideoDisplay();
 
-  void SeekChapter(int incr);
   /* return the wanted number of samples to get better sync if sync_type is video
    * or external master clock */
   int SynchronizeAudio(int nb_samples);
@@ -194,10 +186,6 @@ class VideoState {
   common::shared_ptr<common::threads::Thread<int>> read_tid_;
   bool force_refresh_;
   bool queue_attachments_req_;
-  bool seek_req_;
-  int seek_flags_;
-  int64_t seek_pos_;
-  int64_t seek_rel_;
   int read_pause_return_;
   AVFormatContext* ic_;
   bool realtime_;

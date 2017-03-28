@@ -451,7 +451,6 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   }
 
   core::events::KeyPressInfo inf = event->info();
-  double incr = 0;
   switch (inf.ks.sym) {
     case FASTO_KEY_ESCAPE:
     case FASTO_KEY_q: {
@@ -509,16 +508,6 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     case FASTO_KEY_w: {
       break;
     }
-    case FASTO_KEY_PAGEUP:
-      if (stream_) {
-        stream_->MoveToNextFragment(0);
-      }
-      break;
-    case FASTO_KEY_PAGEDOWN:
-      if (stream_) {
-        stream_->MoveToPreviousFragment(0);
-      }
-      break;
     case FASTO_KEY_LEFTBRACKET: {
       core::VideoState* st = stream_;
       if (st) {
@@ -549,22 +538,6 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       }
       break;
     }
-    case FASTO_KEY_LEFT:
-      incr = -10.0;
-      goto do_seek;
-    case FASTO_KEY_RIGHT:
-      incr = 10.0;
-      goto do_seek;
-    case FASTO_KEY_UP:
-      incr = 60.0;
-      goto do_seek;
-    case FASTO_KEY_DOWN:
-      incr = -60.0;
-    do_seek:
-      if (stream_) {
-        stream_->StreemSeek(incr);
-      }
-      break;
     default:
       break;
   }

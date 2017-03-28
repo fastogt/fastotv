@@ -45,8 +45,6 @@ struct AppOptions {
 
   bool autorotate;
 
-  int seek_by_bytes;
-
   bool framedrop;
   bool genpts;
   AvSyncType av_sync_type;

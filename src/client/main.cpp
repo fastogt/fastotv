@@ -207,11 +207,6 @@ const OptionDef options[] = {
      {&g_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO]},
      "select desired video stream",
      "stream_specifier"},
-    {"bytes",
-     OPT_INT | HAS_ARG,
-     {&g_options.seek_by_bytes},
-     "seek by bytes 0=off 1=on -1=auto",
-     "val"},
     {"volume",
      OPT_INT | HAS_ARG,
      {&g_player_options.audio_volume},
@@ -305,10 +300,6 @@ void show_help_default(const char* opt, const char* arg) {
       "c                   cycle program\n"
       "w                   cycle video filters or show modes\n"
       "s                   activate frame-step mode\n"
-      "left/right          seek backward/forward 10 seconds\n"
-      "down/up             seek backward/forward 1 minute\n"
-      "page down/page up   seek backward/forward 10 minutes\n"
-      "right mouse click   seek to percentage in file corresponding to fraction of width\n"
       "left double-click   toggle full screen");
 }
 

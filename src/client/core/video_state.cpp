@@ -119,10 +119,6 @@ VideoState::VideoState(stream_id id,
       read_tid_(THREAD_MANAGER()->CreateThread(&VideoState::ReadThread, this)),
       force_refresh_(false),
       queue_attachments_req_(false),
-      seek_req_(false),
-      seek_flags_(0),
-      seek_pos_(0),
-      seek_rel_(0),
       read_pause_return_(0),
       ic_(NULL),
       realtime_(false),
@@ -439,18 +435,6 @@ void VideoState::StreamComponentClose(int stream_index) {
   avs->discard = AVDISCARD_ALL;
 }
 
-void VideoState::StreamSeek(int64_t pos, int64_t rel, int seek_by_bytes) {
-  if (!seek_req_) {
-    seek_pos_ = pos;
-    seek_rel_ = rel;
-    seek_flags_ &= ~AVSEEK_FLAG_BYTE;
-    if (seek_by_bytes) {
-      seek_flags_ |= AVSEEK_FLAG_BYTE;
-    }
-    seek_req_ = true;
-  }
-}
-
 void VideoState::StepToNextFrame() {
   /* if the stream is paused unpause it, then step */
   if (paused_) {
@@ -619,32 +603,6 @@ bool VideoState::IsVideoReady() const {
   return vstream_ && vstream_->IsOpened();
 }
 
-void VideoState::SeekChapter(int incr) {
-  if (!ic_->nb_chapters) {
-    return;
-  }
-
-  unsigned int i;
-  int64_t pos = GetMasterClock() * AV_TIME_BASE;
-  /* find the current chapter */
-  for (i = 0; i < ic_->nb_chapters; i++) {
-    AVChapter* ch = ic_->chapters[i];
-    if (av_compare_ts(pos, AV_TIME_BASE_Q, ch->start, ch->time_base) < 0) {
-      i--;
-      break;
-    }
-  }
-
-  unsigned int ii = FFMAX(i + incr, 0);
-  if (ii >= ic_->nb_chapters) {
-    return;
-  }
-
-  DEBUG_LOG() << "Seeking to chapter " << ii;
-  int64_t rq = av_rescale_q(ic_->chapters[ii]->start, ic_->chapters[ii]->time_base, AV_TIME_BASE_Q);
-  StreamSeek(rq, 0, 0);
-}
-
 void VideoState::StreamCycleChannel(AVMediaType codec_type) {
   int start_index = invalid_stream_index;
   int old_index = invalid_stream_index;
@@ -713,63 +671,6 @@ the_end:
              << "  stream from #" << old_index << " to #" << stream_index;
   StreamComponentClose(old_index);
   StreamComponentOpen(stream_index);
-}
-
-void VideoState::StreemSeek(double incr) {
-  if (opt_.seek_by_bytes) {
-    int pos = -1;
-    if (vstream_->IsOpened()) {
-      int64_t lpos = 0;
-      core::PacketQueue* vqueue = vstream_->Queue();
-      if (video_frame_queue_->GetLastUsedPos(&lpos, vqueue->Serial())) {
-        pos = lpos;
-      }
-    }
-    if (pos < 0 && astream_->IsOpened()) {
-      int64_t lpos = 0;
-      core::PacketQueue* aqueue = astream_->Queue();
-      if (audio_frame_queue_->GetLastUsedPos(&lpos, aqueue->Serial())) {
-        pos = lpos;
-      }
-    }
-    if (pos < 0) {
-      pos = avio_tell(ic_->pb);
-    }
-    if (ic_->bit_rate) {
-      incr *= ic_->bit_rate / 8.0;
-    } else {
-      incr *= 180000.0;
-    }
-    pos += incr;
-    StreamSeek(pos, incr, 1);
-  } else {
-    int pos = GetMasterClock();
-    if (!IsValidClock(pos)) {
-      pos = static_cast<double>(seek_pos_) / AV_TIME_BASE;
-    }
-    pos += incr;
-    if (IsValidPts(ic_->start_time) && pos < ic_->start_time / static_cast<double>(AV_TIME_BASE)) {
-      pos = ic_->start_time / static_cast<double>(AV_TIME_BASE);
-    }
-    StreamSeek(static_cast<int64_t>(pos * AV_TIME_BASE), static_cast<int64_t>(incr * AV_TIME_BASE),
-               0);
-  }
-}
-
-void VideoState::MoveToNextFragment(double incr) {
-  if (ic_->nb_chapters <= 1) {
-    incr = 600.0;
-    StreemSeek(incr);
-  }
-  SeekChapter(1);
-}
-
-void VideoState::MoveToPreviousFragment(double incr) {
-  if (ic_->nb_chapters <= 1) {
-    incr = -600.0;
-    StreemSeek(incr);
-  }
-  SeekChapter(-1);
 }
 
 int VideoState::HandleAllocPictureEvent() {
@@ -1244,11 +1145,6 @@ int VideoState::ReadThread() {
   }
 
   max_frame_duration_ = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10000 : 3600000;
-  if (opt_.seek_by_bytes < 0) {
-    opt_.seek_by_bytes =
-        !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
-  }
-
   realtime_ = core::is_realtime(ic);
 
   if (opt_.show_status) {
@@ -1317,33 +1213,6 @@ int VideoState::ReadThread() {
         read_pause_return_ = av_read_pause(ic);
       } else {
         av_read_play(ic);
-      }
-    }
-    if (seek_req_) {
-      int64_t seek_target = seek_pos_;
-      int64_t seek_min = seek_rel_ > 0 ? seek_target - seek_rel_ + 2 : INT64_MIN;
-      int64_t seek_max = seek_rel_ < 0 ? seek_target - seek_rel_ - 2 : INT64_MAX;
-      // FIXME the +-2 is due to rounding being not done in the correct direction in generation
-      //      of the seek_pos/seek_rel variables
-
-      ret = avformat_seek_file(ic, -1, seek_min, seek_target, seek_max, seek_flags_);
-      if (ret < 0) {
-        ERROR_LOG() << ic->filename << ": error while seeking";
-      } else {
-        if (video_stream->IsOpened()) {
-          video_packet_queue->Flush();
-          video_packet_queue->Put(core::PacketQueue::FlushPkt());
-        }
-        if (audio_stream->IsOpened()) {
-          audio_packet_queue->Flush();
-          audio_packet_queue->Put(core::PacketQueue::FlushPkt());
-        }
-      }
-      seek_req_ = false;
-      queue_attachments_req_ = true;
-      eof_ = false;
-      if (paused_) {
-        StepToNextFrame();
       }
     }
     AVStream* video_st = video_stream->IsOpened() ? video_stream->AvStream() : NULL;
