@@ -40,7 +40,6 @@ class Decoder {
 
   void Start();
   void Abort();
-  serial_id_t GetPktSerial() const;
 
   bool Finished() const;
   void SetFinished(bool finished);
@@ -55,7 +54,6 @@ class Decoder {
   PacketQueue* const queue_;
 
   bool packet_pending_;
-  serial_id_t pkt_serial_;
 
  private:
   bool finished_;

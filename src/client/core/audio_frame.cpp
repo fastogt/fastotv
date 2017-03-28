@@ -23,7 +23,7 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-AudioFrame::AudioFrame() : frame(av_frame_alloc()), serial(0), pts(0), duration(0), pos(0) {}
+AudioFrame::AudioFrame() : frame(av_frame_alloc()), pts(0), duration(0), pos(0) {}
 
 AudioFrame::~AudioFrame() {
   ClearFrame();

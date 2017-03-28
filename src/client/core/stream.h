@@ -51,15 +51,13 @@ class Stream {
   // clock interface
   clock_t GetClock() const;
 
-  void SetClockAt(clock_t pts, int serial, clock_t time);
-  void SetClock(clock_t pts, int serial);
+  void SetClockAt(clock_t pts, clock_t time);
+  void SetClock(clock_t pts);
   void SetPaused(bool pause);
 
   clock_t LastUpdatedClock() const;
 
   void SyncSerialClock();
-
-  serial_id_t Serial() const;
 
   PacketQueue* Queue() const;
 

@@ -31,9 +31,8 @@ namespace client {
 namespace core {
 
 Stream::Stream() : packet_queue_(nullptr), clock_(nullptr), stream_index_(-1), stream_st_(NULL) {
-  common::atomic<serial_id_t>* ext_serial = NULL;
-  packet_queue_ = PacketQueue::MakePacketQueue(&ext_serial);
-  clock_ = new Clock(*ext_serial);
+  packet_queue_ = PacketQueue::MakePacketQueue();
+  clock_ = new Clock();
 }
 
 bool Stream::Open(int index, AVStream* av_stream_st) {
@@ -92,12 +91,12 @@ clock_t Stream::GetClock() const {
   return clock_->GetClock();
 }
 
-void Stream::SetClockAt(clock_t pts, int serial, clock_t time) {
-  clock_->SetClockAt(pts, serial, time);
+void Stream::SetClockAt(clock_t pts, clock_t time) {
+  clock_->SetClockAt(pts, time);
 }
 
-void Stream::SetClock(clock_t pts, int serial) {
-  clock_->SetClock(pts, serial);
+void Stream::SetClock(clock_t pts) {
+  clock_->SetClock(pts);
 }
 
 void Stream::SetPaused(bool pause) {
@@ -109,11 +108,7 @@ clock_t Stream::LastUpdatedClock() const {
 }
 
 void Stream::SyncSerialClock() {
-  SetClock(clock_->GetClock(), clock_->Serial());
-}
-
-serial_id_t Stream::Serial() const {
-  return clock_->Serial();
+  SetClock(clock_->GetClock());
 }
 
 PacketQueue* Stream::Queue() const {

@@ -37,7 +37,6 @@ Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
       pkt_(),
       queue_(queue),
       packet_pending_(false),
-      pkt_serial_(0),
       finished_(false) {
   CHECK(queue);
 }
@@ -54,10 +53,6 @@ void Decoder::Abort() {
 Decoder::~Decoder() {
   av_packet_unref(&pkt_);
   avcodec_free_context(&avctx_);
-}
-
-serial_id_t Decoder::GetPktSerial() const {
-  return pkt_serial_;
 }
 
 bool Decoder::Finished() const {
@@ -93,17 +88,17 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       return -1;
     }
 
-    if (!packet_pending_ || queue_->Serial() != pkt_serial_) {
+    if (!packet_pending_) {
       AVPacket lpkt;
       do {
-        if (queue_->Get(&lpkt, true, &pkt_serial_) < 0) {
+        if (queue_->Get(&lpkt, true) < 0) {
           return -1;
         }
         if (lpkt.data == fls->data) {
           avcodec_flush_buffers(avctx_);
           SetFinished(false);
         }
-      } while (lpkt.data == fls->data || queue_->Serial() != pkt_serial_);
+      } while (lpkt.data == fls->data);
       av_packet_unref(&pkt_);
       pkt_temp = pkt_ = lpkt;
       packet_pending_ = true;
@@ -164,17 +159,17 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
       return -1;
     }
 
-    if (!packet_pending_ || queue_->Serial() != pkt_serial_) {
+    if (!packet_pending_) {
       AVPacket lpkt;
       do {
-        if (queue_->Get(&lpkt, true, &pkt_serial_) < 0) {
+        if (queue_->Get(&lpkt, true) < 0) {
           return -1;
         }
         if (lpkt.data == fls->data) {
           avcodec_flush_buffers(avctx_);
           SetFinished(false);
         }
-      } while (lpkt.data == fls->data || queue_->Serial() != pkt_serial_);
+      } while (lpkt.data == fls->data);
       av_packet_unref(&pkt_);
       pkt_temp = pkt_ = lpkt;
       packet_pending_ = true;

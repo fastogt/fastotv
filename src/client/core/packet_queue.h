@@ -42,10 +42,9 @@ namespace client {
 namespace core {
 
 struct SAVPacket {
-  explicit SAVPacket(const AVPacket& p, serial_id_t serial);
+  explicit SAVPacket(const AVPacket& p);
 
   AVPacket pkt;
-  const int serial;
 };
 
 class PacketQueue {  // compressed queue data
@@ -57,17 +56,16 @@ class PacketQueue {  // compressed queue data
   int Put(AVPacket* pkt);
   int PutNullpacket(int stream_index);
   /* return < 0 if aborted, 0 if no packet and > 0 if packet.  */
-  int Get(AVPacket* pkt, bool block, serial_id_t* serial);
+  int Get(AVPacket* pkt, bool block);
   void Start();
 
   static AVPacket* FlushPkt();
-  static PacketQueue* MakePacketQueue(common::atomic<serial_id_t>** ext_serial);
+  static PacketQueue* MakePacketQueue();
 
   bool IsAborted();
   size_t NbPackets();
   int Size() const;
   int64_t Duration() const;
-  serial_id_t Serial() const;
 
  private:
   PacketQueue();
@@ -77,7 +75,6 @@ class PacketQueue {  // compressed queue data
 
   SAVPacket* MakePacket(AVPacket* pkt, bool* is_flush);
 
-  common::atomic<serial_id_t> serial_;
   std::deque<SAVPacket*> queue_;
   int size_;
   int64_t duration_;

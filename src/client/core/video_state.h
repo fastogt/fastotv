@@ -170,8 +170,7 @@ class VideoState {
   int QueuePicture(AVFrame* src_frame,
                    clock_t pts,
                    clock_t duration,
-                   int64_t pos,
-                   serial_id_t serial);
+                   int64_t pos);
 
   int ReadThread();
   int VideoThread();
@@ -200,7 +199,6 @@ class VideoState {
   core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
 
   clock_t audio_clock_;
-  serial_id_t audio_clock_serial_;
   clock_t audio_diff_cum_; /* used for AV difference average computation */
   double audio_diff_avg_coef_;
   double audio_diff_threshold_;

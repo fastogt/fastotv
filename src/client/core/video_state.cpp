@@ -129,7 +129,6 @@ VideoState::VideoState(stream_id id,
       video_frame_queue_(nullptr),
       audio_frame_queue_(nullptr),
       audio_clock_(0),
-      audio_clock_serial_(-1),
       audio_diff_cum_(0),
       audio_diff_avg_coef_(0),
       audio_diff_threshold_(0),
@@ -721,15 +720,12 @@ int VideoState::AudioDecodeFrame() {
     return ERROR_RESULT_VALUE;
   }
 
-  core::PacketQueue* audio_packet_queue = astream_->Queue();
   core::AudioFrame* af = nullptr;
-  do {
-    af = audio_frame_queue_->GetPeekReadable();
-    if (!af) {
-      return ERROR_RESULT_VALUE;
-    }
-    audio_frame_queue_->MoveToNext();
-  } while (af->serial != audio_packet_queue->Serial());
+  af = audio_frame_queue_->GetPeekReadable();
+  if (!af) {
+    return ERROR_RESULT_VALUE;
+  }
+  audio_frame_queue_->MoveToNext();
 
   const AVSampleFormat sample_fmt = static_cast<AVSampleFormat>(af->frame->format);
   int data_size = av_samples_get_buffer_size(NULL, av_frame_get_channels(af->frame),
@@ -813,7 +809,6 @@ int VideoState::AudioDecodeFrame() {
   } else {
     audio_clock_ = invalid_clock();
   }
-  audio_clock_serial_ = af->serial;
   return resampled_data_size;
 }
 
@@ -841,16 +836,7 @@ void VideoState::TryRefreshVideo(msec_t* remaining_time) {
       } else {
         /* dequeue the picture */
         core::VideoFrame* vp = video_frame_queue_->Peek();
-        if (vp->serial != video_packet_queue->Serial()) {
-          video_frame_queue_->MoveToNext();
-          goto retry;
-        }
-
         core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
-        if (lastvp->serial != vp->serial) {
-          frame_timer_ = GetRealClockTime();
-        }
-
         if (paused_) {
           goto display;
         }
@@ -872,10 +858,9 @@ void VideoState::TryRefreshVideo(msec_t* remaining_time) {
 
         {
           const clock_t pts = vp->pts;
-          const int serial = vp->serial;
           if (IsValidClock(pts)) {
             /* update current video pts */
-            vstream_->SetClock(pts, serial);
+            vstream_->SetClock(pts);
           }
         }
 
@@ -971,15 +956,11 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
     const clock_t pts = audio_clock_ -
                         static_cast<double>(2 * audio_hw_buf_size_ + audio_write_buf_size_) /
                             audio_tgt_.bytes_per_sec;
-    astream_->SetClockAt(pts, audio_clock_serial_, audio_callback_time);
+    astream_->SetClockAt(pts, audio_callback_time);
   }
 }
 
-int VideoState::QueuePicture(AVFrame* src_frame,
-                             clock_t pts,
-                             clock_t duration,
-                             int64_t pos,
-                             serial_id_t serial) {
+int VideoState::QueuePicture(AVFrame* src_frame, clock_t pts, clock_t duration, int64_t pos) {
   core::PacketQueue* video_packet_queue = vstream_->Queue();
   core::VideoFrame* vp = video_frame_queue_->GetPeekWritable();
   if (!vp) {
@@ -1016,7 +997,6 @@ int VideoState::QueuePicture(AVFrame* src_frame,
     vp->pts = pts;
     vp->duration = duration;
     vp->pos = pos;
-    vp->serial = serial;
 
     av_frame_move_ref(vp->frame, src_frame);
     video_frame_queue_->Push();
@@ -1039,8 +1019,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
         clock_t diff = dpts - GetMasterClock();
         core::PacketQueue* video_packet_queue = vstream_->Queue();
         if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC &&
-            diff - frame_last_filter_delay_ < 0 && viddec_->GetPktSerial() == vstream_->Serial() &&
-            video_packet_queue->NbPackets()) {
+            diff - frame_last_filter_delay_ < 0 && video_packet_queue->NbPackets()) {
           stats_.frame_drops_early++;
           av_frame_unref(frame);
           got_picture = 0;
@@ -1279,7 +1258,6 @@ fail:
 int VideoState::AudioThread() {
   core::AudioFrame* af = nullptr;
 #if CONFIG_AVFILTER
-  serial_id_t last_serial = invalid_serial_id;
   int64_t dec_channel_layout;
   int reconfigure;
 #endif
@@ -1307,8 +1285,7 @@ int VideoState::AudioThread() {
                                          static_cast<AVSampleFormat>(frame->format),
                                          av_frame_get_channels(frame)) ||
                     audio_filter_src_.channel_layout != dec_channel_layout ||
-                    audio_filter_src_.freq != frame->sample_rate ||
-                    auddec_->GetPktSerial() != last_serial;
+                    audio_filter_src_.freq != frame->sample_rate;
 
       if (reconfigure) {
         char buf1[1024], buf2[1024];
@@ -1318,17 +1295,15 @@ int VideoState::AudioThread() {
             "Audio frame changed from rate:%d ch:%d fmt:%s layout:%s serial:%d to rate:%d ch:%d "
             "fmt:%s layout:%s serial:%d\n",
             audio_filter_src_.freq, audio_filter_src_.channels,
-            av_get_sample_fmt_name(audio_filter_src_.fmt), buf1, last_serial, frame->sample_rate,
+            av_get_sample_fmt_name(audio_filter_src_.fmt), buf1, 0, frame->sample_rate,
             av_frame_get_channels(frame),
-            av_get_sample_fmt_name(static_cast<AVSampleFormat>(frame->format)), buf2,
-            auddec_->GetPktSerial());
+            av_get_sample_fmt_name(static_cast<AVSampleFormat>(frame->format)), buf2, 0);
         DEBUG_LOG() << mess;
 
         audio_filter_src_.fmt = static_cast<AVSampleFormat>(frame->format);
         audio_filter_src_.channels = av_frame_get_channels(frame);
         audio_filter_src_.channel_layout = dec_channel_layout;
         audio_filter_src_.freq = frame->sample_rate;
-        last_serial = auddec_->GetPktSerial();
 
         if ((ret = ConfigureAudioFilters(opt_.afilters, 1)) < 0) {
           break;
@@ -1354,7 +1329,6 @@ int VideoState::AudioThread() {
 
         af->pts = IsValidPts(frame->pts) ? frame->pts * q2d_diff(tb) : invalid_clock();
         af->pos = av_frame_get_pkt_pos(frame);
-        af->serial = auddec_->GetPktSerial();
         AVRational tmp = {frame->nb_samples, frame->sample_rate};
         af->duration = q2d_diff(tmp);
 
@@ -1362,10 +1336,6 @@ int VideoState::AudioThread() {
         audio_frame_queue_->Push();
 
 #if CONFIG_AVFILTER
-        core::PacketQueue* audio_packet_queue = astream_->Queue();
-        if (audio_packet_queue->Serial() != auddec_->GetPktSerial()) {
-          break;
-        }
       }
       if (ret == AVERROR_EOF) {
         auddec_->SetFinished(true);
@@ -1393,7 +1363,6 @@ int VideoState::VideoThread() {
   int last_w = 0;
   int last_h = 0;
   enum AVPixelFormat last_format = AV_PIX_FMT_NONE;  //-2
-  serial_id_t last_serial = invalid_serial_id;
   size_t last_vfilter_idx = 0;
   if (!graph) {
     av_frame_free(&frame);
@@ -1416,16 +1385,16 @@ int VideoState::VideoThread() {
 
 #if CONFIG_AVFILTER
     if (last_w != frame->width || last_h != frame->height || last_format != frame->format ||
-        last_serial != viddec_->GetPktSerial() || last_vfilter_idx != vfilter_idx_) {
+        last_vfilter_idx != vfilter_idx_) {
       const std::string mess = common::MemSPrintf(
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d\n",
           last_w, last_h,
-          static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")),
-          last_serial, frame->width, frame->height,
+          static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
+          frame->width, frame->height,
           static_cast<const char*>(
               av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
-          viddec_->GetPktSerial());
+          0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);
       graph = avfilter_graph_alloc();
@@ -1442,7 +1411,6 @@ int VideoState::VideoThread() {
       last_w = frame->width;
       last_h = frame->height;
       last_format = static_cast<AVPixelFormat>(frame->format);
-      last_serial = viddec_->GetPktSerial();
       last_vfilter_idx = vfilter_idx_;
       frame_rate = filt_out->inputs[0]->frame_rate;
     }
@@ -1473,8 +1441,7 @@ int VideoState::VideoThread() {
       AVRational fr = {frame_rate.den, frame_rate.num};
       clock_t duration = (frame_rate.num && frame_rate.den ? q2d_diff(fr) : 0);
       clock_t pts = IsValidPts(frame->pts) ? frame->pts * q2d_diff(tb) : invalid_clock();
-      ret =
-          QueuePicture(frame, pts, duration, av_frame_get_pkt_pos(frame), viddec_->GetPktSerial());
+      ret = QueuePicture(frame, pts, duration, av_frame_get_pkt_pos(frame));
       av_frame_unref(frame);
 #if CONFIG_AVFILTER
     }

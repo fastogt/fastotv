@@ -23,10 +23,10 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-SAVPacket::SAVPacket(const AVPacket& p, serial_id_t serial) : pkt(p), serial(serial) {}
+SAVPacket::SAVPacket(const AVPacket& p) : pkt(p) {}
 
 PacketQueue::PacketQueue()
-    : serial_(0), queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
+    : queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
 
 int PacketQueue::PutNullpacket(int stream_index) {
   AVPacket pkt1, *pkt = &pkt1;
@@ -37,7 +37,7 @@ int PacketQueue::PutNullpacket(int stream_index) {
   return Put(pkt);
 }
 
-int PacketQueue::Get(AVPacket* pkt, bool block, serial_id_t* serial) {
+int PacketQueue::Get(AVPacket* pkt, bool block) {
   if (!pkt) {
     return -1;
   }
@@ -56,9 +56,6 @@ int PacketQueue::Get(AVPacket* pkt, bool block, serial_id_t* serial) {
       size_ -= pkt1->pkt.size + sizeof(*pkt1);
       duration_ -= pkt1->pkt.duration;
       *pkt = pkt1->pkt;
-      if (serial) {
-        *serial = pkt1->serial;
-      }
       delete pkt1;
       ret = 1;
       break;
@@ -72,11 +69,8 @@ int PacketQueue::Get(AVPacket* pkt, bool block, serial_id_t* serial) {
   return ret;
 }
 
-PacketQueue* PacketQueue::MakePacketQueue(common::atomic<serial_id_t>** ext_serial) {
+PacketQueue* PacketQueue::MakePacketQueue() {
   PacketQueue* pq = new PacketQueue;
-  if (ext_serial) {
-    *ext_serial = &pq->serial_;
-  }
   return pq;
 }
 
@@ -105,12 +99,8 @@ int64_t PacketQueue::Duration() const {
   return duration_;
 }
 
-serial_id_t PacketQueue::Serial() const {
-  return serial_;
-}
-
 void PacketQueue::Start() {
-  SAVPacket* sav = new SAVPacket(*FlushPkt(), ++serial_);
+  SAVPacket* sav = new SAVPacket(*FlushPkt());
 
   lock_t lock(mutex_);
   abort_request_ = false;
@@ -159,10 +149,9 @@ PacketQueue::~PacketQueue() {
 
 SAVPacket* PacketQueue::MakePacket(AVPacket* pkt, bool* is_flush) {
   if (pkt == FlushPkt()) {
-    serial_++;
     *is_flush = true;
   }
-  SAVPacket* pkt1 = new SAVPacket(*pkt, serial_);
+  SAVPacket* pkt1 = new SAVPacket(*pkt);
   *is_flush = false;
   return pkt1;
 }

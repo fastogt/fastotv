@@ -139,11 +139,11 @@ class RingBuffer {
 
   pointer_type Windex() { return WindexElementInner(); }
 
-  bool IsEmpty() { return IsEmptyInner(); }
+  bool IsEmpty() const { return IsEmptyInner(); }
 
-  int NbRemaining() { return NbRemainingInner(); }
+  int NbRemaining() const { return NbRemainingInner(); }
 
-  size_t RindexShown() { return RindexShownInner(); }
+  size_t RindexShown() const { return RindexShownInner(); }
 
  protected:
   int NbRemainingInner() const {

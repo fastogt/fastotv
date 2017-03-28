@@ -28,7 +28,6 @@ namespace core {
 
 VideoFrame::VideoFrame()
     : frame(av_frame_alloc()),
-      serial(0),
       pts(0),
       duration(0),
       pos(0),
@@ -57,14 +56,11 @@ void VideoFrame::ClearFrame() {
 clock_t VideoFrame::VpDuration(core::VideoFrame* vp,
                                core::VideoFrame* nextvp,
                                clock_t max_frame_duration) {
-  if (vp->serial == nextvp->serial) {
-    clock_t duration = nextvp->pts - vp->pts;
-    if (!IsValidClock(duration) || duration <= 0 || duration > max_frame_duration) {
-      return vp->duration;
-    }
-    return duration;
+  clock_t duration = nextvp->pts - vp->pts;
+  if (!IsValidClock(duration) || duration <= 0 || duration > max_frame_duration) {
+    return vp->duration;
   }
-  return 0.0;
+  return duration;
 }
 
 }  // namespace core

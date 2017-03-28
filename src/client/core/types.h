@@ -37,9 +37,6 @@ clock_t GetRealClockTime();  // msec
 msec_t ClockToMsec(clock_t clock);
 msec_t GetCurrentMsec();
 
-typedef int serial_id_t;
-static const serial_id_t invalid_serial_id = -1;
-
 typedef int64_t pts_t;
 pts_t invalid_pts();
 bool IsValidPts(pts_t pts);
