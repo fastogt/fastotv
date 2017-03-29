@@ -53,12 +53,30 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
     return err;
   }
 
+  if (nread == 0) {  // connection closed
+    return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
+  }
+
   *sz = lsz;
   return common::Error();
 }
 
-common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size, ssize_t* nread) {
-  return Read(out, size, nread);
+common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
+  if (!out || size == 0) {
+    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+  }
+
+  ssize_t nread;
+  common::Error err = Read(out, size, &nread);
+  if (err && err->IsError()) {
+    return err;
+  }
+
+  if (nread == 0) {  // connection closed
+    return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
+  }
+
+  return common::Error();
 }
 
 common::Error InnerClient::ReadCommand(std::string* out) {
@@ -74,8 +92,7 @@ common::Error InnerClient::ReadCommand(std::string* out) {
 
   message_size = ntohl(message_size);  // stable
   char* msg = static_cast<char*>(malloc(message_size));
-  ssize_t nread;
-  err = ReadMessage(msg, message_size, &nread);
+  err = ReadMessage(msg, message_size);
   if (err && err->IsError()) {
     free(msg);
     return err;

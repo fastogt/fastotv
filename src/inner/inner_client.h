@@ -37,11 +37,11 @@ class InnerClient : public network::tcp::TcpClient {
   common::Error Write(const cmd_approve_t& approve, size_t* nwrite) WARN_UNUSED_RESULT;
 
   common::Error ReadDataSize(protocoled_size_t* sz) WARN_UNUSED_RESULT;
-  common::Error ReadMessage(char* out, protocoled_size_t size, ssize_t* nread) WARN_UNUSED_RESULT;
+  common::Error ReadMessage(char* out, protocoled_size_t size) WARN_UNUSED_RESULT;
   common::Error ReadCommand(std::string* out) WARN_UNUSED_RESULT;
 
  private:
-  common::Error WriteInner(const char *data, size_t size, size_t* nwrite) WARN_UNUSED_RESULT;
+  common::Error WriteInner(const char* data, size_t size, size_t* nwrite) WARN_UNUSED_RESULT;
   using network::tcp::TcpClient::Write;
   using network::tcp::TcpClient::Read;
 };
