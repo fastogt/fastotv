@@ -56,9 +56,6 @@ class Thread;
 #define VIDEO_PICTURE_QUEUE_SIZE 3
 #define SAMPLE_QUEUE_SIZE 9
 
-/* polls for possible required screen refresh at least this often, should be less than 1/fps */
-#define REFRESH_RATE_MSEC 10
-
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -125,7 +122,7 @@ class VideoState {
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
-  void TryRefreshVideo(msec_t* remaining_time);
+  void TryRefreshVideo();
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
  private:

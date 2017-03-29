@@ -78,7 +78,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
   do {
     AVPacket packet;
-    if (queue_->Get(&packet) < 0) {
+    if (!queue_->Get(&packet)) {
       return -1;
     }
 
@@ -122,7 +122,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
   int got_frame = 0;
   do {
     AVPacket packet;
-    if (queue_->Get(&packet) < 0) {
+    if (!queue_->Get(&packet)) {
       return -1;
     }
 

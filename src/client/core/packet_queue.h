@@ -41,12 +41,6 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-struct SAVPacket {
-  explicit SAVPacket(const AVPacket& p);
-
-  AVPacket pkt;
-};
-
 class PacketQueue {  // compressed queue data
  public:
   PacketQueue();
@@ -57,7 +51,7 @@ class PacketQueue {  // compressed queue data
   int Put(AVPacket* pkt);
   int PutNullpacket(int stream_index);
   /* return < 0 if aborted, 0 if no packet and > 0 if packet.  */
-  int Get(AVPacket* pkt);
+  bool Get(AVPacket* pkt);
   void Start();
 
   bool IsAborted();
@@ -67,9 +61,9 @@ class PacketQueue {  // compressed queue data
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PacketQueue);
-  int PutPrivate(SAVPacket* pkt1);
+  int PutPrivate(AVPacket* pkt1);
 
-  std::deque<SAVPacket*> queue_;
+  std::deque<AVPacket> queue_;
   int size_;
   int64_t duration_;
   bool abort_request_;

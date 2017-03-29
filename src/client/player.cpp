@@ -424,9 +424,9 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
     fApp->HideCursor();
     cursor_hidden_ = true;
   }
-  core::msec_t remaining_time = REFRESH_RATE_MSEC;
+
   if (stream_) {
-    stream_->TryRefreshVideo(&remaining_time);
+    stream_->TryRefreshVideo();
   } else {
     if (surface_) {
       SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface_);

@@ -23,8 +23,6 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-SAVPacket::SAVPacket(const AVPacket& p) : pkt(p) {}
-
 PacketQueue::PacketQueue()
     : queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
 
@@ -37,33 +35,24 @@ int PacketQueue::PutNullpacket(int stream_index) {
   return Put(pkt);
 }
 
-int PacketQueue::Get(AVPacket* pkt) {
+bool PacketQueue::Get(AVPacket* pkt) {
   if (!pkt) {
-    return -1;
+    return false;
   }
 
-  int ret = 0;
   lock_t lock(mutex_);
-  while (true) {
-    if (abort_request_) {
-      ret = -1;
-      break;
-    }
-
-    if (!queue_.empty()) {
-      SAVPacket* pkt1 = queue_[0];
-      queue_.pop_front();
-      size_ -= pkt1->pkt.size + sizeof(*pkt1);
-      duration_ -= pkt1->pkt.duration;
-      *pkt = pkt1->pkt;
-      delete pkt1;
-      ret = 1;
-      break;
-    } else {
-      cond_.wait(lock);
-    }
+  while (queue_.empty() && !abort_request_) {
+    cond_.wait(lock);
   }
-  return ret;
+  if (abort_request_) {
+    return false;
+  }
+
+  *pkt = queue_[0];
+  queue_.pop_front();
+  size_ -= pkt->size;
+  duration_ -= pkt->duration;
+  return true;
 }
 
 bool PacketQueue::IsAborted() {
@@ -91,15 +80,13 @@ void PacketQueue::Start() {
 }
 
 int PacketQueue::Put(AVPacket* pkt) {
-  SAVPacket* sav = new SAVPacket(*pkt);
   lock_t lock(mutex_);
   if (abort_request_) {
     av_packet_unref(pkt);
-    delete sav;
     return -1;
   }
 
-  int ret = PutPrivate(sav);
+  int ret = PutPrivate(pkt);
   cond_.notify_one();
   return ret;
 }
@@ -107,9 +94,8 @@ int PacketQueue::Put(AVPacket* pkt) {
 void PacketQueue::Flush() {
   lock_t lock(mutex_);
   for (auto it = queue_.begin(); it != queue_.end(); ++it) {
-    SAVPacket* pkt = *it;
-    av_packet_unref(&pkt->pkt);
-    delete pkt;
+    AVPacket pkt = *it;
+    av_packet_unref(&pkt);
   }
   queue_.clear();
   size_ = 0;
@@ -126,10 +112,10 @@ PacketQueue::~PacketQueue() {
   Flush();
 }
 
-int PacketQueue::PutPrivate(SAVPacket* pkt1) {
-  queue_.push_back(pkt1);
-  size_ += pkt1->pkt.size + sizeof(*pkt1);
-  duration_ += pkt1->pkt.duration;
+int PacketQueue::PutPrivate(AVPacket* pkt1) {
+  queue_.push_back(*pkt1);
+  size_ += pkt1->size;
+  duration_ += pkt1->duration;
   /* XXX: should duplicate packet data in DV case */
   return 0;
 }

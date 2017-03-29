@@ -89,7 +89,7 @@ extern "C" {
 #define SAMPLE_CORRECTION_PERCENT_MAX 10
 /* we use about AUDIO_DIFF_AVG_NB A-V differences to make the average */
 #define AUDIO_DIFF_AVG_NB 20
-#define SHOW_STATUS_TIMEOUT_MSEC 1000
+#define SHOW_STATUS_TIMEOUT_MSEC 10000
 
 /* NOTE: the size must be big enough to compensate the hardware audio buffersize size */
 /* TODO: We assume that a decoded and resampled frame fits into this buffer */
@@ -812,7 +812,7 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-void VideoState::TryRefreshVideo(msec_t* remaining_time) {
+void VideoState::TryRefreshVideo() {
   if (!paused_ || force_refresh_) {
     AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
     AVStream* audio_st = astream_->IsOpened() ? astream_->AvStream() : NULL;
@@ -825,8 +825,6 @@ void VideoState::TryRefreshVideo(msec_t* remaining_time) {
         VideoDisplay();
         last_vis_time_ = time;
       }
-      msec_t rt = ClockToMsec(last_vis_time_ - time);
-      *remaining_time = FFMIN(*remaining_time, rt);
     }
 
     if (video_st && video_frame_queue_) {
@@ -846,8 +844,6 @@ void VideoState::TryRefreshVideo(msec_t* remaining_time) {
         clock_t delay = ComputeTargetDelay(last_duration);
         clock_t time = GetRealClockTime();
         if (time < frame_timer_ + delay) {
-          msec_t rt = ClockToMsec(frame_timer_ + delay - time);
-          *remaining_time = FFMIN(rt, *remaining_time);
           goto display;
         }
 
