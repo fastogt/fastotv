@@ -66,6 +66,12 @@ class RingBuffer {
   }
 
   template <typename F>
+  void ChangeSafe(F f, pointer_type el) {
+    lock_t lock(queue_mutex_);
+    f(el);
+  }
+
+  template <typename F>
   void WaitSafeAndNotify(F f) {
     lock_t lock(queue_mutex_);
     while (f()) {

@@ -417,7 +417,7 @@ int main(int argc, char** argv) {
 #endif
 
 #if defined(NDEBUG)
-  common::logging::LEVEL_LOG level = common::logging::L_WARNING;
+  common::logging::LEVEL_LOG level = common::logging::L_INFO;
 #else
   common::logging::LEVEL_LOG level = common::logging::L_INFO;
 #endif

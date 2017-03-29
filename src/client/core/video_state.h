@@ -212,8 +212,6 @@ class VideoState {
   struct core::AudioParams audio_tgt_;
   struct SwrContext* swr_ctx_;
 
-  clock_t last_vis_time_;
-
   clock_t frame_timer_;
   clock_t frame_last_returned_time_;
   clock_t frame_last_filter_delay_;

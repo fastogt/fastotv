@@ -33,7 +33,7 @@ namespace application {
 
 class Sdl2Application : public common::application::IApplicationImpl {
  public:
-  enum { event_timeout_wait_msec = 20 };  // 50 fps
+  enum { event_timeout_wait_msec = 1000 / 50 };  // 50 fps
   Sdl2Application(int argc, char** argv);
   ~Sdl2Application();
 

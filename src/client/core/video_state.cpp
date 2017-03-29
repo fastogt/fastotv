@@ -146,7 +146,6 @@ VideoState::VideoState(stream_id id,
 #endif
       audio_tgt_(),
       swr_ctx_(NULL),
-      last_vis_time_(0),
       frame_timer_(0),
       frame_last_returned_time_(0),
       frame_last_filter_delay_(0),
@@ -720,8 +719,7 @@ int VideoState::AudioDecodeFrame() {
     return ERROR_RESULT_VALUE;
   }
 
-  core::AudioFrame* af = nullptr;
-  af = audio_frame_queue_->GetPeekReadable();
+  core::AudioFrame* af = audio_frame_queue_->GetPeekReadable();
   if (!af) {
     return ERROR_RESULT_VALUE;
   }
@@ -819,22 +817,14 @@ void VideoState::TryRefreshVideo() {
     core::PacketQueue* video_packet_queue = vstream_->Queue();
     core::PacketQueue* audio_packet_queue = astream_->Queue();
 
-    if (audio_st) {
-      clock_t time = GetRealClockTime();
-      if (force_refresh_ || last_vis_time_ < time) {
-        VideoDisplay();
-        last_vis_time_ = time;
-      }
-    }
-
     if (video_st && video_frame_queue_) {
     retry:
       if (video_frame_queue_->IsEmpty()) {
         // nothing to do, no picture to display in the queue
       } else {
         /* dequeue the picture */
-        core::VideoFrame* vp = video_frame_queue_->Peek();
         core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
+        core::VideoFrame* vp = video_frame_queue_->Peek();
         if (paused_) {
           goto display;
         }
@@ -856,15 +846,15 @@ void VideoState::TryRefreshVideo() {
           const clock_t pts = vp->pts;
           if (IsValidClock(pts)) {
             /* update current video pts */
-            vstream_->SetClock(pts);
+            vstream_->SetClockAt(pts, time);
           }
         }
 
         core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
         if (nextvp) {
           clock_t duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
-          if (!step_ && (opt_.framedrop || (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER &&
-                                            time > frame_timer_ + duration))) {
+          if (!step_ && ((opt_.framedrop || (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)) &&
+                         time > frame_timer_ + duration)) {
             stats_.frame_drops_late++;
             video_frame_queue_->MoveToNext();
             goto retry;
@@ -1107,11 +1097,12 @@ int VideoState::ReadThread() {
   av_freep(&opts);
 
   AVPacket pkt1, *pkt = &pkt1;
-  int ret;
   if (err < 0) {
     WARNING_LOG() << in_filename << ": could not find codec parameters";
-    ret = -1;
-    goto fail;
+    events::QuitStreamEvent* qevent =
+        new events::QuitStreamEvent(this, events::QuitStreamInfo(this, -1));
+    fApp->PostEvent(qevent);
+    return 0;
   }
 
   if (ic->pb) {
@@ -1166,21 +1157,27 @@ int VideoState::ReadThread() {
     StreamComponentOpen(st_index[AVMEDIA_TYPE_AUDIO]);
   }
 
-  ret = -1;
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
-    ret = StreamComponentOpen(st_index[AVMEDIA_TYPE_VIDEO]);
+    StreamComponentOpen(st_index[AVMEDIA_TYPE_VIDEO]);
   }
 
   if (!video_stream->IsOpened() && !audio_stream->IsOpened()) {
     ERROR_LOG() << "Failed to open file '" << in_filename << "' or configure filtergraph";
-    ret = -1;
-    goto fail;
+    events::QuitStreamEvent* qevent =
+        new events::QuitStreamEvent(this, events::QuitStreamInfo(this, -1));
+    fApp->PostEvent(qevent);
+    return 0;
   }
 
   if (opt_.infinite_buffer < 0 && realtime_) {
     opt_.infinite_buffer = 1;
   }
 
+  AVStream* const video_st = video_stream->AvStream();
+  AVStream* const audio_st = audio_stream->AvStream();
+  UNUSED(audio_st);
+
+  int ret = -1;
   while (!IsAborted()) {
     if (paused_ != last_paused_) {
       last_paused_ = paused_;
@@ -1190,10 +1187,8 @@ int VideoState::ReadThread() {
         av_read_play(ic);
       }
     }
-    AVStream* video_st = video_stream->IsOpened() ? video_stream->AvStream() : NULL;
-    AVStream* audio_st = audio_stream->IsOpened() ? audio_stream->AvStream() : NULL;
     if (queue_attachments_req_) {
-      if (video_st && video_st->disposition & AV_DISPOSITION_ATTACHED_PIC) {
+      if (video_st->disposition & AV_DISPOSITION_ATTACHED_PIC) {
         AVPacket copy;
         if ((ret = av_copy_packet(&copy, &video_st->attached_pic)) < 0) {
           goto fail;
@@ -1210,7 +1205,7 @@ int VideoState::ReadThread() {
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
       continue;
     }
-    if (!paused_ && (!audio_st || (auddec_->Finished())) && (!video_st || (viddec_->Finished()))) {
+    if (!paused_ && (auddec_->Finished()) && (viddec_->Finished())) {
       ret = AVERROR_EOF;
       goto fail;
     }
@@ -1429,7 +1424,7 @@ int VideoState::VideoThread() {
       }
 
       frame_last_filter_delay_ = GetRealClockTime() - frame_last_returned_time_;
-      if (fabs(frame_last_filter_delay_) > AV_NOSYNC_THRESHOLD_MSEC) {
+      if (std::abs(frame_last_filter_delay_) > AV_NOSYNC_THRESHOLD_MSEC) {
         frame_last_filter_delay_ = 0;
       }
       tb = filt_out->inputs[0]->time_base;
