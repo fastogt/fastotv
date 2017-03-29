@@ -35,7 +35,7 @@ std::string CmdIdToString(cmd_id_t id) {
 
 common::Error StableCommand(const std::string& command, std::string* stabled_command) {
   if (command.empty() || !stabled_command) {
-    return common::make_error_value("Invalid input", common::Value::E_ERROR);
+    return common::make_error_value("Prepare commands, invalid input", common::Value::E_ERROR);
   }
 
   size_t pos = command.find_last_of(END_OF_COMMAND);
@@ -52,7 +52,7 @@ common::Error ParseCommand(const std::string& command,
                            cmd_seq_t* seq_id,
                            std::string* cmd_str) {
   if (command.empty() || !cmd_id || !seq_id || !cmd_str) {
-    return common::make_error_value("Invalid input", common::Value::E_ERROR);
+    return common::make_error_value("Parse command, invalid input", common::Value::E_ERROR);
   }
 
   std::string stabled_command;
