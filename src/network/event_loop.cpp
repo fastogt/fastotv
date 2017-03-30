@@ -46,7 +46,6 @@ namespace fasto {
 namespace fastotv {
 namespace network {
 
-
 EvLoopObserver::~EvLoopObserver() {}
 
 LibEvLoop::LibEvLoop()
@@ -135,7 +134,6 @@ void LibEvLoop::stop_cb(struct ev_loop* loop, struct ev_async* watcher, int reve
   }
   ev_unloop(loop, EVUNLOOP_ONE);
 }
-
 }
 }  // namespace fastotv
 }  // namespace fasto

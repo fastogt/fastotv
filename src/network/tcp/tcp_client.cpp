@@ -67,7 +67,7 @@ common::Error TcpClient::Write(const char* data, size_t size, size_t* nwrite) {
   *nwrite = total;  // return number actually sent here
   return common::Error();
 #else
-  return  sock_.write(data, size, nwrite);
+  return sock_.write(data, size, nwrite);
 #endif
 }
 

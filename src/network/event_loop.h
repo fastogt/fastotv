@@ -28,7 +28,6 @@ namespace fasto {
 namespace fastotv {
 namespace network {
 
-
 class EvLoopObserver {
  public:
   virtual ~EvLoopObserver();
@@ -66,7 +65,6 @@ class LibEvLoop {
   common::threads::platform_thread_id_t exec_id_;
   ev_async* async_stop_;
 };
-
 }
 }  // namespace fastotv
 }  // namespace fasto

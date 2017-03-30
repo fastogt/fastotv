@@ -71,7 +71,6 @@ class ILoopThreadController : public ILoopController {
 
   common::shared_ptr<common::threads::Thread<int> > loop_thread_;
 };
-
 }
 }  // namespace fastotv
 }  // namespace fasto

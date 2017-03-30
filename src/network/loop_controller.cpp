@@ -90,7 +90,6 @@ void ILoopThreadController::Started() {
 void ILoopThreadController::Stoped() {
   Join();
 }
-
 }
 }  // namespace fastotv
 }  // namespace fasto

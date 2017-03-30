@@ -71,7 +71,6 @@ class Sdl2Application : public common::application::IApplicationImpl {
   common::threads::EventDispatcher<EventsType> dispatcher_;
   volatile bool stop_;
 };
-
 }
 }
 }

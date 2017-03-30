@@ -29,8 +29,7 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-Clock::Clock()
-    : paused_(false), speed_(1.0) {
+Clock::Clock() : paused_(false), speed_(1.0) {
   SetClock(invalid_clock());
 }
 

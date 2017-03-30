@@ -162,10 +162,7 @@ class VideoState {
    */
   int AudioDecodeFrame();
   int GetVideoFrame(AVFrame* frame);
-  int QueuePicture(AVFrame* src_frame,
-                   clock_t pts,
-                   clock_t duration,
-                   int64_t pos);
+  int QueuePicture(AVFrame* src_frame, clock_t pts, clock_t duration, int64_t pos);
 
   int ReadThread();
   int VideoThread();

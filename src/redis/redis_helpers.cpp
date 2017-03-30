@@ -80,7 +80,7 @@ common::Error parse_user_json(const char* userJson, user_id_t* out_uid, UserInfo
   }
 
   json_object* jid = NULL;
-  json_bool jid_exists = json_object_object_get_ex(obj, "id", &jid); // mongodb id
+  json_bool jid_exists = json_object_object_get_ex(obj, "id", &jid);  // mongodb id
   if (!jid_exists) {
     json_object_put(obj);
     return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);

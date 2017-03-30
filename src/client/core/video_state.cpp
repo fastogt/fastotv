@@ -212,35 +212,14 @@ int VideoState::StreamComponentOpen(int stream_index) {
   av_codec_set_pkt_timebase(avctx, stream->time_base);
   AVCodec* codec = avcodec_find_decoder(avctx->codec_id);
 
-  switch (avctx->codec_type) {
-    case AVMEDIA_TYPE_VIDEO: {
-      last_video_stream_ = stream_index;
-      forced_codec_name = common::utils::c_strornull(opt_.video_codec_name);
-      break;
-    }
-    case AVMEDIA_TYPE_AUDIO: {
-      last_audio_stream_ = stream_index;
-      forced_codec_name = common::utils::c_strornull(opt_.audio_codec_name);
-      break;
-    }
-    case AVMEDIA_TYPE_SUBTITLE: {
-      break;
-    }
-    case AVMEDIA_TYPE_UNKNOWN: {
-      break;
-    }
-    case AVMEDIA_TYPE_ATTACHMENT: {
-      break;
-    }
-    case AVMEDIA_TYPE_DATA: {
-      break;
-    }
-    case AVMEDIA_TYPE_NB: {
-      break;
-    }
-    default:
-      break;
+  if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+    last_video_stream_ = stream_index;
+    forced_codec_name = common::utils::c_strornull(opt_.video_codec_name);
+  } else if (avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
+    last_audio_stream_ = stream_index;
+    forced_codec_name = common::utils::c_strornull(opt_.audio_codec_name);
   }
+
   if (forced_codec_name) {
     codec = avcodec_find_decoder_by_name(forced_codec_name);
   }
@@ -393,42 +372,24 @@ void VideoState::StreamComponentClose(int stream_index) {
 
   AVStream* avs = ic_->streams[stream_index];
   AVCodecParameters* codecpar = avs->codecpar;
-  switch (codecpar->codec_type) {
-    case AVMEDIA_TYPE_VIDEO: {
-      video_frame_queue_->Stop();
-      viddec_->Abort();
-      vdecoder_tid_->Join();
-      vdecoder_tid_ = NULL;
-      destroy(&viddec_);
-      destroy(&video_frame_queue_);
-      break;
-    }
-    case AVMEDIA_TYPE_AUDIO: {
-      audio_frame_queue_->Stop();
-      auddec_->Abort();
-      adecoder_tid_->Join();
-      adecoder_tid_ = NULL;
-      destroy(&auddec_);
-      destroy(&audio_frame_queue_);
-      swr_free(&swr_ctx_);
-      av_freep(&audio_buf1_);
-      audio_buf1_size_ = 0;
-      audio_buf_ = NULL;
-      break;
-    }
-    case AVMEDIA_TYPE_SUBTITLE: {
-      break;
-    }
-    case AVMEDIA_TYPE_UNKNOWN:
-      break;
-    case AVMEDIA_TYPE_ATTACHMENT:
-      break;
-    case AVMEDIA_TYPE_DATA:
-      break;
-    case AVMEDIA_TYPE_NB:
-      break;
-    default:
-      break;
+  if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+    video_frame_queue_->Stop();
+    viddec_->Abort();
+    vdecoder_tid_->Join();
+    vdecoder_tid_ = NULL;
+    destroy(&viddec_);
+    destroy(&video_frame_queue_);
+  } else if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+    audio_frame_queue_->Stop();
+    auddec_->Abort();
+    adecoder_tid_->Join();
+    adecoder_tid_ = NULL;
+    destroy(&auddec_);
+    destroy(&audio_frame_queue_);
+    swr_free(&swr_ctx_);
+    av_freep(&audio_buf1_);
+    audio_buf1_size_ = 0;
+    audio_buf_ = NULL;
   }
   avs->discard = AVDISCARD_ALL;
 }
@@ -645,19 +606,12 @@ void VideoState::StreamCycleChannel(AVMediaType codec_type) {
     }
     AVStream* st = ic_->streams[p ? p->stream_index[stream_index] : stream_index];
     if (st->codecpar->codec_type == codec_type) {
-      /* check that parameters are OK */
-      switch (codec_type) {
-        case AVMEDIA_TYPE_AUDIO: {
-          if (st->codecpar->sample_rate != 0 && st->codecpar->channels != 0) {
-            goto the_end;
-          }
-          break;
-        }
-        case AVMEDIA_TYPE_VIDEO:
-        case AVMEDIA_TYPE_SUBTITLE:
+      if (codec_type == AVMEDIA_TYPE_AUDIO) {
+        if (st->codecpar->sample_rate != 0 && st->codecpar->channels != 0) {
           goto the_end;
-        default:
-          break;
+        }
+      } else if (codec_type == AVMEDIA_TYPE_VIDEO || codec_type == AVMEDIA_TYPE_SUBTITLE) {
+        goto the_end;
       }
     }
   }

@@ -47,7 +47,7 @@ struct SwsContext;
 
 namespace fasto {
 namespace fastotv {
-  namespace client {
+namespace client {
 namespace core {
 
 double q2d_diff(AVRational a);
