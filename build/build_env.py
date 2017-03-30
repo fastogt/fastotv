@@ -319,7 +319,7 @@ class BuildRequest(object):
         stabled_version = 'v{0}.{1}'.format(stabled_version_array[0], stabled_version_array[1])
         build_from_sources(
             '{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT, []),
-            self.prefix_path_)
+            self.prefix_path_, [])
 
     def build_common(self):
         cmake_project_root_abs_path = '..'

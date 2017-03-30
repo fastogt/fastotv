@@ -127,9 +127,8 @@ void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
     const cmd_request_t ping_request = PingRequest(NextRequestID());
-    size_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
-    common::Error err = client->Write(ping_request, &nwrite);
+    common::Error err = client->Write(ping_request);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
       client->Close();
@@ -141,9 +140,8 @@ void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer
 void InnerTcpHandler::RequestChannels() {
   if (inner_connection_) {
     const cmd_request_t channels_request = GetChannelsRequest(NextRequestID());
-    size_t nwrite = 0;
     fasto::fastotv::inner::InnerClient* client = inner_connection_;
-    common::Error err = client->Write(channels_request, &nwrite);
+    common::Error err = client->Write(channels_request);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
       client->Close();
@@ -157,12 +155,11 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
                                                 int argc,
                                                 char* argv[]) {
   UNUSED(argc);
-  size_t nwrite = 0;
   char* command = argv[0];
 
   if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
     const cmd_responce_t pong = PingResponceSuccsess(id);
-    common::Error err = connection->Write(pong, &nwrite);
+    common::Error err = connection->Write(pong);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
@@ -172,7 +169,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     json_object_put(jain);
     std::string enc_auth = common::HexEncode(auth_str, false);
     cmd_responce_t iAm = WhoAreYouResponceSuccsess(id, enc_auth);
-    common::Error err = connection->Write(iAm, &nwrite);
+    common::Error err = connection->Write(iAm);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
@@ -197,7 +194,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
 
     const char* info_json_string = json_object_get_string(info_json);
     cmd_responce_t resp = SystemInfoResponceSuccsess(id, info_json_string);
-    common::Error err = connection->Write(resp, &nwrite);
+    common::Error err = connection->Write(resp);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
@@ -211,7 +208,6 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
                                                  cmd_seq_t id,
                                                  int argc,
                                                  char* argv[]) {
-  size_t nwrite = 0;
   char* state_command = argv[0];
 
   if (IS_EQUAL_COMMAND(state_command, SUCCESS_COMMAND) && argc > 1) {
@@ -221,7 +217,7 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         const char* pong = argv[2];
         if (!pong) {
           cmd_approve_t resp = PingApproveResponceFail(id, "Invalid input argument(s)");
-          common::Error err = connection->Write(resp, &nwrite);
+          common::Error err = connection->Write(resp);
           if (err && err->IsError()) {
             DEBUG_MSG_ERROR(err);
           }
@@ -229,14 +225,14 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         }
 
         const cmd_approve_t resp = PingApproveResponceSuccsess(id);
-        common::Error err = connection->Write(resp, &nwrite);
+        common::Error err = connection->Write(resp);
         if (err && err->IsError()) {
           DEBUG_MSG_ERROR(err);
           return;
         }
       } else {
         cmd_approve_t resp = PingApproveResponceFail(id, "Invalid input argument(s)");
-        common::Error err = connection->Write(resp, &nwrite);
+        common::Error err = connection->Write(resp);
         if (err && err->IsError()) {
           DEBUG_MSG_ERROR(err);
         }
@@ -246,7 +242,7 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         const char* hex_encoded_channels = argv[2];
         if (!hex_encoded_channels) {
           cmd_approve_t resp = GetChannelsApproveResponceFail(id, "Invalid input argument(s)");
-          common::Error err = connection->Write(resp, &nwrite);
+          common::Error err = connection->Write(resp);
           if (err && err->IsError()) {
             DEBUG_MSG_ERROR(err);
           }
@@ -258,7 +254,7 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         json_object* obj = json_tokener_parse(buff_str.c_str());
         if (!obj) {
           cmd_approve_t resp = GetChannelsApproveResponceFail(id, "Invalid input argument(s)");
-          common::Error err = connection->Write(resp, &nwrite);
+          common::Error err = connection->Write(resp);
           if (err && err->IsError()) {
             DEBUG_MSG_ERROR(err);
           }
@@ -268,14 +264,14 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         channels_t channels = MakeChannelsClass(obj);
         fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, channels));
         const cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
-        common::Error err = connection->Write(resp, &nwrite);
+        common::Error err = connection->Write(resp);
         if (err && err->IsError()) {
           DEBUG_MSG_ERROR(err);
           return;
         }
       } else {
         cmd_approve_t resp = GetChannelsApproveResponceFail(id, "Invalid input argument(s)");
-        common::Error err = connection->Write(resp, &nwrite);
+        common::Error err = connection->Write(resp);
         if (err && err->IsError()) {
           DEBUG_MSG_ERROR(err);
         }

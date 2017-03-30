@@ -29,16 +29,16 @@ const char* InnerClient::ClassName() const {
   return "InnerClient";
 }
 
-common::Error InnerClient::Write(const cmd_request_t& request, size_t* nwrite) {
-  return WriteInner(request.data(), request.size(), nwrite);
+common::Error InnerClient::Write(const cmd_request_t& request) {
+  return WriteInner(request.data(), request.size());
 }
 
-common::Error InnerClient::Write(const cmd_responce_t& responce, size_t* nwrite) {
-  return WriteInner(responce.data(), responce.size(), nwrite);
+common::Error InnerClient::Write(const cmd_responce_t& responce) {
+  return WriteInner(responce.data(), responce.size());
 }
 
-common::Error InnerClient::Write(const cmd_approve_t& approve, size_t* nwrite) {
-  return WriteInner(approve.data(), approve.size(), nwrite);
+common::Error InnerClient::Write(const cmd_approve_t& approve) {
+  return WriteInner(approve.data(), approve.size());
 }
 
 common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
@@ -72,8 +72,10 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
     return err;
   }
 
-  if (nread == 0) {  // connection closed
-    return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
+  if (nread != size) {  // connection closed
+    return common::make_error_value(
+        common::MemSPrintf("Error when reading needed to read: %lu, but writed: %lu", size, nread),
+        common::ErrorValue::E_ERROR);
   }
 
   return common::Error();
@@ -103,14 +105,22 @@ common::Error InnerClient::ReadCommand(std::string* out) {
   return common::Error();
 }
 
-common::Error InnerClient::WriteInner(const char* data, size_t size, size_t* nwrite) {
+common::Error InnerClient::WriteInner(const char* data, size_t size) {
   const protocoled_size_t data_size = size;
   const size_t protocoled_data_len = size + sizeof(protocoled_size_t);
 
   char* protocoled_data = static_cast<char*>(malloc(protocoled_data_len));
   betoh_memcpy(protocoled_data, &data_size, sizeof(protocoled_size_t));
   memcpy(protocoled_data + sizeof(protocoled_size_t), data, data_size);
-  common::Error err = TcpClient::Write(protocoled_data, protocoled_data_len, nwrite);
+  size_t nwrite = 0;
+  common::Error err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);
+  if (nwrite != protocoled_data_len) {  // connection closed
+    free(protocoled_data);
+    return common::make_error_value(
+        common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu",
+                           protocoled_data_len, nwrite),
+        common::ErrorValue::E_ERROR);
+  }
   free(protocoled_data);
   return err;
 }
