@@ -54,8 +54,11 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
   }
 
   if (nread != sizeof(protocoled_size_t)) {  // connection closed
+    if (nread == 0) {
+      return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
+    }
     return common::make_error_value(
-        common::MemSPrintf("Error when reading needed to read: %lu, but readed: %lu",
+        common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
                            sizeof(protocoled_size_t), nread),
         common::ErrorValue::E_ERROR);
   }
@@ -76,8 +79,12 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
   }
 
   if (nread != size) {  // connection closed
+    if (nread == 0) {
+      return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
+    }
     return common::make_error_value(
-        common::MemSPrintf("Error when reading needed to read: %lu, but readed: %lu", size, nread),
+        common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu", size,
+                           nread),
         common::ErrorValue::E_ERROR);
   }
 
