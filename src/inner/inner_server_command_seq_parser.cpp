@@ -103,7 +103,6 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
 
   int argc;
   sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
-  ProcessRequest(id, argc, argv);
   if (argv == NULL) {
     WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << input_command;
     connection->Close();
@@ -111,6 +110,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
     return;
   }
 
+  ProcessRequest(id, argc, argv);
   INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->FormatedName()
              << "] seq: " << CmdIdToString(seq) << ", id:" << id << ", cmd: " << cmd_str;
   if (seq == REQUEST_COMMAND) {
