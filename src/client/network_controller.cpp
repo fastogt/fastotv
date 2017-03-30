@@ -48,7 +48,7 @@ void NetworkController::Stop() {
 NetworkController::~NetworkController() {}
 
 AuthInfo NetworkController::GetAuthInfo() {
-  return AuthInfo(USER_SPECIFIC_DEFAULT_LOGIN, USER_SPECIFIC_DEFAULT_PASSWORD);
+  return AuthInfo(USER_LOGIN, USER_PASSWORD);
 }
 
 void NetworkController::RequestChannels() const {
