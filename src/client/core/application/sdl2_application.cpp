@@ -28,6 +28,7 @@
 #include "client/core/events/events.h"
 
 #define FASTO_EVENT (SDL_USEREVENT)
+#define FASTO_TIMER_EVENT (SDL_USEREVENT + 1)
 
 #undef ERROR
 
@@ -66,17 +67,10 @@ int Sdl2Application::PreExec() {
 }
 
 int Sdl2Application::Exec() {
-  while (!stop_) {
-    SDL_Event event;
-    SDL_PumpEvents();
-    int res = SDL_WaitEventTimeout(&event, event_timeout_wait_msec);
-    if (res == 0) {  // timeout
-      events::TimeInfo inf;
-      events::TimerEvent* timer_event = new events::TimerEvent(this, inf);
-      HandleEvent(timer_event);
-      continue;
-    }
+  SDL_TimerID my_timer_id = SDL_AddTimer(event_timeout_wait_msec, timer_callback, this);
 
+  SDL_Event event;
+  while (!stop_ && SDL_WaitEvent(&event)) {
     switch (event.type) {
       case SDL_KEYDOWN: {
         HandleKeyPressEvent(&event.key);
@@ -112,6 +106,7 @@ int Sdl2Application::Exec() {
     }
   }
 
+  SDL_RemoveTimer(my_timer_id);
   return EXIT_SUCCESS;
 }
 
@@ -221,6 +216,14 @@ void Sdl2Application::HandleQuitEvent(SDL_QuitEvent* event) {
   events::QuitInfo inf;
   events::QuitEvent* quit_event = new events::QuitEvent(this, inf);
   HandleEvent(quit_event);
+}
+
+Uint32 Sdl2Application::timer_callback(Uint32 interval, void* user_data) {
+  Sdl2Application* app = static_cast<Sdl2Application*>(user_data);
+  events::TimeInfo inf;
+  events::TimerEvent* timer_event = new events::TimerEvent(app, inf);
+  app->PostEvent(timer_event);
+  return interval;
 }
 }
 }

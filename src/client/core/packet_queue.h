@@ -61,11 +61,10 @@ class PacketQueue {  // compressed queue data
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PacketQueue);
-  int PutPrivate(AVPacket* pkt1);
 
   std::deque<AVPacket> queue_;
-  int size_;
-  int64_t duration_;
+  common::atomic<int> size_;
+  common::atomic<int64_t> duration_;
   bool abort_request_;
   typedef common::unique_lock<common::mutex> lock_t;
   common::condition_variable cond_;

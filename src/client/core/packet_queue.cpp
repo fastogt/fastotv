@@ -86,9 +86,11 @@ int PacketQueue::Put(AVPacket* pkt) {
     return -1;
   }
 
-  int ret = PutPrivate(pkt);
+  queue_.push_back(*pkt);
+  size_ += pkt->size;
+  duration_ += pkt->duration;
   cond_.notify_one();
-  return ret;
+  return 0;
 }
 
 void PacketQueue::Flush() {
@@ -110,14 +112,6 @@ void PacketQueue::Abort() {
 
 PacketQueue::~PacketQueue() {
   Flush();
-}
-
-int PacketQueue::PutPrivate(AVPacket* pkt1) {
-  queue_.push_back(*pkt1);
-  size_ += pkt1->size;
-  duration_ += pkt1->duration;
-  /* XXX: should duplicate packet data in DV case */
-  return 0;
 }
 
 }  // namespace core
