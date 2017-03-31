@@ -28,6 +28,7 @@ ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
 ARCH_FFMPEG_COMP = "bz2"
 ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 
+
 def splitext(path):
     for ext in ['.tar.gz', '.tar.bz2', '.tar.xz']:
         if path.endswith(ext):
@@ -72,6 +73,7 @@ def extract_file(file):
     print("Extracting: {0}".format(file))
     subprocess.call(['tar', '-xvf', file])
     return splitext(file)
+
 
 def build_ffmpeg(url, prefix_path, other_args):
     pwd = os.getcwd()
@@ -176,7 +178,8 @@ class SupportedDevice(object):
 
 SUPPORTED_DEVICES = [SupportedDevice('pc', [], [], []),
                      SupportedDevice('orange-pi',
-                                     ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi'],
+                                     ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi',
+                                      'libvdpau-dev'],
                                      ['--disable-video-opengl', '--disable-video-opengles1',
                                       '--enable-video-opengles2'],
                                      ['--enable-hwaccel=h264_vdpau', '--enable-vdpau'], install_orange_pi)]
