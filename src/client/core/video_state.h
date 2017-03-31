@@ -44,6 +44,7 @@ extern "C" {
 #include "client/core/clock.h"
 
 struct SwrContext;
+struct InputStream;
 
 namespace common {
 namespace threads {
@@ -239,6 +240,7 @@ class VideoState {
 
   Stats stats_;
   VideoStateHandler* handler_;
+  InputStream* input_st_;
 };
 
 }  // namespace core

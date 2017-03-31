@@ -22,6 +22,8 @@
 #include <libavutil/hwcontext.h>
 #include <libavutil/hwcontext_vdpau.h>
 
+#include "ffmpeg_internal.h"
+
 typedef struct VDPAUContext {
   AVBufferRef* hw_frames_ctx;
   AVFrame* tmp_frame;

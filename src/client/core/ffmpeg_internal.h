@@ -22,4 +22,30 @@
 
 #include <libavcodec/avcodec.h>
 
-int vdpau_init(AVCodecContext* decoder_ctx);
+typedef void hw_uninit_callback_t(AVCodecContext* s);
+typedef int hw_get_buffer_callback_t(AVCodecContext* s, AVFrame* frame, int flags);
+typedef int hw_retrieve_data_callback_t(AVCodecContext* s, AVFrame* frame);
+
+enum HWAccelID {
+  HWACCEL_NONE = 0,
+  HWACCEL_AUTO,
+  HWACCEL_VDPAU,
+  HWACCEL_DXVA2,
+  HWACCEL_VDA,
+  HWACCEL_VIDEOTOOLBOX,
+  HWACCEL_QSV,
+  HWACCEL_VAAPI,
+  HWACCEL_CUVID,
+};
+
+typedef struct InputStream {
+  void* hwaccel_ctx;
+  hw_uninit_callback_t* hwaccel_uninit;
+  hw_get_buffer_callback_t* hwaccel_get_buffer;
+  hw_retrieve_data_callback_t* hwaccel_retrieve_data;
+  const char* hwaccel_device;
+  enum AVPixelFormat hwaccel_pix_fmt;
+  enum HWAccelID active_hwaccel_id;
+  enum HWAccelID hwaccel_id;
+  AVBufferRef *hw_frames_ctx;
+} InputStream;

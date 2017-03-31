@@ -49,10 +49,6 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 
-#ifdef HAVE_VDPAU
-#include "ffmpeg_vdpau.h"
-#endif
-
 #if CONFIG_AVFILTER
 #include <libavfilter/avfilter.h>
 #include <libavfilter/buffersink.h>
@@ -66,6 +62,14 @@ extern "C" {
 #include <common/application/application.h>
 #include <common/utils.h>
 #include <common/sprintf.h>
+
+#include "ffmpeg_internal.h"
+
+#ifdef HAVE_VDPAU
+extern "C" {
+#include "ffmpeg_vdpau.h"
+}
+#endif
 
 #include "video_state_handler.h"
 
@@ -108,6 +112,96 @@ namespace {
 int decode_interrupt_callback(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
   return is->IsAborted();
+}
+
+typedef struct HWAccel {
+  const char* name;
+  int (*init)(AVCodecContext* s);
+  enum HWAccelID id;
+  enum AVPixelFormat pix_fmt;
+} HWAccel;
+
+const HWAccel hwaccels[] = {
+#if HAVE_VDPAU_X11
+    {"vdpau", vdpau_init, HWACCEL_VDPAU, AV_PIX_FMT_VDPAU},
+#endif
+#if HAVE_DXVA2_LIB
+    {"dxva2", dxva2_init, HWACCEL_DXVA2, AV_PIX_FMT_DXVA2_VLD},
+#endif
+#if CONFIG_VDA
+    {"vda", videotoolbox_init, HWACCEL_VDA, AV_PIX_FMT_VDA},
+#endif
+#if CONFIG_VIDEOTOOLBOX
+    {"videotoolbox", videotoolbox_init, HWACCEL_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX},
+#endif
+#if CONFIG_LIBMFX
+    {"qsv", qsv_init, HWACCEL_QSV, AV_PIX_FMT_QSV},
+#endif
+#if CONFIG_VAAPI
+    {"vaapi", vaapi_decode_init, HWACCEL_VAAPI, AV_PIX_FMT_VAAPI},
+#endif
+#if CONFIG_CUVID
+    {"cuvid", cuvid_init, HWACCEL_CUVID, AV_PIX_FMT_CUDA},
+#endif
+    {0},
+};
+
+const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
+  for (int i = 0; hwaccels[i].name; i++) {
+    if (hwaccels[i].pix_fmt == pix_fmt) {
+      return &hwaccels[i];
+    }
+  }
+  return NULL;
+}
+
+enum AVPixelFormat get_format(AVCodecContext* s, const enum AVPixelFormat* pix_fmts) {
+  InputStream* ist = static_cast<InputStream*>(s->opaque);
+  const enum AVPixelFormat* p;
+  int ret;
+
+  for (p = pix_fmts; *p != -1; p++) {
+    const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(*p);
+
+    if (!(desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
+      break;
+
+    const HWAccel* hwaccel = get_hwaccel(*p);
+    if (!hwaccel || (ist->active_hwaccel_id && ist->active_hwaccel_id != hwaccel->id) ||
+        (ist->hwaccel_id != HWACCEL_AUTO && ist->hwaccel_id != hwaccel->id)) {
+      continue;
+    }
+
+    ret = hwaccel->init(s);
+    if (ret < 0) {
+      if (ist->hwaccel_id == hwaccel->id) {
+        return AV_PIX_FMT_NONE;
+      }
+      continue;
+    }
+
+    if (ist->hw_frames_ctx) {
+      s->hw_frames_ctx = av_buffer_ref(ist->hw_frames_ctx);
+      if (!s->hw_frames_ctx)
+        return AV_PIX_FMT_NONE;
+    }
+
+    ist->active_hwaccel_id = hwaccel->id;
+    ist->hwaccel_pix_fmt = *p;
+    break;
+  }
+
+  return *p;
+}
+
+int get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
+  InputStream* ist = static_cast<InputStream*>(s->opaque);
+
+  if (ist->hwaccel_get_buffer && frame->format == ist->hwaccel_pix_fmt) {
+    return ist->hwaccel_get_buffer(s, frame, flags);
+  }
+
+  return avcodec_default_get_buffer2(s, frame, flags);
 }
 }
 
@@ -172,9 +266,12 @@ VideoState::VideoState(stream_id id,
       eof_(false),
       abort_request_(false),
       stats_(),
-      handler_(handler) {
+      handler_(handler),
+      input_st_(static_cast<InputStream*>(calloc(1, sizeof(InputStream)))) {
   CHECK(handler_);
   CHECK(id_ != invalid_stream_id);
+
+  // input_st_->hwaccel_id = HWACCEL_AUTO;
 }
 
 VideoState::~VideoState() {
@@ -192,6 +289,8 @@ VideoState::~VideoState() {
   destroy(&vstream_);
 
   avformat_close_input(&ic_);
+
+  free(input_st_);
 }
 
 int VideoState::StreamComponentOpen(int stream_index) {
@@ -260,6 +359,12 @@ int VideoState::StreamComponentOpen(int stream_index) {
     avctx->flags |= CODEC_FLAG_EMU_EDGE;
   }
 #endif
+
+  if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
+    avctx->opaque = input_st_;
+    avctx->get_format = get_format;
+    avctx->get_buffer2 = get_buffer;
+  }
 
   AVDictionary* opts =
       core::filter_codec_opts(copt_.codec_opts, avctx->codec_id, ic_, stream, codec);
@@ -1134,12 +1239,6 @@ int VideoState::ReadThread() {
   AVStream* const video_st = video_stream->AvStream();
   AVStream* const audio_st = audio_stream->AvStream();
   UNUSED(audio_st);
-
-#ifdef HAVE_VDPAU
-  InputStream* st = static_cast<InputStream*>(calloc(1, sizeof(InputStream)));
-  video_st->codec->opaque = st;
-  vdpau_init(video_st->codec);
-#endif
 
   int ret = -1;
   while (!IsAborted()) {
