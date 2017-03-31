@@ -224,6 +224,7 @@ VideoState::VideoState(stream_id id,
   CHECK(id_ != invalid_stream_id);
 
   input_st_->hwaccel_id = opt_.hwaccel_id;
+  input_st_->hwaccel_device = common::utils::strdupornull(opt_.hwaccel_device);
 }
 
 VideoState::~VideoState() {
@@ -242,6 +243,7 @@ VideoState::~VideoState() {
 
   avformat_close_input(&ic_);
 
+  common::utils::freeifnotnull(input_st_->hwaccel_device);
   free(input_st_);
 }
 

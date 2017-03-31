@@ -43,7 +43,7 @@ typedef struct InputStream {
   hw_uninit_callback_t* hwaccel_uninit;
   hw_get_buffer_callback_t* hwaccel_get_buffer;
   hw_retrieve_data_callback_t* hwaccel_retrieve_data;
-  const char* hwaccel_device;
+  char* hwaccel_device;
   enum AVPixelFormat hwaccel_pix_fmt;
   enum HWAccelID active_hwaccel_id;
   enum HWAccelID hwaccel_id;

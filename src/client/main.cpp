@@ -306,6 +306,11 @@ const OptionDef options[] = {
      {.func_arg = opt_hwaccel},
      "use HW accelerated decoding",
      "hwaccel name"},
+    {"hwaccel_device",
+     OPT_VIDEO | OPT_STRING | HAS_ARG | OPT_EXPERT | OPT_INPUT,
+     {&g_options.hwaccel_device},
+     "select a device for HW acceleration",
+     "devicename"},
     {"autorotate", OPT_BOOL, {&g_options.autorotate}, "automatically rotate video", ""},
     {
         NULL,
