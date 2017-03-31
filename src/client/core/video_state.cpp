@@ -49,6 +49,10 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 
+#ifdef HAVE_VDPAU
+#include "ffmpeg_vdpau.h"
+#endif
+
 #if CONFIG_AVFILTER
 #include <libavfilter/avfilter.h>
 #include <libavfilter/buffersink.h>
@@ -1130,6 +1134,12 @@ int VideoState::ReadThread() {
   AVStream* const video_st = video_stream->AvStream();
   AVStream* const audio_st = audio_stream->AvStream();
   UNUSED(audio_st);
+
+#ifdef HAVE_VDPAU
+  InputStream* st = static_cast<InputStream*>(calloc(1, sizeof(InputStream)));
+  video_st->codec->opaque = st;
+  vdpau_init(video_st->codec);
+#endif
 
   int ret = -1;
   while (!IsAborted()) {

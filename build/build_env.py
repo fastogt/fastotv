@@ -176,7 +176,7 @@ class SupportedDevice(object):
             return self.install_specific_()
 
 
-SUPPORTED_DEVICES = [SupportedDevice('pc', [], [], []),
+SUPPORTED_DEVICES = [SupportedDevice('pc', [], [], ['--enable-hwaccel=h264_vdpau', '--enable-vdpau']),
                      SupportedDevice('orange-pi',
                                      ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi',
                                       'libvdpau-dev'],
