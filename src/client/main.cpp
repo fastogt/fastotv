@@ -152,6 +152,36 @@ int opt_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return 0;
 }
 
+int show_hwaccels(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  printf("Hardware acceleration methods:\n");
+  for (size_t i = 0; i < hwaccel_count(); i++) {
+    printf("%s\n", hwaccels[i].name);
+  }
+  printf("\n");
+  return 0;
+}
+
+int opt_hwaccel(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(dopt);
+
+  if (!strcmp(arg, "auto")) {
+    g_options.hwaccel_id = HWACCEL_AUTO;
+  } else if (!strcmp(arg, "none")) {
+    g_options.hwaccel_id = HWACCEL_NONE;
+  } else {
+    for (size_t i = 0; i < hwaccel_count(); i++) {
+      if (!strcmp(hwaccels[i].name, arg)) {
+        g_options.hwaccel_id = hwaccels[i].id;
+        return 0;
+      }
+    }
+
+    ERROR_LOG() << "Unknown value for " << opt << ": " << arg;
+    exit(1);
+  }
+  return 0;
+}
+
 const OptionDef options[] = {
     {"L", OPT_EXIT, {.func_arg = show_license}, "show license"},
     {"h", OPT_EXIT, {.func_arg = show_help}, "show help", "topic"},
@@ -163,6 +193,7 @@ const OptionDef options[] = {
     {"formats", OPT_EXIT, {.func_arg = show_formats}, "show available formats"},
     {"devices", OPT_EXIT, {.func_arg = show_devices}, "show available devices"},
     {"codecs", OPT_EXIT, {.func_arg = show_codecs}, "show available codecs"},
+    {"hwaccels", OPT_EXIT, {.func_arg = show_hwaccels}, "show available hwaccels"},
     {"decoders", OPT_EXIT, {.func_arg = show_decoders}, "show available decoders"},
     {"encoders", OPT_EXIT, {.func_arg = show_encoders}, "show available encoders"},
     {"bsfs", OPT_EXIT, {.func_arg = show_bsfs}, "show available bit stream filters"},
@@ -270,6 +301,11 @@ const OptionDef options[] = {
      {&g_options.video_codec_name},
      "force video decoder",
      "decoder_name"},
+    {"hwaccel",
+     HAS_ARG | OPT_EXPERT,
+     {.func_arg = opt_hwaccel},
+     "use HW accelerated decoding",
+     "hwaccel name"},
     {"autorotate", OPT_BOOL, {&g_options.autorotate}, "automatically rotate video", ""},
     {
         NULL,

@@ -49,3 +49,15 @@ typedef struct InputStream {
   enum HWAccelID hwaccel_id;
   AVBufferRef *hw_frames_ctx;
 } InputStream;
+
+typedef struct HWAccel {
+  const char* name;
+  int (*init)(AVCodecContext* s);
+  enum HWAccelID id;
+  enum AVPixelFormat pix_fmt;
+} HWAccel;
+
+extern const HWAccel hwaccels[];
+
+size_t hwaccel_count();
+const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt);

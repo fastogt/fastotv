@@ -25,6 +25,7 @@
 #include "ffmpeg_config.h"
 
 extern "C" {
+#include "ffmpeg_internal.h"
 #include <libavutil/dict.h>
 #include <libavutil/avutil.h>
 }
@@ -57,6 +58,7 @@ struct AppOptions {
   bool fast;
   std::string audio_codec_name;
   std::string video_codec_name;
+  enum HWAccelID hwaccel_id;
 
 #if CONFIG_AVFILTER
   void InitAvFilters(const std::string& arg);

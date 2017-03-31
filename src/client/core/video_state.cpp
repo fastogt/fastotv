@@ -65,12 +65,6 @@ extern "C" {
 
 #include "ffmpeg_internal.h"
 
-#ifdef HAVE_VDPAU
-extern "C" {
-#include "ffmpeg_vdpau.h"
-}
-#endif
-
 #include "video_state_handler.h"
 
 #include "client/core/types.h"  // for get_valid_channel_layout, etc
@@ -114,57 +108,15 @@ int decode_interrupt_callback(void* user_data) {
   return is->IsAborted();
 }
 
-typedef struct HWAccel {
-  const char* name;
-  int (*init)(AVCodecContext* s);
-  enum HWAccelID id;
-  enum AVPixelFormat pix_fmt;
-} HWAccel;
-
-const HWAccel hwaccels[] = {
-#if HAVE_VDPAU_X11
-    {"vdpau", vdpau_init, HWACCEL_VDPAU, AV_PIX_FMT_VDPAU},
-#endif
-#if HAVE_DXVA2_LIB
-    {"dxva2", dxva2_init, HWACCEL_DXVA2, AV_PIX_FMT_DXVA2_VLD},
-#endif
-#if CONFIG_VDA
-    {"vda", videotoolbox_init, HWACCEL_VDA, AV_PIX_FMT_VDA},
-#endif
-#if CONFIG_VIDEOTOOLBOX
-    {"videotoolbox", videotoolbox_init, HWACCEL_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX},
-#endif
-#if CONFIG_LIBMFX
-    {"qsv", qsv_init, HWACCEL_QSV, AV_PIX_FMT_QSV},
-#endif
-#if CONFIG_VAAPI
-    {"vaapi", vaapi_decode_init, HWACCEL_VAAPI, AV_PIX_FMT_VAAPI},
-#endif
-#if CONFIG_CUVID
-    {"cuvid", cuvid_init, HWACCEL_CUVID, AV_PIX_FMT_CUDA},
-#endif
-    {0},
-};
-
-const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
-  for (int i = 0; hwaccels[i].name; i++) {
-    if (hwaccels[i].pix_fmt == pix_fmt) {
-      return &hwaccels[i];
-    }
-  }
-  return NULL;
-}
-
 enum AVPixelFormat get_format(AVCodecContext* s, const enum AVPixelFormat* pix_fmts) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   const enum AVPixelFormat* p;
-  int ret;
-
   for (p = pix_fmts; *p != -1; p++) {
     const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(*p);
 
-    if (!(desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
+    if (!(desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
       break;
+    }
 
     const HWAccel* hwaccel = get_hwaccel(*p);
     if (!hwaccel || (ist->active_hwaccel_id && ist->active_hwaccel_id != hwaccel->id) ||
@@ -172,7 +124,7 @@ enum AVPixelFormat get_format(AVCodecContext* s, const enum AVPixelFormat* pix_f
       continue;
     }
 
-    ret = hwaccel->init(s);
+    int ret = hwaccel->init(s);
     if (ret < 0) {
       if (ist->hwaccel_id == hwaccel->id) {
         return AV_PIX_FMT_NONE;
@@ -271,7 +223,7 @@ VideoState::VideoState(stream_id id,
   CHECK(handler_);
   CHECK(id_ != invalid_stream_id);
 
-  // input_st_->hwaccel_id = HWACCEL_AUTO;
+  input_st_->hwaccel_id = opt_.hwaccel_id;
 }
 
 VideoState::~VideoState() {

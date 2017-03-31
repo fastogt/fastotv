@@ -36,7 +36,8 @@ AppOptions::AppOptions()
       lowres(0),
       fast(false),
       audio_codec_name(),
-      video_codec_name()
+      video_codec_name(),
+      hwaccel_id(HWACCEL_NONE)
 #if CONFIG_AVFILTER
       ,
       vfilters_list(),

@@ -31,6 +31,7 @@
 #include "ffmpeg_config.h"  // for CONFIG_AVDEVICE, etc
 
 extern "C" {
+#include "core/ffmpeg_internal.h"
 #include <libavcodec/avcodec.h>    // for AVCodec, AVCodecID
 #include <libavformat/avformat.h>  // for AVFormatContext, AVStream
 #include <libavutil/attributes.h>  // for av_noreturn
