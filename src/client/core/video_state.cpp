@@ -318,6 +318,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     avctx->opaque = input_st_;
     avctx->get_format = get_format;
     avctx->get_buffer2 = get_buffer;
+    avctx->thread_safe_callbacks = 1;
   }
 
   AVDictionary* opts =
