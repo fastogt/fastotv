@@ -1521,6 +1521,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph,
   ret =
       av_opt_set_int_list(filt_out, "pix_fmts", pix_fmts, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
   if (ret < 0) {
+    WARNING_LOG() << "Failed to set pix_fmts ret: " << ret;
     return ret;
   }
 
@@ -1562,6 +1563,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph,
   }
 
   if ((ret = core::configure_filtergraph(graph, vfilters, filt_src, last_filter)) < 0) {
+    WARNING_LOG() << "Failed to configure_filtergraph ret: " << ret;
     return ret;
   }
 
