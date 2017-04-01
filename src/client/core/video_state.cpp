@@ -1391,6 +1391,14 @@ int VideoState::VideoThread() {
       continue;
     }
 
+    if (input_st_->hwaccel_retrieve_data && frame->format == input_st_->hwaccel_pix_fmt) {
+      int err = input_st_->hwaccel_retrieve_data(viddec_->AvCtx(), frame);
+      if (err < 0) {
+        continue;
+      }
+    }
+    //input_st_->hwaccel_retrieved_pix_fmt = frame->format;
+
 #if CONFIG_AVFILTER
     if (last_w != frame->width || last_h != frame->height || last_format != frame->format ||
         last_vfilter_idx != vfilter_idx_) {

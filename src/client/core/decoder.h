@@ -45,6 +45,7 @@ class Decoder {
   void SetFinished(bool finished);
 
   AVMediaType CodecType() const;
+  AVCodecContext* AvCtx() const;
 
  protected:
   Decoder(AVCodecContext* avctx, PacketQueue* queue);
