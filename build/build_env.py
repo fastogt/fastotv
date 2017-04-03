@@ -109,7 +109,7 @@ def build_command_configure(compiler_flags, prefix_path):
     # patches
     script_dir = os.path.dirname(g_script_path)
 
-    for dir in compiler_flags.patches():       
+    for dir in compiler_flags.patches():
         scan_dir = os.path.join(script_dir, dir)
         if os.path.exists(scan_dir):
             for diff in os.listdir(scan_dir):
@@ -209,7 +209,7 @@ SUPPORTED_DEVICES = [
     SupportedDevice('pc', [], CompileInfo([], []), CompileInfo([], [])),
     SupportedDevice('orange-pi-one',
                     ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi', 'libvdpau-dev'],
-                    CompileInfo(['patch/orange-pi-one/SDL2'], ['--disable-video-opengl', '--disable-video-opengles1',
+                    CompileInfo(['patch/orange-pi-one/sdl2'], ['--disable-video-opengl', '--disable-video-opengles1',
                                                                '--enable-video-opengles2']),
                     CompileInfo([], ['--enable-hwaccel=h264_vdpau', '--enable-vdpau']), install_orange_pi)]
 
