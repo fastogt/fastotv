@@ -7,6 +7,7 @@ import shutil
 import platform
 import argparse
 import tarfile
+import re
 from pybuild_utils.base import system_info, utils
 
 # Script for building enviroment on clean machine
@@ -30,6 +31,18 @@ ARCH_FFMPEG_COMP = "bz2"
 ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 
 
+class CompileInfo(object):
+    def __init__(self, patches, flags):
+        self.patches_ = patches
+        self.flags_ = flags
+
+    def patches(self):
+        return self.patches_
+
+    def flags(self):
+        return self.flags_
+
+
 def splitext(path):
     for ext in ['.tar.gz', '.tar.bz2', '.tar.xz']:
         if path.endswith(ext):
@@ -37,7 +50,7 @@ def splitext(path):
     return os.path.splitext(path)[0]
 
 
-def download_file(url):
+def download_file(url, current_dir):
     file_name = url.split('/')[-1]
     responce = urlopen(url)
     if responce.status != 200:
@@ -67,10 +80,10 @@ def download_file(url):
         print(status, end='\r')
 
     f.close()
-    return file_name
+    return os.path.join(current_dir, file_name)
 
 
-def extract_file(path):
+def extract_file(path, current_dir):
     print("Extracting: {0}".format(path))
     try:
         tar_file = tarfile.open(path)
@@ -85,25 +98,38 @@ def extract_file(path):
     finally:
         tar_file.close()
 
-    return target_path
+    return os.path.join(current_dir, target_path)
 
 
-def build_ffmpeg(url, prefix_path, other_args):
-    pwd = os.getcwd()
-    file = download_file(url)
-    folder = extract_file(file)
-    os.chdir(folder)
-    ffmpeg_cmd = ['./configure', '--prefix={0}'.format(prefix_path)]
-    ffmpeg_cmd.extend(other_args)
-    subprocess.call(ffmpeg_cmd)
+def build_command_configure(compiler_flags, prefix_path):
+    # patches
+    for dir in compiler_flags.patches():
+        scan_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), dir)
+        if os.path.exists(scan_dir):
+            for diff in os.listdir(scan_dir):
+                if re.match(r'.+\.patch', diff):
+                    patch_file = os.path.join(scan_dir, diff)
+                    line = 'patch -p0 < {0}'.format(patch_file)
+                    subprocess.call(['bash', '-c', line])
+
+    compile_cmd = ['./configure', '--prefix={0}'.format(prefix_path)]
+    compile_cmd.extend(compiler_flags.flags())
+    subprocess.call(compile_cmd)
     subprocess.call(['make', '-j2'])
     subprocess.call(['make', 'install'])
-    os.chdir(pwd)
-    shutil.rmtree(folder)
 
 
-def git_clone(url):
+def build_from_sources(url, compiler_flags, prefix_path):
     pwd = os.getcwd()
+    file_path = download_file(url, pwd)
+    extracted_folder = extract_file(file_path, pwd)
+    os.chdir(extracted_folder)
+    build_command_configure(compiler_flags, prefix_path)
+    os.chdir(pwd)
+    shutil.rmtree(extracted_folder)
+
+
+def git_clone(url, current_dir):
     common_git_clone_line = ['git', 'clone', url]
     cloned_dir = os.path.splitext(url.rsplit('/', 1)[-1])[0]
     common_git_clone_line.append(cloned_dir)
@@ -112,29 +138,14 @@ def git_clone(url):
 
     common_git_clone_init_line = ['git', 'submodule', 'update', '--init', '--recursive']
     subprocess.call(common_git_clone_init_line)
-    os.chdir(pwd)
-    return os.path.join(pwd, cloned_dir)
-
-
-def build_from_sources(url, prefix_path, other_args):
-    pwd = os.getcwd()
-    file = download_file(url)
-    folder = extract_file(file)
-    os.chdir(folder)
-    source_build_cmd = ['./configure', '--prefix={0}'.format(prefix_path)]
-    source_build_cmd.extend(other_args)
-    subprocess.call(source_build_cmd)
-    subprocess.call(['make', '-j2'])
-    subprocess.call(['make', 'install'])
-    os.chdir(pwd)
-    shutil.rmtree(folder)
+    return os.path.join(current_dir, cloned_dir)
 
 
 def install_orange_pi():
     subprocess.call(['modprobe', 'mali'])
     pwd = os.getcwd()
     try:
-        cloned_dir = git_clone('https://github.com/linux-sunxi/sunxi-mali.git')
+        cloned_dir = git_clone('https://github.com/linux-sunxi/sunxi-mali.git', pwd)
         os.chdir(cloned_dir)
         subprocess.call(['make', 'config'])
         subprocess.call(['make', 'install'])
@@ -161,25 +172,24 @@ def install_orange_pi():
     standart_egl_path = '/usr/lib/arm-linux-gnueabihf/mesa-egl/'
     if os.path.exists(standart_egl_path):
         shutil.move(standart_egl_path, '/usr/lib/arm-linux-gnueabihf/.mesa-egl/')
-        # os.symlink('/usr/lib/libMali.so', '/usr/lib/libGLESv2.so')
 
 
 class SupportedDevice(object):
-    def __init__(self, name, system_libs, sdl2_flags, ffmpeg_flags, install_specific=None):
+    def __init__(self, name, system_libs, sdl2_compile_info, ffmpeg_compile_info, install_specific=None):
         self.name_ = name
         self.system_libs_ = system_libs
-        self.sdl2_flags_ = sdl2_flags
-        self.ffmpeg_flags_ = ffmpeg_flags
+        self.sdl2_compile_info_ = sdl2_compile_info
+        self.ffmpeg_compile_info_ = ffmpeg_compile_info
         self.install_specific_ = install_specific
 
     def name(self):
         return self.name_
 
-    def sdl2_flags(self):
-        return self.sdl2_flags_
+    def sdl2_compile_info(self):
+        return self.sdl2_compile_info_
 
-    def ffmpeg_flags(self):
-        return self.ffmpeg_flags_
+    def ffmpeg_compile_info(self):
+        return self.ffmpeg_compile_info_
 
     def system_libs(self, platform):
         return self.system_libs_
@@ -189,13 +199,13 @@ class SupportedDevice(object):
             return self.install_specific_()
 
 
-SUPPORTED_DEVICES = [SupportedDevice('pc', [], [], ['--enable-hwaccel=h264_vdpau', '--enable-vdpau']),
-                     SupportedDevice('orange-pi',
-                                     ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi',
-                                      'libvdpau-dev'],
-                                     ['--disable-video-opengl', '--disable-video-opengles1',
-                                      '--enable-video-opengles2'],
-                                     ['--enable-hwaccel=h264_vdpau', '--enable-vdpau'], install_orange_pi)]
+SUPPORTED_DEVICES = [
+    SupportedDevice('pc', [], CompileInfo([], []), CompileInfo([], [])),
+    SupportedDevice('orange-pi-one',
+                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi', 'libvdpau-dev'],
+                    CompileInfo(['patch/orange-pi-one/SDL2'], ['--disable-video-opengl', '--disable-video-opengles1',
+                                                               '--enable-video-opengles2']),
+                    CompileInfo([], ['--enable-hwaccel=h264_vdpau', '--enable-vdpau']), install_orange_pi)]
 
 
 def get_device():
@@ -306,7 +316,10 @@ class BuildRequest(object):
             for lib in dep_libs:
                 subprocess.call(['port', 'install', lib])
 
-    def build_ffmpeg(self, ffmpeg_version):
+    def build(self, url, compiler_flags):
+        build_from_sources(url, compiler_flags, self.prefix_path_)
+
+    def build_ffmpeg(self, version):
         ffmpeg_platform_args = ['--disable-doc',
                                 '--disable-opencl',
                                 '--disable-lzma', '--disable-iconv',
@@ -324,27 +337,28 @@ class BuildRequest(object):
         elif platform_name == 'macosx':
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
 
-        ffmpeg_platform_args.extend(device.ffmpeg_flags())
-        build_ffmpeg('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, ffmpeg_version, ARCH_FFMPEG_EXT),
-                     self.prefix_path_, ffmpeg_platform_args)
+        ffmpeg_platform_args.extend(device.ffmpeg_compile_info())
+        compiler_flags = CompileInfo([], ffmpeg_platform_args)
+        self.build('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, version, ARCH_FFMPEG_EXT), compiler_flags)
 
     def build_sdl2(self, version):
         device = self.device_
-        build_from_sources('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), self.prefix_path_,
-                           device.sdl2_flags())
+        compiler_flags = device.sdl2_compile_info()
+        self.build('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_libpng(self, version):
-        build_from_sources('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), self.prefix_path_,
-                           [])
+        compiler_flags = CompileInfo([], [])
+        self.build('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), compiler_flags)
 
     def build_cmake(self, version):
         stabled_version_array = version.split(".")
         stabled_version = 'v{0}.{1}'.format(stabled_version_array[0], stabled_version_array[1])
-        build_from_sources(
-            '{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT, []),
-            self.prefix_path_, [])
+        compiler_flags = CompileInfo([], [])
+        self.build('{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT, []),
+                   compiler_flags)
 
     def build_common(self):
+        pwd = os.getcwd()
         cmake_project_root_abs_path = '..'
         if not os.path.exists(cmake_project_root_abs_path):
             raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
@@ -355,7 +369,7 @@ class BuildRequest(object):
         cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
                       prefix_args]
         try:
-            cloned_dir = git_clone('https://github.com/fastogt/common.git')
+            cloned_dir = git_clone('https://github.com/fastogt/common.git', pwd)
             os.chdir(cloned_dir)
 
             os.mkdir('build_cmake_release')
@@ -452,12 +466,13 @@ if __name__ == "__main__":
 
     if argv.with_libpng:
         request.build_libpng(argv.libpng_version)
-    if argv.with_sdl2:
-        request.build_sdl2(argv.sdl2_version)
-    if argv.with_ffmpeg:
-        request.build_ffmpeg(argv.ffmpeg_version)
 
     if argv.with_cmake:
         request.build_cmake(argv.cmake_version)
     if argv.with_common:
         request.build_common()
+
+    if argv.with_sdl2:
+        request.build_sdl2(argv.sdl2_version)
+    if argv.with_ffmpeg:
+        request.build_ffmpeg(argv.ffmpeg_version)

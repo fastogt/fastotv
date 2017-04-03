@@ -1,0 +1,11 @@
+--- src/render/opengles2/SDL_render_gles2.c	2016-10-20 06:56:26.000000000 +0300
++++ SDL_render_gles2.c	2017-04-03 16:45:27.579283000 +0300
+@@ -22,6 +22,8 @@
+ 
+ #if SDL_VIDEO_RENDER_OGL_ES2 && !SDL_RENDER_DISABLED
+ 
++typedef char GLchar;
++
+ #include "SDL_hints.h"
+ #include "SDL_opengles2.h"
+ #include "../SDL_sysrender.h"
