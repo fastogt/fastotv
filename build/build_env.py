@@ -30,6 +30,7 @@ ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
 ARCH_FFMPEG_COMP = "bz2"
 ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 
+g_script_path = os.path.realpath(sys.argv[0])
 
 class CompileInfo(object):
     def __init__(self, patches = [], flags = []):
@@ -106,8 +107,7 @@ def extract_file(path, current_dir):
 
 def build_command_configure(compiler_flags, prefix_path):
     # patches
-    script_path = os.path.realpath(sys.argv[0])
-    script_dir = os.path.dirname(script_path)
+    script_dir = os.path.dirname(g_script_path)
 
     for dir in compiler_flags.patches():       
         scan_dir = os.path.join(script_dir, dir)
