@@ -107,7 +107,8 @@ def extract_file(path, current_dir):
 def build_command_configure(compiler_flags, prefix_path):
     # patches
     for dir in compiler_flags.patches():
-        scan_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), dir)
+        script_dir = os.path.dirname(sys.argv[0])
+        scan_dir = os.path.join(script_dir, dir)
         if os.path.exists(scan_dir):
             for diff in os.listdir(scan_dir):
                 if re.match(r'.+\.patch', diff):
