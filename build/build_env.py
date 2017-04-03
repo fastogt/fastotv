@@ -32,7 +32,7 @@ ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 
 
 class CompileInfo(object):
-    def __init__(self, patches, flags):
+    def __init__(self, patches = [], flags = []):
         self.patches_ = patches
         self.flags_ = flags
 
@@ -41,6 +41,9 @@ class CompileInfo(object):
 
     def flags(self):
         return self.flags_
+
+    def extend_flags(self, other_args):
+        self.flags_.extend(other_args)
 
 
 def splitext(path):
@@ -337,8 +340,8 @@ class BuildRequest(object):
         elif platform_name == 'macosx':
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
 
-        ffmpeg_platform_args.extend(device.ffmpeg_compile_info())
-        compiler_flags = CompileInfo([], ffmpeg_platform_args)
+        compiler_flags = device.ffmpeg_compile_info()
+        compiler_flags.extend_flags(ffmpeg_platform_args)
         self.build('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, version, ARCH_FFMPEG_EXT), compiler_flags)
 
     def build_sdl2(self, version):
