@@ -6,6 +6,7 @@ import os
 import shutil
 import platform
 import argparse
+import tarfile
 from pybuild_utils.base import system_info, utils
 
 # Script for building enviroment on clean machine
@@ -69,10 +70,22 @@ def download_file(url):
     return file_name
 
 
-def extract_file(file):
-    print("Extracting: {0}".format(file))
-    subprocess.call(['tar', '-xvf', file])
-    return splitext(file)
+def extract_file(path):
+    print("Extracting: {0}".format(path))
+    try:
+        tar_file = tarfile.open(path)
+    except Exception as ex:
+        raise ex
+
+    target_path = os.path.commonprefix(tar_file.getnames())
+    try:
+        tar_file.extractall()
+    except Exception as ex:
+        raise ex
+    finally:
+        tar_file.close()
+
+    return target_path
 
 
 def build_ffmpeg(url, prefix_path, other_args):
