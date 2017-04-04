@@ -1188,7 +1188,7 @@ int VideoState::ReadThread() {
     StreamComponentOpen(st_index[AVMEDIA_TYPE_VIDEO]);
   }
 
-  if (!video_stream->IsOpened() && !audio_stream->IsOpened()) {
+  if (!IsStreamReady()) {
     ERROR_LOG() << "Failed to open file '" << in_filename << "' or configure filtergraph";
     events::QuitStreamEvent* qevent =
         new events::QuitStreamEvent(this, events::QuitStreamInfo(this, -1));
