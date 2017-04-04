@@ -32,8 +32,9 @@ ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 
 g_script_path = os.path.realpath(sys.argv[0])
 
+
 class CompileInfo(object):
-    def __init__(self, patches = [], flags = []):
+    def __init__(self, patches: list, flags: list):
         self.patches_ = patches
         self.flags_ = flags
 
@@ -105,7 +106,7 @@ def extract_file(path, current_dir):
     return os.path.join(current_dir, target_path)
 
 
-def build_command_configure(compiler_flags, prefix_path):
+def build_command_configure(compiler_flags: CompileInfo, prefix_path):
     # patches
     script_dir = os.path.dirname(g_script_path)
 
@@ -125,7 +126,7 @@ def build_command_configure(compiler_flags, prefix_path):
     subprocess.call(['make', 'install'])
 
 
-def build_from_sources(url, compiler_flags, prefix_path):
+def build_from_sources(url, compiler_flags: CompileInfo, prefix_path):
     pwd = os.getcwd()
     file_path = download_file(url, pwd)
     extracted_folder = extract_file(file_path, pwd)
@@ -148,7 +149,6 @@ def git_clone(url, current_dir):
 
 
 def install_orange_pi():
-    subprocess.call(['modprobe', 'mali'])
     pwd = os.getcwd()
     try:
         cloned_dir = git_clone('https://github.com/linux-sunxi/sunxi-mali.git', pwd)
@@ -209,12 +209,12 @@ SUPPORTED_DEVICES = [
     SupportedDevice('pc', [], CompileInfo([], []), CompileInfo([], [])),
     SupportedDevice('orange-pi-one',
                     ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi1', 'libvdpau-dev'],
-                    CompileInfo(['patch/orange-pi-one/sdl2'], ['--disable-video-opengl', '--disable-video-opengles1',
-                                                               '--enable-video-opengles2']),
-                    CompileInfo([], ['--enable-hwaccel=h264_vdpau', '--enable-vdpau']), install_orange_pi)]
+                    CompileInfo(['patch/orange-pi-one/sdl2'],
+                                ['--disable-video-opengl', '--disable-video-opengles1', '--enable-video-opengles2']),
+                    CompileInfo([], []), install_orange_pi)]
 
 
-def get_device():
+def get_device() -> SupportedDevice:
     return SUPPORTED_DEVICES[0]
 
 
@@ -322,7 +322,7 @@ class BuildRequest(object):
             for lib in dep_libs:
                 subprocess.call(['port', 'install', lib])
 
-    def build(self, url, compiler_flags):
+    def build(self, url, compiler_flags: CompileInfo):
         build_from_sources(url, compiler_flags, self.prefix_path_)
 
     def build_ffmpeg(self, version):

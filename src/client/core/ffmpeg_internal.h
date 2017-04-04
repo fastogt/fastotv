@@ -22,6 +22,8 @@
 
 #include <libavcodec/avcodec.h>
 
+extern AVBufferRef* hw_device_ctx;
+
 typedef void hw_uninit_callback_t(AVCodecContext* s);
 typedef int hw_get_buffer_callback_t(AVCodecContext* s, AVFrame* frame, int flags);
 typedef int hw_retrieve_data_callback_t(AVCodecContext* s, AVFrame* frame);
@@ -48,6 +50,7 @@ typedef struct InputStream {
   enum HWAccelID active_hwaccel_id;
   enum HWAccelID hwaccel_id;
   AVBufferRef *hw_frames_ctx;
+  enum AVPixelFormat hwaccel_output_format;
 } InputStream;
 
 typedef struct HWAccel {

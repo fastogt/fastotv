@@ -53,7 +53,15 @@ extern "C" {
 
 #include "client/player.h"
 
+#if HAVE_VAAPI_X11
+extern "C" {
+#include "core/ffmpeg_vaapi.h"
+}
+#endif
+
 #undef ERROR
+
+AVBufferRef* hw_device_ctx;
 
 namespace {
 fasto::fastotv::client::core::AppOptions g_options;
@@ -181,6 +189,16 @@ int opt_hwaccel(const char* opt, const char* arg, DictionaryOptions* dopt) {
   }
   return 0;
 }
+
+#if HAVE_VAAPI_X11
+int opt_vaapi_device(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  int err = vaapi_device_init(arg);
+  if (err < 0) {
+    exit_program(1);
+  }
+  return 0;
+}
+#endif
 
 const OptionDef options[] = {
     {"L", OPT_EXIT, {.func_arg = show_license}, "show license"},
@@ -311,6 +329,19 @@ const OptionDef options[] = {
      {&g_options.hwaccel_device},
      "select a device for HW acceleration",
      "devicename"},
+    {"hwaccel_output_format",
+     OPT_VIDEO | OPT_STRING | HAS_ARG | OPT_EXPERT | OPT_INPUT,
+     {&g_options.hwaccel_output_format},
+     "select output format used with HW accelerated decoding",
+     "format"},
+#if HAVE_VAAPI_X11
+    {"vaapi_device",
+     HAS_ARG | OPT_EXPERT,
+     {.func_arg = opt_vaapi_device},
+     "set VAAPI hardware device (DRM path or X11 display name)",
+     "device"},
+#endif
+
     {"autorotate", OPT_BOOL, {&g_options.autorotate}, "automatically rotate video", ""},
     {
         NULL,
@@ -400,6 +431,8 @@ class FFmpegApplication : public B {
   }
 
   ~FFmpegApplication() {
+    av_buffer_unref(&hw_device_ctx);
+
     av_lockmgr_register(NULL);
     destroy(&dict_);
     avformat_network_deinit();

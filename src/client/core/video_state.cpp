@@ -225,6 +225,15 @@ VideoState::VideoState(stream_id id,
 
   input_st_->hwaccel_id = opt_.hwaccel_id;
   input_st_->hwaccel_device = common::utils::strdupornull(opt_.hwaccel_device);
+  const char* hwaccel_output_format = common::utils::c_strornull(opt_.hwaccel_device);
+  if (hwaccel_output_format) {
+    input_st_->hwaccel_output_format = av_get_pix_fmt(hwaccel_output_format);
+    if (input_st_->hwaccel_output_format == AV_PIX_FMT_NONE) {
+      CRITICAL_LOG() << "Unrecognised hwaccel output format: " << hwaccel_output_format;
+    }
+  } else {
+    input_st_->hwaccel_output_format = AV_PIX_FMT_NONE;
+  }
 }
 
 VideoState::~VideoState() {
@@ -1398,7 +1407,7 @@ int VideoState::VideoThread() {
         continue;
       }
     }
-    //input_st_->hwaccel_retrieved_pix_fmt = frame->format;
+// input_st_->hwaccel_retrieved_pix_fmt = frame->format;
 
 #if CONFIG_AVFILTER
     if (last_w != frame->width || last_h != frame->height || last_format != frame->format ||

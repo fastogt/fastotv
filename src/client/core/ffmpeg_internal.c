@@ -3,6 +3,9 @@
 #ifdef HAVE_VDPAU
 #include "ffmpeg_vdpau.h"
 #endif
+#if HAVE_VAAPI_X11
+#include "ffmpeg_vaapi.h"
+#endif
 
 const HWAccel hwaccels[] = {
 #if HAVE_VDPAU_X11
@@ -20,7 +23,7 @@ const HWAccel hwaccels[] = {
 #if CONFIG_LIBMFX
     {"qsv", qsv_init, HWACCEL_QSV, AV_PIX_FMT_QSV},
 #endif
-#if CONFIG_VAAPI
+#if HAVE_VAAPI_X11
     {"vaapi", vaapi_decode_init, HWACCEL_VAAPI, AV_PIX_FMT_VAAPI},
 #endif
 #if CONFIG_CUVID

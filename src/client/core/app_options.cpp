@@ -38,7 +38,8 @@ AppOptions::AppOptions()
       audio_codec_name(),
       video_codec_name(),
       hwaccel_id(HWACCEL_NONE),
-      hwaccel_device()
+      hwaccel_device(),
+      hwaccel_output_format()
 #if CONFIG_AVFILTER
       ,
       vfilters_list(),

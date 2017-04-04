@@ -60,6 +60,7 @@ struct AppOptions {
   std::string video_codec_name;
   enum HWAccelID hwaccel_id;
   std::string hwaccel_device;
+  std::string hwaccel_output_format;
 
 #if CONFIG_AVFILTER
   void InitAvFilters(const std::string& arg);
