@@ -208,10 +208,10 @@ class SupportedDevice(object):
 SUPPORTED_DEVICES = [
     SupportedDevice('pc', [], CompileInfo([], []), CompileInfo([], [])),
     SupportedDevice('orange-pi-one',
-                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi', 'libvdpau-dev'],
+                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi1', 'libvdpau-dev'],
                     CompileInfo(['patch/orange-pi-one/sdl2'], ['--disable-video-opengl', '--disable-video-opengles1',
                                                                '--enable-video-opengles2']),
-                    CompileInfo([], ['--enable-hwaccel=h264_vdpau', '--enable-vdpau']), install_orange_pi)]
+                    CompileInfo([], ['--enable-hwaccel=h264_vdpau', '--enable-vdpau', '--enable-vaapi']), install_orange_pi)]
 
 
 def get_device():
