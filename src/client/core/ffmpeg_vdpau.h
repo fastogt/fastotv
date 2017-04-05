@@ -24,4 +24,12 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
 int vdpau_init(AVCodecContext* decoder_ctx);
+}
+}
+}
+}

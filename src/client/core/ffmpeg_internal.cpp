@@ -7,6 +7,13 @@
 #include "client/core/ffmpeg_vaapi.h"
 #endif
 
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+
+AVBufferRef* hw_device_ctx = NULL;
+
 const HWAccel hwaccels[] = {
 #if HAVE_VDPAU_X11
     {"vdpau", vdpau_init, HWACCEL_VDPAU, AV_PIX_FMT_VDPAU},
@@ -29,8 +36,7 @@ const HWAccel hwaccels[] = {
 #if CONFIG_CUVID
     {"cuvid", cuvid_init, HWACCEL_CUVID, AV_PIX_FMT_CUDA},
 #endif
-    HWAccel()
-};
+    HWAccel()};
 
 size_t hwaccel_count() {
   return FF_ARRAY_ELEMS(hwaccels) - 1;
@@ -43,4 +49,8 @@ const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
     }
   }
   return NULL;
+}
+}
+}
+}
 }

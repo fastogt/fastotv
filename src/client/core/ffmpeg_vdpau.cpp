@@ -28,6 +28,11 @@ extern "C" {
 
 #include "client/core/ffmpeg_internal.h"
 
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+
 typedef struct VDPAUContext {
   AVBufferRef* hw_frames_ctx;
   AVFrame* tmp_frame;
@@ -113,8 +118,10 @@ static int vdpau_alloc(AVCodecContext* s) {
   device_hwctx = static_cast<AVVDPAUDeviceContext*>(device_ctx->hwctx);
 
   ctx->hw_frames_ctx = av_hwframe_ctx_alloc(device_ref);
-  if (!ctx->hw_frames_ctx)
+  if (!ctx->hw_frames_ctx) {
     goto fail;
+  }
+
   av_buffer_unref(&device_ref);
 
   frames_ctx = reinterpret_cast<AVHWFramesContext*>(ctx->hw_frames_ctx->data);
@@ -132,14 +139,11 @@ static int vdpau_alloc(AVCodecContext* s) {
     goto fail;
   }
 
-  // av_log(NULL, AV_LOG_VERBOSE, "Using VDPAU to decode input stream #%d:%d.\n",
-  //       ist->file_index, ist->st->index);
-
+  INFO_LOG() << "Using VDPAU to decode input stream #0:0.";
   return 0;
 
 fail:
-  // av_log(NULL, loglevel, "VDPAU init failed for stream #%d:%d.\n",
-  //       ist->file_index, ist->st->index);
+  ERROR_LOG() << "VDPAU init failed for stream #0:0.";
   av_buffer_unref(&device_ref);
   vdpau_uninit(s);
   return AVERROR(EINVAL);
@@ -158,4 +162,8 @@ int vdpau_init(AVCodecContext* decoder_ctx) {
   ist->hwaccel_get_buffer = vdpau_get_buffer;
   ist->hwaccel_retrieve_data = vdpau_retrieve_data;
   return 0;
+}
+}
+}
+}
 }

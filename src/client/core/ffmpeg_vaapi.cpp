@@ -28,6 +28,11 @@ extern "C" {
 
 #define DEFAULT_SURFACES 20
 
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+
 typedef struct VAAPIDecoderContext {
   AVBufferRef* device_ref;
   AVHWDeviceContext* device;
@@ -45,14 +50,12 @@ static int vaapi_get_buffer(AVCodecContext* avctx, AVFrame* frame, int flags) {
   UNUSED(flags);
   InputStream* ist = static_cast<InputStream*>(avctx->opaque);
   VAAPIDecoderContext* ctx = static_cast<VAAPIDecoderContext*>(ist->hwaccel_ctx);
-  int err;
 
-  err = av_hwframe_get_buffer(ctx->frames_ref, frame, 0);
+  int err = av_hwframe_get_buffer(ctx->frames_ref, frame, 0);
   if (err < 0) {
-    // av_log(ctx, AV_LOG_ERROR, "Failed to allocate decoder surface.\n");
+    ERROR_LOG() << "Failed to allocate decoder surface.";
   } else {
-    //  av_log(ctx, AV_LOG_DEBUG, "Decoder given surface %#x.\n",
-    //        (unsigned int)(uintptr_t)frame->data[3]);
+    DEBUG_LOG() << "Decoder given surface " << reinterpret_cast<uintptr_t>(frame->data[3]) << ".";
   }
   return err;
 }
@@ -60,46 +63,38 @@ static int vaapi_get_buffer(AVCodecContext* avctx, AVFrame* frame, int flags) {
 static int vaapi_retrieve_data(AVCodecContext* avctx, AVFrame* input) {
   InputStream* ist = static_cast<InputStream*>(avctx->opaque);
   VAAPIDecoderContext* ctx = static_cast<VAAPIDecoderContext*>(ist->hwaccel_ctx);
-  AVFrame* output = 0;
-  int err;
 
   if (ctx->output_format == AV_PIX_FMT_VAAPI) {
-    // Nothing to do.
     return 0;
   }
 
-  // av_log(ctx, AV_LOG_DEBUG, "Retrieve data from surface %#x.\n",
-  //       (unsigned int)(uintptr_t)input->data[3]);
-
-  output = av_frame_alloc();
-  if (!output)
+  DEBUG_LOG() << "Retrieve data from surface " << reinterpret_cast<uintptr_t>(input->data[3])
+              << ".";
+  AVFrame* output = av_frame_alloc();
+  if (!output) {
     return AVERROR(ENOMEM);
+  }
 
   output->format = ctx->output_format;
 
-  err = av_hwframe_transfer_data(output, input, 0);
+  int err = av_hwframe_transfer_data(output, input, 0);
   if (err < 0) {
-    // av_log(ctx, AV_LOG_ERROR, "Failed to transfer data to "
-    //      "output frame: %d.\n", err);
-    goto fail;
+    ERROR_LOG() << "Failed to transfer data to output frame error: " << err << ".";
+    av_frame_free(&output);
+    return err;
   }
 
   err = av_frame_copy_props(output, input);
   if (err < 0) {
     av_frame_unref(output);
-    goto fail;
+    av_frame_free(&output);
+    return err;
   }
 
   av_frame_unref(input);
   av_frame_move_ref(input, output);
   av_frame_free(&output);
-
   return 0;
-
-fail:
-  if (output)
-    av_frame_free(&output);
-  return err;
 }
 
 static void vaapi_decode_uninit(AVCodecContext* avctx) {
@@ -122,20 +117,18 @@ static void vaapi_decode_uninit(AVCodecContext* avctx) {
 
 int vaapi_decode_init(AVCodecContext* avctx) {
   InputStream* ist = static_cast<InputStream*>(avctx->opaque);
-  int err;
-  // int loglevel = (ist->hwaccel_id != HWACCEL_VAAPI ? AV_LOG_VERBOSE
-  //                                                 : AV_LOG_ERROR);
-
-  if (ist->hwaccel_ctx)
+  if (ist->hwaccel_ctx) {
     vaapi_decode_uninit(avctx);
+  }
 
   // We have -hwaccel without -vaapi_device, so just initialise here with
   // the device passed as -hwaccel_device (if -vaapi_device was passed, it
   // will always have been called before now).
   if (!hw_device_ctx) {
-    err = vaapi_device_init(ist->hwaccel_device);
-    if (err < 0)
+    int err = vaapi_device_init(ist->hwaccel_device);
+    if (err < 0) {
       return err;
+    }
   }
 
   VAAPIDecoderContext* ctx = static_cast<VAAPIDecoderContext*>(av_mallocz(sizeof(*ctx)));
@@ -145,20 +138,19 @@ int vaapi_decode_init(AVCodecContext* avctx) {
 
   ist->hwaccel_ctx = ctx;
   ctx->device_ref = av_buffer_ref(hw_device_ctx);
-  ctx->device = (AVHWDeviceContext*)ctx->device_ref->data;
+  ctx->device = reinterpret_cast<AVHWDeviceContext*>(ctx->device_ref->data);
 
   ctx->output_format = ist->hwaccel_output_format;
   avctx->pix_fmt = ctx->output_format;
 
   ctx->frames_ref = av_hwframe_ctx_alloc(ctx->device_ref);
   if (!ctx->frames_ref) {
-    // av_log(ctx, loglevel, "Failed to create VAAPI frame context.\n");
-    err = AVERROR(ENOMEM);
-    goto fail;
+    WARNING_LOG() << "Failed to create VAAPI frame context.";
+    vaapi_decode_uninit(avctx);
+    return AVERROR(ENOMEM);
   }
 
-  ctx->frames = (AVHWFramesContext*)ctx->frames_ref->data;
-
+  ctx->frames = reinterpret_cast<AVHWFramesContext*>(ctx->frames_ref->data);
   ctx->frames->format = AV_PIX_FMT_VAAPI;
   ctx->frames->width = avctx->coded_width;
   ctx->frames->height = avctx->coded_height;
@@ -172,13 +164,13 @@ int vaapi_decode_init(AVCodecContext* avctx) {
   // For frame-threaded decoding, at least one additional surface
   // is needed for each thread.
   ctx->frames->initial_pool_size = DEFAULT_SURFACES;
-  if (avctx->active_thread_type & FF_THREAD_FRAME)
+  if (avctx->active_thread_type & FF_THREAD_FRAME) {
     ctx->frames->initial_pool_size += avctx->thread_count;
+  }
 
-  err = av_hwframe_ctx_init(ctx->frames_ref);
+  int err = av_hwframe_ctx_init(ctx->frames_ref);
   if (err < 0) {
-    // av_log(ctx, loglevel, "Failed to initialise VAAPI frame "
-    //       "context: %d\n", err);
+    WARNING_LOG() << "Failed to initialise VAAPI frame context error: " << err;
     goto fail;
   }
 
@@ -191,7 +183,6 @@ int vaapi_decode_init(AVCodecContext* avctx) {
   ist->hwaccel_uninit = &vaapi_decode_uninit;
   ist->hwaccel_get_buffer = &vaapi_get_buffer;
   ist->hwaccel_retrieve_data = &vaapi_retrieve_data;
-
   return 0;
 
 fail:
@@ -200,15 +191,16 @@ fail:
 }
 
 int vaapi_device_init(const char* device) {
-  int err;
-
   av_buffer_unref(&hw_device_ctx);
-
-  err = av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_VAAPI, device, NULL, 0);
+  int err = av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_VAAPI, device, NULL, 0);
   if (err < 0) {
-    // av_log(&vaapi_log, AV_LOG_ERROR, "Failed to create a VAAPI device\n");
+    ERROR_LOG() << "Failed to create a VAAPI device";
     return err;
   }
 
   return 0;
+}
+}
+}
+}
 }

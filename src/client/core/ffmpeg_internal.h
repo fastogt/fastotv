@@ -24,6 +24,11 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+
 extern AVBufferRef* hw_device_ctx;
 
 typedef void hw_uninit_callback_t(AVCodecContext* s);
@@ -66,3 +71,7 @@ extern const HWAccel hwaccels[];
 
 size_t hwaccel_count();
 const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt);
+}
+}
+}
+}

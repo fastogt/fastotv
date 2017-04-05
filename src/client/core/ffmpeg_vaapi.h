@@ -24,5 +24,14 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-int vaapi_decode_init(AVCodecContext *avctx);
-int vaapi_device_init(const char *device);
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+
+int vaapi_decode_init(AVCodecContext* avctx);
+int vaapi_device_init(const char* device);
+}
+}
+}
+}

@@ -31,7 +31,6 @@
 #include "ffmpeg_config.h"  // for CONFIG_AVDEVICE, etc
 
 extern "C" {
-#include "core/ffmpeg_internal.h"
 #include <libavcodec/avcodec.h>    // for AVCodec, AVCodecID
 #include <libavformat/avformat.h>  // for AVFormatContext, AVStream
 #include <libavutil/attributes.h>  // for av_noreturn
@@ -42,6 +41,8 @@ extern "C" {
 #include <libavutil/pixdesc.h>    // for av_get_pix_fmt_name
 #include <libavutil/samplefmt.h>  // for av_get_sample_fmt_name
 }
+
+#include "core/ffmpeg_internal.h"
 
 #define HAS_ARG 0x0001
 #define OPT_BOOL 0x0002

@@ -53,10 +53,10 @@ extern "C" {
 
 #include "client/player.h"
 
-#include "core/ffmpeg_internal.h"
+#include "client/core/ffmpeg_internal.h"
 
 #if CONFIG_VAAPI
-#include "core/ffmpeg_vaapi.h"
+#include "client/core/ffmpeg_vaapi.h"
 #endif
 
 #undef ERROR
@@ -64,8 +64,6 @@ extern "C" {
 // vaapi args: -hwaccel vaapi -vaapi_device /dev/dri/card0
 // vdpau args: -hwaccel vdpau
 // scale output: -vf scale=1920:1080
-
-AVBufferRef* hw_device_ctx;
 
 namespace {
 fasto::fastotv::client::core::AppOptions g_options;
@@ -170,8 +168,8 @@ int show_hwaccels(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
 
   printf("Hardware acceleration methods:\n");
-  for (size_t i = 0; i < hwaccel_count(); i++) {
-    printf("%s\n", hwaccels[i].name);
+  for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
+    printf("%s\n", fasto::fastotv::client::core::hwaccels[i].name);
   }
   printf("\n");
   return 0;
@@ -181,13 +179,13 @@ int opt_hwaccel(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
 
   if (!strcmp(arg, "auto")) {
-    g_options.hwaccel_id = HWACCEL_AUTO;
+    g_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_AUTO;
   } else if (!strcmp(arg, "none")) {
-    g_options.hwaccel_id = HWACCEL_NONE;
+    g_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_NONE;
   } else {
-    for (size_t i = 0; i < hwaccel_count(); i++) {
-      if (!strcmp(hwaccels[i].name, arg)) {
-        g_options.hwaccel_id = hwaccels[i].id;
+    for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
+      if (!strcmp(fasto::fastotv::client::core::hwaccels[i].name, arg)) {
+        g_options.hwaccel_id = fasto::fastotv::client::core::hwaccels[i].id;
         return 0;
       }
     }
@@ -200,7 +198,7 @@ int opt_hwaccel(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
 #if CONFIG_VAAPI
 int opt_vaapi_device(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  int err = vaapi_device_init(arg);
+  int err = fasto::fastotv::client::core::vaapi_device_init(arg);
   if (err < 0) {
     exit_program(1);
   }
@@ -439,7 +437,7 @@ class FFmpegApplication : public B {
   }
 
   ~FFmpegApplication() {
-    av_buffer_unref(&hw_device_ctx);
+    av_buffer_unref(&fasto::fastotv::client::core::hw_device_ctx);
 
     av_lockmgr_register(NULL);
     destroy(&dict_);
