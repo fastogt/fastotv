@@ -20,6 +20,8 @@
 
 #include "ffmpeg_config.h"
 
+extern "C" {
 #include <libavcodec/avcodec.h>
+}
 
 int vdpau_init(AVCodecContext* decoder_ctx);

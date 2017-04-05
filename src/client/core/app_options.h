@@ -25,13 +25,13 @@
 #include "ffmpeg_config.h"
 
 extern "C" {
-#include "ffmpeg_internal.h"
 #include <libavutil/dict.h>
 #include <libavutil/avutil.h>
 }
 
 #include <common/macros.h>
 
+#include "ffmpeg_internal.h"
 #include "client/core/types.h"
 
 namespace fasto {

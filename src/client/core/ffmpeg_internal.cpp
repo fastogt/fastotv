@@ -1,10 +1,10 @@
-#include "ffmpeg_internal.h"
+#include "client/core/ffmpeg_internal.h"
 
 #ifdef HAVE_VDPAU
-#include "ffmpeg_vdpau.h"
+#include "client/core/ffmpeg_vdpau.h"
 #endif
 #if CONFIG_VAAPI
-#include "ffmpeg_vaapi.h"
+#include "client/core/ffmpeg_vaapi.h"
 #endif
 
 const HWAccel hwaccels[] = {
@@ -29,7 +29,7 @@ const HWAccel hwaccels[] = {
 #if CONFIG_CUVID
     {"cuvid", cuvid_init, HWACCEL_CUVID, AV_PIX_FMT_CUDA},
 #endif
-    {0},
+    HWAccel()
 };
 
 size_t hwaccel_count() {
@@ -37,8 +37,7 @@ size_t hwaccel_count() {
 }
 
 const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
-  int i;
-  for (i = 0; hwaccels[i].name; i++) {
+  for (size_t i = 0; i < hwaccel_count(); i++) {
     if (hwaccels[i].pix_fmt == pix_fmt) {
       return &hwaccels[i];
     }

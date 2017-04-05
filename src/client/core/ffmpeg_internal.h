@@ -20,7 +20,9 @@
 
 #include "ffmpeg_config.h"
 
+extern "C" {
 #include <libavcodec/avcodec.h>
+}
 
 extern AVBufferRef* hw_device_ctx;
 
@@ -49,7 +51,7 @@ typedef struct InputStream {
   enum AVPixelFormat hwaccel_pix_fmt;
   enum HWAccelID active_hwaccel_id;
   enum HWAccelID hwaccel_id;
-  AVBufferRef *hw_frames_ctx;
+  AVBufferRef* hw_frames_ctx;
   enum AVPixelFormat hwaccel_output_format;
 } InputStream;
 

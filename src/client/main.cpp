@@ -53,10 +53,10 @@ extern "C" {
 
 #include "client/player.h"
 
+#include "core/ffmpeg_internal.h"
+
 #if CONFIG_VAAPI
-extern "C" {
 #include "core/ffmpeg_vaapi.h"
-}
 #endif
 
 #undef ERROR
@@ -165,6 +165,10 @@ int opt_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
 }
 
 int show_hwaccels(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
   printf("Hardware acceleration methods:\n");
   for (size_t i = 0; i < hwaccel_count(); i++) {
     printf("%s\n", hwaccels[i].name);

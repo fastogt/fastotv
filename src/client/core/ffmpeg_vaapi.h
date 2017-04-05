@@ -20,7 +20,9 @@
 
 #include "ffmpeg_config.h"
 
+extern "C" {
 #include <libavcodec/avcodec.h>
+}
 
 int vaapi_decode_init(AVCodecContext *avctx);
 int vaapi_device_init(const char *device);
