@@ -332,9 +332,9 @@ int VideoState::StreamComponentOpen(int stream_index) {
 
   AVDictionary* opts =
       core::filter_codec_opts(copt_.codec_opts, avctx->codec_id, ic_, stream, codec);
-  if (!av_dict_get(opts, "threads", NULL, 0)) {
+  /*if (!av_dict_get(opts, "threads", NULL, 0)) {
     av_dict_set(&opts, "threads", "auto", 0);
-  }
+  }*/
   if (stream_lowres) {
     av_dict_set_int(&opts, "lowres", stream_lowres, 0);
   }

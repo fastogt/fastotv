@@ -3,7 +3,7 @@
 #ifdef HAVE_VDPAU
 #include "ffmpeg_vdpau.h"
 #endif
-#if HAVE_VAAPI_X11
+#if CONFIG_VAAPI
 #include "ffmpeg_vaapi.h"
 #endif
 
@@ -23,7 +23,7 @@ const HWAccel hwaccels[] = {
 #if CONFIG_LIBMFX
     {"qsv", qsv_init, HWACCEL_QSV, AV_PIX_FMT_QSV},
 #endif
-#if HAVE_VAAPI_X11
+#if CONFIG_VAAPI
     {"vaapi", vaapi_decode_init, HWACCEL_VAAPI, AV_PIX_FMT_VAAPI},
 #endif
 #if CONFIG_CUVID
@@ -37,7 +37,8 @@ size_t hwaccel_count() {
 }
 
 const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
-  for (int i = 0; hwaccels[i].name; i++) {
+  int i;
+  for (i = 0; hwaccels[i].name; i++) {
     if (hwaccels[i].pix_fmt == pix_fmt) {
       return &hwaccels[i];
     }

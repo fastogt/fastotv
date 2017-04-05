@@ -15,7 +15,11 @@
 #cmakedefine01 HAVE_SYS_RESOURCE_H
 #cmakedefine01 HAVE_COMMANDLINETOARGVW
 #cmakedefine01 HAVE_VDPAU_X11
+
+#cmakedefine01 HAVE_VAAPI_DRM
 #cmakedefine01 HAVE_VAAPI_X11
+
+#cmakedefine01 CONFIG_VAAPI
 
 #define FFMPEG_CONFIGURATION ""
 #define CC_IDENT "gcc 4.9.2 (Debian 4.9.2-10)"

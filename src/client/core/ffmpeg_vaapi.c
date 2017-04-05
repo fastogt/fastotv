@@ -16,12 +16,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <libavcodec/vdpau.h>
-#include <libavutil/hwcontext.h>
+#include "ffmpeg_vaapi.h"
+
 #include <libavutil/hwcontext.h>
 
 #include "ffmpeg_internal.h"
-
 
 static AVClass vaapi_class = {
     .class_name = "vaapi",

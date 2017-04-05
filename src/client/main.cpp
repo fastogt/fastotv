@@ -53,13 +53,17 @@ extern "C" {
 
 #include "client/player.h"
 
-#if HAVE_VAAPI_X11
+#if CONFIG_VAAPI
 extern "C" {
 #include "core/ffmpeg_vaapi.h"
 }
 #endif
 
 #undef ERROR
+
+// vaapi args: -hwaccel vaapi -vaapi_device /dev/dri/card0
+// vdpau args: -hwaccel vdpau
+// scale output: -vf scale=1920:1080
 
 AVBufferRef* hw_device_ctx;
 
@@ -190,7 +194,7 @@ int opt_hwaccel(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return 0;
 }
 
-#if HAVE_VAAPI_X11
+#if CONFIG_VAAPI
 int opt_vaapi_device(const char* opt, const char* arg, DictionaryOptions* dopt) {
   int err = vaapi_device_init(arg);
   if (err < 0) {
@@ -334,7 +338,7 @@ const OptionDef options[] = {
      {&g_options.hwaccel_output_format},
      "select output format used with HW accelerated decoding",
      "format"},
-#if HAVE_VAAPI_X11
+#if CONFIG_VAAPI
     {"vaapi_device",
      HAS_ARG | OPT_EXPERT,
      {.func_arg = opt_vaapi_device},
