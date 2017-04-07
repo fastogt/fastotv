@@ -30,7 +30,7 @@ namespace client {
 namespace core {
 
 int vaapi_decode_init(AVCodecContext* avctx);
-int vaapi_device_init(const char* device);
+
 }
 }
 }

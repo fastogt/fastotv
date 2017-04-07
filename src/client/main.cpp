@@ -53,15 +53,13 @@ extern "C" {
 
 #include "client/player.h"
 
-#include "client/core/ffmpeg_internal.h"
-
 #if CONFIG_VAAPI
 #include "client/core/ffmpeg_vaapi.h"
 #endif
 
 #undef ERROR
 
-// vaapi args: -hwaccel vaapi -vaapi_device /dev/dri/card0
+// vaapi args: -hwaccel vaapi -hwaccel_device /dev/dri/card0
 // vdpau args: -hwaccel vdpau
 // scale output: -vf scale=1920:1080
 
@@ -195,16 +193,6 @@ int opt_hwaccel(const char* opt, const char* arg, DictionaryOptions* dopt) {
   }
   return 0;
 }
-
-#if CONFIG_VAAPI
-int opt_vaapi_device(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  int err = fasto::fastotv::client::core::vaapi_device_init(arg);
-  if (err < 0) {
-    exit_program(1);
-  }
-  return 0;
-}
-#endif
 
 const OptionDef options[] = {
     {"L", OPT_EXIT, {.func_arg = show_license}, "show license"},
@@ -340,14 +328,6 @@ const OptionDef options[] = {
      {&g_options.hwaccel_output_format},
      "select output format used with HW accelerated decoding",
      "format"},
-#if CONFIG_VAAPI
-    {"vaapi_device",
-     HAS_ARG | OPT_EXPERT,
-     {.func_arg = opt_vaapi_device},
-     "set VAAPI hardware device (DRM path or X11 display name)",
-     "device"},
-#endif
-
     {"autorotate", OPT_BOOL, {&g_options.autorotate}, "automatically rotate video", ""},
     {
         NULL,
@@ -437,8 +417,6 @@ class FFmpegApplication : public B {
   }
 
   ~FFmpegApplication() {
-    av_buffer_unref(&fasto::fastotv::client::core::hw_device_ctx);
-
     av_lockmgr_register(NULL);
     destroy(&dict_);
     avformat_network_deinit();

@@ -134,8 +134,9 @@ enum AVPixelFormat get_format(AVCodecContext* s, const enum AVPixelFormat* pix_f
 
     if (ist->hw_frames_ctx) {
       s->hw_frames_ctx = av_buffer_ref(ist->hw_frames_ctx);
-      if (!s->hw_frames_ctx)
+      if (!s->hw_frames_ctx) {
         return AV_PIX_FMT_NONE;
+      }
     }
 
     ist->active_hwaccel_id = hwaccel->id;
@@ -229,7 +230,7 @@ VideoState::VideoState(stream_id id,
   if (hwaccel_output_format) {
     input_st_->hwaccel_output_format = av_get_pix_fmt(hwaccel_output_format);
     if (input_st_->hwaccel_output_format == AV_PIX_FMT_NONE) {
-      CRITICAL_LOG() << "Unrecognised hwaccel output format: " << hwaccel_output_format;
+      WARNING_LOG() << "Unrecognised hwaccel output format: " << hwaccel_output_format;
     }
   } else {
     input_st_->hwaccel_output_format = AV_PIX_FMT_NONE;

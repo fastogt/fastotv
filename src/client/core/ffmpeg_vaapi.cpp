@@ -115,6 +115,16 @@ static void vaapi_decode_uninit(AVCodecContext* avctx) {
   ist->hwaccel_retrieve_data = NULL;
 }
 
+static int vaapi_device_init(const char* device) {
+  av_buffer_unref(&hw_device_ctx);
+  int err = av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_VAAPI, device, NULL, 0);
+  if (err < 0) {
+    return err;
+  }
+
+  return 0;
+}
+
 int vaapi_decode_init(AVCodecContext* avctx) {
   InputStream* ist = static_cast<InputStream*>(avctx->opaque);
   if (ist->hwaccel_ctx) {
@@ -127,12 +137,14 @@ int vaapi_decode_init(AVCodecContext* avctx) {
   if (!hw_device_ctx) {
     int err = vaapi_device_init(ist->hwaccel_device);
     if (err < 0) {
+      ERROR_LOG() << "VAAPI init failed error: " << err;
       return err;
     }
   }
 
   VAAPIDecoderContext* ctx = static_cast<VAAPIDecoderContext*>(av_mallocz(sizeof(*ctx)));
   if (!ctx) {
+    ERROR_LOG() << "Failed to create VAAPI context.";
     return AVERROR(ENOMEM);
   }
 
@@ -145,7 +157,7 @@ int vaapi_decode_init(AVCodecContext* avctx) {
 
   ctx->frames_ref = av_hwframe_ctx_alloc(ctx->device_ref);
   if (!ctx->frames_ref) {
-    WARNING_LOG() << "Failed to create VAAPI frame context.";
+    ERROR_LOG() << "Failed to create VAAPI frame context.";
     vaapi_decode_uninit(avctx);
     return AVERROR(ENOMEM);
   }
@@ -170,36 +182,25 @@ int vaapi_decode_init(AVCodecContext* avctx) {
 
   int err = av_hwframe_ctx_init(ctx->frames_ref);
   if (err < 0) {
-    WARNING_LOG() << "Failed to initialise VAAPI frame context error: " << err;
-    goto fail;
+    ERROR_LOG() << "Failed to initialise VAAPI hw_frame context error: " << err;
+    vaapi_decode_uninit(avctx);
+    return err;
   }
 
   ist->hw_frames_ctx = av_buffer_ref(ctx->frames_ref);
   if (!ist->hw_frames_ctx) {
-    err = AVERROR(ENOMEM);
-    goto fail;
+    ERROR_LOG() << "Failed to create VAAPI hw_frame context.";
+    vaapi_decode_uninit(avctx);
+    return AVERROR(ENOMEM);
   }
 
   ist->hwaccel_uninit = &vaapi_decode_uninit;
   ist->hwaccel_get_buffer = &vaapi_get_buffer;
   ist->hwaccel_retrieve_data = &vaapi_retrieve_data;
-  return 0;
-
-fail:
-  vaapi_decode_uninit(avctx);
-  return err;
-}
-
-int vaapi_device_init(const char* device) {
-  av_buffer_unref(&hw_device_ctx);
-  int err = av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_VAAPI, device, NULL, 0);
-  if (err < 0) {
-    ERROR_LOG() << "Failed to create a VAAPI device";
-    return err;
-  }
-
+  INFO_LOG() << "Using VAAPI to decode input stream.";
   return 0;
 }
+
 }
 }
 }

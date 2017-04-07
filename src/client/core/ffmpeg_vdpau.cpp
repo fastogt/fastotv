@@ -68,9 +68,8 @@ static int vdpau_get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
 static int vdpau_retrieve_data(AVCodecContext* s, AVFrame* frame) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   VDPAUContext* ctx = static_cast<VDPAUContext*>(ist->hwaccel_ctx);
-  int ret;
 
-  ret = av_hwframe_transfer_data(ctx->tmp_frame, frame, 0);
+  int ret = av_hwframe_transfer_data(ctx->tmp_frame, frame, 0);
   if (ret < 0) {
     return ret;
   }
@@ -88,15 +87,11 @@ static int vdpau_retrieve_data(AVCodecContext* s, AVFrame* frame) {
 
 static int vdpau_alloc(AVCodecContext* s) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
-  int ret;
-
-  AVBufferRef* device_ref = NULL;
-  AVHWDeviceContext* device_ctx;
-  AVVDPAUDeviceContext* device_hwctx;
-  AVHWFramesContext* frames_ctx;
 
   VDPAUContext* ctx = static_cast<VDPAUContext*>(av_mallocz(sizeof(*ctx)));
   if (!ctx) {
+    ERROR_LOG() << "VDPAU init failed(alloc VDPAUContext).";
+    vdpau_uninit(s);
     return AVERROR(ENOMEM);
   }
 
@@ -107,24 +102,32 @@ static int vdpau_alloc(AVCodecContext* s) {
 
   ctx->tmp_frame = av_frame_alloc();
   if (!ctx->tmp_frame) {
-    goto fail;
+    ERROR_LOG() << "Failed to create VDPAU frame context.";
+    vdpau_uninit(s);
+    return AVERROR(ENOMEM);
   }
 
-  ret = av_hwdevice_ctx_create(&device_ref, AV_HWDEVICE_TYPE_VDPAU, ist->hwaccel_device, NULL, 0);
+  AVBufferRef* device_ref = NULL;
+  int ret =
+      av_hwdevice_ctx_create(&device_ref, AV_HWDEVICE_TYPE_VDPAU, ist->hwaccel_device, NULL, 0);
   if (ret < 0) {
-    goto fail;
+    ERROR_LOG() << "VDPAU init failed error: " << ret;
+    vdpau_uninit(s);
+    return AVERROR(EINVAL);
   }
-  device_ctx = reinterpret_cast<AVHWDeviceContext*>(device_ref->data);
-  device_hwctx = static_cast<AVVDPAUDeviceContext*>(device_ctx->hwctx);
+  AVHWDeviceContext* device_ctx = reinterpret_cast<AVHWDeviceContext*>(device_ref->data);
+  AVVDPAUDeviceContext* device_hwctx = static_cast<AVVDPAUDeviceContext*>(device_ctx->hwctx);
 
   ctx->hw_frames_ctx = av_hwframe_ctx_alloc(device_ref);
   if (!ctx->hw_frames_ctx) {
-    goto fail;
+    ERROR_LOG() << "Failed to create VDPAU frame context.";
+    vdpau_uninit(s);
+    return AVERROR(ENOMEM);
   }
 
   av_buffer_unref(&device_ref);
 
-  frames_ctx = reinterpret_cast<AVHWFramesContext*>(ctx->hw_frames_ctx->data);
+  AVHWFramesContext* frames_ctx = reinterpret_cast<AVHWFramesContext*>(ctx->hw_frames_ctx->data);
   frames_ctx->format = AV_PIX_FMT_VDPAU;
   frames_ctx->sw_format = s->sw_pix_fmt;
   frames_ctx->width = s->coded_width;
@@ -132,21 +135,20 @@ static int vdpau_alloc(AVCodecContext* s) {
 
   ret = av_hwframe_ctx_init(ctx->hw_frames_ctx);
   if (ret < 0) {
-    goto fail;
+    ERROR_LOG() << "Failed to initialise VDPAU hw_frame context error: " << ret;
+    vdpau_uninit(s);
+    return AVERROR(EINVAL);
   }
 
-  if (av_vdpau_bind_context(s, device_hwctx->device, device_hwctx->get_proc_address, 0)) {
-    goto fail;
+  ret = av_vdpau_bind_context(s, device_hwctx->device, device_hwctx->get_proc_address, 0);
+  if (ret != 0) {
+    ERROR_LOG() << "Failed to bind VDPAU context error: " << ret;
+    vdpau_uninit(s);
+    return AVERROR(EINVAL);
   }
 
-  INFO_LOG() << "Using VDPAU to decode input stream #0:0.";
+  INFO_LOG() << "Using VDPAU to decode input stream.";
   return 0;
-
-fail:
-  ERROR_LOG() << "VDPAU init failed for stream #0:0.";
-  av_buffer_unref(&device_ref);
-  vdpau_uninit(s);
-  return AVERROR(EINVAL);
 }
 
 int vdpau_init(AVCodecContext* decoder_ctx) {
