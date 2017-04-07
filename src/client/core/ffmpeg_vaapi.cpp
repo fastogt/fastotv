@@ -197,6 +197,7 @@ int vaapi_decode_init(AVCodecContext* avctx) {
   ist->hwaccel_uninit = &vaapi_decode_uninit;
   ist->hwaccel_get_buffer = &vaapi_get_buffer;
   ist->hwaccel_retrieve_data = &vaapi_retrieve_data;
+
   INFO_LOG() << "Using VAAPI to decode input stream.";
   return 0;
 }
