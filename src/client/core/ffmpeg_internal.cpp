@@ -1,10 +1,13 @@
 #include "client/core/ffmpeg_internal.h"
 
 #ifdef HAVE_VDPAU
-#include "client/core/ffmpeg_vdpau.h"
+#include "client/core/hwaccels/ffmpeg_vdpau.h"
+#endif
+#if HAVE_DXVA2_LIB
+#include "client/core/hwaccels/ffmpeg_dxva2.h"
 #endif
 #if CONFIG_VAAPI
-#include "client/core/ffmpeg_vaapi.h"
+#include "client/core/hwaccels/ffmpeg_vaapi.h"
 #endif
 
 namespace fasto {
@@ -30,7 +33,7 @@ const HWAccel hwaccels[] = {
 #if CONFIG_LIBMFX
     {"qsv", qsv_init, HWACCEL_QSV, AV_PIX_FMT_QSV},
 #endif
-#if CONFIG_VAAPI
+#if HAVE_VAAPI_X11
     {"vaapi", vaapi_decode_init, HWACCEL_VAAPI, AV_PIX_FMT_VAAPI},
 #endif
 #if CONFIG_CUVID

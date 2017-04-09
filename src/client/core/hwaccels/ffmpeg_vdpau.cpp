@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "client/core/ffmpeg_vdpau.h"
+#include "client/core/hwaccels/ffmpeg_vdpau.h"
 
 extern "C" {
 #include <libavcodec/vdpau.h>
