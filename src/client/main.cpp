@@ -130,29 +130,29 @@ int opt_sync(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return 0;
 }
 
-int opt_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
+int opt_set_video_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
   UNUSED(dopt);
 
-  const char* spec = strchr(opt, ':');
-  if (!spec) {
-    ERROR_LOG() << "No media specifier was specified in '" << arg << "' in option '" << opt << "'";
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
     return AVERROR(EINVAL);
   }
-  spec++;
-  switch (spec[0]) {
-    case 'a': {
-      g_options.audio_codec_name = arg;
-      break;
-    }
-    case 'v': {
-      g_options.video_codec_name = arg;
-      break;
-    }
-    default: {
-      ERROR_LOG() << "Invalid media specifier '" << spec << "' in option '" << opt << "'";
-      return AVERROR(EINVAL);
-    }
+
+  g_options.video_codec_name = arg;
+  return 0;
+}
+
+int opt_set_audio_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
   }
+
+  g_options.audio_codec_name = arg;
   return 0;
 }
 
@@ -190,6 +190,204 @@ int opt_hwaccel(const char* opt, const char* arg, DictionaryOptions* dopt) {
   return 0;
 }
 
+int opt_set_hw_device(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  g_options.hwaccel_device = arg;
+  return 0;
+}
+
+int opt_set_hw_output_format(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  g_options.hwaccel_output_format = arg;
+  return 0;
+}
+
+int opt_fullscreen(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
+  g_player_options.is_full_screen = true;
+  return 0;
+}
+
+int opt_select_audio_stream(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  g_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO] = arg;
+  return 0;
+}
+
+int opt_select_video_stream(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  g_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO] = arg;
+  return 0;
+}
+
+int opt_set_audio_volume(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  int vol;
+  if (!parse_number(arg, OPT_INT, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
+                    &vol)) {
+    return AVERROR(EINVAL);
+  }
+  g_player_options.audio_volume = vol;
+  return 0;
+}
+
+int opt_set_show_status(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
+  g_options.show_status = true;
+  return 0;
+}
+
+int opt_set_non_spec(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  bool fast;
+  if (!parse_bool(arg, &fast)) {
+    return AVERROR(EINVAL);
+  }
+  g_options.fast = fast;
+  return 0;
+}
+
+int opt_set_gen_pts(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  bool genpts;
+  if (!parse_bool(arg, &genpts)) {
+    return AVERROR(EINVAL);
+  }
+  g_options.genpts = genpts;
+  return 0;
+}
+
+int opt_set_lowres_volume(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  int lowres;
+  if (!parse_number(arg, OPT_INT, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
+                    &lowres)) {
+    return AVERROR(EINVAL);
+  }
+  g_options.lowres = lowres;
+  return 0;
+}
+
+int opt_set_exit_on_keydown(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
+  g_player_options.exit_on_keydown = true;
+  return 0;
+}
+
+int opt_set_exit_on_mousedown(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
+  g_player_options.exit_on_mousedown = true;
+  return 0;
+}
+
+int opt_set_frame_drop(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
+  g_options.framedrop = true;
+  return 0;
+}
+
+int opt_set_infinite_buffer(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
+  g_options.infinite_buffer = true;
+  return 0;
+}
+
+int opt_set_audio_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  g_options.afilters = arg;
+  return 0;
+}
+
+int opt_set_autorotate(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
+  g_options.autorotate = true;
+  return 0;
+}
+
 const OptionDef options[] = {
     {"L", OPT_EXIT, {.func_arg = show_license}, "show license"},
     {"h", OPT_EXIT, {.func_arg = show_help}, "show help", "topic"},
@@ -214,8 +412,8 @@ const OptionDef options[] = {
      {.func_arg = show_sample_fmts},
      "show available audio sample formats"},
     {"colors", OPT_EXIT, {.func_arg = show_colors}, "show available color names"},
-    {"loglevel", HAS_ARG, {.func_arg = opt_loglevel}, "set logging level", "loglevel"},
-    {"v", HAS_ARG, {.func_arg = opt_loglevel}, "set logging level", "loglevel"},
+    {"loglevel", OPT_NOTHING, {.func_arg = opt_loglevel}, "set logging level", "loglevel"},
+    {"v", OPT_NOTHING, {.func_arg = opt_loglevel}, "set logging level", "loglevel"},
 #if CONFIG_AVDEVICE
     {"sources",
      OPT_EXIT | HAS_ARG,
@@ -228,61 +426,53 @@ const OptionDef options[] = {
      "list sinks of the output device",
      "device"},
 #endif
-    {"x", HAS_ARG, {.func_arg = opt_width}, "force displayed width", "width"},
-    {"y", HAS_ARG, {.func_arg = opt_height}, "force displayed height", "height"},
-    {"s",
-     HAS_ARG | OPT_VIDEO,
-     {.func_arg = opt_frame_size},
-     "set frame size (WxH or abbreviation)",
-     "size"},
-    {"fs", OPT_BOOL, {&g_player_options.is_full_screen}, "force full screen"},
+    {"x", OPT_NOTHING, {.func_arg = opt_width}, "force displayed width", "width"},
+    {"y", OPT_NOTHING, {.func_arg = opt_height}, "force displayed height", "height"},
+    {"s", OPT_VIDEO, {.func_arg = opt_frame_size}, "set frame size (WxH or abbreviation)", "size"},
+    {"fs", OPT_NOTHING, {.func_arg = opt_fullscreen}, "force full screen"},
     {"ast",
-     OPT_STRING | HAS_ARG | OPT_EXPERT,
-     {&g_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO]},
+     OPT_EXPERT,
+     {.func_arg = opt_select_audio_stream},
      "select desired audio stream",
      "stream_specifier"},
     {"vst",
-     OPT_STRING | HAS_ARG | OPT_EXPERT,
-     {&g_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO]},
+     OPT_EXPERT,
+     {.func_arg = opt_select_video_stream},
      "select desired video stream",
      "stream_specifier"},
     {"volume",
-     OPT_INT | HAS_ARG,
-     {&g_player_options.audio_volume},
+     OPT_NOTHING,
+     {.func_arg = opt_set_audio_volume},
      "set startup volume 0=min 100=max",
      "volume"},
     {"pix_fmt",
-     HAS_ARG | OPT_EXPERT | OPT_VIDEO,
+     OPT_EXPERT | OPT_VIDEO,
      {.func_arg = opt_frame_pix_fmt},
      "set pixel format",
      "format"},
-    {"stats", OPT_BOOL | OPT_EXPERT, {&g_options.show_status}, "show status", ""},
-    {"fast", OPT_BOOL | OPT_EXPERT, {&g_options.fast}, "non spec compliant optimizations", ""},
-    {"genpts", OPT_BOOL | OPT_EXPERT, {&g_options.genpts}, "generate pts", ""},
-    {"lowres", OPT_INT | HAS_ARG | OPT_EXPERT, {&g_options.lowres}, "", ""},
+    {"stats", OPT_EXPERT, {.func_arg = opt_set_show_status}, "show status", ""},
+    {"fast", OPT_EXPERT, {.func_arg = opt_set_non_spec}, "non spec compliant optimizations", ""},
+    {"genpts", OPT_EXPERT, {.func_arg = opt_set_gen_pts}, "generate pts", ""},
+    {"lowres", OPT_EXPERT, {.func_arg = opt_set_lowres_volume}, "", ""},
     {"sync",
-     HAS_ARG | OPT_EXPERT,
+     OPT_EXPERT | HAS_ARG,
      {.func_arg = opt_sync},
      "set audio-video sync. type (type=audio/video)",
      "type"},
-    {"exitonkeydown",
-     OPT_BOOL | OPT_EXPERT,
-     {&g_player_options.exit_on_keydown},
-     "exit on key down",
-     ""},
+    {"exitonkeydown", OPT_EXPERT, {.func_arg = opt_set_exit_on_keydown}, "exit on key down", ""},
     {"exitonmousedown",
-     OPT_BOOL | OPT_EXPERT,
-     {&g_player_options.exit_on_mousedown},
+     OPT_EXPERT,
+     {.func_arg = opt_set_exit_on_mousedown},
      "exit on mouse down",
      ""},
     {"framedrop",
-     OPT_BOOL | OPT_EXPERT,
-     {&g_options.framedrop},
+     OPT_EXPERT,
+     {.func_arg = opt_set_frame_drop},
      "drop frames when cpu is too slow",
      ""},
     {"infbuf",
-     OPT_BOOL | OPT_EXPERT,
-     {&g_options.infinite_buffer},
+     OPT_EXPERT,
+     {.func_arg = opt_set_infinite_buffer},
      "don't limit the input buffer size (useful with realtime streams)",
      ""},
 #if CONFIG_AVFILTER
@@ -291,22 +481,21 @@ const OptionDef options[] = {
      {.func_arg = opt_add_vfilter},
      "set video filters",
      "filter_graph"},
-    {"af", OPT_STRING | HAS_ARG, {&g_options.afilters}, "set audio filters", "filter_graph"},
+    {"af", OPT_NOTHING, {.func_arg = opt_set_audio_vfilter}, "set audio filters", "filter_graph"},
 #endif
     {"default",
      HAS_ARG | OPT_AUDIO | OPT_VIDEO | OPT_EXPERT,
      {.func_arg = opt_default},
      "generic catch all option",
      ""},
-    {"codec", HAS_ARG, {.func_arg = opt_codec}, "force decoder", "decoder_name"},
     {"acodec",
-     HAS_ARG | OPT_STRING | OPT_EXPERT,
-     {&g_options.audio_codec_name},
+     OPT_EXPERT,
+     {.func_arg = opt_set_audio_codec},
      "force audio decoder",
      "decoder_name"},
     {"vcodec",
-     HAS_ARG | OPT_STRING | OPT_EXPERT,
-     {&g_options.video_codec_name},
+     OPT_EXPERT,
+     {.func_arg = opt_set_video_codec},
      "force video decoder",
      "decoder_name"},
     {"hwaccel",
@@ -315,16 +504,16 @@ const OptionDef options[] = {
      "use HW accelerated decoding",
      "hwaccel name"},
     {"hwaccel_device",
-     OPT_VIDEO | OPT_STRING | HAS_ARG | OPT_EXPERT | OPT_INPUT,
-     {&g_options.hwaccel_device},
+     OPT_VIDEO | OPT_EXPERT | OPT_INPUT,
+     {.func_arg = opt_set_hw_device},
      "select a device for HW acceleration",
      "devicename"},
     {"hwaccel_output_format",
-     OPT_VIDEO | OPT_STRING | HAS_ARG | OPT_EXPERT | OPT_INPUT,
-     {&g_options.hwaccel_output_format},
+     OPT_VIDEO | OPT_EXPERT | OPT_INPUT,
+     {.func_arg = opt_set_hw_output_format},
      "select output format used with HW accelerated decoding",
      "format"},
-    {"autorotate", OPT_BOOL, {&g_options.autorotate}, "automatically rotate video", ""},
+    {"autorotate", OPT_NOTHING, {.func_arg = opt_set_autorotate}, "automatically rotate video", ""},
     {
         NULL,
     }};
