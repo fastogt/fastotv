@@ -353,7 +353,7 @@ static int dxva2_alloc(AVCodecContext* s) {
 }
 
 static int dxva2_get_decoder_configuration(AVCodecContext* s,
-                                           const GUID* device_guid,
+                                           const GUID& device_guid,
                                            const DXVA2_VideoDesc* desc,
                                            DXVA2_ConfigPictureDecode* config) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
@@ -363,7 +363,7 @@ static int dxva2_get_decoder_configuration(AVCodecContext* s,
   DXVA2_ConfigPictureDecode* cfg_list = NULL;
   DXVA2_ConfigPictureDecode best_cfg;
   HRESULT hr = IDirectXVideoDecoderService_GetDecoderConfigurations(
-      ctx->decoder_service, *device_guid, desc, NULL, &cfg_count, &cfg_list);
+      ctx->decoder_service, device_guid, desc, NULL, &cfg_count, &cfg_list);
   if (FAILED(hr)) {
     ERROR_LOG() << "DXVA2 unable to retrieve decoder configurations err: " << hr;
     return AVERROR(EINVAL);
@@ -404,12 +404,10 @@ static int dxva2_create_decoder(AVCodecContext* s) {
   DXVA2Context* ctx = static_cast<DXVA2Context*>(ist->hwaccel_ctx);
   struct dxva_context* dxva_ctx = static_cast<struct dxva_context*>(s->hwaccel_context);
 
-  GUID device_guid = GUID_NULL;
   const D3DFORMAT surface_format = (s->sw_pix_fmt == AV_PIX_FMT_YUV420P10)
                                        ? static_cast<D3DFORMAT>(MKTAG('P', '0', '1', '0'))
                                        : static_cast<D3DFORMAT>(MKTAG('N', 'V', '1', '2'));
   D3DFORMAT target_format = D3DFMT_UNKNOWN;
-  DXVA2_ConfigPictureDecode config;
   int surface_alignment, num_surfaces;
 
   GUID* guid_list = NULL;
@@ -421,13 +419,15 @@ static int dxva2_create_decoder(AVCodecContext* s) {
     return AVERROR(EINVAL);
   }
 
+  GUID device_guid = GUID_NULL;
   unsigned j;
   for (unsigned i = 0; dxva2_modes[i].guid; i++) {
     D3DFORMAT* target_list = NULL;
     unsigned target_count = 0;
     const dxva2_mode* mode = &dxva2_modes[i];
-    if (mode->codec != s->codec_id)
+    if (mode->codec != s->codec_id) {
       continue;
+    }
 
     for (j = 0; j < guid_count; j++) {
       if (IsEqualGUID(*mode->guid, guid_list[j])) {
@@ -464,11 +464,13 @@ static int dxva2_create_decoder(AVCodecContext* s) {
   }
 
   DXVA2_VideoDesc desc;
+  ZeroMemory(&desc, sizeof(desc));
   desc.SampleWidth = s->coded_width;
   desc.SampleHeight = s->coded_height;
   desc.Format = target_format;
 
-  int ret = dxva2_get_decoder_configuration(s, &device_guid, &desc, &config);
+  DXVA2_ConfigPictureDecode config;
+  int ret = dxva2_get_decoder_configuration(s, device_guid, &desc, &config);
   if (ret < 0) {
     return AVERROR(EINVAL);
   }
