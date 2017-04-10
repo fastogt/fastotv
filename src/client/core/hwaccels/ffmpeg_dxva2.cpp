@@ -40,12 +40,12 @@ extern "C" {
 
 #include <libavutil/hwcontext.h>
 #include <libavutil/hwcontext_dxva2.h>
+}
 
 /* define all the GUIDs used directly here,
    to avoid problems with inconsistent dxva2api.h versions in mingw-w64 and different MSVC version
    */
 #include <initguid.h>
-}
 
 #include <common/macros.h>
 
@@ -256,8 +256,9 @@ static void dxva2_uninit(AVCodecContext* s) {
   ist->hwaccel_get_buffer = NULL;
   ist->hwaccel_retrieve_data = NULL;
 
-  if (ctx->decoder_service)
+  if (ctx->decoder_service) {
     IDirectXVideoDecoderService_Release(ctx->decoder_service);
+  }
 
   av_buffer_unref(&ctx->hw_frames_ctx);
   av_buffer_unref(&ctx->hw_device_ctx);
@@ -269,6 +270,7 @@ static void dxva2_uninit(AVCodecContext* s) {
 }
 
 static int dxva2_get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
+  UNUSED(flags);
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   DXVA2Context* ctx = static_cast<DXVA2Context*>(ist->hwaccel_ctx);
 
@@ -297,12 +299,6 @@ static int dxva2_retrieve_data(AVCodecContext* s, AVFrame* frame) {
 
 static int dxva2_alloc(AVCodecContext* s) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
-  HANDLE device_handle;
-  HRESULT hr;
-
-  AVHWDeviceContext* device_ctx;
-  AVDXVA2DeviceContext* device_hwctx;
-
   DXVA2Context* ctx = static_cast<DXVA2Context*>(av_mallocz(sizeof(DXVA2Context)));
   if (!ctx) {
     return AVERROR(ENOMEM);
@@ -319,19 +315,20 @@ static int dxva2_alloc(AVCodecContext* s) {
     dxva2_uninit(s);
     return AVERROR(EINVAL);
   }
-  device_ctx = reinterpret_cast<AVHWDeviceContext*>(ctx->hw_device_ctx->data);
-  device_hwctx = static_cast<AVDXVA2DeviceContext*>(device_ctx->hwctx);
+  AVHWDeviceContext* device_ctx = reinterpret_cast<AVHWDeviceContext*>(ctx->hw_device_ctx->data);
+  AVDXVA2DeviceContext* device_hwctx = static_cast<AVDXVA2DeviceContext*>(device_ctx->hwctx);
 
-  hr = IDirect3DDeviceManager9_OpenDeviceHandle(device_hwctx->devmgr, &device_handle);
+  HANDLE device_handle;
+  HRESULT hr = IDirect3DDeviceManager9_OpenDeviceHandle(device_hwctx->devmgr, &device_handle);
   if (FAILED(hr)) {
     ERROR_LOG() << "DXVA2 failed to open a device handle err: " << hr;
     dxva2_uninit(s);
     return AVERROR(EINVAL);
   }
 
+  void* pv = NULL;
   hr = IDirect3DDeviceManager9_GetVideoService(device_hwctx->devmgr, device_handle,
-                                               IID_IDirectXVideoDecoderService,
-                                               (void**)&ctx->decoder_service);
+                                               IID_IDirectXVideoDecoderService, &pv);
   IDirect3DDeviceManager9_CloseDeviceHandle(device_hwctx->devmgr, device_handle);
   if (FAILED(hr)) {
     ERROR_LOG() << "DXVA2 failed to create IDirectXVideoDecoderService err: " << hr;
@@ -339,6 +336,7 @@ static int dxva2_alloc(AVCodecContext* s) {
     return AVERROR(EINVAL);
   }
 
+  ctx->decoder_service = static_cast<IDirectXVideoDecoderService*>(pv);
   ctx->tmp_frame = av_frame_alloc();
   if (!ctx->tmp_frame) {
     dxva2_uninit(s);
@@ -360,9 +358,10 @@ static int dxva2_get_decoder_configuration(AVCodecContext* s,
                                            DXVA2_ConfigPictureDecode* config) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   DXVA2Context* ctx = static_cast<DXVA2Context*>(ist->hwaccel_ctx);
+
   unsigned cfg_count = 0, best_score = 0;
   DXVA2_ConfigPictureDecode* cfg_list = NULL;
-  DXVA2_ConfigPictureDecode best_cfg = {{0}};
+  DXVA2_ConfigPictureDecode best_cfg;
   HRESULT hr = IDirectXVideoDecoderService_GetDecoderConfigurations(
       ctx->decoder_service, *device_guid, desc, NULL, &cfg_count, &cfg_list);
   if (FAILED(hr)) {
@@ -374,12 +373,13 @@ static int dxva2_get_decoder_configuration(AVCodecContext* s,
     DXVA2_ConfigPictureDecode* cfg = &cfg_list[i];
 
     unsigned score;
-    if (cfg->ConfigBitstreamRaw == 1)
+    if (cfg->ConfigBitstreamRaw == 1) {
       score = 1;
-    else if (s->codec_id == AV_CODEC_ID_H264 && cfg->ConfigBitstreamRaw == 2)
+    } else if (s->codec_id == AV_CODEC_ID_H264 && cfg->ConfigBitstreamRaw == 2) {
       score = 2;
-    else
+    } else {
       continue;
+    }
     if (IsEqualGUID(cfg->guidConfigBitstreamEncryption, DXVA2_NoEncrypt)) {
       score += 16;
     }
@@ -403,21 +403,17 @@ static int dxva2_create_decoder(AVCodecContext* s) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   DXVA2Context* ctx = static_cast<DXVA2Context*>(ist->hwaccel_ctx);
   struct dxva_context* dxva_ctx = static_cast<struct dxva_context*>(s->hwaccel_context);
-  GUID* guid_list = NULL;
-  unsigned guid_count = 0, i, j;
+
   GUID device_guid = GUID_NULL;
   const D3DFORMAT surface_format = (s->sw_pix_fmt == AV_PIX_FMT_YUV420P10)
                                        ? static_cast<D3DFORMAT>(MKTAG('P', '0', '1', '0'))
                                        : static_cast<D3DFORMAT>(MKTAG('N', 'V', '1', '2'));
   D3DFORMAT target_format = D3DFMT_UNKNOWN;
-  DXVA2_VideoDesc desc = {0};
   DXVA2_ConfigPictureDecode config;
   int surface_alignment, num_surfaces;
-  int ret;
 
-  AVDXVA2FramesContext* frames_hwctx;
-  AVHWFramesContext* frames_ctx;
-
+  GUID* guid_list = NULL;
+  unsigned guid_count = 0;
   HRESULT hr = IDirectXVideoDecoderService_GetDecoderDeviceGuids(ctx->decoder_service, &guid_count,
                                                                  &guid_list);
   if (FAILED(hr)) {
@@ -425,7 +421,8 @@ static int dxva2_create_decoder(AVCodecContext* s) {
     return AVERROR(EINVAL);
   }
 
-  for (i = 0; dxva2_modes[i].guid; i++) {
+  unsigned j;
+  for (unsigned i = 0; dxva2_modes[i].guid; i++) {
     D3DFORMAT* target_list = NULL;
     unsigned target_count = 0;
     const dxva2_mode* mode = &dxva2_modes[i];
@@ -433,18 +430,20 @@ static int dxva2_create_decoder(AVCodecContext* s) {
       continue;
 
     for (j = 0; j < guid_count; j++) {
-      if (IsEqualGUID(*mode->guid, guid_list[j]))
+      if (IsEqualGUID(*mode->guid, guid_list[j])) {
         break;
+      }
     }
-    if (j == guid_count)
+    if (j == guid_count) {
       continue;
+    }
 
     hr = IDirectXVideoDecoderService_GetDecoderRenderTargets(ctx->decoder_service, *mode->guid,
                                                              &target_count, &target_list);
     if (FAILED(hr)) {
       continue;
     }
-    for (j = 0; j < target_count; j++) {
+    for (unsigned j = 0; j < target_count; j++) {
       const D3DFORMAT format = target_list[j];
       if (format == surface_format) {
         target_format = format;
@@ -464,25 +463,27 @@ static int dxva2_create_decoder(AVCodecContext* s) {
     return AVERROR(EINVAL);
   }
 
+  DXVA2_VideoDesc desc;
   desc.SampleWidth = s->coded_width;
   desc.SampleHeight = s->coded_height;
   desc.Format = target_format;
 
-  ret = dxva2_get_decoder_configuration(s, &device_guid, &desc, &config);
+  int ret = dxva2_get_decoder_configuration(s, &device_guid, &desc, &config);
   if (ret < 0) {
     return AVERROR(EINVAL);
   }
 
   /* decoding MPEG-2 requires additional alignment on some Intel GPUs,
      but it causes issues for H.264 on certain AMD GPUs..... */
-  if (s->codec_id == AV_CODEC_ID_MPEG2VIDEO)
+  if (s->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
     surface_alignment = 32;
-  /* the HEVC DXVA2 spec asks for 128 pixel aligned surfaces to ensure
-     all coding features have enough room to work with */
-  else if (s->codec_id == AV_CODEC_ID_HEVC)
+    /* the HEVC DXVA2 spec asks for 128 pixel aligned surfaces to ensure
+       all coding features have enough room to work with */
+  } else if (s->codec_id == AV_CODEC_ID_HEVC) {
     surface_alignment = 128;
-  else
+  } else {
     surface_alignment = 16;
+  }
 
   /* 4 base work surfaces */
   num_surfaces = 4;
@@ -505,8 +506,8 @@ static int dxva2_create_decoder(AVCodecContext* s) {
   if (!ctx->hw_frames_ctx) {
     return AVERROR(ENOMEM);
   }
-  frames_ctx = reinterpret_cast<AVHWFramesContext*>(ctx->hw_frames_ctx->data);
-  frames_hwctx = static_cast<AVDXVA2FramesContext*>(frames_ctx->hwctx);
+  AVHWFramesContext* frames_ctx = reinterpret_cast<AVHWFramesContext*>(ctx->hw_frames_ctx->data);
+  AVDXVA2FramesContext* frames_hwctx = static_cast<AVDXVA2FramesContext*>(frames_ctx->hwctx);
 
   frames_ctx->format = AV_PIX_FMT_DXVA2_VLD;
   frames_ctx->sw_format =
