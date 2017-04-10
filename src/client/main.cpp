@@ -53,10 +53,6 @@ extern "C" {
 
 #include "client/player.h"
 
-#if CONFIG_VAAPI
-#include "client/core/ffmpeg_vaapi.h"
-#endif
-
 #undef ERROR
 
 // vaapi args: -hwaccel vaapi -hwaccel_device /dev/dri/card0
