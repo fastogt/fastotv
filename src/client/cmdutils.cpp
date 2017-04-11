@@ -179,7 +179,7 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
 
 const OptionDef* find_option(const OptionDef* po, const char* name) {
   const char* p = strchr(name, ':');
-  size_t len = p ? (p - name) : strlen(name);
+  size_t len = p ? static_cast<size_t>(p - name) : strlen(name);
 
   while (po->name) {
     if (strncmp(name, po->name, len) == 0 && strlen(po->name) == len) {
@@ -212,53 +212,15 @@ inline void prepare_app_arguments(int* argc_ptr, char*** argv_ptr) {
 int write_option(const OptionDef* po, const char* opt, const char* arg, DictionaryOptions* dopt) {
   /* new-style options contain an offset into optctx, old-style address of
    * a global var*/
-  void* dst = po->u.dst_ptr;
-  if (po->flags & OPT_STRING) {
-    std::string* str_ptr = static_cast<std::string*>(dst);
-    *str_ptr = arg;
-  } else if (po->flags & OPT_BOOL) {
-    bool* bool_ptr = static_cast<bool*>(dst);
-    if (!parse_bool(arg, bool_ptr)) {
-      exit_program(1);
-    }
-  } else if (po->flags & OPT_INT) {
-    int* int_ptr = static_cast<int*>(dst);
-    if (!parse_number(arg, OPT_INT, std::numeric_limits<int>::min(),
-                      std::numeric_limits<int>::max(), int_ptr)) {
-      exit_program(1);
-    }
-  } else if (po->flags & OPT_INT64) {
-    int64_t* int_ptr = static_cast<int64_t*>(dst);
-    if (!parse_number(arg, OPT_INT, std::numeric_limits<int64_t>::min(),
-                      std::numeric_limits<int64_t>::max(), int_ptr)) {
-      exit_program(1);
-    }
-  } else if (po->flags & OPT_TIME) {
-    int64_t* time_ptr = static_cast<int64_t*>(dst);
-    if (!parse_time(arg, true, time_ptr)) {
-      exit_program(1);
-    }
-  } else if (po->flags & OPT_FLOAT) {
-    float* float_ptr = static_cast<float*>(dst);
-    if (!parse_number(arg, OPT_FLOAT, std::numeric_limits<float>::min(),
-                      std::numeric_limits<float>::max(), float_ptr)) {
-      exit_program(1);
-    }
-  } else if (po->flags & OPT_DOUBLE) {
-    double* double_ptr = static_cast<double*>(dst);
-    if (!parse_number(arg, OPT_DOUBLE, std::numeric_limits<double>::min(),
-                      std::numeric_limits<double>::max(), double_ptr)) {
-      exit_program(1);
-    }
-  } else if (po->u.func_arg) {
-    int ret = po->u.func_arg(opt, arg, dopt);
-    if (ret != SUCCESS_RESULT_VALUE) {
-      char err_str[AV_ERROR_MAX_STRING_SIZE] = {0};
-      av_make_error_string(err_str, AV_ERROR_MAX_STRING_SIZE, ret);
-      ERROR_LOG() << "Failed to set value '" << arg << "' for option '" << opt << "': " << err_str;
-      return ret;
-    }
+
+  int ret = po->func_arg(opt, arg, dopt);
+  if (ret != SUCCESS_RESULT_VALUE) {
+    char err_str[AV_ERROR_MAX_STRING_SIZE] = {0};
+    av_make_error_string(err_str, AV_ERROR_MAX_STRING_SIZE, ret);
+    ERROR_LOG() << "Failed to set value '" << arg << "' for option '" << opt << "': " << err_str;
+    return ret;
   }
+
   if (po->flags & OPT_EXIT) {
     exit_program(0);
   }
@@ -693,25 +655,6 @@ bool parse_bool(const std::string& bool_str, bool* result) {
   return true;
 }
 
-bool parse_time(const std::string& time_str, bool is_duration, int64_t* result) {
-  if (time_str.empty()) {
-    WARNING_LOG() << "Can't parse value(time) invalid arguments!";
-    return false;
-  }
-
-  int64_t us;
-  if (av_parse_time(&us, time_str.c_str(), is_duration) < 0) {
-    const char* res = is_duration ? "duration" : "date";
-    WARNING_LOG() << "Invalid specification for " << res << ": " << time_str;
-    return false;
-  }
-
-  if (result) {
-    *result = us;
-  }
-  return true;
-}
-
 void show_help_options(const OptionDef* options,
                        const char* msg,
                        int req_flags,
@@ -746,16 +689,6 @@ int parse_option(const char* opt,
                  const OptionDef* options,
                  DictionaryOptions* dopt) {
   const OptionDef* po = find_option(options, opt);
-  if (!po->name && opt[0] == 'n' && opt[1] == 'o') {
-    /* handle 'no' bool option */
-    po = find_option(options, opt + 2);
-    if ((po->name && (po->flags & OPT_BOOL))) {
-      arg = "false";
-    }
-  } else if (po->flags & OPT_BOOL) {
-    arg = "true";
-  }
-
   if (!po->name) {
     po = find_option(options, "default");
   }
@@ -763,7 +696,7 @@ int parse_option(const char* opt,
     ERROR_LOG() << "Unrecognized option '" << opt << "'";
     return AVERROR(EINVAL);
   }
-  if (po->flags & HAS_ARG && !arg) {
+  if (!arg) {
     ERROR_LOG() << "Missing argument for option '" << opt << "'";
     return AVERROR(EINVAL);
   }
@@ -773,7 +706,7 @@ int parse_option(const char* opt,
     return ret;
   }
 
-  return !!(po->flags & HAS_ARG);
+  return SUCCESS_RESULT_VALUE;
 }
 
 void parse_options(int argc, char** argv, const OptionDef* options, DictionaryOptions* dopt) {
@@ -820,7 +753,7 @@ int locate_option(int argc, char** argv, const OptionDef* options, const char* o
       return i;
     }
 
-    if (!po->name || po->flags & HAS_ARG) {
+    if (!po->name) {
       i++;
     }
   }
@@ -863,7 +796,8 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
   if (!(p = strchr(opt, ':'))) {
     p = opt + strlen(opt);
   }
-  av_strlcpy(opt_stripped, opt, FFMIN(sizeof(opt_stripped), p - opt + 1));
+  size_t diff = static_cast<size_t>(p - opt + 1);
+  av_strlcpy(opt_stripped, opt, FFMIN(sizeof(opt_stripped), diff));
 
   if ((o = opt_find(&cc, opt_stripped, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ)) ||
       ((opt[0] == 'v' || opt[0] == 'a' || opt[0] == 's') &&
@@ -1220,14 +1154,13 @@ int show_layouts(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(opt);
   UNUSED(arg);
 
-  uint64_t layout, j;
-  const char* name;
+  const char* name = NULL;
 
   printf(
       "Individual channels:\n"
       "NAME           DESCRIPTION\n");
   for (int i = 0; i < 63; i++) {
-    name = av_get_channel_name((uint64_t)1 << i);
+    name = av_get_channel_name(uint64_t(1) << i);
     if (!name) {
       continue;
     }
@@ -1237,10 +1170,11 @@ int show_layouts(const char* opt, const char* arg, DictionaryOptions* dopt) {
   printf(
       "\nStandard channel layouts:\n"
       "NAME           DECOMPOSITION\n");
-  for (int i = 0; !av_get_standard_channel_layout(i, &layout, &name); i++) {
+  uint64_t layout;
+  for (unsigned i = 0; !av_get_standard_channel_layout(i, &layout, &name); i++) {
     if (name) {
       printf("%-14s ", name);
-      for (j = 1; j; j <<= 1)
+      for (uint64_t j = 1; j; j <<= 1)
         if ((layout & j)) {
           printf("%s%s", (layout & (j - 1)) ? "+" : "", av_get_channel_name(j));
         }

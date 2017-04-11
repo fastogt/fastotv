@@ -24,10 +24,6 @@
 #include <ostream>     // for operator<<, basic_ostream
 #include <string>      // for operator<<, string
 
-#include <common/convert2string.h>  // for ConvertFromString
-#include <common/logger.h>          // for COMPACT_LOG_WARNING, etc
-#include <common/macros.h>          // for DISALLOW_COPY_AND_ASSIGN
-
 #include "ffmpeg_config.h"  // for CONFIG_AVDEVICE, etc
 
 extern "C" {
@@ -42,26 +38,19 @@ extern "C" {
 #include <libavutil/samplefmt.h>  // for av_get_sample_fmt_name
 }
 
-#include "core/ffmpeg_internal.h"
+#include <common/convert2string.h>  // for ConvertFromString
+#include <common/logger.h>          // for COMPACT_LOG_WARNING, etc
+#include <common/macros.h>          // for DISALLOW_COPY_AND_ASSIGN
 
-#define OPT_NOTHING 0x0000
-#define HAS_ARG 0x0001
-#define OPT_BOOL 0x0002
-#define OPT_EXPERT 0x0004
-#define OPT_STRING 0x0008
-#define OPT_VIDEO 0x0010
-#define OPT_AUDIO 0x0020
-#define OPT_INT 0x0080
-#define OPT_FLOAT 0x0100
-#define OPT_SUBTITLE 0x0200
-#define OPT_INT64 0x0400
-#define OPT_EXIT 0x0800
-#define OPT_DATA 0x1000
-
-#define OPT_TIME 0x10000
-#define OPT_DOUBLE 0x20000
-#define OPT_INPUT 0x40000
-#define OPT_OUTPUT 0x80000
+#define OPT_NOTHING 0
+#define OPT_EXPERT (1 << 0)
+#define OPT_VIDEO (1 << 1)
+#define OPT_AUDIO (1 << 2)
+#define OPT_SUBTITLE (1 << 3)
+#define OPT_EXIT (1 << 4)
+#define OPT_DATA (1 << 5)
+#define OPT_INPUT (1 << 6)
+#define OPT_OUTPUT (1 << 7)
 
 struct DictionaryOptions {
   DictionaryOptions();
@@ -102,8 +91,8 @@ int opt_codec_debug(const char* opt, const char* arg, DictionaryOptions* dopt);
 bool parse_bool(const std::string& bool_str, bool* result);
 
 template <typename T>
-bool parse_number(const std::string& number_str, int type, T min, T max, T* result) {
-  if (number_str.empty()) {
+bool parse_number(const std::string& number_str, T min, T max, T* result) {
+  if (number_str.empty() || !result) {
     WARNING_LOG() << "Can't parse value(number) invalid arguments!";
     return false;
   }
@@ -118,29 +107,16 @@ bool parse_number(const std::string& number_str, int type, T min, T max, T* resu
     WARNING_LOG() << "The value for " << number_str << " was " << lresult << " which is not within "
                   << min << " - " << max;
     return false;
-  } else if (type == OPT_INT64 && static_cast<int64_t>(lresult) != lresult) {
-    WARNING_LOG() << "Expected int64 for " << number_str << " but found: " << lresult;
-    return false;
-  } else if (type == OPT_INT && static_cast<int>(lresult) != lresult) {
-    WARNING_LOG() << "Expected int for " << number_str << " but found: " << lresult;
-    return false;
-  } else {
-    if (result) {
-      *result = lresult;
-    }
-    return true;
   }
-}
 
-bool parse_time(const std::string& time_str, bool is_duration, int64_t* result);
+  *result = lresult;
+  return true;
+}
 
 typedef struct OptionDef {
   const char* name;
   int flags;
-  union {
-    void* dst_ptr;
-    int (*func_arg)(const char*, const char*, DictionaryOptions*);
-  } u;
+  int (*func_arg)(const char*, const char*, DictionaryOptions*);
   const char* help;
   const char* argname;
 } OptionDef;
@@ -164,7 +140,7 @@ void show_help_options(const OptionDef* options,
  * Per-fftool specific help handler. Implemented in each
  * fftool, called by show_help().
  */
-void show_help_default(const char* opt, const char* arg);
+extern void show_help_default(const char* opt, const char* arg);
 
 /**
  * Generic -h handler common to all fftools.

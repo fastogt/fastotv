@@ -395,7 +395,7 @@ if __name__ == "__main__":
     libpng_default_version = '1.6.29'
     sdl2_default_version = '2.0.5'
     ffmpeg_default_version = '3.2.4'
-    cmake_default_version = '3.7.2'
+    cmake_default_version = '3.8.0'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()

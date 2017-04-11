@@ -62,6 +62,8 @@ extern "C" {
 namespace {
 fasto::fastotv::client::core::AppOptions g_options;
 fasto::fastotv::client::PlayerOptions g_player_options;
+DictionaryOptions* dict = NULL;  // FIXME
+
 #if CONFIG_AVFILTER
 int opt_add_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
@@ -74,8 +76,7 @@ int opt_add_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
 void sigterm_handler(int sig) {
   UNUSED(sig);
-
-  exit(123);
+  exit(EXIT_FAILURE);
 }
 
 int opt_frame_size(const char* opt, const char* arg, DictionaryOptions* dopt) {
@@ -90,8 +91,7 @@ static int opt_width(const char* opt, const char* arg, DictionaryOptions* dopt) 
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(),
-                    &g_player_options.screen_width)) {
+  if (!parse_number(arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_width)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -101,8 +101,7 @@ int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, OPT_INT, 1, std::numeric_limits<int>::max(),
-                    &g_player_options.screen_height)) {
+  if (!parse_number(arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_height)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -261,8 +260,7 @@ int opt_set_audio_volume(const char* opt, const char* arg, DictionaryOptions* do
   }
 
   int vol;
-  if (!parse_number(arg, OPT_INT, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
-                    &vol)) {
+  if (!parse_number(arg, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), &vol)) {
     return AVERROR(EINVAL);
   }
   g_player_options.audio_volume = vol;
@@ -322,7 +320,7 @@ int opt_set_lowres_volume(const char* opt, const char* arg, DictionaryOptions* d
   }
 
   int lowres;
-  if (!parse_number(arg, OPT_INT, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
+  if (!parse_number(arg, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
                     &lowres)) {
     return AVERROR(EINVAL);
   }
@@ -389,138 +387,69 @@ int opt_set_autorotate(const char* opt, const char* arg, DictionaryOptions* dopt
 }
 
 const OptionDef options[] = {
-    {"L", OPT_EXIT, {.func_arg = show_license}, "show license"},
-    {"h", OPT_EXIT, {.func_arg = show_help}, "show help", "topic"},
-    {"?", OPT_EXIT, {.func_arg = show_help}, "show help", "topic"},
-    {"help", OPT_EXIT, {.func_arg = show_help}, "show help", "topic"},
-    {"-help", OPT_EXIT, {.func_arg = show_help}, "show help", "topic"},
-    {"version", OPT_EXIT, {.func_arg = show_version}, "show version"},
-    {"buildconf", OPT_EXIT, {.func_arg = show_buildconf}, "show build configuration"},
-    {"formats", OPT_EXIT, {.func_arg = show_formats}, "show available formats"},
-    {"devices", OPT_EXIT, {.func_arg = show_devices}, "show available devices"},
-    {"codecs", OPT_EXIT, {.func_arg = show_codecs}, "show available codecs"},
-    {"hwaccels", OPT_EXIT, {.func_arg = show_hwaccels}, "show available hwaccels"},
-    {"decoders", OPT_EXIT, {.func_arg = show_decoders}, "show available decoders"},
-    {"encoders", OPT_EXIT, {.func_arg = show_encoders}, "show available encoders"},
-    {"bsfs", OPT_EXIT, {.func_arg = show_bsfs}, "show available bit stream filters"},
-    {"protocols", OPT_EXIT, {.func_arg = show_protocols}, "show available protocols"},
-    {"filters", OPT_EXIT, {.func_arg = show_filters}, "show available filters"},
-    {"pix_fmts", OPT_EXIT, {.func_arg = show_pix_fmts}, "show available pixel formats"},
-    {"layouts", OPT_EXIT, {.func_arg = show_layouts}, "show standard channel layouts"},
-    {"sample_fmts",
-     OPT_EXIT,
-     {.func_arg = show_sample_fmts},
-     "show available audio sample formats"},
-    {"colors", OPT_EXIT, {.func_arg = show_colors}, "show available color names"},
-    {"loglevel", OPT_NOTHING, {.func_arg = opt_loglevel}, "set logging level", "loglevel"},
-    {"v", OPT_NOTHING, {.func_arg = opt_loglevel}, "set logging level", "loglevel"},
+    {"L", OPT_EXIT, show_license, "show license", NULL},
+    {"h", OPT_EXIT, show_help, "show help", "topic"},
+    {"?", OPT_EXIT, show_help, "show help", "topic"},
+    {"help", OPT_EXIT, show_help, "show help", "topic"},
+    {"-help", OPT_EXIT, show_help, "show help", "topic"},
+    {"version", OPT_EXIT, show_version, "show version", NULL},
+    {"buildconf", OPT_EXIT, show_buildconf, "show build configuration", NULL},
+    {"formats", OPT_EXIT, show_formats, "show available formats", NULL},
+    {"devices", OPT_EXIT, show_devices, "show available devices", NULL},
+    {"codecs", OPT_EXIT, show_codecs, "show available codecs", NULL},
+    {"hwaccels", OPT_EXIT, show_hwaccels, "show available hwaccels", NULL},
+    {"decoders", OPT_EXIT, show_decoders, "show available decoders", NULL},
+    {"encoders", OPT_EXIT, show_encoders, "show available encoders", NULL},
+    {"bsfs", OPT_EXIT, show_bsfs, "show available bit stream filters", NULL},
+    {"protocols", OPT_EXIT, show_protocols, "show available protocols", NULL},
+    {"filters", OPT_EXIT, show_filters, "show available filters", NULL},
+    {"pix_fmts", OPT_EXIT, show_pix_fmts, "show available pixel formats", NULL},
+    {"layouts", OPT_EXIT, show_layouts, "show standard channel layouts", NULL},
+    {"sample_fmts", OPT_EXIT, show_sample_fmts, "show available audio sample formats", NULL},
+    {"colors", OPT_EXIT, show_colors, "show available color names", NULL},
+    {"loglevel", OPT_NOTHING, opt_loglevel, "set logging level", "loglevel"},
+    {"v", OPT_NOTHING, opt_loglevel, "set logging level", "loglevel"},
 #if CONFIG_AVDEVICE
-    {"sources",
-     OPT_EXIT | HAS_ARG,
-     {.func_arg = show_sources},
-     "list sources of the input device",
-     "device"},
-    {"sinks",
-     OPT_EXIT | HAS_ARG,
-     {.func_arg = show_sinks},
-     "list sinks of the output device",
-     "device"},
+    {"sources", OPT_EXIT, show_sources, "list sources of the input device", "device"},
+    {"sinks", OPT_EXIT, show_sinks, "list sinks of the output device", "device"},
 #endif
-    {"x", OPT_NOTHING, {.func_arg = opt_width}, "force displayed width", "width"},
-    {"y", OPT_NOTHING, {.func_arg = opt_height}, "force displayed height", "height"},
-    {"s", OPT_VIDEO, {.func_arg = opt_frame_size}, "set frame size (WxH or abbreviation)", "size"},
-    {"fs", OPT_NOTHING, {.func_arg = opt_fullscreen}, "force full screen"},
-    {"ast",
-     OPT_EXPERT,
-     {.func_arg = opt_select_audio_stream},
-     "select desired audio stream",
-     "stream_specifier"},
-    {"vst",
-     OPT_EXPERT,
-     {.func_arg = opt_select_video_stream},
-     "select desired video stream",
-     "stream_specifier"},
-    {"volume",
-     OPT_NOTHING,
-     {.func_arg = opt_set_audio_volume},
-     "set startup volume 0=min 100=max",
-     "volume"},
-    {"pix_fmt",
-     OPT_EXPERT | OPT_VIDEO,
-     {.func_arg = opt_frame_pix_fmt},
-     "set pixel format",
-     "format"},
-    {"stats", OPT_EXPERT, {.func_arg = opt_set_show_status}, "show status", ""},
-    {"fast", OPT_EXPERT, {.func_arg = opt_set_non_spec}, "non spec compliant optimizations", ""},
-    {"genpts", OPT_EXPERT, {.func_arg = opt_set_gen_pts}, "generate pts", ""},
-    {"lowres", OPT_EXPERT, {.func_arg = opt_set_lowres_volume}, "", ""},
-    {"sync",
-     OPT_EXPERT | HAS_ARG,
-     {.func_arg = opt_sync},
-     "set audio-video sync. type (type=audio/video)",
-     "type"},
-    {"exitonkeydown", OPT_EXPERT, {.func_arg = opt_set_exit_on_keydown}, "exit on key down", ""},
-    {"exitonmousedown",
-     OPT_EXPERT,
-     {.func_arg = opt_set_exit_on_mousedown},
-     "exit on mouse down",
-     ""},
-    {"framedrop",
-     OPT_EXPERT,
-     {.func_arg = opt_set_frame_drop},
-     "drop frames when cpu is too slow",
-     ""},
-    {"infbuf",
-     OPT_EXPERT,
-     {.func_arg = opt_set_infinite_buffer},
-     "don't limit the input buffer size (useful with realtime streams)",
-     ""},
+    {"x", OPT_NOTHING, opt_width, "force displayed width", "width"},
+    {"y", OPT_NOTHING, opt_height, "force displayed height", "height"},
+    {"s", OPT_VIDEO, opt_frame_size, "set frame size (WxH or abbreviation)", "size"},
+    {"fs", OPT_NOTHING, opt_fullscreen, "force full screen", NULL},
+    {"ast", OPT_EXPERT, opt_select_audio_stream, "select desired audio stream", "stream_specifier"},
+    {"vst", OPT_EXPERT, opt_select_video_stream, "select desired video stream", "stream_specifier"},
+    {"volume", OPT_NOTHING, opt_set_audio_volume, "set startup volume 0=min 100=max", "volume"},
+    {"pix_fmt", OPT_EXPERT | OPT_VIDEO, opt_frame_pix_fmt, "set pixel format", "format"},
+    {"stats", OPT_EXPERT, opt_set_show_status, "show status", ""},
+    {"fast", OPT_EXPERT, opt_set_non_spec, "non spec compliant optimizations", ""},
+    {"genpts", OPT_EXPERT, opt_set_gen_pts, "generate pts", ""},
+    {"lowres", OPT_EXPERT, opt_set_lowres_volume, "", ""},
+    {"sync", OPT_EXPERT, opt_sync, "set audio-video sync. type (type=audio/video)", "type"},
+    {"exitonkeydown", OPT_EXPERT, opt_set_exit_on_keydown, "exit on key down", ""},
+    {"exitonmousedown", OPT_EXPERT, opt_set_exit_on_mousedown, "exit on mouse down", ""},
+    {"framedrop", OPT_EXPERT, opt_set_frame_drop, "drop frames when cpu is too slow", ""},
+    {"infbuf", OPT_EXPERT, opt_set_infinite_buffer,
+     "don't limit the input buffer size (useful with realtime streams)", ""},
 #if CONFIG_AVFILTER
-    {"vf",
-     OPT_EXPERT | HAS_ARG,
-     {.func_arg = opt_add_vfilter},
-     "set video filters",
-     "filter_graph"},
-    {"af", OPT_NOTHING, {.func_arg = opt_set_audio_vfilter}, "set audio filters", "filter_graph"},
+    {"vf", OPT_EXPERT, opt_add_vfilter, "set video filters", "filter_graph"},
+    {"af", OPT_NOTHING, opt_set_audio_vfilter, "set audio filters", "filter_graph"},
 #endif
-    {"default",
-     HAS_ARG | OPT_AUDIO | OPT_VIDEO | OPT_EXPERT,
-     {.func_arg = opt_default},
-     "generic catch all option",
-     ""},
-    {"acodec",
-     OPT_EXPERT,
-     {.func_arg = opt_set_audio_codec},
-     "force audio decoder",
-     "decoder_name"},
-    {"vcodec",
-     OPT_EXPERT,
-     {.func_arg = opt_set_video_codec},
-     "force video decoder",
-     "decoder_name"},
-    {"hwaccel",
-     HAS_ARG | OPT_EXPERT,
-     {.func_arg = opt_hwaccel},
-     "use HW accelerated decoding",
-     "hwaccel name"},
-    {"hwaccel_device",
-     OPT_VIDEO | OPT_EXPERT | OPT_INPUT,
-     {.func_arg = opt_set_hw_device},
-     "select a device for HW acceleration",
-     "devicename"},
-    {"hwaccel_output_format",
-     OPT_VIDEO | OPT_EXPERT | OPT_INPUT,
-     {.func_arg = opt_set_hw_output_format},
-     "select output format used with HW accelerated decoding",
-     "format"},
-    {"autorotate", OPT_NOTHING, {.func_arg = opt_set_autorotate}, "automatically rotate video", ""},
-    {
-        NULL,
-    }};
+    {"default", OPT_AUDIO | OPT_VIDEO | OPT_EXPERT, opt_default, "generic catch all option", ""},
+    {"acodec", OPT_EXPERT, opt_set_audio_codec, "force audio decoder", "decoder_name"},
+    {"vcodec", OPT_EXPERT, opt_set_video_codec, "force video decoder", "decoder_name"},
+    {"hwaccel", OPT_EXPERT, opt_hwaccel, "use HW accelerated decoding", "hwaccel name"},
+    {"hwaccel_device", OPT_VIDEO | OPT_EXPERT | OPT_INPUT, opt_set_hw_device,
+     "select a device for HW acceleration", "devicename"},
+    {"hwaccel_output_format", OPT_VIDEO | OPT_EXPERT | OPT_INPUT, opt_set_hw_output_format,
+     "select output format used with HW accelerated decoding", "format"},
+    {"autorotate", OPT_NOTHING, opt_set_autorotate, "automatically rotate video", ""},
+    {NULL, OPT_NOTHING, NULL, NULL, NULL}};
 
 void show_usage(void) {
   printf("Simple media player\nusage: " PROJECT_NAME_TITLE " [options]\n");
 }
+
 }
 
 void show_help_default(const char* opt, const char* arg) {
@@ -538,6 +467,7 @@ void show_help_default(const char* opt, const char* arg) {
       "m                   toggle mute\n"
       "9, 0                decrease and increase volume respectively\n"
       "/, *                decrease and increase volume respectively\n"
+      "[, ]                prev/next channel\n"
       "a                   cycle audio channel in the current program\n"
       "v                   cycle video channel\n"
       "c                   cycle program\n"
@@ -545,8 +475,6 @@ void show_help_default(const char* opt, const char* arg) {
       "s                   activate frame-step mode\n"
       "left double-click   toggle full screen");
 }
-
-static DictionaryOptions* dict = NULL;  // FIXME
 
 template <typename B>
 class FFmpegApplication : public B {
