@@ -58,7 +58,7 @@ class TcpClient : common::IMetaClassInfo {
 
  protected:
   virtual common::Error Write(const char* data, size_t size, size_t* nwrite) WARN_UNUSED_RESULT;
-  virtual common::Error Read(char* out, size_t max_size, ssize_t* nread) WARN_UNUSED_RESULT;
+  virtual common::Error Read(char* out, size_t max_size, size_t* nread) WARN_UNUSED_RESULT;
 
  private:
   ITcpLoop* server_;

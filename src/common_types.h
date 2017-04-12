@@ -24,6 +24,6 @@ namespace fasto {
 namespace fastotv {
 
 typedef std::string stream_id;  // must be unique
-static const stream_id invalid_stream_id = std::string();
+static const stream_id invalid_stream_id = stream_id();
 }
 }

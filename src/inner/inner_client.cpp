@@ -30,15 +30,15 @@ const char* InnerClient::ClassName() const {
 }
 
 common::Error InnerClient::Write(const cmd_request_t& request) {
-  return WriteInner(request.data(), request.size());
+  return WriteInner(request.cmd());
 }
 
 common::Error InnerClient::Write(const cmd_responce_t& responce) {
-  return WriteInner(responce.data(), responce.size());
+  return WriteInner(responce.cmd());
 }
 
 common::Error InnerClient::Write(const cmd_approve_t& approve) {
-  return WriteInner(approve.data(), approve.size());
+  return WriteInner(approve.cmd());
 }
 
 common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
@@ -47,7 +47,7 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
   }
 
   protocoled_size_t lsz = 0;
-  ssize_t nread;
+  size_t nread;
   common::Error err = Read(reinterpret_cast<char*>(&lsz), sizeof(protocoled_size_t), &nread);
   if (err && err->IsError()) {
     return err;
@@ -72,7 +72,7 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
-  ssize_t nread;
+  size_t nread;
   common::Error err = Read(out, size, &nread);
   if (err && err->IsError()) {
     return err;
@@ -115,13 +115,19 @@ common::Error InnerClient::ReadCommand(std::string* out) {
   return common::Error();
 }
 
-common::Error InnerClient::WriteInner(const char* data, size_t size) {
+common::Error InnerClient::WriteInner(const std::string& data) {
+  if (data.empty()) {
+    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+  }
+  const char* data_ptr = data.data();
+  const size_t size = data.size();
+
   const protocoled_size_t data_size = size;
   const size_t protocoled_data_len = size + sizeof(protocoled_size_t);
 
   char* protocoled_data = static_cast<char*>(malloc(protocoled_data_len));
   betoh_memcpy(protocoled_data, &data_size, sizeof(protocoled_size_t));
-  memcpy(protocoled_data + sizeof(protocoled_size_t), data, data_size);
+  memcpy(protocoled_data + sizeof(protocoled_size_t), data_ptr, data_size);
   size_t nwrite = 0;
   common::Error err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);
   if (nwrite != protocoled_data_len) {  // connection closed

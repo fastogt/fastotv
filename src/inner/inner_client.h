@@ -28,7 +28,7 @@ namespace inner {
 
 class InnerClient : public network::tcp::TcpClient {
  public:
-  typedef uint32_t protocoled_size_t;
+  typedef uint32_t protocoled_size_t;  // 4 byte
   InnerClient(network::tcp::ITcpLoop* server, const common::net::socket_info& info);
   const char* ClassName() const override;
 
@@ -41,7 +41,7 @@ class InnerClient : public network::tcp::TcpClient {
   common::Error ReadCommand(std::string* out) WARN_UNUSED_RESULT;
 
  private:
-  common::Error WriteInner(const char* data, size_t size) WARN_UNUSED_RESULT;
+  common::Error WriteInner(const std::string& data) WARN_UNUSED_RESULT;
   using network::tcp::TcpClient::Write;
   using network::tcp::TcpClient::Read;
 };

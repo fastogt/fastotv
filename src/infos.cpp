@@ -85,8 +85,7 @@ bool UserInfo::IsValid() const {
 
 json_object* MakeJobjectFromChannels(const channels_t& channels) {
   json_object* jchannels = json_object_new_array();
-  for (size_t i = 0; i < channels.size(); ++i) {
-    Url url = channels[i];
+  for (Url url : channels) {
     json_object_array_add(jchannels, Url::MakeJobject(url));
   }
   return jchannels;

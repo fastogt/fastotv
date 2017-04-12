@@ -86,10 +86,6 @@ class InnerCmd {
 
   const std::string& cmd() const { return cmd_; }
 
-  const char* data() const { return cmd_.c_str(); }
-
-  size_t size() const { return cmd_.size(); }
-
  private:
   const cmd_seq_t id_;
   const std::string cmd_;

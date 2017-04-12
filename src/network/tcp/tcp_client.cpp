@@ -71,7 +71,7 @@ common::Error TcpClient::Write(const char* data, size_t size, size_t* nwrite) {
 #endif
 }
 
-common::Error TcpClient::Read(char* out, size_t max_size, ssize_t* nread) {
+common::Error TcpClient::Read(char* out, size_t max_size, size_t* nread) {
   if (!out || !nread) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
