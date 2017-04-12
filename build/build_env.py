@@ -287,7 +287,7 @@ class BuildRequest(object):
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit'
-                            'libvdpau-dev', libva-dev]
+                                                                      'libvdpau-dev', 'libva-dev']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
                             'make',
@@ -297,7 +297,7 @@ class BuildRequest(object):
                             'libdrm-devel', 'libdri2-devel', 'libump-devel',
                             'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit',
                             'libvdpau-devel', 'libva-devel']
-            #Centos 7 no package: libtoolize, libdri2-devel, libump-devel
+            # Centos 7 no package: libtoolize, libdri2-devel, libump-devel
 
             dep_libs.extend(device.system_libs(platform_name))
 
