@@ -208,7 +208,7 @@ class SupportedDevice(object):
 SUPPORTED_DEVICES = [
     SupportedDevice('pc', [], CompileInfo([], []), CompileInfo([], [])),
     SupportedDevice('orange-pi-one',
-                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi1', 'libvdpau-dev'],
+                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi1'],
                     CompileInfo(['patch/orange-pi-one/sdl2'],
                                 ['--disable-video-opengl', '--disable-video-opengles1', '--enable-video-opengles2']),
                     CompileInfo([], []), install_orange_pi)]
@@ -232,7 +232,7 @@ def linux_get_dist():
     dist_name = linux_tuple[0]
     dist_name_upper = dist_name.upper()
 
-    if dist_name_upper in ["RHEL", "CENTOS", "FEDORA"]:
+    if dist_name_upper in ["RHEL", "CENTOS LINUX", "FEDORA"]:
         return "RHEL"
     elif dist_name_upper in ["DEBIAN", "UBUNTU"]:
         return "DEBIAN"
@@ -286,15 +286,18 @@ class BuildRequest(object):
                             'libasound2-dev',
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
-                            'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
+                            'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit'
+                            'libvdpau-dev', libva-dev]
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
                             'make',
-                            'zlib-dev', 'bzip2-devel', 'pcre-devel',
+                            'zlib-devel', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
-                            'libx11-devel',
+                            'libX11-devel',
                             'libdrm-devel', 'libdri2-devel', 'libump-devel',
-                            'xorg-x11-server-devel', 'xserver-xorg', 'xinit']
+                            'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit',
+                            'libvdpau-devel', 'libva-devel']
+            #Centos 7 no package: libtoolize, libdri2-devel, libump-devel
 
             dep_libs.extend(device.system_libs(platform_name))
 
