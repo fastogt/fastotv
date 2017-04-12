@@ -58,6 +58,7 @@ typedef struct InputStream {
   enum HWAccelID hwaccel_id;
   AVBufferRef* hw_frames_ctx;
   enum AVPixelFormat hwaccel_output_format;
+  enum AVPixelFormat hwaccel_retrieved_pix_fmt;
 } InputStream;
 
 typedef struct HWAccel {

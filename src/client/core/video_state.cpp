@@ -333,9 +333,9 @@ int VideoState::StreamComponentOpen(int stream_index) {
 
   AVDictionary* opts =
       core::filter_codec_opts(copt_.codec_opts, avctx->codec_id, ic_, stream, codec);
-  /*if (!av_dict_get(opts, "threads", NULL, 0)) {
+  if (!av_dict_get(opts, "threads", NULL, 0)) {
     av_dict_set(&opts, "threads", "auto", 0);
-  }*/
+  }
   if (stream_lowres) {
     av_dict_set_int(&opts, "lowres", stream_lowres, 0);
   }
@@ -1408,7 +1408,7 @@ int VideoState::VideoThread() {
         continue;
       }
     }
-// input_st_->hwaccel_retrieved_pix_fmt = frame->format;
+    input_st_->hwaccel_retrieved_pix_fmt = static_cast<AVPixelFormat>(frame->format);
 
 #if CONFIG_AVFILTER
     if (last_w != frame->width || last_h != frame->height || last_format != frame->format ||
