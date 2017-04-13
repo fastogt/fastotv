@@ -53,7 +53,7 @@ class VideoStateHandler : public core::events::EventListener {
                              int volume) = 0;
 
   // video
-  virtual bool HandleRequestWindow(VideoState* stream) = 0;
+  virtual bool HandleRequestVideo(VideoState* stream) = 0;
   virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) = 0;
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) = 0;
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) = 0;

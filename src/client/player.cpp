@@ -328,7 +328,7 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderPresent(renderer_);
 }
 
-bool Player::HandleRequestWindow(core::VideoState* stream) {
+bool Player::HandleRequestVideo(core::VideoState* stream) {
   if (!stream) {  // invalid input
     return false;
   }

@@ -81,7 +81,7 @@ class Player : public core::VideoStateHandler {
 
   virtual bool HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
   virtual void HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) override;
-  virtual bool HandleRequestWindow(core::VideoState* stream) override;
+  virtual bool HandleRequestVideo(core::VideoState* stream) override;
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override;
 
   virtual void HandlePreExecEvent(core::events::PreExecEvent* event);

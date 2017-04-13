@@ -17,7 +17,6 @@ IF(DEVELOPER_ENABLE_TESTS)
   ADD_SUBDIRECTORY(${CMAKE_HOME_DIRECTORY}/tests/googletest googletest)
   INCLUDE_DIRECTORIES(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT})
 ########## PREPARE GTEST LIBRARY ##########
-
   ADD_EXECUTABLE(unit_tests
     ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp commands/commands.cpp client/commands.cpp
   )

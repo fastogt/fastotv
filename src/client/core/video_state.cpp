@@ -522,7 +522,7 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
     handler_->HandleDefaultWindowSize(vp->width, vp->height, vp->sar);
   }
 
-  bool res = handler_->HandleRequestWindow(this);
+  bool res = handler_->HandleRequestVideo(this);
   if (!res) {
     return ERROR_RESULT_VALUE;
   }
@@ -1182,11 +1182,17 @@ int VideoState::ReadThread() {
 
   /* open the streams */
   if (st_index[AVMEDIA_TYPE_AUDIO] >= 0) {
-    StreamComponentOpen(st_index[AVMEDIA_TYPE_AUDIO]);
+    int res_audio = StreamComponentOpen(st_index[AVMEDIA_TYPE_AUDIO]);
+    if (res_audio < 0) {
+      WARNING_LOG() << "Failed to open audio stream";
+    }
   }
 
   if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
-    StreamComponentOpen(st_index[AVMEDIA_TYPE_VIDEO]);
+    int res_video = StreamComponentOpen(st_index[AVMEDIA_TYPE_VIDEO]);
+    if (res_video < 0) {
+      WARNING_LOG() << "Failed to open video stream";
+    }
   }
 
   if (!IsStreamReady()) {
