@@ -127,6 +127,11 @@ int audio_open(void* opaque,
                struct AudioParams* audio_hw_params,
                SDL_AudioCallback cb);
 
+bool init_audio_params(int64_t wanted_channel_layout,
+                       int freq,
+                       int channels,
+                       struct AudioParams* audio_hw_params);
+
 bool is_realtime(AVFormatContext* s);
 
 int cmp_audio_fmts(enum AVSampleFormat fmt1,

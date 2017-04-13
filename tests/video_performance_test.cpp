@@ -8,6 +8,7 @@ extern "C" {
 #include "client/core/video_state.h"
 #include "client/core/video_state_handler.h"
 #include "client/core/events/events.h"
+#include "client/core/utils.h"
 
 using namespace fasto::fastotv;
 using namespace fasto::fastotv::client;
@@ -47,23 +48,27 @@ class FakeHandler : public VideoStateHandler {
                                   int wanted_nb_channels,
                                   int wanted_sample_rate,
                                   core::AudioParams* audio_hw_params) override {
+    UNUSED(stream);
+
+    core::AudioParams laudio_hw_params;
+    if (!core::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
+      return false;
+    }
+
+    *audio_hw_params = laudio_hw_params;
     return true;
   }
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
                              const uint8_t* src,
                              uint32_t len,
-                             int volume) override {
-    NOOP();
-  }
+                             int volume) override {}
 
   // video
   virtual bool HandleRequestVideo(VideoState* stream) override { return true; }
   virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override {
     return true;
   }
-  virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override {
-    NOOP();
-  }
+  virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override {}
   virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override { NOOP(); }
 };
 
@@ -85,7 +90,8 @@ class FakeApplication : public common::application::IApplicationImpl {
   virtual int Exec() {
     const stream_id id = "unique";
     const common::uri::Uri uri = common::uri::Uri("file:///home/sasha/fast.ts");
-    const core::AppOptions opt;
+    core::AppOptions opt;
+    opt.auto_exit = true;
     DictionaryOptions* dict = new DictionaryOptions;
     const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
                                     dict->codec_opts);
@@ -98,9 +104,15 @@ class FakeApplication : public common::application::IApplicationImpl {
       return res;
     }
 
-    lock_t lock(queue_mutex_);
+    uint8_t stream_buff[8192];
+    lock_t lock(stop_mutex_);
     while (!stop_) {
-      queue_cond_.wait(lock);
+      std::cv_status interrupt_status = stop_cond_.wait_for(lock, std::chrono::milliseconds(20));
+      if (interrupt_status == std::cv_status::no_timeout) {  // if notify
+      } else {
+        vs->TryRefreshVideo();
+        vs->UpdateAudioBuffer(stream_buff, sizeof(stream_buff), 100);
+      }
     }
 
     delete handler;
@@ -117,6 +129,9 @@ class FakeApplication : public common::application::IApplicationImpl {
       if (res == ERROR_RESULT_VALUE) {
         fApp->Exit(EXIT_FAILURE);
       }
+    } else if (fevent->GetEventType() == core::events::QuitStreamEvent::EventType) {
+      events::QuitStreamEvent* qevent = static_cast<core::events::QuitStreamEvent*>(event);
+      fApp->Exit(EXIT_SUCCESS);
     } else {
       NOTREACHED();
     }
@@ -131,15 +146,15 @@ class FakeApplication : public common::application::IApplicationImpl {
   virtual void HideCursor() {}
 
   virtual void Exit(int result) {
-    lock_t lock(queue_mutex_);
+    lock_t lock(stop_mutex_);
     stop_ = true;
-    queue_cond_.notify_one();
+    stop_cond_.notify_one();
   }
 
  private:
   typedef common::unique_lock<common::mutex> lock_t;
-  common::condition_variable queue_cond_;
-  common::mutex queue_mutex_;
+  common::condition_variable stop_cond_;
+  common::mutex stop_mutex_;
   bool stop_;
 };
 
@@ -148,6 +163,17 @@ common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** ar
 }
 
 int main(int argc, char** argv) {
+#if defined(NDEBUG)
+  common::logging::LEVEL_LOG level = common::logging::L_INFO;
+#else
+  common::logging::LEVEL_LOG level = common::logging::L_INFO;
+#endif
+#if defined(LOG_TO_FILE)
+  std::string log_path = common::file_system::prepare_path("~/" PROJECT_NAME_LOWERCASE ".log");
+  INIT_LOGGER(PROJECT_NAME_TITLE, log_path, level);
+#else
+  INIT_LOGGER(PROJECT_NAME_TITLE, level);
+#endif
   common::application::Application app(argc, argv, &CreateApplicationImpl);
   return app.Exec();
 }

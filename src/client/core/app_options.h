@@ -62,6 +62,7 @@ struct AppOptions {
   std::string hwaccel_device;
   std::string hwaccel_output_format;
 
+  bool auto_exit;
 #if CONFIG_AVFILTER
   void InitAvFilters(const std::string& arg);
   std::vector<std::string> vfilters_list;

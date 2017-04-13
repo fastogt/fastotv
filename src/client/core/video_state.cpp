@@ -935,6 +935,10 @@ void VideoState::TryRefreshVideo() {
 }
 
 void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
+  if (!IsStreamReady()) {
+    return;
+  }
+
   const clock_t audio_callback_time = GetRealClockTime();
   while (len > 0) {
     if (audio_buf_index_ >= audio_buf_size_) {
@@ -1239,18 +1243,25 @@ int VideoState::ReadThread() {
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
       continue;
     }
-    if (!paused_ && (auddec_->Finished()) && (viddec_->Finished())) {
-      ret = AVERROR_EOF;
-      goto fail;
+    if (!paused_ && (!auddec_->Finished() && audio_frame_queue_->IsEmpty()) &&
+        (!viddec_->Finished() && video_frame_queue_->IsEmpty())) {
+      if (opt_.auto_exit) {
+        ret = AVERROR_EOF;
+        goto fail;
+      }
     }
     ret = av_read_frame(ic, pkt);
     if (ret < 0) {
-      if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !eof_) {
+      bool is_eof = ret == AVERROR_EOF;
+      bool is_feof = avio_feof(ic->pb);
+      if ((is_eof || is_feof) && !eof_) {
         if (video_stream->IsOpened()) {
           video_packet_queue->PutNullpacket(video_stream->Index());
+          viddec_->SetFinished(false);  // FIX ME
         }
         if (audio_stream->IsOpened()) {
           audio_packet_queue->PutNullpacket(audio_stream->Index());
+          auddec_->SetFinished(false);  // FIX ME
         }
         eof_ = true;
       }

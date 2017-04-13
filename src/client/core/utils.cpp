@@ -363,19 +363,39 @@ int audio_open(void* opaque,
     }
   }
 
-  audio_hw_params->fmt = AV_SAMPLE_FMT_S16;
-  audio_hw_params->freq = spec.freq;
-  audio_hw_params->channel_layout = wanted_channel_layout;
-  audio_hw_params->channels = spec.channels;
-  audio_hw_params->frame_size =
-      av_samples_get_buffer_size(NULL, audio_hw_params->channels, 1, audio_hw_params->fmt, 1);
-  audio_hw_params->bytes_per_sec = av_samples_get_buffer_size(
-      NULL, audio_hw_params->channels, audio_hw_params->freq, audio_hw_params->fmt, 1);
-  if (audio_hw_params->bytes_per_sec <= 0 || audio_hw_params->frame_size <= 0) {
-    ERROR_LOG() << "av_samples_get_buffer_size failed";
+  struct AudioParams laudio_hw_params;
+  if (!init_audio_params(wanted_channel_layout, spec.freq, spec.channels, &laudio_hw_params)) {
+    ERROR_LOG() << "Failed to init audio parametrs";
     return -1;
   }
+
+  *audio_hw_params = laudio_hw_params;
   return spec.size;
+}
+
+bool init_audio_params(int64_t wanted_channel_layout,
+                       int freq,
+                       int channels,
+                       struct AudioParams* audio_hw_params) {
+  if (!audio_hw_params) {
+    return false;
+  }
+
+  struct AudioParams laudio_hw_params;
+  laudio_hw_params.fmt = AV_SAMPLE_FMT_S16;
+  laudio_hw_params.freq = freq;
+  laudio_hw_params.channel_layout = wanted_channel_layout;
+  laudio_hw_params.channels = channels;
+  laudio_hw_params.frame_size =
+      av_samples_get_buffer_size(NULL, laudio_hw_params.channels, 1, laudio_hw_params.fmt, 1);
+  laudio_hw_params.bytes_per_sec = av_samples_get_buffer_size(
+      NULL, laudio_hw_params.channels, laudio_hw_params.freq, laudio_hw_params.fmt, 1);
+  if (laudio_hw_params.bytes_per_sec <= 0 || laudio_hw_params.frame_size <= 0) {
+    return false;
+  }
+
+  *audio_hw_params = laudio_hw_params;
+  return true;
 }
 
 bool is_realtime(AVFormatContext* s) {
