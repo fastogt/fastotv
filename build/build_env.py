@@ -399,7 +399,7 @@ class BuildRequest(object):
 if __name__ == "__main__":
     libpng_default_version = '1.6.29'
     sdl2_default_version = '2.0.5'
-    ffmpeg_default_version = '3.2.4'
+    ffmpeg_default_version = '3.3'
     cmake_default_version = '3.8.0'
 
     host_os = system_info.get_os()
