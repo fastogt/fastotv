@@ -89,9 +89,11 @@ class FakeApplication : public common::application::IApplicationImpl {
   }
   virtual int Exec() {
     const stream_id id = "unique";
-    const common::uri::Uri uri = common::uri::Uri("file:///home/sasha/fast.ts");
+    // wget http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
+    const common::uri::Uri uri = common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
     core::AppOptions opt;
     opt.auto_exit = true;
+    opt.hwaccel_id = HWACCEL_VAAPI;
     DictionaryOptions* dict = new DictionaryOptions;
     const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
                                     dict->codec_opts);

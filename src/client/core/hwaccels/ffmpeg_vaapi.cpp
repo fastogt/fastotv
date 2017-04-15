@@ -68,8 +68,6 @@ static int vaapi_retrieve_data(AVCodecContext* avctx, AVFrame* input) {
     return 0;
   }
 
-  DEBUG_LOG() << "Retrieve data from surface " << reinterpret_cast<uintptr_t>(input->data[3])
-              << ".";
   AVFrame* output = av_frame_alloc();
   if (!output) {
     return AVERROR(ENOMEM);
