@@ -1406,12 +1406,11 @@ int VideoState::VideoThread() {
   }
 #endif
 
-  int ret;
   AVStream* video_st = vstream_->AvStream();
   AVRational tb = video_st->time_base;
   AVRational frame_rate = av_guess_frame_rate(ic_, video_st, NULL);
   while (true) {
-    ret = GetVideoFrame(frame);
+    int ret = GetVideoFrame(frame);
     if (ret < 0) {
       goto the_end;
     }
