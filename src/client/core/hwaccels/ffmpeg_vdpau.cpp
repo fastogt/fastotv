@@ -28,8 +28,6 @@ extern "C" {
 
 #include "client/core/ffmpeg_internal.h"
 
-#define DEFAULT_SURFACES 20
-
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -37,7 +35,7 @@ namespace core {
 
 typedef struct VDPAUContext {
   AVBufferRef* hw_frames_ctx;
-  enum AVPixelFormat output_format;
+  AVFrame* tmp_frame;
 } VDPAUContext;
 
 typedef void vdpau_uninit_callback_t(AVCodecContext* s);
@@ -53,6 +51,7 @@ static void vdpau_uninit(AVCodecContext* s) {
   ist->hwaccel_retrieve_data = NULL;
 
   av_buffer_unref(&ctx->hw_frames_ctx);
+  av_frame_free(&ctx->tmp_frame);
 
   av_freep(&ist->hwaccel_ctx);
   av_freep(&s->hwaccel_context);
@@ -63,79 +62,66 @@ static int vdpau_get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   VDPAUContext* ctx = static_cast<VDPAUContext*>(ist->hwaccel_ctx);
 
-  int err = av_hwframe_get_buffer(ctx->hw_frames_ctx, frame, 0);
-  if (err < 0) {
-    ERROR_LOG() << "Failed to allocate decoder surface.";
-  } else {
-    DEBUG_LOG() << "Decoder given surface " << reinterpret_cast<uintptr_t>(frame->data[3]) << ".";
-  }
-  return err;
+  return av_hwframe_get_buffer(ctx->hw_frames_ctx, frame, 0);
 }
 
-static int vdpau_retrieve_data(AVCodecContext* avctx, AVFrame* input) {
-  InputStream* ist = static_cast<InputStream*>(avctx->opaque);
+static int vdpau_retrieve_data(AVCodecContext* s, AVFrame* frame) {
+  InputStream* ist = static_cast<InputStream*>(s->opaque);
   VDPAUContext* ctx = static_cast<VDPAUContext*>(ist->hwaccel_ctx);
 
-  if (ctx->output_format == AV_PIX_FMT_VAAPI) {
-    return 0;
+  int ret = av_hwframe_transfer_data(ctx->tmp_frame, frame, 0);
+  if (ret < 0) {
+    return ret;
   }
 
-  AVFrame* output = av_frame_alloc();
-  if (!output) {
-    return AVERROR(ENOMEM);
+  ret = av_frame_copy_props(ctx->tmp_frame, frame);
+  if (ret < 0) {
+    av_frame_unref(ctx->tmp_frame);
+    return ret;
   }
 
-  output->format = ctx->output_format;
-
-  int err = av_hwframe_transfer_data(output, input, 0);
-  if (err < 0) {
-    ERROR_LOG() << "Failed to transfer data to output frame error: " << err << ".";
-    av_frame_free(&output);
-    return err;
-  }
-
-  err = av_frame_copy_props(output, input);
-  if (err < 0) {
-    av_frame_unref(output);
-    av_frame_free(&output);
-    return err;
-  }
-
-  av_frame_unref(input);
-  av_frame_move_ref(input, output);
-  av_frame_free(&output);
+  av_frame_unref(frame);
+  av_frame_move_ref(frame, ctx->tmp_frame);
   return 0;
 }
 
-static int vaapi_decode_init(AVCodecContext* avctx) {
-  InputStream* ist = static_cast<InputStream*>(avctx->opaque);
+static int vdpau_alloc(AVCodecContext* s) {
+  InputStream* ist = static_cast<InputStream*>(s->opaque);
 
   VDPAUContext* ctx = static_cast<VDPAUContext*>(av_mallocz(sizeof(*ctx)));
   if (!ctx) {
     ERROR_LOG() << "VDPAU init failed(alloc VDPAUContext).";
-    vdpau_uninit(avctx);
+    vdpau_uninit(s);
     return AVERROR(ENOMEM);
   }
 
   ist->hwaccel_ctx = ctx;
+  ist->hwaccel_uninit = vdpau_uninit;
+  ist->hwaccel_get_buffer = vdpau_get_buffer;
+  ist->hwaccel_retrieve_data = vdpau_retrieve_data;
+
+  ctx->tmp_frame = av_frame_alloc();
+  if (!ctx->tmp_frame) {
+    ERROR_LOG() << "Failed to create VDPAU frame context.";
+    vdpau_uninit(s);
+    return AVERROR(ENOMEM);
+  }
 
   AVBufferRef* device_ref = NULL;
   int ret =
       av_hwdevice_ctx_create(&device_ref, AV_HWDEVICE_TYPE_VDPAU, ist->hwaccel_device, NULL, 0);
   if (ret < 0) {
     ERROR_LOG() << "VDPAU init failed error: " << ret;
-    vdpau_uninit(avctx);
+    vdpau_uninit(s);
     return AVERROR(EINVAL);
   }
   AVHWDeviceContext* device_ctx = reinterpret_cast<AVHWDeviceContext*>(device_ref->data);
   AVVDPAUDeviceContext* device_hwctx = static_cast<AVVDPAUDeviceContext*>(device_ctx->hwctx);
 
-  ctx->output_format = ist->hwaccel_output_format;
-  avctx->pix_fmt = ctx->output_format;
   ctx->hw_frames_ctx = av_hwframe_ctx_alloc(device_ref);
   if (!ctx->hw_frames_ctx) {
     ERROR_LOG() << "Failed to create VDPAU frame context.";
-    vdpau_uninit(avctx);
+    vdpau_uninit(s);
     return AVERROR(ENOMEM);
   }
 
@@ -143,34 +129,24 @@ static int vaapi_decode_init(AVCodecContext* avctx) {
 
   AVHWFramesContext* frames_ctx = reinterpret_cast<AVHWFramesContext*>(ctx->hw_frames_ctx->data);
   frames_ctx->format = AV_PIX_FMT_VDPAU;
-  frames_ctx->sw_format = avctx->sw_pix_fmt;
-  frames_ctx->width = avctx->coded_width;
-  frames_ctx->height = avctx->coded_height;
-
-  // For frame-threaded decoding, at least one additional surface
-  // is needed for each thread.
-  frames_ctx->initial_pool_size = DEFAULT_SURFACES;
-  if (avctx->active_thread_type & FF_THREAD_FRAME) {
-    frames_ctx->initial_pool_size += avctx->thread_count;
-  }
+  frames_ctx->sw_format = s->sw_pix_fmt;
+  frames_ctx->width = s->coded_width;
+  frames_ctx->height = s->coded_height;
 
   ret = av_hwframe_ctx_init(ctx->hw_frames_ctx);
   if (ret < 0) {
     ERROR_LOG() << "Failed to initialise VDPAU hw_frame context error: " << ret;
-    vdpau_uninit(avctx);
+    vdpau_uninit(s);
     return AVERROR(EINVAL);
   }
 
-  ret = av_vdpau_bind_context(avctx, device_hwctx->device, device_hwctx->get_proc_address, 0);
+  ret = av_vdpau_bind_context(s, device_hwctx->device, device_hwctx->get_proc_address, 0);
   if (ret != 0) {
     ERROR_LOG() << "Failed to bind VDPAU context error: " << ret;
-    vdpau_uninit(avctx);
+    vdpau_uninit(s);
     return AVERROR(EINVAL);
   }
 
-  ist->hwaccel_uninit = &vdpau_uninit;
-  ist->hwaccel_get_buffer = &vdpau_get_buffer;
-  ist->hwaccel_retrieve_data = &vdpau_retrieve_data;
   INFO_LOG() << "Using VDPAU to decode input stream.";
   return 0;
 }
@@ -178,15 +154,15 @@ static int vaapi_decode_init(AVCodecContext* avctx) {
 int vdpau_init(AVCodecContext* decoder_ctx) {
   InputStream* ist = static_cast<InputStream*>(decoder_ctx->opaque);
 
-  if (ist->hwaccel_ctx) {
-    vdpau_uninit(decoder_ctx);
+  if (!ist->hwaccel_ctx) {
+    int ret = vdpau_alloc(decoder_ctx);
+    if (ret < 0) {
+      return ret;
+    }
   }
 
-  int ret = vaapi_decode_init(decoder_ctx);
-  if (ret < 0) {
-    return ret;
-  }
-
+  ist->hwaccel_get_buffer = vdpau_get_buffer;
+  ist->hwaccel_retrieve_data = vdpau_retrieve_data;
   return 0;
 }
 }
