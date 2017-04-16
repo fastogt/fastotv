@@ -161,6 +161,16 @@ def install_orange_pi():
         os.chdir(pwd)
         raise ex
 
+    try:
+        cloned_dir = git_clone('https://github.com/fastogt/libvdpau-sunxi.git', pwd)
+        os.chdir(cloned_dir)
+        subprocess.call(['make', 'install'])
+        os.chdir(pwd)
+        shutil.rmtree(cloned_dir)
+    except Exception as ex:
+        os.chdir(pwd)
+        raise ex
+
     with open('/etc/udev/rules.d/50-mali.rules', 'w') as f:
         f.write('KERNEL=="mali", MODE="0660", GROUP="video"\n'
                 'KERNEL=="ump", MODE="0660", GROUP="video"')
@@ -208,7 +218,7 @@ class SupportedDevice(object):
 SUPPORTED_DEVICES = [
     SupportedDevice('pc', [], CompileInfo([], []), CompileInfo([], [])),
     SupportedDevice('orange-pi-one',
-                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libvdpau-sunxi1'],
+                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo'],
                     CompileInfo(['patch/orange-pi-one/sdl2'],
                                 ['--disable-video-opengl', '--disable-video-opengles1', '--enable-video-opengles2']),
                     CompileInfo([], []), install_orange_pi)]
