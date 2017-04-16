@@ -218,7 +218,7 @@ class SupportedDevice(object):
 SUPPORTED_DEVICES = [
     SupportedDevice('pc', [], CompileInfo([], []), CompileInfo([], [])),
     SupportedDevice('orange-pi-one',
-                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo'],
+                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libcedrus1-dev'],
                     CompileInfo(['patch/orange-pi-one/sdl2'],
                                 ['--disable-video-opengl', '--disable-video-opengles1', '--enable-video-opengles2']),
                     CompileInfo([], []), install_orange_pi)]
