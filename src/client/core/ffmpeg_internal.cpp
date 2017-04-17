@@ -9,6 +9,9 @@
 #if CONFIG_VAAPI
 #include "client/core/hwaccels/ffmpeg_vaapi.h"
 #endif
+#if CONFIG_CUVID
+#include "client/core/hwaccels/ffmpeg_cuvid.h"
+#endif
 
 namespace fasto {
 namespace fastotv {

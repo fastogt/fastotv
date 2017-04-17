@@ -25,6 +25,9 @@
 #cmakedefine01 HAVE_VAAPI_DRM
 #cmakedefine01 HAVE_VAAPI_X11
 
+#cmakedefine01 CONFIG_CUVID
+#cmakedefine01 HAVE_CUVID
+
 #define FFMPEG_CONFIGURATION ""
 #define CC_IDENT "gcc 4.9.2 (Debian 4.9.2-10)"
 #define FFMPEG_DATADIR "/usr/local/share/ffmpeg"
