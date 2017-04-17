@@ -63,6 +63,7 @@ int Sdl2Application::PreExec() {
 
   SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
   SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
+
   return EXIT_SUCCESS;
 }
 
@@ -75,6 +76,9 @@ int Sdl2Application::Exec() {
       case SDL_KEYDOWN: {
         HandleKeyPressEvent(&event.key);
         break;
+      }
+      case SDL_KEYUP: {
+       break;
       }
       case SDL_MOUSEBUTTONDOWN: {
         HandleMousePressEvent(&event.button);
@@ -161,7 +165,7 @@ void Sdl2Application::HandleEvent(events::Event* event) {
 }
 
 void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
-  if (event->type == SDL_KEYDOWN) {
+  if (event->type == SDL_KEYDOWN && event->repeat == 0) {
     Keysym ks = SDLKeySymToOur(event->keysym);
     events::KeyPressInfo inf(event->state == SDL_PRESSED, ks);
     events::KeyPressEvent* key_press = new events::KeyPressEvent(this, inf);
