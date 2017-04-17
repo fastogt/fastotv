@@ -451,6 +451,9 @@ void VideoState::StreamComponentClose(int stream_index) {
     viddec_->Abort();
     vdecoder_tid_->Join();
     vdecoder_tid_ = NULL;
+    if (input_st_->hwaccel_uninit) {
+      input_st_->hwaccel_uninit(viddec_->AvCtx());
+    }
     destroy(&viddec_);
     destroy(&video_frame_queue_);
   } else if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {

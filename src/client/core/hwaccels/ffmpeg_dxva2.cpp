@@ -584,6 +584,7 @@ int dxva2_init(AVCodecContext* s) {
     return ret;
   }
 
+  INFO_LOG() << "Using DXVA2 to decode input stream.";
   return 0;
 }
 }

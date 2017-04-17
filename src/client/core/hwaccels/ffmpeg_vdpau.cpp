@@ -46,14 +46,17 @@ static void vdpau_uninit(AVCodecContext* s) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   VDPAUContext* ctx = static_cast<VDPAUContext*>(ist->hwaccel_ctx);
 
+  if (ctx) {
+    av_buffer_unref(&ctx->hw_frames_ctx);
+    av_frame_free(&ctx->tmp_frame);
+    av_free(ctx);
+  }
+  
+  ist->hwaccel_ctx = NULL;
   ist->hwaccel_uninit = NULL;
   ist->hwaccel_get_buffer = NULL;
   ist->hwaccel_retrieve_data = NULL;
 
-  av_buffer_unref(&ctx->hw_frames_ctx);
-  av_frame_free(&ctx->tmp_frame);
-
-  av_freep(&ist->hwaccel_ctx);
   av_freep(&s->hwaccel_context);
 }
 
@@ -96,9 +99,6 @@ static int vdpau_alloc(AVCodecContext* s) {
   }
 
   ist->hwaccel_ctx = ctx;
-  ist->hwaccel_uninit = vdpau_uninit;
-  ist->hwaccel_get_buffer = vdpau_get_buffer;
-  ist->hwaccel_retrieve_data = vdpau_retrieve_data;
 
   ctx->tmp_frame = av_frame_alloc();
   if (!ctx->tmp_frame) {
@@ -147,23 +147,20 @@ static int vdpau_alloc(AVCodecContext* s) {
     return AVERROR(EINVAL);
   }
 
+  ist->hwaccel_uninit = &vdpau_uninit;
+  ist->hwaccel_get_buffer = &vdpau_get_buffer;
+  ist->hwaccel_retrieve_data = &vdpau_retrieve_data;
   INFO_LOG() << "Using VDPAU to decode input stream.";
   return 0;
 }
 
 int vdpau_init(AVCodecContext* decoder_ctx) {
   InputStream* ist = static_cast<InputStream*>(decoder_ctx->opaque);
-
-  if (!ist->hwaccel_ctx) {
-    int ret = vdpau_alloc(decoder_ctx);
-    if (ret < 0) {
-      return ret;
-    }
+  if (ist->hwaccel_ctx) {
+    return 0;
   }
 
-  ist->hwaccel_get_buffer = vdpau_get_buffer;
-  ist->hwaccel_retrieve_data = vdpau_retrieve_data;
-  return 0;
+  return vdpau_alloc(decoder_ctx);
 }
 }
 }
