@@ -170,14 +170,15 @@ class BuildRequest(object):
                 subprocess.call(['port', 'install', lib])
 
     def build(self, url, compiler_flags: utils.CompileInfo):
-        utils.build_from_sources(url, compiler_flags, self.prefix_path_)
+        utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_)
 
     def build_ffmpeg(self, version):
-        ffmpeg_platform_args = ['--disable-doc',
-                                '--disable-opencl',
+        ffmpeg_platform_args = ['--disable-doc', 
+                                '--disable-programs',
+                                '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
-                                '--disable-debug', '--disable-ffserver',
+                                '--disable-debug', '--disable-jni',
                                 '--enable-avfilter', '--enable-avcodec', '--enable-avdevice', '--enable-avformat',
                                 '--enable-swscale', '--enable-swresample',
                                 '--extra-version=static']  # '--extra-cflags=--static'
