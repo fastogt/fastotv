@@ -93,7 +93,6 @@ class FakeApplication : public common::application::IApplicationImpl {
     const common::uri::Uri uri = common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
     core::AppOptions opt;
     opt.auto_exit = true;
-    opt.hwaccel_id = HWACCEL_VDPAU;
     DictionaryOptions* dict = new DictionaryOptions;
     const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
                                     dict->codec_opts);

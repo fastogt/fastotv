@@ -576,7 +576,7 @@ common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** ar
 /* Called from the main */
 int main(int argc, char** argv) {
   bool daemon_mode = false;
-  for (int i = 0; i < argc; ++i) {
+  for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-d") == 0) {
       daemon_mode = true;
     }

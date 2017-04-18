@@ -46,7 +46,7 @@ extern "C" {
 #define USER_FIELD "user"
 #define URLS_FIELD "urls"
 
-#define IMG_PATH "resources/offline.png"
+#define IMG_PATH_RELATIVE "resources/offline.png"
 
 #undef ERROR
 
@@ -387,7 +387,8 @@ void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
 void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
-    surface_ = IMG_LoadPNG(IMG_PATH);
+    std::string full_path = common::file_system::realpath_from_filename(IMG_PATH_RELATIVE);
+    surface_ = IMG_LoadPNG(full_path.c_str());
     controller_->Start();
   }
 }
