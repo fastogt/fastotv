@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-import sys
 import os
-import shutil
 import re
-from pybuild_utils.base import system_info
+import shutil
+import sys
+
 from pybuild_utils.base import run_command
+from pybuild_utils.base import system_info
 from pybuild_utils.base import utils
 
 
@@ -216,6 +217,7 @@ class BuildRequest(object):
 
 if __name__ == "__main__":
     argc = len(sys.argv)
+    dev_null = '/dev/null'
 
     if argc > 1:
         cmake_root = sys.argv[1]
@@ -226,7 +228,7 @@ if __name__ == "__main__":
     if argc > 2:
         branding_file_path = sys.argv[2]
     else:
-        branding_file_path = '/dev/null'
+        branding_file_path = dev_null
 
     if argc > 3:
         platform_str = sys.argv[3]
@@ -250,7 +252,7 @@ if __name__ == "__main__":
         packages = []
 
     request = BuildRequest(platform_str, arch_bit_str)
-    if branding_file_path != '/dev/null':
+    if branding_file_path != dev_null:
         abs_branding_file = os.path.abspath(branding_file_path)
         branding_options = utils.read_file_line_by_line(abs_branding_file)
     else:

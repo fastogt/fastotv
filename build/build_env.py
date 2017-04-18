@@ -1,13 +1,11 @@
 #!/usr/bin/env python
-import sys
-from urllib.request import urlopen
-import subprocess
+import argparse
 import os
 import shutil
-import platform
-import argparse
-import tarfile
-import re
+import subprocess
+import sys
+
+from devices import orange_pi_one
 from pybuild_utils.base import system_info, utils
 
 # Script for building enviroment on clean machine
@@ -33,161 +31,11 @@ ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 g_script_path = os.path.realpath(sys.argv[0])
 
 
-class CompileInfo(object):
-    def __init__(self, patches: list, flags: list):
-        self.patches_ = patches
-        self.flags_ = flags
-
-    def patches(self):
-        return self.patches_
-
-    def flags(self):
-        return self.flags_
-
-    def extend_flags(self, other_args):
-        self.flags_.extend(other_args)
-
-
 def splitext(path):
     for ext in ['.tar.gz', '.tar.bz2', '.tar.xz']:
         if path.endswith(ext):
             return path[:-len(ext)]
     return os.path.splitext(path)[0]
-
-
-def download_file(url, current_dir):
-    file_name = url.split('/')[-1]
-    responce = urlopen(url)
-    if responce.status != 200:
-        raise utils.BuildError(
-            "Can't fetch url: %s, status: %s, responce: %s" % (url, responce.status, responce.reason))
-
-    f = open(file_name, 'wb')
-    file_size = 0
-    header = responce.getheader("Content-Length")
-    if header:
-        file_size = int(header)
-
-    print("Downloading: %s Bytes: %s" % (file_name, file_size))
-
-    file_size_dl = 0
-    block_sz = 8192
-    while True:
-        buffer = responce.read(block_sz)
-        if not buffer:
-            break
-
-        file_size_dl += len(buffer)
-        f.write(buffer)
-        percent = 0 if not file_size else file_size_dl * 100. / file_size
-        status = r"%10d  [%3.2f%%]" % (file_size_dl, percent)
-        status += chr(8) * (len(status) + 1)
-        print(status, end='\r')
-
-    f.close()
-    return os.path.join(current_dir, file_name)
-
-
-def extract_file(path, current_dir):
-    print("Extracting: {0}".format(path))
-    try:
-        tar_file = tarfile.open(path)
-    except Exception as ex:
-        raise ex
-
-    target_path = os.path.commonprefix(tar_file.getnames())
-    try:
-        tar_file.extractall()
-    except Exception as ex:
-        raise ex
-    finally:
-        tar_file.close()
-
-    return os.path.join(current_dir, target_path)
-
-
-def build_command_configure(compiler_flags: CompileInfo, prefix_path):
-    # patches
-    script_dir = os.path.dirname(g_script_path)
-
-    for dir in compiler_flags.patches():
-        scan_dir = os.path.join(script_dir, dir)
-        if os.path.exists(scan_dir):
-            for diff in os.listdir(scan_dir):
-                if re.match(r'.+\.patch', diff):
-                    patch_file = os.path.join(scan_dir, diff)
-                    line = 'patch -p0 < {0}'.format(patch_file)
-                    subprocess.call(['bash', '-c', line])
-
-    compile_cmd = ['./configure', '--prefix={0}'.format(prefix_path)]
-    compile_cmd.extend(compiler_flags.flags())
-    subprocess.call(compile_cmd)
-    subprocess.call(['make', '-j2'])
-    subprocess.call(['make', 'install'])
-
-
-def build_from_sources(url, compiler_flags: CompileInfo, prefix_path):
-    pwd = os.getcwd()
-    file_path = download_file(url, pwd)
-    extracted_folder = extract_file(file_path, pwd)
-    os.chdir(extracted_folder)
-    build_command_configure(compiler_flags, prefix_path)
-    os.chdir(pwd)
-    shutil.rmtree(extracted_folder)
-
-
-def git_clone(url, current_dir):
-    common_git_clone_line = ['git', 'clone', url]
-    cloned_dir = os.path.splitext(url.rsplit('/', 1)[-1])[0]
-    common_git_clone_line.append(cloned_dir)
-    subprocess.call(common_git_clone_line)
-    os.chdir(cloned_dir)
-
-    common_git_clone_init_line = ['git', 'submodule', 'update', '--init', '--recursive']
-    subprocess.call(common_git_clone_init_line)
-    return os.path.join(current_dir, cloned_dir)
-
-
-def install_orange_pi():
-    pwd = os.getcwd()
-    try:
-        cloned_dir = git_clone('https://github.com/linux-sunxi/sunxi-mali.git', pwd)
-        os.chdir(cloned_dir)
-        subprocess.call(['make', 'config'])
-        subprocess.call(['make', 'install'])
-        os.chdir(pwd)
-        shutil.rmtree(cloned_dir)
-    except Exception as ex:
-        os.chdir(pwd)
-        raise ex
-
-    try:
-        cloned_dir = git_clone('https://github.com/fastogt/libvdpau-sunxi.git', pwd)
-        os.chdir(cloned_dir)
-        subprocess.call(['make', 'install'])
-        os.chdir(pwd)
-        shutil.rmtree(cloned_dir)
-    except Exception as ex:
-        os.chdir(pwd)
-        raise ex
-
-    with open('/etc/udev/rules.d/50-mali.rules', 'w') as f:
-        f.write('KERNEL=="mali", MODE="0660", GROUP="video"\n'
-                'KERNEL=="ump", MODE="0660", GROUP="video"')
-
-    with open('/etc/asound.conf', 'w') as f:
-        f.write('pcm.!default {\n'
-                'type hw\n'
-                'card 1\n'
-                '}\n'
-                'ctl.!default {\n'
-                'type hw\n'
-                'card 1\n'
-                '}')
-
-    standart_egl_path = '/usr/lib/arm-linux-gnueabihf/mesa-egl/'
-    if os.path.exists(standart_egl_path):
-        shutil.move(standart_egl_path, '/usr/lib/arm-linux-gnueabihf/.mesa-egl/')
 
 
 class SupportedDevice(object):
@@ -216,37 +64,21 @@ class SupportedDevice(object):
 
 
 SUPPORTED_DEVICES = [
-    SupportedDevice('pc', [], CompileInfo([], []), CompileInfo([], [])),
+    SupportedDevice('pc', [], utils.CompileInfo([], []), utils.CompileInfo([], [])),
     SupportedDevice('orange-pi-one',
                     ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libcedrus1-dev'],
-                    CompileInfo(['patch/orange-pi-one/sdl2'],
-                                ['--disable-video-opengl', '--disable-video-opengles1', '--enable-video-opengles2']),
-                    CompileInfo([], []), install_orange_pi)]
+                    utils.CompileInfo(['patch/orange-pi-one/sdl2'],
+                                      ['--disable-video-opengl', '--disable-video-opengles1',
+                                       '--enable-video-opengles2']),
+                    utils.CompileInfo([], []), orange_pi_one.install_orange_pi)]
 
 
 def get_device() -> SupportedDevice:
     return SUPPORTED_DEVICES[0]
 
 
-def get_supported_device_by_name(name):
+def get_supported_device_by_name(name) -> SupportedDevice:
     return next((x for x in SUPPORTED_DEVICES if x.name() == name), None)
-
-
-def linux_get_dist():
-    """
-    Return the running distribution group
-    RHEL: RHEL, CENTOS, FEDORA
-    DEBIAN: UBUNTU, DEBIAN
-    """
-    linux_tuple = platform.linux_distribution()
-    dist_name = linux_tuple[0]
-    dist_name_upper = dist_name.upper()
-
-    if dist_name_upper in ["RHEL", "CENTOS LINUX", "FEDORA"]:
-        return "RHEL"
-    elif dist_name_upper in ["DEBIAN", "UBUNTU"]:
-        return "DEBIAN"
-    raise NotImplemented("Unknown platform '%s'" % dist_name)
 
 
 class BuildRequest(object):
@@ -289,7 +121,7 @@ class BuildRequest(object):
         device = self.device_
 
         if platform_name == 'linux':
-            distribution = linux_get_dist()
+            distribution = system_info.linux_get_dist()
             if distribution == 'DEBIAN':
                 dep_libs = ['git', 'gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
@@ -297,7 +129,7 @@ class BuildRequest(object):
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit',
-                                                                      'libvdpau-dev', 'libva-dev']
+                            'libvdpau-dev', 'libva-dev']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
                             'make',
@@ -337,8 +169,8 @@ class BuildRequest(object):
             for lib in dep_libs:
                 subprocess.call(['port', 'install', lib])
 
-    def build(self, url, compiler_flags: CompileInfo):
-        build_from_sources(url, compiler_flags, self.prefix_path_)
+    def build(self, url, compiler_flags: utils.CompileInfo):
+        utils.build_from_sources(url, compiler_flags, self.prefix_path_)
 
     def build_ffmpeg(self, version):
         ffmpeg_platform_args = ['--disable-doc',
@@ -368,13 +200,13 @@ class BuildRequest(object):
         self.build('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_libpng(self, version):
-        compiler_flags = CompileInfo([], [])
+        compiler_flags = utils.CompileInfo([], [])
         self.build('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), compiler_flags)
 
     def build_cmake(self, version):
         stabled_version_array = version.split(".")
         stabled_version = 'v{0}.{1}'.format(stabled_version_array[0], stabled_version_array[1])
-        compiler_flags = CompileInfo([], [])
+        compiler_flags = utils.CompileInfo([], [])
         self.build('{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT, []),
                    compiler_flags)
 
@@ -390,7 +222,7 @@ class BuildRequest(object):
         cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
                       prefix_args]
         try:
-            cloned_dir = git_clone('https://github.com/fastogt/common.git', pwd)
+            cloned_dir = utils.git_clone('https://github.com/fastogt/common.git', pwd)
             os.chdir(cloned_dir)
 
             os.mkdir('build_cmake_release')
