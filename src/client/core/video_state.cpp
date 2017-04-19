@@ -276,7 +276,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
   }
 
   const char* forced_codec_name = NULL;
-  // av_codec_set_pkt_timebase(avctx, stream->time_base);
+  av_codec_set_pkt_timebase(avctx, stream->time_base);
   AVCodec* codec = avcodec_find_decoder(avctx->codec_id);
 
   if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {

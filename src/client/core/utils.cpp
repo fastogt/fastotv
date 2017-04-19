@@ -189,7 +189,7 @@ int configure_filtergraph(AVFilterGraph* graph,
                           const std::string& filtergraph,
                           AVFilterContext* source_ctx,
                           AVFilterContext* sink_ctx) {
-  AVFilterInOut *outputs = NULL, *inputs = NULL;
+  AVFilterInOut* outputs = NULL, *inputs = NULL;
   int ret;
   if (!filtergraph.empty()) {
     outputs = avfilter_inout_alloc();
@@ -282,14 +282,21 @@ int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
         ERROR_LOG() << "Negative linesize is not supported for YUV.";
         return -1;
       }
-      ret = SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1],
-                                 frame->linesize[1], frame->data[2], frame->linesize[2]);
+      ret = SDL_UpdateYUVTexture(tex,
+                                 NULL,
+                                 frame->data[0],
+                                 frame->linesize[0],
+                                 frame->data[1],
+                                 frame->linesize[1],
+                                 frame->data[2],
+                                 frame->linesize[2]);
       break;
     case AV_PIX_FMT_BGRA:
       if (frame->linesize[0] < 0) {
-        ret =
-            SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
-                              -frame->linesize[0]);
+        ret = SDL_UpdateTexture(tex,
+                                NULL,
+                                frame->data[0] + frame->linesize[0] * (frame->height - 1),
+                                -frame->linesize[0]);
       } else {
         ret = SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
       }
@@ -332,9 +339,11 @@ int audio_open(void* opaque,
     next_sample_rate_idx--;
   }
   wanted_spec.format = AUDIO_S16SYS;
-  wanted_spec.silence = 0;
-  wanted_spec.samples = FFMAX(AUDIO_MIN_BUFFER_SIZE,
-                              2 << av_log2(wanted_spec.freq / SDL_AUDIO_MAX_CALLBACKS_PER_SEC));
+  const double samples_per_call =
+      static_cast<double>(wanted_spec.freq) / SDL_AUDIO_MAX_CALLBACKS_PER_SEC;
+  const Uint16 audio_buff_size = 2 << av_log2(samples_per_call);
+  wanted_spec.samples =
+      FFMAX(AUDIO_MIN_BUFFER_SIZE, audio_buff_size);  // Audio buffer size in samples
   wanted_spec.callback = cb;
   wanted_spec.userdata = opaque;
   while (SDL_OpenAudio(&wanted_spec, &spec) < 0) {
