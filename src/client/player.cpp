@@ -75,8 +75,8 @@ bool CreateWindowFunc(int width,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                         width, height, flags);
+  SDL_Window* lwindow = SDL_CreateWindow(
+      NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -116,7 +116,8 @@ PlayerOptions::PlayerOptions()
       screen_width(0),
       screen_height(0),
       audio_volume(volume),
-      muted(false) {}
+      muted(false) {
+}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -126,6 +127,7 @@ Player::Player(const PlayerOptions& options,
       copt_(copt),
       play_list_(),
       audio_params_(nullptr),
+      audio_buff_size_(0),
       renderer_(NULL),
       window_(NULL),
       cursor_hidden_(false),
@@ -259,25 +261,34 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
                                 int64_t wanted_channel_layout,
                                 int wanted_nb_channels,
                                 int wanted_sample_rate,
-                                core::AudioParams* audio_hw_params) {
+                                core::AudioParams* audio_hw_params,
+                                int* audio_buff_size) {
   UNUSED(stream);
 
   if (audio_params_) {
     *audio_hw_params = *audio_params_;
+    *audio_buff_size = audio_buff_size_;
     return true;
   }
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
-                             &laudio_hw_params, sdl_audio_callback);
+  int ret = core::audio_open(this,
+                             wanted_channel_layout,
+                             wanted_nb_channels,
+                             wanted_sample_rate,
+                             &laudio_hw_params,
+                             sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
 
   SDL_PauseAudio(0);
   audio_params_ = new core::AudioParams(laudio_hw_params);
+  audio_buff_size_ = ret;
+
   *audio_hw_params = *audio_params_;
+  *audio_buff_size = audio_buff_size_;
   return true;
 }
 
@@ -298,14 +309,13 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
-                     false) < 0) {
+  if (ReallocTexture(
+          &frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of "
-                << frame->width << "x" << frame->height
+                   "size of " << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -320,9 +330,14 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect, xleft_, ytop_, width_, height_, frame->width, frame->height,
-                               frame->sar);
-  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
+  core::calculate_display_rect(
+      &rect, xleft_, ytop_, width_, height_, frame->width, frame->height, frame->sar);
+  SDL_RenderCopyEx(renderer_,
+                   frame->bmp,
+                   NULL,
+                   &rect,
+                   0,
+                   NULL,
                    frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   SDL_RenderPresent(renderer_);

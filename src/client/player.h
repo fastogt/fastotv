@@ -73,7 +73,8 @@ class Player : public core::VideoStateHandler {
                                   int64_t wanted_channel_layout,
                                   int wanted_nb_channels,
                                   int wanted_sample_rate,
-                                  core::AudioParams* audio_hw_params) override;
+                                  core::AudioParams* audio_hw_params,
+                                  int* audio_buff_size) override;
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
                              const uint8_t* src,
                              uint32_t len,
@@ -137,6 +138,7 @@ class Player : public core::VideoStateHandler {
   channels_t play_list_;
 
   core::AudioParams* audio_params_;
+  int audio_buff_size_;
 
   SDL_Renderer* renderer_;
   SDL_Window* window_;
