@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "config.h"
+#include "ffmpeg_config.h"
 
 #if HAVE_UTGETOSTYPEFROMSTRING
 #include <CoreServices/CoreServices.h>
@@ -24,6 +24,7 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavutil/avutil.h>
 #if CONFIG_VDA
 #  include <libavcodec/vda.h>
 #endif
@@ -50,8 +51,8 @@ char *videotoolbox_pixfmt;
 
 static int videotoolbox_retrieve_data(AVCodecContext *s, AVFrame *frame)
 {
-    InputStream *ist = s->opaque;
-    VTContext  *vt = ist->hwaccel_ctx;
+    InputStream *ist = static_cast<InputStream *>(s->opaque);
+    VTContext  *vt = static_cast<VTContext*>(ist->hwaccel_ctx);
     CVPixelBufferRef pixbuf = (CVPixelBufferRef)frame->data[3];
     OSType pixel_format = CVPixelBufferGetPixelFormatType(pixbuf);
     CVReturn err;
@@ -69,9 +70,7 @@ static int videotoolbox_retrieve_data(AVCodecContext *s, AVFrame *frame)
     case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange: vt->tmp_frame->format = AV_PIX_FMT_NV12; break;
 #endif
     default:
-        av_log(NULL, AV_LOG_ERROR,
-               "%s: Unsupported pixel format: %s\n",
-               av_fourcc2str(s->codec_tag), videotoolbox_pixfmt);
+        //ERROR_LOG() << av_fourcc2str(s->codec_tag) << ": Unsupported pixel format: " << videotoolbox_pixfmt;
         return AVERROR(ENOSYS);
     }
 
@@ -91,16 +90,16 @@ static int videotoolbox_retrieve_data(AVCodecContext *s, AVFrame *frame)
 
         planes = CVPixelBufferGetPlaneCount(pixbuf);
         for (i = 0; i < planes; i++) {
-            data[i]     = CVPixelBufferGetBaseAddressOfPlane(pixbuf, i);
+            data[i]     = static_cast<uint8_t*>(CVPixelBufferGetBaseAddressOfPlane(pixbuf, i));
             linesize[i] = CVPixelBufferGetBytesPerRowOfPlane(pixbuf, i);
         }
     } else {
-        data[0] = CVPixelBufferGetBaseAddress(pixbuf);
+        data[0] = static_cast<uint8_t*>(CVPixelBufferGetBaseAddress(pixbuf));
         linesize[0] = CVPixelBufferGetBytesPerRow(pixbuf);
     }
 
     av_image_copy(vt->tmp_frame->data, vt->tmp_frame->linesize,
-                  (const uint8_t **)data, linesize, vt->tmp_frame->format,
+                  (const uint8_t **)data, linesize, static_cast<AVPixelFormat>(vt->tmp_frame->format),
                   frame->width, frame->height);
 
     ret = av_frame_copy_props(vt->tmp_frame, frame);
@@ -116,8 +115,8 @@ static int videotoolbox_retrieve_data(AVCodecContext *s, AVFrame *frame)
 
 static void videotoolbox_uninit(AVCodecContext *s)
 {
-    InputStream *ist = s->opaque;
-    VTContext  *vt = ist->hwaccel_ctx;
+    InputStream *ist = static_cast<InputStream *>(s->opaque);
+    VTContext  *vt = static_cast<VTContext *>(ist->hwaccel_ctx);
 
     ist->hwaccel_uninit        = NULL;
     ist->hwaccel_retrieve_data = NULL;
@@ -138,15 +137,13 @@ static void videotoolbox_uninit(AVCodecContext *s)
 
 int videotoolbox_init(AVCodecContext *s)
 {
-    InputStream *ist = s->opaque;
-    int loglevel = (ist->hwaccel_id == HWACCEL_AUTO) ? AV_LOG_VERBOSE : AV_LOG_ERROR;
+    InputStream *ist = static_cast<InputStream *>(s->opaque);
     int ret = 0;
-    VTContext *vt;
-
-    vt = av_mallocz(sizeof(*vt));
+    VTContext *vt = static_cast<VTContext *>(av_mallocz(sizeof(*vt)));
     if (!vt)
         return AVERROR(ENOMEM);
 
+    const char* dec = ist->hwaccel_id == HWACCEL_VIDEOTOOLBOX ? "Videotoolbox" : "VDA";
     ist->hwaccel_ctx           = vt;
     ist->hwaccel_uninit        = videotoolbox_uninit;
     ist->hwaccel_retrieve_data = videotoolbox_retrieve_data;
@@ -169,9 +166,9 @@ int videotoolbox_init(AVCodecContext *s)
 #if HAVE_UTGETOSTYPEFROMSTRING
             vtctx->cv_pix_fmt_type = UTGetOSTypeFromString(pixfmt_str);
 #else
-            av_log(s, loglevel, "UTGetOSTypeFromString() is not available "
-                   "on this platform, %s pixel format can not be honored from "
-                   "the command line\n", videotoolbox_pixfmt);
+            WARNING_LOG() << "UTGetOSTypeFromString() is not available "
+                   "on this platform, " << videotoolbox_pixfmt << " pixel format can not be honored from "
+                   "the command line";
 #endif
             ret = av_videotoolbox_default_init2(s, vtctx);
             CFRelease(pixfmt_str);
@@ -189,9 +186,9 @@ int videotoolbox_init(AVCodecContext *s)
 #if HAVE_UTGETOSTYPEFROMSTRING
             vdactx->cv_pix_fmt_type = UTGetOSTypeFromString(pixfmt_str);
 #else
-            av_log(s, loglevel, "UTGetOSTypeFromString() is not available "
-                   "on this platform, %s pixel format can not be honored from "
-                   "the command line\n", videotoolbox_pixfmt);
+            WARNING_LOG() << "UTGetOSTypeFromString() is not available "
+                   "on this platform, " << videotoolbox_pixfmt << " pixel format can not be honored from "
+                   "the command line";
 #endif
             ret = av_vda_default_init2(s, vdactx);
             CFRelease(pixfmt_str);
@@ -199,11 +196,11 @@ int videotoolbox_init(AVCodecContext *s)
 #endif
     }
     if (ret < 0) {
-        av_log(NULL, loglevel,
-               "Error creating %s decoder.\n", ist->hwaccel_id == HWACCEL_VIDEOTOOLBOX ? "Videotoolbox" : "VDA");
+        ERROR_LOG() << "Error creating " << dec << " decoder.";
         goto fail;
     }
 
+    INFO_LOG() << "Using " << dec << " to decode input stream.";
     return 0;
 fail:
     videotoolbox_uninit(s);

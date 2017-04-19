@@ -29,6 +29,10 @@
 #cmakedefine01 CONFIG_CUVID
 #cmakedefine01 HAVE_CUVID
 
+#cmakedefine01 CONFIG_VIDEOTOOLBOX
+
+#cmakedefine01 HAVE_UTGETOSTYPEFROMSTRING
+
 #cmakedefine01 CONFIG_VDA
 #cmakedefine01 HAVE_VIDEOTOOLBOX
 
