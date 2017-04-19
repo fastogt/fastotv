@@ -14,23 +14,25 @@ IF(BUILD_SERVER)  # build server
 ENDIF(BUILD_SERVER)
 
 IF(DEVELOPER_ENABLE_TESTS)
-########## PREPARE GTEST LIBRARY ##########
-  ADD_SUBDIRECTORY(${CMAKE_HOME_DIRECTORY}/tests/googletest googletest)
-  INCLUDE_DIRECTORIES(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT})
-########## PREPARE GTEST LIBRARY ##########
-  ADD_EXECUTABLE(unit_tests
-    ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp commands/commands.cpp client/commands.cpp
-  )
+  IF(DEVELOPER_ENABLE_UNIT_TESTS)
+  ########## PREPARE GTEST LIBRARY ##########
+    ADD_SUBDIRECTORY(${CMAKE_HOME_DIRECTORY}/tests/googletest googletest)
+    INCLUDE_DIRECTORIES(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT})
+  ########## PREPARE GTEST LIBRARY ##########
+    ADD_EXECUTABLE(unit_tests
+      ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp commands/commands.cpp client/commands.cpp
+    )
 
-  TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main common)
-  ADD_TEST_TARGET(unit_tests)
-  SET_PROPERTY(TARGET unit_tests PROPERTY FOLDER "Unit tests")
+    TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main common)
+    ADD_TEST_TARGET(unit_tests)
+    SET_PROPERTY(TARGET unit_tests PROPERTY FOLDER "Unit tests")
 
-  #Mock tests
-  #ADD_EXECUTABLE(mock_tests
-    #${CMAKE_SOURCE_DIR}/tests/mock_tests/test_connections.cpp
-  #)
-  #TARGET_LINK_LIBRARIES(mock_tests gmock gmock_main ${PROJECT_CORE_LIBRARY} common)
-  #ADD_TEST_TARGET(mock_tests)
-  #SET_PROPERTY(TARGET mock_tests PROPERTY FOLDER "Mock tests")
+    #Mock tests
+    #ADD_EXECUTABLE(mock_tests
+      #${CMAKE_SOURCE_DIR}/tests/mock_tests/test_connections.cpp
+    #)
+    #TARGET_LINK_LIBRARIES(mock_tests gmock gmock_main ${PROJECT_CORE_LIBRARY} common)
+    #ADD_TEST_TARGET(mock_tests)
+    #SET_PROPERTY(TARGET mock_tests PROPERTY FOLDER "Mock tests")
+  ENDIF(DEVELOPER_ENABLE_UNIT_TESTS)
 ENDIF(DEVELOPER_ENABLE_TESTS)
