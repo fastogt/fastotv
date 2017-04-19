@@ -12,6 +12,9 @@
 #if CONFIG_CUVID
 #include "client/core/hwaccels/ffmpeg_cuvid.h"
 #endif
+#if CONFIG_VDA
+#include "client/core/hwaccels/ffmpeg_videotoolbox.h"
+#endif
 
 namespace fasto {
 namespace fastotv {
