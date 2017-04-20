@@ -65,11 +65,29 @@ fasto::fastotv::client::PlayerOptions g_player_options;
 DictionaryOptions* dict = NULL;  // FIXME
 
 #if CONFIG_AVFILTER
-int opt_add_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
+int opt_set_video_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(opt);
+  UNUSED(dopt);
 
-  g_options.InitAvFilters(arg);
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  g_options.vfilters = arg;
+  return 0;
+}
+
+int opt_set_audio_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(dopt);
+
+  if (!arg) {
+    ERROR_LOG() << "Missing argument for option '" << opt << "'";
+    return AVERROR(EINVAL);
+  }
+
+  g_options.afilters = arg;
   return 0;
 }
 #endif
@@ -364,19 +382,6 @@ int opt_set_infinite_buffer(const char* opt, const char* arg, DictionaryOptions*
   return 0;
 }
 
-int opt_set_audio_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  g_options.afilters = arg;
-  return 0;
-}
-
 int opt_set_autorotate(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(opt);
   UNUSED(arg);
@@ -432,7 +437,7 @@ const OptionDef options[] = {
     {"infbuf", OPT_EXPERT, opt_set_infinite_buffer,
      "don't limit the input buffer size (useful with realtime streams)", ""},
 #if CONFIG_AVFILTER
-    {"vf", OPT_EXPERT, opt_add_vfilter, "set video filters", "filter_graph"},
+    {"vf", OPT_EXPERT, opt_set_video_vfilter, "set video filters", "filter_graph"},
     {"af", OPT_NOTHING, opt_set_audio_vfilter, "set audio filters", "filter_graph"},
 #endif
     {"default", OPT_AUDIO | OPT_VIDEO | OPT_EXPERT, opt_default, "generic catch all option", ""},

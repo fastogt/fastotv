@@ -46,7 +46,8 @@ extern "C" {
 #define USER_FIELD "user"
 #define URLS_FIELD "urls"
 
-#define IMG_PATH_RELATIVE "resources/offline.png"
+#define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "resources/offline_channel.png"
+#define IMG_CONNECTION_ERROR_PATH_RELATIVE "resources/connection_error.png"
 
 #undef ERROR
 
@@ -75,8 +76,8 @@ bool CreateWindowFunc(int width,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(
-      NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                         width, height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -116,8 +117,7 @@ PlayerOptions::PlayerOptions()
       screen_width(0),
       screen_height(0),
       audio_volume(volume),
-      muted(false) {
-}
+      muted(false) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -134,13 +134,15 @@ Player::Player(const PlayerOptions& options,
       cursor_last_shown_(0),
       last_mouse_left_click_(0),
       curent_stream_pos_(0),
-      surface_(NULL),
+      offline_channel_surface_(NULL),
+      connection_error_surface_(NULL),
       stream_(nullptr),
       width_(0),
       height_(0),
       xleft_(0),
       ytop_(0),
-      controller_(new NetworkController) {
+      controller_(new NetworkController),
+      current_state_(INIT_STATE) {
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -253,8 +255,12 @@ void Player::HandleEvent(event_t* event) {
 }
 
 void Player::HandleExceptionEvent(event_t* event, common::Error err) {
-  UNUSED(event);
   UNUSED(err);
+  if (event->GetEventType() == core::events::ClientConnectedEvent::EventType) {
+    // core::events::ClientConnectedEvent* connect_event =
+    //    static_cast<core::events::ClientConnectedEvent*>(event);
+    SwitchToDisconnectMode();
+  }
 }
 
 bool Player::HandleRequestAudio(core::VideoState* stream,
@@ -273,12 +279,8 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this,
-                             wanted_channel_layout,
-                             wanted_nb_channels,
-                             wanted_sample_rate,
-                             &laudio_hw_params,
-                             sdl_audio_callback);
+  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
+                             &laudio_hw_params, sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -309,13 +311,14 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(
-          &frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
+  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
+                     false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of " << frame->width << "x" << frame->height
+                   "size of "
+                << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -330,14 +333,9 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(
-      &rect, xleft_, ytop_, width_, height_, frame->width, frame->height, frame->sar);
-  SDL_RenderCopyEx(renderer_,
-                   frame->bmp,
-                   NULL,
-                   &rect,
-                   0,
-                   NULL,
+  core::calculate_display_rect(&rect, xleft_, ytop_, width_, height_, frame->width, frame->height,
+                               frame->sar);
+  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
                    frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   SDL_RenderPresent(renderer_);
@@ -396,15 +394,21 @@ void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
     return;
   }
   destroy(&stream_);
-  SwitchToErrorMode();
+  SwitchToChannelErrorMode();
 }
 
 void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
-    std::string full_path = common::file_system::realpath_from_filename(IMG_PATH_RELATIVE);
-    surface_ = IMG_LoadPNG(full_path.c_str());
+    const std::string offline_channel_img_full_path =
+        common::file_system::realpath_from_filename(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
+    offline_channel_surface_ = IMG_LoadPNG(offline_channel_img_full_path.c_str());
+
+    const std::string connection_error_img_full_path =
+        common::file_system::realpath_from_filename(IMG_CONNECTION_ERROR_PATH_RELATIVE);
+    connection_error_surface_ = IMG_LoadPNG(connection_error_img_full_path.c_str());
     controller_->Start();
+    SwitchToConnectMode();
   }
 }
 
@@ -416,7 +420,8 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
       stream_->Abort();
       destroy(&stream_);
     }
-    SDL_FreeSurface(surface_);
+    SDL_FreeSurface(offline_channel_surface_);
+    SDL_FreeSurface(connection_error_surface_);
 
     SDL_CloseAudio();
     destroy(&audio_params_);
@@ -442,11 +447,28 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
     cursor_hidden_ = true;
   }
 
-  if (stream_) {
-    stream_->TryRefreshVideo();
-  } else {
-    if (surface_) {
-      SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, surface_);
+  if (current_state_ == PLAYING_STATE) {
+    if (stream_) {
+      stream_->TryRefreshVideo();
+    } else {
+      if (offline_channel_surface_) {
+        SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, offline_channel_surface_);
+        if (img) {
+          SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+          SDL_RenderClear(renderer_);
+          SDL_RenderCopy(renderer_, img, NULL, NULL);
+          SDL_RenderPresent(renderer_);
+          SDL_DestroyTexture(img);
+        }
+      } else {
+        SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+        SDL_RenderClear(renderer_);
+        SDL_RenderPresent(renderer_);
+      }
+    }
+  } else if (current_state_ == INIT_STATE) {
+    if (connection_error_surface_) {
+      SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, connection_error_surface_);
       if (img) {
         SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
         SDL_RenderClear(renderer_);
@@ -459,6 +481,8 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
       SDL_RenderClear(renderer_);
       SDL_RenderPresent(renderer_);
     }
+  } else {
+    NOTREACHED();
   }
 }
 
@@ -537,7 +561,7 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       }
       stream_ = CreatePrevStream();
       if (!stream_) {
-        SwitchToErrorMode();
+        SwitchToChannelErrorMode();
       }
       break;
     }
@@ -552,7 +576,7 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       }
       stream_ = CreateNextStream();
       if (!stream_) {
-        SwitchToErrorMode();
+        SwitchToChannelErrorMode();
       }
       break;
     }
@@ -630,6 +654,9 @@ void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* even
 
 void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {
   UNUSED(event);
+  if (current_state_ == INIT_STATE) {
+    SwitchToDisconnectMode();
+  }
 }
 
 void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event) {
@@ -639,10 +666,7 @@ void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent
 void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event) {
   channels_t chan = event->info();
   play_list_ = chan;
-  stream_ = CreateCurrentStream();
-  if (!stream_) {
-    SwitchToErrorMode();
-  }
+  SwitchToPlayingMode();
 }
 
 bool Player::GetCurrentUrl(Url* url) const {
@@ -687,19 +711,43 @@ int Player::ReallocTexture(SDL_Texture** texture,
   return SUCCESS_RESULT_VALUE;
 }
 
-void Player::SwitchToErrorMode() {
+void Player::SwitchToPlayingMode() {
+  stream_ = CreateCurrentStream();
+  if (stream_) {
+    current_state_ = PLAYING_STATE;
+    return;
+  }
+
+  SwitchToChannelErrorMode();
+}
+
+void Player::SwitchToChannelErrorMode() {
   Url url;
   std::string name_str = "Unknown";
   if (GetCurrentUrl(&url)) {
     name_str = url.GetName();
   }
 
-  CalculateDispalySize();
+  InitWindow(name_str);
+  current_state_ = PLAYING_STATE;
+}
 
+void Player::SwitchToConnectMode() {
+  InitWindow("Connect");
+  current_state_ = INIT_STATE;
+}
+
+void Player::SwitchToDisconnectMode() {
+  InitWindow("Disconnect");
+  current_state_ = INIT_STATE;
+}
+
+void Player::InitWindow(const std::string& title) {
+  CalculateDispalySize();
   if (!window_) {
-    CreateWindowFunc(width_, height_, options_.is_full_screen, name_str, &renderer_, &window_);
+    CreateWindowFunc(width_, height_, options_.is_full_screen, title, &renderer_, &window_);
   } else {
-    SDL_SetWindowTitle(window_, name_str.c_str());
+    SDL_SetWindowTitle(window_, title.c_str());
   }
 }
 

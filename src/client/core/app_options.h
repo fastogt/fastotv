@@ -64,8 +64,7 @@ struct AppOptions {
 
   bool auto_exit;
 #if CONFIG_AVFILTER
-  void InitAvFilters(const std::string& arg);
-  std::vector<std::string> vfilters_list;
+  std::string vfilters;
   std::string afilters;
 #endif
 };

@@ -43,17 +43,11 @@ AppOptions::AppOptions()
       auto_exit(false)
 #if CONFIG_AVFILTER
       ,
-      vfilters_list(),
+      vfilters(),
       afilters()
 #endif
 {
 }
-
-#if CONFIG_AVFILTER
-void AppOptions::InitAvFilters(const std::string& arg) {
-  vfilters_list.push_back(arg);
-}
-#endif
 
 ComplexOptions::ComplexOptions()
     : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {}

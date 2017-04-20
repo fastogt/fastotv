@@ -58,6 +58,7 @@ struct PlayerOptions {
 
 class Player : public core::VideoStateHandler {
  public:
+  enum States { INIT_STATE, PLAYING_STATE };
   Player(const PlayerOptions& options,
          const core::AppOptions& opt,
          const core::ComplexOptions& copt);
@@ -121,8 +122,15 @@ class Player : public core::VideoStateHandler {
                      SDL_BlendMode blendmode,
                      bool init_texture);
   bool GetCurrentUrl(Url* url) const;
-  void SwitchToErrorMode();
+  void InitWindow(const std::string& title);
   void CalculateDispalySize();
+
+  // player modes
+  void SwitchToPlayingMode();
+  void SwitchToChannelErrorMode();
+
+  void SwitchToConnectMode();
+  void SwitchToDisconnectMode();
 
   core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();
@@ -147,7 +155,8 @@ class Player : public core::VideoStateHandler {
   core::msec_t last_mouse_left_click_;
   size_t curent_stream_pos_;
 
-  SDL_Surface* surface_;
+  SDL_Surface* offline_channel_surface_;
+  SDL_Surface* connection_error_surface_;
   core::VideoState* stream_;
 
   int width_;
@@ -156,6 +165,7 @@ class Player : public core::VideoStateHandler {
   const int ytop_;
 
   NetworkController* controller_;
+  States current_state_;
 };
 }
 }

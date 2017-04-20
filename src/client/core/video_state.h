@@ -219,7 +219,6 @@ class VideoState {
   bool step_;
 
 #if CONFIG_AVFILTER
-  size_t vfilter_idx_;
   AVFilterContext* in_video_filter_;   // the first filter in the video chain
   AVFilterContext* out_video_filter_;  // the last filter in the video chain
   AVFilterContext* in_audio_filter_;   // the first filter in the audio chain
