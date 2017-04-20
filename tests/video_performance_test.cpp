@@ -37,8 +37,11 @@ struct DictionaryOptions {
 }
 
 class FakeHandler : public VideoStateHandler {
-  virtual void HandleEvent(event_t* event) override {}
-  virtual void HandleExceptionEvent(event_t* event, common::Error err) override {}
+  virtual void HandleEvent(event_t* event) override { UNUSED(event); }
+  virtual void HandleExceptionEvent(event_t* event, common::Error err) override {
+    UNUSED(event);
+    UNUSED(err);
+  }
 
   virtual ~FakeHandler() {}
 
@@ -47,8 +50,13 @@ class FakeHandler : public VideoStateHandler {
                                   int64_t wanted_channel_layout,
                                   int wanted_nb_channels,
                                   int wanted_sample_rate,
-                                  core::AudioParams* audio_hw_params) override {
+                                  core::AudioParams* audio_hw_params,
+                                  int* audio_buff_size) override {
     UNUSED(stream);
+    UNUSED(wanted_channel_layout);
+    UNUSED(wanted_nb_channels);
+    UNUSED(wanted_sample_rate);
+    UNUSED(audio_buff_size);
 
     core::AudioParams laudio_hw_params;
     if (!core::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
@@ -61,15 +69,32 @@ class FakeHandler : public VideoStateHandler {
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
                              const uint8_t* src,
                              uint32_t len,
-                             int volume) override {}
+                             int volume) override {
+    UNUSED(audio_stream_ptr);
+    UNUSED(src);
+    UNUSED(len);
+    UNUSED(volume);
+  }
 
   // video
-  virtual bool HandleRequestVideo(VideoState* stream) override { return true; }
-  virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override {
+  virtual bool HandleRequestVideo(VideoState* stream) override {
+    UNUSED(stream);
     return true;
   }
-  virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override {}
-  virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override { NOOP(); }
+  virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override {
+    UNUSED(stream);
+    UNUSED(frame);
+    return true;
+  }
+  virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override {
+    UNUSED(stream);
+    UNUSED(frame);
+  }
+  virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override {
+    UNUSED(width);
+    UNUSED(height);
+    UNUSED(sar);
+  }
 };
 
 class FakeApplication : public common::application::IApplicationImpl {
@@ -77,7 +102,7 @@ class FakeApplication : public common::application::IApplicationImpl {
   FakeApplication(int argc, char** argv)
       : common::application::IApplicationImpl(argc, argv), stop_(false) {}
 
-  virtual int PreExec() { /* register all codecs, demux and protocols */
+  virtual int PreExec() override { /* register all codecs, demux and protocols */
 #if CONFIG_AVDEVICE
     avdevice_register_all();
 #endif
@@ -87,10 +112,11 @@ class FakeApplication : public common::application::IApplicationImpl {
     av_register_all();
     return EXIT_SUCCESS;
   }
-  virtual int Exec() {
+  virtual int Exec() override {
     const stream_id id = "unique";
     // wget http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
-    const common::uri::Uri uri = common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
+    const common::uri::Uri uri =
+        common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
     core::AppOptions opt;
     opt.auto_exit = true;
     DictionaryOptions* dict = new DictionaryOptions;
@@ -120,9 +146,9 @@ class FakeApplication : public common::application::IApplicationImpl {
     delete dict;
     return EXIT_SUCCESS;
   }
-  virtual int PostExec() { return EXIT_SUCCESS; }
+  virtual int PostExec() override { return EXIT_SUCCESS; }
 
-  virtual void PostEvent(event_t* event) {
+  virtual void PostEvent(event_t* event) override {
     events::Event* fevent = static_cast<events::Event*>(event);
     if (fevent->GetEventType() == core::events::AllocFrameEvent::EventType) {
       core::events::AllocFrameEvent* avent = static_cast<core::events::AllocFrameEvent*>(event);
@@ -131,22 +157,34 @@ class FakeApplication : public common::application::IApplicationImpl {
         fApp->Exit(EXIT_FAILURE);
       }
     } else if (fevent->GetEventType() == core::events::QuitStreamEvent::EventType) {
-      events::QuitStreamEvent* qevent = static_cast<core::events::QuitStreamEvent*>(event);
+      //events::QuitStreamEvent* qevent = static_cast<core::events::QuitStreamEvent*>(event);
       fApp->Exit(EXIT_SUCCESS);
     } else {
       NOTREACHED();
     }
   }
-  virtual void SendEvent(event_t* event) { NOTREACHED(); }
+  virtual void SendEvent(event_t* event) override {
+    UNUSED(event);
+    NOTREACHED();
+  }
 
-  virtual void Subscribe(listener_t* listener, common::events_size_t id) {}
-  virtual void UnSubscribe(listener_t* listener, common::events_size_t id) {}
-  virtual void UnSubscribe(listener_t* listener) {}
+  virtual void Subscribe(listener_t* listener, common::events_size_t id) override {
+    UNUSED(listener);
+    UNUSED(id);
+  }
+  virtual void UnSubscribe(listener_t* listener, common::events_size_t id) override {
+    UNUSED(listener);
+    UNUSED(id);
+  }
+  virtual void UnSubscribe(listener_t* listener) override {
+    UNUSED(listener);
+  }
 
-  virtual void ShowCursor() {}
-  virtual void HideCursor() {}
+  virtual void ShowCursor() override {}
+  virtual void HideCursor() override {}
 
-  virtual void Exit(int result) {
+  virtual void Exit(int result) override {
+    UNUSED(result);
     lock_t lock(stop_mutex_);
     stop_ = true;
     stop_cond_.notify_one();
