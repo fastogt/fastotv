@@ -49,9 +49,11 @@ namespace core {
 namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
-    : common::application::IApplicationImpl(argc, argv), dispatcher_(), stop_(false) {}
+    : common::application::IApplicationImpl(argc, argv), dispatcher_(), stop_(false) {
+}
 
-Sdl2Application::~Sdl2Application() {}
+Sdl2Application::~Sdl2Application() {
+}
 
 int Sdl2Application::PreExec() {
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
@@ -78,7 +80,7 @@ int Sdl2Application::Exec() {
         break;
       }
       case SDL_KEYUP: {
-       break;
+        break;
       }
       case SDL_MOUSEBUTTONDOWN: {
         HandleMousePressEvent(&event.button);
@@ -180,7 +182,8 @@ void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
 
 void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {  // SDL_WindowEventID
   if (event->event == SDL_WINDOWEVENT_RESIZED) {
-    events::WindowResizeInfo inf(event->data1, event->data2);
+    Size new_size(event->data1, event->data2);
+    events::WindowResizeInfo inf(new_size);
     events::WindowResizeEvent* wind_resize = new events::WindowResizeEvent(this, inf);
     HandleEvent(wind_resize);
   } else if (event->event == SDL_WINDOWEVENT_EXPOSED) {

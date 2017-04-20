@@ -20,6 +20,8 @@
 
 #include "client/core/events/events_base.h"
 
+#include "types.h"
+
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -27,10 +29,9 @@ namespace core {
 namespace events {
 
 struct WindowResizeInfo {
-  WindowResizeInfo(int width, int height);
+  explicit WindowResizeInfo(const Size& size);
 
-  int width;
-  int height;
+  Size size;
 };
 
 struct WindowExposeInfo {};

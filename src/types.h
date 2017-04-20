@@ -16,19 +16,43 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/events/window_events.h"
+#pragma once
+
+#include <limits>
+
+#include <common/url.h>
+
+#include "common_types.h"
+
+struct json_object;
 
 namespace fasto {
 namespace fastotv {
-namespace client {
-namespace core {
-namespace events {
 
-WindowResizeInfo::WindowResizeInfo(const Size& size) : size(size) {
+struct Point {
+  Point() : x(0), y(0) {}
+  Point(int x, int y) : x(x), y(y) {}
+
+  int x;
+  int y;
+};
+
+struct Size {
+  Size() : width(0), height(0) {}
+  Size(int width, int height) : width(width), height(height) {}
+
+  bool IsValid() { return width != 0 && height != 0; }
+
+  int width;
+  int height;
+};
+}
 }
 
-}
-}
-}
-}
+namespace common {
+std::string ConvertToString(const fasto::fastotv::Point& value);
+bool ConvertFromString(const std::string& from, fasto::fastotv::Point* out);
+
+std::string ConvertToString(const fasto::fastotv::Size& value);
+bool ConvertFromString(const std::string& from, fasto::fastotv::Size* out);
 }

@@ -62,13 +62,12 @@ int ConvertToSDLVolume(int val) {
   return av_clip(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
-bool CreateWindowFunc(int width,
-                      int height,
+bool CreateWindowFunc(Size window_size,
                       bool is_full_screen,
                       const std::string& title,
                       SDL_Renderer** renderer,
                       SDL_Window** window) {
-  if (!renderer || !window) {  // invalid input
+  if (!renderer || !window || !window_size.IsValid()) {  // invalid input
     return false;
   }
 
@@ -76,8 +75,12 @@ bool CreateWindowFunc(int width,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                         width, height, flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL,
+                                         SDL_WINDOWPOS_UNDEFINED,
+                                         SDL_WINDOWPOS_UNDEFINED,
+                                         window_size.width,
+                                         window_size.height,
+                                         flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -99,7 +102,7 @@ bool CreateWindowFunc(int width,
     return false;
   }
 
-  SDL_SetWindowSize(lwindow, width, height);
+  SDL_SetWindowSize(lwindow, window_size.width, window_size.height);
   SDL_SetWindowTitle(lwindow, title.c_str());
 
   *window = lwindow;
@@ -112,12 +115,11 @@ PlayerOptions::PlayerOptions()
     : exit_on_keydown(false),
       exit_on_mousedown(false),
       is_full_screen(false),
-      default_width(width),
-      default_height(height),
-      screen_width(0),
-      screen_height(0),
+      default_size(width, height),
+      screen_size(0, 0),
       audio_volume(volume),
-      muted(false) {}
+      muted(false) {
+}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -137,8 +139,7 @@ Player::Player(const PlayerOptions& options,
       offline_channel_surface_(NULL),
       connection_error_surface_(NULL),
       stream_(nullptr),
-      width_(0),
-      height_(0),
+      window_size_(),
       xleft_(0),
       ytop_(0),
       controller_(new NetworkController),
@@ -279,8 +280,12 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
-                             &laudio_hw_params, sdl_audio_callback);
+  int ret = core::audio_open(this,
+                             wanted_channel_layout,
+                             wanted_nb_channels,
+                             wanted_sample_rate,
+                             &laudio_hw_params,
+                             sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -311,14 +316,13 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
-                     false) < 0) {
+  if (ReallocTexture(
+          &frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of "
-                << frame->width << "x" << frame->height
+                   "size of " << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -333,9 +337,20 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect, xleft_, ytop_, width_, height_, frame->width, frame->height,
+  core::calculate_display_rect(&rect,
+                               xleft_,
+                               ytop_,
+                               window_size_.width,
+                               window_size_.height,
+                               frame->width,
+                               frame->height,
                                frame->sar);
-  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
+  SDL_RenderCopyEx(renderer_,
+                   frame->bmp,
+                   NULL,
+                   &rect,
+                   0,
+                   NULL,
                    frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   SDL_RenderPresent(renderer_);
@@ -358,23 +373,20 @@ bool Player::HandleRequestVideo(core::VideoState* stream) {
 
   if (!window_) {
     bool created =
-        CreateWindowFunc(width_, height_, options_.is_full_screen, name, &renderer_, &window_);
-    if (!created) {
-      return false;
-    }
-  } else {
-    SDL_SetWindowSize(window_, width_, height_);
-    SDL_SetWindowTitle(window_, name.c_str());
+        CreateWindowFunc(window_size_, options_.is_full_screen, name, &renderer_, &window_);
+    return created;
   }
 
+  SDL_SetWindowSize(window_, window_size_.width, window_size_.height);
+  SDL_SetWindowTitle(window_, name.c_str());
   return true;
 }
 
 void Player::HandleDefaultWindowSize(int width, int height, AVRational sar) {
   SDL_Rect rect;
   core::calculate_display_rect(&rect, 0, 0, INT_MAX, height, width, height, sar);
-  options_.default_width = rect.w;
-  options_.default_height = rect.h;
+  options_.default_size.width = rect.w;
+  options_.default_size.height = rect.h;
 }
 
 void Player::HandleAllocFrameEvent(core::events::AllocFrameEvent* event) {
@@ -622,8 +634,7 @@ void Player::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
 
 void Player::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {
   core::events::WindowResizeInfo inf = event->info();
-  width_ = inf.width;
-  height_ = inf.height;
+  window_size_ = inf.size;
   if (stream_) {
     stream_->RefreshRequest();
   }
@@ -745,23 +756,21 @@ void Player::SwitchToDisconnectMode() {
 void Player::InitWindow(const std::string& title) {
   CalculateDispalySize();
   if (!window_) {
-    CreateWindowFunc(width_, height_, options_.is_full_screen, title, &renderer_, &window_);
+    CreateWindowFunc(window_size_, options_.is_full_screen, title, &renderer_, &window_);
   } else {
     SDL_SetWindowTitle(window_, title.c_str());
   }
 }
 
 void Player::CalculateDispalySize() {
-  if (width_ && height_) {
+  if (window_size_.IsValid()) {
     return;
   }
 
-  if (options_.screen_width && options_.screen_height) {
-    width_ = options_.screen_width;
-    height_ = options_.screen_height;
+  if (options_.screen_size.IsValid()) {
+    window_size_ = options_.screen_size;
   } else {
-    width_ = options_.default_width;
-    height_ = options_.default_height;
+    window_size_ = options_.default_size;
   }
 }
 

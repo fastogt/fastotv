@@ -25,6 +25,7 @@
 #include <common/time.h>
 
 #include "url.h"
+#include "types.h"
 
 #include "client/core/video_state_handler.h"
 #include "client/core/app_options.h"
@@ -47,10 +48,9 @@ struct PlayerOptions {
   bool exit_on_keydown;
   bool exit_on_mousedown;
   bool is_full_screen;
-  int default_width;
-  int default_height;
-  int screen_width;
-  int screen_height;
+
+  Size default_size;
+  Size screen_size;
 
   int audio_volume;  // Range: 0 - 100
   bool muted;
@@ -159,8 +159,7 @@ class Player : public core::VideoStateHandler {
   SDL_Surface* connection_error_surface_;
   core::VideoState* stream_;
 
-  int width_;
-  int height_;
+  Size window_size_;
   const int xleft_;
   const int ytop_;
 

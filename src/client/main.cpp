@@ -74,6 +74,16 @@ int opt_set_video_vfilter(const char* opt, const char* arg, DictionaryOptions* d
     return AVERROR(EINVAL);
   }
 
+  const std::string arg_copy(arg);
+  size_t del = arg_copy.find_first_of('=');
+  if (del != std::string::npos) {
+    std::string key = arg_copy.substr(0, del);
+    std::string value = arg_copy.substr(del + 1);
+    fasto::fastotv::Size sz;
+    if (key == "scale" && common::ConvertFromString(value, &sz)) {
+      g_player_options.screen_size = sz;
+    }
+  }
   g_options.vfilters = arg;
   return 0;
 }
@@ -109,7 +119,7 @@ static int opt_width(const char* opt, const char* arg, DictionaryOptions* dopt) 
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_width)) {
+  if (!parse_number(arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_size.width)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -119,7 +129,7 @@ int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_height)) {
+  if (!parse_number(arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_size.height)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -338,8 +348,8 @@ int opt_set_lowres_volume(const char* opt, const char* arg, DictionaryOptions* d
   }
 
   int lowres;
-  if (!parse_number(arg, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
-                    &lowres)) {
+  if (!parse_number(
+          arg, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), &lowres)) {
     return AVERROR(EINVAL);
   }
   g_options.lowres = lowres;
@@ -434,8 +444,11 @@ const OptionDef options[] = {
     {"exitonkeydown", OPT_EXPERT, opt_set_exit_on_keydown, "exit on key down", ""},
     {"exitonmousedown", OPT_EXPERT, opt_set_exit_on_mousedown, "exit on mouse down", ""},
     {"framedrop", OPT_EXPERT, opt_set_frame_drop, "drop frames when cpu is too slow", ""},
-    {"infbuf", OPT_EXPERT, opt_set_infinite_buffer,
-     "don't limit the input buffer size (useful with realtime streams)", ""},
+    {"infbuf",
+     OPT_EXPERT,
+     opt_set_infinite_buffer,
+     "don't limit the input buffer size (useful with realtime streams)",
+     ""},
 #if CONFIG_AVFILTER
     {"vf", OPT_EXPERT, opt_set_video_vfilter, "set video filters", "filter_graph"},
     {"af", OPT_NOTHING, opt_set_audio_vfilter, "set audio filters", "filter_graph"},
@@ -444,17 +457,22 @@ const OptionDef options[] = {
     {"acodec", OPT_EXPERT, opt_set_audio_codec, "force audio decoder", "decoder_name"},
     {"vcodec", OPT_EXPERT, opt_set_video_codec, "force video decoder", "decoder_name"},
     {"hwaccel", OPT_EXPERT, opt_hwaccel, "use HW accelerated decoding", "hwaccel name"},
-    {"hwaccel_device", OPT_VIDEO | OPT_EXPERT | OPT_INPUT, opt_set_hw_device,
-     "select a device for HW acceleration", "devicename"},
-    {"hwaccel_output_format", OPT_VIDEO | OPT_EXPERT | OPT_INPUT, opt_set_hw_output_format,
-     "select output format used with HW accelerated decoding", "format"},
+    {"hwaccel_device",
+     OPT_VIDEO | OPT_EXPERT | OPT_INPUT,
+     opt_set_hw_device,
+     "select a device for HW acceleration",
+     "devicename"},
+    {"hwaccel_output_format",
+     OPT_VIDEO | OPT_EXPERT | OPT_INPUT,
+     opt_set_hw_output_format,
+     "select output format used with HW accelerated decoding",
+     "format"},
     {"autorotate", OPT_NOTHING, opt_set_autorotate, "automatically rotate video", ""},
     {NULL, OPT_NOTHING, NULL, NULL, NULL}};
 
 void show_usage(void) {
   printf("Simple media player\nusage: " PROJECT_NAME_TITLE " [options]\n");
 }
-
 }
 
 void show_help_default(const char* opt, const char* arg) {
@@ -604,8 +622,8 @@ int main(int argc, char** argv) {
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
   common::application::Application app(argc, argv, &CreateApplicationImpl);
-  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict,
-                                                    dict->format_opts, dict->codec_opts);
+  fasto::fastotv::client::core::ComplexOptions copt(
+      dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
   fasto::fastotv::client::Player* player =
       new fasto::fastotv::client::Player(g_player_options, g_options, copt);
   int res = app.Exec();
