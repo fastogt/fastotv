@@ -59,7 +59,7 @@ InnerTcpHandler::~InnerTcpHandler() {
   inner_connection_ = nullptr;
 }
 
-void InnerTcpHandler::PreLooped(network::tcp::ITcpLoop* server) {
+void InnerTcpHandler::PreLooped(network::IoLoop* server) {
   ping_server_id_timer_ = server->CreateTimer(ping_timeout_server, ping_timeout_server);
   CHECK(!inner_connection_);
 
@@ -79,15 +79,15 @@ void InnerTcpHandler::PreLooped(network::tcp::ITcpLoop* server) {
   server->RegisterClient(connection);
 }
 
-void InnerTcpHandler::Accepted(network::tcp::TcpClient* client) {
+void InnerTcpHandler::Accepted(network::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Moved(network::tcp::TcpClient* client) {
+void InnerTcpHandler::Moved(network::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Closed(network::tcp::TcpClient* client) {
+void InnerTcpHandler::Closed(network::IoClient* client) {
   if (client == inner_connection_) {
     fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, ainf_));
     inner_connection_ = nullptr;
@@ -95,7 +95,7 @@ void InnerTcpHandler::Closed(network::tcp::TcpClient* client) {
   }
 }
 
-void InnerTcpHandler::DataReceived(network::tcp::TcpClient* client) {
+void InnerTcpHandler::DataReceived(network::IoClient* client) {
   std::string buff;
   fasto::fastotv::inner::InnerClient* iclient =
       static_cast<fasto::fastotv::inner::InnerClient*>(client);
@@ -110,11 +110,11 @@ void InnerTcpHandler::DataReceived(network::tcp::TcpClient* client) {
   HandleInnerDataReceived(iclient, buff);
 }
 
-void InnerTcpHandler::DataReadyToWrite(network::tcp::TcpClient* client) {
+void InnerTcpHandler::DataReadyToWrite(network::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::PostLooped(network::tcp::ITcpLoop* server) {
+void InnerTcpHandler::PostLooped(network::IoLoop* server) {
   UNUSED(server);
   if (inner_connection_) {
     fasto::fastotv::inner::InnerClient* connection = inner_connection_;
@@ -123,7 +123,7 @@ void InnerTcpHandler::PostLooped(network::tcp::ITcpLoop* server) {
   }
 }
 
-void InnerTcpHandler::TimerEmited(network::tcp::ITcpLoop* server, network::timer_id_t id) {
+void InnerTcpHandler::TimerEmited(network::IoLoop* server, network::timer_id_t id) {
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
     const cmd_request_t ping_request = PingRequest(NextRequestID());

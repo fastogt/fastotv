@@ -16,26 +16,38 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/inner/inner_tcp_server.h"
+#pragma once
 
-#include "network/tcp/tcp_client.h"
+#include "network/io_client.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
-namespace inner {
+namespace core {
+namespace inputs {
 
-InnerTcpServer::InnerTcpServer(network::IoLoopObserver* observer) : IoLoop(observer) {}
+common::Error LircInit(int* fd) WARN_UNUSED_RESULT;
+common::Error LircDeinit(int fd) WARN_UNUSED_RESULT;
 
-const char* InnerTcpServer::ClassName() const {
-  return "InnerTcpServer";
+class LircInputClient : public network::IoClient {
+ public:
+  LircInputClient(network::IoLoop* server, int fd);
+
+  virtual int Fd() const;
+
+ protected:
+  virtual void CloseImpl() override;
+
+ private:
+  virtual common::Error Write(const char* data,
+                              size_t size,
+                              size_t* nwrite) final WARN_UNUSED_RESULT;
+  virtual common::Error Read(char* out, size_t max_size, size_t* nread) final WARN_UNUSED_RESULT;
+
+  common::net::SocketHolder sock_;
+};
 }
-
-network::tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
-  return new network::tcp::TcpClient(this, info);
 }
-
-}  // namespace inner
 }
-}  // namespace fastotv
-}  // namespace fasto
+}
+}

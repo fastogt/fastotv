@@ -54,10 +54,6 @@ struct SigIgnInit {
   }
 } sig_init;
 
-typedef common::unique_lock<common::mutex> lock_t;
-common::mutex g_exists_loops_mutex_;
-std::vector<fasto::fastotv::network::tcp::ITcpLoop*> g_exists_loops_;
-
 }  // namespace
 
 namespace fasto {
@@ -65,246 +61,9 @@ namespace fastotv {
 namespace network {
 namespace tcp {
 
-class LoopTimer : public common::patterns::id_counter<LoopTimer, timer_id_t> {
- public:
-  explicit LoopTimer(ITcpLoop* server)
-      : server_(server), timer_((struct ev_timer*)calloc(1, sizeof(struct ev_timer))) {
-    timer_->data = this;
-  }
-
-  ITcpLoop* server() const { return server_; }
-
-  ~LoopTimer() { free(timer_); }
-
-  ITcpLoop* server_;
-  struct ev_timer* const timer_;
-};
-
-ITcpLoop::ITcpLoop(ITcpLoopObserver* observer)
-    : loop_(new LibEvLoop), observer_(observer), clients_(), timers_(), id_() {
-  loop_->setObserver(this);
-}
-
-ITcpLoop::~ITcpLoop() {
-  delete loop_;
-}
-
-int ITcpLoop::Exec() {
-  int res = loop_->Exec();
-  return res;
-}
-
-void ITcpLoop::Stop() {
-  loop_->Stop();
-}
-
-void ITcpLoop::RegisterClient(const common::net::socket_info& info) {
-  TcpClient* client = CreateClient(info);
-  RegisterClient(client);
-}
-
-void ITcpLoop::UnRegisterClient(TcpClient* client) {
-  CHECK(client->Server() == this);
-  loop_->StopIO(client->read_write_io_);
-
-  if (observer_) {
-    observer_->Moved(client);
-  }
-
-  client->server_ = nullptr;
-  clients_.erase(std::remove(clients_.begin(), clients_.end(), client), clients_.end());
-  INFO_LOG() << "Successfully unregister client[" << client->FormatedName() << "], from server["
-             << FormatedName() << "], " << clients_.size() << " client(s) connected.";
-}
-
-void ITcpLoop::RegisterClient(TcpClient* client) {
-  if (client->Server()) {
-    CHECK(client->Server() == this);
-  }
-
-  // Initialize and start watcher to read client requests
-  ev_io_init(client->read_write_io_, read_write_cb, client->Fd(), client->Flags());
-  loop_->StartIO(client->read_write_io_);
-
-  if (observer_) {
-    observer_->Accepted(client);
-  }
-
-  client->server_ = this;
-  clients_.push_back(client);
-  INFO_LOG() << "Successfully connected with client[" << client->FormatedName() << "], from server["
-             << FormatedName() << "], " << clients_.size() << " client(s) connected.";
-}
-
-void ITcpLoop::CloseClient(TcpClient* client) {
-  CHECK(client->Server() == this);
-  loop_->StopIO(client->read_write_io_);
-
-  if (observer_) {
-    observer_->Closed(client);
-  }
-  clients_.erase(std::remove(clients_.begin(), clients_.end(), client), clients_.end());
-  INFO_LOG() << "Successfully disconnected client[" << client->FormatedName() << "], from server["
-             << FormatedName() << "], " << clients_.size() << " client(s) connected.";
-}
-
-timer_id_t ITcpLoop::CreateTimer(double sec, double repeat) {
-  LoopTimer* timer = new LoopTimer(this);
-  ev_timer_init(timer->timer_, timer_cb, sec, repeat);
-  loop_->StartTimer(timer->timer_);
-  timers_.push_back(timer);
-  return timer->id();
-}
-
-void ITcpLoop::RemoveTimer(timer_id_t id) {
-  for (std::vector<LoopTimer*>::iterator it = timers_.begin(); it != timers_.end(); ++it) {
-    LoopTimer* timer = *it;
-    if (timer->id() == id) {
-      timers_.erase(it);
-      delete timer;
-      return;
-    }
-  }
-}
-
-common::patterns::id_counter<ITcpLoop>::type_t ITcpLoop::GetId() const {
-  return id_.id();
-}
-
-void ITcpLoop::ExecInLoopThread(async_loop_exec_function_t func) {
-  loop_->ExecInLoopThread(func);
-}
-
-bool ITcpLoop::IsLoopThread() const {
-  return loop_->IsLoopThread();
-}
-
-void ITcpLoop::ChangeFlags(TcpClient* client) {
-  if (client->Flags() != client->read_write_io_->events) {
-    loop_->StopIO(client->read_write_io_);
-    ev_io_set(client->read_write_io_, client->Fd(), client->Flags());
-    loop_->StartIO(client->read_write_io_);
-  }
-}
-
-ITcpLoop* ITcpLoop::FindExistLoopByPredicate(std::function<bool(ITcpLoop*)> pred) {
-  if (!pred) {
-    return nullptr;
-  }
-
-  lock_t loc(g_exists_loops_mutex_);
-  for (size_t i = 0; i < g_exists_loops_.size(); ++i) {
-    ITcpLoop* loop = g_exists_loops_[i];
-    if (loop && pred(loop)) {
-      return loop;
-    }
-  }
-
-  return nullptr;
-}
-
-std::vector<TcpClient*> ITcpLoop::Clients() const {
-  return clients_;
-}
-
-void ITcpLoop::SetName(const std::string& name) {
-  name_ = name;
-}
-
-std::string ITcpLoop::Name() const {
-  return name_;
-}
-
-std::string ITcpLoop::FormatedName() const {
-  return common::MemSPrintf("[%s][%s(%llu)]", Name(), ClassName(), GetId());
-}
-
-void ITcpLoop::read_write_cb(struct ev_loop* loop, struct ev_io* watcher, int revents) {
-  TcpClient* pclient = reinterpret_cast<TcpClient*>(watcher->data);
-  ITcpLoop* pserver = pclient->Server();
-  LibEvLoop* evloop = reinterpret_cast<LibEvLoop*>(ev_userdata(loop));
-  CHECK(pserver && pserver->loop_ == evloop);
-
-  if (EV_ERROR & revents) {
-    DNOTREACHED();
-    return;
-  }
-
-  if (revents & EV_READ) {
-    if (pserver->observer_) {
-      pserver->observer_->DataReceived(pclient);
-    }
-  }
-
-  if (revents & EV_WRITE) {
-    if (pserver->observer_) {
-      pserver->observer_->DataReadyToWrite(pclient);
-    }
-  }
-}
-
-void ITcpLoop::timer_cb(struct ev_loop* loop, struct ev_timer* timer, int revents) {
-  LoopTimer* ptimer = reinterpret_cast<LoopTimer*>(timer->data);
-  ITcpLoop* pserver = ptimer->server();
-  LibEvLoop* evloop = reinterpret_cast<LibEvLoop*>(ev_userdata(loop));
-  CHECK(pserver && pserver->loop_ == evloop);
-
-  if (EV_ERROR & revents) {
-    DNOTREACHED();
-    return;
-  }
-
-  DCHECK(revents & EV_TIMEOUT);
-  if (pserver->observer_) {
-    pserver->observer_->TimerEmited(pserver, ptimer->id());
-  }
-}
-
-void ITcpLoop::PreLooped(LibEvLoop* loop) {
-  UNUSED(loop);
-  {
-    lock_t loc(g_exists_loops_mutex_);
-    g_exists_loops_.push_back(this);
-  }
-
-  if (observer_) {
-    observer_->PreLooped(this);
-  }
-}
-
-void ITcpLoop::Stoped(LibEvLoop* loop) {
-  UNUSED(loop);
-  const std::vector<LoopTimer*> timers = timers_;
-  for (size_t i = 0; i < timers.size(); ++i) {
-    LoopTimer* timer = timers[i];
-    RemoveTimer(timer->id());
-  }
-
-  const std::vector<TcpClient*> cl = Clients();
-
-  for (size_t i = 0; i < cl.size(); ++i) {
-    TcpClient* client = cl[i];
-    client->Close();
-    delete client;
-  }
-}
-
-void ITcpLoop::PostLooped(LibEvLoop* loop) {
-  UNUSED(loop);
-  {
-    lock_t loc(g_exists_loops_mutex_);
-    g_exists_loops_.erase(std::remove(g_exists_loops_.begin(), g_exists_loops_.end(), this),
-                          g_exists_loops_.end());
-  }
-
-  if (observer_) {
-    observer_->PostLooped(this);
-  }
-}
-
 // server
-TcpServer::TcpServer(const common::net::HostAndPort& host, ITcpLoopObserver* observer)
-    : ITcpLoop(observer), sock_(host), accept_io_((struct ev_io*)calloc(1, sizeof(struct ev_io))) {
+TcpServer::TcpServer(const common::net::HostAndPort& host, IoLoopObserver* observer)
+    : IoLoop(observer), sock_(host), accept_io_((struct ev_io*)calloc(1, sizeof(struct ev_io))) {
   accept_io_->data = this;
 }
 
@@ -313,12 +72,12 @@ TcpServer::~TcpServer() {
   accept_io_ = NULL;
 }
 
-ITcpLoop* TcpServer::FindExistServerByHost(const common::net::HostAndPort& host) {
+IoLoop* TcpServer::FindExistServerByHost(const common::net::HostAndPort& host) {
   if (!host.IsValid()) {
     return nullptr;
   }
 
-  auto find_by_host = [host](ITcpLoop* loop) -> bool {
+  auto find_by_host = [host](IoLoop* loop) -> bool {
     TcpServer* server = static_cast<TcpServer*>(loop);
     if (!server) {
       return false;
@@ -338,11 +97,11 @@ void TcpServer::PreLooped(LibEvLoop* loop) {
   int fd = sock_.fd();
   ev_io_init(accept_io_, accept_cb, fd, EV_READ);
   loop->StartIO(accept_io_);
-  ITcpLoop::PreLooped(loop);
+  IoLoop::PreLooped(loop);
 }
 
 void TcpServer::PostLooped(LibEvLoop* loop) {
-  ITcpLoop::PostLooped(loop);
+  IoLoop::PostLooped(loop);
 }
 
 void TcpServer::Stoped(LibEvLoop* loop) {
@@ -352,7 +111,7 @@ void TcpServer::Stoped(LibEvLoop* loop) {
   }
 
   loop->StopIO(accept_io_);
-  ITcpLoop::Stoped(loop);
+  IoLoop::Stoped(loop);
 }
 
 common::Error TcpServer::Bind() {
@@ -395,11 +154,9 @@ void TcpServer::accept_cb(struct ev_loop* loop, struct ev_io* watcher, int reven
     return;
   }
 
-  TcpClient* pclient = pserver->CreateClient(sinfo);
+  IoClient* pclient = pserver->CreateClient(sinfo);
   pserver->RegisterClient(pclient);
 }
-
-ITcpLoopObserver::~ITcpLoopObserver() {}
 
 }  // namespace tcp
 }

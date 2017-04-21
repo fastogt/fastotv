@@ -27,6 +27,10 @@
 #include "client/inner/inner_tcp_handler.h"
 #include "client/inner/inner_tcp_server.h"
 
+#ifdef HAVE_LIRC
+#include "client/core/inputs/lirc_input_client.h"
+#endif
+
 #include <common/application/application.h>
 
 #include "server_config.h"
@@ -35,7 +39,71 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
-NetworkController::NetworkController() : ILoopThreadController() {}
+namespace {
+class PrivateHandler : public inner::InnerTcpHandler {
+ public:
+  typedef inner::InnerTcpHandler base_class;
+  PrivateHandler(const common::net::HostAndPort& innerHost, const AuthInfo& ainf)
+      : base_class(innerHost, ainf)
+#ifdef HAVE_LIRC
+        ,
+        client_(nullptr)
+#endif
+  {
+  }
+
+  virtual void PreLooped(network::IoLoop* server) override {
+#ifdef HAVE_LIRC
+    int fd;
+    common::Error err = core::inputs::LircInit(&fd);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    } else {
+      client_ = new core::inputs::LircInputClient(server, fd);
+      server->RegisterClient(client_);
+    }
+#endif
+    base_class::PreLooped(server);
+  }
+
+  void Closed(network::IoClient* client) {
+#ifdef HAVE_LIRC
+    if (client == client_) {
+      client_ = nullptr;
+      return;
+    }
+#endif
+    base_class::Closed(client);
+  }
+
+  void DataReceived(network::IoClient* client) {
+#ifdef HAVE_LIRC
+    if (client == client_) {
+      return;
+    }
+#endif
+    base_class::DataReceived(client);
+  }
+
+  virtual void PostLooped(network::IoLoop* server) override {
+    UNUSED(server);
+#ifdef HAVE_LIRC
+    if (client_) {
+      core::inputs::LircInputClient* connection = client_;
+      connection->Close();
+      delete connection;
+    }
+#endif
+    base_class::PostLooped(server);
+  }
+#ifdef HAVE_LIRC
+  core::inputs::LircInputClient* client_;
+#endif
+};
+}
+
+NetworkController::NetworkController() : ILoopThreadController() {
+}
 
 void NetworkController::Start() {
   ILoopThreadController::Start();
@@ -45,7 +113,8 @@ void NetworkController::Stop() {
   ILoopThreadController::Stop();
 }
 
-NetworkController::~NetworkController() {}
+NetworkController::~NetworkController() {
+}
 
 AuthInfo NetworkController::GetAuthInfo() {
   return AuthInfo(USER_LOGIN, USER_PASSWORD);
@@ -59,13 +128,12 @@ void NetworkController::RequestChannels() const {
   }
 }
 
-network::tcp::ITcpLoopObserver* NetworkController::CreateHandler() {
-  client::inner::InnerTcpHandler* handler =
-      new client::inner::InnerTcpHandler(g_service_host, GetAuthInfo());
+network::IoLoopObserver* NetworkController::CreateHandler() {
+  client::inner::InnerTcpHandler* handler = new PrivateHandler(g_service_host, GetAuthInfo());
   return handler;
 }
 
-network::tcp::ITcpLoop* NetworkController::CreateServer(network::tcp::ITcpLoopObserver* handler) {
+network::IoLoop* NetworkController::CreateServer(network::IoLoopObserver* handler) {
   client::inner::InnerTcpServer* serv = new client::inner::InnerTcpServer(handler);
   serv->SetName("local_inner_server");
   return serv;

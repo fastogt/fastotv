@@ -22,8 +22,8 @@ namespace fasto {
 namespace fastotv {
 namespace inner {
 
-InnerClient::InnerClient(network::tcp::ITcpLoop* server, const common::net::socket_info& info)
-    : TcpClient(server, info) {}
+InnerClient::InnerClient(network::IoLoop* server, const common::net::socket_info& info)
+    : network::tcp::TcpClient(server, info) {}
 
 const char* InnerClient::ClassName() const {
   return "InnerClient";

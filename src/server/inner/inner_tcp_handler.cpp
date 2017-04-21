@@ -62,23 +62,23 @@ InnerTcpHandlerHost::~InnerTcpHandlerHost() {
   delete handler_;
 }
 
-void InnerTcpHandlerHost::PreLooped(network::tcp::ITcpLoop* server) {
+void InnerTcpHandlerHost::PreLooped(network::IoLoop* server) {
   ping_client_id_timer_ = server->CreateTimer(ping_timeout_clients, ping_timeout_clients);
 }
 
-void InnerTcpHandlerHost::Moved(network::tcp::TcpClient* client) {
+void InnerTcpHandlerHost::Moved(network::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandlerHost::PostLooped(network::tcp::ITcpLoop* server) {
+void InnerTcpHandlerHost::PostLooped(network::IoLoop* server) {
   UNUSED(server);
 }
 
-void InnerTcpHandlerHost::TimerEmited(network::tcp::ITcpLoop* server, network::timer_id_t id) {
+void InnerTcpHandlerHost::TimerEmited(network::IoLoop* server, network::timer_id_t id) {
   if (ping_client_id_timer_ == id) {
-    std::vector<network::tcp::TcpClient*> online_clients = server->Clients();
+    std::vector<network::IoClient*> online_clients = server->Clients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
-      network::tcp::TcpClient* client = online_clients[i];
+      network::IoClient* client = online_clients[i];
       InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
       if (iclient) {
         const cmd_request_t ping_request = PingRequest(NextRequestID());
@@ -97,7 +97,7 @@ void InnerTcpHandlerHost::TimerEmited(network::tcp::ITcpLoop* server, network::t
   }
 }
 
-void InnerTcpHandlerHost::Accepted(network::tcp::TcpClient* client) {
+void InnerTcpHandlerHost::Accepted(network::IoClient* client) {
   cmd_request_t whoareyou = WhoAreYouRequest(NextRequestID());
   InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
   if (iclient) {
@@ -108,7 +108,7 @@ void InnerTcpHandlerHost::Accepted(network::tcp::TcpClient* client) {
   }
 }
 
-void InnerTcpHandlerHost::Closed(network::tcp::TcpClient* client) {
+void InnerTcpHandlerHost::Closed(network::IoClient* client) {
   bool is_ok = parent_->UnRegisterInnerConnectionByHost(client);
   if (is_ok) {
     InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
@@ -119,7 +119,7 @@ void InnerTcpHandlerHost::Closed(network::tcp::TcpClient* client) {
   }
 }
 
-void InnerTcpHandlerHost::DataReceived(network::tcp::TcpClient* client) {
+void InnerTcpHandlerHost::DataReceived(network::IoClient* client) {
   std::string buff;
   InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
   common::Error err = iclient->ReadCommand(&buff);
@@ -133,7 +133,7 @@ void InnerTcpHandlerHost::DataReceived(network::tcp::TcpClient* client) {
   HandleInnerDataReceived(iclient, buff);
 }
 
-void InnerTcpHandlerHost::DataReadyToWrite(network::tcp::TcpClient* client) {
+void InnerTcpHandlerHost::DataReadyToWrite(network::IoClient* client) {
   UNUSED(client);
 }
 

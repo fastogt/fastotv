@@ -25,9 +25,9 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
-class InnerTcpServer : public network::tcp::ITcpLoop {
+class InnerTcpServer : public network::IoLoop {
  public:
-  explicit InnerTcpServer(network::tcp::ITcpLoopObserver* observer);
+  explicit InnerTcpServer(network::IoLoopObserver* observer);
   virtual const char* ClassName() const override;
 
  protected:

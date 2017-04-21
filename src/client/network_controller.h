@@ -42,8 +42,8 @@ class NetworkController : private fasto::fastotv::network::ILoopThreadController
   void RequestChannels() const;
 
  private:
-  virtual network::tcp::ITcpLoopObserver* CreateHandler() override;
-  virtual network::tcp::ITcpLoop* CreateServer(network::tcp::ITcpLoopObserver* handler) override;
+  virtual network::IoLoopObserver* CreateHandler() override;
+  virtual network::IoLoop* CreateServer(network::IoLoopObserver* handler) override;
 };
 
 }  // namespace network

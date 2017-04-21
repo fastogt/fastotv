@@ -102,7 +102,7 @@ int ServerHost::exec() {
   return connection_thread->JoinAndGet();
 }
 
-bool ServerHost::UnRegisterInnerConnectionByHost(network::tcp::TcpClient* connection) {
+bool ServerHost::UnRegisterInnerConnectionByHost(network::IoClient* connection) {
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
@@ -120,7 +120,7 @@ bool ServerHost::UnRegisterInnerConnectionByHost(network::tcp::TcpClient* connec
 
 bool ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
                                                const AuthInfo& user,
-                                               network::tcp::TcpClient* connection) {
+                                               network::IoClient* connection) {
   CHECK(user.IsValid());
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {

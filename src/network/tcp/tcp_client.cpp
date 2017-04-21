@@ -31,14 +31,11 @@ namespace fastotv {
 namespace network {
 namespace tcp {
 
-TcpClient::TcpClient(ITcpLoop* server, const common::net::socket_info& info, flags_t flags)
-    : server_(server),
-      read_write_io_(static_cast<struct ev_io*>(calloc(1, sizeof(struct ev_io)))),
-      flags_(flags),
-      sock_(info),
-      name_(),
-      id_() {
-  read_write_io_->data = this;
+TcpClient::TcpClient(IoLoop* server, const common::net::socket_info& info, flags_t flags)
+    : network::IoClient(server, flags), sock_(info) {
+}
+
+TcpClient::~TcpClient() {
 }
 
 common::net::socket_info TcpClient::Info() const {
@@ -79,53 +76,11 @@ common::Error TcpClient::Read(char* out, size_t max_size, size_t* nread) {
   return sock_.read(out, max_size, nread);
 }
 
-TcpClient::~TcpClient() {
-  free(read_write_io_);
-  read_write_io_ = NULL;
-}
-
-ITcpLoop* TcpClient::Server() const {
-  return server_;
-}
-
-void TcpClient::Close() {
-  if (server_) {
-    server_->CloseClient(this);
-  }
-
+void TcpClient::CloseImpl() {
   common::Error err = sock_.close();
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
   }
-}
-
-void TcpClient::SetName(const std::string& name) {
-  name_ = name;
-}
-
-std::string TcpClient::Name() const {
-  return name_;
-}
-
-TcpClient::flags_t TcpClient::Flags() const {
-  return flags_;
-}
-
-void TcpClient::SetFlags(flags_t flags) {
-  flags_ = flags;
-  server_->ChangeFlags(this);
-}
-
-common::patterns::id_counter<TcpClient>::type_t TcpClient::Id() const {
-  return id_.id();
-}
-
-const char* TcpClient::ClassName() const {
-  return "TcpClient";
-}
-
-std::string TcpClient::FormatedName() const {
-  return common::MemSPrintf("[%s][%s(%" PRIuMAX ")]", Name(), ClassName(), Id());
 }
 
 }  // namespace tcp

@@ -18,105 +18,20 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
-#include <functional>
+#include "network/io_server.h"
 
-#include <common/patterns/crtp_pattern.h>
-
-#include <common/net/socket_tcp.h>
-
-#include "network/event_loop.h"
+#include "network/tcp/tcp_client.h"
 
 #define INVALID_TIMER_ID -1
 
 namespace fasto {
 namespace fastotv {
 namespace network {
-typedef int timer_id_t;
-
 namespace tcp {
 
-class ITcpLoopObserver;
-class TcpClient;
-class LoopTimer;
-
-class ITcpLoop : public EvLoopObserver, common::IMetaClassInfo {
+class TcpServer : public network::IoLoop {
  public:
-  explicit ITcpLoop(ITcpLoopObserver* observer = nullptr);
-  virtual ~ITcpLoop();
-
-  int Exec() WARN_UNUSED_RESULT;
-  virtual void Stop();
-
-  void RegisterClient(const common::net::socket_info& info);
-  void RegisterClient(TcpClient* client);
-  void UnRegisterClient(TcpClient* client);
-  virtual void CloseClient(TcpClient* client);
-
-  timer_id_t CreateTimer(double sec, double repeat);
-  void RemoveTimer(timer_id_t id);
-
-  void ChangeFlags(TcpClient* client);
-
-  common::patterns::id_counter<ITcpLoop>::type_t GetId() const;
-
-  void SetName(const std::string& name);
-  std::string Name() const;
-
-  virtual const char* ClassName() const override = 0;
-  std::string FormatedName() const;
-
-  void ExecInLoopThread(async_loop_exec_function_t func);
-
-  bool IsLoopThread() const;
-
-  std::vector<TcpClient*> Clients() const;
-
-  static ITcpLoop* FindExistLoopByPredicate(std::function<bool(ITcpLoop*)> pred);
-
- protected:
-  virtual TcpClient* CreateClient(const common::net::socket_info& info) = 0;
-
-  virtual void PreLooped(LibEvLoop* loop) override;
-  virtual void Stoped(LibEvLoop* loop) override;
-  virtual void PostLooped(LibEvLoop* loop) override;
-
-  LibEvLoop* const loop_;
-
- private:
-  static void read_write_cb(struct ev_loop* loop, struct ev_io* watcher, int revents);
-  static void timer_cb(struct ev_loop* loop, struct ev_timer* timer, int revents);
-
-  ITcpLoopObserver* const observer_;
-
-  std::vector<TcpClient*> clients_;
-  std::vector<LoopTimer*> timers_;
-  const common::patterns::id_counter<ITcpLoop> id_;
-
-  std::string name_;
-};
-
-class ITcpLoopObserver {
- public:
-  virtual void PreLooped(ITcpLoop* server) = 0;
-
-  virtual void Accepted(TcpClient* client) = 0;
-  virtual void Moved(TcpClient* client) = 0;
-  virtual void Closed(TcpClient* client) = 0;
-  virtual void TimerEmited(ITcpLoop* server, timer_id_t id) = 0;
-
-  virtual void DataReceived(TcpClient* client) = 0;
-  virtual void DataReadyToWrite(TcpClient* client) = 0;
-
-  virtual void PostLooped(ITcpLoop* server) = 0;
-
-  virtual ~ITcpLoopObserver();
-};
-
-class TcpServer : public ITcpLoop {
- public:
-  explicit TcpServer(const common::net::HostAndPort& host, ITcpLoopObserver* observer = nullptr);
+  explicit TcpServer(const common::net::HostAndPort& host, IoLoopObserver* observer = nullptr);
   virtual ~TcpServer();
 
   common::Error Bind() WARN_UNUSED_RESULT;
@@ -125,7 +40,7 @@ class TcpServer : public ITcpLoop {
   const char* ClassName() const override;
   common::net::HostAndPort host() const;
 
-  static ITcpLoop* FindExistServerByHost(const common::net::HostAndPort& host);
+  static network::IoLoop* FindExistServerByHost(const common::net::HostAndPort& host);
 
  private:
   virtual TcpClient* CreateClient(const common::net::socket_info& info) override;

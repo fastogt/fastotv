@@ -29,7 +29,7 @@ namespace inner {
 class InnerClient : public network::tcp::TcpClient {
  public:
   typedef uint32_t protocoled_size_t;  // 4 byte
-  InnerClient(network::tcp::ITcpLoop* server, const common::net::socket_info& info);
+  InnerClient(network::IoLoop* server, const common::net::socket_info& info);
   const char* ClassName() const override;
 
   common::Error Write(const cmd_request_t& request) WARN_UNUSED_RESULT;

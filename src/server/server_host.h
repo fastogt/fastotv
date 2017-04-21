@@ -56,10 +56,10 @@ class ServerHost {
   void stop();
   int exec();
 
-  bool UnRegisterInnerConnectionByHost(network::tcp::TcpClient* connection) WARN_UNUSED_RESULT;
+  bool UnRegisterInnerConnectionByHost(network::IoClient* connection) WARN_UNUSED_RESULT;
   bool RegisterInnerConnectionByUser(user_id_t user_id,
                                      const AuthInfo& user,
-                                     network::tcp::TcpClient* connection) WARN_UNUSED_RESULT;
+                                     network::IoClient* connection) WARN_UNUSED_RESULT;
   common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;
   common::Error FindUser(const AuthInfo& auth,
                          user_id_t* uid,

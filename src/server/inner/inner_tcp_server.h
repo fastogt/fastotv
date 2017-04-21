@@ -32,7 +32,7 @@ namespace inner {
 
 class InnerTcpServer : public network::tcp::TcpServer {
  public:
-  InnerTcpServer(const common::net::HostAndPort& host, network::tcp::ITcpLoopObserver* observer);
+  InnerTcpServer(const common::net::HostAndPort& host, network::IoLoopObserver* observer);
   virtual const char* ClassName() const override;
 
  private:

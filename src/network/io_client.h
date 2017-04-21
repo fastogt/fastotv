@@ -23,32 +23,49 @@
 #include <common/patterns/crtp_pattern.h>
 #include <common/net/socket_tcp.h>
 
-#include "network/io_client.h"
+#include "network/event_loop.h"
 
 namespace fasto {
 namespace fastotv {
 namespace network {
-namespace tcp {
 
-class TcpClient : public IoClient {
+class IoLoop;
+
+class IoClient : common::IMetaClassInfo {
  public:
-  TcpClient(IoLoop* server, const common::net::socket_info& info, flags_t flags = EV_READ);
-  virtual ~TcpClient();
+  typedef int flags_t;
+  friend class IoLoop;
+  IoClient(IoLoop* server, flags_t flags = EV_READ);
+  virtual ~IoClient();
 
-  common::net::socket_info Info() const;
+  void Close();
 
- protected:
-  virtual int Fd() const override;
+  IoLoop* Server() const;
 
-  virtual common::Error Write(const char* data, size_t size, size_t* nwrite) override;
-  virtual common::Error Read(char* out, size_t max_size, size_t* nread) override;
-  virtual void CloseImpl() override;
+  void SetName(const std::string& name);
+  std::string Name() const;
+
+  flags_t Flags() const;
+  void SetFlags(flags_t flags);
+
+  common::patterns::id_counter<IoClient>::type_t Id() const;
+  virtual const char* ClassName() const override;
+  std::string FormatedName() const;
+
+ protected:  // executed IoLoop
+  virtual int Fd() const = 0;
+  virtual common::Error Write(const char* data, size_t size, size_t* nwrite) WARN_UNUSED_RESULT = 0;
+  virtual common::Error Read(char* out, size_t max_size, size_t* nread) WARN_UNUSED_RESULT = 0;
+  virtual void CloseImpl() = 0;
 
  private:
-  common::net::SocketHolder sock_;
-};
+  IoLoop* server_;
+  ev_io* read_write_io_;
+  int flags_;
 
-}  // namespace tcp
+  std::string name_;
+  const common::patterns::id_counter<IoClient> id_;
+};
 }
 }  // namespace fastotv
 }  // namespace fasto

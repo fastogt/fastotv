@@ -26,7 +26,7 @@ namespace server {
 namespace inner {
 
 InnerTcpServer::InnerTcpServer(const common::net::HostAndPort& host,
-                               network::tcp::ITcpLoopObserver* observer)
+                               network::IoLoopObserver* observer)
     : TcpServer(host, observer) {}
 
 const char* InnerTcpServer::ClassName() const {
