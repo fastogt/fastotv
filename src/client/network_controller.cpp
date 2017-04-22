@@ -28,7 +28,7 @@
 #include "client/inner/inner_tcp_server.h"
 
 #ifdef HAVE_LIRC
-#include "client/core/inputs/lirc_input_client.h"
+#include "client/inputs/lirc_input_client.h"
 #endif
 
 #include <common/application/application.h>
@@ -55,11 +55,11 @@ class PrivateHandler : public inner::InnerTcpHandler {
   virtual void PreLooped(network::IoLoop* server) override {
 #ifdef HAVE_LIRC
     int fd;
-    common::Error err = core::inputs::LircInit(&fd);
+    common::Error err = inputs::LircInit(&fd);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     } else {
-      client_ = new core::inputs::LircInputClient(server, fd);
+      client_ = new inputs::LircInputClient(server, fd);
       server->RegisterClient(client_);
     }
 #endif
@@ -89,7 +89,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
     UNUSED(server);
 #ifdef HAVE_LIRC
     if (client_) {
-      core::inputs::LircInputClient* connection = client_;
+      inputs::LircInputClient* connection = client_;
       connection->Close();
       delete connection;
     }
@@ -97,7 +97,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::PostLooped(server);
   }
 #ifdef HAVE_LIRC
-  core::inputs::LircInputClient* client_;
+  inputs::LircInputClient* client_;
 #endif
 };
 }

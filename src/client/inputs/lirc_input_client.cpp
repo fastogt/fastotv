@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/inputs/lirc_input_client.h"
+#include "client/inputs/lirc_input_client.h"
 
 #include <common/logger.h>
 
@@ -25,7 +25,6 @@
 namespace fasto {
 namespace fastotv {
 namespace client {
-namespace core {
 namespace inputs {
 
 common::Error LircInit(int* fd) {
@@ -79,7 +78,6 @@ void LircInputClient::CloseImpl() {
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
   }
-}
 }
 }
 }

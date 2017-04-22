@@ -23,7 +23,6 @@
 namespace fasto {
 namespace fastotv {
 namespace client {
-namespace core {
 namespace inputs {
 
 common::Error LircInit(int* fd) WARN_UNUSED_RESULT;
@@ -46,7 +45,6 @@ class LircInputClient : public network::IoClient {
 
   common::net::SocketHolder sock_;
 };
-}
 }
 }
 }
