@@ -27,21 +27,28 @@ namespace fastotv {
 namespace client {
 namespace inputs {
 
-common::Error LircInit(int* fd) {
-  if (!fd) {
+common::Error LircInit(int* fd, struct lirc_config** cfg) {
+  if (!fd || !cfg) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
-  int lfd = lirc_init(NULL, 1);
+  int lfd = lirc_init(PROJECT_NAME_LOWERCASE, 1);
   if (lfd == -1) {
     return common::make_error_value("Lirc init failed!", common::Value::E_ERROR);
   }
 
+  lirc_config* lcfg = NULL;
+  if (lirc_readconfig(NULL, &lcfg, NULL) == -1) {
+    LircDeinit(fd, NULL);
+    return common::make_error_value("Could not read LIRC config file!", common::Value::E_ERROR);
+  }
+
   *fd = lfd;
+  *cfg = lcfg;
   return common::Error();
 }
 
-common::Error LircDeinit(int fd) {
+common::Error LircDeinit(int fd, struct lirc_config** cfg) {
   if (fd == -1) {
     return common::Error();
   }
@@ -50,11 +57,32 @@ common::Error LircDeinit(int fd) {
     return common::make_error_value("Lirc deinit failed!", common::Value::E_ERROR);
   }
 
+  if (cfg) {
+    *cfg = NULL;
+  }
   return common::Error();
 }
 
-LircInputClient::LircInputClient(network::IoLoop* server, int fd)
-    : network::IoClient(server), sock_(fd) {
+LircInputClient::LircInputClient(network::IoLoop* server, int fd, struct lirc_config* cfg)
+    : network::IoClient(server), sock_(fd), cfg_(cfg) {}
+
+common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
+  char* code = NULL;
+  int ret;
+  while ((ret = lirc_nextcode(&code)) == 0 && code != NULL) {
+    char* c = NULL;
+    while ((ret = lirc_code2char(cfg_, code, &c)) == 0 && c != NULL) {
+      if (cb) {
+        cb(c);
+      }
+    }
+    free(code);
+    if (ret == -1) {
+      break;
+    }
+  }
+
+  return common::Error();
 }
 
 int LircInputClient::Fd() const {
@@ -74,7 +102,7 @@ common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
 }
 
 void LircInputClient::CloseImpl() {
-  common::Error err = LircDeinit(sock_.fd());
+  common::Error err = LircDeinit(sock_.fd(), &cfg_);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
   }

@@ -79,6 +79,8 @@ class PrivateHandler : public inner::InnerTcpHandler {
   void DataReceived(network::IoClient* client) {
 #ifdef HAVE_LIRC
     if (client == client_) {
+      auto cb = [this](const std::string& code) { INFO_LOG() << "Recived lirc cmd:" << code; };
+      client->ReadWithCallback(cb);
       return;
     }
 #endif
@@ -102,8 +104,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
 };
 }
 
-NetworkController::NetworkController() : ILoopThreadController() {
-}
+NetworkController::NetworkController() : ILoopThreadController() {}
 
 void NetworkController::Start() {
   ILoopThreadController::Start();
@@ -113,8 +114,7 @@ void NetworkController::Stop() {
   ILoopThreadController::Stop();
 }
 
-NetworkController::~NetworkController() {
-}
+NetworkController::~NetworkController() {}
 
 AuthInfo NetworkController::GetAuthInfo() {
   return AuthInfo(USER_LOGIN, USER_PASSWORD);

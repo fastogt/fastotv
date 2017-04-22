@@ -20,19 +20,24 @@
 
 #include "network/io_client.h"
 
+struct lirc_config;
+
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace inputs {
 
-common::Error LircInit(int* fd) WARN_UNUSED_RESULT;
-common::Error LircDeinit(int fd) WARN_UNUSED_RESULT;
+common::Error LircInit(int* fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
+common::Error LircDeinit(int fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
 
 class LircInputClient : public network::IoClient {
  public:
-  LircInputClient(network::IoLoop* server, int fd);
+  typedef std::function<void(const std::string&)> read_callback_t;
+  LircInputClient(network::IoLoop* server, int fd, struct lirc_config* cfg);
 
-  virtual int Fd() const;
+  virtual int Fd() const override;
+
+  common::Error ReadWithCallback(read_callback_t cb) WARN_UNUSED_RESULT;
 
  protected:
   virtual void CloseImpl() override;
@@ -44,6 +49,7 @@ class LircInputClient : public network::IoClient {
   virtual common::Error Read(char* out, size_t max_size, size_t* nread) final WARN_UNUSED_RESULT;
 
   common::net::SocketHolder sock_;
+  struct lirc_config* cfg_;
 };
 }
 }
