@@ -75,7 +75,7 @@ class PcDevice(SupportedDevice):
 class OrangePiDevice(SupportedDevice):
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo',
-                                                        'libcedrus1-dev']},
+                                                        'libcedrus1-dev', 'libvdpau-devel']},
                                  utils.CompileInfo(['patch/orange-pi-one/sdl2'],
                                                    ['--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2']),

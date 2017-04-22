@@ -8,6 +8,7 @@ from pybuild_utils.base import utils
 
 
 def install_orange_pi():
+    subprocess.call(['modprobe', 'mali'])
     pwd = os.getcwd()
     try:
         cloned_dir = utils.git_clone('https://github.com/linux-sunxi/sunxi-mali.git', pwd)
