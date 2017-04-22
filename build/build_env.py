@@ -4,8 +4,9 @@ import os
 import shutil
 import subprocess
 import sys
+from abc import ABCMeta, abstractmethod
 
-from devices import orange_pi_one
+from devices import orange_pi
 from pybuild_utils.base import system_info, utils
 
 # Script for building enviroment on clean machine
@@ -38,13 +39,12 @@ def splitext(path):
     return os.path.splitext(path)[0]
 
 
-class SupportedDevice(object):
-    def __init__(self, name, system_libs, sdl2_compile_info, ffmpeg_compile_info, install_specific=None):
+class SupportedDevice(metaclass=ABCMeta):
+    def __init__(self, name, system_platform_libs: dict, sdl2_compile_info, ffmpeg_compile_info):
         self.name_ = name
-        self.system_libs_ = system_libs
+        self.system_platform_libs_ = system_platform_libs
         self.sdl2_compile_info_ = sdl2_compile_info
         self.ffmpeg_compile_info_ = ffmpeg_compile_info
-        self.install_specific_ = install_specific
 
     def name(self):
         return self.name_
@@ -55,22 +55,49 @@ class SupportedDevice(object):
     def ffmpeg_compile_info(self):
         return self.ffmpeg_compile_info_
 
-    def system_libs(self, platform):
-        return self.system_libs_
+    def system_libs(self, platform: system_info.Platform) -> list:
+        return self.system_platform_libs_.get(platform.name())
+
+    @abstractmethod
+    def install_specific(self):
+        pass
+
+
+class PcDevice(SupportedDevice):
+    def __init__(self):
+        SupportedDevice.__init__(self, 'pc', {'linux': ['libvdpau-devel', 'libva-devel', 'libvdpau-dev', 'libva-dev']},
+                                 utils.CompileInfo([], []), utils.CompileInfo([], []))
 
     def install_specific(self):
-        if self.install_specific_:
-            return self.install_specific_()
+        return
 
 
-SUPPORTED_DEVICES = [
-    SupportedDevice('pc', [], utils.CompileInfo([], []), utils.CompileInfo([], [])),
-    SupportedDevice('orange-pi-one',
-                    ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libcedrus1-dev'],
-                    utils.CompileInfo(['patch/orange-pi-one/sdl2'],
-                                      ['--disable-video-opengl', '--disable-video-opengles1',
-                                       '--enable-video-opengles2']),
-                    utils.CompileInfo([], []), orange_pi_one.install_orange_pi)]
+class OrangePiDevice(SupportedDevice):
+    def __init__(self, name):
+        SupportedDevice.__init__(self, name, {'linux': ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo',
+                                                        'libcedrus1-dev']},
+                                 utils.CompileInfo(['patch/orange-pi-one/sdl2'],
+                                                   ['--disable-video-opengl', '--disable-video-opengles1',
+                                                    '--enable-video-opengles2']),
+                                 utils.CompileInfo([], []))
+
+    def install_specific(self):
+        orange_pi.install_orange_pi()
+
+
+class OrangePiOne(OrangePiDevice):
+    def __init__(self):
+        OrangePiDevice.__init__(self, 'orange-pi-one')
+
+
+class OrangePiLite(OrangePiDevice):
+    def __init__(self):
+        OrangePiDevice.__init__(self, 'orange-pi-lite')
+        linux_libs = self.system_platform_libs_.get('linux')
+        linux_libs.extend(['liblircclient-dev'])
+
+
+SUPPORTED_DEVICES = [PcDevice(), OrangePiOne(), OrangePiLite()]
 
 
 def get_device() -> SupportedDevice:
@@ -80,6 +107,11 @@ def get_device() -> SupportedDevice:
 def get_supported_device_by_name(name) -> SupportedDevice:
     return next((x for x in SUPPORTED_DEVICES if x.name() == name), None)
 
+def get_availible_devices() -> list:
+    result = []
+    for device in SUPPORTED_DEVICES:
+        result.extend([device.name()])
+    return result
 
 class BuildRequest(object):
     def __init__(self, device, platform, arch_name, dir_path, prefix_path):
@@ -115,10 +147,11 @@ class BuildRequest(object):
     def install_device_specific(self):
         device.install_specific()
 
-    def install_system(self):
-        platform_name = self.platform_.name()
-        arch = self.platform_.arch()
-        device = self.device_
+    def get_system_libs(self):
+        platform = self.platform_
+        platform_name = platform.name()
+        arch = platform.arch()
+        dep_libs = []
 
         if platform_name == 'linux':
             distribution = system_info.linux_get_dist()
@@ -128,8 +161,7 @@ class BuildRequest(object):
                             'libasound2-dev',
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
-                            'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit',
-                            'libvdpau-dev', 'libva-dev']
+                            'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
                             'make',
@@ -137,22 +169,13 @@ class BuildRequest(object):
                             'alsa-lib-devel',
                             'libX11-devel',
                             'libdrm-devel', 'libdri2-devel', 'libump-devel',
-                            'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit',
-                            'libvdpau-devel', 'libva-devel']
-            # x86_64 arch
-            # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
-            # Debian 8.7 no packages: libdri2-dev, libump-dev, 
+                            'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
+                # x86_64 arch
+                # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
+                # Debian 8.7 no packages: libdri2-dev, libump-dev,
 
-            dep_libs.extend(device.system_libs(platform_name))
-
-            for lib in dep_libs:
-                if distribution == 'DEBIAN':
-                    subprocess.call(['apt-get', '-y', '--force-yes', 'install', lib])
-                elif distribution == 'RHEL':
-                    subprocess.call(['yum', '-y', 'install', lib])
-
-            if distribution == 'RHEL':
-                subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
+                # if distribution == 'RHEL':
+                #    subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
         elif platform_name == 'windows':
             if arch.name() == 'x86_64':
                 dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
@@ -160,20 +183,26 @@ class BuildRequest(object):
             elif arch.name() == 'i386':
                 dep_libs = ['git', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
                             'mingw-w64-i686-make', 'mingw-w64-i686-ninja']
-
-            for lib in dep_libs:
-                subprocess.call(['pacman', '-SYq', lib])
         elif platform_name == 'macosx':
             dep_libs = ['git', 'yasm', 'make', 'ninja']
+        else:
+            raise NotImplemented("Unknown platform '%s'" % platform_name)
 
-            for lib in dep_libs:
-                subprocess.call(['port', 'install', lib])
+        device_specific_libs = self.device_.system_libs(platform)
+        dep_libs.extend(device_specific_libs)
+        return dep_libs
+
+    def install_system(self):
+        platform = self.platform_
+        dep_libs = self.get_system_libs();
+        for lib in dep_libs:
+            platform.install_package(lib)
 
     def build(self, url, compiler_flags: utils.CompileInfo):
         utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_)
 
     def build_ffmpeg(self, version):
-        ffmpeg_platform_args = ['--disable-doc', 
+        ffmpeg_platform_args = ['--disable-doc',
                                 '--disable-programs',
                                 '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
@@ -248,6 +277,7 @@ if __name__ == "__main__":
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
     default_device = get_device().name()
+    availible_devices = get_availible_devices()
 
     parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
     parser.add_argument('--with-device',
@@ -255,7 +285,7 @@ if __name__ == "__main__":
                         dest='with_device', action='store_true')
     parser.add_argument('--without-device', help='build without device dependencies', dest='with_device',
                         action='store_false')
-    parser.add_argument('--device', help='device (default: {0})'.format(default_device), default=default_device)
+    parser.add_argument('--device', help='device (default: {0}, availible: {1})'.format(default_device, availible_devices), default=default_device)
     parser.set_defaults(with_device=True)
 
     parser.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',
