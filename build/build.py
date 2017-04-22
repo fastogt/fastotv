@@ -85,7 +85,7 @@ class BuildRequest(object):
         if arch == None:
             raise utils.BuildError('invalid arch')
 
-        self.platform_ = system_info.Platform(platform_or_none.name(), arch, platform_or_none.package_types())
+        self.platform_ = platform_or_none.make_platform_by_arch(arch, platform_or_none.package_types())
         print("Build request for platform: {0}, arch: {1} created".format(platform, arch.name()))
 
     def platform(self):
