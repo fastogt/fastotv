@@ -56,7 +56,7 @@ class SupportedDevice(metaclass=ABCMeta):
         return self.ffmpeg_compile_info_
 
     def system_libs(self, platform: system_info.Platform) -> list:
-        return self.system_platform_libs_.get(platform.name())
+        return self.system_platform_libs_.get(platform.name(), [])
 
     @abstractmethod
     def install_specific(self):
@@ -127,7 +127,8 @@ class BuildRequest(object):
         if not prefix_path:
             prefix_path = build_arch.default_install_prefix_path()
 
-        build_platform = system_info.Platform(platform_or_none.name(), build_arch, platform_or_none.package_types())
+        packages_types = platform_or_none.package_types()
+        build_platform = platform_or_none.make_platform_by_arch(build_arch, packages_types)
 
         self.device_ = device
         self.platform_ = build_platform
@@ -194,7 +195,7 @@ class BuildRequest(object):
 
     def install_system(self):
         platform = self.platform_
-        dep_libs = self.get_system_libs();
+        dep_libs = self.get_system_libs()
         for lib in dep_libs:
             platform.install_package(lib)
 
