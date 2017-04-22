@@ -38,8 +38,8 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   }
 
   lirc_config* lcfg = NULL;
-  if (lirc_readconfig(NULL, &lcfg, NULL) == -1) {
-    LircDeinit(fd, NULL);
+  if (lirc_readconfig("/etc/lirc/lircd.conf", &lcfg, NULL) == -1) {
+    LircDeinit(lfd, NULL);
     return common::make_error_value("Could not read LIRC config file!", common::Value::E_ERROR);
   }
 

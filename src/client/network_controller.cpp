@@ -55,18 +55,19 @@ class PrivateHandler : public inner::InnerTcpHandler {
   virtual void PreLooped(network::IoLoop* server) override {
 #ifdef HAVE_LIRC
     int fd;
-    common::Error err = inputs::LircInit(&fd);
+    struct lirc_config* lcd = NULL;
+    common::Error err = inputs::LircInit(&fd, &lcd);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     } else {
-      client_ = new inputs::LircInputClient(server, fd);
+      client_ = new inputs::LircInputClient(server, fd, lcd);
       server->RegisterClient(client_);
     }
 #endif
     base_class::PreLooped(server);
   }
 
-  void Closed(network::IoClient* client) {
+  virtual void Closed(network::IoClient* client) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
       client_ = nullptr;
@@ -76,11 +77,11 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::Closed(client);
   }
 
-  void DataReceived(network::IoClient* client) {
+  virtual void DataReceived(network::IoClient* client) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
       auto cb = [this](const std::string& code) { INFO_LOG() << "Recived lirc cmd:" << code; };
-      client->ReadWithCallback(cb);
+      client_->ReadWithCallback(cb);
       return;
     }
 #endif
