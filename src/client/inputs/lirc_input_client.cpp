@@ -50,7 +50,9 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   char* lirc_config_ptr = const_cast<char*>(lirc_config_path.c_str());
   if (lirc_readconfig(lirc_config_ptr, &lcfg, NULL) == -1) {
     LircDeinit(lfd, NULL);
-    return common::make_error_value("Could not read LIRC config file!", common::Value::E_ERROR);
+    std::string msg_error =
+        common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
+    return common::make_error_value(msg_error, common::Value::E_ERROR);
   }
 
   *fd = lfd;
