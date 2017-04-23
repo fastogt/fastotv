@@ -18,9 +18,11 @@
 
 #include "client/inputs/lirc_input_client.h"
 
-#include <common/logger.h>
-
 #include <lirc/lirc_client.h>
+
+#include <common/logger.h>
+#include <common/file_system.h>
+#include <common/net/net.h>
 
 namespace fasto {
 namespace fastotv {
@@ -32,13 +34,21 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
-  int lfd = lirc_init(PROJECT_NAME_LOWERCASE, 1);
+  int lfd = lirc_init(const_cast<char*>(PROJECT_NAME_LOWERCASE), 1);
   if (lfd == -1) {
     return common::make_error_value("Lirc init failed!", common::Value::E_ERROR);
   }
 
+  common::ErrnoError err = common::net::set_blocking_socket(lfd, false);
+  if (err && err->IsError()) {
+    return err;
+  }
+
   lirc_config* lcfg = NULL;
-  if (lirc_readconfig("/etc/lirc/lircd.conf", &lcfg, NULL) == -1) {
+  const std::string lirc_config_path =
+      common::file_system::realpath_from_filename(LIRCRC_CONFIG_PATH_RELATIVE);
+  char* lirc_config_ptr = const_cast<char*>(lirc_config_path.c_str());
+  if (lirc_readconfig(lirc_config_ptr, &lcfg, NULL) == -1) {
     LircDeinit(lfd, NULL);
     return common::make_error_value("Could not read LIRC config file!", common::Value::E_ERROR);
   }

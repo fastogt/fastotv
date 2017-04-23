@@ -162,6 +162,8 @@ Player::Player(const PlayerOptions& options,
 
   fApp->Subscribe(this, core::events::KeyPressEvent::EventType);
 
+  fApp->Subscribe(this, core::events::LircPressEvent::EventType);
+
   fApp->Subscribe(this, core::events::MouseMoveEvent::EventType);
   fApp->Subscribe(this, core::events::MousePressEvent::EventType);
 
@@ -215,6 +217,9 @@ void Player::HandleEvent(event_t* event) {
   } else if (event->GetEventType() == core::events::KeyPressEvent::EventType) {
     core::events::KeyPressEvent* key_press_event = static_cast<core::events::KeyPressEvent*>(event);
     HandleKeyPressEvent(key_press_event);
+  } else if (event->GetEventType() == core::events::LircPressEvent::EventType) {
+    core::events::LircPressEvent* lirc_press_event = static_cast<core::events::LircPressEvent*>(event);
+    HandleLircPressEvent(lirc_press_event);
   } else if (event->GetEventType() == core::events::WindowResizeEvent::EventType) {
     core::events::WindowResizeEvent* win_resize_event =
         static_cast<core::events::WindowResizeEvent*>(event);
@@ -495,6 +500,25 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
     }
   } else {
     NOTREACHED();
+  }
+}
+
+void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
+  if (options_.exit_on_keydown) {
+    fApp->Exit(EXIT_SUCCESS);
+    return;
+  }
+
+  core::events::LircPressInfo inf = event->info();
+  switch (inf.code) {
+  case LIRC_KEY_OK:
+  case LIRC_KEY_LEFT:
+  case LIRC_KEY_UP:
+  case LIRC_KEY_RIGHT:
+  case LIRC_KEY_DOWN:
+    break;
+  default:
+    break;
   }
 }
 

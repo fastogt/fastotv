@@ -96,6 +96,8 @@ class Player : public core::VideoStateHandler {
 
   virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event);
 
+  virtual void HandleLircPressEvent(core::events::LircPressEvent* event);
+
   virtual void HandleWindowResizeEvent(core::events::WindowResizeEvent* event);
   virtual void HandleWindowExposeEvent(core::events::WindowExposeEvent* event);
   virtual void HandleWindowCloseEvent(core::events::WindowCloseEvent* event);

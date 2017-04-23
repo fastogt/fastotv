@@ -23,15 +23,15 @@
 #include <common/convert2string.h>
 #include <common/file_system.h>
 #include <common/logger.h>
+#include <common/application/application.h>
 
 #include "client/inner/inner_tcp_handler.h"
 #include "client/inner/inner_tcp_server.h"
 
 #ifdef HAVE_LIRC
 #include "client/inputs/lirc_input_client.h"
+#include "client/core/events/lirc_events.h"
 #endif
-
-#include <common/application/application.h>
 
 #include "server_config.h"
 
@@ -80,7 +80,18 @@ class PrivateHandler : public inner::InnerTcpHandler {
   virtual void DataReceived(network::IoClient* client) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
-      auto cb = [this](const std::string& code) { INFO_LOG() << "Recived lirc cmd:" << code; };
+      auto cb = [this](const std::string& code) {
+          LircCode lcode;
+          if (!common::ConvertFromString(code, &lcode)){
+            WARNING_LOG() << "Unknown lirc code: " << code;
+            return;
+          }
+
+          core::events::LircPressInfo linf;
+          linf.code = lcode;
+          core::events::LircPressEvent* levent = new core::events::LircPressEvent(this, linf);
+          fApp->PostEvent(levent);
+      };
       client_->ReadWithCallback(cb);
       return;
     }
