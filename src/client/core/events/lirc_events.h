@@ -20,13 +20,7 @@
 
 #include "client/core/events/events_base.h"
 
-enum LircCode {
-  LIRC_KEY_OK,
-  LIRC_KEY_LEFT,
-  LIRC_KEY_UP,
-  LIRC_KEY_RIGHT,
-  LIRC_KEY_DOWN
-};
+enum LircCode { LIRC_KEY_OK, LIRC_KEY_LEFT, LIRC_KEY_UP, LIRC_KEY_RIGHT, LIRC_KEY_DOWN };
 
 namespace common {
 std::string ConvertToString(LircCode value);
@@ -39,7 +33,9 @@ namespace client {
 namespace core {
 namespace events {
 
-struct LircPressInfo {LircCode code;};
+struct LircPressInfo {
+  LircCode code;
+};
 typedef EventBase<LIRC_PRESS_EVENT, LircPressInfo> LircPressEvent;
 
 }  // namespace events {

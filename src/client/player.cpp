@@ -75,12 +75,8 @@ bool CreateWindowFunc(Size window_size,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL,
-                                         SDL_WINDOWPOS_UNDEFINED,
-                                         SDL_WINDOWPOS_UNDEFINED,
-                                         window_size.width,
-                                         window_size.height,
-                                         flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                         window_size.width, window_size.height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -118,8 +114,7 @@ PlayerOptions::PlayerOptions()
       default_size(width, height),
       screen_size(0, 0),
       audio_volume(volume),
-      muted(false) {
-}
+      muted(false) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -218,7 +213,8 @@ void Player::HandleEvent(event_t* event) {
     core::events::KeyPressEvent* key_press_event = static_cast<core::events::KeyPressEvent*>(event);
     HandleKeyPressEvent(key_press_event);
   } else if (event->GetEventType() == core::events::LircPressEvent::EventType) {
-    core::events::LircPressEvent* lirc_press_event = static_cast<core::events::LircPressEvent*>(event);
+    core::events::LircPressEvent* lirc_press_event =
+        static_cast<core::events::LircPressEvent*>(event);
     HandleLircPressEvent(lirc_press_event);
   } else if (event->GetEventType() == core::events::WindowResizeEvent::EventType) {
     core::events::WindowResizeEvent* win_resize_event =
@@ -285,12 +281,8 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this,
-                             wanted_channel_layout,
-                             wanted_nb_channels,
-                             wanted_sample_rate,
-                             &laudio_hw_params,
-                             sdl_audio_callback);
+  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
+                             &laudio_hw_params, sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -321,13 +313,14 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(
-          &frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
+  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
+                     false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of " << frame->width << "x" << frame->height
+                   "size of "
+                << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -342,20 +335,9 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect,
-                               xleft_,
-                               ytop_,
-                               window_size_.width,
-                               window_size_.height,
-                               frame->width,
-                               frame->height,
-                               frame->sar);
-  SDL_RenderCopyEx(renderer_,
-                   frame->bmp,
-                   NULL,
-                   &rect,
-                   0,
-                   NULL,
+  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height,
+                               frame->width, frame->height, frame->sar);
+  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
                    frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   SDL_RenderPresent(renderer_);
@@ -511,14 +493,28 @@ void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
 
   core::events::LircPressInfo inf = event->info();
   switch (inf.code) {
-  case LIRC_KEY_OK:
-  case LIRC_KEY_LEFT:
-  case LIRC_KEY_UP:
-  case LIRC_KEY_RIGHT:
-  case LIRC_KEY_DOWN:
-    break;
-  default:
-    break;
+    case LIRC_KEY_OK: {
+      PauseStream();
+      break;
+    }
+    case LIRC_KEY_LEFT: {
+      MoveToPreviousStream();
+      break;
+    }
+    case LIRC_KEY_UP: {
+      UpdateVolume(VOLUME_STEP);
+      break;
+    }
+    case LIRC_KEY_RIGHT: {
+      MoveToNextStream();
+      break;
+    }
+    case LIRC_KEY_DOWN: {
+      UpdateVolume(-VOLUME_STEP);
+      break;
+    }
+    default:
+      break;
   }
 }
 
@@ -542,9 +538,7 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     }
     case FASTO_KEY_p:
     case FASTO_KEY_SPACE:
-      if (stream_) {
-        stream_->TogglePause();
-      }
+      PauseStream();
       break;
     case FASTO_KEY_m: {
       bool muted = !options_.muted;
@@ -587,33 +581,11 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       break;
     }
     case FASTO_KEY_LEFTBRACKET: {
-      core::VideoState* st = stream_;
-      if (st) {
-        common::thread th([st]() {
-          st->Abort();
-          delete st;
-        });
-        th.detach();
-      }
-      stream_ = CreatePrevStream();
-      if (!stream_) {
-        SwitchToChannelErrorMode();
-      }
+      MoveToPreviousStream();
       break;
     }
     case FASTO_KEY_RIGHTBRACKET: {
-      core::VideoState* st = stream_;
-      if (st) {
-        common::thread th([st]() {
-          st->Abort();
-          delete st;
-        });
-        th.detach();
-      }
-      stream_ = CreateNextStream();
-      if (!stream_) {
-        SwitchToChannelErrorMode();
-      }
+      MoveToNextStream();
       break;
     }
     default:
@@ -795,6 +767,42 @@ void Player::CalculateDispalySize() {
     window_size_ = options_.screen_size;
   } else {
     window_size_ = options_.default_size;
+  }
+}
+
+void Player::PauseStream() {
+  if (stream_) {
+    stream_->TogglePause();
+  }
+}
+
+void Player::MoveToNextStream() {
+  core::VideoState* st = stream_;
+  if (st) {
+    common::thread th([st]() {
+      st->Abort();
+      delete st;
+    });
+    th.detach();
+  }
+  stream_ = CreateNextStream();
+  if (!stream_) {
+    SwitchToChannelErrorMode();
+  }
+}
+
+void Player::MoveToPreviousStream() {
+  core::VideoState* st = stream_;
+  if (st) {
+    common::thread th([st]() {
+      st->Abort();
+      delete st;
+    });
+    th.detach();
+  }
+  stream_ = CreatePrevStream();
+  if (!stream_) {
+    SwitchToChannelErrorMode();
   }
 }
 

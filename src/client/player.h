@@ -127,6 +127,11 @@ class Player : public core::VideoStateHandler {
   void InitWindow(const std::string& title);
   void CalculateDispalySize();
 
+  // channel evrnts
+  void PauseStream();
+  void MoveToNextStream();
+  void MoveToPreviousStream();
+
   // player modes
   void SwitchToPlayingMode();
   void SwitchToChannelErrorMode();

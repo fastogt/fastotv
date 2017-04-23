@@ -81,16 +81,16 @@ class PrivateHandler : public inner::InnerTcpHandler {
 #ifdef HAVE_LIRC
     if (client == client_) {
       auto cb = [this](const std::string& code) {
-          LircCode lcode;
-          if (!common::ConvertFromString(code, &lcode)){
-            WARNING_LOG() << "Unknown lirc code: " << code;
-            return;
-          }
+        LircCode lcode;
+        if (!common::ConvertFromString(code, &lcode)) {
+          WARNING_LOG() << "Unknown lirc code: " << code;
+          return;
+        }
 
-          core::events::LircPressInfo linf;
-          linf.code = lcode;
-          core::events::LircPressEvent* levent = new core::events::LircPressEvent(this, linf);
-          fApp->PostEvent(levent);
+        core::events::LircPressInfo linf;
+        linf.code = lcode;
+        core::events::LircPressEvent* levent = new core::events::LircPressEvent(this, linf);
+        fApp->PostEvent(levent);
       };
       client_->ReadWithCallback(cb);
       return;
