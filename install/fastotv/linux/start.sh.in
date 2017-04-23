@@ -9,6 +9,6 @@ done
 SOURCE_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 cd $SOURCE_DIR
 
-export LD_LIBRARY_PATH="$SOURCE_DIR/../lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$SOURCE_DIR/@RELATIVE_SOURCE_DIR@/lib:$LD_LIBRARY_PATH"
 
 "$SOURCE_DIR/@PROJECT_NAME@" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"

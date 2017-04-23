@@ -400,11 +400,11 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
     const std::string offline_channel_img_full_path =
-        common::file_system::realpath_from_filename(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
+        common::file_system::absolute_path_from_filename(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     offline_channel_surface_ = IMG_LoadPNG(offline_channel_img_full_path.c_str());
 
     const std::string connection_error_img_full_path =
-        common::file_system::realpath_from_filename(IMG_CONNECTION_ERROR_PATH_RELATIVE);
+        common::file_system::absolute_path_from_filename(IMG_CONNECTION_ERROR_PATH_RELATIVE);
     connection_error_surface_ = IMG_LoadPNG(connection_error_img_full_path.c_str());
     controller_->Start();
     SwitchToConnectMode();

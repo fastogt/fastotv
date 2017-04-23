@@ -46,7 +46,7 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
 
   lirc_config* lcfg = NULL;
   const std::string lirc_config_path =
-      common::file_system::realpath_from_filename(LIRCRC_CONFIG_PATH_RELATIVE);
+      common::file_system::make_path(RELATIVE_SOURCE_DIR, LIRCRC_CONFIG_PATH_RELATIVE);
   char* lirc_config_ptr = const_cast<char*>(lirc_config_path.c_str());
   if (lirc_readconfig(lirc_config_ptr, &lcfg, NULL) == -1) {
     LircDeinit(lfd, NULL);
