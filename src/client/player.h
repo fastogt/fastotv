@@ -142,6 +142,20 @@ class Player : public core::VideoStateHandler {
   void SwitchToConnectMode();
   void SwitchToDisconnectMode();
 
+  void StartDraw();
+
+  void DrawDisplay();
+  void DrawPlayingStatus();
+  void DrawInitStatus();
+
+  void DrawChannelsInfo();
+
+  void DrawInfo();
+
+  void DrawFooter();
+
+  void FinishDraw();
+
   core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();
   core::VideoState* CreatePrevStream();

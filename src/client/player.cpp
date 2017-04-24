@@ -433,7 +433,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
     connection_error_surface_ = IMG_LoadPNG(connection_error_img_full_path.c_str());
 
     const std::string font_path =
-          common::file_system::make_path(RELATIVE_SOURCE_DIR, "share/fonts/FreeSans.ttf");
+        common::file_system::make_path(RELATIVE_SOURCE_DIR, "share/fonts/FreeSans.ttf");
     font_ = TTF_OpenFont(font_path.c_str(), 24);
     controller_->Start();
     SwitchToConnectMode();
@@ -476,43 +476,12 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
     cursor_hidden_ = true;
   }
 
-  if (current_state_ == PLAYING_STATE) {
-    if (stream_) {
-      stream_->TryRefreshVideo();
-    } else {
-      if (offline_channel_surface_) {
-        SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, offline_channel_surface_);
-        if (img) {
-          SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-          SDL_RenderClear(renderer_);
-          SDL_RenderCopy(renderer_, img, NULL, NULL);
-          SDL_RenderPresent(renderer_);
-          SDL_DestroyTexture(img);
-        }
-      } else {
-        SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-        SDL_RenderClear(renderer_);
-        SDL_RenderPresent(renderer_);
-      }
-    }
-  } else if (current_state_ == INIT_STATE) {
-    if (connection_error_surface_) {
-      SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, connection_error_surface_);
-      if (img) {
-        SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-        SDL_RenderClear(renderer_);
-        SDL_RenderCopy(renderer_, img, NULL, NULL);
-        SDL_RenderPresent(renderer_);
-        SDL_DestroyTexture(img);
-      }
-    } else {
-      SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-      SDL_RenderClear(renderer_);
-      SDL_RenderPresent(renderer_);
-    }
-  } else {
-    NOTREACHED();
-  }
+  StartDraw();
+  DrawDisplay();
+  DrawChannelsInfo();
+  DrawInfo();
+  DrawFooter();
+  FinishDraw();
 }
 
 void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
@@ -788,6 +757,72 @@ void Player::SwitchToConnectMode() {
 void Player::SwitchToDisconnectMode() {
   InitWindow("Disconnect");
   current_state_ = INIT_STATE;
+}
+
+void Player::StartDraw() {
+}
+
+void Player::DrawDisplay() {
+  if (current_state_ == PLAYING_STATE) {
+    DrawPlayingStatus();
+  } else if (current_state_ == INIT_STATE) {
+    DrawInitStatus();
+  } else {
+    NOTREACHED();
+  };
+}
+
+void Player::DrawPlayingStatus() {
+  if (stream_) {
+    stream_->TryRefreshVideo();
+    return;
+  }
+
+  if (offline_channel_surface_) {
+    SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, offline_channel_surface_);
+    if (img) {
+      SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+      SDL_RenderClear(renderer_);
+      SDL_RenderCopy(renderer_, img, NULL, NULL);
+      SDL_RenderPresent(renderer_);
+      SDL_DestroyTexture(img);
+    }
+    return;
+  }
+
+  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+  SDL_RenderClear(renderer_);
+  SDL_RenderPresent(renderer_);
+}
+
+void Player::DrawInitStatus() {
+  if (connection_error_surface_) {
+    SDL_Texture* img = SDL_CreateTextureFromSurface(renderer_, connection_error_surface_);
+    if (img) {
+      SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+      SDL_RenderClear(renderer_);
+      SDL_RenderCopy(renderer_, img, NULL, NULL);
+      SDL_RenderPresent(renderer_);
+      SDL_DestroyTexture(img);
+    }
+    return;
+  }
+
+  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+  SDL_RenderClear(renderer_);
+  SDL_RenderPresent(renderer_);
+}
+
+void Player::DrawChannelsInfo() {
+}
+
+void Player::DrawInfo() {
+}
+
+void Player::DrawFooter() {
+}
+
+void Player::FinishDraw() {
 }
 
 void Player::InitWindow(const std::string& title) {
