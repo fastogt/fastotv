@@ -116,7 +116,8 @@ class PrivateHandler : public inner::InnerTcpHandler {
 };
 }
 
-NetworkController::NetworkController() : ILoopThreadController() {}
+NetworkController::NetworkController() : ILoopThreadController() {
+}
 
 void NetworkController::Start() {
   ILoopThreadController::Start();
@@ -126,7 +127,8 @@ void NetworkController::Stop() {
   ILoopThreadController::Stop();
 }
 
-NetworkController::~NetworkController() {}
+NetworkController::~NetworkController() {
+}
 
 AuthInfo NetworkController::GetAuthInfo() {
   return AuthInfo(USER_LOGIN, USER_PASSWORD);

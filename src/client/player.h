@@ -19,6 +19,7 @@
 #pragma once
 
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_ttf.h>
 
 #include <common/smart_ptr.h>
 #include <common/url.h>
@@ -166,6 +167,7 @@ class Player : public core::VideoStateHandler {
 
   SDL_Surface* offline_channel_surface_;
   SDL_Surface* connection_error_surface_;
+  TTF_Font* font_;
   core::VideoState* stream_;
 
   Size window_size_;

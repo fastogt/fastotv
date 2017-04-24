@@ -52,7 +52,8 @@ InnerTcpHandler::InnerTcpHandler(const common::net::HostAndPort& innerHost, cons
     : inner_connection_(nullptr),
       ping_server_id_timer_(INVALID_TIMER_ID),
       innerHost_(innerHost),
-      ainf_(ainf) {}
+      ainf_(ainf) {
+}
 
 InnerTcpHandler::~InnerTcpHandler() {
   delete inner_connection_;

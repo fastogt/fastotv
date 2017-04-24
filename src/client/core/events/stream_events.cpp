@@ -24,12 +24,15 @@ namespace client {
 namespace core {
 namespace events {
 
-StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {}
+StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {
+}
 
 FrameInfo::FrameInfo(VideoState* stream, core::VideoFrame* frame)
-    : StreamInfo(stream), frame(frame) {}
+    : StreamInfo(stream), frame(frame) {
+}
 
-QuitStreamInfo::QuitStreamInfo(VideoState* stream, int code) : StreamInfo(stream), code(code) {}
+QuitStreamInfo::QuitStreamInfo(VideoState* stream, int code) : StreamInfo(stream), code(code) {
+}
 }
 }
 }

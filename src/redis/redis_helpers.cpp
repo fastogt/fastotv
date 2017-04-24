@@ -94,7 +94,8 @@ common::Error parse_user_json(const char* userJson, user_id_t* out_uid, UserInfo
 
 }  // namespace
 
-RedisStorage::RedisStorage() : config_() {}
+RedisStorage::RedisStorage() : config_() {
+}
 
 void RedisStorage::SetConfig(const redis_configuration_t& config) {
   config_ = config;
@@ -146,9 +147,11 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
   return common::Error();
 }
 
-RedisSubHandler::~RedisSubHandler() {}
+RedisSubHandler::~RedisSubHandler() {
+}
 
-RedisSub::RedisSub(RedisSubHandler* handler) : handler_(handler), stop_(false) {}
+RedisSub::RedisSub(RedisSubHandler* handler) : handler_(handler), stop_(false) {
+}
 
 void RedisSub::SetConfig(const redis_sub_configuration_t& config) {
   config_ = config;

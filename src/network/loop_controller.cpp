@@ -28,7 +28,8 @@ namespace fasto {
 namespace fastotv {
 namespace network {
 
-ILoopController::ILoopController() : loop_(nullptr), handler_(nullptr) {}
+ILoopController::ILoopController() : loop_(nullptr), handler_(nullptr) {
+}
 
 int ILoopController::Exec() {
   CHECK(!handler_);
@@ -76,7 +77,8 @@ ILoopThreadController::ILoopThreadController() : ILoopController(), loop_thread_
   loop_thread_ = THREAD_MANAGER()->CreateThread(&ILoopController::Exec, this);
 }
 
-ILoopThreadController::~ILoopThreadController() {}
+ILoopThreadController::~ILoopThreadController() {
+}
 
 int ILoopThreadController::Join() {
   return loop_thread_->JoinAndGet();

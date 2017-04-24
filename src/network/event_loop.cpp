@@ -46,7 +46,8 @@ namespace fasto {
 namespace fastotv {
 namespace network {
 
-EvLoopObserver::~EvLoopObserver() {}
+EvLoopObserver::~EvLoopObserver() {
+}
 
 LibEvLoop::LibEvLoop()
     : loop_(ev_loop_new(0)),

@@ -116,7 +116,9 @@ void show_help_filter(const char* name) {
   printf("    Inputs:\n");
   int count = avfilter_pad_count(f->inputs);
   for (int i = 0; i < count; i++) {
-    printf("       #%d: %s (%s)\n", i, avfilter_pad_get_name(f->inputs, i),
+    printf("       #%d: %s (%s)\n",
+           i,
+           avfilter_pad_get_name(f->inputs, i),
            media_type_string(avfilter_pad_get_type(f->inputs, i)));
   }
   if (f->flags & AVFILTER_FLAG_DYNAMIC_INPUTS) {
@@ -128,7 +130,9 @@ void show_help_filter(const char* name) {
   printf("    Outputs:\n");
   count = avfilter_pad_count(f->outputs);
   for (int i = 0; i < count; i++) {
-    printf("       #%d: %s (%s)\n", i, avfilter_pad_get_name(f->outputs, i),
+    printf("       #%d: %s (%s)\n",
+           i,
+           avfilter_pad_get_name(f->outputs, i),
            media_type_string(avfilter_pad_get_type(f->outputs, i)));
   }
   if (f->flags & AVFILTER_FLAG_DYNAMIC_OUTPUTS) {
@@ -233,28 +237,33 @@ int write_option(const OptionDef* po, const char* opt, const char* arg, Dictiona
 #define SHOW_CONFIG 4
 #define SHOW_COPYRIGHT 8
 
-#define PRINT_LIB_INFO(libname, LIBNAME, flags, level)                                            \
-  if (CONFIG_##LIBNAME) {                                                                         \
-    const char* indent = (flags & INDENT) ? "  " : "";                                            \
-    if (flags & SHOW_VERSION) {                                                                   \
-      unsigned int version = libname##_version();                                                 \
-      RUNTIME_LOG(level) << common::MemSPrintf(                                                   \
-          "%slib%-11s %2d.%3d.%3d / %2d.%3d.%3d", indent, #libname, LIB##LIBNAME##_VERSION_MAJOR, \
-          LIB##LIBNAME##_VERSION_MINOR, LIB##LIBNAME##_VERSION_MICRO, AV_VERSION_MAJOR(version),  \
-          AV_VERSION_MINOR(version), AV_VERSION_MICRO(version));                                  \
-    }                                                                                             \
-    if (flags & SHOW_CONFIG) {                                                                    \
-      const char* cfg = libname##_configuration();                                                \
-      if (strcmp(FFMPEG_CONFIGURATION, cfg)) {                                                    \
-        if (!warned_cfg) {                                                                        \
-          RUNTIME_LOG(level) << common::MemSPrintf("%sWARNING: library configuration mismatch",   \
-                                                   indent);                                       \
-          warned_cfg = true;                                                                      \
-        }                                                                                         \
-        RUNTIME_LOG(level) << indent << common::MemSPrintf("%s%-11s configuration: %s", indent,   \
-                                                           #libname, cfg);                        \
-      }                                                                                           \
-    }                                                                                             \
+#define PRINT_LIB_INFO(libname, LIBNAME, flags, level)                                           \
+  if (CONFIG_##LIBNAME) {                                                                        \
+    const char* indent = (flags & INDENT) ? "  " : "";                                           \
+    if (flags & SHOW_VERSION) {                                                                  \
+      unsigned int version = libname##_version();                                                \
+      RUNTIME_LOG(level) << common::MemSPrintf("%slib%-11s %2d.%3d.%3d / %2d.%3d.%3d",           \
+                                               indent,                                           \
+                                               #libname,                                         \
+                                               LIB##LIBNAME##_VERSION_MAJOR,                     \
+                                               LIB##LIBNAME##_VERSION_MINOR,                     \
+                                               LIB##LIBNAME##_VERSION_MICRO,                     \
+                                               AV_VERSION_MAJOR(version),                        \
+                                               AV_VERSION_MINOR(version),                        \
+                                               AV_VERSION_MICRO(version));                       \
+    }                                                                                            \
+    if (flags & SHOW_CONFIG) {                                                                   \
+      const char* cfg = libname##_configuration();                                               \
+      if (strcmp(FFMPEG_CONFIGURATION, cfg)) {                                                   \
+        if (!warned_cfg) {                                                                       \
+          RUNTIME_LOG(level) << common::MemSPrintf("%sWARNING: library configuration mismatch",  \
+                                                   indent);                                      \
+          warned_cfg = true;                                                                     \
+        }                                                                                        \
+        RUNTIME_LOG(level) << indent << common::MemSPrintf(                                      \
+                                            "%s%-11s configuration: %s", indent, #libname, cfg); \
+      }                                                                                          \
+    }                                                                                            \
   }
 
 void print_all_libs_info(int flags, common::logging::LEVEL_LOG level) {
@@ -283,7 +292,7 @@ void print_program_info(int flags, common::logging::LEVEL_LOG level) {
 void print_buildconf(int flags, common::logging::LEVEL_LOG level) {
   const char* indent = (flags & INDENT) ? "  " : "";
   char str[] = {FFMPEG_CONFIGURATION};
-  char *conflist, *remove_tilde, *splitconf;
+  char* conflist, *remove_tilde, *splitconf;
 
   // Change all the ' --' strings to '~--' so that
   // they can be identified as tokens.
@@ -461,7 +470,10 @@ int show_formats_devices(const char* opt,
     }
     last_name = name;
 
-    printf(" %s%s %-15s %s\n", decode ? "D" : " ", encode ? "E" : " ", name,
+    printf(" %s%s %-15s %s\n",
+           decode ? "D" : " ",
+           encode ? "E" : " ",
+           name,
            long_name ? long_name : " ");
   }
   return SUCCESS_RESULT_VALUE;
@@ -483,8 +495,8 @@ int show_formats_devices(const char* opt,
 void print_codec(const AVCodec* c) {
   int encoder = av_codec_is_encoder(c);
 
-  printf("%s %s [%s]:\n", encoder ? "Encoder" : "Decoder", c->name,
-         c->long_name ? c->long_name : "");
+  printf(
+      "%s %s [%s]:\n", encoder ? "Encoder" : "Decoder", c->name, c->long_name ? c->long_name : "");
 
   printf("    General capabilities: ");
   if (c->capabilities & AV_CODEC_CAP_DRAW_HORIZ_BAND) {
@@ -559,10 +571,14 @@ void print_codec(const AVCodec* c) {
     }
     printf("\n");
   }
-  PRINT_CODEC_SUPPORTED(c, pix_fmts, enum AVPixelFormat, "pixel formats", AV_PIX_FMT_NONE,
-                        GET_PIX_FMT_NAME);
+  PRINT_CODEC_SUPPORTED(
+      c, pix_fmts, enum AVPixelFormat, "pixel formats", AV_PIX_FMT_NONE, GET_PIX_FMT_NAME);
   PRINT_CODEC_SUPPORTED(c, supported_samplerates, int, "sample rates", 0, GET_SAMPLE_RATE_NAME);
-  PRINT_CODEC_SUPPORTED(c, sample_fmts, enum AVSampleFormat, "sample formats", AV_SAMPLE_FMT_NONE,
+  PRINT_CODEC_SUPPORTED(c,
+                        sample_fmts,
+                        enum AVSampleFormat,
+                        "sample formats",
+                        AV_SAMPLE_FMT_NONE,
                         GET_SAMPLE_FMT_NAME);
   PRINT_CODEC_SUPPORTED(c, channel_layouts, uint64_t, "channel layouts", 0, GET_CH_LAYOUT_DESC);
 }
@@ -778,7 +794,7 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
   bool consumed = false;
   char opt_stripped[128];
   const char* p;
-  const AVClass *cc = avcodec_get_class(), *fc = avformat_get_class();
+  const AVClass* cc = avcodec_get_class(), *fc = avformat_get_class();
 #if CONFIG_AVRESAMPLE
   const AVClass* rc = avresample_get_class();
 #endif
@@ -918,7 +934,9 @@ int show_license(const char* opt, const char* arg, DictionaryOptions* dopt) {
       "\n"
       "You should have received a copy of the GNU Lesser General Public License\n"
       "along with %s.  If not, see <http://www.gnu.org/licenses/>.\n",
-      PROJECT_NAME_TITLE, PROJECT_NAME_TITLE, PROJECT_NAME_TITLE);
+      PROJECT_NAME_TITLE,
+      PROJECT_NAME_TITLE,
+      PROJECT_NAME_TITLE);
 
   return 0;
 }
@@ -1089,9 +1107,13 @@ int show_filters(const char* opt, const char* arg, DictionaryOptions* dopt) {
                              : '|';
     }
     *descr_cur = 0;
-    printf(" %c%c%c %-17s %-10s %s\n", (filter->flags & AVFILTER_FLAG_SUPPORT_TIMELINE) ? 'T' : '.',
+    printf(" %c%c%c %-17s %-10s %s\n",
+           (filter->flags & AVFILTER_FLAG_SUPPORT_TIMELINE) ? 'T' : '.',
            (filter->flags & AVFILTER_FLAG_SLICE_THREADS) ? 'S' : '.',
-           filter->process_command ? 'C' : '.', filter->name, descr, filter->description);
+           filter->process_command ? 'C' : '.',
+           filter->name,
+           descr,
+           filter->description);
   }
 #else
   printf("No filters available: libavfilter disabled\n");
@@ -1139,12 +1161,15 @@ int show_pix_fmts(const char* opt, const char* arg, DictionaryOptions* dopt) {
 
   while ((pix_desc = av_pix_fmt_desc_next(pix_desc))) {
     enum AVPixelFormat pix_fmt = av_pix_fmt_desc_get_id(pix_desc);
-    printf("%c%c%c%c%c %-16s       %d            %2d\n", sws_isSupportedInput(pix_fmt) ? 'I' : '.',
+    printf("%c%c%c%c%c %-16s       %d            %2d\n",
+           sws_isSupportedInput(pix_fmt) ? 'I' : '.',
            sws_isSupportedOutput(pix_fmt) ? 'O' : '.',
            (pix_desc->flags & AV_PIX_FMT_FLAG_HWACCEL) ? 'H' : '.',
            (pix_desc->flags & AV_PIX_FMT_FLAG_PAL) ? 'P' : '.',
-           (pix_desc->flags & AV_PIX_FMT_FLAG_BITSTREAM) ? 'B' : '.', pix_desc->name,
-           pix_desc->nb_components, av_get_bits_per_pixel(pix_desc));
+           (pix_desc->flags & AV_PIX_FMT_FLAG_BITSTREAM) ? 'B' : '.',
+           pix_desc->name,
+           pix_desc->nb_components,
+           av_get_bits_per_pixel(pix_desc));
   }
   return 0;
 }
@@ -1367,8 +1392,10 @@ int print_device_sources(AVInputFormat* fmt, AVDictionary* opts) {
   }
 
   for (int i = 0; i < device_list->nb_devices; i++) {
-    printf("%s %s [%s]\n", device_list->default_device == i ? "*" : " ",
-           device_list->devices[i]->device_name, device_list->devices[i]->device_description);
+    printf("%s %s [%s]\n",
+           device_list->default_device == i ? "*" : " ",
+           device_list->devices[i]->device_name,
+           device_list->devices[i]->device_description);
   }
 
   avdevice_free_list_devices(&device_list);
@@ -1395,8 +1422,10 @@ int print_device_sinks(AVOutputFormat* fmt, AVDictionary* opts) {
   }
 
   for (int i = 0; i < device_list->nb_devices; i++) {
-    printf("%s %s [%s]\n", device_list->default_device == i ? "*" : " ",
-           device_list->devices[i]->device_name, device_list->devices[i]->device_description);
+    printf("%s %s [%s]\n",
+           device_list->default_device == i ? "*" : " ",
+           device_list->devices[i]->device_name,
+           device_list->devices[i]->device_description);
   }
 
   avdevice_free_list_devices(&device_list);

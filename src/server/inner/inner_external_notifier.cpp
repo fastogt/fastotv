@@ -36,9 +36,11 @@ namespace fastotv {
 namespace server {
 namespace inner {
 
-InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) {}
+InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) {
+}
 
-InnerSubHandler::~InnerSubHandler() {}
+InnerSubHandler::~InnerSubHandler() {
+}
 
 void InnerSubHandler::processSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {
   std::string join = request_id;
@@ -106,8 +108,11 @@ void InnerSubHandler::handleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  auto cb = std::bind(&InnerSubHandler::processSubscribed, this, std::placeholders::_1,
-                      std::placeholders::_2, std::placeholders::_3);
+  auto cb = std::bind(&InnerSubHandler::processSubscribed,
+                      this,
+                      std::placeholders::_1,
+                      std::placeholders::_2,
+                      std::placeholders::_3);
   fasto::fastotv::inner::RequestCallback rc(id, cb);
   parent_->SubscribeRequest(rc);
 }

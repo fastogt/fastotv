@@ -22,6 +22,7 @@
 #include <SDL2/SDL_error.h>   // for SDL_GetError
 #include <SDL2/SDL_mutex.h>   // for SDL_CreateMutex, etc
 #include <SDL2/SDL_stdinc.h>  // for SDL_getenv, SDL_setenv, etc
+#include <SDL2/SDL_ttf.h>
 
 #include <common/threads/event_bus.h>
 
@@ -58,13 +59,17 @@ Sdl2Application::~Sdl2Application() {
 int Sdl2Application::PreExec() {
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
   if (SDL_Init(flags)) {
-    ERROR_LOG() << "Could not initialize SDL - " << SDL_GetError();
-    ERROR_LOG() << "(Did you set the DISPLAY variable?)";
+    ERROR_LOG() << "Could not initialize SDL error: " << SDL_GetError();
     return EXIT_FAILURE;
   }
 
   SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
   SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
+
+  if (TTF_Init() == -1) {
+    ERROR_LOG() << "SDL_ttf could not error: " << TTF_GetError();
+    return EXIT_FAILURE;
+  }
 
   return EXIT_SUCCESS;
 }
@@ -117,6 +122,7 @@ int Sdl2Application::Exec() {
 }
 
 int Sdl2Application::PostExec() {
+  TTF_Quit();
   SDL_Quit();
   return EXIT_SUCCESS;
 }

@@ -31,7 +31,8 @@ namespace client {
 namespace core {
 
 Stream::Stream()
-    : packet_queue_(new PacketQueue), clock_(new Clock), stream_index_(-1), stream_st_(NULL) {}
+    : packet_queue_(new PacketQueue), clock_(new Clock), stream_index_(-1), stream_st_(NULL) {
+}
 
 bool Stream::Open(int index, AVStream* av_stream_st) {
   stream_index_ = index;
@@ -113,9 +114,11 @@ PacketQueue* Stream::Queue() const {
   return packet_queue_;
 }
 
-VideoStream::VideoStream() : Stream() {}
+VideoStream::VideoStream() : Stream() {
+}
 
-AudioStream::AudioStream() : Stream() {}
+AudioStream::AudioStream() : Stream() {
+}
 
 }  // namespace core
 }

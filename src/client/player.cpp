@@ -75,8 +75,12 @@ bool CreateWindowFunc(Size window_size,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                         window_size.width, window_size.height, flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL,
+                                         SDL_WINDOWPOS_UNDEFINED,
+                                         SDL_WINDOWPOS_UNDEFINED,
+                                         window_size.width,
+                                         window_size.height,
+                                         flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -114,7 +118,8 @@ PlayerOptions::PlayerOptions()
       default_size(width, height),
       screen_size(0, 0),
       audio_volume(volume),
-      muted(false) {}
+      muted(false) {
+}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -133,6 +138,7 @@ Player::Player(const PlayerOptions& options,
       curent_stream_pos_(0),
       offline_channel_surface_(NULL),
       connection_error_surface_(NULL),
+      font_(NULL),
       stream_(nullptr),
       window_size_(),
       xleft_(0),
@@ -286,8 +292,12 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
-                             &laudio_hw_params, sdl_audio_callback);
+  int ret = core::audio_open(this,
+                             wanted_channel_layout,
+                             wanted_nb_channels,
+                             wanted_sample_rate,
+                             &laudio_hw_params,
+                             sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -318,14 +328,13 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
-                     false) < 0) {
+  if (ReallocTexture(
+          &frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of "
-                << frame->width << "x" << frame->height
+                   "size of " << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -340,9 +349,20 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height,
-                               frame->width, frame->height, frame->sar);
-  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
+  core::calculate_display_rect(&rect,
+                               xleft_,
+                               ytop_,
+                               window_size_.width,
+                               window_size_.height,
+                               frame->width,
+                               frame->height,
+                               frame->sar);
+  SDL_RenderCopyEx(renderer_,
+                   frame->bmp,
+                   NULL,
+                   &rect,
+                   0,
+                   NULL,
                    frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   SDL_RenderPresent(renderer_);
@@ -411,6 +431,10 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
     const std::string connection_error_img_full_path =
         common::file_system::absolute_path_from_filename(IMG_CONNECTION_ERROR_PATH_RELATIVE);
     connection_error_surface_ = IMG_LoadPNG(connection_error_img_full_path.c_str());
+
+    const std::string font_path =
+          common::file_system::make_path(RELATIVE_SOURCE_DIR, "share/fonts/FreeSans.ttf");
+    font_ = TTF_OpenFont(font_path.c_str(), 24);
     controller_->Start();
     SwitchToConnectMode();
   }
@@ -424,6 +448,7 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
       stream_->Abort();
       destroy(&stream_);
     }
+    TTF_CloseFont(font_);
     SDL_FreeSurface(offline_channel_surface_);
     SDL_FreeSurface(connection_error_surface_);
 

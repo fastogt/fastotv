@@ -116,8 +116,8 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
   png_color_16* transv;
   /* Read PNG header info */
   png_read_info(png_ptr, info_ptr);
-  png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL,
-               NULL);
+  png_get_IHDR(
+      png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
 
   /* tell libpng to strip 16 bit/color files down to 8 bits/color */
   png_set_strip_16(png_ptr);
@@ -169,8 +169,8 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
 
   png_read_update_info(png_ptr, info_ptr);
 
-  png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL,
-               NULL);
+  png_get_IHDR(
+      png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
 
   /* Allocate the SDL surface to hold the image */
   Uint32 Rmask = 0;
@@ -204,8 +204,8 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
   if (ckey != -1) {
     if (color_type != PNG_COLOR_TYPE_PALETTE) {
       /* FIXME: Should these be truncated or shifted down? */
-      ckey = SDL_MapRGB(surface->format, (Uint8)transv->red, (Uint8)transv->green,
-                        (Uint8)transv->blue);
+      ckey = SDL_MapRGB(
+          surface->format, (Uint8)transv->red, (Uint8)transv->green, (Uint8)transv->blue);
     }
     SDL_SetColorKey(surface, SDL_TRUE, ckey);
   }

@@ -277,7 +277,6 @@ void IoLoop::PostLooped(LibEvLoop* loop) {
 
 IoLoopObserver::~IoLoopObserver() {
 }
-
 }
 }  // namespace fastotv
 }  // namespace fasto

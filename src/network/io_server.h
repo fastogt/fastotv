@@ -110,7 +110,6 @@ class IoLoopObserver {
 
   virtual ~IoLoopObserver();
 };
-
 }
 }  // namespace fastotv
 }  // namespace fasto

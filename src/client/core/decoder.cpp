@@ -66,7 +66,8 @@ AVCodecContext* Decoder::AvCtx() const {
   return avctx_;
 }
 
-IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue) : Decoder(avctx, queue) {}
+IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue) : Decoder(avctx, queue) {
+}
 
 AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue)
     : IFrameDecoder(avctx, queue), start_pts_(invalid_pts()), start_pts_tb_{0, 0} {

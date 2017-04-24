@@ -51,7 +51,7 @@ static void vdpau_uninit(AVCodecContext* s) {
     av_frame_free(&ctx->tmp_frame);
     av_free(ctx);
   }
-  
+
   ist->hwaccel_ctx = NULL;
   ist->hwaccel_uninit = NULL;
   ist->hwaccel_get_buffer = NULL;

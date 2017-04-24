@@ -26,7 +26,6 @@ namespace events {
 
 WindowResizeInfo::WindowResizeInfo(const Size& size) : size(size) {
 }
-
 }
 }
 }

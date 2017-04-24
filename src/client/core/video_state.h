@@ -175,7 +175,7 @@ class VideoState {
   core::AppOptions opt_;
   core::ComplexOptions copt_;
 
-  common::shared_ptr<common::threads::Thread<int>> read_tid_;
+  common::shared_ptr<common::threads::Thread<int> > read_tid_;
   bool force_refresh_;
   bool queue_attachments_req_;
   int read_pause_return_;
@@ -229,8 +229,8 @@ class VideoState {
   int last_video_stream_;
   int last_audio_stream_;
 
-  common::shared_ptr<common::threads::Thread<int>> vdecoder_tid_;
-  common::shared_ptr<common::threads::Thread<int>> adecoder_tid_;
+  common::shared_ptr<common::threads::Thread<int> > vdecoder_tid_;
+  common::shared_ptr<common::threads::Thread<int> > adecoder_tid_;
 
   bool paused_;
   bool last_paused_;
