@@ -64,6 +64,9 @@ class Player : public core::VideoStateHandler {
          const core::ComplexOptions& copt);
   void SetFullScreen(bool full_screen);
   void SetMute(bool mute);
+  void Mute();
+  void UpdateVolume(int step);
+  void Quit();
   ~Player();
 
  protected:
@@ -116,7 +119,6 @@ class Player : public core::VideoStateHandler {
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
 
-  void UpdateVolume(int step);
   int ReallocTexture(SDL_Texture** texture,
                      Uint32 new_format,
                      int new_width,

@@ -20,7 +20,15 @@
 
 #include "client/core/events/events_base.h"
 
-enum LircCode { LIRC_KEY_OK, LIRC_KEY_LEFT, LIRC_KEY_UP, LIRC_KEY_RIGHT, LIRC_KEY_DOWN };
+enum LircCode {
+  LIRC_KEY_OK = 0,
+  LIRC_KEY_LEFT,
+  LIRC_KEY_UP,
+  LIRC_KEY_RIGHT,
+  LIRC_KEY_DOWN,
+  LIRC_KEY_EXIT,
+  LIRC_KEY_MUTE
+};
 
 namespace common {
 std::string ConvertToString(LircCode value);

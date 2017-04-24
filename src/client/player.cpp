@@ -186,6 +186,11 @@ void Player::SetMute(bool mute) {
   options_.muted = mute;
 }
 
+void Player::Mute() {
+  bool muted = !options_.muted;
+  SetMute(muted);
+}
+
 Player::~Player() {
   av_buffer_unref(&core::hw_device_ctx);
   destroy(&controller_);
@@ -383,7 +388,7 @@ void Player::HandleAllocFrameEvent(core::events::AllocFrameEvent* event) {
       stream_->Abort();
       destroy(&stream_);
     }
-    fApp->Exit(EXIT_FAILURE);
+    Quit();
   }
 }
 
@@ -487,7 +492,7 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
 
 void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
   if (options_.exit_on_keydown) {
-    fApp->Exit(EXIT_SUCCESS);
+    Quit();
     return;
   }
 
@@ -513,6 +518,14 @@ void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
       UpdateVolume(-VOLUME_STEP);
       break;
     }
+    case LIRC_KEY_EXIT: {
+      Quit();
+      break;
+    }
+    case LIRC_KEY_MUTE: {
+      Mute();
+      break;
+    }
     default:
       break;
   }
@@ -520,7 +533,7 @@ void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
 
 void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   if (options_.exit_on_keydown) {
-    fApp->Exit(EXIT_SUCCESS);
+    Quit();
     return;
   }
 
@@ -528,7 +541,7 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   switch (inf.ks.sym) {
     case FASTO_KEY_ESCAPE:
     case FASTO_KEY_q: {
-      fApp->Exit(EXIT_SUCCESS);
+      Quit();
       return;
     }
     case FASTO_KEY_f: {
@@ -541,8 +554,7 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       PauseStream();
       break;
     case FASTO_KEY_m: {
-      bool muted = !options_.muted;
-      SetMute(muted);
+      Mute();
       break;
     }
     case FASTO_KEY_KP_MULTIPLY:
@@ -595,7 +607,7 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
 
 void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
   if (options_.exit_on_mousedown) {
-    fApp->Exit(EXIT_SUCCESS);
+    Quit();
     return;
   }
 
@@ -645,12 +657,12 @@ void Player::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
 
 void Player::HandleWindowCloseEvent(core::events::WindowCloseEvent* event) {
   UNUSED(event);
-  fApp->Exit(EXIT_SUCCESS);
+  Quit();
 }
 
 void Player::HandleQuitEvent(core::events::QuitEvent* event) {
   UNUSED(event);
-  fApp->Exit(EXIT_SUCCESS);
+  Quit();
 }
 
 void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* event) {
@@ -697,6 +709,10 @@ void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
 
 void Player::UpdateVolume(int step) {
   options_.audio_volume = av_clip(options_.audio_volume + step, 0, 100);
+}
+
+void Player::Quit() {
+  fApp->Exit(EXIT_SUCCESS);
 }
 
 int Player::ReallocTexture(SDL_Texture** texture,
