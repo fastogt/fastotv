@@ -107,11 +107,13 @@ def get_device() -> SupportedDevice:
 def get_supported_device_by_name(name) -> SupportedDevice:
     return next((x for x in SUPPORTED_DEVICES if x.name() == name), None)
 
-def get_availible_devices() -> list:
+
+def get_available_devices() -> list:
     result = []
-    for device in SUPPORTED_DEVICES:
-        result.extend([device.name()])
+    for dev in SUPPORTED_DEVICES:
+        result.extend([dev.name()])
     return result
+
 
 class BuildRequest(object):
     def __init__(self, device, platform, arch_name, dir_path, prefix_path):
@@ -146,7 +148,7 @@ class BuildRequest(object):
                                                                                build_arch.name()))
 
     def install_device_specific(self):
-        device.install_specific()
+        self.device_.install_specific()
 
     def get_system_libs(self):
         platform = self.platform_
@@ -174,9 +176,6 @@ class BuildRequest(object):
                 # x86_64 arch
                 # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
                 # Debian 8.7 no packages: libdri2-dev, libump-dev,
-
-                # if distribution == 'RHEL':
-                #    subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
         elif platform_name == 'windows':
             if arch.name() == 'x86_64':
                 dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
@@ -199,6 +198,13 @@ class BuildRequest(object):
         for lib in dep_libs:
             platform.install_package(lib)
 
+        # post install step
+        platform_name = platform.name()
+        if platform_name == 'linux':
+            distribution = system_info.linux_get_dist()
+            if distribution == 'RHEL':
+                subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
+
     def build(self, url, compiler_flags: utils.CompileInfo):
         utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_)
 
@@ -212,7 +218,6 @@ class BuildRequest(object):
                                 '--enable-avfilter', '--enable-avcodec', '--enable-avdevice', '--enable-avformat',
                                 '--enable-swscale', '--enable-swresample',
                                 '--extra-version=static']  # '--extra-cflags=--static'
-        device = self.device_
         platform_name = self.platform_.name()
         if platform_name == 'linux':
             ffmpeg_platform_args.extend(['--disable-libxcb'])
@@ -221,13 +226,12 @@ class BuildRequest(object):
         elif platform_name == 'macosx':
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
 
-        compiler_flags = device.ffmpeg_compile_info()
+        compiler_flags = self.device_.ffmpeg_compile_info()
         compiler_flags.extend_flags(ffmpeg_platform_args)
         self.build('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, version, ARCH_FFMPEG_EXT), compiler_flags)
 
     def build_sdl2(self, version):
-        device = self.device_
-        compiler_flags = device.sdl2_compile_info()
+        compiler_flags = self.device_.sdl2_compile_info()
         self.build('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_libpng(self, version):
@@ -278,7 +282,7 @@ if __name__ == "__main__":
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
     default_device = get_device().name()
-    availible_devices = get_availible_devices()
+    availible_devices = get_available_devices()
 
     parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
     parser.add_argument('--with-device',
@@ -286,7 +290,9 @@ if __name__ == "__main__":
                         dest='with_device', action='store_true')
     parser.add_argument('--without-device', help='build without device dependencies', dest='with_device',
                         action='store_false')
-    parser.add_argument('--device', help='device (default: {0}, availible: {1})'.format(default_device, availible_devices), default=default_device)
+    parser.add_argument('--device',
+                        help='device (default: {0}, availible: {1})'.format(default_device, availible_devices),
+                        default=default_device)
     parser.set_defaults(with_device=True)
 
     parser.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',

@@ -133,7 +133,7 @@ AuthInfo NetworkController::GetAuthInfo() {
 }
 
 void NetworkController::ConnectToServer() const {
-  client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
+  PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   client::inner::InnerTcpServer* server = static_cast<client::inner::InnerTcpServer*>(loop_);
   if (handler) {
     auto cb = [handler, server]() { handler->Connect(server); };
@@ -142,7 +142,7 @@ void NetworkController::ConnectToServer() const {
 }
 
 void NetworkController::DisconnectFromServer() const {
-  client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
+  PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {
     auto cb = [handler]() { handler->DisConnect(); };
     ExecInLoopThread(cb);
@@ -150,7 +150,7 @@ void NetworkController::DisconnectFromServer() const {
 }
 
 void NetworkController::RequestChannels() const {
-  client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
+  PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {
     auto cb = [handler]() { handler->RequestChannels(); };
     ExecInLoopThread(cb);
@@ -158,7 +158,7 @@ void NetworkController::RequestChannels() const {
 }
 
 network::IoLoopObserver* NetworkController::CreateHandler() {
-  client::inner::InnerTcpHandler* handler = new PrivateHandler(g_service_host, GetAuthInfo());
+  PrivateHandler* handler = new PrivateHandler(g_service_host, GetAuthInfo());
   return handler;
 }
 
