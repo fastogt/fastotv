@@ -32,11 +32,9 @@ namespace network {
 namespace tcp {
 
 TcpClient::TcpClient(IoLoop* server, const common::net::socket_info& info, flags_t flags)
-    : network::IoClient(server, flags), sock_(info) {
-}
+    : network::IoClient(server, flags), sock_(info) {}
 
-TcpClient::~TcpClient() {
-}
+TcpClient::~TcpClient() {}
 
 common::net::socket_info TcpClient::Info() const {
   return sock_.info();
@@ -47,7 +45,10 @@ int TcpClient::Fd() const {
 }
 
 common::Error TcpClient::Write(const char* data, size_t size, size_t* nwrite) {
-#if 0
+  if (!data || !size || !nwrite) {
+    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+  }
+
   size_t total = 0;          // how many bytes we've sent
   size_t bytes_left = size;  // how many we have left to send
 
@@ -63,17 +64,28 @@ common::Error TcpClient::Write(const char* data, size_t size, size_t* nwrite) {
 
   *nwrite = total;  // return number actually sent here
   return common::Error();
-#else
-  return sock_.write(data, size, nwrite);
-#endif
 }
 
-common::Error TcpClient::Read(char* out, size_t max_size, size_t* nread) {
-  if (!out || !nread) {
+common::Error TcpClient::Read(char* out, size_t size, size_t* nread) {
+  if (!out || !size || !nread) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
-  return sock_.read(out, max_size, nread);
+  size_t total = 0;          // how many bytes we've readed
+  size_t bytes_left = size;  // how many we have left to read
+
+  while (total < size) {
+    size_t n;
+    common::Error err = sock_.read(out + total, size, &n);
+    if (err && err->IsError()) {
+      return err;
+    }
+    total += n;
+    bytes_left -= n;
+  }
+
+  *nread = total;  // return number actually readed here
+  return common::Error();
 }
 
 void TcpClient::CloseImpl() {

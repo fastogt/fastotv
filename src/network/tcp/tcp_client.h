@@ -41,7 +41,7 @@ class TcpClient : public IoClient {
   virtual int Fd() const override;
 
   virtual common::Error Write(const char* data, size_t size, size_t* nwrite) override;
-  virtual common::Error Read(char* out, size_t max_size, size_t* nread) override;
+  virtual common::Error Read(char* out, size_t size, size_t* nread) override;
   virtual void CloseImpl() override;
 
  private:
