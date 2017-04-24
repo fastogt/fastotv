@@ -132,6 +132,23 @@ AuthInfo NetworkController::GetAuthInfo() {
   return AuthInfo(USER_LOGIN, USER_PASSWORD);
 }
 
+void NetworkController::ConnectToServer() const {
+  client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
+  client::inner::InnerTcpServer* server = static_cast<client::inner::InnerTcpServer*>(loop_);
+  if (handler) {
+    auto cb = [handler, server]() { handler->Connect(server); };
+    ExecInLoopThread(cb);
+  }
+}
+
+void NetworkController::DisconnectFromServer() const {
+  client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
+  if (handler) {
+    auto cb = [handler]() { handler->DisConnect(); };
+    ExecInLoopThread(cb);
+  }
+}
+
 void NetworkController::RequestChannels() const {
   client::inner::InnerTcpHandler* handler = static_cast<client::inner::InnerTcpHandler*>(handler_);
   if (handler) {

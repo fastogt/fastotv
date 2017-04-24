@@ -63,20 +63,7 @@ void InnerTcpHandler::PreLooped(network::IoLoop* server) {
   ping_server_id_timer_ = server->CreateTimer(ping_timeout_server, ping_timeout_server);
   CHECK(!inner_connection_);
 
-  common::net::socket_info client_info;
-  common::ErrnoError err =
-      common::net::connect(innerHost_, common::net::ST_SOCK_STREAM, 0, &client_info);
-  if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
-    auto ex_event = make_exception_event(new core::events::ClientConnectedEvent(this, ainf_), err);
-    fApp->PostEvent(ex_event);
-    return;
-  }
-
-  fasto::fastotv::inner::InnerClient* connection =
-      new fasto::fastotv::inner::InnerClient(server, client_info);
-  inner_connection_ = connection;
-  server->RegisterClient(connection);
+  Connect(server);
 }
 
 void InnerTcpHandler::Accepted(network::IoClient* client) {
@@ -116,11 +103,7 @@ void InnerTcpHandler::DataReadyToWrite(network::IoClient* client) {
 
 void InnerTcpHandler::PostLooped(network::IoLoop* server) {
   UNUSED(server);
-  if (inner_connection_) {
-    fasto::fastotv::inner::InnerClient* connection = inner_connection_;
-    connection->Close();
-    delete connection;
-  }
+  DisConnect();
 }
 
 void InnerTcpHandler::TimerEmited(network::IoLoop* server, network::timer_id_t id) {
@@ -147,6 +130,37 @@ void InnerTcpHandler::RequestChannels() {
       client->Close();
       delete client;
     }
+  }
+}
+
+void InnerTcpHandler::Connect(network::IoLoop* server) {
+  if (!server) {
+    return;
+  }
+
+  DisConnect();
+
+  common::net::socket_info client_info;
+  common::ErrnoError err =
+      common::net::connect(innerHost_, common::net::ST_SOCK_STREAM, 0, &client_info);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    auto ex_event = make_exception_event(new core::events::ClientConnectedEvent(this, ainf_), err);
+    fApp->PostEvent(ex_event);
+    return;
+  }
+
+  fasto::fastotv::inner::InnerClient* connection =
+      new fasto::fastotv::inner::InnerClient(server, client_info);
+  inner_connection_ = connection;
+  server->RegisterClient(connection);
+}
+
+void InnerTcpHandler::DisConnect() {
+  if (inner_connection_) {
+    fasto::fastotv::inner::InnerClient* connection = inner_connection_;
+    connection->Close();
+    delete connection;
   }
 }
 

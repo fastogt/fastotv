@@ -39,6 +39,8 @@ class NetworkController : private fasto::fastotv::network::ILoopThreadController
   void Stop();
   static AuthInfo GetAuthInfo();
 
+  void ConnectToServer() const;
+  void DisconnectFromServer() const;
   void RequestChannels() const;
 
  private:
