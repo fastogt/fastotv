@@ -535,21 +535,20 @@ class FFmpegApplication : public B {
       return EXIT_FAILURE;
     }
 
-    int pre_ret = base_class_t::PreExec();
-    fasto::fastotv::client::core::events::PreExecInfo inf(pre_ret);
+    int pre_exec = base_class_t::PreExec();
+    fasto::fastotv::client::core::events::PreExecInfo inf(pre_exec);
     fasto::fastotv::client::core::events::PreExecEvent* pre_event =
         new fasto::fastotv::client::core::events::PreExecEvent(this, inf);
     base_class_t::SendEvent(pre_event);
-    return pre_ret;
+    return pre_exec;
   }
 
   virtual int PostExec() override {
-    int post_ret = base_class_t::PostExec();
-    fasto::fastotv::client::core::events::PostExecInfo inf(post_ret);
+    fasto::fastotv::client::core::events::PostExecInfo inf(EXIT_SUCCESS);
     fasto::fastotv::client::core::events::PostExecEvent* post_event =
         new fasto::fastotv::client::core::events::PostExecEvent(this, inf);
     base_class_t::SendEvent(post_event);
-    return post_ret;
+    return base_class_t::PostExec();
   }
 
   ~FFmpegApplication() {

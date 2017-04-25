@@ -78,7 +78,7 @@ common::Error TcpClient::Read(char* out, size_t size, size_t* nread) {
 
   while (total < size) {
     size_t n;
-    common::Error err = sock_.read(out + total, size, &n);
+    common::Error err = sock_.read(out + total, bytes_left, &n);
     if (err && err->IsError()) {
       return err;
     }

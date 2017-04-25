@@ -59,6 +59,7 @@ struct PlayerOptions {
 
 class Player : public core::VideoStateHandler {
  public:
+  enum { footer_height = 50 };
   enum States { INIT_STATE, PLAYING_STATE };
   Player(const PlayerOptions& options,
          const core::AppOptions& opt,
@@ -117,6 +118,9 @@ class Player : public core::VideoStateHandler {
   virtual void HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event);
 
  private:
+  bool GetCurrentUrl(Url* url) const;
+  std::string GetCurrentUrlName() const;  // return Unknown if not found
+
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
 
@@ -126,8 +130,8 @@ class Player : public core::VideoStateHandler {
                      int new_height,
                      SDL_BlendMode blendmode,
                      bool init_texture);
-  bool GetCurrentUrl(Url* url) const;
-  void InitWindow(const std::string& title);
+
+  void InitWindow(const std::string& title, States status);
   void CalculateDispalySize();
 
   // channel evrnts
@@ -142,19 +146,15 @@ class Player : public core::VideoStateHandler {
   void SwitchToConnectMode();
   void SwitchToDisconnectMode();
 
-  void StartDraw();
-
   void DrawDisplay();
   void DrawPlayingStatus();
   void DrawInitStatus();
 
-  void DrawChannelsInfo();
-
   void DrawInfo();
-
+  void DrawChannelsInfo(Size display_size);
+  void DrawVideoInfo(Size display_size);
   void DrawFooter();
-
-  void FinishDraw();
+  Rect GetFooterRect() const;
 
   core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();
@@ -174,8 +174,13 @@ class Player : public core::VideoStateHandler {
 
   SDL_Renderer* renderer_;
   SDL_Window* window_;
-  bool cursor_hidden_;
+
+  bool show_cursor_;
   core::msec_t cursor_last_shown_;
+
+  bool show_footer_;
+  core::msec_t footer_last_shown_;
+
   core::msec_t last_mouse_left_click_;
   size_t curent_stream_pos_;
 
@@ -190,6 +195,7 @@ class Player : public core::VideoStateHandler {
 
   NetworkController* controller_;
   States current_state_;
+  std::string current_state_str_;
 };
 }
 }

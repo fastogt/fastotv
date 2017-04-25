@@ -46,6 +46,12 @@ struct Size {
   int width;
   int height;
 };
+
+struct Rect {
+  Rect(int x, int y, int width, int height) : x(x), y(y), w(width), h(height) {}
+  int x, y;
+  int w, h;
+};
 }
 }
 

@@ -17,6 +17,7 @@ from pybuild_utils.base import system_info, utils
 # defines
 CMAKE_SRC_ROOT = "https://cmake.org/files/"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
+SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
 FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
 PNG_SRC_ROOT = "https://downloads.sourceforge.net/project/libpng/libpng16/"
 
@@ -179,10 +180,10 @@ class BuildRequest(object):
         elif platform_name == 'windows':
             if arch.name() == 'x86_64':
                 dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
-                            'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja']
+                            'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja', 'mingw-w64-x86_64-freetype']
             elif arch.name() == 'i386':
                 dep_libs = ['git', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
-                            'mingw-w64-i686-make', 'mingw-w64-i686-ninja']
+                            'mingw-w64-i686-make', 'mingw-w64-i686-ninja', 'mingw-w64-i686-freetype']
         elif platform_name == 'macosx':
             dep_libs = ['git', 'yasm', 'make', 'ninja']
         else:
@@ -234,6 +235,10 @@ class BuildRequest(object):
         compiler_flags = self.device_.sdl2_compile_info()
         self.build('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
+    def build_sdl2_ttf(self, version):
+        compiler_flags = []
+        self.build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
+
     def build_libpng(self, version):
         compiler_flags = utils.CompileInfo([], [])
         self.build('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), compiler_flags)
@@ -276,6 +281,7 @@ class BuildRequest(object):
 if __name__ == "__main__":
     libpng_default_version = '1.6.29'
     sdl2_default_version = '2.0.5'
+    sdl2_ttf_default_version = '2.0.14'
     ffmpeg_default_version = '3.3'
     cmake_default_version = '3.8.0'
 
@@ -314,6 +320,13 @@ if __name__ == "__main__":
     parser.add_argument('--sdl2-version', help='sdl2 version (default: {0})'.format(sdl2_default_version),
                         default=sdl2_default_version)
     parser.set_defaults(with_sdl2=True)
+
+    parser.add_argument('--with-sdl2_ttf', help='build sdl2 (default, version:{0})'.format(sdl2_ttf_default_version),
+                        dest='with_sdl2_ttf', action='store_true')
+    parser.add_argument('--without-sdl2_ttf', help='build without sdl2 ttf', dest='with_sdl2_ttf', action='store_false')
+    parser.add_argument('--sdl2_ttf-version', help='sdl2 ttf version (default: {0})'.format(sdl2_ttf_default_version),
+                        default=sdl2_ttf_default_version)
+    parser.set_defaults(with_sdl2_ttf=True)
 
     parser.add_argument('--with-ffmpeg', help='build ffmpeg (default, version:{0})'.format(ffmpeg_default_version),
                         dest='with_ffmpeg', action='store_true')
@@ -365,5 +378,7 @@ if __name__ == "__main__":
 
     if argv.with_sdl2:
         request.build_sdl2(argv.sdl2_version)
+    if argv.with_sdl2_ttf:
+        request.build_sdl2_ttf(argv.sdl2_ttf_version)
     if argv.with_ffmpeg:
         request.build_ffmpeg(argv.ffmpeg_version)

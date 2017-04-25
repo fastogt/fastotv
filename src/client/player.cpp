@@ -42,6 +42,7 @@ extern "C" {
 /* Step size for volume control */
 #define VOLUME_STEP 1
 #define CURSOR_HIDE_DELAY_MSEC 1000  // 1 sec
+#define FOOTER_HIDE_DELAY_MSEC 1000  // 1 sec
 
 #define USER_FIELD "user"
 #define URLS_FIELD "urls"
@@ -75,12 +76,8 @@ bool CreateWindowFunc(Size window_size,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL,
-                                         SDL_WINDOWPOS_UNDEFINED,
-                                         SDL_WINDOWPOS_UNDEFINED,
-                                         window_size.width,
-                                         window_size.height,
-                                         flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                         window_size.width, window_size.height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -118,8 +115,7 @@ PlayerOptions::PlayerOptions()
       default_size(width, height),
       screen_size(0, 0),
       audio_volume(volume),
-      muted(false) {
-}
+      muted(false) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -132,8 +128,10 @@ Player::Player(const PlayerOptions& options,
       audio_buff_size_(0),
       renderer_(NULL),
       window_(NULL),
-      cursor_hidden_(false),
+      show_cursor_(false),
       cursor_last_shown_(0),
+      show_footer_(false),
+      footer_last_shown_(0),
       last_mouse_left_click_(0),
       curent_stream_pos_(0),
       offline_channel_surface_(NULL),
@@ -144,7 +142,7 @@ Player::Player(const PlayerOptions& options,
       xleft_(0),
       ytop_(0),
       controller_(new NetworkController),
-      current_state_(INIT_STATE) {
+      current_state_(INIT_STATE), current_state_str_("Init") {
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -292,12 +290,8 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this,
-                             wanted_channel_layout,
-                             wanted_nb_channels,
-                             wanted_sample_rate,
-                             &laudio_hw_params,
-                             sdl_audio_callback);
+  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
+                             &laudio_hw_params, sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -328,13 +322,14 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(
-          &frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
+  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
+                     false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of " << frame->width << "x" << frame->height
+                   "size of "
+                << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -349,22 +344,12 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect,
-                               xleft_,
-                               ytop_,
-                               window_size_.width,
-                               window_size_.height,
-                               frame->width,
-                               frame->height,
-                               frame->sar);
-  SDL_RenderCopyEx(renderer_,
-                   frame->bmp,
-                   NULL,
-                   &rect,
-                   0,
-                   NULL,
+  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height,
+                               frame->width, frame->height, frame->sar);
+  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
                    frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
+  DrawInfo();
   SDL_RenderPresent(renderer_);
 }
 
@@ -373,24 +358,7 @@ bool Player::HandleRequestVideo(core::VideoState* stream) {
     return false;
   }
 
-  CalculateDispalySize();
-
-  std::string name;
-  for (size_t i = 0; i < play_list_.size(); ++i) {
-    if (play_list_[i].Id() == stream->Id()) {
-      name = play_list_[i].GetName();
-      break;
-    }
-  }
-
-  if (!window_) {
-    bool created =
-        CreateWindowFunc(window_size_, options_.is_full_screen, name, &renderer_, &window_);
-    return created;
-  }
-
-  SDL_SetWindowSize(window_, window_size_.width, window_size_.height);
-  SDL_SetWindowTitle(window_, name.c_str());
+  InitWindow(GetCurrentUrlName(), PLAYING_STATE);
   return true;
 }
 
@@ -435,6 +403,9 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
     const std::string font_path =
         common::file_system::make_path(RELATIVE_SOURCE_DIR, "share/fonts/FreeSans.ttf");
     font_ = TTF_OpenFont(font_path.c_str(), 24);
+    if (!font_) {
+      WARNING_LOG() << "Couldn't open font file path: " << font_path;
+    }
     controller_->Start();
     SwitchToConnectMode();
   }
@@ -470,18 +441,18 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
 
 void Player::HandleTimerEvent(core::events::TimerEvent* event) {
   UNUSED(event);
-  core::msec_t diff = core::GetCurrentMsec() - cursor_last_shown_;
-  if (!cursor_hidden_ && diff > CURSOR_HIDE_DELAY_MSEC) {
+  const core::msec_t cur_time = core::GetCurrentMsec();
+  core::msec_t diff_currsor = cur_time - cursor_last_shown_;
+  if (show_cursor_ && diff_currsor > CURSOR_HIDE_DELAY_MSEC) {
     fApp->HideCursor();
-    cursor_hidden_ = true;
+    show_cursor_ = false;
   }
 
-  StartDraw();
+  core::msec_t diff_footer = cur_time - footer_last_shown_;
+  if (show_footer_ && diff_footer > FOOTER_HIDE_DELAY_MSEC) {
+    show_footer_ = false;
+  }
   DrawDisplay();
-  DrawChannelsInfo();
-  DrawInfo();
-  DrawFooter();
-  FinishDraw();
 }
 
 void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
@@ -617,18 +588,18 @@ void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
     }
   }
 
-  if (cursor_hidden_) {
+  if (!show_cursor_) {
     fApp->ShowCursor();
-    cursor_hidden_ = false;
+    show_cursor_ = true;
   }
   cursor_last_shown_ = cur_time;
 }
 
 void Player::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
   UNUSED(event);
-  if (cursor_hidden_) {
+  if (!show_cursor_) {
     fApp->ShowCursor();
-    cursor_hidden_ = false;
+    show_cursor_ = true;
   }
   core::msec_t cur_time = core::GetCurrentMsec();
   cursor_last_shown_ = cur_time;
@@ -682,6 +653,15 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
   SwitchToPlayingMode();
 }
 
+std::string Player::GetCurrentUrlName() const {
+  Url url;
+  if (GetCurrentUrl(&url)) {
+    return url.GetName();
+  }
+
+  return "Unknown";
+}
+
 bool Player::GetCurrentUrl(Url* url) const {
   if (!url || play_list_.empty()) {
     return false;
@@ -731,7 +711,6 @@ int Player::ReallocTexture(SDL_Texture** texture,
 void Player::SwitchToPlayingMode() {
   stream_ = CreateCurrentStream();
   if (stream_) {
-    current_state_ = PLAYING_STATE;
     return;
   }
 
@@ -739,27 +718,15 @@ void Player::SwitchToPlayingMode() {
 }
 
 void Player::SwitchToChannelErrorMode() {
-  Url url;
-  std::string name_str = "Unknown";
-  if (GetCurrentUrl(&url)) {
-    name_str = url.GetName();
-  }
-
-  InitWindow(name_str);
-  current_state_ = PLAYING_STATE;
+  InitWindow(GetCurrentUrlName(), PLAYING_STATE);
 }
 
 void Player::SwitchToConnectMode() {
-  InitWindow("Connect");
-  current_state_ = INIT_STATE;
+  InitWindow("Connecting...", INIT_STATE);
 }
 
 void Player::SwitchToDisconnectMode() {
-  InitWindow("Disconnect");
-  current_state_ = INIT_STATE;
-}
-
-void Player::StartDraw() {
+  InitWindow("Disconnected", INIT_STATE);
 }
 
 void Player::DrawDisplay() {
@@ -784,6 +751,7 @@ void Player::DrawPlayingStatus() {
       SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
       SDL_RenderClear(renderer_);
       SDL_RenderCopy(renderer_, img, NULL, NULL);
+      DrawInfo();
       SDL_RenderPresent(renderer_);
       SDL_DestroyTexture(img);
     }
@@ -792,6 +760,7 @@ void Player::DrawPlayingStatus() {
 
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
+  DrawInfo();
   SDL_RenderPresent(renderer_);
 }
 
@@ -802,6 +771,7 @@ void Player::DrawInitStatus() {
       SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
       SDL_RenderClear(renderer_);
       SDL_RenderCopy(renderer_, img, NULL, NULL);
+      DrawInfo();
       SDL_RenderPresent(renderer_);
       SDL_DestroyTexture(img);
     }
@@ -810,28 +780,69 @@ void Player::DrawInitStatus() {
 
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
+  DrawInfo();
   SDL_RenderPresent(renderer_);
 }
 
-void Player::DrawChannelsInfo() {
+void Player::DrawInfo() {
+  const Size display_size = window_size_;
+
+  DrawChannelsInfo(display_size);
+  DrawVideoInfo(display_size);
+  DrawFooter();
 }
 
-void Player::DrawInfo() {
+void Player::DrawChannelsInfo(Size display_size) {}
+
+void Player::DrawVideoInfo(Size display_size) {}
+
+Rect Player::GetFooterRect() const {
+  const Size display_size = window_size_;
+  int x = 0;
+  int y = display_size.height - footer_height;
+  int w = display_size.width;
+  int h = footer_height;
+  return Rect(x, y, w, h);
 }
 
 void Player::DrawFooter() {
+  if (!show_footer_ || !font_) {
+    return;
+  }
+
+  std::string footer_text;
+  if (current_state_ == INIT_STATE) {
+    footer_text = GetCurrentUrlName();
+  } else if (current_state_ == PLAYING_STATE) {
+    footer_text = GetCurrentUrlName();
+  } else {
+    NOTREACHED();
+  }
+
+  static const SDL_Color text_color = {255, 255, 255, 0};
+  SDL_Surface* text = TTF_RenderText_Solid(font_, footer_text.c_str(), text_color);
+  const Rect footer_rect = GetFooterRect();
+  SDL_Rect dst = {footer_rect.w / 2 - text->w / 2,
+                  footer_rect.y + (footer_rect.h / 2 - text->h / 2), text->w, text->h};
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
+  SDL_RenderCopy(renderer_, texture, NULL, &dst);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(text);
 }
 
-void Player::FinishDraw() {
-}
-
-void Player::InitWindow(const std::string& title) {
+void Player::InitWindow(const std::string& title, States status) {
   CalculateDispalySize();
   if (!window_) {
     CreateWindowFunc(window_size_, options_.is_full_screen, title, &renderer_, &window_);
   } else {
     SDL_SetWindowTitle(window_, title.c_str());
   }
+
+  current_state_ = status;
+  current_state_str_ = title;
+  show_footer_ = true;
+  core::msec_t cur_time = core::GetCurrentMsec();
+  footer_last_shown_ = cur_time;
 }
 
 void Player::CalculateDispalySize() {
