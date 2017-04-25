@@ -24,16 +24,16 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
+typedef void hw_uninit_callback_t(AVCodecContext* s);
+typedef int hw_get_buffer_callback_t(AVCodecContext* s, AVFrame* frame, int flags);
+typedef int hw_retrieve_data_callback_t(AVCodecContext* s, AVFrame* frame);
+
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
 
 extern AVBufferRef* hw_device_ctx;
-
-typedef void hw_uninit_callback_t(AVCodecContext* s);
-typedef int hw_get_buffer_callback_t(AVCodecContext* s, AVFrame* frame, int flags);
-typedef int hw_retrieve_data_callback_t(AVCodecContext* s, AVFrame* frame);
 
 enum HWAccelID {
   HWACCEL_NONE = 0,

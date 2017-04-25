@@ -154,7 +154,10 @@ class Player : public core::VideoStateHandler {
   void DrawChannelsInfo(Size display_size);
   void DrawVideoInfo(Size display_size);
   void DrawFooter();
+  void DrawVolume();
+
   Rect GetFooterRect() const;
+  Rect GetVolumeRect() const;
 
   core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();
@@ -180,6 +183,9 @@ class Player : public core::VideoStateHandler {
 
   bool show_footer_;
   core::msec_t footer_last_shown_;
+
+  bool show_volume_;
+  core::msec_t volume_last_shown_;
 
   core::msec_t last_mouse_left_click_;
   size_t curent_stream_pos_;

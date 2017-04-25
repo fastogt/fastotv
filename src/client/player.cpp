@@ -41,8 +41,10 @@ extern "C" {
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
+
 #define CURSOR_HIDE_DELAY_MSEC 1000  // 1 sec
 #define FOOTER_HIDE_DELAY_MSEC 1000  // 1 sec
+#define VOLUME_HIDE_DELAY_MSEC 2000  // 2 sec
 
 #define USER_FIELD "user"
 #define URLS_FIELD "urls"
@@ -132,6 +134,8 @@ Player::Player(const PlayerOptions& options,
       cursor_last_shown_(0),
       show_footer_(false),
       footer_last_shown_(0),
+      show_volume_(false),
+      volume_last_shown_(0),
       last_mouse_left_click_(0),
       curent_stream_pos_(0),
       offline_channel_surface_(NULL),
@@ -142,7 +146,8 @@ Player::Player(const PlayerOptions& options,
       xleft_(0),
       ytop_(0),
       controller_(new NetworkController),
-      current_state_(INIT_STATE), current_state_str_("Init") {
+      current_state_(INIT_STATE),
+      current_state_str_("Init") {
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -452,6 +457,11 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
   if (show_footer_ && diff_footer > FOOTER_HIDE_DELAY_MSEC) {
     show_footer_ = false;
   }
+
+  core::msec_t diff_volume = cur_time - volume_last_shown_;
+  if (show_volume_ && diff_volume > VOLUME_HIDE_DELAY_MSEC) {
+    show_volume_ = false;
+  }
   DrawDisplay();
 }
 
@@ -683,6 +693,9 @@ void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
 
 void Player::UpdateVolume(int step) {
   options_.audio_volume = av_clip(options_.audio_volume + step, 0, 100);
+  show_volume_ = true;
+  core::msec_t cur_time = core::GetCurrentMsec();
+  volume_last_shown_ = cur_time;
 }
 
 void Player::Quit() {
@@ -790,6 +803,7 @@ void Player::DrawInfo() {
   DrawChannelsInfo(display_size);
   DrawVideoInfo(display_size);
   DrawFooter();
+  DrawVolume();
 }
 
 void Player::DrawChannelsInfo(Size display_size) {}
@@ -797,6 +811,15 @@ void Player::DrawChannelsInfo(Size display_size) {}
 void Player::DrawVideoInfo(Size display_size) {}
 
 Rect Player::GetFooterRect() const {
+  const Size display_size = window_size_;
+  int x = 0;
+  int y = display_size.height - footer_height;
+  int w = display_size.width;
+  int h = footer_height;
+  return Rect(x, y, w, h);
+}
+
+Rect Player::GetVolumeRect() const {
   const Size display_size = window_size_;
   int x = 0;
   int y = display_size.height - footer_height;
@@ -824,6 +847,25 @@ void Player::DrawFooter() {
   const Rect footer_rect = GetFooterRect();
   SDL_Rect dst = {footer_rect.w / 2 - text->w / 2,
                   footer_rect.y + (footer_rect.h / 2 - text->h / 2), text->w, text->h};
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
+  SDL_RenderCopy(renderer_, texture, NULL, &dst);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(text);
+}
+
+void Player::DrawVolume() {
+  if (!show_volume_) {
+    return;
+  }
+
+  int vol = options_.audio_volume;
+  std::string vol_str = common::MemSPrintf("VOLUME: %d", vol);
+  const Rect volume_rect = GetVolumeRect();
+
+  static const SDL_Color text_color = {255, 255, 255, 0};
+  SDL_Surface* text = TTF_RenderText_Solid(font_, vol_str.c_str(), text_color);
+  SDL_Rect dst = {volume_rect.w / 2 - text->w / 2,
+                  volume_rect.y + (volume_rect.h / 2 - text->h / 2), text->w, text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
