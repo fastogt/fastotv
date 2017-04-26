@@ -23,6 +23,7 @@
 #include <common/logger.h>
 #include <common/file_system.h>
 #include <common/net/net.h>
+#include <common/utils.h>
 
 namespace fasto {
 namespace fastotv {
@@ -47,7 +48,8 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   lirc_config* lcfg = NULL;
   const std::string lirc_config_path =
       common::file_system::make_path(RELATIVE_SOURCE_DIR, LIRCRC_CONFIG_PATH_RELATIVE);
-  char* lirc_config_ptr = const_cast<char*>(lirc_config_path.c_str());
+  const char* lirc_config_path_ptr = common::utils::c_strornull(lirc_config_path);
+  char* lirc_config_ptr = const_cast<char*>(lirc_config_path_ptr);
   if (lirc_readconfig(lirc_config_ptr, &lcfg, NULL) == -1) {
     LircDeinit(lfd, NULL);
     std::string msg_error =
@@ -76,7 +78,8 @@ common::Error LircDeinit(int fd, struct lirc_config** cfg) {
 }
 
 LircInputClient::LircInputClient(network::IoLoop* server, int fd, struct lirc_config* cfg)
-    : network::IoClient(server), sock_(fd), cfg_(cfg) {}
+    : network::IoClient(server), sock_(fd), cfg_(cfg) {
+}
 
 common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
   char* code = NULL;

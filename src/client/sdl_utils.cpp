@@ -58,6 +58,11 @@ SDL_Texture* CreateTexture(SDL_Renderer* renderer,
 }
 
 SDL_Surface* IMG_LoadPNG(const char* path) {
+  if (!path) {
+    WARNING_LOG() << "Invalid input argument(s)";
+    return NULL;
+  }
+
   unsigned char header[8];  // 8 is the maximum size that can be checked
   FILE* fp = fopen(path, "rb");
   if (!fp) {
