@@ -236,7 +236,7 @@ class BuildRequest(object):
         self.build('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_sdl2_ttf(self, version):
-        compiler_flags = []
+        compiler_flags = utils.CompileInfo([], [])
         self.build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_libpng(self, version):
