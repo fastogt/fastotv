@@ -185,7 +185,7 @@ class BuildRequest(object):
                 dep_libs = ['git', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
                             'mingw-w64-i686-make', 'mingw-w64-i686-ninja', 'mingw-w64-i686-freetype']
         elif platform_name == 'macosx':
-            dep_libs = ['git', 'yasm', 'make', 'ninja']
+            dep_libs = ['git', 'yasm', 'make', 'ninja', 'freetype']
         else:
             raise NotImplemented("Unknown platform '%s'" % platform_name)
 
