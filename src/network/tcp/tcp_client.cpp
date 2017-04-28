@@ -80,10 +80,6 @@ common::Error TcpClient::Read(char* out, size_t size, size_t* nread) {
     if (err && err->IsError()) {
       return err;
     }
-    if (n == 0) {
-      return common::make_error_value_errno(EPIPE, common::Value::E_ERROR,
-                                            common::logging::L_ERROR);
-    }
     total += n;
     bytes_left -= n;
   }
