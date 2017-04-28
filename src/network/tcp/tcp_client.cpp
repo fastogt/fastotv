@@ -32,11 +32,9 @@ namespace network {
 namespace tcp {
 
 TcpClient::TcpClient(IoLoop* server, const common::net::socket_info& info, flags_t flags)
-    : network::IoClient(server, flags), sock_(info) {
-}
+    : network::IoClient(server, flags), sock_(info) {}
 
-TcpClient::~TcpClient() {
-}
+TcpClient::~TcpClient() {}
 
 common::net::socket_info TcpClient::Info() const {
   return sock_.info();
@@ -81,6 +79,10 @@ common::Error TcpClient::Read(char* out, size_t size, size_t* nread) {
     common::Error err = sock_.read(out + total, bytes_left, &n);
     if (err && err->IsError()) {
       return err;
+    }
+    if (n == 0) {
+      return common::make_error_value_errno(EPIPE, common::Value::E_ERROR,
+                                            common::logging::L_ERROR);
     }
     total += n;
     bytes_left -= n;
