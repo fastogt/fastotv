@@ -16,7 +16,7 @@ def print_usage():
 
 
 class BuildRpcServer(object):
-    EXCHANGE = 'build_servers_excange'
+    EXCHANGE = 'build_servers_exchange'
     EXCHANGE_TYPE = 'direct'
 
     def __init__(self, platform, arch_bit):
@@ -26,8 +26,9 @@ class BuildRpcServer(object):
         self.consumer_tag_ = None
         self.platform_ = platform
         self.arch_bit_ = arch_bit
-        self.routing_key_ = system_info.gen_routing_key(platform, arch_bit)
-        print("Build server for %s inited!" % platform)
+        routing_key = system_info.gen_routing_key(platform, arch_bit)
+        self.routing_key_ = routing_key
+        print("Build server for {0} inited, routing_key: {1}!".format(platform, routing_key))
 
     def connect(self):
         credentials = pika.PlainCredentials(config.USER_NAME, config.PASSWORD)
@@ -160,6 +161,9 @@ class BuildRpcServer(object):
 
     def on_request(self, ch, method, props, body):
         platform_and_arch = '{0}_{1}'.format(self.platform_, self.arch_bit_)
+        if isinstance(body, bytes):
+            body = body.decode("utf-8")
+
         data = json.loads(body)
         # self.acknowledge_message(method.delivery_tag)
         # return
@@ -168,8 +172,7 @@ class BuildRpcServer(object):
         package_type = data.get('package_type')
         destination = data.get('destination')
         op_id = props.correlation_id
-        package_types = []
-        package_types.append(package_type)
+        package_types = [package_type]
 
         self.send_status(props.reply_to, op_id, 0.0, 'Prepare to build package')
         print('Build started for: {0}, platform: {1}'.format(op_id, platform_and_arch))
