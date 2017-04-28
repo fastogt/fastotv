@@ -32,9 +32,11 @@ namespace network {
 namespace tcp {
 
 TcpClient::TcpClient(IoLoop* server, const common::net::socket_info& info, flags_t flags)
-    : network::IoClient(server, flags), sock_(info) {}
+    : network::IoClient(server, flags), sock_(info) {
+}
 
-TcpClient::~TcpClient() {}
+TcpClient::~TcpClient() {
+}
 
 common::net::socket_info TcpClient::Info() const {
   return sock_.info();

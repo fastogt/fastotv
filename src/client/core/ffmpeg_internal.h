@@ -47,7 +47,7 @@ enum HWAccelID {
   HWACCEL_CUVID,
 };
 
-typedef struct InputStream {
+struct InputStream {
   void* hwaccel_ctx;
   hw_uninit_callback_t* hwaccel_uninit;
   hw_get_buffer_callback_t* hwaccel_get_buffer;
@@ -59,14 +59,14 @@ typedef struct InputStream {
   AVBufferRef* hw_frames_ctx;
   enum AVPixelFormat hwaccel_output_format;
   enum AVPixelFormat hwaccel_retrieved_pix_fmt;
-} InputStream;
+};
 
-typedef struct HWAccel {
+struct HWAccel {
   const char* name;
   int (*init)(AVCodecContext* s);
   enum HWAccelID id;
   enum AVPixelFormat pix_fmt;
-} HWAccel;
+};
 
 extern const HWAccel hwaccels[];
 

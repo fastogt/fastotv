@@ -135,6 +135,11 @@ common::Error TcpServer::accept(common::net::socket_info* info) {
 }
 
 void TcpServer::accept_cb(struct ev_loop* loop, struct ev_io* watcher, int revents) {
+  if (!watcher || !watcher->data) {
+    NOTREACHED();
+    return;
+  }
+
   TcpServer* pserver = reinterpret_cast<TcpServer*>(watcher->data);
   LibEvLoop* evloop = reinterpret_cast<LibEvLoop*>(ev_userdata(loop));
   CHECK(pserver && pserver->loop_ == evloop);

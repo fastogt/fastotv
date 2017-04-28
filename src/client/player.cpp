@@ -432,8 +432,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
 
     const std::string font_path =
         common::file_system::make_path(RELATIVE_SOURCE_DIR, MAIN_FONT_PATH_RELATIVE);
-    const char* font_path_ptr =
-        common::utils::c_strornull(font_path);
+    const char* font_path_ptr = common::utils::c_strornull(font_path);
     font_ = TTF_OpenFont(font_path_ptr, 24);
     if (!font_) {
       WARNING_LOG() << "Couldn't open font file path: " << font_path;
