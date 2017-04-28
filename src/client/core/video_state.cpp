@@ -1254,8 +1254,8 @@ int VideoState::ReadThread() {
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
       continue;
     }
-    if (!paused_ && (!auddec_->Finished() && audio_frame_queue_->IsEmpty()) &&
-        (!viddec_->Finished() && video_frame_queue_->IsEmpty())) {
+    if (!paused_ && (!auddec_->IsFinished() && audio_frame_queue_->IsEmpty()) &&
+        (!viddec_->IsFinished() && video_frame_queue_->IsEmpty())) {
       if (opt_.auto_exit) {
         ret = AVERROR_EOF;
         goto fail;

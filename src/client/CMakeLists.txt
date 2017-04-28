@@ -314,7 +314,7 @@ IF(FFMPEG_LIBSWRESAMPLE)
 ENDIF(FFMPEG_LIBSWRESAMPLE)
 
 CHECK_INCLUDE_FILES("sys/resource.h;sys/time.h" HAVE_SYS_RESOURCE_H)
-CONFIGURE_FILE(ffmpeg_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h)
+CONFIGURE_FILE(ffmpeg_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h @ONLY IMMEDIATE)
 
 # core
 SET(BUILD_CLIENT_CORE_SOURCES
@@ -401,7 +401,7 @@ SET(BUILD_CLIENT_SOURCES
   player.h player.cpp
   cmdutils.h cmdutils.cpp
   sdl_utils.h sdl_utils.cpp
-  network_controller.h network_controller.cpp
+  ioservice.h ioservice.cpp
   ${HEADERS_INNER} ${SOURCES_INNER} ${CLIENT_SERVER_SOURCES}
   ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}
   ${DEPENDENS_CLIENT_SOURCES} ${DEPENDENS_CLIENT_HEADERS}

@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "sdl_utils.h"
+#include "client/sdl_utils.h"
 
 extern "C" {
 #include <png.h>

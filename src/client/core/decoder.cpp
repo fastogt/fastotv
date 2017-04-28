@@ -50,7 +50,7 @@ Decoder::~Decoder() {
   avcodec_free_context(&avctx_);
 }
 
-bool Decoder::Finished() const {
+bool Decoder::IsFinished() const {
   return finished_;
 }
 
@@ -105,7 +105,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       NOTREACHED();
     }
     got_frame = 1;
-  } while (!got_frame && !Finished());
+  } while (!got_frame && !IsFinished());
 
   return got_frame;
 }
@@ -143,7 +143,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
 
     frame->pts = av_frame_get_best_effort_timestamp(frame);
     got_frame = 1;
-  } while (!got_frame && !Finished());
+  } while (!got_frame && !IsFinished());
 
   return got_frame;
 }

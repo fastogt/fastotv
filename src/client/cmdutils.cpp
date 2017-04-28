@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "cmdutils.h"
+#include "client/cmdutils.h"
 
 #ifdef _WIN32
 #include <windef.h>
@@ -280,11 +280,11 @@ void print_all_libs_info(int flags, common::logging::LEVEL_LOG level) {
 
 void print_program_info(int flags, common::logging::LEVEL_LOG level) {
   const char* indent = (flags & INDENT) ? "  " : "";
-  RUNTIME_LOG(level) << PROJECT_NAME_TITLE " version " PROJECT_VERSION;
+  RUNTIME_LOG(level) << PROJECT_NAME_TITLE " version: " PROJECT_VERSION;
   if (flags & SHOW_COPYRIGHT) {
     RUNTIME_LOG(level) << " " PROJECT_COPYRIGHT;
   }
-  RUNTIME_LOG(level) << "\n" << indent << "built with " << CC_IDENT;
+  RUNTIME_LOG(level) << indent << "built with " << CC_IDENT;
   RUNTIME_LOG(level) << indent
                      << "FFMPEG version " FFMPEG_VERSION ", configuration: " FFMPEG_CONFIGURATION;
 }
@@ -712,10 +712,6 @@ int parse_option(const char* opt,
     ERROR_LOG() << "Unrecognized option '" << opt << "'";
     return AVERROR(EINVAL);
   }
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
 
   int ret = write_option(po, opt, arg, dopt);
   if (ret < 0) {
@@ -891,6 +887,10 @@ void show_banner(int argc, char** argv, const OptionDef* options) {
   UNUSED(argc);
   UNUSED(argv);
   UNUSED(options);
+  int idx = locate_option(argc, argv, options, "version");
+  if (idx) {
+    return;
+  }
 
   print_program_info(INDENT | SHOW_COPYRIGHT, common::logging::L_INFO);
   print_all_libs_info(INDENT | SHOW_CONFIG, common::logging::L_INFO);

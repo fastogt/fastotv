@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "player.h"
+#include "client/player.h"
 
 #include <SDL2/SDL_audio.h>  // for SDL_MIX_MAXVOLUME, etc
 #include <SDL2/SDL_hints.h>
@@ -32,8 +32,8 @@ extern "C" {
 #include <common/threads/thread_manager.h>
 #include <common/utils.h>
 
-#include "sdl_utils.h"
-#include "network_controller.h"
+#include "client/sdl_utils.h"
+#include "client/ioservice.h"
 
 #include "client/core/video_state.h"
 #include "client/core/app_options.h"

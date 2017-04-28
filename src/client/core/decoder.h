@@ -41,7 +41,7 @@ class Decoder {
   void Start();
   void Abort();
 
-  bool Finished() const;
+  bool IsFinished() const;
   void SetFinished(bool finished);
 
   AVMediaType CodecType() const;

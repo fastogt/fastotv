@@ -41,6 +41,8 @@ namespace core {
 
 // 640x480
 // 1280x720
+// 1920x1080
+
 struct AppOptions {
   AppOptions();
 

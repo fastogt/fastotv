@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "network_controller.h"
+#include "client/ioservice.h"
 
 #include <string>
 
