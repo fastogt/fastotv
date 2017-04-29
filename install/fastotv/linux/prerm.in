@@ -1,15 +1,22 @@
 #!/bin/sh
 set -e
 
-if test -e /usr/bin/@PROJECT_NAME_LOWERCASE@ ; then
-    rm /usr/bin/@PROJECT_NAME_LOWERCASE@
+if test -e @EXECUTABLE_PATH@ ; then
+  rm @EXECUTABLE_PATH@
+fi
+
+if test -e /usr/lib/systemd/system/@PROJECT_NAME_LOWERCASE@.service ; then
+  rm /usr/lib/systemd/system/@PROJECT_NAME_LOWERCASE@.service
 fi
 
 if test -e /usr/share/applications/@PROJECT_NAME_LOWERCASE@.desktop ; then
-    rm /usr/share/applications/@PROJECT_NAME_LOWERCASE@.desktop
+  rm /usr/share/applications/@PROJECT_NAME_LOWERCASE@.desktop
+fi
+
+if test -e /etc/init.d/@PROJECT_NAME_LOWERCASE@ ; then
+  rm /etc/init.d/@PROJECT_NAME_LOWERCASE@
 fi
 
 if test -e /usr/share/icons/@PROJECT_NAME_LOWERCASE@.png ; then
-    rm /usr/share/icons/@PROJECT_NAME_LOWERCASE@.png
+  rm /usr/share/icons/@PROJECT_NAME_LOWERCASE@.png
 fi
-

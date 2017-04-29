@@ -66,8 +66,10 @@ class SupportedDevice(metaclass=ABCMeta):
 
 class PcDevice(SupportedDevice):
     def __init__(self):
-        SupportedDevice.__init__(self, 'pc', {'linux': ['libvdpau-devel', 'libva-devel', 'libvdpau-dev', 'libva-dev']},
-                                 utils.CompileInfo([], []), utils.CompileInfo([], []))
+        SupportedDevice.__init__(self, 'pc', {'linux': [
+        'libvdpau-devel', 'libva-devel', 'libgl1-mesa-devel', # redhat
+        'libvdpau-dev', 'libva-dev', 'libgl1-mesa-dev' # debian
+        ]}, utils.CompileInfo([], []), utils.CompileInfo([], []))
 
     def install_specific(self):
         return
