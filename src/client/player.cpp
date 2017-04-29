@@ -833,9 +833,11 @@ void Player::DrawInfo() {
 }
 
 void Player::DrawChannelsInfo(Size display_size) {
+  UNUSED(display_size);
 }
 
 void Player::DrawVideoInfo(Size display_size) {
+  UNUSED(display_size);
 }
 
 Rect Player::GetFooterRect() const {

@@ -599,7 +599,7 @@ common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** ar
 int main(int argc, char** argv) {
   bool daemon_mode = false;
   for (int i = 1; i < argc; ++i) {
-    if (strcmp(argv[i], "-d") == 0) {
+    if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-daemon") == 0) {
       daemon_mode = true;
     }
   }

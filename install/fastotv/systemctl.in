@@ -1,0 +1,18 @@
+[Unit]
+Description=@PROJECT_SUMMARY@
+
+[Service]
+Type=forking
+PermissionsStartOnly=true
+PIDFile=@PIDFILE_PATH@
+ExecStartPre=-/usr/bin/mkdir /var/run/@PROJECT_NAME_LOWERCASE@
+ExecStartPre=-/bin/touch @PIDFILE_PATH@
+ExecStartPre=-/usr/bin/chown -R @USER_LOGIN@:@USER_GROUP@ @RUN_DIR_PATH@ @PIDFILE_PATH@
+ExecStart=@EXECUTABLE_PATH@ --daemon
+ExecStop=@EXECUTABLE_PATH@ --stop
+ExecStopPost=-/bin/rm -f @PIDFILE_PATH@
+User=@USER_LOGIN@
+Group=@USER_GROUP@
+
+[Install]
+WantedBy=multi-user.target
