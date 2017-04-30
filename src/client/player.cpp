@@ -44,7 +44,7 @@ extern "C" {
 #define VOLUME_STEP 1
 
 #define CURSOR_HIDE_DELAY_MSEC 1000  // 1 sec
-#define FOOTER_HIDE_DELAY_MSEC 1000  // 1 sec
+#define FOOTER_HIDE_DELAY_MSEC 2000  // 1 sec
 #define VOLUME_HIDE_DELAY_MSEC 2000  // 2 sec
 
 #define USER_FIELD "user"
@@ -80,12 +80,8 @@ bool CreateWindowFunc(Size window_size,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL,
-                                         SDL_WINDOWPOS_UNDEFINED,
-                                         SDL_WINDOWPOS_UNDEFINED,
-                                         window_size.width,
-                                         window_size.height,
-                                         flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                         window_size.width, window_size.height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -123,8 +119,7 @@ PlayerOptions::PlayerOptions()
       default_size(width, height),
       screen_size(0, 0),
       audio_volume(volume),
-      muted(false) {
-}
+      muted(false) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -302,12 +297,8 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this,
-                             wanted_channel_layout,
-                             wanted_nb_channels,
-                             wanted_sample_rate,
-                             &laudio_hw_params,
-                             sdl_audio_callback);
+  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
+                             &laudio_hw_params, sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -338,13 +329,14 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(
-          &frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
+  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
+                     false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of " << frame->width << "x" << frame->height
+                   "size of "
+                << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -359,20 +351,9 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect,
-                               xleft_,
-                               ytop_,
-                               window_size_.width,
-                               window_size_.height,
-                               frame->width,
-                               frame->height,
-                               frame->sar);
-  SDL_RenderCopyEx(renderer_,
-                   frame->bmp,
-                   NULL,
-                   &rect,
-                   0,
-                   NULL,
+  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height,
+                               frame->width, frame->height, frame->sar);
+  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
                    frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   DrawInfo();
@@ -411,8 +392,9 @@ void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
   if (inf.stream_ && inf.stream_->IsAborted()) {
     return;
   }
+
   destroy(&stream_);
-  SwitchToChannelErrorMode();
+  SwitchToChannelErrorMode(inf.error);
 }
 
 void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
@@ -753,11 +735,15 @@ void Player::SwitchToPlayingMode() {
     return;
   }
 
-  SwitchToChannelErrorMode();
+  common::Error err = common::make_error_value("Failed to create stream", common::Value::E_ERROR);
+  SwitchToChannelErrorMode(err);
 }
 
-void Player::SwitchToChannelErrorMode() {
-  InitWindow(GetCurrentUrlName(), PLAYING_STATE);
+void Player::SwitchToChannelErrorMode(common::Error err) {
+  std::string url_str = GetCurrentUrlName();
+  std::string error_str = common::MemSPrintf("%s (%s)", url_str, err->Description());
+  RUNTIME_LOG(err->GetLevel()) << error_str;
+  InitWindow(error_str, PLAYING_STATE);
 }
 
 void Player::SwitchToConnectMode() {
@@ -865,9 +851,9 @@ void Player::DrawFooter() {
 
   std::string footer_text;
   if (current_state_ == INIT_STATE) {
-    footer_text = GetCurrentUrlName();
+    footer_text = current_state_str_;
   } else if (current_state_ == PLAYING_STATE) {
-    footer_text = GetCurrentUrlName();
+    footer_text = current_state_str_;
   } else {
     NOTREACHED();
   }
@@ -876,9 +862,7 @@ void Player::DrawFooter() {
   SDL_Surface* text = TTF_RenderText_Solid(font_, footer_text.c_str(), text_color);
   const Rect footer_rect = GetFooterRect();
   SDL_Rect dst = {footer_rect.w / 2 - text->w / 2,
-                  footer_rect.y + (footer_rect.h / 2 - text->h / 2),
-                  text->w,
-                  text->h};
+                  footer_rect.y + (footer_rect.h / 2 - text->h / 2), text->w, text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
@@ -897,9 +881,7 @@ void Player::DrawVolume() {
   static const SDL_Color text_color = {255, 255, 255, 0};
   SDL_Surface* text = TTF_RenderText_Solid(font_, vol_str.c_str(), text_color);
   SDL_Rect dst = {volume_rect.w / 2 - text->w / 2,
-                  volume_rect.y + (volume_rect.h / 2 - text->h / 2),
-                  text->w,
-                  text->h};
+                  volume_rect.y + (volume_rect.h / 2 - text->h / 2), text->w, text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
@@ -950,7 +932,8 @@ void Player::MoveToNextStream() {
   }
   stream_ = CreateNextStream();
   if (!stream_) {
-    SwitchToChannelErrorMode();
+    common::Error err = common::make_error_value("Failed to create stream", common::Value::E_ERROR);
+    SwitchToChannelErrorMode(err);
   }
 }
 
@@ -965,7 +948,8 @@ void Player::MoveToPreviousStream() {
   }
   stream_ = CreatePrevStream();
   if (!stream_) {
-    SwitchToChannelErrorMode();
+    common::Error err = common::make_error_value("Failed to create stream", common::Value::E_ERROR);
+    SwitchToChannelErrorMode(err);
   }
 }
 

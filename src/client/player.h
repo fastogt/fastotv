@@ -141,7 +141,7 @@ class Player : public core::VideoStateHandler {
 
   // player modes
   void SwitchToPlayingMode();
-  void SwitchToChannelErrorMode();
+  void SwitchToChannelErrorMode(common::Error err);
 
   void SwitchToConnectMode();
   void SwitchToDisconnectMode();

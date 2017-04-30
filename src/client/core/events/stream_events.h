@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <common/error.h>
+
 #include "client/core/events/events_base.h"
 
 namespace fasto {
@@ -40,8 +42,9 @@ struct FrameInfo : public StreamInfo {
 };
 
 struct QuitStreamInfo : public StreamInfo {
-  QuitStreamInfo(VideoState* stream, int code);
-  int code;
+  QuitStreamInfo(VideoState* stream, int exit_code, common::Error err);
+  int exit_code;
+  common::Error error;
 };
 
 typedef EventBase<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
