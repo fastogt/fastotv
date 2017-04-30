@@ -5,13 +5,13 @@ About FastoTV
 
 FastoTV &mdash; is a crossplatform tv player. <br />
 
-Visit our site: [www.fastogt.com](http://www.fastotv.com)
+Visit our site: [FastoTV](http://www.fastotv.com)
 
 Download
 ========
 
 You can download compiled version (for Mac OS X, Windows, FreeBSD and Linux) from our site:<br />
-[www.fastogt.com](http://www.fastotv.com)
+[FastoTV](http://www.fastotv.com)
 
 Contribute
 ==========
