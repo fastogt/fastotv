@@ -20,7 +20,7 @@ Contributions are always welcome! Just try to follow our coding style: [FastoGT 
 Build
 =====
 
-Build documentation: [Build FastoGT](https://github.com/fasto/fastonosql/wiki/Build)
+Build documentation: [Build FastoGT](https://github.com/fastogt/fastotv/wiki/Build)
 
 License
 =======
