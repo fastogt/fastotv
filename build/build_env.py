@@ -165,6 +165,7 @@ class BuildRequest(object):
                 dep_libs = ['git', 'gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
+                            'freetype-dev',
                             'libx11-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
@@ -173,6 +174,7 @@ class BuildRequest(object):
                             'make',
                             'zlib-devel', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
+                            'freetype-devel',
                             'libX11-devel',
                             'libdrm-devel', 'libdri2-devel', 'libump-devel',
                             'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
