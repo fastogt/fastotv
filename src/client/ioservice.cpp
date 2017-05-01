@@ -67,14 +67,14 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::PreLooped(server);
   }
 
-  virtual void Closed(network::IoClient* client, common::Error err) override {
+  virtual void Closed(network::IoClient* client) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
       client_ = nullptr;
       return;
     }
 #endif
-    base_class::Closed(client, err);
+    base_class::Closed(client);
   }
 
   virtual void DataReceived(network::IoClient* client) override {

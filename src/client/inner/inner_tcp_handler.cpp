@@ -74,7 +74,7 @@ void InnerTcpHandler::Moved(network::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Closed(network::IoClient* client, common::Error err) {
+void InnerTcpHandler::Closed(network::IoClient* client) {
   if (client != inner_connection_) {
     return;
   }
@@ -91,7 +91,7 @@ void InnerTcpHandler::DataReceived(network::IoClient* client) {
   common::Error err = iclient->ReadCommand(&buff);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
-    client->Close(err);
+    client->Close();
     delete client;
     return;
   }
@@ -116,7 +116,7 @@ void InnerTcpHandler::TimerEmited(network::IoLoop* server, network::timer_id_t i
     common::Error err = client->Write(ping_request);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-      client->Close(err);
+      client->Close();
       delete client;
     }
   }
@@ -129,7 +129,7 @@ void InnerTcpHandler::RequestChannels() {
     common::Error err = client->Write(channels_request);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-      client->Close(err);
+      client->Close();
       delete client;
     }
   }
@@ -162,7 +162,7 @@ void InnerTcpHandler::Connect(network::IoLoop* server) {
 void InnerTcpHandler::DisConnect(common::Error err) {
   if (inner_connection_) {
     fasto::fastotv::inner::InnerClient* connection = inner_connection_;
-    connection->Close(err);
+    connection->Close();
     delete connection;
   }
 }

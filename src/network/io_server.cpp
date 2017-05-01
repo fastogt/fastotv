@@ -109,12 +109,12 @@ void IoLoop::RegisterClient(IoClient* client) {
              << FormatedName() << "], " << clients_.size() << " client(s) connected.";
 }
 
-void IoLoop::CloseClient(IoClient* client, common::Error err) {
+void IoLoop::CloseClient(IoClient* client) {
   CHECK(client->Server() == this);
   loop_->StopIO(client->read_write_io_);
 
   if (observer_) {
-    observer_->Closed(client, err);
+    observer_->Closed(client);
   }
   clients_.erase(std::remove(clients_.begin(), clients_.end(), client), clients_.end());
   INFO_LOG() << "Successfully disconnected client[" << client->FormatedName() << "], from server["
@@ -257,7 +257,7 @@ void IoLoop::Stoped(LibEvLoop* loop) {
 
   for (size_t i = 0; i < cl.size(); ++i) {
     IoClient* client = cl[i];
-    client->Close(common::make_error_value("Stoped", common::Value::E_ERROR));
+    client->Close();
     delete client;
   }
 }

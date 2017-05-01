@@ -51,7 +51,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   virtual void Accepted(network::IoClient* client) override;
   virtual void Moved(network::IoClient* client) override;
-  virtual void Closed(network::IoClient* client, common::Error err) override;
+  virtual void Closed(network::IoClient* client) override;
 
   virtual void DataReceived(network::IoClient* client) override;
   virtual void DataReadyToWrite(network::IoClient* client) override;

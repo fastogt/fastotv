@@ -49,7 +49,7 @@ class IoLoop : public EvLoopObserver, common::IMetaClassInfo {
   void RegisterClient(const common::net::socket_info& info);
   void RegisterClient(IoClient* client);
   void UnRegisterClient(IoClient* client);
-  virtual void CloseClient(IoClient* client, common::Error err);
+  virtual void CloseClient(IoClient* client);
 
   timer_id_t CreateTimer(double sec, double repeat);
   void RemoveTimer(timer_id_t id);
@@ -100,7 +100,7 @@ class IoLoopObserver {
 
   virtual void Accepted(IoClient* client) = 0;
   virtual void Moved(IoClient* client) = 0;
-  virtual void Closed(IoClient* client, common::Error err) = 0;
+  virtual void Closed(IoClient* client) = 0;
   virtual void TimerEmited(IoLoop* server, timer_id_t id) = 0;
 
   virtual void DataReceived(IoClient* client) = 0;

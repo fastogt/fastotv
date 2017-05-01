@@ -85,7 +85,7 @@ void InnerTcpHandlerHost::TimerEmited(network::IoLoop* server, network::timer_id
         common::Error err = iclient->Write(ping_request);
         if (err && err->IsError()) {
           DEBUG_MSG_ERROR(err);
-          client->Close(err);
+          client->Close();
           delete client;
         } else {
           INFO_LOG() << "Pinged to client[" << client->FormatedName() << "], from server["
@@ -108,8 +108,7 @@ void InnerTcpHandlerHost::Accepted(network::IoClient* client) {
   }
 }
 
-void InnerTcpHandlerHost::Closed(network::IoClient* client, common::Error err) {
-  UNUSED(err);
+void InnerTcpHandlerHost::Closed(network::IoClient* client) {
   common::Error unreg_err = parent_->UnRegisterInnerConnectionByHost(client);
   if (unreg_err && unreg_err->IsError()) {
     DNOTREACHED();
@@ -129,7 +128,7 @@ void InnerTcpHandlerHost::DataReceived(network::IoClient* client) {
   common::Error err = iclient->ReadCommand(&buff);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
-    client->Close(err);
+    client->Close();
     delete client;
     return;
   }
@@ -195,7 +194,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       if (err && err->IsError()) {
         DEBUG_MSG_ERROR(err);
       }
-      connection->Close(err);
+      connection->Close();
       delete connection;
       return;
     }
@@ -224,21 +223,21 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
     common::Error err = HandleInnerSuccsessResponceCommand(connection, id, argc, argv);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-      connection->Close(err);
+      connection->Close();
       delete connection;
     }
   } else if (IS_EQUAL_COMMAND(state_command, FAIL_COMMAND) && argc > 1) {
     common::Error err = HandleInnerFailedResponceCommand(connection, id, argc, argv);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-      connection->Close(err);
+      connection->Close();
       delete connection;
     }
   } else {
     const std::string error_str = common::MemSPrintf("UNKNOWN STATE COMMAND: %s", state_command);
     common::Error err = common::make_error_value(error_str, common::Value::E_ERROR);
     DEBUG_MSG_ERROR(err);
-    connection->Close(err);
+    connection->Close();
     delete connection;
   }
 }
