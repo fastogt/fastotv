@@ -20,22 +20,22 @@ def print_usage():
 
 
 class BuildSystem:
-    def __init__(self, name, cmd_line, cmake_generator_arg, policy):
+    def __init__(self, name, cmd_line: list, cmake_generator_arg, policy: run_command.Policy):
         self.name_ = name
         self.cmd_line_ = cmd_line
         self.cmake_generator_arg_ = cmake_generator_arg
         self.policy_ = policy
 
-    def cmake_generator_arg(self):
+    def cmake_generator_arg(self) -> str:
         return self.cmake_generator_arg_
 
-    def name(self):
+    def name(self) -> str:
         return self.name_
 
-    def policy(self):
+    def policy(self) -> run_command.Policy:
         return self.policy_
 
-    def cmd_line(self):  # cmd + args
+    def cmd_line(self) -> list:  # cmd + args
         return self.cmd_line_
 
 
@@ -78,11 +78,11 @@ class BuildRequest(object):
     def __init__(self, platform, arch_bit):
         platform_or_none = system_info.get_supported_platform_by_name(platform)
 
-        if platform_or_none == None:
+        if not platform_or_none:
             raise utils.BuildError('invalid platform')
 
         arch = platform_or_none.architecture_by_arch_name(arch_bit)
-        if arch == None:
+        if not arch:
             raise utils.BuildError('invalid arch')
 
         self.platform_ = platform_or_none.make_platform_by_arch(arch, platform_or_none.package_types())
