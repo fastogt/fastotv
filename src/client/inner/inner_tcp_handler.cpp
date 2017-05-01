@@ -79,7 +79,8 @@ void InnerTcpHandler::Closed(network::IoClient* client, common::Error err) {
     return;
   }
 
-  fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, ainf_));
+  ConnectInfo cinf(innerHost_);
+  fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, cinf));
   inner_connection_ = nullptr;
 }
 
@@ -146,7 +147,8 @@ void InnerTcpHandler::Connect(network::IoLoop* server) {
       common::net::connect(innerHost_, common::net::ST_SOCK_STREAM, 0, &client_info);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
-    auto ex_event = make_exception_event(new core::events::ClientConnectedEvent(this, ainf_), err);
+    ConnectInfo cinf(innerHost_);
+    auto ex_event = make_exception_event(new core::events::ClientConnectedEvent(this, cinf), err);
     fApp->PostEvent(ex_event);
     return;
   }
@@ -313,10 +315,21 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
         connection->SetName(ainf_.login);
-        fApp->PostEvent(new core::events::ClientConnectedEvent(this, ainf_));
+        fApp->PostEvent(new core::events::ClientAuthorizedEvent(this, ainf_));
       }
     }
   } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {
+    if (argc > 1) {
+      const char* failed_resp_command = argv[1];
+      if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING_COMMAND)) {
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU_COMMAND)) {
+        common::Error err =
+            common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
+        auto ex_event =
+            make_exception_event(new core::events::ClientAuthorizedEvent(this, ainf_), err);
+        fApp->PostEvent(ex_event);
+      }
+    }
   } else {
     WARNING_LOG() << "UNKNOWN COMMAND: " << command;
   }

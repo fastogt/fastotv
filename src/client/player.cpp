@@ -181,6 +181,10 @@ Player::Player(const PlayerOptions& options,
 
   fApp->Subscribe(this, core::events::ClientDisconnectedEvent::EventType);
   fApp->Subscribe(this, core::events::ClientConnectedEvent::EventType);
+
+  fApp->Subscribe(this, core::events::ClientAuthorizedEvent::EventType);
+  fApp->Subscribe(this, core::events::ClientUnAuthorizedEvent::EventType);
+
   fApp->Subscribe(this, core::events::ClientConfigChangeEvent::EventType);
   fApp->Subscribe(this, core::events::ReceiveChannelsEvent::EventType);
 }
@@ -261,6 +265,14 @@ void Player::HandleEvent(event_t* event) {
     core::events::ClientDisconnectedEvent* disc_event =
         static_cast<core::events::ClientDisconnectedEvent*>(event);
     HandleClientDisconnectedEvent(disc_event);
+  } else if (event->GetEventType() == core::events::ClientAuthorizedEvent::EventType) {
+    core::events::ClientAuthorizedEvent* auth_event =
+        static_cast<core::events::ClientAuthorizedEvent*>(event);
+    HandleClientAuthorizedEvent(auth_event);
+  } else if (event->GetEventType() == core::events::ClientUnAuthorizedEvent::EventType) {
+    core::events::ClientUnAuthorizedEvent* unauth_event =
+        static_cast<core::events::ClientUnAuthorizedEvent*>(event);
+    HandleClientUnAuthorizedEvent(unauth_event);
   } else if (event->GetEventType() == core::events::ClientConfigChangeEvent::EventType) {
     core::events::ClientConfigChangeEvent* conf_change_event =
         static_cast<core::events::ClientConfigChangeEvent*>(event);
@@ -278,6 +290,10 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
     // core::events::ClientConnectedEvent* connect_event =
     //    static_cast<core::events::ClientConnectedEvent*>(event);
     SwitchToDisconnectMode();
+  } else if (event->GetEventType() == core::events::ClientAuthorizedEvent::EventType) {
+    // core::events::ClientConnectedEvent* connect_event =
+    //    static_cast<core::events::ClientConnectedEvent*>(event);
+    SwitchToUnAuthorizeMode();
   }
 }
 
@@ -650,11 +666,23 @@ void Player::HandleQuitEvent(core::events::QuitEvent* event) {
 
 void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* event) {
   UNUSED(event);
+  SwitchToAuthorizeMode();
+}
+
+void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {
+  UNUSED(event);
+  if (current_state_ == INIT_STATE) {
+    SwitchToDisconnectMode();
+  }
+}
+
+void Player::HandleClientAuthorizedEvent(core::events::ClientAuthorizedEvent* event) {
+  UNUSED(event);
 
   controller_->RequestChannels();
 }
 
-void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {
+void Player::HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event) {
   UNUSED(event);
   if (current_state_ == INIT_STATE) {
     SwitchToDisconnectMode();
@@ -752,6 +780,14 @@ void Player::SwitchToConnectMode() {
 
 void Player::SwitchToDisconnectMode() {
   InitWindow("Disconnected", INIT_STATE);
+}
+
+void Player::SwitchToAuthorizeMode() {
+  InitWindow("Authorize...", INIT_STATE);
+}
+
+void Player::SwitchToUnAuthorizeMode() {
+  InitWindow("UnAuthorize...", INIT_STATE);
 }
 
 void Player::DrawDisplay() {

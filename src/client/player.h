@@ -114,6 +114,8 @@ class Player : public core::VideoStateHandler {
 
   virtual void HandleClientConnectedEvent(core::events::ClientConnectedEvent* event);
   virtual void HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event);
+  virtual void HandleClientAuthorizedEvent(core::events::ClientAuthorizedEvent* event);
+  virtual void HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event);
   virtual void HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event);
   virtual void HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event);
 
@@ -145,6 +147,9 @@ class Player : public core::VideoStateHandler {
 
   void SwitchToConnectMode();
   void SwitchToDisconnectMode();
+
+  void SwitchToAuthorizeMode();
+  void SwitchToUnAuthorizeMode();
 
   void DrawDisplay();
   void DrawPlayingStatus();

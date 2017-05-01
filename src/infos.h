@@ -21,12 +21,21 @@
 #include <string>
 #include <vector>
 
+#include <common/net/types.h>
+
 #include "url.h"
 
 namespace fasto {
 namespace fastotv {
 
 typedef std::string user_id_t;
+
+struct ConnectInfo {
+  ConnectInfo();
+  explicit ConnectInfo(const common::net::HostAndPort& host);
+
+  common::net::HostAndPort host;
+};
 
 struct AuthInfo {
   AuthInfo();

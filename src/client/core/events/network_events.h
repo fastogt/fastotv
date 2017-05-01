@@ -29,8 +29,10 @@ class TvConfig {};
 namespace core {
 namespace events {
 
-typedef EventBase<CLIENT_DISCONNECT_EVENT, AuthInfo> ClientDisconnectedEvent;
-typedef EventBase<CLIENT_CONNECT_EVENT, AuthInfo> ClientConnectedEvent;
+typedef EventBase<CLIENT_DISCONNECT_EVENT, ConnectInfo> ClientDisconnectedEvent;
+typedef EventBase<CLIENT_CONNECT_EVENT, ConnectInfo> ClientConnectedEvent;
+typedef EventBase<CLIENT_AUTHORIZED_EVENT, AuthInfo> ClientAuthorizedEvent;
+typedef EventBase<CLIENT_UNAUTHORIZED_EVENT, AuthInfo> ClientUnAuthorizedEvent;
 typedef EventBase<CLIENT_CONFIG_CHANGE_EVENT, TvConfig> ClientConfigChangeEvent;
 typedef EventBase<CLIENT_RECEIVE_CHANNELS_EVENT, channels_t> ReceiveChannelsEvent;
 
