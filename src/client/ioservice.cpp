@@ -67,14 +67,14 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::PreLooped(server);
   }
 
-  virtual void Closed(network::IoClient* client) override {
+  virtual void Closed(network::IoClient* client, common::Error err) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
       client_ = nullptr;
       return;
     }
 #endif
-    base_class::Closed(client);
+    base_class::Closed(client, err);
   }
 
   virtual void DataReceived(network::IoClient* client) override {
@@ -116,8 +116,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
 };
 }
 
-NetworkController::NetworkController() : ILoopThreadController() {
-}
+NetworkController::NetworkController() : ILoopThreadController() {}
 
 void NetworkController::Start() {
   ILoopThreadController::Start();
@@ -127,8 +126,7 @@ void NetworkController::Stop() {
   ILoopThreadController::Stop();
 }
 
-NetworkController::~NetworkController() {
-}
+NetworkController::~NetworkController() {}
 
 AuthInfo NetworkController::GetAuthInfo() {
   return AuthInfo(USER_LOGIN, USER_PASSWORD);
@@ -146,7 +144,7 @@ void NetworkController::ConnectToServer() const {
 void NetworkController::DisconnectFromServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {
-    auto cb = [handler]() { handler->DisConnect(); };
+    auto cb = [handler]() { handler->DisConnect(common::Error()); };
     ExecInLoopThread(cb);
   }
 }

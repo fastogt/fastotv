@@ -52,8 +52,7 @@ InnerTcpHandler::InnerTcpHandler(const common::net::HostAndPort& innerHost, cons
     : inner_connection_(nullptr),
       ping_server_id_timer_(INVALID_TIMER_ID),
       innerHost_(innerHost),
-      ainf_(ainf) {
-}
+      ainf_(ainf) {}
 
 InnerTcpHandler::~InnerTcpHandler() {
   delete inner_connection_;
@@ -75,12 +74,13 @@ void InnerTcpHandler::Moved(network::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Closed(network::IoClient* client) {
-  if (client == inner_connection_) {
-    fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, ainf_));
-    inner_connection_ = nullptr;
+void InnerTcpHandler::Closed(network::IoClient* client, common::Error err) {
+  if (client != inner_connection_) {
     return;
   }
+
+  fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, ainf_));
+  inner_connection_ = nullptr;
 }
 
 void InnerTcpHandler::DataReceived(network::IoClient* client) {
@@ -90,7 +90,7 @@ void InnerTcpHandler::DataReceived(network::IoClient* client) {
   common::Error err = iclient->ReadCommand(&buff);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
-    client->Close();
+    client->Close(err);
     delete client;
     return;
   }
@@ -104,7 +104,7 @@ void InnerTcpHandler::DataReadyToWrite(network::IoClient* client) {
 
 void InnerTcpHandler::PostLooped(network::IoLoop* server) {
   UNUSED(server);
-  DisConnect();
+  DisConnect(common::Error());
 }
 
 void InnerTcpHandler::TimerEmited(network::IoLoop* server, network::timer_id_t id) {
@@ -115,7 +115,7 @@ void InnerTcpHandler::TimerEmited(network::IoLoop* server, network::timer_id_t i
     common::Error err = client->Write(ping_request);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-      client->Close();
+      client->Close(err);
       delete client;
     }
   }
@@ -128,7 +128,7 @@ void InnerTcpHandler::RequestChannels() {
     common::Error err = client->Write(channels_request);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-      client->Close();
+      client->Close(err);
       delete client;
     }
   }
@@ -139,7 +139,7 @@ void InnerTcpHandler::Connect(network::IoLoop* server) {
     return;
   }
 
-  DisConnect();
+  DisConnect(common::make_error_value("Reconnect", common::Value::E_ERROR));
 
   common::net::socket_info client_info;
   common::ErrnoError err =
@@ -157,10 +157,10 @@ void InnerTcpHandler::Connect(network::IoLoop* server) {
   server->RegisterClient(connection);
 }
 
-void InnerTcpHandler::DisConnect() {
+void InnerTcpHandler::DisConnect(common::Error err) {
   if (inner_connection_) {
     fasto::fastotv::inner::InnerClient* connection = inner_connection_;
-    connection->Close();
+    connection->Close(err);
     delete connection;
   }
 }

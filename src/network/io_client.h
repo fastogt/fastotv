@@ -38,7 +38,7 @@ class IoClient : common::IMetaClassInfo {
   IoClient(IoLoop* server, flags_t flags = EV_READ);
   virtual ~IoClient();
 
-  void Close();
+  void Close(common::Error err);
 
   IoLoop* Server() const;
 

@@ -102,30 +102,30 @@ int ServerHost::exec() {
   return connection_thread->JoinAndGet();
 }
 
-bool ServerHost::UnRegisterInnerConnectionByHost(network::IoClient* connection) {
+common::Error ServerHost::UnRegisterInnerConnectionByHost(network::IoClient* connection) {
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
   user_id_t uid = iconnection->GetUid();
   if (uid.empty()) {
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
   connections_.erase(uid);
-  return true;
+  return common::Error();
 }
 
-bool ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
+common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
                                                const AuthInfo& user,
                                                network::IoClient* connection) {
   CHECK(user.IsValid());
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
   iconnection->SetServerHostInfo(user);
@@ -134,7 +134,7 @@ bool ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
   std::string login = user.login;
   connections_[user_id] = iconnection;
   connection->SetName(login);
-  return true;
+  return common::Error();
 }
 
 common::Error ServerHost::FindUserAuth(const AuthInfo& user, user_id_t* uid) const {

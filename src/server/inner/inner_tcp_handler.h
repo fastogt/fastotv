@@ -51,7 +51,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   virtual void Accepted(network::IoClient* client) override;
   virtual void Moved(network::IoClient* client) override;
-  virtual void Closed(network::IoClient* client) override;
+  virtual void Closed(network::IoClient* client, common::Error err) override;
 
   virtual void DataReceived(network::IoClient* client) override;
   virtual void DataReadyToWrite(network::IoClient* client) override;
@@ -80,6 +80,16 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
+
+  // inner handlers
+  common::Error HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
+                                                   cmd_seq_t id,
+                                                   int argc,
+                                                   char* argv[]) WARN_UNUSED_RESULT;
+  common::Error HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
+                                                 cmd_seq_t id,
+                                                 int argc,
+                                                 char* argv[]) WARN_UNUSED_RESULT;
 
   ServerHost* const parent_;
 

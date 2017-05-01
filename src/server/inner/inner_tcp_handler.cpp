@@ -85,7 +85,7 @@ void InnerTcpHandlerHost::TimerEmited(network::IoLoop* server, network::timer_id
         common::Error err = iclient->Write(ping_request);
         if (err && err->IsError()) {
           DEBUG_MSG_ERROR(err);
-          client->Close();
+          client->Close(err);
           delete client;
         } else {
           INFO_LOG() << "Pinged to client[" << client->FormatedName() << "], from server["
@@ -108,14 +108,18 @@ void InnerTcpHandlerHost::Accepted(network::IoClient* client) {
   }
 }
 
-void InnerTcpHandlerHost::Closed(network::IoClient* client) {
-  bool is_ok = parent_->UnRegisterInnerConnectionByHost(client);
-  if (is_ok) {
-    InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
-    if (iconnection) {
-      user_id_t uid = iconnection->GetUid();
-      PublishStateToChannel(uid, false);
-    }
+void InnerTcpHandlerHost::Closed(network::IoClient* client, common::Error err) {
+  UNUSED(err);
+  common::Error unreg_err = parent_->UnRegisterInnerConnectionByHost(client);
+  if (unreg_err && unreg_err->IsError()) {
+    DNOTREACHED();
+    return;
+  }
+
+  InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
+  if (iconnection) {
+    user_id_t uid = iconnection->GetUid();
+    PublishStateToChannel(uid, false);
   }
 }
 
@@ -125,7 +129,7 @@ void InnerTcpHandlerHost::DataReceived(network::IoClient* client) {
   common::Error err = iclient->ReadCommand(&buff);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
-    client->Close();
+    client->Close(err);
     delete client;
     return;
   }
@@ -191,7 +195,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       if (err && err->IsError()) {
         DEBUG_MSG_ERROR(err);
       }
-      connection->Close();
+      connection->Close(err);
       delete connection;
       return;
     }
@@ -217,120 +221,155 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
   char* state_command = argv[0];
 
   if (IS_EQUAL_COMMAND(state_command, SUCCESS_COMMAND) && argc > 1) {
-    char* command = argv[1];
-    if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
-      if (argc > 2) {
-        const char* pong = argv[2];
-        if (!pong) {
-          cmd_approve_t resp = PingApproveResponceFail(id, "Invalid input argument(s)");
-          common::Error err = connection->Write(resp);
-          if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
-          }
-          goto fail;
-        }
-
-        cmd_approve_t resp = PingApproveResponceSuccsess(id);
-        common::Error err = connection->Write(resp);
-        if (err && err->IsError()) {
-          goto fail;
-        }
-      } else {
-        cmd_approve_t resp = PingApproveResponceFail(id, "Invalid input argument(s)");
-        common::Error err = connection->Write(resp);
-        if (err && err->IsError()) {
-          DEBUG_MSG_ERROR(err);
-        }
-      }
-    } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
-      if (argc > 2) {
-        const char* uauthstr = argv[2];
-        if (!uauthstr) {
-          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-          common::Error err = connection->Write(resp);
-          if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
-          }
-          goto fail;
-        }
-
-        common::buffer_t buff = common::HexDecode(uauthstr);
-        std::string buff_str(buff.begin(), buff.end());
-        json_object* obj = json_tokener_parse(buff_str.c_str());
-        if (!obj) {
-          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-          common::Error err = connection->Write(resp);
-          if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
-          }
-          goto fail;
-        }
-
-        AuthInfo uauth = AuthInfo::MakeClass(obj);
-        json_object_put(obj);
-        if (!uauth.IsValid()) {
-          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-          common::Error err = connection->Write(resp);
-          if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
-          }
-          goto fail;
-        }
-
-        user_id_t uid;
-        common::Error err = parent_->FindUserAuth(uauth, &uid);
-        if (err && err->IsError()) {
-          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->Description());
-          common::Error err = connection->Write(resp);
-          if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
-          }
-          goto fail;
-        }
-
-        std::string login = uauth.login;
-        InnerTcpClient* fclient = parent_->FindInnerConnectionByID(login);
-        if (fclient) {
-          cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Double connection reject");
-          common::Error err = connection->Write(resp);
-          if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
-          }
-          goto fail;
-        }
-
-        cmd_approve_t resp = WhoAreYouApproveResponceSuccsess(id);
-        err = connection->Write(resp);
-        if (err && err->IsError()) {
-          DEBUG_MSG_ERROR(err);
-          goto fail;
-        }
-
-        bool is_ok = parent_->RegisterInnerConnectionByUser(uid, uauth, connection);
-        if (is_ok) {
-          PublishStateToChannel(uid, true);
-        }
-      } else {
-        cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-        common::Error err = connection->Write(resp);
-        if (err && err->IsError()) {
-          DEBUG_MSG_ERROR(err);
-        }
-      }
-    } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {
-    } else {
-      WARNING_LOG() << "UNKNOWN RESPONCE COMMAND: " << command;
+    common::Error err = HandleInnerSuccsessResponceCommand(connection, id, argc, argv);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      connection->Close(err);
+      delete connection;
     }
   } else if (IS_EQUAL_COMMAND(state_command, FAIL_COMMAND) && argc > 1) {
+    common::Error err = HandleInnerFailedResponceCommand(connection, id, argc, argv);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      connection->Close(err);
+      delete connection;
+    }
   } else {
-    WARNING_LOG() << "UNKNOWN STATE COMMAND: " << state_command;
+    const std::string error_str = common::MemSPrintf("UNKNOWN STATE COMMAND: %s", state_command);
+    common::Error err = common::make_error_value(error_str, common::Value::E_ERROR);
+    DEBUG_MSG_ERROR(err);
+    connection->Close(err);
+    delete connection;
+  }
+}
+
+common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
+    fastotv::inner::InnerClient* connection,
+    cmd_seq_t id,
+    int argc,
+    char* argv[]) {
+  char* command = argv[1];
+  if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
+    if (argc < 2) {
+      const std::string error_str = "Invalid input argument(s)";
+      cmd_approve_t resp = PingApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return common::make_error_value(error_str, common::Value::E_ERROR);
+    }
+
+    const char* pong = argv[2];
+    if (!pong) {
+      const std::string error_str = "Invalid input argument(s)";
+      cmd_approve_t resp = PingApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return common::make_error_value(error_str, common::Value::E_ERROR);
+    }
+
+    cmd_approve_t resp = PingApproveResponceSuccsess(id);
+    common::Error err = connection->Write(resp);
+    if (err && err->IsError()) {
+      return err;
+    }
+    return common::Error();
+  } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
+    if (argc < 2) {
+      const std::string error_str = "Invalid input argument(s)";
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return common::make_error_value(error_str, common::Value::E_ERROR);
+    }
+
+    const char* uauthstr = argv[2];
+    if (!uauthstr) {
+      const std::string error_str = "Invalid input argument(s)";
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return common::make_error_value(error_str, common::Value::E_ERROR);
+    }
+
+    common::buffer_t buff = common::HexDecode(uauthstr);
+    std::string buff_str(buff.begin(), buff.end());
+    json_object* obj = json_tokener_parse(buff_str.c_str());
+    if (!obj) {
+      const std::string error_str = "Invalid input argument(s)";
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return common::make_error_value(error_str, common::Value::E_ERROR);
+    }
+
+    AuthInfo uauth = AuthInfo::MakeClass(obj);
+    json_object_put(obj);
+    if (!uauth.IsValid()) {
+      const std::string error_str = "Invalid input argument(s)";
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return common::make_error_value(error_str, common::Value::E_ERROR);
+    }
+
+    user_id_t uid;
+    common::Error err = parent_->FindUserAuth(uauth, &uid);
+    if (err && err->IsError()) {
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->Description());
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return err;
+    }
+
+    std::string login = uauth.login;
+    InnerTcpClient* fclient = parent_->FindInnerConnectionByID(login);
+    if (fclient) {
+      const std::string error_str = "Double connection reject";
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return err;
+    }
+
+    cmd_approve_t resp = WhoAreYouApproveResponceSuccsess(id);
+    err = connection->Write(resp);
+    if (err && err->IsError()) {
+      return err;
+    }
+
+    err = parent_->RegisterInnerConnectionByUser(uid, uauth, connection);
+    if (err && err->IsError()) {
+      return err;
+    }
+
+    PublishStateToChannel(uid, true);
+    return common::Error();
+  } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {
+    cmd_approve_t resp = SystemInfoApproveResponceSuccsess(id);
+    common::Error err = connection->Write(resp);
+    if (err && err->IsError()) {
+      return err;
+    }
+    return common::Error();
   }
 
-  return;
+  const std::string error_str = common::MemSPrintf("UNKNOWN RESPONCE COMMAND: %s", command);
+  return common::make_error_value(error_str, common::Value::E_ERROR);
+}
 
-fail:
-  connection->Close();
-  delete connection;
+common::Error InnerTcpHandlerHost::HandleInnerFailedResponceCommand(
+    fastotv::inner::InnerClient* connection,
+    cmd_seq_t id,
+    int argc,
+    char* argv[]) {
+  UNUSED(connection);
+  UNUSED(id);
+  UNUSED(argc);
+
+  char* command = argv[1];
+  const std::string error_str =
+      common::MemSPrintf("Sorry now we can't handle failed pesponce for command: %s", command);
+  return common::make_error_value(error_str, common::Value::E_ERROR);
 }
 
 void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,

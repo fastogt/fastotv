@@ -44,9 +44,9 @@ IoClient::~IoClient() {
   read_write_io_ = NULL;
 }
 
-void IoClient::Close() {
+void IoClient::Close(common::Error err) {
   if (server_) {
-    server_->CloseClient(this);
+    server_->CloseClient(this, err);
   }
   CloseImpl();
 }

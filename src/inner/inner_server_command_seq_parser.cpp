@@ -100,7 +100,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
   if (err && err->IsError()) {
     WARNING_LOG() << err->Description();
-    connection->Close();
+    connection->Close(err);
     delete connection;
     return;
   }
@@ -108,8 +108,9 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   int argc;
   sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
   if (argv == NULL) {
-    WARNING_LOG() << "PROBLEM PARSING INNER COMMAND: " << input_command;
-    connection->Close();
+    const std::string error_str = "PROBLEM PARSING INNER COMMAND: " + input_command;
+    WARNING_LOG() << error_str;
+    connection->Close(common::make_error_value(error_str, common::Value::E_ERROR));
     delete connection;
     return;
   }
@@ -125,7 +126,8 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
     HandleInnerApproveCommand(connection, id, argc, argv);
   } else {
     DNOTREACHED();
-    connection->Close();
+    const std::string error_str = "Invalid command type: " + input_command;
+    connection->Close(common::make_error_value(error_str, common::Value::E_ERROR));
     delete connection;
   }
   sdsfreesplitres(argv, argc);
