@@ -129,7 +129,8 @@ int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_size.height)) {
+  if (!parse_number(
+          arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_size.height)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -620,6 +621,50 @@ int main(int argc, char** argv) {
 #else
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
+
+  common::file_system::ascii_string_path file_path(PIDFILE_PATH);
+  if (!file_path.IsValid()) {
+    ERROR_LOG() << "Can't get pid file path: " << PIDFILE_PATH;
+    return EXIT_FAILURE;
+  }
+
+  const std::string pid_directory = file_path.Directory();
+  if (!common::file_system::is_directory_exist(pid_directory)) {
+    common::ErrnoError err = common::file_system::create_directory(pid_directory, true);
+    if (err && err->IsError()) {
+      ERROR_LOG() << "Can't create pid file directory error:(" << err->Description()
+                  << "), pid file path: " << PIDFILE_PATH;
+      return EXIT_FAILURE;
+    }
+  }
+
+  common::ErrnoError err = common::file_system::node_access(pid_directory);
+  if (err && err->IsError()) {
+    ERROR_LOG() << "Can't have permissions to create, pid file path: " << PIDFILE_PATH;
+    return EXIT_FAILURE;
+  }
+
+  common::file_system::File lock_pid_file(file_path);
+  if (!lock_pid_file.Open("w")) {
+    ERROR_LOG() << "Can't open pid file path: " << PIDFILE_PATH;
+    return EXIT_FAILURE;
+  }
+
+  if (!lock_pid_file.Lock()) {
+    ERROR_LOG() << "Can't lock pid file path: " << PIDFILE_PATH;
+    lock_pid_file.Close();
+    return EXIT_FAILURE;
+  }
+
+  std::string pid_str = common::MemSPrintf("%ld\n", common::get_current_process_pid());
+  bool writed = lock_pid_file.Write(pid_str);
+  if (!writed) {
+    ERROR_LOG() << "Can't write pid to file path: " << PIDFILE_PATH;
+    lock_pid_file.Close();
+    return EXIT_FAILURE;
+  }
+  lock_pid_file.Flush();
+
   common::application::Application app(argc, argv, &CreateApplicationImpl);
   fasto::fastotv::client::core::ComplexOptions copt(
       dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
@@ -627,5 +672,15 @@ int main(int argc, char** argv) {
       new fasto::fastotv::client::Player(g_player_options, g_options, copt);
   int res = app.Exec();
   destroy(&player);
+
+  if (!lock_pid_file.Unlock()) {
+    WARNING_LOG() << "Can't unlock pid file path: " << PIDFILE_PATH;
+  }
+
+  lock_pid_file.Close();
+  err = common::file_system::remove_file(PIDFILE_PATH);
+  if (err && err->IsError()) {
+    WARNING_LOG() << "Can't remove file: " << PIDFILE_PATH << ", error: " << err->Description();
+  }
   return res;
 }
