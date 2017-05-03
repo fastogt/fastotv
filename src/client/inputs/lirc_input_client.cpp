@@ -46,8 +46,10 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   }
 
   lirc_config* lcfg = NULL;
+  const std::string absolute_source_dir =
+      common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string lirc_config_path =
-      common::file_system::make_path(RELATIVE_SOURCE_DIR, LIRCRC_CONFIG_PATH_RELATIVE);
+      common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
   const char* lirc_config_path_ptr = common::utils::c_strornull(lirc_config_path);
   char* lirc_config_ptr = const_cast<char*>(lirc_config_path_ptr);
   if (lirc_readconfig(lirc_config_ptr, &lcfg, NULL) == -1) {

@@ -596,9 +596,11 @@ common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** ar
                                                                                            argv);
 }
 
-static int main_single_application(int argc, char** argv, const std::string& pid_file_path) {
-  const std::string absolute_pid_file_path = common::file_system::is_absolute_path(pid_file_path) ?
-              pid_file_path : common::file_system::absolute_path_from_relative(pid_file_path);
+// runtime_directory_absolute_path can be not equal pwd (used for pid file location)
+static int main_single_application(int argc,
+                                   char** argv,
+                                   const std::string& runtime_directory_absolute_path) {
+  typedef common::file_system::ascii_string_path string_path_type;
 #if defined(NDEBUG)
   common::logging::LEVEL_LOG level = common::logging::L_INFO;
 #else
@@ -611,36 +613,38 @@ static int main_single_application(int argc, char** argv, const std::string& pid
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
 
-  common::file_system::ascii_string_path file_path(absolute_pid_file_path);
-  if (!file_path.IsValid()) {
-    ERROR_LOG() << "Can't get pid file path: " << absolute_pid_file_path;
+  const std::string pid_path_str =
+      common::file_system::make_path(runtime_directory_absolute_path, std::string(PIDFILE_NAME));
+  string_path_type pid_path(pid_path_str);
+  if (!pid_path.IsValid()) {
+    ERROR_LOG() << "Can't get pid file path: " << pid_path_str;
     return EXIT_FAILURE;
   }
 
-  const std::string pid_directory = file_path.Directory();
-  if (!common::file_system::is_directory_exist(pid_directory)) {
-    common::ErrnoError err = common::file_system::create_directory(pid_directory, true);
+  if (!common::file_system::is_directory_exist(runtime_directory_absolute_path)) {
+    common::ErrnoError err =
+        common::file_system::create_directory(runtime_directory_absolute_path, true);
     if (err && err->IsError()) {
       ERROR_LOG() << "Can't create pid file directory error:(" << err->Description()
-                  << "), pid file path: " << absolute_pid_file_path;
+                  << "), pid file path: " << pid_path_str;
       return EXIT_FAILURE;
     }
   }
 
-  common::ErrnoError err = common::file_system::node_access(pid_directory);
+  common::ErrnoError err = common::file_system::node_access(runtime_directory_absolute_path);
   if (err && err->IsError()) {
-    ERROR_LOG() << "Can't have permissions to create, pid file path: " << absolute_pid_file_path;
+    ERROR_LOG() << "Can't have permissions to create, pid file path: " << pid_path_str;
     return EXIT_FAILURE;
   }
 
-  common::file_system::File lock_pid_file(file_path);
+  common::file_system::File lock_pid_file(pid_path);
   if (!lock_pid_file.Open("w")) {
-    ERROR_LOG() << "Can't open pid file path: " << absolute_pid_file_path;
+    ERROR_LOG() << "Can't open pid file path: " << pid_path_str;
     return EXIT_FAILURE;
   }
 
   if (!lock_pid_file.Lock()) {
-    ERROR_LOG() << "Can't lock pid file path: " << absolute_pid_file_path;
+    ERROR_LOG() << "Can't lock pid file path: " << pid_path_str;
     lock_pid_file.Close();
     return EXIT_FAILURE;
   }
@@ -648,7 +652,7 @@ static int main_single_application(int argc, char** argv, const std::string& pid
   std::string pid_str = common::MemSPrintf("%ld\n", common::get_current_process_pid());
   bool writed = lock_pid_file.Write(pid_str);
   if (!writed) {
-    ERROR_LOG() << "Can't write pid to file path: " << absolute_pid_file_path;
+    ERROR_LOG() << "Can't write pid to file path: " << pid_path_str;
     lock_pid_file.Close();
     return EXIT_FAILURE;
   }
@@ -663,20 +667,20 @@ static int main_single_application(int argc, char** argv, const std::string& pid
   destroy(&player);
 
   if (!lock_pid_file.Unlock()) {
-    WARNING_LOG() << "Can't unlock pid file path: " << absolute_pid_file_path;
+    WARNING_LOG() << "Can't unlock pid file path: " << pid_path_str;
   }
 
   lock_pid_file.Close();
-  err = common::file_system::remove_file(absolute_pid_file_path);
+  err = common::file_system::remove_file(pid_path_str);
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't remove file: " << absolute_pid_file_path << ", error: " << err->Description();
+    WARNING_LOG() << "Can't remove file: " << pid_path_str << ", error: " << err->Description();
   }
   return res;
 }
 
 /* Called from the main */
 int main(int argc, char** argv) {
-  std::string pid_file_path = PIDFILE_PATH;
+  std::string runtime_directory_path = RUNTIME_DIR;
 #if defined(OS_LINUX) || defined(OS_FREEBSD)
   bool daemon_mode = false;
   for (int i = 1; i < argc; ++i) {
@@ -688,9 +692,13 @@ int main(int argc, char** argv) {
   if (daemon_mode) {
     common::create_as_daemon();
   } else {
-    pid_file_path = "/tmp/" PROJECT_NAME_LOWERCASE "/" PIDFILE_NAME;
+    runtime_directory_path = "/tmp/" PROJECT_NAME_LOWERCASE "/";
   }
 #endif
 
-  return main_single_application(argc, argv, pid_file_path);
+  const std::string runtime_directory_absolute_path =
+      common::file_system::is_absolute_path(runtime_directory_path)
+          ? runtime_directory_path
+          : common::file_system::absolute_path_from_relative(runtime_directory_path);
+  return main_single_application(argc, argv, runtime_directory_absolute_path);
 }
