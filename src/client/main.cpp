@@ -663,13 +663,13 @@ static int main_single_application(int argc, char** argv, const std::string& pid
   destroy(&player);
 
   if (!lock_pid_file.Unlock()) {
-    WARNING_LOG() << "Can't unlock pid file path: " << pid_file_path;
+    WARNING_LOG() << "Can't unlock pid file path: " << absolute_pid_file_path;
   }
 
   lock_pid_file.Close();
-  err = common::file_system::remove_file(pid_file_path);
+  err = common::file_system::remove_file(absolute_pid_file_path);
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't remove file: " << pid_file_path << ", error: " << err->Description();
+    WARNING_LOG() << "Can't remove file: " << absolute_pid_file_path << ", error: " << err->Description();
   }
   return res;
 }
