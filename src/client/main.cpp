@@ -596,20 +596,9 @@ common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** ar
                                                                                            argv);
 }
 
-/* Called from the main */
-int main(int argc, char** argv) {
-  bool daemon_mode = false;
-  for (int i = 1; i < argc; ++i) {
-    if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-daemon") == 0) {
-      daemon_mode = true;
-    }
-  }
-#if defined(OS_POSIX)
-  if (daemon_mode) {
-    common::create_as_daemon();
-  }
-#endif
-
+static int main_single_application(int argc, char** argv, const std::string& pid_file_path) {
+  const std::string absolute_pid_file_path = common::file_system::is_absolute_path(pid_file_path) ?
+              pid_file_path : common::file_system::absolute_path_from_relative(pid_file_path);
 #if defined(NDEBUG)
   common::logging::LEVEL_LOG level = common::logging::L_INFO;
 #else
@@ -622,9 +611,9 @@ int main(int argc, char** argv) {
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
 
-  common::file_system::ascii_string_path file_path(PIDFILE_PATH);
+  common::file_system::ascii_string_path file_path(absolute_pid_file_path);
   if (!file_path.IsValid()) {
-    ERROR_LOG() << "Can't get pid file path: " << PIDFILE_PATH;
+    ERROR_LOG() << "Can't get pid file path: " << absolute_pid_file_path;
     return EXIT_FAILURE;
   }
 
@@ -633,25 +622,25 @@ int main(int argc, char** argv) {
     common::ErrnoError err = common::file_system::create_directory(pid_directory, true);
     if (err && err->IsError()) {
       ERROR_LOG() << "Can't create pid file directory error:(" << err->Description()
-                  << "), pid file path: " << PIDFILE_PATH;
+                  << "), pid file path: " << absolute_pid_file_path;
       return EXIT_FAILURE;
     }
   }
 
   common::ErrnoError err = common::file_system::node_access(pid_directory);
   if (err && err->IsError()) {
-    ERROR_LOG() << "Can't have permissions to create, pid file path: " << PIDFILE_PATH;
+    ERROR_LOG() << "Can't have permissions to create, pid file path: " << absolute_pid_file_path;
     return EXIT_FAILURE;
   }
 
   common::file_system::File lock_pid_file(file_path);
   if (!lock_pid_file.Open("w")) {
-    ERROR_LOG() << "Can't open pid file path: " << PIDFILE_PATH;
+    ERROR_LOG() << "Can't open pid file path: " << absolute_pid_file_path;
     return EXIT_FAILURE;
   }
 
   if (!lock_pid_file.Lock()) {
-    ERROR_LOG() << "Can't lock pid file path: " << PIDFILE_PATH;
+    ERROR_LOG() << "Can't lock pid file path: " << absolute_pid_file_path;
     lock_pid_file.Close();
     return EXIT_FAILURE;
   }
@@ -659,7 +648,7 @@ int main(int argc, char** argv) {
   std::string pid_str = common::MemSPrintf("%ld\n", common::get_current_process_pid());
   bool writed = lock_pid_file.Write(pid_str);
   if (!writed) {
-    ERROR_LOG() << "Can't write pid to file path: " << PIDFILE_PATH;
+    ERROR_LOG() << "Can't write pid to file path: " << absolute_pid_file_path;
     lock_pid_file.Close();
     return EXIT_FAILURE;
   }
@@ -674,13 +663,34 @@ int main(int argc, char** argv) {
   destroy(&player);
 
   if (!lock_pid_file.Unlock()) {
-    WARNING_LOG() << "Can't unlock pid file path: " << PIDFILE_PATH;
+    WARNING_LOG() << "Can't unlock pid file path: " << pid_file_path;
   }
 
   lock_pid_file.Close();
-  err = common::file_system::remove_file(PIDFILE_PATH);
+  err = common::file_system::remove_file(pid_file_path);
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't remove file: " << PIDFILE_PATH << ", error: " << err->Description();
+    WARNING_LOG() << "Can't remove file: " << pid_file_path << ", error: " << err->Description();
   }
   return res;
+}
+
+/* Called from the main */
+int main(int argc, char** argv) {
+  std::string pid_file_path = PIDFILE_PATH;
+#if defined(OS_LINUX) || defined(OS_FREEBSD)
+  bool daemon_mode = false;
+  for (int i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-daemon") == 0) {
+      daemon_mode = true;
+    }
+  }
+
+  if (daemon_mode) {
+    common::create_as_daemon();
+  } else {
+    pid_file_path = "/tmp/" PROJECT_NAME_LOWERCASE "/" PIDFILE_NAME;
+  }
+#endif
+
+  return main_single_application(argc, argv, pid_file_path);
 }
