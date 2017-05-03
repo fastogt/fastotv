@@ -637,26 +637,29 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
-  common::file_system::File lock_pid_file(pid_path);
-  if (!lock_pid_file.Open("w")) {
+  const uint32_t fl =
+      common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE;
+  common::file_system::File lock_pid_file(pid_path, fl);
+  if (!lock_pid_file.IsValid()) {
     ERROR_LOG() << "Can't open pid file path: " << pid_path_str;
     return EXIT_FAILURE;
   }
 
-  if (!lock_pid_file.Lock()) {
+  err = lock_pid_file.Lock();
+  if (err && err->IsError()) {
     ERROR_LOG() << "Can't lock pid file path: " << pid_path_str;
     lock_pid_file.Close();
     return EXIT_FAILURE;
   }
 
   std::string pid_str = common::MemSPrintf("%ld\n", common::get_current_process_pid());
-  bool writed = lock_pid_file.Write(pid_str);
-  if (!writed) {
+  size_t writed;
+  err = lock_pid_file.Write(pid_str, &writed);
+  if (err && err->IsError()) {
     ERROR_LOG() << "Can't write pid to file path: " << pid_path_str;
     lock_pid_file.Close();
     return EXIT_FAILURE;
   }
-  lock_pid_file.Flush();
 
   common::application::Application app(argc, argv, &CreateApplicationImpl);
   fasto::fastotv::client::core::ComplexOptions copt(
@@ -666,7 +669,8 @@ static int main_single_application(int argc,
   int res = app.Exec();
   destroy(&player);
 
-  if (!lock_pid_file.Unlock()) {
+  err = lock_pid_file.Unlock();
+  if (err && err->IsError()) {
     WARNING_LOG() << "Can't unlock pid file path: " << pid_path_str;
   }
 
