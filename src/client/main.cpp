@@ -639,8 +639,9 @@ static int main_single_application(int argc,
 
   const uint32_t fl =
       common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE;
-  common::file_system::File lock_pid_file(pid_path, fl);
-  if (!lock_pid_file.IsValid()) {
+  common::file_system::File lock_pid_file;
+  err = lock_pid_file.Open(pid_path, fl);
+  if (err && err->IsError()) {
     ERROR_LOG() << "Can't open pid file path: " << pid_path_str;
     return EXIT_FAILURE;
   }
@@ -648,7 +649,7 @@ static int main_single_application(int argc,
   err = lock_pid_file.Lock();
   if (err && err->IsError()) {
     ERROR_LOG() << "Can't lock pid file path: " << pid_path_str;
-    lock_pid_file.Close();
+    err = lock_pid_file.Close();
     return EXIT_FAILURE;
   }
 
@@ -657,7 +658,7 @@ static int main_single_application(int argc,
   err = lock_pid_file.Write(pid_str, &writed);
   if (err && err->IsError()) {
     ERROR_LOG() << "Can't write pid to file path: " << pid_path_str;
-    lock_pid_file.Close();
+    err = lock_pid_file.Close();
     return EXIT_FAILURE;
   }
 
@@ -674,7 +675,7 @@ static int main_single_application(int argc,
     WARNING_LOG() << "Can't unlock pid file path: " << pid_path_str;
   }
 
-  lock_pid_file.Close();
+  err = lock_pid_file.Close();
   err = common::file_system::remove_file(pid_path_str);
   if (err && err->IsError()) {
     WARNING_LOG() << "Can't remove file: " << pid_path_str << ", error: " << err->Description();
