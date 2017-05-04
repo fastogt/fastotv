@@ -42,7 +42,7 @@ InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) 
 InnerSubHandler::~InnerSubHandler() {
 }
 
-void InnerSubHandler::processSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {
+void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {
   std::string join = request_id;
   for (int i = 0; i < argc; ++i) {
     join += " ";
@@ -52,7 +52,7 @@ void InnerSubHandler::processSubscribed(cmd_seq_t request_id, int argc, char* ar
   PublishToChannelOut(join);
 }
 
-void InnerSubHandler::handleMessage(const std::string& channel, const std::string& msg) {
+void InnerSubHandler::HandleMessage(const std::string& channel, const std::string& msg) {
   // [std::string]site [cmd_id_t]seq [std::string]command args ...
   // [cmd_id_t]seq OK/FAIL [std::string]command args ..
   INFO_LOG() << "InnerSubHandler channel: " << channel << ", msg: " << msg;
@@ -108,7 +108,7 @@ void InnerSubHandler::handleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  auto cb = std::bind(&InnerSubHandler::processSubscribed,
+  auto cb = std::bind(&InnerSubHandler::ProcessSubscribed,
                       this,
                       std::placeholders::_1,
                       std::placeholders::_2,

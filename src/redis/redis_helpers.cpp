@@ -194,7 +194,7 @@ void RedisSub::Listen() {
     size_t msg_len = lreply->element[2]->len;
 
     if (handler_) {
-      handler_->handleMessage(std::string(chn, chn_len), std::string(msg, msg_len));
+      handler_->HandleMessage(std::string(chn, chn_len), std::string(msg, msg_len));
     }
 
     freeReplyObject(lreply);

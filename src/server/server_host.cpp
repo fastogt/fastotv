@@ -119,8 +119,8 @@ common::Error ServerHost::UnRegisterInnerConnectionByHost(network::IoClient* con
 }
 
 common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
-                                               const AuthInfo& user,
-                                               network::IoClient* connection) {
+                                                        const AuthInfo& user,
+                                                        network::IoClient* connection) {
   CHECK(user.IsValid());
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {

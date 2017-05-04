@@ -83,7 +83,7 @@ IoLoop* TcpServer::FindExistServerByHost(const common::net::HostAndPort& host) {
       return false;
     }
 
-    return server->host() == host;
+    return server->GetHost() == host;
   };
 
   return FindExistLoopByPredicate(find_by_host);
@@ -126,11 +126,11 @@ const char* TcpServer::ClassName() const {
   return "TcpServer";
 }
 
-common::net::HostAndPort TcpServer::host() const {
+common::net::HostAndPort TcpServer::GetHost() const {
   return sock_.host();
 }
 
-common::Error TcpServer::accept(common::net::socket_info* info) {
+common::Error TcpServer::Accept(common::net::socket_info* info) {
   return sock_.accept(info);
 }
 
@@ -152,7 +152,7 @@ void TcpServer::accept_cb(struct ev_loop* loop, struct ev_io* watcher, int reven
   CHECK(watcher->fd == pserver->sock_.fd());
 
   common::net::socket_info sinfo;
-  common::Error err = pserver->accept(&sinfo);
+  common::Error err = pserver->Accept(&sinfo);
 
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);

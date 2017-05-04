@@ -32,14 +32,18 @@
 namespace fasto {
 namespace fastotv {
 
-ConnectInfo::ConnectInfo() {}
+ConnectInfo::ConnectInfo() {
+}
 
-ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {}
+ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {
+}
 
-AuthInfo::AuthInfo() : login(), password() {}
+AuthInfo::AuthInfo() : login(), password() {
+}
 
 AuthInfo::AuthInfo(const std::string& login, const std::string& password)
-    : login(login), password(password) {}
+    : login(login), password(password) {
+}
 
 bool AuthInfo::IsValid() const {
   return !login.empty();
@@ -71,9 +75,11 @@ AuthInfo AuthInfo::MakeClass(json_object* obj) {
   return ainf;
 }
 
-UserInfo::UserInfo() : auth() {}
+UserInfo::UserInfo() : auth() {
+}
 
-UserInfo::UserInfo(const AuthInfo& a, const std::vector<Url>& ch) : auth(a), channels(ch) {}
+UserInfo::UserInfo(const AuthInfo& a, const std::vector<Url>& ch) : auth(a), channels(ch) {
+}
 
 std::string UserInfo::GetLogin() const {
   return auth.login;

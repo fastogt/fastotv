@@ -34,10 +34,10 @@ class InnerSubHandler : public RedisSubHandler {
   virtual ~InnerSubHandler();
 
  protected:
-  virtual void handleMessage(const std::string& channel, const std::string& msg) override;
+  virtual void HandleMessage(const std::string& channel, const std::string& msg) override;
 
  private:
-  void processSubscribed(cmd_seq_t request_id, int argc, char* argv[]);
+  void ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]);
 
   void PublishToChannelOut(const std::string& msg);
 

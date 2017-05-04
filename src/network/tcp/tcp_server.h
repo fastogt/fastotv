@@ -38,7 +38,7 @@ class TcpServer : public network::IoLoop {
   common::Error Listen(int backlog) WARN_UNUSED_RESULT;
 
   const char* ClassName() const override;
-  common::net::HostAndPort host() const;
+  common::net::HostAndPort GetHost() const;
 
   static network::IoLoop* FindExistServerByHost(const common::net::HostAndPort& host);
 
@@ -51,7 +51,7 @@ class TcpServer : public network::IoLoop {
 
   static void accept_cb(struct ev_loop* loop, struct ev_io* watcher, int revents);
 
-  common::Error accept(common::net::socket_info* info) WARN_UNUSED_RESULT;
+  common::Error Accept(common::net::socket_info* info) WARN_UNUSED_RESULT;
 
   common::net::ServerSocketTcp sock_;
   ev_io* accept_io_;

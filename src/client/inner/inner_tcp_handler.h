@@ -41,7 +41,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
 
   void RequestChannels();                 // should be execute in network thread
   void Connect(network::IoLoop* server);  // should be execute in network thread
-  void DisConnect(common::Error err);                      // should be execute in network thread
+  void DisConnect(common::Error err);     // should be execute in network thread
 
   virtual void PreLooped(network::IoLoop* server) override;
   virtual void Accepted(network::IoClient* client) override;

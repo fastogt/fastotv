@@ -65,7 +65,7 @@ LibEvLoop::~LibEvLoop() {
   async_stop_ = NULL;
 }
 
-void LibEvLoop::setObserver(EvLoopObserver* observer) {
+void LibEvLoop::SetObserver(EvLoopObserver* observer) {
   observer_ = observer;
 }
 

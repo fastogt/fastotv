@@ -42,7 +42,7 @@ class LibEvLoop {
   LibEvLoop();
   ~LibEvLoop();
 
-  void setObserver(EvLoopObserver* observer);
+  void SetObserver(EvLoopObserver* observer);
 
   void StartIO(ev_io* io);
   void StopIO(ev_io* io);

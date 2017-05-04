@@ -55,7 +55,7 @@ class LoopTimer : public common::patterns::id_counter<LoopTimer, timer_id_t> {
 
 IoLoop::IoLoop(IoLoopObserver* observer)
     : loop_(new LibEvLoop), observer_(observer), clients_(), timers_(), id_() {
-  loop_->setObserver(this);
+  loop_->SetObserver(this);
 }
 
 IoLoop::~IoLoop() {

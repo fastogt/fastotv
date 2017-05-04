@@ -58,8 +58,8 @@ class ServerHost {
 
   common::Error UnRegisterInnerConnectionByHost(network::IoClient* connection) WARN_UNUSED_RESULT;
   common::Error RegisterInnerConnectionByUser(user_id_t user_id,
-                                     const AuthInfo& user,
-                                     network::IoClient* connection) WARN_UNUSED_RESULT;
+                                              const AuthInfo& user,
+                                              network::IoClient* connection) WARN_UNUSED_RESULT;
   common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;
   common::Error FindUser(const AuthInfo& auth,
                          user_id_t* uid,
