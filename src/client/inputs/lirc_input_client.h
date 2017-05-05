@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "network/io_client.h"
+#include <common/libev/io_client.h>
 
 struct lirc_config;
 
@@ -30,10 +30,10 @@ namespace inputs {
 common::Error LircInit(int* fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
 common::Error LircDeinit(int fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
 
-class LircInputClient : public network::IoClient {
+class LircInputClient : public common::libev::IoClient {
  public:
   typedef std::function<void(const std::string&)> read_callback_t;
-  LircInputClient(network::IoLoop* server, int fd, struct lirc_config* cfg);
+  LircInputClient(common::libev::IoLoop* server, int fd, struct lirc_config* cfg);
 
   virtual int Fd() const override;
 

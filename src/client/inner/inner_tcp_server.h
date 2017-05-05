@@ -18,20 +18,20 @@
 
 #pragma once
 
-#include "network/tcp/tcp_server.h"
+#include <common/libev/tcp/tcp_server.h>
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace inner {
 
-class InnerTcpServer : public network::IoLoop {
+class InnerTcpServer : public common::libev::IoLoop {
  public:
-  explicit InnerTcpServer(network::IoLoopObserver* observer);
+  explicit InnerTcpServer(common::libev::IoLoopObserver* observer);
   virtual const char* ClassName() const override;
 
  protected:
-  virtual network::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
+  virtual common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner

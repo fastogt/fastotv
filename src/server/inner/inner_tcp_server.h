@@ -23,20 +23,20 @@
 
 #include "inner/inner_server_command_seq_parser.h"
 
-#include "network/tcp/tcp_server.h"
+#include <common/libev/tcp/tcp_server.h>
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
 
-class InnerTcpServer : public network::tcp::TcpServer {
+class InnerTcpServer : public common::libev::tcp::TcpServer {
  public:
-  InnerTcpServer(const common::net::HostAndPort& host, network::IoLoopObserver* observer);
+  InnerTcpServer(const common::net::HostAndPort& host, common::libev::IoLoopObserver* observer);
   virtual const char* ClassName() const override;
 
  private:
-  virtual network::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
+  virtual common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner

@@ -23,7 +23,7 @@
 
 #include <common/threads/types.h>
 
-#include "network/tcp/tcp_client.h"
+#include <common/libev/tcp/tcp_client.h>
 
 #include "redis/redis_helpers.h"
 
@@ -56,10 +56,10 @@ class ServerHost {
   void stop();
   int exec();
 
-  common::Error UnRegisterInnerConnectionByHost(network::IoClient* connection) WARN_UNUSED_RESULT;
+  common::Error UnRegisterInnerConnectionByHost(common::libev::IoClient* connection) WARN_UNUSED_RESULT;
   common::Error RegisterInnerConnectionByUser(user_id_t user_id,
                                               const AuthInfo& user,
-                                              network::IoClient* connection) WARN_UNUSED_RESULT;
+                                              common::libev::IoClient* connection) WARN_UNUSED_RESULT;
   common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;
   common::Error FindUser(const AuthInfo& auth,
                          user_id_t* uid,

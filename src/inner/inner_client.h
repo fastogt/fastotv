@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "network/tcp/tcp_client.h"
+#include <common/libev/tcp/tcp_client.h>
 
 #include "commands/commands.h"
 
@@ -26,10 +26,10 @@ namespace fasto {
 namespace fastotv {
 namespace inner {
 
-class InnerClient : public network::tcp::TcpClient {
+class InnerClient : public common::libev::tcp::TcpClient {
  public:
   typedef uint32_t protocoled_size_t;  // 4 byte
-  InnerClient(network::IoLoop* server, const common::net::socket_info& info);
+  InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info);
   const char* ClassName() const override;
 
   common::Error Write(const cmd_request_t& request) WARN_UNUSED_RESULT;
@@ -42,8 +42,8 @@ class InnerClient : public network::tcp::TcpClient {
 
  private:
   common::Error WriteInner(const std::string& data) WARN_UNUSED_RESULT;
-  using network::tcp::TcpClient::Write;
-  using network::tcp::TcpClient::Read;
+  using common::libev::tcp::TcpClient::Write;
+  using common::libev::tcp::TcpClient::Read;
 };
 
 }  // namespace inner

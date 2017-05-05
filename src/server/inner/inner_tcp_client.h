@@ -25,20 +25,22 @@
 
 #include "inner/inner_client.h"
 
-namespace fasto {
-namespace fastotv {
-namespace network {
+namespace common {
+namespace libev {
 namespace tcp {
 class TcpServer;
 }  // namespace tcp
 }
+}
 
+namespace fasto {
+namespace fastotv {
 namespace server {
 namespace inner {
 
 class InnerTcpClient : public fastotv::inner::InnerClient {
  public:
-  InnerTcpClient(network::tcp::TcpServer* server, const common::net::socket_info& info);
+  InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info);
   ~InnerTcpClient();
 
   virtual const char* ClassName() const override;

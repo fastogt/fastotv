@@ -83,6 +83,9 @@ fasto::fastotv::Url Url::MakeClass(struct json_object* obj) {
   fasto::fastotv::Url url(json_object_get_string(jid),
                           common::uri::Uri(json_object_get_string(jurl)),
                           json_object_get_string(jname));
+  if (!url.IsValid()) {
+    return fasto::fastotv::Url();
+  }
   return url;
 }
 }

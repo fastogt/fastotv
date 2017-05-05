@@ -30,7 +30,7 @@
 
 #include "third-party/json-c/json-c/json.h"
 
-#include "network/tcp/tcp_server.h"
+#include <common/libev/tcp/tcp_server.h>
 
 #include "inner/inner_client.h"
 
@@ -60,22 +60,22 @@ InnerTcpHandler::~InnerTcpHandler() {
   inner_connection_ = nullptr;
 }
 
-void InnerTcpHandler::PreLooped(network::IoLoop* server) {
+void InnerTcpHandler::PreLooped(common::libev::IoLoop* server) {
   ping_server_id_timer_ = server->CreateTimer(ping_timeout_server, ping_timeout_server);
   CHECK(!inner_connection_);
 
   Connect(server);
 }
 
-void InnerTcpHandler::Accepted(network::IoClient* client) {
+void InnerTcpHandler::Accepted(common::libev::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Moved(network::IoClient* client) {
+void InnerTcpHandler::Moved(common::libev::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Closed(network::IoClient* client) {
+void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   if (client != inner_connection_) {
     return;
   }
@@ -85,7 +85,7 @@ void InnerTcpHandler::Closed(network::IoClient* client) {
   inner_connection_ = nullptr;
 }
 
-void InnerTcpHandler::DataReceived(network::IoClient* client) {
+void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
   std::string buff;
   fasto::fastotv::inner::InnerClient* iclient =
       static_cast<fasto::fastotv::inner::InnerClient*>(client);
@@ -100,16 +100,16 @@ void InnerTcpHandler::DataReceived(network::IoClient* client) {
   HandleInnerDataReceived(iclient, buff);
 }
 
-void InnerTcpHandler::DataReadyToWrite(network::IoClient* client) {
+void InnerTcpHandler::DataReadyToWrite(common::libev::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::PostLooped(network::IoLoop* server) {
+void InnerTcpHandler::PostLooped(common::libev::IoLoop* server) {
   UNUSED(server);
   DisConnect(common::Error());
 }
 
-void InnerTcpHandler::TimerEmited(network::IoLoop* server, network::timer_id_t id) {
+void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) {
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
     const cmd_request_t ping_request = PingRequest(NextRequestID());
@@ -136,7 +136,7 @@ void InnerTcpHandler::RequestChannels() {
   }
 }
 
-void InnerTcpHandler::Connect(network::IoLoop* server) {
+void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
   if (!server) {
     return;
   }
@@ -161,6 +161,7 @@ void InnerTcpHandler::Connect(network::IoLoop* server) {
 }
 
 void InnerTcpHandler::DisConnect(common::Error err) {
+  UNUSED(err);
   if (inner_connection_) {
     fasto::fastotv::inner::InnerClient* connection = inner_connection_;
     connection->Close();

@@ -27,7 +27,7 @@
 
 #include "commands/commands.h"
 
-#include "network/tcp/tcp_client.h"
+#include <common/libev/tcp/tcp_client.h>
 
 #include "inner/inner_tcp_client.h"
 #include "inner/inner_server_command_seq_parser.h"
@@ -41,7 +41,7 @@
 namespace fasto {
 namespace fastotv {
 namespace {
-int exec_server(network::tcp::TcpServer* server) {
+int exec_server(common::libev::tcp::TcpServer* server) {
   common::Error err = server->Bind();
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
@@ -102,7 +102,7 @@ int ServerHost::exec() {
   return connection_thread->JoinAndGet();
 }
 
-common::Error ServerHost::UnRegisterInnerConnectionByHost(network::IoClient* connection) {
+common::Error ServerHost::UnRegisterInnerConnectionByHost(common::libev::IoClient* connection) {
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
@@ -120,7 +120,7 @@ common::Error ServerHost::UnRegisterInnerConnectionByHost(network::IoClient* con
 
 common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
                                                         const AuthInfo& user,
-                                                        network::IoClient* connection) {
+                                                        common::libev::IoClient* connection) {
   CHECK(user.IsValid());
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {

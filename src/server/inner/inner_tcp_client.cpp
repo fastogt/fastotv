@@ -30,7 +30,7 @@ namespace fastotv {
 namespace server {
 namespace inner {
 
-InnerTcpClient::InnerTcpClient(network::tcp::TcpServer* server,
+InnerTcpClient::InnerTcpClient(common::libev::tcp::TcpServer* server,
                                const common::net::socket_info& info)
     : InnerClient(server, info), hinfo_(), uid_() {
 }

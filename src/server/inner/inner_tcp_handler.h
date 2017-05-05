@@ -25,7 +25,7 @@
 
 #include "redis/redis_helpers.h"
 
-#include "network/tcp/tcp_server.h"
+#include <common/libev/tcp/tcp_server.h>
 
 #include "infos.h"
 
@@ -39,7 +39,7 @@ class InnerTcpClient;
 class InnerSubHandler;
 
 class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqParser,
-                            public network::IoLoopObserver {
+                            public common::libev::IoLoopObserver {
  public:
   enum {
     ping_timeout_clients = 60  // sec
@@ -47,16 +47,16 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   explicit InnerTcpHandlerHost(ServerHost* parent);
 
-  virtual void PreLooped(network::IoLoop* server) override;
+  virtual void PreLooped(common::libev::IoLoop* server) override;
 
-  virtual void Accepted(network::IoClient* client) override;
-  virtual void Moved(network::IoClient* client) override;
-  virtual void Closed(network::IoClient* client) override;
+  virtual void Accepted(common::libev::IoClient* client) override;
+  virtual void Moved(common::libev::IoClient* client) override;
+  virtual void Closed(common::libev::IoClient* client) override;
 
-  virtual void DataReceived(network::IoClient* client) override;
-  virtual void DataReadyToWrite(network::IoClient* client) override;
-  virtual void PostLooped(network::IoLoop* server) override;
-  virtual void TimerEmited(network::IoLoop* server, network::timer_id_t id) override;
+  virtual void DataReceived(common::libev::IoClient* client) override;
+  virtual void DataReadyToWrite(common::libev::IoClient* client) override;
+  virtual void PostLooped(common::libev::IoLoop* server) override;
+  virtual void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
 
   virtual ~InnerTcpHandlerHost();
 
@@ -96,7 +96,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
   RedisSub* sub_commands_in_;
   InnerSubHandler* handler_;
   std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
-  network::timer_id_t ping_client_id_timer_;
+  common::libev::timer_id_t ping_client_id_timer_;
 };
 
 }  // namespace inner

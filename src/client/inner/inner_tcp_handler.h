@@ -22,7 +22,7 @@
 
 #include "inner/inner_server_command_seq_parser.h"
 
-#include "network/tcp/tcp_server.h"
+#include <common/libev/tcp/tcp_server.h>
 
 namespace fasto {
 namespace fastotv {
@@ -30,7 +30,7 @@ namespace client {
 namespace inner {
 
 class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParser,
-                        public network::IoLoopObserver {
+                        public common::libev::IoLoopObserver {
  public:
   enum {
     ping_timeout_server = 30  // sec
@@ -40,17 +40,17 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   ~InnerTcpHandler();
 
   void RequestChannels();                 // should be execute in network thread
-  void Connect(network::IoLoop* server);  // should be execute in network thread
+  void Connect(common::libev::IoLoop* server);  // should be execute in network thread
   void DisConnect(common::Error err);     // should be execute in network thread
 
-  virtual void PreLooped(network::IoLoop* server) override;
-  virtual void Accepted(network::IoClient* client) override;
-  virtual void Moved(network::IoClient* client) override;
-  virtual void Closed(network::IoClient* client) override;
-  virtual void DataReceived(network::IoClient* client) override;
-  virtual void DataReadyToWrite(network::IoClient* client) override;
-  virtual void PostLooped(network::IoLoop* server) override;
-  virtual void TimerEmited(network::IoLoop* server, network::timer_id_t id) override;
+  virtual void PreLooped(common::libev::IoLoop* server) override;
+  virtual void Accepted(common::libev::IoClient* client) override;
+  virtual void Moved(common::libev::IoClient* client) override;
+  virtual void Closed(common::libev::IoClient* client) override;
+  virtual void DataReceived(common::libev::IoClient* client) override;
+  virtual void DataReadyToWrite(common::libev::IoClient* client) override;
+  virtual void PostLooped(common::libev::IoLoop* server) override;
+  virtual void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
 
  private:
   virtual void HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
@@ -67,7 +67,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
                                          char* argv[]) override;
 
   fasto::fastotv::inner::InnerClient* inner_connection_;
-  network::timer_id_t ping_server_id_timer_;
+  common::libev::timer_id_t ping_server_id_timer_;
 
   const common::net::HostAndPort innerHost_;
   const AuthInfo ainf_;

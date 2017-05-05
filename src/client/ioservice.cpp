@@ -52,7 +52,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
   {
   }
 
-  virtual void PreLooped(network::IoLoop* server) override {
+  virtual void PreLooped(common::libev::IoLoop* server) override {
 #ifdef HAVE_LIRC
     int fd;
     struct lirc_config* lcd = NULL;
@@ -67,7 +67,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::PreLooped(server);
   }
 
-  virtual void Closed(network::IoClient* client) override {
+  virtual void Closed(common::libev::IoClient* client) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
       client_ = nullptr;
@@ -77,7 +77,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::Closed(client);
   }
 
-  virtual void DataReceived(network::IoClient* client) override {
+  virtual void DataReceived(common::libev::IoClient* client) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
       auto cb = [this](const std::string& code) {
@@ -99,7 +99,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::DataReceived(client);
   }
 
-  virtual void PostLooped(network::IoLoop* server) override {
+  virtual void PostLooped(common::libev::IoLoop* server) override {
     UNUSED(server);
 #ifdef HAVE_LIRC
     if (client_) {
@@ -159,12 +159,12 @@ void NetworkController::RequestChannels() const {
   }
 }
 
-network::IoLoopObserver* NetworkController::CreateHandler() {
+common::libev::IoLoopObserver* NetworkController::CreateHandler() {
   PrivateHandler* handler = new PrivateHandler(g_service_host, GetAuthInfo());
   return handler;
 }
 
-network::IoLoop* NetworkController::CreateServer(network::IoLoopObserver* handler) {
+common::libev::IoLoop* NetworkController::CreateServer(common::libev::IoLoopObserver* handler) {
   client::inner::InnerTcpServer* serv = new client::inner::InnerTcpServer(handler);
   serv->SetName("local_inner_server");
   return serv;

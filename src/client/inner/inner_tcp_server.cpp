@@ -18,22 +18,22 @@
 
 #include "client/inner/inner_tcp_server.h"
 
-#include "network/tcp/tcp_client.h"
+#include <common/libev/tcp/tcp_client.h>
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace inner {
 
-InnerTcpServer::InnerTcpServer(network::IoLoopObserver* observer) : IoLoop(observer) {
+InnerTcpServer::InnerTcpServer(common::libev::IoLoopObserver* observer) : IoLoop(observer) {
 }
 
 const char* InnerTcpServer::ClassName() const {
   return "InnerTcpServer";
 }
 
-network::tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
-  return new network::tcp::TcpClient(this, info);
+common::libev::tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
+  return new common::libev::tcp::TcpClient(this, info);
 }
 
 }  // namespace inner

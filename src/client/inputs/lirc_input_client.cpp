@@ -79,8 +79,8 @@ common::Error LircDeinit(int fd, struct lirc_config** cfg) {
   return common::Error();
 }
 
-LircInputClient::LircInputClient(network::IoLoop* server, int fd, struct lirc_config* cfg)
-    : network::IoClient(server), sock_(fd), cfg_(cfg) {
+LircInputClient::LircInputClient(common::libev::IoLoop* server, int fd, struct lirc_config* cfg)
+    : common::libev::IoClient(server), sock_(fd), cfg_(cfg) {
 }
 
 common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {

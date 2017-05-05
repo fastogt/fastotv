@@ -24,13 +24,13 @@
 
 #include "infos.h"
 
-#include "network/loop_controller.h"
+#include <common/libev/loop_controller.h>
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 
-class NetworkController : private fasto::fastotv::network::ILoopThreadController {
+class NetworkController : private common::libev::ILoopThreadController {
  public:
   NetworkController();
   ~NetworkController();
@@ -44,8 +44,8 @@ class NetworkController : private fasto::fastotv::network::ILoopThreadController
   void RequestChannels() const;
 
  private:
-  virtual network::IoLoopObserver* CreateHandler() override;
-  virtual network::IoLoop* CreateServer(network::IoLoopObserver* handler) override;
+  virtual common::libev::IoLoopObserver* CreateHandler() override;
+  virtual common::libev::IoLoop* CreateServer(common::libev::IoLoopObserver* handler) override;
 };
 
 }  // namespace network
