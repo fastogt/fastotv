@@ -136,8 +136,7 @@ void NetworkController::ConnectToServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   client::inner::InnerTcpServer* server = static_cast<client::inner::InnerTcpServer*>(loop_);
   if (handler) {
-    auto cb = [handler, server](common::libev::LibEvLoop* loop, common::libev::LibevAsync* async,
-                                common::libev::flags_t revents) { handler->Connect(server); };
+    auto cb = [handler, server]() { handler->Connect(server); };
     ExecInLoopThread(cb);
   }
 }
@@ -145,8 +144,7 @@ void NetworkController::ConnectToServer() const {
 void NetworkController::DisconnectFromServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {
-    auto cb = [handler](common::libev::LibEvLoop* loop, common::libev::LibevAsync* async,
-                        common::libev::flags_t revents) { handler->DisConnect(common::Error()); };
+    auto cb = [handler]() { handler->DisConnect(common::Error()); };
     ExecInLoopThread(cb);
   }
 }
@@ -154,8 +152,7 @@ void NetworkController::DisconnectFromServer() const {
 void NetworkController::RequestChannels() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {
-    auto cb = [handler](common::libev::LibEvLoop* loop, common::libev::LibevAsync* async,
-                        common::libev::flags_t revents) { handler->RequestChannels(); };
+    auto cb = [handler]() { handler->RequestChannels(); };
     ExecInLoopThread(cb);
   }
 }
