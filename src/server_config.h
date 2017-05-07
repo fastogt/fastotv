@@ -26,7 +26,7 @@
 namespace fasto {
 namespace fastotv {
 
-const common::net::HostAndPort g_service_host(SERVICE_HOST_NAME, SERVICE_HOST_PORT);
+static const common::net::HostAndPort g_service_host(SERVICE_HOST_NAME, SERVICE_HOST_PORT);
 
 }  // namespace fastotv
 }  // namespace fasto

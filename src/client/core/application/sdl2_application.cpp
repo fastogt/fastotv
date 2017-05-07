@@ -29,7 +29,6 @@
 #include "client/core/events/events.h"
 
 #define FASTO_EVENT (SDL_USEREVENT)
-#define FASTO_TIMER_EVENT (SDL_USEREVENT + 1)
 
 #undef ERROR
 
@@ -50,15 +49,17 @@ namespace core {
 namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
-    : common::application::IApplicationImpl(argc, argv), dispatcher_(), stop_(false) {
+    : common::application::IApplicationImpl(argc, argv), dispatcher_() {
 }
 
 Sdl2Application::~Sdl2Application() {
+  THREAD_MANAGER()->FreeInstance();
 }
 
 int Sdl2Application::PreExec() {
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
-  if (SDL_Init(flags)) {
+  int res = SDL_Init(flags);
+  if (res != 0) {
     ERROR_LOG() << "Could not initialize SDL error: " << SDL_GetError();
     return EXIT_FAILURE;
   }
@@ -66,7 +67,8 @@ int Sdl2Application::PreExec() {
   SDL_EventState(SDL_SYSWMEVENT, SDL_IGNORE);
   SDL_EventState(SDL_USEREVENT, SDL_IGNORE);
 
-  if (TTF_Init() == -1) {
+  res = TTF_Init();
+  if (res != 0) {
     ERROR_LOG() << "SDL_ttf could not error: " << TTF_GetError();
     return EXIT_FAILURE;
   }
@@ -78,51 +80,66 @@ int Sdl2Application::Exec() {
   SDL_TimerID my_timer_id = SDL_AddTimer(event_timeout_wait_msec, timer_callback, this);
 
   SDL_Event event;
-  while (!stop_ && SDL_WaitEvent(&event)) {
-    switch (event.type) {
-      case SDL_KEYDOWN: {
-        HandleKeyPressEvent(&event.key);
-        break;
-      }
-      case SDL_KEYUP: {
-        break;
-      }
-      case SDL_MOUSEBUTTONDOWN: {
-        HandleMousePressEvent(&event.button);
-        break;
-      }
-      case SDL_MOUSEBUTTONUP: {
-        HandleMouseReleaseEvent(&event.button);
-        break;
-      }
-      case SDL_MOUSEMOTION: {
-        HandleMouseMoveEvent(&event.motion);
-        break;
-      }
-      case SDL_WINDOWEVENT: {
-        HandleWindowEvent(&event.window);
-        break;
-      }
-      case SDL_QUIT: {
-        HandleQuitEvent(&event.quit);
-        break;
-      }
-      case FASTO_EVENT: {
-        events::Event* fevent = static_cast<events::Event*>(event.user.data1);
-        HandleEvent(fevent);
-        break;
-      }
-      default:
-        break;
+  while (SDL_WaitEvent(&event)) {
+    bool is_stop_event = event.type == FASTO_EVENT && event.user.data1 == NULL;
+    if (is_stop_event) {
+      break;
     }
+    ProcessEvent(&event);
   }
 
   SDL_RemoveTimer(my_timer_id);
   return EXIT_SUCCESS;
 }
 
+void Sdl2Application::ProcessEvent(SDL_Event* event) {
+  switch (event->type) {
+    case SDL_KEYDOWN: {
+      HandleKeyPressEvent(&event->key);
+      break;
+    }
+    case SDL_KEYUP: {
+      break;
+    }
+    case SDL_MOUSEBUTTONDOWN: {
+      HandleMousePressEvent(&event->button);
+      break;
+    }
+    case SDL_MOUSEBUTTONUP: {
+      HandleMouseReleaseEvent(&event->button);
+      break;
+    }
+    case SDL_MOUSEMOTION: {
+      HandleMouseMoveEvent(&event->motion);
+      break;
+    }
+    case SDL_WINDOWEVENT: {
+      HandleWindowEvent(&event->window);
+      break;
+    }
+    case SDL_QUIT: {
+      HandleQuitEvent(&event->quit);
+      break;
+    }
+    case FASTO_EVENT: {
+      events::Event* fevent = static_cast<events::Event*>(event->user.data1);
+      HandleEvent(fevent);
+      break;
+    }
+    default:
+      break;
+  }
+}
+
 int Sdl2Application::PostExec() {
   TTF_Quit();
+  SDL_Event event;
+  while (SDL_PollEvent(&event)) {
+    if (event.type == FASTO_EVENT) {
+      events::Event* fevent = static_cast<events::Event*>(event.user.data1);
+      delete fevent;
+    }
+  }
   SDL_Quit();
   return EXIT_SUCCESS;
 }
@@ -140,12 +157,14 @@ void Sdl2Application::UnSubscribe(common::IListener* listener) {
 }
 
 void Sdl2Application::SendEvent(common::IEvent* event) {
-  if (!THREAD_MANAGER()->IsMainThread()) {
-    PostEvent(event);
-  } else {
+  if (THREAD_MANAGER()->IsMainThread()) {
     events::Event* fevent = static_cast<events::Event*>(event);
     HandleEvent(fevent);
+    return;
   }
+
+  DNOTREACHED();
+  PostEvent(event);
 }
 
 void Sdl2Application::PostEvent(common::IEvent* event) {
@@ -153,7 +172,7 @@ void Sdl2Application::PostEvent(common::IEvent* event) {
   sevent.type = FASTO_EVENT;
   sevent.user.data1 = event;
   int res = SDL_PushEvent(&sevent);
-  if(res == -1) {
+  if(res != 1) {
     DNOTREACHED();
     delete event;
   }
@@ -161,7 +180,7 @@ void Sdl2Application::PostEvent(common::IEvent* event) {
 
 void Sdl2Application::Exit(int result) {
   UNUSED(result);
-  stop_ = true;
+  PostEvent(NULL);  // FIX ME
 }
 
 void Sdl2Application::ShowCursor() {

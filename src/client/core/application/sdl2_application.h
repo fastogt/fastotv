@@ -67,9 +67,10 @@ class Sdl2Application : public common::application::IApplicationImpl {
   virtual void HandleQuitEvent(SDL_QuitEvent* event);
 
  private:
+  void ProcessEvent(SDL_Event* event);
+
   static Uint32 timer_callback(Uint32 interval, void* user_data);
   common::threads::EventDispatcher<EventsType> dispatcher_;
-  volatile bool stop_;
 };
 }
 }

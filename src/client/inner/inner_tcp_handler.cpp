@@ -281,6 +281,7 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
         }
 
         channels_t channels = MakeChannelsClass(obj);
+        json_object_put(obj);
         fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, channels));
         const cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
         common::Error err = connection->Write(resp);
