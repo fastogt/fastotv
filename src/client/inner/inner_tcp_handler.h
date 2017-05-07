@@ -22,6 +22,7 @@
 
 #include "inner/inner_server_command_seq_parser.h"
 
+#include <common/libev/io_loop_observer.h>
 #include <common/libev/tcp/tcp_server.h>
 
 namespace fasto {

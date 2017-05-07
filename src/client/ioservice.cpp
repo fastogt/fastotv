@@ -24,6 +24,7 @@
 #include <common/file_system.h>
 #include <common/logger.h>
 #include <common/application/application.h>
+#include <common/threads/thread_manager.h>
 
 #include "client/inner/inner_tcp_handler.h"
 #include "client/inner/inner_tcp_server.h"
@@ -116,23 +117,25 @@ class PrivateHandler : public inner::InnerTcpHandler {
 };
 }
 
-NetworkController::NetworkController() : ILoopThreadController() {}
+IoService::IoService()
+    : ILoopController(),
+      loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
 
-void NetworkController::Start() {
-  ILoopThreadController::Start();
+void IoService::Start() {
+  ILoopController::Start();
 }
 
-void NetworkController::Stop() {
-  ILoopThreadController::Stop();
+void IoService::Stop() {
+  ILoopController::Stop();
 }
 
-NetworkController::~NetworkController() {}
+IoService::~IoService() {}
 
-AuthInfo NetworkController::GetAuthInfo() {
+AuthInfo IoService::GetAuthInfo() {
   return AuthInfo(USER_LOGIN, USER_PASSWORD);
 }
 
-void NetworkController::ConnectToServer() const {
+void IoService::ConnectToServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   client::inner::InnerTcpServer* server = static_cast<client::inner::InnerTcpServer*>(loop_);
   if (handler) {
@@ -141,7 +144,7 @@ void NetworkController::ConnectToServer() const {
   }
 }
 
-void NetworkController::DisconnectFromServer() const {
+void IoService::DisconnectFromServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {
     auto cb = [handler]() { handler->DisConnect(common::Error()); };
@@ -149,7 +152,7 @@ void NetworkController::DisconnectFromServer() const {
   }
 }
 
-void NetworkController::RequestChannels() const {
+void IoService::RequestChannels() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {
     auto cb = [handler]() { handler->RequestChannels(); };
@@ -157,15 +160,24 @@ void NetworkController::RequestChannels() const {
   }
 }
 
-common::libev::IoLoopObserver* NetworkController::CreateHandler() {
+common::libev::IoLoopObserver* IoService::CreateHandler() {
   PrivateHandler* handler = new PrivateHandler(g_service_host, GetAuthInfo());
   return handler;
 }
 
-common::libev::IoLoop* NetworkController::CreateServer(common::libev::IoLoopObserver* handler) {
+common::libev::IoLoop* IoService::CreateServer(common::libev::IoLoopObserver* handler) {
   client::inner::InnerTcpServer* serv = new client::inner::InnerTcpServer(handler);
   serv->SetName("local_inner_server");
   return serv;
+}
+
+void IoService::HandleStarted() {
+  bool result = loop_thread_->Start();
+  DCHECK(result);
+}
+
+void IoService::HandleStoped() {
+  loop_thread_->JoinAndGet();
 }
 
 }  // namespace network

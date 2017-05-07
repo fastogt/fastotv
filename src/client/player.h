@@ -40,7 +40,7 @@ namespace core {
 class VideoState;
 }
 
-class NetworkController;
+class IoService;
 
 struct PlayerOptions {
   enum { width = 640, height = 480, volume = 100 };
@@ -204,7 +204,7 @@ class Player : public core::VideoStateHandler {
   const int xleft_;
   const int ytop_;
 
-  NetworkController* controller_;
+  IoService* controller_;
   States current_state_;
   std::string current_state_str_;
 };

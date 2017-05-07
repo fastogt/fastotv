@@ -18,22 +18,29 @@
 
 #pragma once
 
-#include <common/threads/types.h>
-
 #include <string>
+
+#include <common/smart_ptr.h>
+
+#include <common/libev/loop_controller.h>
 
 #include "infos.h"
 
-#include <common/libev/loop_controller.h>
+namespace common {
+namespace threads {
+template <typename RT>
+class Thread;
+}
+}
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 
-class NetworkController : private common::libev::ILoopThreadController {
+class IoService : public common::libev::ILoopController {
  public:
-  NetworkController();
-  ~NetworkController();
+  IoService();
+  virtual ~IoService();
 
   void Start();
   void Stop();
@@ -44,8 +51,15 @@ class NetworkController : private common::libev::ILoopThreadController {
   void RequestChannels() const;
 
  private:
+  using ILoopController::Exec;
+
   virtual common::libev::IoLoopObserver* CreateHandler() override;
   virtual common::libev::IoLoop* CreateServer(common::libev::IoLoopObserver* handler) override;
+
+  virtual void HandleStarted() override;
+  virtual void HandleStoped() override;
+
+  common::shared_ptr<common::threads::Thread<int> > loop_thread_;
 };
 
 }  // namespace network

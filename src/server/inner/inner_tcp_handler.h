@@ -21,11 +21,12 @@
 #include <common/threads/thread.h>
 #include <common/threads/types.h>
 
+#include <common/libev/io_loop_observer.h>
+#include <common/libev/tcp/tcp_server.h>
+
 #include "inner/inner_server_command_seq_parser.h"
 
 #include "redis/redis_helpers.h"
-
-#include <common/libev/tcp/tcp_server.h>
 
 #include "infos.h"
 

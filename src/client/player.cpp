@@ -152,7 +152,7 @@ Player::Player(const PlayerOptions& options,
       window_size_(),
       xleft_(0),
       ytop_(0),
-      controller_(new NetworkController),
+      controller_(new IoService),
       current_state_(INIT_STATE),
       current_state_str_("Init") {
   // stable options
