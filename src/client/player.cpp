@@ -212,7 +212,9 @@ void Player::Mute() {
 }
 
 Player::~Player() {
-  av_buffer_unref(&core::hw_device_ctx);
+  if (core::hw_device_ctx) {
+    av_buffer_unref(&core::hw_device_ctx);
+  }
   destroy(&controller_);
   fApp->UnSubscribe(this);
 }
