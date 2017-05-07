@@ -152,7 +152,11 @@ void Sdl2Application::PostEvent(common::IEvent* event) {
   SDL_Event sevent;
   sevent.type = FASTO_EVENT;
   sevent.user.data1 = event;
-  SDL_PushEvent(&sevent);
+  int res = SDL_PushEvent(&sevent);
+  if(res == -1) {
+    DNOTREACHED();
+    delete event;
+  }
 }
 
 void Sdl2Application::Exit(int result) {
