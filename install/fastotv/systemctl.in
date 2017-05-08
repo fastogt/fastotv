@@ -1,5 +1,7 @@
 [Unit]
 Description=@PROJECT_SUMMARY@
+After=xorg.target
+Requires=xorg.target
 
 [Service]
 Type=forking
