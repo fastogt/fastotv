@@ -129,8 +129,8 @@ int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(dopt);
   UNUSED(opt);
 
-  if (!parse_number(
-          arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_size.height)) {
+  if (!parse_number(arg, 1, std::numeric_limits<int>::max(),
+                    &g_player_options.screen_size.height)) {
     return ERROR_RESULT_VALUE;
   }
   return SUCCESS_RESULT_VALUE;
@@ -349,8 +349,8 @@ int opt_set_lowres_volume(const char* opt, const char* arg, DictionaryOptions* d
   }
 
   int lowres;
-  if (!parse_number(
-          arg, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), &lowres)) {
+  if (!parse_number(arg, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
+                    &lowres)) {
     return AVERROR(EINVAL);
   }
   g_options.lowres = lowres;
@@ -445,11 +445,8 @@ const OptionDef options[] = {
     {"exitonkeydown", OPT_EXPERT, opt_set_exit_on_keydown, "exit on key down", ""},
     {"exitonmousedown", OPT_EXPERT, opt_set_exit_on_mousedown, "exit on mouse down", ""},
     {"framedrop", OPT_EXPERT, opt_set_frame_drop, "drop frames when cpu is too slow", ""},
-    {"infbuf",
-     OPT_EXPERT,
-     opt_set_infinite_buffer,
-     "don't limit the input buffer size (useful with realtime streams)",
-     ""},
+    {"infbuf", OPT_EXPERT, opt_set_infinite_buffer,
+     "don't limit the input buffer size (useful with realtime streams)", ""},
 #if CONFIG_AVFILTER
     {"vf", OPT_EXPERT, opt_set_video_vfilter, "set video filters", "filter_graph"},
     {"af", OPT_NOTHING, opt_set_audio_vfilter, "set audio filters", "filter_graph"},
@@ -458,16 +455,10 @@ const OptionDef options[] = {
     {"acodec", OPT_EXPERT, opt_set_audio_codec, "force audio decoder", "decoder_name"},
     {"vcodec", OPT_EXPERT, opt_set_video_codec, "force video decoder", "decoder_name"},
     {"hwaccel", OPT_EXPERT, opt_hwaccel, "use HW accelerated decoding", "hwaccel name"},
-    {"hwaccel_device",
-     OPT_VIDEO | OPT_EXPERT | OPT_INPUT,
-     opt_set_hw_device,
-     "select a device for HW acceleration",
-     "devicename"},
-    {"hwaccel_output_format",
-     OPT_VIDEO | OPT_EXPERT | OPT_INPUT,
-     opt_set_hw_output_format,
-     "select output format used with HW accelerated decoding",
-     "format"},
+    {"hwaccel_device", OPT_VIDEO | OPT_EXPERT | OPT_INPUT, opt_set_hw_device,
+     "select a device for HW acceleration", "devicename"},
+    {"hwaccel_output_format", OPT_VIDEO | OPT_EXPERT | OPT_INPUT, opt_set_hw_output_format,
+     "select output format used with HW accelerated decoding", "format"},
     {"autorotate", OPT_NOTHING, opt_set_autorotate, "automatically rotate video", ""},
     {NULL, OPT_NOTHING, NULL, NULL, NULL}};
 
@@ -596,39 +587,61 @@ common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** ar
                                                                                            argv);
 }
 
-// runtime_directory_absolute_path can be not equal pwd (used for pid file location)
-static int main_single_application(int argc,
-                                   char** argv,
-                                   const std::string& runtime_directory_absolute_path) {
-  typedef common::file_system::ascii_string_path string_path_type;
-#if defined(NDEBUG)
-  common::logging::LEVEL_LOG level = common::logging::L_INFO;
-#else
-  common::logging::LEVEL_LOG level = common::logging::L_INFO;
-#endif
-#if defined(LOG_TO_FILE)
-  std::string log_path = common::file_system::prepare_path("~/" PROJECT_NAME_LOWERCASE ".log");
-  INIT_LOGGER(PROJECT_NAME_TITLE, log_path, level);
-#else
-  INIT_LOGGER(PROJECT_NAME_TITLE, level);
-#endif
-
-  const std::string pid_path_str =
-      common::file_system::make_path(runtime_directory_absolute_path, std::string(PIDFILE_NAME));
-  string_path_type pid_path(pid_path_str);
-  if (!pid_path.IsValid()) {
-    ERROR_LOG() << "Can't get pid file path: " << pid_path_str;
-    return EXIT_FAILURE;
+static int prepare_to_start(const std::string& app_directory_absolute_path,
+                            const std::string& runtime_directory_absolute_path) {
+  if (!common::file_system::is_directory_exist(app_directory_absolute_path)) {
+    common::ErrnoError err =
+        common::file_system::create_directory(app_directory_absolute_path, true);
+    if (err && err->IsError()) {
+      ERROR_LOG() << "Can't create app directory error:(" << err->Description()
+                  << "), path: " << app_directory_absolute_path;
+      return EXIT_FAILURE;
+    }
   }
 
   if (!common::file_system::is_directory_exist(runtime_directory_absolute_path)) {
     common::ErrnoError err =
         common::file_system::create_directory(runtime_directory_absolute_path, true);
     if (err && err->IsError()) {
-      ERROR_LOG() << "Can't create pid file directory error:(" << err->Description()
-                  << "), pid file path: " << pid_path_str;
+      ERROR_LOG() << "Can't create runtime directory error:(" << err->Description()
+                  << "), path: " << runtime_directory_absolute_path;
       return EXIT_FAILURE;
     }
+  }
+
+  return EXIT_SUCCESS;
+}
+
+// runtime_directory_absolute_path can be not equal pwd (used for pid file location)
+static int main_single_application(int argc,
+                                   char** argv,
+                                   const std::string& app_directory_absolute_path,
+                                   const std::string& runtime_directory_absolute_path) {
+  typedef common::file_system::ascii_string_path string_path_type;
+  int res = prepare_to_start(app_directory_absolute_path, runtime_directory_absolute_path);
+  if (res == EXIT_FAILURE) {
+    return EXIT_FAILURE;
+  }
+
+#if defined(NDEBUG)
+  common::logging::LEVEL_LOG level = common::logging::L_INFO;
+#else
+  common::logging::LEVEL_LOG level = common::logging::L_INFO;
+#endif
+#if defined(LOG_TO_FILE)
+  const std::string log_path =
+      common::file_system::make_path(app_directory_absolute_path, std::string(LOG_FILE_NAME));
+  INIT_LOGGER(PROJECT_NAME_TITLE, log_path, level);
+#else
+  INIT_LOGGER(PROJECT_NAME_TITLE, level);
+#endif
+
+  const std::string pid_path_str =
+      common::file_system::make_path(runtime_directory_absolute_path, std::string(PID_FILE_NAME));
+  string_path_type pid_path(pid_path_str);
+  if (!pid_path.IsValid()) {
+    ERROR_LOG() << "Can't get pid file path: " << pid_path_str;
+    return EXIT_FAILURE;
   }
 
   common::ErrnoError err = common::file_system::node_access(runtime_directory_absolute_path);
@@ -663,11 +676,11 @@ static int main_single_application(int argc,
   }
 
   common::application::Application app(argc, argv, &CreateApplicationImpl);
-  fasto::fastotv::client::core::ComplexOptions copt(
-      dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict,
+                                                    dict->format_opts, dict->codec_opts);
   fasto::fastotv::client::Player* player =
       new fasto::fastotv::client::Player(g_player_options, g_options, copt);
-  int res = app.Exec();
+  res = app.Exec();
   destroy(&player);
 
   err = lock_pid_file.Unlock();
@@ -685,25 +698,18 @@ static int main_single_application(int argc,
 
 /* Called from the main */
 int main(int argc, char** argv) {
-  std::string runtime_directory_path = RUNTIME_DIR;
-#if defined(OS_LINUX) || defined(OS_FREEBSD)
-  bool daemon_mode = false;
-  for (int i = 1; i < argc; ++i) {
-    if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "-daemon") == 0) {
-      daemon_mode = true;
-    }
-  }
-
-  if (daemon_mode) {
-    common::create_as_daemon();
-  } else {
-    runtime_directory_path = "/tmp/" PROJECT_NAME_LOWERCASE "/";
-  }
-#endif
+  const std::string runtime_directory_path = RUNTIME_DIR;
+  const std::string app_directory_path = APPLICATION_DIR;
 
   const std::string runtime_directory_absolute_path =
       common::file_system::is_absolute_path(runtime_directory_path)
           ? runtime_directory_path
           : common::file_system::absolute_path_from_relative(runtime_directory_path);
-  return main_single_application(argc, argv, runtime_directory_absolute_path);
+
+  const std::string app_directory_absolute_path =
+      common::file_system::is_absolute_path(app_directory_path)
+          ? app_directory_path
+          : common::file_system::absolute_path_from_relative(app_directory_path);
+  return main_single_application(argc, argv, app_directory_absolute_path,
+                                 runtime_directory_absolute_path);
 }
