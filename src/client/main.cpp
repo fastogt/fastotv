@@ -599,6 +599,12 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
     }
   }
 
+  common::ErrnoError err = common::file_system::node_access(app_directory_absolute_path);
+  if (err && err->IsError()) {
+    ERROR_LOG() << "Can't have permissions to app directory path: " << app_directory_absolute_path;
+    return EXIT_FAILURE;
+  }
+
   if (!common::file_system::is_directory_exist(runtime_directory_absolute_path)) {
     common::ErrnoError err =
         common::file_system::create_directory(runtime_directory_absolute_path, true);
@@ -609,6 +615,13 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
     }
   }
 
+  err = common::file_system::node_access(runtime_directory_absolute_path);
+  if (err && err->IsError()) {
+    ERROR_LOG() << "Can't have permissions to runtime directory path: "
+                << runtime_directory_absolute_path;
+    return EXIT_FAILURE;
+  }
+
   return EXIT_SUCCESS;
 }
 
@@ -617,7 +630,6 @@ static int main_single_application(int argc,
                                    char** argv,
                                    const std::string& app_directory_absolute_path,
                                    const std::string& runtime_directory_absolute_path) {
-  typedef common::file_system::ascii_string_path string_path_type;
   int res = prepare_to_start(app_directory_absolute_path, runtime_directory_absolute_path);
   if (res == EXIT_FAILURE) {
     return EXIT_FAILURE;
@@ -636,32 +648,27 @@ static int main_single_application(int argc,
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
 
-  const std::string pid_path_str =
-      common::file_system::make_path(runtime_directory_absolute_path, std::string(PID_FILE_NAME));
-  string_path_type pid_path(pid_path_str);
-  if (!pid_path.IsValid()) {
-    ERROR_LOG() << "Can't get pid file path: " << pid_path_str;
-    return EXIT_FAILURE;
-  }
+  common::application::Application app(argc, argv, &CreateApplicationImpl);
 
-  common::ErrnoError err = common::file_system::node_access(runtime_directory_absolute_path);
-  if (err && err->IsError()) {
-    ERROR_LOG() << "Can't have permissions to create, pid file path: " << pid_path_str;
+  const std::string pid_absolute_path =
+      common::file_system::make_path(runtime_directory_absolute_path, PID_FILE_NAME);
+  if (!common::file_system::is_valid_path(pid_absolute_path)) {
+    ERROR_LOG() << "Can't get pid file path: " << pid_absolute_path;
     return EXIT_FAILURE;
   }
 
   const uint32_t fl =
       common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE;
   common::file_system::File lock_pid_file;
-  err = lock_pid_file.Open(pid_path, fl);
+  common::ErrnoError err = lock_pid_file.Open(pid_absolute_path, fl);
   if (err && err->IsError()) {
-    ERROR_LOG() << "Can't open pid file path: " << pid_path_str;
+    ERROR_LOG() << "Can't open pid file path: " << pid_absolute_path;
     return EXIT_FAILURE;
   }
 
   err = lock_pid_file.Lock();
   if (err && err->IsError()) {
-    ERROR_LOG() << "Can't lock pid file path: " << pid_path_str;
+    ERROR_LOG() << "Can't lock pid file path: " << pid_absolute_path;
     err = lock_pid_file.Close();
     return EXIT_FAILURE;
   }
@@ -670,12 +677,11 @@ static int main_single_application(int argc,
   size_t writed;
   err = lock_pid_file.Write(pid_str, &writed);
   if (err && err->IsError()) {
-    ERROR_LOG() << "Can't write pid to file path: " << pid_path_str;
+    ERROR_LOG() << "Can't write pid to file path: " << pid_absolute_path;
     err = lock_pid_file.Close();
     return EXIT_FAILURE;
   }
 
-  common::application::Application app(argc, argv, &CreateApplicationImpl);
   fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict,
                                                     dict->format_opts, dict->codec_opts);
   fasto::fastotv::client::Player* player =
@@ -685,13 +691,14 @@ static int main_single_application(int argc,
 
   err = lock_pid_file.Unlock();
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't unlock pid file path: " << pid_path_str;
+    WARNING_LOG() << "Can't unlock pid file path: " << pid_absolute_path;
   }
 
   err = lock_pid_file.Close();
-  err = common::file_system::remove_file(pid_path_str);
+  err = common::file_system::remove_file(pid_absolute_path);
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't remove file: " << pid_path_str << ", error: " << err->Description();
+    WARNING_LOG() << "Can't remove file: " << pid_absolute_path
+                  << ", error: " << err->Description();
   }
   return res;
 }
