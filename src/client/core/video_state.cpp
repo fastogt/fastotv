@@ -1167,7 +1167,7 @@ int VideoState::ReadThread() {
   realtime_ = core::is_realtime(ic);
 
   if (opt_.show_status) {
-    av_dump_format(ic, 0, in_filename, 0);
+    av_dump_format(ic, 0, id_.c_str(), 0);
   }
 
   for (int i = 0; i < static_cast<int>(ic->nb_streams); i++) {

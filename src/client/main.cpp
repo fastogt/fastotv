@@ -465,6 +465,52 @@ const OptionDef options[] = {
 void show_usage(void) {
   printf("Simple media player\nusage: " PROJECT_NAME_TITLE " [options]\n");
 }
+
+int fasto_log_to_ffmpeg(common::logging::LEVEL_LOG level){
+  if (level <= common::logging::L_CRIT) {
+    return AV_LOG_FATAL;
+  } else if (level <= common::logging::L_ERROR) {
+    return AV_LOG_ERROR;
+  } else if (level <= common::logging::L_WARNING) {
+    return AV_LOG_WARNING;
+  } else if (level <= common::logging::L_INFO) {
+    return AV_LOG_INFO;
+  } else {
+    return common::logging::L_DEBUG;
+  }
+}
+
+common::logging::LEVEL_LOG ffmpeg_log_to_fasto(int level){
+  if (level <= AV_LOG_FATAL) {
+    return common::logging::L_CRIT;
+  } else if (level <= AV_LOG_ERROR) {
+    return common::logging::L_ERROR;
+  } else if (level <= AV_LOG_WARNING) {
+    return common::logging::L_WARNING;
+  } else if (level <= AV_LOG_INFO) {
+    return common::logging::L_INFO;
+  } else {
+    return common::logging::L_DEBUG;
+  }
+}
+
+void avlog_cb(void* , int level, const char* sz_fmt, va_list varg) {
+  common::logging::LEVEL_LOG lg = ffmpeg_log_to_fasto(level);
+  common::logging::LEVEL_LOG clg = common::logging::CURRENT_LOG_LEVEL();
+  if (lg > clg) {
+    return;
+  }
+
+  char* ret = NULL;
+  int res = vasprintf(&ret, sz_fmt, varg);
+  if (res == ERROR_RESULT_VALUE) {
+    return;
+  }
+
+  static std::ostream& info_stream = common::logging::LogMessage(common::logging::L_INFO, false).Stream();
+  info_stream << ret;
+  free(ret);
+}
 }
 
 void show_help_default(const char* opt, const char* arg) {
@@ -518,6 +564,9 @@ class FFmpegApplication : public B {
     show_banner(argc, argv, options);
     parse_options(argc, argv, options, lopt);
     dict = dict_ = lopt;
+    av_log_set_callback(avlog_cb);
+    int ffmpeg_log_level = fasto_log_to_ffmpeg(common::logging::CURRENT_LOG_LEVEL());
+    av_log_set_level(ffmpeg_log_level);
   }
 
   virtual int PreExec() override {
