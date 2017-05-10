@@ -88,13 +88,26 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
     }
 
     int retcd = avcodec_send_packet(avctx_, &packet);
-    if (retcd < 0 && retcd != AVERROR_EOF) {
-      continue;
+    if (retcd < 0) {
+      if (retcd == AVERROR(EAGAIN)) {
+        goto read;
+      } else if (retcd == AVERROR_EOF) {
+        return 0;
+      }
+      DNOTREACHED();
+      return -1;
     }
 
+  read:
     retcd = avcodec_receive_frame(avctx_, frame);
     if (retcd < 0) {
-      continue;
+      if (retcd == AVERROR(EAGAIN)) {
+        continue;
+      } else if (retcd == AVERROR_EOF) {
+        return 0;
+      }
+      DNOTREACHED();
+      return -1;
     }
 
     AVRational tb = {1, frame->sample_rate};
@@ -132,13 +145,26 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
     }
 
     int retcd = avcodec_send_packet(avctx_, &packet);
-    if (retcd < 0 && retcd != AVERROR_EOF) {
-      continue;
+    if (retcd < 0) {
+      if (retcd == AVERROR(EAGAIN)) {
+        goto read;
+      } else if (retcd == AVERROR_EOF) {
+        return 0;
+      }
+      DNOTREACHED();
+      return -1;
     }
 
+  read:
     retcd = avcodec_receive_frame(avctx_, frame);
     if (retcd < 0) {
-      continue;
+      if (retcd == AVERROR(EAGAIN)) {
+        continue;
+      } else if (retcd == AVERROR_EOF) {
+        return 0;
+      }
+      DNOTREACHED();
+      return -1;
     }
 
     frame->pts = av_frame_get_best_effort_timestamp(frame);
