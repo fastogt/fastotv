@@ -33,7 +33,7 @@ namespace client {
 namespace core {
 
 Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
-    : avctx_(avctx), queue_(queue), finished_(true) {
+    : avctx_(avctx), queue_(queue), finished_(false) {
   CHECK(queue);
 }
 
