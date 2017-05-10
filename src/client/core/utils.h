@@ -43,8 +43,6 @@ extern "C" {
 /* Minimum SDL audio buffer size, in samples. */
 #define AUDIO_MIN_BUFFER_SIZE 512
 
-struct SwsContext;
-
 namespace fasto {
 namespace fastotv {
 namespace client {

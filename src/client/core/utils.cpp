@@ -47,10 +47,6 @@ extern "C" {
 /* Calculate actual buffer size keeping in mind not cause too frequent audio callbacks */
 #define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30
 
-namespace {
-const unsigned sws_flags = SWS_BICUBIC;
-}
-
 namespace fasto {
 namespace fastotv {
 namespace client {
