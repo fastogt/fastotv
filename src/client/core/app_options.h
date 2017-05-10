@@ -43,12 +43,13 @@ namespace core {
 // 1280x720
 // 1920x1080
 
+enum FRAME_DROP_STRATEGY { FRAME_DROP_AUTO = -1, FRAME_DROP_OFF = 0, FRAME_DROP_ON = 1 };
+
 struct AppOptions {
   AppOptions();
-
   bool autorotate;
 
-  bool framedrop;
+  FRAME_DROP_STRATEGY framedrop;
   bool genpts;
   AvSyncType av_sync_type;
   bool show_status;

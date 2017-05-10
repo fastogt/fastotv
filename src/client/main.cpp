@@ -380,7 +380,7 @@ int opt_set_frame_drop(const char* opt, const char* arg, DictionaryOptions* dopt
   UNUSED(arg);
   UNUSED(dopt);
 
-  g_options.framedrop = true;
+  g_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_ON;
   return 0;
 }
 
@@ -502,7 +502,7 @@ void avlog_cb(void* , int level, const char* sz_fmt, va_list varg) {
   }
 
   char* ret = NULL;
-  int res = vasprintf(&ret, sz_fmt, varg);
+  int res = common::vasprintf(&ret, sz_fmt, varg);
   if (res == ERROR_RESULT_VALUE) {
     return;
   }

@@ -67,8 +67,8 @@ class SupportedDevice(metaclass=ABCMeta):
 class PcDevice(SupportedDevice):
     def __init__(self):
         SupportedDevice.__init__(self, 'pc', {'linux': [
-        'libvdpau-devel', 'libva-devel', 'libgl1-mesa-devel', # redhat
-        'libvdpau-dev', 'libva-dev', 'libgl1-mesa-dev' # debian
+            'libvdpau-devel', 'libva-devel', 'libgl1-mesa-devel',  # redhat
+            'libvdpau-dev', 'libva-dev', 'libgl1-mesa-dev'  # debian
         ]}, utils.CompileInfo([], []), utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -77,8 +77,9 @@ class PcDevice(SupportedDevice):
 
 class OrangePiDevice(SupportedDevice):
     def __init__(self, name):
-        SupportedDevice.__init__(self, name, {'linux': ['libgles2-mesa-dev', 'libgl1-mesa-dev', 'xserver-xorg-video-fbturbo',
-                                                        'libcedrus1-dev', 'libvdpau-dev']},
+        SupportedDevice.__init__(self, name,
+                                 {'linux': ['libgles2-mesa-dev', 'libgl1-mesa-dev', 'xserver-xorg-video-fbturbo',
+                                            'libcedrus1-dev', 'libvdpau-dev']},
                                  utils.CompileInfo(['patch/orange-pi-one/sdl2'],
                                                    ['--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2']),
@@ -326,9 +327,9 @@ if __name__ == "__main__":
     parser.set_defaults(with_sdl2=True)
 
     parser.add_argument('--with-sdl2_ttf', help='build sdl2 (default, version:{0})'.format(sdl2_ttf_default_version),
-                        dest='with_sdl2_ttf', action='store_true')
-    parser.add_argument('--without-sdl2_ttf', help='build without sdl2 ttf', dest='with_sdl2_ttf', action='store_false')
-    parser.add_argument('--sdl2_ttf-version', help='sdl2 ttf version (default: {0})'.format(sdl2_ttf_default_version),
+                        dest='with_sdl2-ttf', action='store_true')
+    parser.add_argument('--without-sdl2-ttf', help='build without sdl2 ttf', dest='with_sdl2_ttf', action='store_false')
+    parser.add_argument('--sdl2-ttf-version', help='sdl2 ttf version (default: {0})'.format(sdl2_ttf_default_version),
                         default=sdl2_ttf_default_version)
     parser.set_defaults(with_sdl2_ttf=True)
 

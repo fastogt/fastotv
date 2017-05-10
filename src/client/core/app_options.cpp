@@ -27,7 +27,7 @@ namespace core {
 
 AppOptions::AppOptions()
     : autorotate(false),
-      framedrop(false),
+      framedrop(FRAME_DROP_AUTO),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
       show_status(true),
