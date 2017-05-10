@@ -870,10 +870,6 @@ void VideoState::TryRefreshVideo() {
           goto display;
         }
 
-        if (frame_timer_ == 0) {
-          frame_timer_ = GetRealClockTime();
-        }
-
         /* compute nominal last_duration */
         clock_t last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
         clock_t delay = ComputeTargetDelay(last_duration);
