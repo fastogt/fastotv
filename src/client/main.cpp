@@ -502,7 +502,11 @@ void avlog_cb(void* , int level, const char* sz_fmt, va_list varg) {
   }
 
   char* ret = NULL;
-  int res = common::vasprintf(&ret, sz_fmt, varg);
+#ifdef OS_POSIX
+  int res = vasprintf(&ret, sz_fmt, varg);
+#else
+  int res = ERROR_RESULT_VALUE;
+#endif
   if (res == ERROR_RESULT_VALUE) {
     return;
   }

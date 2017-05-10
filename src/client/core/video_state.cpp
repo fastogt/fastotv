@@ -870,6 +870,10 @@ void VideoState::TryRefreshVideo() {
           goto display;
         }
 
+        if (frame_timer_ == 0) {
+          frame_timer_ = GetRealClockTime();
+        }
+
         /* compute nominal last_duration */
         clock_t last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
         clock_t delay = ComputeTargetDelay(last_duration);
@@ -1046,7 +1050,8 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
   if (got_picture) {
     frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(ic_, vstream_->AvStream(), frame);
 
-    if (opt_.framedrop == FRAME_DROP_AUTO || (opt_.framedrop || GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)) {
+    if (opt_.framedrop == FRAME_DROP_AUTO ||
+        (opt_.framedrop || GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)) {
       if (IsValidPts(frame->pts)) {
         clock_t dpts = vstream_->q2d() * frame->pts;
         clock_t diff = dpts - GetMasterClock();
