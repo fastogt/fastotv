@@ -27,6 +27,7 @@
 #include <common/threads/event_bus.h>
 
 #include "client/core/events/events.h"
+#include "client/core/types.h"
 
 #define FASTO_EVENT (SDL_USEREVENT)
 
@@ -49,8 +50,7 @@ namespace core {
 namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
-    : common::application::IApplicationImpl(argc, argv), dispatcher_() {
-}
+    : common::application::IApplicationImpl(argc, argv), dispatcher_() {}
 
 Sdl2Application::~Sdl2Application() {
   THREAD_MANAGER()->FreeInstance();
@@ -172,7 +172,7 @@ void Sdl2Application::PostEvent(common::IEvent* event) {
   sevent.type = FASTO_EVENT;
   sevent.user.data1 = event;
   int res = SDL_PushEvent(&sevent);
-  if(res != 1) {
+  if (res != 1) {
     DNOTREACHED();
     delete event;
   }
@@ -192,7 +192,16 @@ void Sdl2Application::HideCursor() {
 }
 
 void Sdl2Application::HandleEvent(events::Event* event) {
+  msec_t start_time = GetCurrentMsec();
+  EventsType event_type = event->GetEventType();
+  bool is_filtered_event = event_type == PRE_EXEC_EVENT || event_type == POST_EXEC_EVENT;
   dispatcher_.ProcessEvent(event);
+  msec_t finish_time = GetCurrentMsec();
+
+  msec_t diff_time = finish_time - start_time;
+  if (diff_time >= event_timeout_wait_msec && !is_filtered_event) {
+    WARNING_LOG() << "Long time execution(" << diff_time << " msec) of event type: " << event_type;
+  }
 }
 
 void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {

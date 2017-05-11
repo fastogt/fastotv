@@ -20,7 +20,7 @@
 
 #include <common/event.h>
 
-enum EventsType {
+enum EventsType : common::IEvent::event_id_t {
   PRE_EXEC_EVENT = 0,
   POST_EXEC_EVENT,
 

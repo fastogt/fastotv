@@ -36,6 +36,8 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
+class TextureSaver;
+
 namespace core {
 class VideoState;
 }
@@ -195,8 +197,9 @@ class Player : public core::VideoStateHandler {
   core::msec_t last_mouse_left_click_;
   size_t curent_stream_pos_;
 
-  SDL_Surface* offline_channel_surface_;
-  SDL_Surface* connection_error_surface_;
+  TextureSaver* offline_channel_texture_;
+  TextureSaver* connection_error_texture_;
+
   TTF_Font* font_;
   core::VideoState* stream_;
 

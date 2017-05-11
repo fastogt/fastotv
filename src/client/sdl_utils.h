@@ -20,6 +20,22 @@
 
 #include <SDL2/SDL_render.h>
 
+namespace fasto {
+namespace fastotv {
+namespace client {
+
+class TextureSaver {
+ public:
+  TextureSaver(SDL_Surface* surface);
+  ~TextureSaver();
+  SDL_Texture* GetTexture(SDL_Renderer* renderer) const;
+
+ private:
+  SDL_Surface* surface_;
+  mutable SDL_Texture* texture_;
+  mutable SDL_Renderer* renderer_;
+};
+
 SDL_Texture* CreateTexture(SDL_Renderer* renderer,
                            Uint32 new_format,
                            int new_width,
@@ -27,3 +43,6 @@ SDL_Texture* CreateTexture(SDL_Renderer* renderer,
                            SDL_BlendMode blendmode,
                            bool init_texture);
 SDL_Surface* IMG_LoadPNG(const char* path);
+}
+}
+}
