@@ -41,6 +41,7 @@ extern "C" {
 }
 
 #include <common/logger.h>  // for LogMessage, etc
+#include <common/macros.h>
 
 #include "client/core/audio_params.h"  // for AudioParams
 
@@ -185,7 +186,7 @@ int configure_filtergraph(AVFilterGraph* graph,
                           const std::string& filtergraph,
                           AVFilterContext* source_ctx,
                           AVFilterContext* sink_ctx) {
-  AVFilterInOut* outputs = NULL, *inputs = NULL;
+  AVFilterInOut *outputs = NULL, *inputs = NULL;
   int ret;
   if (!filtergraph.empty()) {
     outputs = avfilter_inout_alloc();
@@ -271,36 +272,23 @@ void calculate_display_rect(SDL_Rect* rect,
 }
 
 int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
-  int ret = 0;
-  switch (frame->format) {
-    case AV_PIX_FMT_YUV420P:
-      if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
-        ERROR_LOG() << "Negative linesize is not supported for YUV.";
-        return -1;
-      }
-      ret = SDL_UpdateYUVTexture(tex,
-                                 NULL,
-                                 frame->data[0],
-                                 frame->linesize[0],
-                                 frame->data[1],
-                                 frame->linesize[1],
-                                 frame->data[2],
-                                 frame->linesize[2]);
-      break;
-    case AV_PIX_FMT_BGRA:
-      if (frame->linesize[0] < 0) {
-        ret = SDL_UpdateTexture(tex,
-                                NULL,
-                                frame->data[0] + frame->linesize[0] * (frame->height - 1),
-                                -frame->linesize[0]);
-      } else {
-        ret = SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
-      }
-      break;
-    default:
-      break;
+  if (frame->format == AV_PIX_FMT_YUV420P) {
+    if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
+      ERROR_LOG() << "Negative linesize is not supported for YUV.";
+      return -1;
+    }
+    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1],
+                                frame->linesize[1], frame->data[2], frame->linesize[2]);
+  } else if (frame->format == AV_PIX_FMT_YUV420P) {
+    if (frame->linesize[0] < 0) {
+      return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
+                               -frame->linesize[0]);
+    }
+    return SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
   }
-  return ret;
+
+  NOTREACHED();
+  return -1;
 }
 
 int audio_open(void* opaque,

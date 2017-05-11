@@ -565,7 +565,7 @@ void VideoState::VideoDisplay() {
     core::VideoFrame* vp = video_frame_queue_->PeekLast();
     if (vp->bmp) {
       if (!vp->uploaded) {
-        if (core::upload_texture(vp->bmp, vp->frame) < 0) {
+        if (upload_texture(vp->bmp, vp->frame) < 0) {
           return;
         }
         vp->uploaded = true;
