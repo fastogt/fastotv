@@ -1,10 +1,10 @@
 0.2.0 /
 [Alexandr Topilski]
 - LIRC support
-- hwaccels Cuvid, Videotoolbox
+- added hwaccels: Cuvid, Videotoolbox
 - footer text
 
 0.1.0 / April 17, 2017
 [Alexandr Topilski]
-- hwaccels VDPAU, VAAPI, DXVA2
+- added hwaccels: VDPAU, VAAPI, DXVA2
 

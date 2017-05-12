@@ -94,7 +94,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       } else if (retcd == AVERROR_EOF) {
         return 0;
       }
-      DNOTREACHED();
+      DNOTREACHED() << "avcodec_send_packet error: " << retcd;
       return -1;
     }
 
@@ -106,7 +106,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       } else if (retcd == AVERROR_EOF) {
         return 0;
       }
-      DNOTREACHED();
+      DNOTREACHED() << "avcodec_receive_frame error: " << retcd;
       return -1;
     }
 

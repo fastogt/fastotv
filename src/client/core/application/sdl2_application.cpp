@@ -205,7 +205,7 @@ void Sdl2Application::HandleEvent(events::Event* event) {
 }
 
 void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
-  if (event->type == SDL_KEYDOWN && event->repeat == 0) {
+  if (event->type == SDL_KEYDOWN) {
     Keysym ks = SDLKeySymToOur(event->keysym);
     events::KeyPressInfo inf(event->state == SDL_PRESSED, ks);
     events::KeyPressEvent* key_press = new events::KeyPressEvent(this, inf);

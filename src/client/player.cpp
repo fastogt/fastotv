@@ -827,7 +827,7 @@ void Player::DrawPlayingStatus() {
 void Player::DrawInitStatus() {
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
-  SDL_Texture* img =  connection_error_texture_->GetTexture(renderer_);
+  SDL_Texture* img = connection_error_texture_->GetTexture(renderer_);
   if (img) {
     SDL_RenderCopy(renderer_, img, NULL, NULL);
   }
