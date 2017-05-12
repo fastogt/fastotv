@@ -453,7 +453,10 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
       stream_->Abort();
       destroy(&stream_);
     }
-    TTF_CloseFont(font_);
+    if (font_) {
+      TTF_CloseFont(font_);
+      font_ = NULL;
+    }
     destroy(&offline_channel_texture_);
     destroy(&connection_error_texture_);
 
@@ -893,7 +896,7 @@ void Player::DrawFooter() {
 }
 
 void Player::DrawVolume() {
-  if (!show_volume_) {
+  if (!show_volume_ || !font_) {
     return;
   }
 
