@@ -101,7 +101,14 @@ class OrangePiLite(OrangePiDevice):
         linux_libs.extend(['liblircclient-dev'])
 
 
-SUPPORTED_DEVICES = [PcDevice(), OrangePiOne(), OrangePiLite()]
+class OrangePiPC2(OrangePiDevice):
+    def __init__(self):
+        OrangePiDevice.__init__(self, 'orange-pi-pc2')
+        linux_libs = self.system_platform_libs_.get('linux')
+        linux_libs.extend(['liblircclient-dev'])
+
+
+SUPPORTED_DEVICES = [PcDevice(), OrangePiOne(), OrangePiLite(), OrangePiPC2()]
 
 
 def get_device() -> SupportedDevice:
