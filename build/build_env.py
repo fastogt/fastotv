@@ -6,7 +6,7 @@ import subprocess
 import sys
 from abc import ABCMeta, abstractmethod
 
-from devices import orange_pi
+from devices.orange_pi import orange_pi
 from pybuild_utils.base import system_info, utils
 
 # Script for building enviroment on clean machine
@@ -80,7 +80,7 @@ class OrangePiDevice(SupportedDevice):
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev', 'libgl1-mesa-dev', 'xserver-xorg-video-fbturbo',
                                             'libcedrus1-dev', 'libvdpau-dev']},
-                                 utils.CompileInfo(['patch/orange-pi-one/sdl2'],
+                                 utils.CompileInfo(['patch/orange-pi/sdl2'],
                                                    ['--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2']),
                                  utils.CompileInfo([], []))
