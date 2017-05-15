@@ -45,6 +45,7 @@ extern "C" {
 #include <common/file_system.h>
 #include <common/threads/types.h>
 #include <common/utils.h>
+#include <common/system/system.h>
 
 #include "client/cmdutils.h"          // for HAS_ARG, OPT_EXPERT, etc
 #include "client/core/app_options.h"  // for AppOptions, ComplexOptions
@@ -60,6 +61,12 @@ extern "C" {
 // scale output: -vf scale=1920:1080
 
 namespace {
+struct MainOptions {
+  MainOptions():power_off_on_exit(false){
+  }
+  bool power_off_on_exit;
+};
+MainOptions g_main_options;
 fasto::fastotv::client::core::AppOptions g_options;
 fasto::fastotv::client::PlayerOptions g_player_options;
 DictionaryOptions* dict = NULL;  // FIXME
@@ -366,6 +373,15 @@ int opt_set_exit_on_keydown(const char* opt, const char* arg, DictionaryOptions*
   return 0;
 }
 
+int opt_set_power_off_on_exit(const char* opt, const char* arg, DictionaryOptions* dopt) {
+  UNUSED(opt);
+  UNUSED(arg);
+  UNUSED(dopt);
+
+  g_main_options.power_off_on_exit = true;
+  return 0;
+}
+
 int opt_set_exit_on_mousedown(const char* opt, const char* arg, DictionaryOptions* dopt) {
   UNUSED(opt);
   UNUSED(arg);
@@ -444,6 +460,7 @@ const OptionDef options[] = {
     {"sync", OPT_EXPERT, opt_sync, "set audio-video sync. type (type=audio/video)", "type"},
     {"exitonkeydown", OPT_EXPERT, opt_set_exit_on_keydown, "exit on key down", ""},
     {"exitonmousedown", OPT_EXPERT, opt_set_exit_on_mousedown, "exit on mouse down", ""},
+    {"poweroffonexit", OPT_EXPERT, opt_set_power_off_on_exit, "poweroff on exit application", ""},
     {"framedrop", OPT_EXPERT, opt_set_frame_drop, "drop frames when cpu is too slow", ""},
     {"infbuf", OPT_EXPERT, opt_set_infinite_buffer,
      "don't limit the input buffer size (useful with realtime streams)", ""},
@@ -752,6 +769,13 @@ static int main_single_application(int argc,
   if (err && err->IsError()) {
     WARNING_LOG() << "Can't remove file: " << pid_absolute_path
                   << ", error: " << err->Description();
+  }
+
+  if (g_main_options.power_off_on_exit) {
+    common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);
+    if (err_shut && err_shut->IsError()) {
+      WARNING_LOG() << "Can't shutdown error: " << err_shut->Description();
+    }
   }
   return res;
 }
