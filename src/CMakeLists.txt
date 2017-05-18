@@ -12,15 +12,16 @@ ENDIF(BUILD_SERVER)
 
 IF(DEVELOPER_ENABLE_TESTS)
   IF(DEVELOPER_ENABLE_UNIT_TESTS)
+  FIND_PACKAGE(common REQUIRED)
   ########## PREPARE GTEST LIBRARY ##########
     ADD_SUBDIRECTORY(${CMAKE_HOME_DIRECTORY}/tests/googletest googletest)
-    INCLUDE_DIRECTORIES(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT})
+    INCLUDE_DIRECTORIES(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT} ${COMMON_INCLUDE_DIR})
   ########## PREPARE GTEST LIBRARY ##########
     ADD_EXECUTABLE(unit_tests
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp commands/commands.cpp client/commands.cpp
     )
 
-    TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main common)
+    TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main ${COMMON_LIBRARIES})
     ADD_TEST_TARGET(unit_tests)
     SET_PROPERTY(TARGET unit_tests PROPERTY FOLDER "Unit tests")
 

@@ -192,10 +192,10 @@ class BuildRequest(object):
                 # Debian 8.7 no packages: libdri2-dev, libump-dev,
         elif platform_name == 'windows':
             if arch.name() == 'x86_64':
-                dep_libs = ['git', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
+                dep_libs = ['git', 'make', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
                             'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja', 'mingw-w64-x86_64-freetype']
             elif arch.name() == 'i386':
-                dep_libs = ['git', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
+                dep_libs = ['git', 'make', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
                             'mingw-w64-i686-make', 'mingw-w64-i686-ninja', 'mingw-w64-i686-freetype']
         elif platform_name == 'macosx':
             dep_libs = ['git', 'yasm', 'make', 'ninja', 'freetype']
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     sdl2_default_version = '2.0.5'
     sdl2_ttf_default_version = '2.0.14'
     ffmpeg_default_version = '3.3'
-    cmake_default_version = '3.8.0'
+    cmake_default_version = '3.8.1'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
