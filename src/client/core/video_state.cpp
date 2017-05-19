@@ -457,20 +457,31 @@ void VideoState::StreamComponentClose(int stream_index) {
   AVStream* avs = ic_->streams[stream_index];
   AVCodecParameters* codecpar = avs->codecpar;
   if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-    video_frame_queue_->Stop();  // FIXME
-    viddec_->Abort();
-    vdecoder_tid_->Join();
-    vdecoder_tid_ = NULL;
+    if (video_frame_queue_) {
+      video_frame_queue_->Stop();
+    }
+    if (viddec_) {
+      viddec_->Abort();
+    }
+    if (vdecoder_tid_) {
+      vdecoder_tid_->Join();
+      vdecoder_tid_ = NULL;
+    }
     if (input_st_->hwaccel_uninit) {
       input_st_->hwaccel_uninit(viddec_->AvCtx());
+      input_st_->hwaccel_uninit = NULL;
     }
     destroy(&viddec_);
     destroy(&video_frame_queue_);
   } else if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-    audio_frame_queue_->Stop();
+    if (audio_frame_queue_) {
+      audio_frame_queue_->Stop();
+    }
     auddec_->Abort();
-    adecoder_tid_->Join();
-    adecoder_tid_ = NULL;
+    if (adecoder_tid_) {
+      adecoder_tid_->Join();
+      adecoder_tid_ = NULL;
+    }
     destroy(&auddec_);
     destroy(&audio_frame_queue_);
     swr_free(&swr_ctx_);
@@ -802,8 +813,7 @@ int VideoState::AudioDecodeFrame() {
   if (swr_ctx_) {
     const uint8_t** in = const_cast<const uint8_t**>(af->frame->extended_data);
     uint8_t** out = &audio_buf1_;
-    int out_count =
-        static_cast<int64_t>(wanted_nb_samples) * audio_tgt_.freq / af->frame->sample_rate + 256;
+    int out_count = wanted_nb_samples * audio_tgt_.freq / af->frame->sample_rate + 256;
     int out_size =
         av_samples_get_buffer_size(NULL, audio_tgt_.channels, out_count, audio_tgt_.fmt, 0);
     if (out_size < 0) {
@@ -1500,7 +1510,9 @@ int VideoState::VideoThread() {
       if (std::abs(frame_last_filter_delay_) > AV_NOSYNC_THRESHOLD_MSEC) {
         frame_last_filter_delay_ = 0;
       }
-      tb = filt_out->inputs[0]->time_base;  // FIXME
+      if (filt_out) {
+        tb = filt_out->inputs[0]->time_base;
+      }
 #endif
       AVRational fr = {frame_rate.den, frame_rate.num};
       clock_t duration = (frame_rate.num && frame_rate.den ? q2d_diff(fr) : 0);

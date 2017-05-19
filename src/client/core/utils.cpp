@@ -279,7 +279,7 @@ int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
     }
     return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1],
                                 frame->linesize[1], frame->data[2], frame->linesize[2]);
-  } else if (frame->format == AV_PIX_FMT_YUV420P) {
+  } else if (frame->format == AV_PIX_FMT_BGRA) {
     if (frame->linesize[0] < 0) {
       return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
                                -frame->linesize[0]);
