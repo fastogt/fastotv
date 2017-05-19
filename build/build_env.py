@@ -23,7 +23,7 @@ PNG_SRC_ROOT = "https://downloads.sourceforge.net/project/libpng/libpng16/"
 
 ARCH_CMAKE_COMP = "gz"
 ARCH_CMAKE_EXT = "tar." + ARCH_CMAKE_COMP
-ARCH_PNG_COMP = "xz"
+ARCH_PNG_COMP = "gz"
 ARCH_PNG_EXT = "tar." + ARCH_PNG_COMP
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
