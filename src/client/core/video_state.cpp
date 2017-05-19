@@ -457,7 +457,7 @@ void VideoState::StreamComponentClose(int stream_index) {
   AVStream* avs = ic_->streams[stream_index];
   AVCodecParameters* codecpar = avs->codecpar;
   if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-    video_frame_queue_->Stop();
+    video_frame_queue_->Stop();  // FIXME
     viddec_->Abort();
     vdecoder_tid_->Join();
     vdecoder_tid_ = NULL;
@@ -1500,7 +1500,7 @@ int VideoState::VideoThread() {
       if (std::abs(frame_last_filter_delay_) > AV_NOSYNC_THRESHOLD_MSEC) {
         frame_last_filter_delay_ = 0;
       }
-      tb = filt_out->inputs[0]->time_base;
+      tb = filt_out->inputs[0]->time_base;  // FIXME
 #endif
       AVRational fr = {frame_rate.den, frame_rate.num};
       clock_t duration = (frame_rate.num && frame_rate.den ? q2d_diff(fr) : 0);
