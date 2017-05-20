@@ -927,7 +927,7 @@ bool parse_bool(const std::string& bool_str, bool* result) {
   std::string bool_str_copy = bool_str;
   std::transform(bool_str_copy.begin(), bool_str_copy.end(), bool_str_copy.begin(), ::tolower);
   if (result) {
-    *result = bool_str_copy == "true";
+    *result = bool_str_copy == "true" || bool_str_copy == "on";
   }
   return true;
 }

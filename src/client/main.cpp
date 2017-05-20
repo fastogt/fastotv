@@ -137,14 +137,14 @@ extern "C" {
 */
 
 namespace {
-struct MainOptions {
-  MainOptions()
+struct FastoTVConfig {
+  FastoTVConfig()
       : power_off_on_exit(false),
         loglevel(common::logging::L_INFO),
         app_options(),
         player_options(),
         dict(new DictionaryOptions) {}
-  ~MainOptions() { destroy(&dict); }
+  ~FastoTVConfig() { destroy(&dict); }
 
   bool power_off_on_exit;
   common::logging::LEVEL_LOG loglevel;
@@ -154,7 +154,7 @@ struct MainOptions {
   DictionaryOptions* dict;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(MainOptions);
+  DISALLOW_COPY_AND_ASSIGN(FastoTVConfig);
 };
 
 void sigterm_handler(int sig) {
@@ -339,7 +339,7 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
 }
 
 static int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  MainOptions* pconfig = reinterpret_cast<MainOptions*>(user);
+  FastoTVConfig* pconfig = reinterpret_cast<FastoTVConfig*>(user);
   size_t value_len = strlen(value);
   if (value_len == 0) {  // skip empty fields
     return 0;
@@ -474,6 +474,9 @@ static int ini_handler_fasto(void* user, const char* section, const char* name, 
     pconfig->app_options.audio_codec_name = value;
     return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VCODEC_FIELD)) {
+    pconfig->app_options.video_codec_name = value;
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_FIELD)) {
     if (strcmp(value, "auto") == 0) {
       pconfig->app_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_AUTO;
     } else if (strcmp(value, "none") == 0) {
@@ -487,9 +490,6 @@ static int ini_handler_fasto(void* user, const char* section, const char* name, 
       }
       return 0;
     }
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_FIELD)) {
-    pconfig->app_options.video_codec_name = value;
     return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_DEVICE_FIELD)) {
     pconfig->app_options.hwaccel_device = value;
@@ -514,6 +514,47 @@ static int ini_handler_fasto(void* user, const char* section, const char* name, 
   }
 }
 
+int load_config_file(const std::string& config_absolute_path, FastoTVConfig* options) {
+  if (!options) {
+    return EXIT_FAILURE;
+  }
+
+  std::string copy_config_absolute_path = config_absolute_path;
+  if (!common::file_system::is_file_exist(config_absolute_path)) {
+    const std::string absolute_source_dir =
+        common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+    copy_config_absolute_path =
+        common::file_system::make_path(absolute_source_dir, CONFIG_FILE_PATH_RELATIVE);
+  }
+
+  const char* copy_config_absolute_path_ptr = common::utils::c_strornull(copy_config_absolute_path);
+  if (ini_parse(copy_config_absolute_path_ptr, ini_handler_fasto, options) < 0) {
+    std::cout << "Can't load config " << copy_config_absolute_path << ", use default settings."
+              << std::endl;
+  }
+  return EXIT_SUCCESS;
+}
+
+int save_config_file(const std::string& config_absolute_path, FastoTVConfig* options) {
+  if (!options) {
+    return EXIT_FAILURE;
+  }
+
+  common::file_system::ascii_string_path config_path(config_absolute_path);
+  common::file_system::ANSIFile config_save_file(config_path);
+  if (!config_save_file.Open("w")) {
+    return EXIT_FAILURE;
+  }
+
+  config_save_file.Write("[" CONFIG_MAIN_OPTIONS "]\n");
+  config_save_file.WriteFormated(CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "=%s\n",
+                                 common::logging::log_level_to_text(options->loglevel));
+  config_save_file.WriteFormated(CONFIG_MAIN_OPTIONS_POWEROFF_ON_EXIT_FIELD "=%s\n",
+                                 common::ConvertToString(options->power_off_on_exit));
+  config_save_file.Close();
+  return EXIT_SUCCESS;
+}
+
 // runtime_directory_absolute_path can be not equal pwd (used for pid file location)
 static int main_single_application(int argc,
                                    char** argv,
@@ -524,18 +565,17 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
+  FastoTVConfig main_options;
   const std::string config_absolute_path =
       common::file_system::make_path(app_directory_absolute_path, CONFIG_FILE_NAME);
   if (!common::file_system::is_valid_path(config_absolute_path)) {
-    std::cout << "Can't get pid file path: " << config_absolute_path << std::endl;
+    std::cout << "Can't config file path: " << config_absolute_path << std::endl;
     return EXIT_FAILURE;
   }
 
-  MainOptions main_options;
-  const char* config_absolute_path_ptr = common::utils::c_strornull(config_absolute_path);
-  if (ini_parse(config_absolute_path_ptr, ini_handler_fasto, &main_options) < 0) {
-    std::cout << "Can't load config " << config_absolute_path << ", use default settings."
-              << std::endl;
+  res = load_config_file(config_absolute_path, &main_options);
+  if (res == EXIT_FAILURE) {
+    return EXIT_FAILURE;
   }
 
 #if defined(LOG_TO_FILE)
@@ -599,6 +639,9 @@ static int main_single_application(int argc,
     WARNING_LOG() << "Can't remove file: " << pid_absolute_path
                   << ", error: " << err->Description();
   }
+
+  // save config file
+  res = save_config_file(config_absolute_path, &main_options);
 
   if (main_options.power_off_on_exit) {
     common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);

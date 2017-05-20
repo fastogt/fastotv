@@ -3,4 +3,4 @@
 #  exec startx
 #fi
 
-exec @EXECUTABLE_PATH@ @CMD_ARGUMENTS@
+exec @EXECUTABLE_PATH@
