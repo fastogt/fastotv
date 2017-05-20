@@ -24,6 +24,7 @@
 #include <limits>    // for numeric_limits
 #include <ostream>   // for operator<<, basic_ostream
 #include <string>    // for char_traits, string, etc
+#include <iostream>
 
 #include "ffmpeg_config.h"
 
@@ -62,8 +63,7 @@ extern "C" {
 
 namespace {
 struct MainOptions {
-  MainOptions():power_off_on_exit(false){
-  }
+  MainOptions() : power_off_on_exit(false) {}
   bool power_off_on_exit;
 };
 MainOptions g_main_options;
@@ -188,19 +188,6 @@ int opt_set_audio_codec(const char* opt, const char* arg, DictionaryOptions* dop
   }
 
   g_options.audio_codec_name = arg;
-  return 0;
-}
-
-int show_hwaccels(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  printf("Hardware acceleration methods:\n");
-  for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
-    printf("%s\n", fasto::fastotv::client::core::hwaccels[i].name);
-  }
-  printf("\n");
   return 0;
 }
 
@@ -419,32 +406,7 @@ int opt_set_autorotate(const char* opt, const char* arg, DictionaryOptions* dopt
 }
 
 const OptionDef options[] = {
-    {"L", OPT_EXIT, show_license, "show license", NULL},
-    {"h", OPT_EXIT, show_help, "show help", "topic"},
-    {"?", OPT_EXIT, show_help, "show help", "topic"},
-    {"help", OPT_EXIT, show_help, "show help", "topic"},
-    {"-help", OPT_EXIT, show_help, "show help", "topic"},
-    {"version", OPT_EXIT, show_version, "show version", NULL},
-    {"buildconf", OPT_EXIT, show_buildconf, "show build configuration", NULL},
-    {"formats", OPT_EXIT, show_formats, "show available formats", NULL},
-    {"devices", OPT_EXIT, show_devices, "show available devices", NULL},
-    {"codecs", OPT_EXIT, show_codecs, "show available codecs", NULL},
-    {"hwaccels", OPT_EXIT, show_hwaccels, "show available hwaccels", NULL},
-    {"decoders", OPT_EXIT, show_decoders, "show available decoders", NULL},
-    {"encoders", OPT_EXIT, show_encoders, "show available encoders", NULL},
-    {"bsfs", OPT_EXIT, show_bsfs, "show available bit stream filters", NULL},
-    {"protocols", OPT_EXIT, show_protocols, "show available protocols", NULL},
-    {"filters", OPT_EXIT, show_filters, "show available filters", NULL},
-    {"pix_fmts", OPT_EXIT, show_pix_fmts, "show available pixel formats", NULL},
-    {"layouts", OPT_EXIT, show_layouts, "show standard channel layouts", NULL},
-    {"sample_fmts", OPT_EXIT, show_sample_fmts, "show available audio sample formats", NULL},
-    {"colors", OPT_EXIT, show_colors, "show available color names", NULL},
     {"loglevel", OPT_NOTHING, opt_loglevel, "set logging level", "loglevel"},
-    {"v", OPT_NOTHING, opt_loglevel, "set logging level", "loglevel"},
-#if CONFIG_AVDEVICE
-    {"sources", OPT_EXIT, show_sources, "list sources of the input device", "device"},
-    {"sinks", OPT_EXIT, show_sinks, "list sinks of the output device", "device"},
-#endif
     {"x", OPT_NOTHING, opt_width, "force displayed width", "width"},
     {"y", OPT_NOTHING, opt_height, "force displayed height", "height"},
     {"s", OPT_VIDEO, opt_frame_size, "set frame size (WxH or abbreviation)", "size"},
@@ -479,11 +441,7 @@ const OptionDef options[] = {
     {"autorotate", OPT_NOTHING, opt_set_autorotate, "automatically rotate video", ""},
     {NULL, OPT_NOTHING, NULL, NULL, NULL}};
 
-void show_usage(void) {
-  printf("Simple media player\nusage: " PROJECT_NAME_TITLE " [options]\n");
-}
-
-int fasto_log_to_ffmpeg(common::logging::LEVEL_LOG level){
+int fasto_log_to_ffmpeg(common::logging::LEVEL_LOG level) {
   if (level <= common::logging::L_CRIT) {
     return AV_LOG_FATAL;
   } else if (level <= common::logging::L_ERROR) {
@@ -497,7 +455,7 @@ int fasto_log_to_ffmpeg(common::logging::LEVEL_LOG level){
   }
 }
 
-common::logging::LEVEL_LOG ffmpeg_log_to_fasto(int level){
+common::logging::LEVEL_LOG ffmpeg_log_to_fasto(int level) {
   if (level <= AV_LOG_FATAL) {
     return common::logging::L_CRIT;
   } else if (level <= AV_LOG_ERROR) {
@@ -511,7 +469,7 @@ common::logging::LEVEL_LOG ffmpeg_log_to_fasto(int level){
   }
 }
 
-void avlog_cb(void* , int level, const char* sz_fmt, va_list varg) {
+void avlog_cb(void*, int level, const char* sz_fmt, va_list varg) {
   common::logging::LEVEL_LOG lg = ffmpeg_log_to_fasto(level);
   common::logging::LEVEL_LOG clg = common::logging::CURRENT_LOG_LEVEL();
   if (lg > clg) {
@@ -528,34 +486,11 @@ void avlog_cb(void* , int level, const char* sz_fmt, va_list varg) {
     return;
   }
 
-  static std::ostream& info_stream = common::logging::LogMessage(common::logging::L_INFO, false).Stream();
+  static std::ostream& info_stream =
+      common::logging::LogMessage(common::logging::L_INFO, false).Stream();
   info_stream << ret;
   free(ret);
 }
-}
-
-void show_help_default(const char* opt, const char* arg) {
-  UNUSED(opt);
-  UNUSED(arg);
-
-  show_usage();
-  show_help_options(options, "Main options:", 0, OPT_EXPERT, 0);
-  show_help_options(options, "Advanced options:", OPT_EXPERT, 0, 0);
-  printf(
-      "\nWhile playing:\n"
-      "q, ESC              quit\n"
-      "f                   toggle full screen\n"
-      "p, SPC              pause\n"
-      "m                   toggle mute\n"
-      "9, 0                decrease and increase volume respectively\n"
-      "/, *                decrease and increase volume respectively\n"
-      "[, ]                prev/next channel\n"
-      "a                   cycle audio channel in the current program\n"
-      "v                   cycle video channel\n"
-      "c                   cycle program\n"
-      "w                   cycle video filters or show modes\n"
-      "s                   activate frame-step mode\n"
-      "left double-click   toggle full screen");
 }
 
 template <typename B>
@@ -782,6 +717,86 @@ static int main_single_application(int argc,
 
 /* Called from the main */
 int main(int argc, char** argv) {
+  for (int i = 0; i < argc; ++i) {
+    const bool lastarg = i == argc - 1;
+    if (strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0) {
+      show_version();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+      std::string topic;
+      if (!lastarg) {
+        topic = argv[++i];
+      }
+      show_help(topic);
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--license") == 0 || strcmp(argv[i], "-l") == 0) {
+      show_license();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--buildconf") == 0) {
+      show_buildconf();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--formats") == 0) {
+      show_formats();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--devices") == 0) {
+      show_devices();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--codecs") == 0) {
+      show_codecs();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--hwaccels") == 0) {
+      show_hwaccels();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--decoders") == 0) {
+      show_decoders();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--encoders") == 0) {
+      show_encoders();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--bsfs") == 0) {
+      show_bsfs();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--protocols") == 0) {
+      show_protocols();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--filters") == 0) {
+      show_filters();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--pix_fmts") == 0) {
+      show_pix_fmts();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--layouts") == 0) {
+      show_layouts();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--sample_fmts") == 0) {
+      show_sample_fmts();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--colors") == 0) {
+      show_colors();
+      return EXIT_SUCCESS;
+    }
+#if CONFIG_AVDEVICE
+    else if (strcmp(argv[i], "--sources") == 0) {
+      std::string device;
+      if (!lastarg) {
+        device = argv[++i];
+      }
+      show_sources(device);
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "--sinks") == 0) {
+      std::string device;
+      if (!lastarg) {
+        device = argv[++i];
+      }
+      show_sinks(device);
+      return EXIT_SUCCESS;
+    } else {
+      show_help(std::string());
+      return EXIT_SUCCESS;
+    }
+#endif
+  }
+
   const std::string runtime_directory_path = RUNTIME_DIR;
   const std::string app_directory_path = APPLICATION_DIR;
 

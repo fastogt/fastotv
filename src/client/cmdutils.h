@@ -42,6 +42,30 @@ extern "C" {
 #include <common/logger.h>          // for COMPACT_LOG_WARNING, etc
 #include <common/macros.h>          // for DISALLOW_COPY_AND_ASSIGN
 
+void show_license();
+void show_version();
+void show_usage();
+void show_help(const std::string& topic);
+void show_buildconf();
+void show_formats();
+void show_devices();
+void show_codecs();
+void show_hwaccels();
+void show_decoders();
+void show_encoders();
+void show_bsfs();
+void show_protocols();
+void show_filters();
+void show_pix_fmts();
+void show_layouts();
+void show_sample_fmts();
+void show_colors();
+
+#if CONFIG_AVDEVICE
+void show_sinks(const std::string& device);
+void show_sources(const std::string& device);
+#endif
+
 #define OPT_NOTHING 0
 #define OPT_EXPERT (1 << 0)
 #define OPT_VIDEO (1 << 1)
@@ -137,17 +161,6 @@ void show_help_options(const OptionDef* options,
                        int alt_flags);
 
 /**
- * Per-fftool specific help handler. Implemented in each
- * fftool, called by show_help().
- */
-extern void show_help_default(const char* opt, const char* arg);
-
-/**
- * Generic -h handler common to all fftools.
- */
-int show_help(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
  * Parse the command line arguments.
  *
  * @param argc   number of command line arguments
@@ -239,114 +252,6 @@ void show_banner(int argc, char** argv, const OptionDef* options);
  * This option processing function does not utilize the arguments.
  */
 int show_version(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print the build configuration of the program to stdout. The contents
- * depend on the definition of FFMPEG_CONFIGURATION.
- * This option processing function does not utilize the arguments.
- */
-int show_buildconf(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print the license of the program to stdout. The license depends on
- * the license of the libraries compiled into the program.
- * This option processing function does not utilize the arguments.
- */
-int show_license(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the formats supported by the
- * program (including devices).
- * This option processing function does not utilize the arguments.
- */
-int show_formats(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the devices supported by the
- * program.
- * This option processing function does not utilize the arguments.
- */
-int show_devices(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-#if CONFIG_AVDEVICE
-/**
- * Print a listing containing autodetected sinks of the output device.
- * Device name with options may be passed as an argument to limit results.
- */
-int show_sinks(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing autodetected sources of the input device.
- * Device name with options may be passed as an argument to limit results.
- */
-int show_sources(const char* opt, const char* arg, DictionaryOptions* dopt);
-#endif
-
-/**
- * Print a listing containing all the codecs supported by the
- * program.
- * This option processing function does not utilize the arguments.
- */
-int show_codecs(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the decoders supported by the
- * program.
- */
-int show_decoders(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the encoders supported by the
- * program.
- */
-int show_encoders(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the filters supported by the
- * program.
- * This option processing function does not utilize the arguments.
- */
-int show_filters(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the bit stream filters supported by the
- * program.
- * This option processing function does not utilize the arguments.
- */
-int show_bsfs(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the protocols supported by the
- * program.
- * This option processing function does not utilize the arguments.
- */
-int show_protocols(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the pixel formats supported by the
- * program.
- * This option processing function does not utilize the arguments.
- */
-int show_pix_fmts(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the standard channel layouts supported by
- * the program.
- * This option processing function does not utilize the arguments.
- */
-int show_layouts(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the sample formats supported by the
- * program.
- */
-int show_sample_fmts(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
- * Print a listing containing all the color names and values recognized
- * by the program.
- */
-int show_colors(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 #define media_type_string av_get_media_type_string
 
