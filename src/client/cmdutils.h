@@ -66,16 +66,6 @@ void show_sinks(const std::string& device);
 void show_sources(const std::string& device);
 #endif
 
-#define OPT_NOTHING 0
-#define OPT_EXPERT (1 << 0)
-#define OPT_VIDEO (1 << 1)
-#define OPT_AUDIO (1 << 2)
-#define OPT_SUBTITLE (1 << 3)
-#define OPT_EXIT (1 << 4)
-#define OPT_DATA (1 << 5)
-#define OPT_INPUT (1 << 6)
-#define OPT_OUTPUT (1 << 7)
-
 struct DictionaryOptions {
   DictionaryOptions();
   ~DictionaryOptions();
@@ -88,11 +78,6 @@ struct DictionaryOptions {
  private:
   DISALLOW_COPY_AND_ASSIGN(DictionaryOptions);
 };
-
-/**
- * Wraps exit with a program-specific cleanup routine.
- */
-void exit_program(int ret) av_noreturn;
 
 /**
  * Initialize dynamic library loading
@@ -122,7 +107,7 @@ bool parse_number(const std::string& number_str, T min, T max, T* result) {
   }
 
   T lresult;
-  if (common::ConvertFromString(number_str, &lresult)) {
+  if (!common::ConvertFromString(number_str, &lresult)) {
     WARNING_LOG() << "Can't parse value(number) value: " << number_str;
     return false;
   }
@@ -136,114 +121,6 @@ bool parse_number(const std::string& number_str, T min, T max, T* result) {
   *result = lresult;
   return true;
 }
-
-typedef struct OptionDef {
-  const char* name;
-  int flags;
-  int (*func_arg)(const char*, const char*, DictionaryOptions*);
-  const char* help;
-  const char* argname;
-} OptionDef;
-
-/**
- * Print help for all options matching specified flags.
- *
- * @param options a list of options
- * @param msg title of this group. Only printed if at least one option matches.
- * @param req_flags print only options which have all those flags set.
- * @param rej_flags don't print options which have any of those flags set.
- * @param alt_flags print only options that have at least one of those flags set
- */
-void show_help_options(const OptionDef* options,
-                       const char* msg,
-                       int req_flags,
-                       int rej_flags,
-                       int alt_flags);
-
-/**
- * Parse the command line arguments.
- *
- * @param argc   number of command line arguments
- * @param argv   values of command line arguments
- * @param options Array with the definitions required to interpret every
- * option of the form: -option_name [argument]
- * @param optctx an opaque options context
- * @param parse_arg_function Name of the function called to process every
- * argument without a leading option name flag. NULL if such arguments do
- * not have to be processed.
- */
-void parse_options(int argc, char** argv, const OptionDef* options, DictionaryOptions* dopt);
-
-/**
- * Parse one given option.
- *
- * @return on success 1 if arg was consumed, 0 otherwise; negative number on error
- */
-int parse_option(const char* opt,
-                 const char* arg,
-                 const OptionDef* options,
-                 DictionaryOptions* dopt);
-
-/**
- * Find the '-loglevel' option in the command line args and apply it.
- */
-void parse_loglevel(int argc, char** argv, const OptionDef* options);
-
-/**
- * Return index of option opt in argv or 0 if not found.
- */
-int locate_option(int argc, char** argv, const OptionDef* options, const char* optname);
-
-/**
- * Check if the given stream matches a stream specifier.
- *
- * @param s  Corresponding format context.
- * @param st Stream from s to be checked.
- * @param spec A stream specifier of the [v|a|s|d]:[\<stream index\>] form.
- *
- * @return 1 if the stream matches, 0 if it doesn't, <0 on error
- */
-int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec);
-
-/**
- * Filter out options for given codec.
- *
- * Create a new options dictionary containing only the options from
- * opts which apply to the codec with ID codec_id.
- *
- * @param opts     dictionary to place options in
- * @param codec_id ID of the codec that should be filtered for
- * @param s Corresponding format context.
- * @param st A stream from s for which the options should be filtered.
- * @param codec The particular codec for which the options should be filtered.
- *              If null, the default one is looked up according to the codec id.
- * @return a pointer to the created dictionary
- */
-AVDictionary* filter_codec_opts(AVDictionary* opts,
-                                enum AVCodecID codec_id,
-                                AVFormatContext* s,
-                                AVStream* st,
-                                AVCodec* codec);
-
-/**
- * Setup AVCodecContext options for avformat_find_stream_info().
- *
- * Create an array of dictionaries, one dictionary for each stream
- * contained in s.
- * Each dictionary will contain the options from codec_opts which can
- * be applied to the corresponding stream codec context.
- *
- * @return pointer to the created array of dictionaries, NULL if it
- * cannot be created
- */
-AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* codec_opts);
-
-/**
- * Print the program banner to stderr. The banner contents depend on the
- * current version of the repository and of the libav* libraries used by
- * the program.
- */
-void show_banner(int argc, char** argv, const OptionDef* options);
 
 /**
  * Print the version of the program to stdout. The version message
@@ -270,5 +147,3 @@ int show_version(const char* opt, const char* arg, DictionaryOptions* dopt);
 #define GET_CH_LAYOUT_DESC(ch_layout) \
   char name[128];                     \
   av_get_channel_layout_string(name, sizeof(name), 0, ch_layout);
-
-double get_rotation(AVStream* st);

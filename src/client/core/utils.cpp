@@ -114,7 +114,7 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
         case 0:
           continue;
         default:
-          exit_program(1);
+          NOTREACHED();
       }
 
     if (av_opt_find(&cc, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ) || !codec ||
@@ -175,10 +175,6 @@ double get_rotation(AVStream* st) {
   }
 
   return theta;
-}
-
-void exit_program(int ret) {
-  exit(ret);
 }
 
 #if CONFIG_AVFILTER

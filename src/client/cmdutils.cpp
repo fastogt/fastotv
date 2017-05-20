@@ -153,19 +153,6 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
   return true;
 }
 
-const OptionDef* find_option(const OptionDef* po, const char* name) {
-  const char* p = strchr(name, ':');
-  size_t len = p ? static_cast<size_t>(p - name) : strlen(name);
-
-  while (po->name) {
-    if (strncmp(name, po->name, len) == 0 && strlen(po->name) == len) {
-      break;
-    }
-    po++;
-  }
-  return po;
-}
-
 const AVOption* opt_find(void* obj,
                          const char* name,
                          const char* unit,
@@ -177,31 +164,6 @@ const AVOption* opt_find(void* obj,
   }
 
   return o;
-}
-
-inline void prepare_app_arguments(int* argc_ptr, char*** argv_ptr) {
-  UNUSED(argc_ptr);
-  UNUSED(argv_ptr);
-  /* nothing to do */
-}
-
-int write_option(const OptionDef* po, const char* opt, const char* arg, DictionaryOptions* dopt) {
-  /* new-style options contain an offset into optctx, old-style address of
-   * a global var*/
-
-  int ret = po->func_arg(opt, arg, dopt);
-  if (ret != SUCCESS_RESULT_VALUE) {
-    char err_str[AV_ERROR_MAX_STRING_SIZE] = {0};
-    av_make_error_string(err_str, AV_ERROR_MAX_STRING_SIZE, ret);
-    ERROR_LOG() << "Failed to set value '" << arg << "' for option '" << opt << "': " << err_str;
-    return ret;
-  }
-
-  if (po->flags & OPT_EXIT) {
-    exit_program(0);
-  }
-
-  return 0;
 }
 
 #define INDENT 1
@@ -491,23 +453,6 @@ void print_codec(const AVCodec* c) {
   PRINT_CODEC_SUPPORTED(c, channel_layouts, uint64_t, "channel layouts", 0, GET_CH_LAYOUT_DESC);
 }
 
-int opt_loglevel_inner(const char* opt, const char* arg, char* argv) {
-  UNUSED(argv);
-  UNUSED(opt);
-
-  common::logging::LEVEL_LOG lg;
-  if (common::logging::text_to_log_level(arg, &lg)) {
-    SET_CURRENT_LOG_LEVEL(lg);
-    return SUCCESS_RESULT_VALUE;
-  }
-
-  ERROR_LOG() << "Invalid loglevel " << arg << ". Possible levels are:";
-  for (int i = common::logging::L_EMERG; i < common::logging::LEVEL_LOG_COUNT; ++i) {
-    ERROR_LOG() << common::logging::log_level_to_text(static_cast<common::logging::LEVEL_LOG>(i));
-  }
-  return ERROR_RESULT_VALUE;
-}
-
 void show_help_codec(const std::string& name, bool encoder) {
   if (name.empty()) {
     std::cout << "No codec name specified." << std::endl;
@@ -644,8 +589,6 @@ void show_help_filter(const std::string& name) {
 
 void show_help_default() {
   show_usage();
-  // show_help_options(options, "Main options:", 0, OPT_EXPERT, 0);
-  // show_help_options(options, "Advanced options:", OPT_EXPERT, 0, 0);
   std::cout << "\nWhile playing:\n"
                "q, ESC              quit\n"
                "f                   toggle full screen\n"
@@ -975,10 +918,6 @@ void init_dynload(void) {
 #endif
 }
 
-void exit_program(int ret) {
-  exit(ret);
-}
-
 bool parse_bool(const std::string& bool_str, bool* result) {
   if (bool_str.empty()) {
     WARNING_LOG() << "Can't parse value(bool) invalid arguments!";
@@ -993,121 +932,9 @@ bool parse_bool(const std::string& bool_str, bool* result) {
   return true;
 }
 
-void show_help_options(const OptionDef* options,
-                       const char* msg,
-                       int req_flags,
-                       int rej_flags,
-                       int alt_flags) {
-  const OptionDef* po;
-  bool first = true;
-  for (po = options; po->name; po++) {
-    char buf[64];
-
-    if (((po->flags & req_flags) != req_flags) || (alt_flags && !(po->flags & alt_flags)) ||
-        (po->flags & rej_flags)) {
-      continue;
-    }
-
-    if (first) {
-      printf("%s\n", msg);
-      first = false;
-    }
-    av_strlcpy(buf, po->name, sizeof(buf));
-    if (po->argname) {
-      av_strlcat(buf, " ", sizeof(buf));
-      av_strlcat(buf, po->argname, sizeof(buf));
-    }
-    printf("-%-17s  %s\n", buf, po->help);
-  }
-  printf("\n");
-}
-
-int parse_option(const char* opt,
-                 const char* arg,
-                 const OptionDef* options,
-                 DictionaryOptions* dopt) {
-  const OptionDef* po = find_option(options, opt);
-  if (!po->name) {
-    po = find_option(options, "default");
-  }
-  if (!po->name) {
-    ERROR_LOG() << "Unrecognized option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  int ret = write_option(po, opt, arg, dopt);
-  if (ret < 0) {
-    return ret;
-  }
-
-  return SUCCESS_RESULT_VALUE;
-}
-
-void parse_options(int argc, char** argv, const OptionDef* options, DictionaryOptions* dopt) {
-  bool handleoptions = true;
-
-  /* perform system-dependent conversions for arguments list */
-  prepare_app_arguments(&argc, &argv);
-
-  /* parse options */
-  int optindex = 1;
-  while (optindex < argc) {
-    const char* opt = argv[optindex++];
-
-    if (handleoptions && opt[0] == '-' && opt[1] != '\0') {
-      if (opt[1] == '-' && opt[2] == '\0') {
-        handleoptions = false;
-        continue;
-      }
-      opt++;
-
-      int ret = parse_option(opt, argv[optindex], options, dopt);
-      if (ret < 0) {
-        exit_program(1);
-      }
-      optindex += ret;
-    }
-  }
-}
-
-int locate_option(int argc, char** argv, const OptionDef* options, const char* optname) {
-  for (int i = 1; i < argc; i++) {
-    const char* cur_opt = argv[i];
-
-    if (*cur_opt++ != '-') {
-      continue;
-    }
-
-    const OptionDef* po = find_option(options, cur_opt);
-    if (!po->name && cur_opt[0] == 'n' && cur_opt[1] == 'o') {
-      po = find_option(options, cur_opt + 2);
-    }
-
-    if ((!po->name && !strcmp(cur_opt, optname)) || (po->name && !strcmp(optname, po->name))) {
-      return i;
-    }
-
-    if (!po->name) {
-      i++;
-    }
-  }
-  return 0;
-}
-
-void parse_loglevel(int argc, char** argv, const OptionDef* options) {
-  int idx = locate_option(argc, argv, options, "loglevel");
-  if (!idx) {
-    idx = locate_option(argc, argv, options, "v");
-  }
-  if (idx && argv[idx + 1]) {
-    opt_loglevel_inner(NULL, "loglevel", argv[idx + 1]);
-  }
-}
-
 #define FLAGS \
   (o->type == AV_OPT_TYPE_FLAGS && (arg[0] == '-' || arg[0] == '+')) ? AV_DICT_APPEND : 0
 int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
   const AVOption* o;
   bool consumed = false;
   char opt_stripped[128];
@@ -1198,136 +1025,6 @@ int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
     return 0;
   }
   return AVERROR_OPTION_NOT_FOUND;
-}
-
-int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  return opt_loglevel_inner(opt, arg, NULL);
-}
-
-void show_banner(int argc, char** argv, const OptionDef* options) {
-  UNUSED(argc);
-  UNUSED(argv);
-  UNUSED(options);
-  int idx = locate_option(argc, argv, options, "version");
-  if (idx) {
-    return;
-  }
-
-  print_program_info(INDENT | SHOW_COPYRIGHT, common::logging::L_INFO);
-  print_all_libs_info(INDENT | SHOW_CONFIG, common::logging::L_INFO);
-  print_all_libs_info(INDENT | SHOW_VERSION, common::logging::L_INFO);
-}
-
-int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {
-  int ret = avformat_match_stream_specifier(s, st, spec);
-  if (ret < 0) {
-    ERROR_LOG() << "Invalid stream specifier: " << spec;
-  }
-  return ret;
-}
-
-AVDictionary* filter_codec_opts(AVDictionary* opts,
-                                enum AVCodecID codec_id,
-                                AVFormatContext* s,
-                                AVStream* st,
-                                AVCodec* codec) {
-  AVDictionary* ret = NULL;
-  AVDictionaryEntry* t = NULL;
-  int flags = s->oformat ? AV_OPT_FLAG_ENCODING_PARAM : AV_OPT_FLAG_DECODING_PARAM;
-  char prefix = 0;
-  const AVClass* cc = avcodec_get_class();
-
-  if (!codec) {
-    codec = s->oformat ? avcodec_find_encoder(codec_id) : avcodec_find_decoder(codec_id);
-  }
-
-  AVCodecParameters* codecpar = st->codecpar;
-  if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-    prefix = 'v';
-    flags |= AV_OPT_FLAG_VIDEO_PARAM;
-  } else if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-    prefix = 'a';
-    flags |= AV_OPT_FLAG_AUDIO_PARAM;
-  } else if (codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-    prefix = 's';
-    flags |= AV_OPT_FLAG_SUBTITLE_PARAM;
-  }
-
-  while ((t = av_dict_get(opts, "", t, AV_DICT_IGNORE_SUFFIX))) {
-    char* p = strchr(t->key, ':');
-
-    /* check stream specification in opt name */
-    if (p)
-      switch (check_stream_specifier(s, st, p + 1)) {
-        case 1:
-          *p = 0;
-          break;
-        case 0:
-          continue;
-        default:
-          exit_program(1);
-      }
-
-    if (av_opt_find(&cc, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ) || !codec ||
-        (codec->priv_class &&
-         av_opt_find(&codec->priv_class, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ))) {
-      av_dict_set(&ret, t->key, t->value, 0);
-    } else if (t->key[0] == prefix &&
-               av_opt_find(&cc, t->key + 1, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ)) {
-      av_dict_set(&ret, t->key + 1, t->value, 0);
-    }
-
-    if (p) {
-      *p = ':';
-    }
-  }
-  return ret;
-}
-
-AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* codec_opts) {
-  if (!s->nb_streams) {
-    return NULL;
-  }
-
-  AVDictionary** opts = static_cast<AVDictionary**>(av_mallocz_array(s->nb_streams, sizeof(*opts)));
-  if (!opts) {
-    ERROR_LOG() << "Could not alloc memory for stream options.";
-    return NULL;
-  }
-  for (unsigned int i = 0; i < s->nb_streams; i++) {
-    opts[i] =
-        filter_codec_opts(codec_opts, s->streams[i]->codecpar->codec_id, s, s->streams[i], NULL);
-  }
-  return opts;
-}
-
-double get_rotation(AVStream* st) {
-  AVDictionaryEntry* rotate_tag = av_dict_get(st->metadata, "rotate", NULL, 0);
-  uint8_t* displaymatrix = av_stream_get_side_data(st, AV_PKT_DATA_DISPLAYMATRIX, NULL);
-  double theta = 0;
-
-  if (rotate_tag && *rotate_tag->value && strcmp(rotate_tag->value, "0")) {
-    char* tail;
-    theta = av_strtod(rotate_tag->value, &tail);
-    if (*tail) {
-      theta = 0;
-    }
-  }
-  if (displaymatrix && !theta) {
-    theta = -av_display_rotation_get((int32_t*)displaymatrix);
-  }
-
-  theta -= 360 * floor(theta / 360 + 0.9 / 360);
-
-  if (fabs(theta - 90 * round(theta / 90)) > 2) {
-    WARNING_LOG() << "Odd rotation angle.\n"
-                     "If you want to help, upload a sample "
-                     "of this file to ftp://upload.ffmpeg.org/incoming/ "
-                     "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)";
-  }
-
-  return theta;
 }
 
 #if CONFIG_AVDEVICE

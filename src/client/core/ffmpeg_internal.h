@@ -44,7 +44,7 @@ enum HWAccelID {
   HWACCEL_VIDEOTOOLBOX,
   HWACCEL_QSV,
   HWACCEL_VAAPI,
-  HWACCEL_CUVID,
+  HWACCEL_CUVID
 };
 
 struct InputStream {

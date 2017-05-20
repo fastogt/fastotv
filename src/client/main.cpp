@@ -55,391 +55,112 @@ extern "C" {
 
 #include "client/player.h"
 
+#include "inih/ini.h"
+
+#define CONFIG_MAIN_OPTIONS "main_options"
+#define CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "loglevel"
+#define CONFIG_MAIN_OPTIONS_POWEROFF_ON_EXIT_FIELD "poweroffonexit"
+
+#define CONFIG_PLAYER_OPTIONS "player_options"
+#define CONFIG_PLAYER_OPTIONS_WIDTH_FIELD "width"
+#define CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD "height"
+#define CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD "fullscreen"
+#define CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "volume"
+#define CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD "exitonkeydown"
+#define CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "exitonmousedown"
+
+#define CONFIG_APP_OPTIONS "app_options"
+#define CONFIG_APP_OPTIONS_AST_FIELD "ast"
+#define CONFIG_APP_OPTIONS_VST_FIELD "vst"
+#define CONFIG_APP_OPTIONS_STATS_FIELD "stats"
+#define CONFIG_APP_OPTIONS_FAST_FIELD "fast"
+#define CONFIG_APP_OPTIONS_GENPTS_FIELD "genpts"
+#define CONFIG_APP_OPTIONS_LOWRES_FIELD "lowres"
+#define CONFIG_APP_OPTIONS_SYNC_FIELD "sync"
+#define CONFIG_APP_OPTIONS_FRAMEDROP_FIELD "framedrop"
+#define CONFIG_APP_OPTIONS_INFBUF_FIELD "infbuf"
+#define CONFIG_APP_OPTIONS_VF_FIELD "vf"
+#define CONFIG_APP_OPTIONS_AF_FIELD "af"
+#define CONFIG_APP_OPTIONS_ACODEC_FIELD "acodec"
+#define CONFIG_APP_OPTIONS_VCODEC_FIELD "vcodec"
+#define CONFIG_APP_OPTIONS_HWACCEL_FIELD "hwaccel"
+#define CONFIG_APP_OPTIONS_HWACCEL_DEVICE_FIELD "hwaccel_device"
+#define CONFIG_APP_OPTIONS_HWACCEL_OUTPUT_FORMAT_FIELD "hwaccel_output_format"
+#define CONFIG_APP_OPTIONS_AUTOROTATE_FIELD "autorotate"
+
+#define CONFIG_OTHER_OPTIONS "other"
+#define CONFIG_OTHER_OPTIONS_VIDEO_SIZE_FIELD "video_size"
+#define CONFIG_OTHER_OPTIONS_PIXEL_FORMAT_FIELD "pixel_format"
+
 #undef ERROR
 
 // vaapi args: -hwaccel vaapi -hwaccel_device /dev/dri/card0
 // vdpau args: -hwaccel vdpau
-// scale output: -vf scale=1920:1080
+// scale output: -vf scale=1920x1080
+
+/*
+  [main_options]
+  loglevel=INFO ["EMERG", "ALLERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG"]
+  poweroffonexit=false [true,false]
+
+  [app_options]
+  ast=0 [0, INT_MAX]
+  vst=0 [0, INT_MAX]
+  stats=true [true,false]
+  fast=false [true,false]
+  genpts=false [true,false]
+  lowres=0 [0, INT_MAX]
+  sync=audio [audio, video]
+  framedrop=-1 [-1, 0, 1]
+  infbuf=-1 [-1, 0, 1]
+  vf=std::string() []
+  af=std::string() []
+  acodec=std::string() []
+  vcodec=std::string() []
+  hwaccel=none [none, auto, vdpau, dxva2, vda,
+               videotoolbox, qsv, vaapi, cuvid]
+  hwaccel_device=std::string() []
+  hwaccel_output_format=std::string() []
+  autorotate=false [true,false]
+
+  [player_options]
+  width=0  [0, INT_MAX]
+  height=0 [0, INT_MAX]
+  fullscreen=false [true,false]
+  volume=100 [0,100]
+  exitonkeydown=false [true,false]
+  exitonmousedown=false [true,false]
+
+  [other]
+  video_size=0 [0, INT_MAX]
+  pixel_format=std::string() []
+*/
 
 namespace {
 struct MainOptions {
-  MainOptions() : power_off_on_exit(false) {}
+  MainOptions()
+      : power_off_on_exit(false),
+        loglevel(common::logging::L_INFO),
+        app_options(),
+        player_options(),
+        dict(new DictionaryOptions) {}
+  ~MainOptions() { destroy(&dict); }
+
   bool power_off_on_exit;
+  common::logging::LEVEL_LOG loglevel;
+
+  fasto::fastotv::client::core::AppOptions app_options;
+  fasto::fastotv::client::PlayerOptions player_options;
+  DictionaryOptions* dict;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(MainOptions);
 };
-MainOptions g_main_options;
-fasto::fastotv::client::core::AppOptions g_options;
-fasto::fastotv::client::PlayerOptions g_player_options;
-DictionaryOptions* dict = NULL;  // FIXME
-
-#if CONFIG_AVFILTER
-int opt_set_video_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  const std::string arg_copy(arg);
-  size_t del = arg_copy.find_first_of('=');
-  if (del != std::string::npos) {
-    std::string key = arg_copy.substr(0, del);
-    std::string value = arg_copy.substr(del + 1);
-    fasto::fastotv::Size sz;
-    if (key == "scale" && common::ConvertFromString(value, &sz)) {
-      g_player_options.screen_size = sz;
-    }
-  }
-  g_options.vfilters = arg;
-  return 0;
-}
-
-int opt_set_audio_vfilter(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  g_options.afilters = arg;
-  return 0;
-}
-#endif
 
 void sigterm_handler(int sig) {
   UNUSED(sig);
   exit(EXIT_FAILURE);
 }
-
-int opt_frame_size(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  WARNING_LOG() << "Option -s is deprecated, use -video_size.";
-  return opt_default("video_size", arg, dopt);
-}
-
-static int opt_width(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  if (!parse_number(arg, 1, std::numeric_limits<int>::max(), &g_player_options.screen_size.width)) {
-    return ERROR_RESULT_VALUE;
-  }
-  return SUCCESS_RESULT_VALUE;
-}
-
-int opt_height(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  if (!parse_number(arg, 1, std::numeric_limits<int>::max(),
-                    &g_player_options.screen_size.height)) {
-    return ERROR_RESULT_VALUE;
-  }
-  return SUCCESS_RESULT_VALUE;
-}
-
-int opt_frame_pix_fmt(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-  UNUSED(opt);
-
-  WARNING_LOG() << "Option -pix_fmt is deprecated, use -pixel_format.";
-  return opt_default("pixel_format", arg, dopt);
-}
-
-int opt_sync(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-
-  if (!strcmp(arg, "audio")) {
-    g_options.av_sync_type = fasto::fastotv::client::core::AV_SYNC_AUDIO_MASTER;
-  } else if (!strcmp(arg, "video")) {
-    g_options.av_sync_type = fasto::fastotv::client::core::AV_SYNC_VIDEO_MASTER;
-  } else {
-    ERROR_LOG() << "Unknown value for " << opt << ": " << arg;
-    exit(1);
-  }
-  return 0;
-}
-
-int opt_set_video_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  g_options.video_codec_name = arg;
-  return 0;
-}
-
-int opt_set_audio_codec(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  g_options.audio_codec_name = arg;
-  return 0;
-}
-
-int opt_hwaccel(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(dopt);
-
-  if (!strcmp(arg, "auto")) {
-    g_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_AUTO;
-  } else if (!strcmp(arg, "none")) {
-    g_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_NONE;
-  } else {
-    for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
-      if (!strcmp(fasto::fastotv::client::core::hwaccels[i].name, arg)) {
-        g_options.hwaccel_id = fasto::fastotv::client::core::hwaccels[i].id;
-        return 0;
-      }
-    }
-
-    ERROR_LOG() << "Unknown value for " << opt << ": " << arg;
-    exit(1);
-  }
-  return 0;
-}
-
-int opt_set_hw_device(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  g_options.hwaccel_device = arg;
-  return 0;
-}
-
-int opt_set_hw_output_format(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  g_options.hwaccel_output_format = arg;
-  return 0;
-}
-
-int opt_fullscreen(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  g_player_options.is_full_screen = true;
-  return 0;
-}
-
-int opt_select_audio_stream(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  g_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO] = arg;
-  return 0;
-}
-
-int opt_select_video_stream(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  g_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO] = arg;
-  return 0;
-}
-
-int opt_set_audio_volume(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  int vol;
-  if (!parse_number(arg, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), &vol)) {
-    return AVERROR(EINVAL);
-  }
-  g_player_options.audio_volume = vol;
-  return 0;
-}
-
-int opt_set_show_status(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  g_options.show_status = true;
-  return 0;
-}
-
-int opt_set_non_spec(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  bool fast;
-  if (!parse_bool(arg, &fast)) {
-    return AVERROR(EINVAL);
-  }
-  g_options.fast = fast;
-  return 0;
-}
-
-int opt_set_gen_pts(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  bool genpts;
-  if (!parse_bool(arg, &genpts)) {
-    return AVERROR(EINVAL);
-  }
-  g_options.genpts = genpts;
-  return 0;
-}
-
-int opt_set_lowres_volume(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(dopt);
-
-  if (!arg) {
-    ERROR_LOG() << "Missing argument for option '" << opt << "'";
-    return AVERROR(EINVAL);
-  }
-
-  int lowres;
-  if (!parse_number(arg, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
-                    &lowres)) {
-    return AVERROR(EINVAL);
-  }
-  g_options.lowres = lowres;
-  return 0;
-}
-
-int opt_set_exit_on_keydown(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  g_player_options.exit_on_keydown = true;
-  return 0;
-}
-
-int opt_set_power_off_on_exit(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  g_main_options.power_off_on_exit = true;
-  return 0;
-}
-
-int opt_set_exit_on_mousedown(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  g_player_options.exit_on_mousedown = true;
-  return 0;
-}
-
-int opt_set_frame_drop(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  g_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_ON;
-  return 0;
-}
-
-int opt_set_infinite_buffer(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  g_options.infinite_buffer = true;
-  return 0;
-}
-
-int opt_set_autorotate(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  UNUSED(opt);
-  UNUSED(arg);
-  UNUSED(dopt);
-
-  g_options.autorotate = true;
-  return 0;
-}
-
-const OptionDef options[] = {
-    {"loglevel", OPT_NOTHING, opt_loglevel, "set logging level", "loglevel"},
-    {"x", OPT_NOTHING, opt_width, "force displayed width", "width"},
-    {"y", OPT_NOTHING, opt_height, "force displayed height", "height"},
-    {"s", OPT_VIDEO, opt_frame_size, "set frame size (WxH or abbreviation)", "size"},
-    {"fs", OPT_NOTHING, opt_fullscreen, "force full screen", NULL},
-    {"ast", OPT_EXPERT, opt_select_audio_stream, "select desired audio stream", "stream_specifier"},
-    {"vst", OPT_EXPERT, opt_select_video_stream, "select desired video stream", "stream_specifier"},
-    {"volume", OPT_NOTHING, opt_set_audio_volume, "set startup volume 0=min 100=max", "volume"},
-    {"pix_fmt", OPT_EXPERT | OPT_VIDEO, opt_frame_pix_fmt, "set pixel format", "format"},
-    {"stats", OPT_EXPERT, opt_set_show_status, "show status", ""},
-    {"fast", OPT_EXPERT, opt_set_non_spec, "non spec compliant optimizations", ""},
-    {"genpts", OPT_EXPERT, opt_set_gen_pts, "generate pts", ""},
-    {"lowres", OPT_EXPERT, opt_set_lowres_volume, "", ""},
-    {"sync", OPT_EXPERT, opt_sync, "set audio-video sync. type (type=audio/video)", "type"},
-    {"exitonkeydown", OPT_EXPERT, opt_set_exit_on_keydown, "exit on key down", ""},
-    {"exitonmousedown", OPT_EXPERT, opt_set_exit_on_mousedown, "exit on mouse down", ""},
-    {"poweroffonexit", OPT_EXPERT, opt_set_power_off_on_exit, "poweroff on exit application", ""},
-    {"framedrop", OPT_EXPERT, opt_set_frame_drop, "drop frames when cpu is too slow", ""},
-    {"infbuf", OPT_EXPERT, opt_set_infinite_buffer,
-     "don't limit the input buffer size (useful with realtime streams)", ""},
-#if CONFIG_AVFILTER
-    {"vf", OPT_EXPERT, opt_set_video_vfilter, "set video filters", "filter_graph"},
-    {"af", OPT_NOTHING, opt_set_audio_vfilter, "set audio filters", "filter_graph"},
-#endif
-    {"default", OPT_AUDIO | OPT_VIDEO | OPT_EXPERT, opt_default, "generic catch all option", ""},
-    {"acodec", OPT_EXPERT, opt_set_audio_codec, "force audio decoder", "decoder_name"},
-    {"vcodec", OPT_EXPERT, opt_set_video_codec, "force video decoder", "decoder_name"},
-    {"hwaccel", OPT_EXPERT, opt_hwaccel, "use HW accelerated decoding", "hwaccel name"},
-    {"hwaccel_device", OPT_VIDEO | OPT_EXPERT | OPT_INPUT, opt_set_hw_device,
-     "select a device for HW acceleration", "devicename"},
-    {"hwaccel_output_format", OPT_VIDEO | OPT_EXPERT | OPT_INPUT, opt_set_hw_output_format,
-     "select output format used with HW accelerated decoding", "format"},
-    {"autorotate", OPT_NOTHING, opt_set_autorotate, "automatically rotate video", ""},
-    {NULL, OPT_NOTHING, NULL, NULL, NULL}};
 
 int fasto_log_to_ffmpeg(common::logging::LEVEL_LOG level) {
   if (level <= common::logging::L_CRIT) {
@@ -497,10 +218,8 @@ template <typename B>
 class FFmpegApplication : public B {
  public:
   typedef B base_class_t;
-  FFmpegApplication(int argc, char** argv) : base_class_t(argc, argv), dict_(NULL) {
+  FFmpegApplication(int argc, char** argv) : base_class_t(argc, argv) {
     init_dynload();
-
-    parse_loglevel(argc, argv, options);
 
 /* register all codecs, demux and protocols */
 #if CONFIG_AVDEVICE
@@ -512,21 +231,15 @@ class FFmpegApplication : public B {
     av_register_all();
     avformat_network_init();
 
-    DictionaryOptions* lopt = new DictionaryOptions;
-
     signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
     signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
 
-    show_banner(argc, argv, options);
-    parse_options(argc, argv, options, lopt);
-    dict = dict_ = lopt;
     av_log_set_callback(avlog_cb);
     int ffmpeg_log_level = fasto_log_to_ffmpeg(common::logging::CURRENT_LOG_LEVEL());
     av_log_set_level(ffmpeg_log_level);
   }
 
   virtual int PreExec() override {
-    g_options.autorotate = true;  // fix me
     if (av_lockmgr_register(lockmgr)) {
       ERROR_LOG() << "Could not initialize lock manager!";
       return EXIT_FAILURE;
@@ -550,11 +263,7 @@ class FFmpegApplication : public B {
 
   ~FFmpegApplication() {
     av_lockmgr_register(NULL);
-    destroy(&dict_);
     avformat_network_deinit();
-    if (g_options.show_status) {
-      printf("\n");
-    }
   }
 
  private:
@@ -583,8 +292,6 @@ class FFmpegApplication : public B {
     }
     return 1;
   }
-
-  DictionaryOptions* dict_;
 };
 
 common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** argv) {
@@ -598,15 +305,16 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
     common::ErrnoError err =
         common::file_system::create_directory(app_directory_absolute_path, true);
     if (err && err->IsError()) {
-      ERROR_LOG() << "Can't create app directory error:(" << err->Description()
-                  << "), path: " << app_directory_absolute_path;
+      std::cout << "Can't create app directory error:(" << err->Description()
+                << "), path: " << app_directory_absolute_path << std::endl;
       return EXIT_FAILURE;
     }
   }
 
   common::ErrnoError err = common::file_system::node_access(app_directory_absolute_path);
   if (err && err->IsError()) {
-    ERROR_LOG() << "Can't have permissions to app directory path: " << app_directory_absolute_path;
+    std::cout << "Can't have permissions to app directory path: " << app_directory_absolute_path
+              << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -614,20 +322,196 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
     common::ErrnoError err =
         common::file_system::create_directory(runtime_directory_absolute_path, true);
     if (err && err->IsError()) {
-      ERROR_LOG() << "Can't create runtime directory error:(" << err->Description()
-                  << "), path: " << runtime_directory_absolute_path;
+      std::cout << "Can't create runtime directory error:(" << err->Description()
+                << "), path: " << runtime_directory_absolute_path << std::endl;
       return EXIT_FAILURE;
     }
   }
 
   err = common::file_system::node_access(runtime_directory_absolute_path);
   if (err && err->IsError()) {
-    ERROR_LOG() << "Can't have permissions to runtime directory path: "
-                << runtime_directory_absolute_path;
+    std::cout << "Can't have permissions to runtime directory path: "
+              << runtime_directory_absolute_path << std::endl;
     return EXIT_FAILURE;
   }
 
   return EXIT_SUCCESS;
+}
+
+static int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
+  MainOptions* pconfig = reinterpret_cast<MainOptions*>(user);
+  size_t value_len = strlen(value);
+  if (value_len == 0) {  // skip empty fields
+    return 0;
+  }
+
+#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
+  if (MATCH(CONFIG_MAIN_OPTIONS, CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD)) {
+    common::logging::LEVEL_LOG lg;
+    if (common::logging::text_to_log_level(value, &lg)) {
+      pconfig->loglevel = lg;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_MAIN_OPTIONS, CONFIG_MAIN_OPTIONS_POWEROFF_ON_EXIT_FIELD)) {
+    bool exit;
+    if (parse_bool(value, &exit)) {
+      pconfig->power_off_on_exit = exit;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_WIDTH_FIELD)) {
+    int width;
+    if (parse_number(value, 0, std::numeric_limits<int>::max(), &width)) {
+      pconfig->player_options.screen_size.width = width;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD)) {
+    int height;
+    if (parse_number(value, 0, std::numeric_limits<int>::max(), &height)) {
+      pconfig->player_options.screen_size.height = height;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD)) {
+    bool is_full_screen;
+    if (parse_bool(value, &is_full_screen)) {
+      pconfig->player_options.is_full_screen = is_full_screen;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_VOLUME_FIELD)) {
+    int volume;
+    if (parse_number(value, 0, 100, &volume)) {
+      pconfig->player_options.audio_volume = volume;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD)) {
+    bool exit;
+    if (parse_bool(value, &exit)) {
+      pconfig->player_options.exit_on_keydown = exit;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD)) {
+    bool exit;
+    if (parse_bool(value, &exit)) {
+      pconfig->player_options.exit_on_mousedown = exit;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AST_FIELD)) {
+    pconfig->app_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO] = value;
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VST_FIELD)) {
+    pconfig->app_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO] = value;
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_STATS_FIELD)) {
+    bool show_stats;
+    if (parse_bool(value, &show_stats)) {
+      pconfig->app_options.show_status = show_stats;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_FAST_FIELD)) {
+    bool fast;
+    if (parse_bool(value, &fast)) {
+      pconfig->app_options.fast = fast;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_GENPTS_FIELD)) {
+    bool genpts;
+    if (parse_bool(value, &genpts)) {
+      pconfig->app_options.genpts = genpts;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_LOWRES_FIELD)) {
+    int lowres;
+    if (parse_number(value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
+                     &lowres)) {
+      pconfig->app_options.lowres = lowres;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_SYNC_FIELD)) {
+    if (strcmp(value, "audio") == 0) {
+      pconfig->app_options.av_sync_type = fasto::fastotv::client::core::AV_SYNC_AUDIO_MASTER;
+    } else if (strcmp(value, "video") == 0) {
+      pconfig->app_options.av_sync_type = fasto::fastotv::client::core::AV_SYNC_VIDEO_MASTER;
+    } else {
+      return 0;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_FRAMEDROP_FIELD)) {
+    if (strcmp(value, "auto") == 0) {
+      pconfig->app_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_AUTO;
+    } else if (strcmp(value, "off") == 0) {
+      pconfig->app_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_OFF;
+    } else if (strcmp(value, "on") == 0) {
+      pconfig->app_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_ON;
+    } else {
+      return 0;
+    }
+
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_INFBUF_FIELD)) {
+    int inf;
+    if (parse_number(value, -1, 1, &inf)) {
+      pconfig->app_options.infinite_buffer = inf;
+    }
+    return 1;
+#if CONFIG_AVFILTER
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VF_FIELD)) {
+    const std::string arg_copy(value);
+    size_t del = arg_copy.find_first_of('=');
+    if (del != std::string::npos) {
+      std::string key = arg_copy.substr(0, del);
+      std::string value = arg_copy.substr(del + 1);
+      fasto::fastotv::Size sz;
+      if (key == "scale" && common::ConvertFromString(value, &sz)) {
+        pconfig->player_options.screen_size = sz;
+      }
+    }
+    pconfig->app_options.vfilters = value;
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AF_FIELD)) {
+    pconfig->app_options.afilters = value;
+    return 1;
+#endif
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_ACODEC_FIELD)) {
+    pconfig->app_options.audio_codec_name = value;
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VCODEC_FIELD)) {
+    if (strcmp(value, "auto") == 0) {
+      pconfig->app_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_AUTO;
+    } else if (strcmp(value, "none") == 0) {
+      pconfig->app_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_NONE;
+    } else {
+      for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
+        if (strcmp(fasto::fastotv::client::core::hwaccels[i].name, value) == 0) {
+          pconfig->app_options.hwaccel_id = fasto::fastotv::client::core::hwaccels[i].id;
+          return 1;
+        }
+      }
+      return 0;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_FIELD)) {
+    pconfig->app_options.video_codec_name = value;
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_DEVICE_FIELD)) {
+    pconfig->app_options.hwaccel_device = value;
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_OUTPUT_FORMAT_FIELD)) {
+    pconfig->app_options.hwaccel_output_format = value;
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AUTOROTATE_FIELD)) {
+    bool autorotate;
+    if (parse_bool(value, &autorotate)) {
+      pconfig->app_options.autorotate = autorotate;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_OTHER_OPTIONS, CONFIG_OTHER_OPTIONS_VIDEO_SIZE_FIELD)) {
+    opt_default("video_size", value, pconfig->dict);
+    return 1;
+  } else if (MATCH(CONFIG_OTHER_OPTIONS, CONFIG_OTHER_OPTIONS_PIXEL_FORMAT_FIELD)) {
+    opt_default("pixel_format", value, pconfig->dict);
+    return 1;
+  } else {
+    return 0; /* unknown section/name, error */
+  }
 }
 
 // runtime_directory_absolute_path can be not equal pwd (used for pid file location)
@@ -640,17 +524,26 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
-#if defined(NDEBUG)
-  common::logging::LEVEL_LOG level = common::logging::L_INFO;
-#else
-  common::logging::LEVEL_LOG level = common::logging::L_INFO;
-#endif
+  const std::string config_absolute_path =
+      common::file_system::make_path(app_directory_absolute_path, CONFIG_FILE_NAME);
+  if (!common::file_system::is_valid_path(config_absolute_path)) {
+    std::cout << "Can't get pid file path: " << config_absolute_path << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  MainOptions main_options;
+  const char* config_absolute_path_ptr = common::utils::c_strornull(config_absolute_path);
+  if (ini_parse(config_absolute_path_ptr, ini_handler_fasto, &main_options) < 0) {
+    std::cout << "Can't load config " << config_absolute_path << ", use default settings."
+              << std::endl;
+  }
+
 #if defined(LOG_TO_FILE)
   const std::string log_path =
       common::file_system::make_path(app_directory_absolute_path, std::string(LOG_FILE_NAME));
-  INIT_LOGGER(PROJECT_NAME_TITLE, log_path, level);
+  INIT_LOGGER(PROJECT_NAME_TITLE, log_path, main_options.loglevel);
 #else
-  INIT_LOGGER(PROJECT_NAME_TITLE, level);
+  INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
 #endif
 
   common::application::Application app(argc, argv, &CreateApplicationImpl);
@@ -687,10 +580,11 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
+  DictionaryOptions* dict = main_options.dict;
   fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict,
                                                     dict->format_opts, dict->codec_opts);
-  fasto::fastotv::client::Player* player =
-      new fasto::fastotv::client::Player(g_player_options, g_options, copt);
+  fasto::fastotv::client::Player* player = new fasto::fastotv::client::Player(
+      main_options.player_options, main_options.app_options, copt);
   res = app.Exec();
   destroy(&player);
 
@@ -706,7 +600,7 @@ static int main_single_application(int argc,
                   << ", error: " << err->Description();
   }
 
-  if (g_main_options.power_off_on_exit) {
+  if (main_options.power_off_on_exit) {
     common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);
     if (err_shut && err_shut->IsError()) {
       WARNING_LOG() << "Can't shutdown error: " << err_shut->Description();
@@ -717,7 +611,7 @@ static int main_single_application(int argc,
 
 /* Called from the main */
 int main(int argc, char** argv) {
-  for (int i = 0; i < argc; ++i) {
+  for (int i = 1; i < argc; ++i) {
     const bool lastarg = i == argc - 1;
     if (strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0) {
       show_version();
