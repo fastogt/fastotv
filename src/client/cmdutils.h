@@ -18,28 +18,13 @@
 
 #pragma once
 
-#include <inttypes.h>  // for PRIx64=
-#include <stdint.h>    // for int64_t
-#include <stdio.h>     // for snprintf
-#include <ostream>     // for operator<<, basic_ostream
-#include <string>      // for operator<<, string
-
 #include "ffmpeg_config.h"  // for CONFIG_AVDEVICE, etc
 
 extern "C" {
-#include <libavcodec/avcodec.h>    // for AVCodec, AVCodecID
-#include <libavformat/avformat.h>  // for AVFormatContext, AVStream
-#include <libavutil/attributes.h>  // for av_noreturn
-#include <libavutil/avutil.h>      // for av_get_media_type_string
-#include <libavutil/channel_layout.h>
 #include <libavutil/dict.h>       // for AVDictionary
-#include <libavutil/log.h>        // for AVClass
-#include <libavutil/pixdesc.h>    // for av_get_pix_fmt_name
-#include <libavutil/samplefmt.h>  // for av_get_sample_fmt_name
 }
 
 #include <common/convert2string.h>  // for ConvertFromString
-#include <common/logger.h>          // for COMPACT_LOG_WARNING, etc
 #include <common/macros.h>          // for DISALLOW_COPY_AND_ASSIGN
 
 void show_license();

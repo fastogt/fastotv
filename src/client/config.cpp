@@ -18,8 +18,6 @@
 
 #include "config.h"
 
-#include <iostream>
-
 #include <common/file_system.h>
 #include <common/utils.h>
 
@@ -94,10 +92,14 @@
   exitonmousedown=false [true,false]
 */
 
+namespace fasto {
+namespace fastotv {
+namespace client {
+
 namespace {
 
 int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  FastoTVConfig* pconfig = reinterpret_cast<FastoTVConfig*>(user);
+  TVConfig* pconfig = reinterpret_cast<TVConfig*>(user);
   size_t value_len = strlen(value);
   if (value_len == 0) {  // skip empty fields
     return 0;
@@ -258,9 +260,20 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
 }
 }
 
-int load_config_file(const std::string& config_absolute_path, FastoTVConfig* options) {
+TVConfig::TVConfig()
+    : power_off_on_exit(false),
+      loglevel(common::logging::L_INFO),
+      app_options(),
+      player_options(),
+      dict(new DictionaryOptions) {}
+
+TVConfig::~TVConfig() {
+  destroy(&dict);
+}
+
+bool load_config_file(const std::string& config_absolute_path, TVConfig* options) {
   if (!options) {
-    return EXIT_FAILURE;
+    return false;
   }
 
   std::string copy_config_absolute_path = config_absolute_path;
@@ -272,22 +285,19 @@ int load_config_file(const std::string& config_absolute_path, FastoTVConfig* opt
   }
 
   const char* copy_config_absolute_path_ptr = common::utils::c_strornull(copy_config_absolute_path);
-  if (ini_parse(copy_config_absolute_path_ptr, ini_handler_fasto, options) < 0) {
-    std::cout << "Can't load config " << copy_config_absolute_path << ", use default settings."
-              << std::endl;
-  }
-  return EXIT_SUCCESS;
+  ini_parse(copy_config_absolute_path_ptr, ini_handler_fasto, options);
+  return true;
 }
 
-int save_config_file(const std::string& config_absolute_path, FastoTVConfig* options) {
+bool save_config_file(const std::string& config_absolute_path, TVConfig* options) {
   if (!options) {
-    return EXIT_FAILURE;
+    return false;
   }
 
   common::file_system::ascii_string_path config_path(config_absolute_path);
   common::file_system::ANSIFile config_save_file(config_path);
   if (!config_save_file.Open("w")) {
-    return EXIT_FAILURE;
+    return false;
   }
 
   config_save_file.Write("[" CONFIG_MAIN_OPTIONS "]\n");
@@ -348,9 +358,13 @@ int save_config_file(const std::string& config_absolute_path, FastoTVConfig* opt
                                  options->player_options.audio_volume);
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD "=%s\n",
                                  common::ConvertToString(options->player_options.exit_on_keydown));
-  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "=%s\n",
-                                 common::ConvertToString(options->player_options.exit_on_mousedown));
+  config_save_file.WriteFormated(
+      CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "=%s\n",
+      common::ConvertToString(options->player_options.exit_on_mousedown));
 
   config_save_file.Close();
-  return EXIT_SUCCESS;
+  return true;
+}
+}
+}
 }

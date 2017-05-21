@@ -16,20 +16,19 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <common/logger.h>
+#include <common/log_levels.h>
 
 #include "cmdutils.h"
-#include "client/core/app_options.h"
 #include "player.h"
+#include "client/core/app_options.h"
 
-struct FastoTVConfig {
-  FastoTVConfig()
-      : power_off_on_exit(false),
-        loglevel(common::logging::L_INFO),
-        app_options(),
-        player_options(),
-        dict(new DictionaryOptions) {}
-  ~FastoTVConfig() { destroy(&dict); }
+namespace fasto {
+namespace fastotv {
+namespace client {
+
+struct TVConfig {
+  TVConfig();
+  ~TVConfig();
 
   bool power_off_on_exit;
   common::logging::LEVEL_LOG loglevel;
@@ -39,8 +38,12 @@ struct FastoTVConfig {
   DictionaryOptions* dict;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(FastoTVConfig);
+  DISALLOW_COPY_AND_ASSIGN(TVConfig);
 };
 
-int load_config_file(const std::string& config_absolute_path, FastoTVConfig* options);
-int save_config_file(const std::string& config_absolute_path, FastoTVConfig* options);
+bool load_config_file(const std::string& config_absolute_path, TVConfig* options);
+bool save_config_file(const std::string& config_absolute_path, TVConfig* options);
+
+}
+}
+}

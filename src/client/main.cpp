@@ -234,7 +234,7 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
-  FastoTVConfig main_options;
+  fasto::fastotv::client::TVConfig main_options;
   const std::string config_absolute_path =
       common::file_system::make_path(app_directory_absolute_path, CONFIG_FILE_NAME);
   if (!common::file_system::is_valid_path(config_absolute_path)) {
