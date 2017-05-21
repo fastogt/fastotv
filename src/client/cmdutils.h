@@ -70,12 +70,6 @@ struct DictionaryOptions {
 void init_dynload(void);
 
 /**
- * Fallback for options that are not explicitly handled, these will be
- * parsed through AVOptions.
- */
-int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-/**
  * Set the libav* libraries log level.
  */
 int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt);

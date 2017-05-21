@@ -153,19 +153,6 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
   return true;
 }
 
-const AVOption* opt_find(void* obj,
-                         const char* name,
-                         const char* unit,
-                         int opt_flags,
-                         int search_flags) {
-  const AVOption* o = av_opt_find(obj, name, unit, opt_flags, search_flags);
-  if (o && !o->flags) {
-    return NULL;
-  }
-
-  return o;
-}
-
 #define INDENT 1
 #define SHOW_VERSION 2
 #define SHOW_CONFIG 4
@@ -930,101 +917,6 @@ bool parse_bool(const std::string& bool_str, bool* result) {
     *result = bool_str_copy == "true" || bool_str_copy == "on";
   }
   return true;
-}
-
-#define FLAGS \
-  (o->type == AV_OPT_TYPE_FLAGS && (arg[0] == '-' || arg[0] == '+')) ? AV_DICT_APPEND : 0
-int opt_default(const char* opt, const char* arg, DictionaryOptions* dopt) {
-  const AVOption* o;
-  bool consumed = false;
-  char opt_stripped[128];
-  const char* p;
-  const AVClass *cc = avcodec_get_class(), *fc = avformat_get_class();
-#if CONFIG_AVRESAMPLE
-  const AVClass* rc = avresample_get_class();
-#endif
-#if CONFIG_SWSCALE
-  const AVClass* sc = sws_get_class();
-#endif
-#if CONFIG_SWRESAMPLE
-  const AVClass* swr_class = swr_get_class();
-#endif
-
-  if (strcmp(opt, "debug") == 0) {
-    SET_CURRENT_LOG_LEVEL(common::logging::L_DEBUG);
-  }
-
-  if (!(p = strchr(opt, ':'))) {
-    p = opt + strlen(opt);
-  }
-  size_t diff = static_cast<size_t>(p - opt + 1);
-  av_strlcpy(opt_stripped, opt, FFMIN(sizeof(opt_stripped), diff));
-
-  if ((o = opt_find(&cc, opt_stripped, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ)) ||
-      ((opt[0] == 'v' || opt[0] == 'a' || opt[0] == 's') &&
-       (o = opt_find(&cc, opt + 1, NULL, 0, AV_OPT_SEARCH_FAKE_OBJ)))) {
-    av_dict_set(&dopt->codec_opts, opt, arg, FLAGS);
-    consumed = true;
-  }
-  if ((o = opt_find(&fc, opt, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ))) {
-    av_dict_set(&dopt->format_opts, opt, arg, FLAGS);
-    if (consumed) {
-      DEBUG_LOG() << "Routing option " << opt << " to both codec and muxer layer";
-    }
-    consumed = true;
-  }
-#if CONFIG_SWSCALE
-  if (!consumed &&
-      (o = opt_find(&sc, opt, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ))) {
-    struct SwsContext* sws = sws_alloc_context();
-    int ret = av_opt_set(sws, opt, arg, 0);
-    sws_freeContext(sws);
-    if (!strcmp(opt, "srcw") || !strcmp(opt, "srch") || !strcmp(opt, "dstw") ||
-        !strcmp(opt, "dsth") || !strcmp(opt, "src_format") || !strcmp(opt, "dst_format")) {
-      ERROR_LOG() << "Directly using swscale dimensions/format options is not supported, please "
-                     "use the -s or -pix_fmt options";
-      return AVERROR(EINVAL);
-    }
-    if (ret < 0) {
-      ERROR_LOG() << "Error setting option " << opt << ".";
-      return ret;
-    }
-
-    av_dict_set(&dopt->sws_dict, opt, arg, FLAGS);
-
-    consumed = true;
-  }
-#else
-  if (!consumed && !strcmp(opt, "sws_flags")) {
-    WARNING_LOG() << "Ignoring " << opt << " " << arg << ", due to disabled swscale";
-    consumed = true;
-  }
-#endif
-#if CONFIG_SWRESAMPLE
-  if (!consumed &&
-      (o = opt_find(&swr_class, opt, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ))) {
-    struct SwrContext* swr = swr_alloc();
-    int ret = av_opt_set(swr, opt, arg, 0);
-    swr_free(&swr);
-    if (ret < 0) {
-      ERROR_LOG() << "Error setting option " << opt;
-      return ret;
-    }
-    av_dict_set(&dopt->swr_opts, opt, arg, FLAGS);
-    consumed = true;
-  }
-#endif
-#if CONFIG_AVRESAMPLE
-  if ((o = opt_find(&rc, opt, NULL, 0, AV_OPT_SEARCH_CHILDREN | AV_OPT_SEARCH_FAKE_OBJ))) {
-    av_dict_set(&resample_opts, opt, arg, FLAGS);
-    consumed = 1;
-  }
-#endif
-
-  if (consumed) {
-    return 0;
-  }
-  return AVERROR_OPTION_NOT_FOUND;
 }
 
 #if CONFIG_AVDEVICE

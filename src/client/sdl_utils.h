@@ -26,7 +26,7 @@ namespace client {
 
 class TextureSaver {
  public:
-  TextureSaver(SDL_Surface* surface);
+  explicit TextureSaver(SDL_Surface* surface);
   ~TextureSaver();
   SDL_Texture* GetTexture(SDL_Renderer* renderer) const;
 

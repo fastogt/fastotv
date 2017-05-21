@@ -242,8 +242,8 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
-  res = load_config_file(config_absolute_path, &main_options);
-  if (res == EXIT_FAILURE) {
+  bool is_loaded = load_config_file(config_absolute_path, &main_options);
+  if (!is_loaded) {
     return EXIT_FAILURE;
   }
 
@@ -310,7 +310,8 @@ static int main_single_application(int argc,
   }
 
   // save config file
-  res = save_config_file(config_absolute_path, &main_options);
+  bool is_saved = save_config_file(config_absolute_path, &main_options);
+  UNUSED(is_saved);
 
   if (main_options.power_off_on_exit) {
     common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);
