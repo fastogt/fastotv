@@ -15,6 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
+#include <signal.h>
 
 #include <iostream>
 
