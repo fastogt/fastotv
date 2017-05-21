@@ -26,7 +26,7 @@ namespace client {
 namespace core {
 
 AppOptions::AppOptions()
-    : autorotate(false),
+    : autorotate(true),
       framedrop(FRAME_DROP_AUTO),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),

@@ -96,11 +96,6 @@ int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec);
 
 double get_rotation(AVStream* st);
 
-/**
- * Wraps exit with a program-specific cleanup routine.
- */
-void exit_program(int ret) av_noreturn;
-
 #if CONFIG_AVFILTER
 int configure_filtergraph(AVFilterGraph* graph,
                           const std::string& filtergraph,

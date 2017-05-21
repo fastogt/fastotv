@@ -1102,6 +1102,7 @@ int VideoState::ReadThread() {
     av_dict_set(&copt_.format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
     scan_all_pmts_set = true;
   }
+
   int open_result =
       avformat_open_input(&ic, in_filename, NULL, &copt_.format_opts);  // autodetect format
   if (open_result < 0) {

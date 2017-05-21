@@ -118,8 +118,7 @@ PlayerOptions::PlayerOptions()
       is_full_screen(false),
       default_size(width, height),
       screen_size(0, 0),
-      audio_volume(volume),
-      muted(false) {}
+      audio_volume(volume) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -149,7 +148,8 @@ Player::Player(const PlayerOptions& options,
       ytop_(0),
       controller_(new IoService),
       current_state_(INIT_STATE),
-      current_state_str_("Init") {
+      current_state_str_("Init"),
+      muted_(false) {
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -198,11 +198,11 @@ void Player::SetFullScreen(bool full_screen) {
 }
 
 void Player::SetMute(bool mute) {
-  options_.muted = mute;
+  muted_ = mute;
 }
 
 void Player::Mute() {
-  bool muted = !options_.muted;
+  bool muted = !muted_;
   SetMute(muted);
 }
 
@@ -728,7 +728,7 @@ bool Player::GetCurrentUrl(Url* url) const {
 void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
   Player* player = static_cast<Player*>(opaque);
   core::VideoState* st = player->stream_;
-  if (!player->options_.muted && st && st->IsStreamReady()) {
+  if (!player->muted_ && st && st->IsStreamReady()) {
     st->UpdateAudioBuffer(stream, len, player->options_.audio_volume);
   } else {
     memset(stream, 0, len);
