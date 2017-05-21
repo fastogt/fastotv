@@ -20,6 +20,8 @@
 
 #include "ffmpeg_config.h"
 
+#include <string>
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 }
@@ -75,4 +77,9 @@ const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt);
 }
 }
 }
+}
+
+namespace common {
+std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value);
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out);
 }

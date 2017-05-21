@@ -437,6 +437,7 @@ ENDIF(ENABLE_LIRC)
 
 SET(BUILD_CLIENT_SOURCES
   player.h player.cpp
+  config.h config.cpp
   cmdutils.h cmdutils.cpp
   sdl_utils.h sdl_utils.cpp
   ioservice.h ioservice.cpp

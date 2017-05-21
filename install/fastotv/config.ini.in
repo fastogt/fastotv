@@ -1,7 +1,6 @@
 [main_options]
 poweroffonexit=@CONFIG_POWER_OFF_ON_EXIT@
 [player_options]
-[other]
 [app_options]
 hwaccel=@CONFIG_HWACCEL_METHOD@
 vf=@CONFIG_VF_SCALE@

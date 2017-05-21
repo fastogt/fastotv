@@ -16,14 +16,6 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <errno.h>   // for EINVAL
-#include <signal.h>  // for signal, SIGINT, SIGTERM
-#include <stdio.h>   // for printf
-#include <stdlib.h>  // for exit, EXIT_FAILURE
-#include <string.h>  // for strcmp, NULL, strchr
-#include <limits>    // for numeric_limits
-#include <ostream>   // for operator<<, basic_ostream
-#include <string>    // for char_traits, string, etc
 #include <iostream>
 
 #include "ffmpeg_config.h"
@@ -34,128 +26,22 @@ extern "C" {
 #if CONFIG_AVFILTER
 #include <libavfilter/avfilter.h>  // for avfilter_get_class, etc
 #endif
-#include <libavformat/avformat.h>  // for av_find_input_format, etc
-#include <libavutil/avutil.h>
-#include <libavutil/error.h>  // for AVERROR
-#include <libavutil/opt.h>    // for AV_OPT_FLAG_DECODING_PARAM, etc
 }
 
-#include <common/log_levels.h>  // for LEVEL_LOG, etc
-#include <common/logger.h>      // for LogMessage, etc
-#include <common/macros.h>      // for UNUSED, etc
 #include <common/file_system.h>
-#include <common/threads/types.h>
-#include <common/utils.h>
 #include <common/system/system.h>
+#include <common/utils.h>
 
-#include "client/cmdutils.h"          // for HAS_ARG, OPT_EXPERT, etc
-#include "client/core/app_options.h"  // for AppOptions, ComplexOptions
 #include "client/core/types.h"
 #include "client/core/application/sdl2_application.h"
 
 #include "client/player.h"
 
-#include "inih/ini.h"
-
-#define CONFIG_MAIN_OPTIONS "main_options"
-#define CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "loglevel"
-#define CONFIG_MAIN_OPTIONS_POWEROFF_ON_EXIT_FIELD "poweroffonexit"
-
-#define CONFIG_PLAYER_OPTIONS "player_options"
-#define CONFIG_PLAYER_OPTIONS_WIDTH_FIELD "width"
-#define CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD "height"
-#define CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD "fullscreen"
-#define CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "volume"
-#define CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD "exitonkeydown"
-#define CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "exitonmousedown"
-
-#define CONFIG_APP_OPTIONS "app_options"
-#define CONFIG_APP_OPTIONS_AST_FIELD "ast"
-#define CONFIG_APP_OPTIONS_VST_FIELD "vst"
-#define CONFIG_APP_OPTIONS_STATS_FIELD "stats"
-#define CONFIG_APP_OPTIONS_FAST_FIELD "fast"
-#define CONFIG_APP_OPTIONS_GENPTS_FIELD "genpts"
-#define CONFIG_APP_OPTIONS_LOWRES_FIELD "lowres"
-#define CONFIG_APP_OPTIONS_SYNC_FIELD "sync"
-#define CONFIG_APP_OPTIONS_FRAMEDROP_FIELD "framedrop"
-#define CONFIG_APP_OPTIONS_INFBUF_FIELD "infbuf"
-#define CONFIG_APP_OPTIONS_VF_FIELD "vf"
-#define CONFIG_APP_OPTIONS_AF_FIELD "af"
-#define CONFIG_APP_OPTIONS_ACODEC_FIELD "acodec"
-#define CONFIG_APP_OPTIONS_VCODEC_FIELD "vcodec"
-#define CONFIG_APP_OPTIONS_HWACCEL_FIELD "hwaccel"
-#define CONFIG_APP_OPTIONS_HWACCEL_DEVICE_FIELD "hwaccel_device"
-#define CONFIG_APP_OPTIONS_HWACCEL_OUTPUT_FORMAT_FIELD "hwaccel_output_format"
-#define CONFIG_APP_OPTIONS_AUTOROTATE_FIELD "autorotate"
-
-#define CONFIG_OTHER_OPTIONS "other"
-#define CONFIG_OTHER_OPTIONS_VIDEO_SIZE_FIELD "video_size"
-#define CONFIG_OTHER_OPTIONS_PIXEL_FORMAT_FIELD "pixel_format"
+#include "config.h"
 
 #undef ERROR
 
-// vaapi args: -hwaccel vaapi -hwaccel_device /dev/dri/card0
-// vdpau args: -hwaccel vdpau
-// scale output: -vf scale=1920x1080
-
-/*
-  [main_options]
-  loglevel=INFO ["EMERG", "ALLERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG"]
-  poweroffonexit=false [true,false]
-
-  [app_options]
-  ast=0 [0, INT_MAX]
-  vst=0 [0, INT_MAX]
-  stats=true [true,false]
-  fast=false [true,false]
-  genpts=false [true,false]
-  lowres=0 [0, INT_MAX]
-  sync=audio [audio, video]
-  framedrop=-1 [-1, 0, 1]
-  infbuf=-1 [-1, 0, 1]
-  vf=std::string() []
-  af=std::string() []
-  acodec=std::string() []
-  vcodec=std::string() []
-  hwaccel=none [none, auto, vdpau, dxva2, vda,
-               videotoolbox, qsv, vaapi, cuvid]
-  hwaccel_device=std::string() []
-  hwaccel_output_format=std::string() []
-  autorotate=false [true,false]
-
-  [player_options]
-  width=0  [0, INT_MAX]
-  height=0 [0, INT_MAX]
-  fullscreen=false [true,false]
-  volume=100 [0,100]
-  exitonkeydown=false [true,false]
-  exitonmousedown=false [true,false]
-
-  [other]
-  video_size=0 [0, INT_MAX]
-  pixel_format=std::string() []
-*/
-
 namespace {
-struct FastoTVConfig {
-  FastoTVConfig()
-      : power_off_on_exit(false),
-        loglevel(common::logging::L_INFO),
-        app_options(),
-        player_options(),
-        dict(new DictionaryOptions) {}
-  ~FastoTVConfig() { destroy(&dict); }
-
-  bool power_off_on_exit;
-  common::logging::LEVEL_LOG loglevel;
-
-  fasto::fastotv::client::core::AppOptions app_options;
-  fasto::fastotv::client::PlayerOptions player_options;
-  DictionaryOptions* dict;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(FastoTVConfig);
-};
 
 void sigterm_handler(int sig) {
   UNUSED(sig);
@@ -335,223 +221,6 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
     return EXIT_FAILURE;
   }
 
-  return EXIT_SUCCESS;
-}
-
-static int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  FastoTVConfig* pconfig = reinterpret_cast<FastoTVConfig*>(user);
-  size_t value_len = strlen(value);
-  if (value_len == 0) {  // skip empty fields
-    return 0;
-  }
-
-#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-  if (MATCH(CONFIG_MAIN_OPTIONS, CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD)) {
-    common::logging::LEVEL_LOG lg;
-    if (common::logging::text_to_log_level(value, &lg)) {
-      pconfig->loglevel = lg;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_MAIN_OPTIONS, CONFIG_MAIN_OPTIONS_POWEROFF_ON_EXIT_FIELD)) {
-    bool exit;
-    if (parse_bool(value, &exit)) {
-      pconfig->power_off_on_exit = exit;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_WIDTH_FIELD)) {
-    int width;
-    if (parse_number(value, 0, std::numeric_limits<int>::max(), &width)) {
-      pconfig->player_options.screen_size.width = width;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD)) {
-    int height;
-    if (parse_number(value, 0, std::numeric_limits<int>::max(), &height)) {
-      pconfig->player_options.screen_size.height = height;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD)) {
-    bool is_full_screen;
-    if (parse_bool(value, &is_full_screen)) {
-      pconfig->player_options.is_full_screen = is_full_screen;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_VOLUME_FIELD)) {
-    int volume;
-    if (parse_number(value, 0, 100, &volume)) {
-      pconfig->player_options.audio_volume = volume;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD)) {
-    bool exit;
-    if (parse_bool(value, &exit)) {
-      pconfig->player_options.exit_on_keydown = exit;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD)) {
-    bool exit;
-    if (parse_bool(value, &exit)) {
-      pconfig->player_options.exit_on_mousedown = exit;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AST_FIELD)) {
-    pconfig->app_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO] = value;
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VST_FIELD)) {
-    pconfig->app_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO] = value;
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_STATS_FIELD)) {
-    bool show_stats;
-    if (parse_bool(value, &show_stats)) {
-      pconfig->app_options.show_status = show_stats;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_FAST_FIELD)) {
-    bool fast;
-    if (parse_bool(value, &fast)) {
-      pconfig->app_options.fast = fast;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_GENPTS_FIELD)) {
-    bool genpts;
-    if (parse_bool(value, &genpts)) {
-      pconfig->app_options.genpts = genpts;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_LOWRES_FIELD)) {
-    int lowres;
-    if (parse_number(value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
-                     &lowres)) {
-      pconfig->app_options.lowres = lowres;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_SYNC_FIELD)) {
-    if (strcmp(value, "audio") == 0) {
-      pconfig->app_options.av_sync_type = fasto::fastotv::client::core::AV_SYNC_AUDIO_MASTER;
-    } else if (strcmp(value, "video") == 0) {
-      pconfig->app_options.av_sync_type = fasto::fastotv::client::core::AV_SYNC_VIDEO_MASTER;
-    } else {
-      return 0;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_FRAMEDROP_FIELD)) {
-    if (strcmp(value, "auto") == 0) {
-      pconfig->app_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_AUTO;
-    } else if (strcmp(value, "off") == 0) {
-      pconfig->app_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_OFF;
-    } else if (strcmp(value, "on") == 0) {
-      pconfig->app_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_ON;
-    } else {
-      return 0;
-    }
-
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_INFBUF_FIELD)) {
-    int inf;
-    if (parse_number(value, -1, 1, &inf)) {
-      pconfig->app_options.infinite_buffer = inf;
-    }
-    return 1;
-#if CONFIG_AVFILTER
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VF_FIELD)) {
-    const std::string arg_copy(value);
-    size_t del = arg_copy.find_first_of('=');
-    if (del != std::string::npos) {
-      std::string key = arg_copy.substr(0, del);
-      std::string value = arg_copy.substr(del + 1);
-      fasto::fastotv::Size sz;
-      if (key == "scale" && common::ConvertFromString(value, &sz)) {
-        pconfig->player_options.screen_size = sz;
-      }
-    }
-    pconfig->app_options.vfilters = value;
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AF_FIELD)) {
-    pconfig->app_options.afilters = value;
-    return 1;
-#endif
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_ACODEC_FIELD)) {
-    pconfig->app_options.audio_codec_name = value;
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VCODEC_FIELD)) {
-    pconfig->app_options.video_codec_name = value;
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_FIELD)) {
-    if (strcmp(value, "auto") == 0) {
-      pconfig->app_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_AUTO;
-    } else if (strcmp(value, "none") == 0) {
-      pconfig->app_options.hwaccel_id = fasto::fastotv::client::core::HWACCEL_NONE;
-    } else {
-      for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
-        if (strcmp(fasto::fastotv::client::core::hwaccels[i].name, value) == 0) {
-          pconfig->app_options.hwaccel_id = fasto::fastotv::client::core::hwaccels[i].id;
-          return 1;
-        }
-      }
-      return 0;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_DEVICE_FIELD)) {
-    pconfig->app_options.hwaccel_device = value;
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_HWACCEL_OUTPUT_FORMAT_FIELD)) {
-    pconfig->app_options.hwaccel_output_format = value;
-    return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AUTOROTATE_FIELD)) {
-    bool autorotate;
-    if (parse_bool(value, &autorotate)) {
-      pconfig->app_options.autorotate = autorotate;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_OTHER_OPTIONS, CONFIG_OTHER_OPTIONS_VIDEO_SIZE_FIELD)) {
-    opt_default("video_size", value, pconfig->dict);
-    return 1;
-  } else if (MATCH(CONFIG_OTHER_OPTIONS, CONFIG_OTHER_OPTIONS_PIXEL_FORMAT_FIELD)) {
-    opt_default("pixel_format", value, pconfig->dict);
-    return 1;
-  } else {
-    return 0; /* unknown section/name, error */
-  }
-}
-
-int load_config_file(const std::string& config_absolute_path, FastoTVConfig* options) {
-  if (!options) {
-    return EXIT_FAILURE;
-  }
-
-  std::string copy_config_absolute_path = config_absolute_path;
-  if (!common::file_system::is_file_exist(config_absolute_path)) {
-    const std::string absolute_source_dir =
-        common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
-    copy_config_absolute_path =
-        common::file_system::make_path(absolute_source_dir, CONFIG_FILE_PATH_RELATIVE);
-  }
-
-  const char* copy_config_absolute_path_ptr = common::utils::c_strornull(copy_config_absolute_path);
-  if (ini_parse(copy_config_absolute_path_ptr, ini_handler_fasto, options) < 0) {
-    std::cout << "Can't load config " << copy_config_absolute_path << ", use default settings."
-              << std::endl;
-  }
-  return EXIT_SUCCESS;
-}
-
-int save_config_file(const std::string& config_absolute_path, FastoTVConfig* options) {
-  if (!options) {
-    return EXIT_FAILURE;
-  }
-
-  common::file_system::ascii_string_path config_path(config_absolute_path);
-  common::file_system::ANSIFile config_save_file(config_path);
-  if (!config_save_file.Open("w")) {
-    return EXIT_FAILURE;
-  }
-
-  config_save_file.Write("[" CONFIG_MAIN_OPTIONS "]\n");
-  config_save_file.WriteFormated(CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "=%s\n",
-                                 common::logging::log_level_to_text(options->loglevel));
-  config_save_file.WriteFormated(CONFIG_MAIN_OPTIONS_POWEROFF_ON_EXIT_FIELD "=%s\n",
-                                 common::ConvertToString(options->power_off_on_exit));
-  config_save_file.Close();
   return EXIT_SUCCESS;
 }
 

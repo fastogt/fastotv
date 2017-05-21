@@ -56,7 +56,6 @@ struct PlayerOptions {
   Size screen_size;
 
   int audio_volume;  // Range: 0 - 100
-  bool muted;
 };
 
 class Player : public core::VideoStateHandler {
@@ -210,6 +209,8 @@ class Player : public core::VideoStateHandler {
   IoService* controller_;
   States current_state_;
   std::string current_state_str_;
+
+  bool muted_;
 };
 }
 }
