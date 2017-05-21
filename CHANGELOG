@@ -1,8 +1,9 @@
-0.2.0 /
+0.2.0 / May 21, 2017
 [Alexandr Topilski]
 - LIRC support
 - added hwaccels: Cuvid, Videotoolbox
 - footer text
+- config file
 
 0.1.0 / April 17, 2017
 [Alexandr Topilski]
