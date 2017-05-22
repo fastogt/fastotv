@@ -50,7 +50,8 @@ namespace core {
 namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
-    : common::application::IApplicationImpl(argc, argv), dispatcher_() {}
+    : common::application::IApplicationImpl(argc, argv), dispatcher_() {
+}
 
 Sdl2Application::~Sdl2Application() {
   THREAD_MANAGER()->FreeInstance();

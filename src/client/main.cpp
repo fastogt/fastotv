@@ -90,7 +90,7 @@ void avlog_cb(void*, int level, const char* sz_fmt, va_list varg) {
 #else
   int res = ERROR_RESULT_VALUE;
 #endif
-  if (res == ERROR_RESULT_VALUE) {
+  if (res == ERROR_RESULT_VALUE || !ret) {
     return;
   }
 
@@ -291,8 +291,8 @@ static int main_single_application(int argc,
   }
 
   DictionaryOptions* dict = main_options.dict;
-  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict,
-                                                    dict->format_opts, dict->codec_opts);
+  fasto::fastotv::client::core::ComplexOptions copt(
+      dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
   fasto::fastotv::client::Player* player = new fasto::fastotv::client::Player(
       main_options.player_options, main_options.app_options, copt);
   res = app.Exec();
@@ -304,6 +304,11 @@ static int main_single_application(int argc,
   }
 
   err = lock_pid_file.Close();
+  if (err && err->IsError()) {
+    WARNING_LOG() << "Can't close pid file path: " << pid_absolute_path
+                  << ", error: " << err->Description();
+  }
+
   err = common::file_system::remove_file(pid_absolute_path);
   if (err && err->IsError()) {
     WARNING_LOG() << "Can't remove file: " << pid_absolute_path
@@ -417,6 +422,6 @@ int main(int argc, char** argv) {
       common::file_system::is_absolute_path(app_directory_path)
           ? app_directory_path
           : common::file_system::absolute_path_from_relative(app_directory_path);
-  return main_single_application(argc, argv, app_directory_absolute_path,
-                                 runtime_directory_absolute_path);
+  return main_single_application(
+      argc, argv, app_directory_absolute_path, runtime_directory_absolute_path);
 }

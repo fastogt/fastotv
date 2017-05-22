@@ -182,7 +182,7 @@ int configure_filtergraph(AVFilterGraph* graph,
                           const std::string& filtergraph,
                           AVFilterContext* source_ctx,
                           AVFilterContext* sink_ctx) {
-  AVFilterInOut *outputs = NULL, *inputs = NULL;
+  AVFilterInOut* outputs = NULL, *inputs = NULL;
   int ret;
   if (!filtergraph.empty()) {
     outputs = avfilter_inout_alloc();
@@ -273,11 +273,19 @@ int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
       ERROR_LOG() << "Negative linesize is not supported for YUV.";
       return -1;
     }
-    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1],
-                                frame->linesize[1], frame->data[2], frame->linesize[2]);
+    return SDL_UpdateYUVTexture(tex,
+                                NULL,
+                                frame->data[0],
+                                frame->linesize[0],
+                                frame->data[1],
+                                frame->linesize[1],
+                                frame->data[2],
+                                frame->linesize[2]);
   } else if (frame->format == AV_PIX_FMT_BGRA) {
     if (frame->linesize[0] < 0) {
-      return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
+      return SDL_UpdateTexture(tex,
+                               NULL,
+                               frame->data[0] + frame->linesize[0] * (frame->height - 1),
                                -frame->linesize[0]);
     }
     return SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
@@ -404,10 +412,11 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1,
                    enum AVSampleFormat fmt2,
                    int64_t channel_count2) {
   /* If channel count == 1, planar and non-planar formats are the same */
-  if (channel_count1 == 1 && channel_count2 == 1)
+  if (channel_count1 == 1 && channel_count2 == 1) {
     return av_get_packed_sample_fmt(fmt1) != av_get_packed_sample_fmt(fmt2);
-  else
-    return channel_count1 != channel_count2 || fmt1 != fmt2;
+  }
+
+  return channel_count1 != channel_count2 || fmt1 != fmt2;
 }
 
 }  // namespace core

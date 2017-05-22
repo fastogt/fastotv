@@ -180,8 +180,8 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_LOWRES_FIELD)) {
     int lowres;
-    if (parse_number(value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
-                     &lowres)) {
+    if (parse_number(
+            value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), &lowres)) {
       pconfig->app_options.lowres = lowres;
     }
     return 1;
@@ -265,7 +265,8 @@ TVConfig::TVConfig()
       loglevel(common::logging::L_INFO),
       app_options(),
       player_options(),
-      dict(new DictionaryOptions) {}
+      dict(new DictionaryOptions) {
+}
 
 TVConfig::~TVConfig() {
   destroy(&dict);

@@ -118,8 +118,8 @@ class PrivateHandler : public inner::InnerTcpHandler {
 }
 
 IoService::IoService()
-    : ILoopController(),
-      loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
+    : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {
+}
 
 void IoService::Start() {
   ILoopController::Start();
@@ -129,7 +129,8 @@ void IoService::Stop() {
   ILoopController::Stop();
 }
 
-IoService::~IoService() {}
+IoService::~IoService() {
+}
 
 AuthInfo IoService::GetAuthInfo() {
   return AuthInfo(USER_LOGIN, USER_PASSWORD);

@@ -21,7 +21,7 @@
 #include "ffmpeg_config.h"  // for CONFIG_AVDEVICE, etc
 
 extern "C" {
-#include <libavutil/dict.h>       // for AVDictionary
+#include <libavutil/dict.h>  // for AVDictionary
 }
 
 #include <common/convert2string.h>  // for ConvertFromString
