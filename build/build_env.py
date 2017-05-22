@@ -19,7 +19,7 @@ CMAKE_SRC_ROOT = "https://cmake.org/files/"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
 FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
-PNG_SRC_ROOT = "https://downloads.sourceforge.net/project/libpng/libpng16/"
+PNG_SRC_ROOT = "https://sourceforge.net/projects/libpng/files/libpng16/older-releases/"
 
 ARCH_CMAKE_COMP = "gz"
 ARCH_CMAKE_EXT = "tar." + ARCH_CMAKE_COMP
@@ -292,7 +292,7 @@ class BuildRequest(object):
 
 
 if __name__ == "__main__":
-    libpng_default_version = '1.6.29'
+    libpng_default_version = '1.6.21'
     sdl2_default_version = '2.0.5'
     sdl2_ttf_default_version = '2.0.14'
     ffmpeg_default_version = '3.3'
