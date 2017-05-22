@@ -120,8 +120,8 @@ class FakeApplication : public common::application::IApplicationImpl {
     core::AppOptions opt;
     opt.auto_exit = true;
     DictionaryOptions* dict = new DictionaryOptions;
-    const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
-                                    dict->codec_opts);
+    const core::ComplexOptions copt(
+        dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
     VideoStateHandler* handler = new FakeHandler;
     VideoState* vs = new VideoState(id, uri, opt, copt, handler);
     int res = vs->Exec();
@@ -131,17 +131,26 @@ class FakeApplication : public common::application::IApplicationImpl {
       return res;
     }
 
-    uint8_t stream_buff[8192];
+    std::thread audio([this, vs]() {
+      while (!stop_) {
+        uint8_t stream_buff[8192];
+        vs->UpdateAudioBuffer(stream_buff, sizeof(stream_buff), 100);
+        std::this_thread::sleep_for(std::chrono::milliseconds(15));
+      }
+    });
+
     lock_t lock(stop_mutex_);
     while (!stop_) {
       std::cv_status interrupt_status = stop_cond_.wait_for(lock, std::chrono::milliseconds(20));
       if (interrupt_status == std::cv_status::no_timeout) {  // if notify
       } else {
         vs->TryRefreshVideo();
-        vs->UpdateAudioBuffer(stream_buff, sizeof(stream_buff), 100);
       }
     }
 
+    vs->Abort();
+    audio.join();
+    delete vs;
     delete handler;
     delete dict;
     return EXIT_SUCCESS;
@@ -157,7 +166,7 @@ class FakeApplication : public common::application::IApplicationImpl {
         fApp->Exit(EXIT_FAILURE);
       }
     } else if (fevent->GetEventType() == core::events::QuitStreamEvent::EventType) {
-      //events::QuitStreamEvent* qevent = static_cast<core::events::QuitStreamEvent*>(event);
+      // events::QuitStreamEvent* qevent = static_cast<core::events::QuitStreamEvent*>(event);
       fApp->Exit(EXIT_SUCCESS);
     } else {
       NOTREACHED();
@@ -176,9 +185,7 @@ class FakeApplication : public common::application::IApplicationImpl {
     UNUSED(listener);
     UNUSED(id);
   }
-  virtual void UnSubscribe(listener_t* listener) override {
-    UNUSED(listener);
-  }
+  virtual void UnSubscribe(listener_t* listener) override { UNUSED(listener); }
 
   virtual void ShowCursor() override {}
   virtual void HideCursor() override {}

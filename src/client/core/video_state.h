@@ -127,6 +127,8 @@ class VideoState {
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
  private:
+  void Close();
+
   bool IsVideoReady() const;
   bool IsAudioReady() const;
 

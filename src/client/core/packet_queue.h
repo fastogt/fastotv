@@ -60,6 +60,8 @@ class PacketQueue {  // compressed queue data
   int64_t Duration() const;
 
  private:
+  int PushFront(AVPacket* pkt);
+  int PushBack(AVPacket* pkt);
   DISALLOW_COPY_AND_ASSIGN(PacketQueue);
 
   std::deque<AVPacket> queue_;

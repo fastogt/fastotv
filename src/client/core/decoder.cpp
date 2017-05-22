@@ -66,6 +66,11 @@ AVCodecContext* Decoder::AvCtx() const {
   return avctx_;
 }
 
+void Decoder::Flush() {
+  queue_->Flush();
+  avcodec_flush_buffers(avctx_);
+}
+
 IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue) : Decoder(avctx, queue) {
 }
 
@@ -85,6 +90,12 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
     AVPacket packet;
     if (!queue_->Get(&packet)) {
       return -1;
+    }
+
+    if (packet.data == NULL) {  // flush packet
+      SetFinished(false);
+      Flush();
+      return 0;
     }
 
     int retcd = avcodec_send_packet(avctx_, &packet);
@@ -142,6 +153,12 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
     AVPacket packet;
     if (!queue_->Get(&packet)) {
       return -1;
+    }
+
+    if (packet.data == NULL) {  // flush packet
+      SetFinished(false);
+      Flush();
+      return 0;
     }
 
     int retcd = avcodec_send_packet(avctx_, &packet);

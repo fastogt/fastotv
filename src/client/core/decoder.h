@@ -48,6 +48,8 @@ class Decoder {
   AVCodecContext* AvCtx() const;
 
  protected:
+  void Flush();
+
   Decoder(AVCodecContext* avctx, PacketQueue* queue);
 
   AVCodecContext* avctx_;

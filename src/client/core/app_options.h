@@ -65,7 +65,7 @@ struct AppOptions {
   std::string hwaccel_device;
   std::string hwaccel_output_format;
 
-  bool auto_exit;
+  bool auto_exit;  // exit from stream if eos
 #if CONFIG_AVFILTER
   std::string vfilters;
   std::string afilters;

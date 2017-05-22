@@ -33,7 +33,7 @@ int PacketQueue::PutNullpacket(int stream_index) {
   pkt->data = NULL;
   pkt->size = 0;
   pkt->stream_index = stream_index;
-  return Put(pkt);
+  return PushFront(pkt);
 }
 
 bool PacketQueue::Get(AVPacket* pkt) {
@@ -81,6 +81,24 @@ void PacketQueue::Start() {
 }
 
 int PacketQueue::Put(AVPacket* pkt) {
+  return PushBack(pkt);
+}
+
+int PacketQueue::PushFront(AVPacket* pkt) {
+  lock_t lock(mutex_);
+  if (abort_request_) {
+    av_packet_unref(pkt);
+    return -1;
+  }
+
+  queue_.push_front(*pkt);
+  size_ += pkt->size;
+  duration_ += pkt->duration;
+  cond_.notify_one();
+  return 0;
+}
+
+int PacketQueue::PushBack(AVPacket* pkt) {
   lock_t lock(mutex_);
   if (abort_request_) {
     av_packet_unref(pkt);

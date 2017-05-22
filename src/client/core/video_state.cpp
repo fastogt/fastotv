@@ -247,23 +247,12 @@ VideoState::VideoState(stream_id id,
 }
 
 VideoState::~VideoState() {
-  /* close each stream */
-  if (vstream_->IsOpened()) {
-    StreamComponentClose(vstream_->Index());
-    vstream_->Close();
-  }
-  if (astream_->IsOpened()) {
-    StreamComponentClose(astream_->Index());
-    astream_->Close();
-  }
-
   destroy(&astream_);
   destroy(&vstream_);
 
-  avformat_close_input(&ic_);
-
   common::utils::freeifnotnull(input_st_->hwaccel_device);
   free(input_st_);
+  input_st_ = NULL;
 }
 
 int VideoState::StreamComponentOpen(int stream_index) {
@@ -600,6 +589,8 @@ int VideoState::Exec() {
 void VideoState::Abort() {
   abort_request_ = true;
   read_tid_->Join();
+  Close();
+  avformat_close_input(&ic_);
 }
 
 bool VideoState::IsReadThread() const {
@@ -650,6 +641,18 @@ void VideoState::RefreshRequest() {
 void VideoState::TogglePause() {
   StreamTogglePause();
   step_ = false;
+}
+
+void VideoState::Close() {
+  /* close each stream */
+  if (vstream_->IsOpened()) {
+    StreamComponentClose(vstream_->Index());
+    vstream_->Close();
+  }
+  if (astream_->IsOpened()) {
+    StreamComponentClose(astream_->Index());
+    astream_->Close();
+  }
 }
 
 bool VideoState::IsAudioReady() const {
@@ -1285,7 +1288,7 @@ int VideoState::ReadThread() {
       continue;
     }
     if (!paused_ && (!auddec_->IsFinished() && audio_frame_queue_->IsEmpty()) &&
-        (!viddec_->IsFinished() && video_frame_queue_->IsEmpty())) {
+        (!viddec_->IsFinished() && video_frame_queue_->IsEmpty()) && eof_) {
       if (opt_.auto_exit) {
         int errn = AVERROR_EOF;
         std::string err_str = ffmpeg_errno_to_string(errn);
@@ -1298,16 +1301,15 @@ int VideoState::ReadThread() {
     }
     int ret = av_read_frame(ic, pkt);
     if (ret < 0) {
+      WARNING_LOG() << "Read input stream error: " << ffmpeg_errno_to_string(ret);
       bool is_eof = ret == AVERROR_EOF;
       bool is_feof = avio_feof(ic->pb);
       if ((is_eof || is_feof) && !eof_) {
         if (video_stream->IsOpened()) {
           video_packet_queue->PutNullpacket(video_stream->Index());
-          viddec_->SetFinished(false);  // FIX ME
         }
         if (audio_stream->IsOpened()) {
           audio_packet_queue->PutNullpacket(audio_stream->Index());
-          auddec_->SetFinished(false);  // FIX ME
         }
         eof_ = true;
       }
