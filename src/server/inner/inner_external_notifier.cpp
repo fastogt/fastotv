@@ -53,7 +53,7 @@ void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id, int argc, char* ar
 }
 
 void InnerSubHandler::HandleMessage(const std::string& channel, const std::string& msg) {
-  // [std::string]site [cmd_id_t]seq [std::string]command args ...
+  // [std::string]login [cmd_id_t]seq [std::string]command args ...
   // [cmd_id_t]seq OK/FAIL [std::string]command args ..
   INFO_LOG() << "InnerSubHandler channel: " << channel << ", msg: " << msg;
   size_t space_pos = msg.find_first_of(' ');

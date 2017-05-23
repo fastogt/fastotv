@@ -193,8 +193,8 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       DEBUG_MSG_ERROR(err);
     }
   } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {
-    const common::system_info::CpuInfo& c1 = common::system_info::currentCpuInfo();
-    std::string brand = c1.brandName();
+    const common::system_info::CpuInfo& c1 = common::system_info::CurrentCpuInfo();
+    std::string brand = c1.BrandName();
 
     int64_t ram_total = common::system_info::amountOfPhysicalMemory();
     int64_t ram_free = common::system_info::amountOfAvailablePhysicalMemory();
