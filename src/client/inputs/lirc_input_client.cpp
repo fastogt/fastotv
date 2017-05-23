@@ -102,12 +102,12 @@ common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
   return common::Error();
 }
 
-int LircInputClient::Fd() const {
-  return sock_.fd();
+int LircInputClient::GetFd() const {
+  return sock_.GetFd();
 }
 
 common::Error LircInputClient::Write(const char* data, size_t size, size_t* nwrite) {
-  return sock_.write(data, size, nwrite);
+  return sock_.Write(data, size, nwrite);
 }
 
 common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
@@ -115,11 +115,11 @@ common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
-  return sock_.read(out, max_size, nread);
+  return sock_.Read(out, max_size, nread);
 }
 
 void LircInputClient::CloseImpl() {
-  common::Error err = LircDeinit(sock_.fd(), &cfg_);
+  common::Error err = LircDeinit(sock_.GetFd(), &cfg_);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
   }

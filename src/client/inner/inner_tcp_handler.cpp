@@ -71,7 +71,8 @@ void InnerTcpHandler::Accepted(common::libev::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandler::Moved(common::libev::IoClient* client) {
+void InnerTcpHandler::Moved(common::libev::IoLoop* server, common::libev::IoClient* client) {
+  UNUSED(server);
   UNUSED(client);
 }
 

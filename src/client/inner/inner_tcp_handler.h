@@ -46,7 +46,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
 
   virtual void PreLooped(common::libev::IoLoop* server) override;
   virtual void Accepted(common::libev::IoClient* client) override;
-  virtual void Moved(common::libev::IoClient* client) override;
+  virtual void Moved(common::libev::IoLoop* server, common::libev::IoClient* client) override;
   virtual void Closed(common::libev::IoClient* client) override;
   virtual void DataReceived(common::libev::IoClient* client) override;
   virtual void DataReadyToWrite(common::libev::IoClient* client) override;

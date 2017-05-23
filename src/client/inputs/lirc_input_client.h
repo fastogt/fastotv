@@ -35,7 +35,7 @@ class LircInputClient : public common::libev::IoClient {
   typedef std::function<void(const std::string&)> read_callback_t;
   LircInputClient(common::libev::IoLoop* server, int fd, struct lirc_config* cfg);
 
-  virtual int Fd() const override;
+  virtual int GetFd() const override;
 
   common::Error ReadWithCallback(read_callback_t cb) WARN_UNUSED_RESULT;
 

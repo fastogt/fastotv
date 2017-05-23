@@ -47,7 +47,7 @@
   redis_unix_path=/var/run/redis/redis.sock
 */
 
-const common::net::HostAndPort redis_default_host = common::net::HostAndPort::createLocalHost(6379);
+const common::net::HostAndPort redis_default_host = common::net::HostAndPort::CreateLocalHost(6379);
 const std::string redis_default_unix_path = "/var/run/redis/redis.sock";
 
 sig_atomic_t is_stop = 0;

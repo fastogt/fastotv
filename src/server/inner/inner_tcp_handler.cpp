@@ -66,7 +66,8 @@ void InnerTcpHandlerHost::PreLooped(common::libev::IoLoop* server) {
   ping_client_id_timer_ = server->CreateTimer(ping_timeout_clients, ping_timeout_clients);
 }
 
-void InnerTcpHandlerHost::Moved(common::libev::IoClient* client) {
+void InnerTcpHandlerHost::Moved(common::libev::IoLoop* server, common::libev::IoClient* client) {
+  UNUSED(server);
   UNUSED(client);
 }
 

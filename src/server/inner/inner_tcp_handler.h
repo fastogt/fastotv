@@ -51,7 +51,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
   virtual void PreLooped(common::libev::IoLoop* server) override;
 
   virtual void Accepted(common::libev::IoClient* client) override;
-  virtual void Moved(common::libev::IoClient* client) override;
+  virtual void Moved(common::libev::IoLoop* server, common::libev::IoClient* client) override;
   virtual void Closed(common::libev::IoClient* client) override;
 
   virtual void DataReceived(common::libev::IoClient* client) override;
