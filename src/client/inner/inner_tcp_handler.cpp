@@ -197,12 +197,12 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     const common::system_info::CpuInfo& c1 = common::system_info::CurrentCpuInfo();
     std::string brand = c1.BrandName();
 
-    int64_t ram_total = common::system_info::amountOfPhysicalMemory();
-    int64_t ram_free = common::system_info::amountOfAvailablePhysicalMemory();
+    int64_t ram_total = common::system_info::AmountOfPhysicalMemory();
+    int64_t ram_free = common::system_info::AmountOfAvailablePhysicalMemory();
 
-    std::string os_name = common::system_info::operatingSystemName();
-    std::string os_version = common::system_info::operatingSystemVersion();
-    std::string os_arch = common::system_info::operatingSystemArchitecture();
+    std::string os_name = common::system_info::OperatingSystemName();
+    std::string os_version = common::system_info::OperatingSystemVersion();
+    std::string os_arch = common::system_info::OperatingSystemArchitecture();
 
     std::string os = common::MemSPrintf("%s %s(%s)", os_name, os_version, os_arch);
 
