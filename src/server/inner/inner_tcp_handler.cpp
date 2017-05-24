@@ -203,7 +203,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     json_object* jchannels = MakeJobjectFromChannels(user.channels);
     std::string channels_str = json_object_get_string(jchannels);
     json_object_put(jchannels);
-    std::string hex_channels = common::HexEncode(channels_str, false);
+    std::string hex_channels = Encode(channels_str);
     cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, hex_channels);
     err = connection->Write(channels_responce);
     if (err && err->IsError()) {
@@ -291,7 +291,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       return common::make_error_value(error_str, common::Value::E_ERROR);
     }
 
-    common::buffer_t buff = common::HexDecode(uauthstr);
+    common::buffer_t buff = Decode(uauthstr);
     std::string buff_str(buff.begin(), buff.end());
     json_object* obj = json_tokener_parse(buff_str.c_str());
     if (!obj) {

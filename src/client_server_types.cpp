@@ -16,10 +16,23 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "common_types.h"
+#include "client_server_types.h"
+
+#include <common/convert2string.h>
 
 namespace fasto {
 namespace fastotv {
-namespace core {}  // namespace core
+namespace core {
+
+std::string Encode(const std::string& data) {
+  std::string enc_data = common::HexEncode(data, false);
+  return enc_data;
+}
+
+common::buffer_t Decode(const std::string& data) {
+  return common::HexDecode(data);
+}
+
+}  // namespace core
 }
 }

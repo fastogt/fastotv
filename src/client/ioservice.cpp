@@ -44,7 +44,7 @@ namespace {
 class PrivateHandler : public inner::InnerTcpHandler {
  public:
   typedef inner::InnerTcpHandler base_class;
-  PrivateHandler(const common::net::HostAndPort& innerHost, const AuthInfo& ainf)
+  PrivateHandler(const common::net::HostAndPort& innerHost, AuthInfoSPtr ainf)
       : base_class(innerHost, ainf)
 #ifdef HAVE_LIRC
         ,
@@ -132,10 +132,6 @@ void IoService::Stop() {
 IoService::~IoService() {
 }
 
-AuthInfo IoService::GetAuthInfo() {
-  return AuthInfo(USER_LOGIN, USER_PASSWORD);
-}
-
 void IoService::ConnectToServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   client::inner::InnerTcpServer* server = static_cast<client::inner::InnerTcpServer*>(loop_);
@@ -162,7 +158,8 @@ void IoService::RequestChannels() const {
 }
 
 common::libev::IoLoopObserver* IoService::CreateHandler() {
-  PrivateHandler* handler = new PrivateHandler(g_service_host, GetAuthInfo());
+  PrivateHandler* handler = new PrivateHandler(
+      g_service_host, common::make_shared<AuthInfo>(USER_LOGIN, USER_PASSWORD, 0));
   return handler;
 }
 

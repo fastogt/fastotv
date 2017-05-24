@@ -55,11 +55,11 @@ SET(SOURCES_SDS
 )
 
 SET(CLIENT_SERVER_SOURCES
-  ${SOURCE_ROOT}/infos.h ${SOURCE_ROOT}/infos.cpp
+  ${SOURCE_ROOT}/channel_info.h ${SOURCE_ROOT}/channel_info.cpp
+  ${SOURCE_ROOT}/auth_info.h ${SOURCE_ROOT}/auth_info.cpp
   ${SOURCE_ROOT}/server_config.h
   ${SOURCE_ROOT}/url.h ${SOURCE_ROOT}/url.cpp
-  ${SOURCE_ROOT}/types.h ${SOURCE_ROOT}/types.cpp
-  ${SOURCE_ROOT}/common_types.h ${SOURCE_ROOT}/common_types.cpp
+  ${SOURCE_ROOT}/client_server_types.h ${SOURCE_ROOT}/client_server_types.cpp
 ) # server and client common sources
 
 IF(OS_WINDOWS)
@@ -436,6 +436,7 @@ IF(ENABLE_LIRC)
 ENDIF(ENABLE_LIRC)
 
 SET(BUILD_CLIENT_SOURCES
+  types.h types.cpp
   player.h player.cpp
   config.h config.cpp
   cmdutils.h cmdutils.cpp

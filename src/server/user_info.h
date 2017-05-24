@@ -22,50 +22,20 @@
 #include <vector>
 
 #include <common/net/types.h>
+#include <common/smart_ptr.h>
 
-#include "url.h"
+#include "auth_info.h"
+#include "channel_info.h"
 
 namespace fasto {
 namespace fastotv {
+namespace server {
 
-typedef std::string user_id_t;
-
-struct ConnectInfo {
-  ConnectInfo();
-  explicit ConnectInfo(const common::net::HostAndPort& host);
-
-  common::net::HostAndPort host;
-};
-
-struct AuthInfo {
-  AuthInfo();
-  AuthInfo(const std::string& login, const std::string& password);
-
-  bool IsValid() const;
-
-  static json_object* MakeJobject(const AuthInfo& ainf);  // allocate json_object
-  static AuthInfo MakeClass(json_object* obj);            // pass valid json obj
-
-  std::string login;  // unique
-  std::string password;
-};
-
-inline bool operator==(const AuthInfo& lhs, const AuthInfo& rhs) {
-  return lhs.login == rhs.login && lhs.password == rhs.password;
-}
-
-inline bool operator!=(const AuthInfo& x, const AuthInfo& y) {
-  return !(x == y);
-}
-
-typedef std::vector<Url> channels_t;
-
-json_object* MakeJobjectFromChannels(const channels_t& channels);  // allocate json_object
-channels_t MakeChannelsClass(json_object* obj);                    // pass valid json obj
+typedef std::string user_id_t;  // mongodb/redis id
 
 struct UserInfo {
   UserInfo();
-  explicit UserInfo(const AuthInfo& a, const std::vector<Url>& ch);
+  explicit UserInfo(const AuthInfo& a, const channels_t& ch);
 
   bool IsValid() const;
   std::string GetLogin() const;
@@ -86,5 +56,6 @@ inline bool operator!=(const UserInfo& x, const UserInfo& y) {
   return !(x == y);
 }
 
+}
 }  // namespace fastotv
 }  // namespace fasto

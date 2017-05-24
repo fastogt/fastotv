@@ -21,7 +21,7 @@ IF(DEVELOPER_ENABLE_TESTS)
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp commands/commands.cpp client/commands.cpp
     )
 
-    TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main ${COMMON_LIBRARIES})
+    TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main ${COMMON_LIBRARIES} json-c)
     ADD_TEST_TARGET(unit_tests)
     SET_PROPERTY(TARGET unit_tests PROPERTY FOLDER "Unit tests")
 

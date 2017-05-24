@@ -18,47 +18,49 @@
 
 #pragma once
 
-#include <string>
-
 #include <common/smart_ptr.h>
 
-#include <common/libev/loop_controller.h>
-
-namespace common {
-namespace threads {
-template <typename RT>
-class Thread;
-}
-}
+#include "auth_info.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 
-class IoService : public common::libev::ILoopController {
- public:
-  IoService();
-  virtual ~IoService();
+typedef common::shared_ptr<AuthInfo> AuthInfoSPtr;
 
-  void Start();
-  void Stop();
+struct Point {
+  Point() : x(0), y(0) {}
+  Point(int x, int y) : x(x), y(y) {}
 
-  void ConnectToServer() const;
-  void DisconnectFromServer() const;
-  void RequestChannels() const;
-
- private:
-  using ILoopController::Exec;
-
-  virtual common::libev::IoLoopObserver* CreateHandler() override;
-  virtual common::libev::IoLoop* CreateServer(common::libev::IoLoopObserver* handler) override;
-
-  virtual void HandleStarted() override;
-  virtual void HandleStoped() override;
-
-  common::shared_ptr<common::threads::Thread<int> > loop_thread_;
+  int x;
+  int y;
 };
 
-}  // namespace network
-}  // namespace fastotv
-}  // namespace fasto
+struct Size {
+  Size() : width(0), height(0) {}
+  Size(int width, int height) : width(width), height(height) {}
+
+  bool IsValid() { return width != 0 && height != 0; }
+
+  int width;
+  int height;
+};
+
+struct Rect {
+  Rect(int x, int y, int width, int height) : x(x), y(y), w(width), h(height) {}
+  int x, y;
+  int w, h;
+};
+
+}
+}
+}
+
+
+namespace common {
+std::string ConvertToString(const fasto::fastotv::client::Point& value);
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::Point* out);
+
+std::string ConvertToString(const fasto::fastotv::client::Size& value);
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::Size* out);
+}

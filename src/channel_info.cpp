@@ -16,49 +16,43 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include "channel_info.h"
 
 #include <string>
 
-#include <common/smart_ptr.h>
+#include "third-party/json-c/json-c/json.h"  // for json_object_...
 
-#include <common/libev/loop_controller.h>
-
-namespace common {
-namespace threads {
-template <typename RT>
-class Thread;
-}
-}
+#include <common/sprintf.h>
+#include <common/convert2string.h>
 
 namespace fasto {
 namespace fastotv {
-namespace client {
 
-class IoService : public common::libev::ILoopController {
- public:
-  IoService();
-  virtual ~IoService();
+std::string Encode(const std::string& data) {
+  std::string enc_data = common::HexEncode(data, false);
+  return enc_data;
+}
 
-  void Start();
-  void Stop();
+common::buffer_t Decode(const std::string& data) {
+  return common::HexDecode(data);
+}
 
-  void ConnectToServer() const;
-  void DisconnectFromServer() const;
-  void RequestChannels() const;
+json_object* MakeJobjectFromChannels(const channels_t& channels) {
+  json_object* jchannels = json_object_new_array();
+  for (Url url : channels) {
+    json_object_array_add(jchannels, Url::MakeJobject(url));
+  }
+  return jchannels;
+}
 
- private:
-  using ILoopController::Exec;
+channels_t MakeChannelsClass(json_object* obj) {
+  channels_t chan;
+  int len = json_object_array_length(obj);
+  for (int i = 0; i < len; ++i) {
+    chan.push_back(Url::MakeClass(json_object_array_get_idx(obj, i)));
+  }
+  return chan;
+}
 
-  virtual common::libev::IoLoopObserver* CreateHandler() override;
-  virtual common::libev::IoLoop* CreateServer(common::libev::IoLoopObserver* handler) override;
-
-  virtual void HandleStarted() override;
-  virtual void HandleStoped() override;
-
-  common::shared_ptr<common::threads::Thread<int> > loop_thread_;
-};
-
-}  // namespace network
 }  // namespace fastotv
 }  // namespace fasto

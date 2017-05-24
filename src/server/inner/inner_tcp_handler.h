@@ -28,7 +28,7 @@
 
 #include "redis/redis_helpers.h"
 
-#include "infos.h"
+#include "server/user_info.h"
 
 namespace fasto {
 namespace fastotv {

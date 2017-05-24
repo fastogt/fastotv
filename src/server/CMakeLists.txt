@@ -25,10 +25,11 @@ SET(SOURCES_SDS
 )
 
 SET(CLIENT_SERVER_SOURCES
-  ${SOURCE_ROOT}/infos.h ${SOURCE_ROOT}/infos.cpp
+  ${SOURCE_ROOT}/auth_info.h ${SOURCE_ROOT}/auth_info.cpp
+  ${SOURCE_ROOT}/channel_info.h ${SOURCE_ROOT}/channel_info.cpp
   ${SOURCE_ROOT}/server_config.h
   ${SOURCE_ROOT}/url.h ${SOURCE_ROOT}/url.cpp
-  ${SOURCE_ROOT}/common_types.h ${SOURCE_ROOT}/common_types.cpp
+  ${SOURCE_ROOT}/client_server_types.h ${SOURCE_ROOT}/client_server_types.cpp
 )
 
 IF(OS_WINDOWS)
@@ -79,6 +80,7 @@ SET(SOURCES_INNER_SERVER
 
 SET(BUILD_SERVER_SOURCES
   server_host.cpp server_host.h
+  user_info.h user_info.cpp
   ${HEADERS_REDIS} ${SOURCES_REDIS}
   ${HEADERS_COMMANDS} ${SOURCES_COMMANDS}
   ${HEADERS_INNER} ${SOURCES_INNER}

@@ -22,7 +22,7 @@
 
 #include <common/url.h>
 
-#include "common_types.h"
+#include "client_server_types.h"
 
 struct json_object;
 

@@ -28,17 +28,17 @@ namespace client {
 // ping
 cmd_request_t PingRequest(cmd_seq_t id);
 cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text);
+cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 // get_channels
 cmd_request_t GetChannelsRequest(cmd_seq_t id);
 cmd_approve_t GetChannelsApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& error_text);
+cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 
 // responces
 // who are you
-cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const std::string& auth);
+cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const std::string& auth);  // escaped
 // system info
-cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info);
+cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info);  // json
 // ping
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id);
 }

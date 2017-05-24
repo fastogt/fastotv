@@ -18,12 +18,19 @@
 
 #pragma once
 
-#include <string>
+#include <vector>
+
+#include "url.h"
+
+#define CHANNELS_FIELD "channels"
 
 namespace fasto {
 namespace fastotv {
 
-typedef std::string stream_id;  // must be unique
-static const stream_id invalid_stream_id = stream_id();
-}
-}
+typedef std::vector<Url> channels_t;
+
+json_object* MakeJobjectFromChannels(const channels_t& channels);  // allocate json_object
+channels_t MakeChannelsClass(json_object* obj);                    // pass valid json obj
+
+}  // namespace fastotv
+}  // namespace fasto

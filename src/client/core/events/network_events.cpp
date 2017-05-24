@@ -22,7 +22,13 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
-namespace events {}
+namespace events {
+ConnectInfo::ConnectInfo() {
+}
+
+ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {
+}
+}
 }
 }
 }

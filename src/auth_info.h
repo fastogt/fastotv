@@ -18,47 +18,40 @@
 
 #pragma once
 
-#include <limits>
-
-#include <common/url.h>
-
-#include "common_types.h"
+#include <string>
 
 struct json_object;
+
+#define LOGIN_FIELD "login"
+#define PASSWORD_FIELD "password"
+#define BANDWIDTH_FIELD "bandwidth"
 
 namespace fasto {
 namespace fastotv {
 
-struct Point {
-  Point() : x(0), y(0) {}
-  Point(int x, int y) : x(x), y(y) {}
+typedef uint64_t bandwidth_t;
 
-  int x;
-  int y;
+struct AuthInfo {
+  AuthInfo();
+  AuthInfo(const std::string& login, const std::string& password, bandwidth_t band);
+
+  bool IsValid() const;
+
+  static json_object* MakeJobject(const AuthInfo& ainf);  // allocate json_object
+  static AuthInfo MakeClass(json_object* obj);            // pass valid json obj
+
+  std::string login;  // unique
+  std::string password;
+  bandwidth_t bandwidth;
 };
 
-struct Size {
-  Size() : width(0), height(0) {}
-  Size(int width, int height) : width(width), height(height) {}
-
-  bool IsValid() { return width != 0 && height != 0; }
-
-  int width;
-  int height;
-};
-
-struct Rect {
-  Rect(int x, int y, int width, int height) : x(x), y(y), w(width), h(height) {}
-  int x, y;
-  int w, h;
-};
-}
+inline bool operator==(const AuthInfo& lhs, const AuthInfo& rhs) {
+  return lhs.login == rhs.login && lhs.password == rhs.password;
 }
 
-namespace common {
-std::string ConvertToString(const fasto::fastotv::Point& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::Point* out);
-
-std::string ConvertToString(const fasto::fastotv::Size& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::Size* out);
+inline bool operator!=(const AuthInfo& x, const AuthInfo& y) {
+  return !(x == y);
 }
+
+}  // namespace fastotv
+}  // namespace fasto

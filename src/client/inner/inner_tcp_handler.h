@@ -18,12 +18,14 @@
 
 #pragma once
 
-#include "infos.h"
+#include "auth_info.h"
 
 #include "inner/inner_server_command_seq_parser.h"
 
 #include <common/libev/io_loop_observer.h>
 #include <common/libev/tcp/tcp_server.h>
+
+#include "client/types.h"
 
 namespace fasto {
 namespace fastotv {
@@ -37,7 +39,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
     ping_timeout_server = 30  // sec
   };
 
-  explicit InnerTcpHandler(const common::net::HostAndPort& innerHost, const AuthInfo& ainf);
+  explicit InnerTcpHandler(const common::net::HostAndPort& innerHost, AuthInfoSPtr ainf);
   ~InnerTcpHandler();
 
   void RequestChannels();                       // should be execute in network thread
@@ -71,7 +73,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   common::libev::timer_id_t ping_server_id_timer_;
 
   const common::net::HostAndPort innerHost_;
-  const AuthInfo ainf_;
+  AuthInfoSPtr ainf_;  // owner
 };
 
 }  // namespace inner

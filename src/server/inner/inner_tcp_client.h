@@ -21,7 +21,7 @@
 #include <vector>
 #include <utility>
 
-#include "infos.h"
+#include "server/user_info.h"
 
 #include "inner/inner_client.h"
 

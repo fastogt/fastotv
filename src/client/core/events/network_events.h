@@ -18,21 +18,31 @@
 
 #pragma once
 
+#include <common/net/types.h>
+
 #include "client/core/events/events_base.h"
 
-#include "infos.h"
+#include "client/types.h"
+#include "channel_info.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
-class TvConfig {};
 namespace core {
 namespace events {
 
+class TvConfig {};
+struct ConnectInfo {
+  ConnectInfo();
+  explicit ConnectInfo(const common::net::HostAndPort& host);
+
+  common::net::HostAndPort host;
+};
+
 typedef EventBase<CLIENT_DISCONNECT_EVENT, ConnectInfo> ClientDisconnectedEvent;
 typedef EventBase<CLIENT_CONNECT_EVENT, ConnectInfo> ClientConnectedEvent;
-typedef EventBase<CLIENT_AUTHORIZED_EVENT, AuthInfo> ClientAuthorizedEvent;
-typedef EventBase<CLIENT_UNAUTHORIZED_EVENT, AuthInfo> ClientUnAuthorizedEvent;
+typedef EventBase<CLIENT_AUTHORIZED_EVENT, AuthInfoSPtr> ClientAuthorizedEvent;
+typedef EventBase<CLIENT_UNAUTHORIZED_EVENT, AuthInfoSPtr> ClientUnAuthorizedEvent;
 typedef EventBase<CLIENT_CONFIG_CHANGE_EVENT, TvConfig> ClientConfigChangeEvent;
 typedef EventBase<CLIENT_RECEIVE_CHANNELS_EVENT, channels_t> ReceiveChannelsEvent;
 

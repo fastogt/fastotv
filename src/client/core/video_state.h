@@ -36,7 +36,7 @@ extern "C" {
 #include <common/smart_ptr.h>
 #include <common/url.h>
 
-#include "common_types.h"
+#include "client_server_types.h"
 
 #include "client/core/audio_params.h"  // for AudioParams
 #include "client/core/types.h"

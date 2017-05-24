@@ -23,7 +23,7 @@
 #include <common/net/types.h>
 #include <common/error.h>
 
-#include "infos.h"
+#include "server/user_info.h"
 
 namespace fasto {
 namespace fastotv {

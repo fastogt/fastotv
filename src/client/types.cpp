@@ -16,23 +16,29 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "types.h"
+#include "client/types.h"
 
-#include <common/convert2string.h>
 #include <common/sprintf.h>
+#include <common/convert2string.h>
+
+namespace fasto {
+namespace fastotv {
+namespace client {}
+}
+}
 
 namespace common {
 
-std::string ConvertToString(const fasto::fastotv::Point& value) {
+std::string ConvertToString(const fasto::fastotv::client::Point& value) {
   return MemSPrintf("%d:%d", value.x, value.y);
 }
 
-bool ConvertFromString(const std::string& from, fasto::fastotv::Point* out) {
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::Point* out) {
   if (!out) {
     return false;
   }
 
-  fasto::fastotv::Point res;
+  fasto::fastotv::client::Point res;
   size_t del = from.find_first_of(':');
   if (del != std::string::npos) {
     int lx;
@@ -52,16 +58,16 @@ bool ConvertFromString(const std::string& from, fasto::fastotv::Point* out) {
   return true;
 }
 
-std::string ConvertToString(const fasto::fastotv::Size& value) {
+std::string ConvertToString(const fasto::fastotv::client::Size& value) {
   return MemSPrintf("%dx%d", value.width, value.height);
 }
 
-bool ConvertFromString(const std::string& from, fasto::fastotv::Size* out) {
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::Size* out) {
   if (!out) {
     return false;
   }
 
-  fasto::fastotv::Size res;
+  fasto::fastotv::client::Size res;
   size_t del = from.find_first_of('x');
   if (del != std::string::npos) {
     int lwidth;

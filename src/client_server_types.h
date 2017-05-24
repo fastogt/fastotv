@@ -18,31 +18,20 @@
 
 #pragma once
 
-#include "client/core/events/events_base.h"
+#include <string>
 
-#include "client/types.h"
+#include <common/types.h>
 
 namespace fasto {
 namespace fastotv {
-namespace client {
-namespace core {
-namespace events {
 
-struct WindowResizeInfo {
-  explicit WindowResizeInfo(const Size& size);
+typedef std::string stream_id;  // must be unique
+static const stream_id invalid_stream_id = stream_id();
 
-  Size size;
-};
+// simple encode/decode algorithm
+std::string Encode(const std::string& data);
+common::buffer_t Decode(const std::string& data);
 
-struct WindowExposeInfo {};
-struct WindowCloseInfo {};
 
-typedef EventBase<WINDOW_RESIZE_EVENT, WindowResizeInfo> WindowResizeEvent;
-typedef EventBase<WINDOW_EXPOSE_EVENT, WindowExposeInfo> WindowExposeEvent;
-typedef EventBase<WINDOW_CLOSE_EVENT, WindowCloseInfo> WindowCloseEvent;
-
-}  // namespace events {
-}
-}
 }
 }

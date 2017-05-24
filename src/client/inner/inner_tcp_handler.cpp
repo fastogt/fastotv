@@ -48,7 +48,7 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
-InnerTcpHandler::InnerTcpHandler(const common::net::HostAndPort& innerHost, const AuthInfo& ainf)
+InnerTcpHandler::InnerTcpHandler(const common::net::HostAndPort& innerHost, AuthInfoSPtr ainf)
     : inner_connection_(nullptr),
       ping_server_id_timer_(INVALID_TIMER_ID),
       innerHost_(innerHost),
@@ -81,7 +81,7 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
     return;
   }
 
-  ConnectInfo cinf(innerHost_);
+  core::events::ConnectInfo cinf(innerHost_);
   fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, cinf));
   inner_connection_ = nullptr;
 }
@@ -149,7 +149,7 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
       common::net::connect(innerHost_, common::net::ST_SOCK_STREAM, 0, &client_info);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
-    ConnectInfo cinf(innerHost_);
+    core::events::ConnectInfo cinf(innerHost_);
     auto ex_event = make_exception_event(new core::events::ClientConnectedEvent(this, cinf), err);
     fApp->PostEvent(ex_event);
     return;
@@ -184,10 +184,12 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       DEBUG_MSG_ERROR(err);
     }
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
-    json_object* jain = AuthInfo::MakeJobject(ainf_);
-    std::string auth_str = json_object_get_string(jain);
-    json_object_put(jain);
-    std::string enc_auth = common::HexEncode(auth_str, false);
+    AuthInfo* ainf_ptr = ainf_.get();
+
+    json_object* jauth = AuthInfo::MakeJobject(*ainf_ptr);
+    std::string auth_str = json_object_get_string(jauth);
+    std::string enc_auth = Encode(auth_str);
+    json_object_put(jauth);
     cmd_responce_t iAm = WhoAreYouResponceSuccsess(id, enc_auth);
     common::Error err = connection->Write(iAm);
     if (err && err->IsError()) {
@@ -212,7 +214,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     json_object_object_add(info_json, STATUS_RAM_TOTAL_FIELD, json_object_new_int64(ram_total));
     json_object_object_add(info_json, STATUS_RAM_FREE_FIELD, json_object_new_int64(ram_free));
 
-    const char* info_json_string = json_object_get_string(info_json);
+    std::string info_json_string = json_object_get_string(info_json);
     cmd_responce_t resp = SystemInfoResponceSuccsess(id, info_json_string);
     common::Error err = connection->Write(resp);
     if (err && err->IsError()) {
@@ -269,7 +271,7 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
           return;
         }
 
-        common::buffer_t buff = common::HexDecode(hex_encoded_channels);
+        common::buffer_t buff = Decode(hex_encoded_channels);
         std::string buff_str(buff.begin(), buff.end());
         json_object* obj = json_tokener_parse(buff_str.c_str());
         if (!obj) {
@@ -318,7 +320,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       const char* okrespcommand = argv[1];
       if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
-        connection->SetName(ainf_.login);
+        connection->SetName(ainf_->login);
         fApp->PostEvent(new core::events::ClientAuthorizedEvent(this, ainf_));
       }
     }
