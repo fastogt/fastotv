@@ -21,6 +21,7 @@
 #include <string>
 
 #include <common/types.h>
+#include <common/time.h>
 
 namespace fasto {
 namespace fastotv {
@@ -28,12 +29,12 @@ namespace fastotv {
 typedef std::string stream_id;  // must be unique
 static const stream_id invalid_stream_id = stream_id();
 
+typedef std::string login_t;  // unique, user email now
 typedef int64_t bandwidth_t;
+typedef common::time64_t timestamp_t;
 
 // simple encode/decode algorithm
 std::string Encode(const std::string& data);
-common::buffer_t Decode(const std::string& data);
-
-
+std::string Decode(const std::string& data);
 }
 }

@@ -44,7 +44,7 @@ cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& er
 // who are you
 cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const std::string& auth);  // escaped
 // system info
-cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info);  // json
+cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info);  // escaped
 // ping
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id);
 }

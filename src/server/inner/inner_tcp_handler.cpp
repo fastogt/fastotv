@@ -33,6 +33,8 @@
 #include "server/server_host.h"
 
 #include "server_info.h"
+#include "client_info.h"
+#include "ping_info.h"
 
 #include "server/inner/inner_tcp_client.h"
 
@@ -203,10 +205,12 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
 
     ServerInfo serv;
     serv.bandwidth_host = config_.server.bandwidth_host;
+
     json_object* jserver_info = ServerInfo::MakeJobject(serv);
     std::string server_info_str = json_object_get_string(jserver_info);
     json_object_put(jserver_info);
     std::string hex_server_info = Encode(server_info_str);
+
     cmd_responce_t server_info_responce = GetServerInfoResponceSuccsess(id, hex_server_info);
     err = connection->Write(server_info_responce);
     if (err && err->IsError()) {
@@ -231,9 +235,10 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
 
     json_object* jchannels = MakeJobjectFromChannels(user.channels);
     std::string channels_str = json_object_get_string(jchannels);
+    std::string enc_channels = Encode(channels_str);
     json_object_put(jchannels);
-    std::string hex_channels = Encode(channels_str);
-    cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, hex_channels);
+
+    cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, enc_channels);
     err = connection->Write(channels_responce);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
@@ -279,56 +284,32 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     char* argv[]) {
   char* command = argv[1];
   if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
-    if (argc < 2) {
-      const std::string error_str = "Invalid input argument(s)";
-      cmd_approve_t resp = PingApproveResponceFail(id, error_str);
+    json_object* obj = NULL;
+    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
+    if (parse_err && parse_err->IsError()) {
+      cmd_approve_t resp = PingApproveResponceFail(id, parse_err->Description());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
-      return common::make_error_value(error_str, common::Value::E_ERROR);
+      return parse_err;
     }
 
-    const char* pong = argv[2];
-    if (!pong) {
-      const std::string error_str = "Invalid input argument(s)";
-      cmd_approve_t resp = PingApproveResponceFail(id, error_str);
-      common::Error write_err = connection->Write(resp);
-      UNUSED(write_err);
-      return common::make_error_value(error_str, common::Value::E_ERROR);
-    }
-
+    ServerPingInfo ping_info = ServerPingInfo::MakeClass(obj);
+    UNUSED(ping_info);
+    json_object_put(obj);
     cmd_approve_t resp = PingApproveResponceSuccsess(id);
     common::Error err = connection->Write(resp);
     if (err && err->IsError()) {
       return err;
     }
     return common::Error();
-  } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
-    if (argc < 2) {
-      const std::string error_str = "Invalid input argument(s)";
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+  } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {  // encoded
+    json_object* obj = NULL;
+    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
+    if (parse_err && parse_err->IsError()) {
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, parse_err->Description());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
-      return common::make_error_value(error_str, common::Value::E_ERROR);
-    }
-
-    const char* uauthstr = argv[2];
-    if (!uauthstr) {
-      const std::string error_str = "Invalid input argument(s)";
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
-      common::Error write_err = connection->Write(resp);
-      UNUSED(write_err);
-      return common::make_error_value(error_str, common::Value::E_ERROR);
-    }
-
-    common::buffer_t buff = Decode(uauthstr);
-    std::string buff_str(buff.begin(), buff.end());
-    json_object* obj = json_tokener_parse(buff_str.c_str());
-    if (!obj) {
-      const std::string error_str = "Invalid input argument(s)";
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, "Invalid input argument(s)");
-      common::Error write_err = connection->Write(resp);
-      UNUSED(write_err);
-      return common::make_error_value(error_str, common::Value::E_ERROR);
+      return parse_err;
     }
 
     AuthInfo uauth = AuthInfo::MakeClass(obj);
@@ -373,7 +354,26 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
 
     PublishStateToChannel(uid, true);
     return common::Error();
-  } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {
+  } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {  // encoded
+    json_object* obj = NULL;
+    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
+    if (parse_err && parse_err->IsError()) {
+      cmd_approve_t resp = SystemInfoApproveResponceFail(id, parse_err->Description());
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return parse_err;
+    }
+
+    ClientInfo cinf = ClientInfo::MakeClass(obj);
+    json_object_put(obj);
+    if (!cinf.IsValid()) {
+      const std::string error_str = "Invalid input argument(s)";
+      cmd_approve_t resp = SystemInfoApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return common::make_error_value(error_str, common::Value::E_ERROR);
+    }
+
     cmd_approve_t resp = SystemInfoApproveResponceSuccsess(id);
     common::Error err = connection->Write(resp);
     if (err && err->IsError()) {
@@ -420,6 +420,28 @@ void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient*
   } else {
     WARNING_LOG() << "UNKNOWN COMMAND: " << command;
   }
+}
+
+common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc,
+                                                                 char* argv[],
+                                                                 json_object** out) {
+  if (argc < 2) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  const char* arg_2_str = argv[2];
+  if (!arg_2_str) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  std::string raw = Decode(arg_2_str);
+  json_object* obj = json_tokener_parse(raw.c_str());
+  if (!obj) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  *out = obj;
+  return common::Error();
 }
 
 }  // namespace inner

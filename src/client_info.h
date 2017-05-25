@@ -24,17 +24,28 @@
 
 struct json_object;
 
-#define BANDWIDTH_FIELD "bandwidth"
+#define CLIENT_INFO_LOGIN_FIELD "login"
+#define CLIENT_INFO_BANDWIDTH_FIELD "bandwidth"
+#define CLIENT_INFO_OS_FIELD "os"
+#define CLIENT_INFO_CPU_FIELD "cpu"
+#define CLIENT_INFO_RAM_TOTAL_FIELD "ram_total"
+#define CLIENT_INFO_RAM_FREE_FIELD "ram_free"
 
 namespace fasto {
 namespace fastotv {
 
 struct ClientInfo {
   ClientInfo();
+  bool IsValid() const;
 
   static json_object* MakeJobject(const ClientInfo& inf);  // allocate json_object
   static ClientInfo MakeClass(json_object* obj);           // pass valid json obj
 
+  login_t login;
+  std::string os;
+  std::string cpu_brand;
+  int64_t ram_total;
+  int64_t ram_free;
   bandwidth_t bandwidth;
 };
 

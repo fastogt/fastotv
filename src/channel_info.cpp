@@ -28,15 +28,6 @@
 namespace fasto {
 namespace fastotv {
 
-std::string Encode(const std::string& data) {
-  std::string enc_data = common::HexEncode(data, false);
-  return enc_data;
-}
-
-common::buffer_t Decode(const std::string& data) {
-  return common::HexDecode(data);
-}
-
 json_object* MakeJobjectFromChannels(const channels_t& channels) {
   json_object* jchannels = json_object_new_array();
   for (Url url : channels) {

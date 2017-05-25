@@ -89,6 +89,10 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
                                                  int argc,
                                                  char* argv[]) WARN_UNUSED_RESULT;
 
+  common::Error ParserResponceResponceCommand(int argc,
+                                              char* argv[],
+                                              json_object** out) WARN_UNUSED_RESULT;
+
   ServerHost* const parent_;
 
   RedisSub* sub_commands_in_;

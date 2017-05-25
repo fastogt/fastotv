@@ -44,12 +44,12 @@
 #define APPROVE_COMMAND 2
 
 // client commands
-#define CLIENT_PING_COMMAND "client_ping"
+#define CLIENT_PING_COMMAND "client_ping"  // ping server
 #define CLIENT_GET_SERVER_INFO "get_server_info"
 #define CLIENT_GET_CHANNELS "get_channels"
 
 // server commands
-#define SERVER_PING_COMMAND "server_ping"
+#define SERVER_PING_COMMAND "server_ping"  // ping client
 #define SERVER_WHO_ARE_YOU_COMMAND "who_are_you"
 #define SERVER_PLEASE_SYSTEM_INFO_COMMAND "plz_system_info"
 

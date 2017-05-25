@@ -44,7 +44,7 @@
 // system info
 #define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_FAIL_1E \
   GENEATATE_FAIL_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "'%s'")
-#define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1J \
+#define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1E \
   GENEATATE_SUCCESS_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "'%s'")
 
 // ping
@@ -96,7 +96,7 @@ cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const std::string& auth) 
 }
 
 cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info) {
-  return MakeResponce(id, CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1J, system_info);
+  return MakeResponce(id, CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1E, system_info);
 }
 
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id) {

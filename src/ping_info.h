@@ -16,21 +16,35 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#pragma once
+
 #include "client_server_types.h"
 
-#include <common/convert2string.h>
+struct json_object;
+
+#define SERVER_INFO_TIMESTAMP_FIELD "timestamp"
+#define CLIENT_INFO_TIMESTAMP_FIELD "timestamp"
 
 namespace fasto {
 namespace fastotv {
 
-std::string Encode(const std::string& data) {
-  std::string enc_data = common::HexEncode(data, false);
-  return enc_data;
-}
+struct ServerPingInfo {
+  ServerPingInfo();
 
-std::string Decode(const std::string& data) {
-  common::buffer_t dec = common::HexDecode(data);
-  return common::ConvertToString(dec);
-}
-}
-}
+  static json_object* MakeJobject(const ServerPingInfo& inf);  // allocate json_object
+  static ServerPingInfo MakeClass(json_object* obj);           // pass valid json obj
+
+  timestamp_t timestamp;
+};
+
+struct ClientPingInfo {
+  ClientPingInfo();
+
+  static json_object* MakeJobject(const ClientPingInfo& inf);  // allocate json_object
+  static ClientPingInfo MakeClass(json_object* obj);           // pass valid json obj
+
+  timestamp_t timestamp;
+};
+
+}  // namespace fastotv
+}  // namespace fasto

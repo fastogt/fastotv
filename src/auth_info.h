@@ -20,10 +20,12 @@
 
 #include <string>
 
+#include "client_server_types.h"
+
 struct json_object;
 
-#define LOGIN_FIELD "login"
-#define PASSWORD_FIELD "password"
+#define AUTH_INFO_LOGIN_FIELD "login"
+#define AUTH_INFO_PASSWORD_FIELD "password"
 
 namespace fasto {
 namespace fastotv {
@@ -37,7 +39,7 @@ struct AuthInfo {
   static json_object* MakeJobject(const AuthInfo& ainf);  // allocate json_object
   static AuthInfo MakeClass(json_object* obj);            // pass valid json obj
 
-  std::string login;  // unique
+  login_t login;  // unique
   std::string password;
 };
 
