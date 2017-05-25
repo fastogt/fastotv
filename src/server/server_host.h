@@ -44,11 +44,11 @@ class ServerHost {
   enum { timeout_seconds = 1 };
   typedef std::unordered_map<user_id_t, inner::InnerTcpClient*> inner_connections_type;
 
-  explicit ServerHost(const common::net::HostAndPort& host);
+  explicit ServerHost(const Config& config);
   ~ServerHost();
 
-  void stop();
-  int exec();
+  void Stop();
+  int Exec();
 
   common::Error UnRegisterInnerConnectionByHost(common::libev::IoClient* connection)
       WARN_UNUSED_RESULT;
@@ -62,7 +62,8 @@ class ServerHost {
                          UserInfo* uinf) const WARN_UNUSED_RESULT;
 
   inner::InnerTcpClient* FindInnerConnectionByID(user_id_t user_id) const;
-  void SetConfig(const Config& conf);
+
+  Config GetConfig() const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ServerHost);
@@ -75,6 +76,7 @@ class ServerHost {
 
   inner_connections_type connections_;
   RedisStorage rstorage_;
+  const Config config_;
 };
 
 }  // namespace server

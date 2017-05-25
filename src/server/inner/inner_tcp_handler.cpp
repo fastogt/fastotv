@@ -49,10 +49,17 @@ InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent)
       sub_commands_in_(NULL),
       handler_(NULL),
       ping_client_id_timer_(INVALID_TIMER_ID) {
+  Config config = parent->GetConfig();
   handler_ = new InnerSubHandler(this);
   sub_commands_in_ = new RedisSub(handler_);
   redis_subscribe_command_in_thread_ =
       THREAD_MANAGER()->CreateThread(&RedisSub::Listen, sub_commands_in_);
+
+  sub_commands_in_->SetConfig(config.server.redis);
+  bool result = redis_subscribe_command_in_thread_->Start();
+  if (!result) {
+    WARNING_LOG() << "Don't started listen thread for external commands.";
+  }
 }
 
 InnerTcpHandlerHost::~InnerTcpHandlerHost() {
@@ -141,14 +148,6 @@ void InnerTcpHandlerHost::DataReadyToWrite(common::libev::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandlerHost::SetConfig(const Config& config) {
-  sub_commands_in_->SetConfig(config.server.redis);
-  bool result = redis_subscribe_command_in_thread_->Start();
-  if (!result) {
-    WARNING_LOG() << "Don't started listen thread for external commands.";
-  }
-}
-
 bool InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
   return sub_commands_in_->PublishToChannelOut(msg);
 }
@@ -200,7 +199,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
 
-    #pragma message "IMPL PLZ"
+#pragma message "IMPL PLZ"
     /*json_object* jchannels = MakeJobjectFromChannels(user.channels);
     std::string channels_str = json_object_get_string(jchannels);
     json_object_put(jchannels);

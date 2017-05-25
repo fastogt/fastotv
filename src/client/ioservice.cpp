@@ -34,8 +34,6 @@
 #include "client/core/events/lirc_events.h"
 #endif
 
-#include "server_config.h"
-
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -165,7 +163,7 @@ void IoService::RequestChannels() const {
 
 common::libev::IoLoopObserver* IoService::CreateHandler() {
   inner::StartConfig conf;
-  conf.inner_host = g_service_host;
+  conf.inner_host = common::net::HostAndPort(SERVICE_HOST_NAME, SERVICE_HOST_PORT);
   conf.ainf = AuthInfo(USER_LOGIN, USER_PASSWORD);
   PrivateHandler* handler = new PrivateHandler(conf);
   return handler;

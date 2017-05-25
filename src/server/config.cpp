@@ -25,6 +25,7 @@
 #define CHANNEL_CLIENTS_STATE_NAME "CLIENTS_STATE"
 
 #define CONFIG_SERVER_OPTIONS "server"
+#define CONFIG_SERVER_OPTIONS_HOST_FIELD "host"
 #define CONFIG_SERVER_OPTIONS_REDIS_SERVER_FIELD "redis_server"
 #define CONFIG_SERVER_OPTIONS_REDIS_UNIX_PATH_FIELD "redis_unix_path"
 #define CONFIG_SERVER_OPTIONS_REDIS_CHANNEL_IN_FIELD "redis_channel_in_name"
@@ -34,6 +35,7 @@
 
 /*
   [server]
+  host=fastotv.com:7040
   redis_server=localhost:6379
   redis_unix_path=/var/run/redis/redis.sock
   bandwidth_server=localhost:5544
@@ -60,10 +62,19 @@ int ini_handler_fasto(void* user_data, const char* section, const char* name, co
     common::net::HostAndPort hs;
     bool res = common::ConvertFromString(value, &hs);
     if (!res) {
-      WARNING_LOG() << "Invalid host value: " << value;
+      WARNING_LOG() << "Invalid " CONFIG_SERVER_OPTIONS_REDIS_SERVER_FIELD " value: " << value;
       return 0;
     }
     pconfig->server.redis.redis_host = hs;
+    return 1;
+  } else if (MATCH(CONFIG_SERVER_OPTIONS, CONFIG_SERVER_OPTIONS_HOST_FIELD)) {
+    common::net::HostAndPort hs;
+    bool res = common::ConvertFromString(value, &hs);
+    if (!res) {
+      WARNING_LOG() << "Invalid " CONFIG_SERVER_OPTIONS_HOST_FIELD " value: " << value;
+      return 0;
+    }
+    pconfig->server.host = hs;
     return 1;
   } else if (MATCH(CONFIG_SERVER_OPTIONS, CONFIG_SERVER_OPTIONS_REDIS_UNIX_PATH_FIELD)) {
     pconfig->server.redis.redis_unix_socket = value;
@@ -81,7 +92,7 @@ int ini_handler_fasto(void* user_data, const char* section, const char* name, co
     common::net::HostAndPort hs;
     bool res = common::ConvertFromString(value, &hs);
     if (!res) {
-      WARNING_LOG() << "Invalid host value: " << value;
+      WARNING_LOG() << "Invalid " CONFIG_SERVER_OPTIONS_BANDWIDT_SERVER_FIELD " value: " << value;
       return 0;
     }
     pconfig->server.bandwidth_host = hs;
@@ -94,14 +105,14 @@ int ini_handler_fasto(void* user_data, const char* section, const char* name, co
 
 Settings::Settings() : redis(), bandwidth_host() {
   // in config by default
-  //redis.redis_host = redis_default_host;
-  //redis.redis_unix_socket = redis_default_unix_path;
+  // redis.redis_host = redis_default_host;
+  // redis.redis_unix_socket = redis_default_unix_path;
 
   redis.channel_in = CHANNEL_COMMANDS_IN_NAME;
   redis.channel_out = CHANNEL_COMMANDS_OUT_NAME;
   redis.channel_clients_state = CHANNEL_CLIENTS_STATE_NAME;
 
-  //bandwidth_host = bandwidth_default_host;
+  // bandwidth_host = bandwidth_default_host;
 }
 
 Config::Config() : server() {}

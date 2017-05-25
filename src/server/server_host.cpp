@@ -59,11 +59,13 @@ int exec_server(common::libev::tcp::TcpServer* server) {
 }
 namespace server {
 
-ServerHost::ServerHost(const common::net::HostAndPort& host)
-    : stop_(false), handler_(nullptr), server_(nullptr) {
+ServerHost::ServerHost(const Config& config)
+    : stop_(false), handler_(nullptr), server_(nullptr), rstorage_(), config_(config) {
   handler_ = new inner::InnerTcpHandlerHost(this);
-  server_ = new inner::InnerTcpServer(host, handler_);
+  server_ = new inner::InnerTcpServer(config.server.host, handler_);
   server_->SetName("inner_server");
+
+  rstorage_.SetConfig(config.server.redis);
 }
 
 ServerHost::~ServerHost() {
@@ -71,14 +73,14 @@ ServerHost::~ServerHost() {
   destroy(&handler_);
 }
 
-void ServerHost::stop() {
+void ServerHost::Stop() {
   std::unique_lock<std::mutex> lock(stop_mutex_);
   stop_ = true;
   server_->Stop();
   stop_cond_.notify_all();
 }
 
-int ServerHost::exec() {
+int ServerHost::Exec() {
   common::shared_ptr<common::threads::Thread<int> > connection_thread =
       THREAD_MANAGER()->CreateThread(&exec_server, server_);
   bool result = connection_thread->Start();
@@ -154,9 +156,8 @@ inner::InnerTcpClient* ServerHost::FindInnerConnectionByID(user_id_t user_id) co
   return (*hs).second;
 }
 
-void ServerHost::SetConfig(const Config& conf) {
-  rstorage_.SetConfig(conf.server.redis);
-  handler_->SetConfig(conf);
+Config ServerHost::GetConfig() const {
+  return config_;
 }
 
 }  // namespace server

@@ -27,6 +27,7 @@ namespace server {
 struct Settings {
   Settings();
 
+  common::net::HostAndPort host;
   redis_sub_configuration_t redis;
   common::net::HostAndPort bandwidth_host;
 };
