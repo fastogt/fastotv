@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "commands/commands.h"
+#include "server/commands.h"
 
 // requests
 // who are you
@@ -52,7 +52,8 @@
 
 // ping
 #define SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING_COMMAND, "'%s'")
-#define SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "pong")
+#define SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E \
+  GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "'%s'")
 
 namespace fasto {
 namespace fastotv {
@@ -96,15 +97,15 @@ cmd_responce_t GetServerInfoResponceFail(cmd_seq_t id, const std::string& error_
   return MakeResponce(id, SERVER_GET_SERVER_INFO_COMMAND_RESP_FAIL_1E, error_text);
 }
 
-cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const std::string& channels) {
-  return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E, channels);
+cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const std::string& channels_info) {
+  return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E, channels_info);
 }
 cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E, error_text);
 }
 
-cmd_responce_t PingResponceSuccsess(cmd_seq_t id) {
-  return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS);
+cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const std::string& ping_info) {
+  return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info);
 }
 cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E, error_text);

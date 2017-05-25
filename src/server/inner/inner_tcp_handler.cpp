@@ -181,11 +181,18 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
   UNUSED(argc);
   char* command = argv[0];
   if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
-    cmd_responce_t pong = PingResponceSuccsess(id);
+    ClientPingInfo ping;
+    json_object* jping_info = ClientPingInfo::MakeJobject(ping);
+    std::string ping_info_str = json_object_get_string(jping_info);
+    json_object_put(jping_info);
+    std::string ping_info = Encode(ping_info_str);
+
+    cmd_responce_t pong = PingResponceSuccsess(id, ping_info);
     common::Error err = connection->Write(pong);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
+    return;
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_SERVER_INFO)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
     AuthInfo hinf = client->ServerHostInfo();
@@ -216,6 +223,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
+    return;
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
     AuthInfo hinf = client->ServerHostInfo();
@@ -243,9 +251,10 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
-  } else {
-    WARNING_LOG() << "UNKNOWN COMMAND: " << command;
+    return;
   }
+
+  WARNING_LOG() << "UNKNOWN COMMAND: " << command;
 }
 
 void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
@@ -261,6 +270,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
       connection->Close();
       delete connection;
     }
+    return;
   } else if (IS_EQUAL_COMMAND(state_command, FAIL_COMMAND) && argc > 1) {
     common::Error err = HandleInnerFailedResponceCommand(connection, id, argc, argv);
     if (err && err->IsError()) {
@@ -268,13 +278,14 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
       connection->Close();
       delete connection;
     }
-  } else {
-    const std::string error_str = common::MemSPrintf("UNKNOWN STATE COMMAND: %s", state_command);
-    common::Error err = common::make_error_value(error_str, common::Value::E_ERROR);
-    DEBUG_MSG_ERROR(err);
-    connection->Close();
-    delete connection;
+    return;
   }
+
+  const std::string error_str = common::MemSPrintf("UNKNOWN STATE COMMAND: %s", state_command);
+  common::Error err = common::make_error_value(error_str, common::Value::E_ERROR);
+  DEBUG_MSG_ERROR(err);
+  connection->Close();
+  delete connection;
 }
 
 common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(

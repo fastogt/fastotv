@@ -190,11 +190,17 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
   char* command = argv[0];
 
   if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
-    const cmd_responce_t pong = PingResponceSuccsess(id);
+    ServerPingInfo ping;
+    json_object* jping = ServerPingInfo::MakeJobject(ping);
+    std::string ping_str = json_object_get_string(jping);
+    std::string enc_ping = Encode(ping_str);
+    json_object_put(jping);
+    const cmd_responce_t pong = PingResponceSuccsess(id, enc_ping);
     common::Error err = connection->Write(pong);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
+    return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
     json_object* jauth = AuthInfo::MakeJobject(config_.ainf);
     std::string auth_str = json_object_get_string(jauth);
@@ -205,6 +211,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
+    return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {
     const common::system_info::CpuInfo& c1 = common::system_info::CurrentCpuInfo();
     std::string brand = c1.BrandName();
@@ -234,9 +241,10 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       DEBUG_MSG_ERROR(err);
     }
     json_object_put(info_json);
-  } else {
-    WARNING_LOG() << "UNKNOWN REQUEST COMMAND: " << command;
+    return;
   }
+
+  WARNING_LOG() << "UNKNOWN REQUEST COMMAND: " << command;
 }
 
 void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerClient* connection,
@@ -250,14 +258,16 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
+    return;
   } else if (IS_EQUAL_COMMAND(state_command, FAIL_COMMAND) && argc > 1) {
     common::Error err = HandleInnerFailedResponceCommand(connection, id, argc, argv);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
-  } else {
-    WARNING_LOG() << "UNKNOWN STATE COMMAND: " << state_command;
+    return;
   }
+
+  WARNING_LOG() << "UNKNOWN STATE COMMAND: " << state_command;
 }
 
 void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClient* connection,
@@ -276,6 +286,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
         fApp->PostEvent(new core::events::ClientAuthorizedEvent(this, config_.ainf));
       }
     }
+    return;
   } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {
     if (argc > 1) {
       const char* failed_resp_command = argv[1];
@@ -288,9 +299,10 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
         fApp->PostEvent(ex_event);
       }
     }
-  } else {
-    WARNING_LOG() << "UNKNOWN COMMAND: " << command;
+    return;
   }
+
+  WARNING_LOG() << "UNKNOWN COMMAND: " << command;
 }
 
 common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(

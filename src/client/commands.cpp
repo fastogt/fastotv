@@ -49,7 +49,8 @@
 
 // ping
 #define CLIENT_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING_COMMAND, "'%s'")
-#define CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "pong")
+#define CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E \
+  GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "'%s'")
 
 namespace fasto {
 namespace fastotv {
@@ -99,8 +100,8 @@ cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& syste
   return MakeResponce(id, CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1E, system_info);
 }
 
-cmd_responce_t PingResponceSuccsess(cmd_seq_t id) {
-  return MakeResponce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS);
+cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const std::string& ping_info) {
+  return MakeResponce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info);
 }
 }
 }
