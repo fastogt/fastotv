@@ -45,7 +45,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
     ping_timeout_clients = 60  // sec
   };
 
-  explicit InnerTcpHandlerHost(ServerHost* parent);
+  explicit InnerTcpHandlerHost(ServerHost* parent, const Config& config);
 
   virtual void PreLooped(common::libev::IoLoop* server) override;
 
@@ -95,6 +95,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
   InnerSubHandler* handler_;
   std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
   common::libev::timer_id_t ping_client_id_timer_;
+  const Config config_;
 };
 
 }  // namespace inner

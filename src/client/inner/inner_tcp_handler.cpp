@@ -34,8 +34,9 @@
 
 #include "inner/inner_client.h"
 
-#include "client/commands.h"
+#include "server_info.h"
 
+#include "client/commands.h"
 #include "client/core/events/network_events.h"
 
 #define STATUS_OS_FIELD "os"
@@ -294,10 +295,9 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
           return;
         }
 
-        #pragma message "IMPL PLZ"
-        /*channels_t channels = MakeChannelsClass(obj);
+        ServerInfo sinf = ServerInfo::MakeClass(obj);
         json_object_put(obj);
-        fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, channels));
+        /*fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, channels));
         const cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
         common::Error err = connection->Write(resp);
         if (err && err->IsError()) {

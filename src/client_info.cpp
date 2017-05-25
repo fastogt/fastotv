@@ -16,24 +16,34 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include "client_info.h"
 
 #include <string>
 
-#include <common/types.h>
+#include "third-party/json-c/json-c/json.h"  // for json_object_...
+
+#include <common/convert2string.h>
 
 namespace fasto {
 namespace fastotv {
 
-typedef std::string stream_id;  // must be unique
-static const stream_id invalid_stream_id = stream_id();
+ClientInfo::ClientInfo() : bandwidth(0) {}
 
-typedef int64_t bandwidth_t;
-
-// simple encode/decode algorithm
-std::string Encode(const std::string& data);
-common::buffer_t Decode(const std::string& data);
-
-
+struct json_object* ClientInfo::MakeJobject(const ClientInfo& inf) {
+  json_object* obj = json_object_new_object();
+  json_object_object_add(obj, BANDWIDTH_FIELD, json_object_new_int64(inf.bandwidth));
+  return obj;
 }
+
+ClientInfo ClientInfo::MakeClass(json_object* obj) {
+  json_object* jband = NULL;
+  json_bool jband_exists = json_object_object_get_ex(obj, BANDWIDTH_FIELD, &jband);
+  ClientInfo inf;
+  if (jband_exists) {
+    inf.bandwidth = json_object_get_int64(jband);
+  }
+  return inf;
 }
+
+}  // namespace fastotv
+}  // namespace fasto

@@ -26,6 +26,8 @@ SET(SOURCES_SDS
 
 SET(CLIENT_SERVER_SOURCES
   ${SOURCE_ROOT}/auth_info.h ${SOURCE_ROOT}/auth_info.cpp
+  ${SOURCE_ROOT}/server_info.h ${SOURCE_ROOT}/server_info.cpp
+  ${SOURCE_ROOT}/client_info.h ${SOURCE_ROOT}/client_info.cpp
   ${SOURCE_ROOT}/channel_info.h ${SOURCE_ROOT}/channel_info.cpp
   ${SOURCE_ROOT}/url.h ${SOURCE_ROOT}/url.cpp
   ${SOURCE_ROOT}/client_server_types.h ${SOURCE_ROOT}/client_server_types.cpp

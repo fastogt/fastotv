@@ -32,6 +32,8 @@
 #include "server/commands.h"
 #include "server/server_host.h"
 
+#include "server_info.h"
+
 #include "server/inner/inner_tcp_client.h"
 
 #include "server/inner/inner_external_notifier.h"
@@ -44,12 +46,12 @@ namespace fastotv {
 namespace server {
 namespace inner {
 
-InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent)
+InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent, const Config& config)
     : parent_(parent),
       sub_commands_in_(NULL),
       handler_(NULL),
-      ping_client_id_timer_(INVALID_TIMER_ID) {
-  Config config = parent->GetConfig();
+      ping_client_id_timer_(INVALID_TIMER_ID),
+      config_(config) {
   handler_ = new InnerSubHandler(this);
   sub_commands_in_ = new RedisSub(handler_);
   redis_subscribe_command_in_thread_ =
@@ -199,16 +201,17 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
 
-#pragma message "IMPL PLZ"
-    /*json_object* jchannels = MakeJobjectFromChannels(user.channels);
-    std::string channels_str = json_object_get_string(jchannels);
-    json_object_put(jchannels);
-    std::string hex_channels = Encode(channels_str);
-    cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, hex_channels);
-    err = connection->Write(channels_responce);
+    ServerInfo serv;
+    serv.bandwidth_host = config_.server.bandwidth_host;
+    json_object* jserver_info = ServerInfo::MakeJobject(serv);
+    std::string server_info_str = json_object_get_string(jserver_info);
+    json_object_put(jserver_info);
+    std::string hex_server_info = Encode(server_info_str);
+    cmd_responce_t server_info_responce = GetServerInfoResponceSuccsess(id, hex_server_info);
+    err = connection->Write(server_info_responce);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-    }*/
+    }
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
     AuthInfo hinf = client->ServerHostInfo();

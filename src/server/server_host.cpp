@@ -61,7 +61,7 @@ namespace server {
 
 ServerHost::ServerHost(const Config& config)
     : stop_(false), handler_(nullptr), server_(nullptr), rstorage_(), config_(config) {
-  handler_ = new inner::InnerTcpHandlerHost(this);
+  handler_ = new inner::InnerTcpHandlerHost(this, config);
   server_ = new inner::InnerTcpServer(config.server.host, handler_);
   server_->SetName("inner_server");
 
@@ -154,10 +154,6 @@ inner::InnerTcpClient* ServerHost::FindInnerConnectionByID(user_id_t user_id) co
   }
 
   return (*hs).second;
-}
-
-Config ServerHost::GetConfig() const {
-  return config_;
 }
 
 }  // namespace server

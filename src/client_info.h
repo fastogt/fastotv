@@ -20,20 +20,23 @@
 
 #include <string>
 
-#include <common/types.h>
+#include "client_server_types.h"
+
+struct json_object;
+
+#define BANDWIDTH_FIELD "bandwidth"
 
 namespace fasto {
 namespace fastotv {
 
-typedef std::string stream_id;  // must be unique
-static const stream_id invalid_stream_id = stream_id();
+struct ClientInfo {
+  ClientInfo();
 
-typedef int64_t bandwidth_t;
+  static json_object* MakeJobject(const ClientInfo& inf);  // allocate json_object
+  static ClientInfo MakeClass(json_object* obj);           // pass valid json obj
 
-// simple encode/decode algorithm
-std::string Encode(const std::string& data);
-common::buffer_t Decode(const std::string& data);
+  bandwidth_t bandwidth;
+};
 
-
-}
-}
+}  // namespace fastotv
+}  // namespace fasto
