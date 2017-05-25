@@ -27,11 +27,11 @@
   GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU_COMMAND, "")
 
 // system info
-#define SERVER_PLEASE_SYSTEM_INFO_COMMAND_REQ GENERATE_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "")
-#define SERVER_PLEASE_SYSTEM_INFO_COMMAND_APPROVE_FAIL_1E \
-  GENERATE_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "'%s'")
-#define SERVER_PLEASE_SYSTEM_INFO_COMMAND_APPROVE_SUCCESS \
-  GENERATE_FMT(SERVER_PLEASE_SYSTEM_INFO_COMMAND, "")
+#define SERVER_GET_CLIENT_INFO_COMMAND_REQ GENERATE_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "")
+#define SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_FAIL_1E \
+  GENEATATE_FAIL_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "'%s'")
+#define SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_SUCCESS \
+  GENEATATE_SUCCESS_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "")
 
 // ping
 #define SERVER_PING_COMMAND_REQ GENERATE_FMT(SERVER_PING_COMMAND, "")
@@ -70,13 +70,13 @@ cmd_approve_t WhoAreYouApproveResponceFail(cmd_seq_t id, const std::string& erro
 }
 
 cmd_request_t SystemInfoRequest(cmd_seq_t id) {
-  return MakeRequest(id, SERVER_PLEASE_SYSTEM_INFO_COMMAND_REQ);
+  return MakeRequest(id, SERVER_GET_CLIENT_INFO_COMMAND_REQ);
 }
 cmd_approve_t SystemInfoApproveResponceSuccsess(cmd_seq_t id) {
-  return MakeApproveResponce(id, SERVER_PLEASE_SYSTEM_INFO_COMMAND_APPROVE_SUCCESS);
+  return MakeApproveResponce(id, SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_SUCCESS);
 }
 cmd_approve_t SystemInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeApproveResponce(id, SERVER_PLEASE_SYSTEM_INFO_COMMAND_APPROVE_FAIL_1E, error_text);
+  return MakeApproveResponce(id, SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_FAIL_1E, error_text);
 }
 
 cmd_request_t PingRequest(cmd_seq_t id) {

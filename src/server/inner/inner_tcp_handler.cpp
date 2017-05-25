@@ -365,7 +365,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
 
     PublishStateToChannel(uid, true);
     return common::Error();
-  } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {  // encoded
+  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {  // encoded
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
@@ -424,13 +424,23 @@ void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient*
     if (argc > 1) {
       const char* okrespcommand = argv[1];
       if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_PING_COMMAND)) {
-      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
+      } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_GET_SERVER_INFO)) {
+      } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_GET_CHANNELS)) {
       }
     }
+    return;
   } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {
-  } else {
-    WARNING_LOG() << "UNKNOWN COMMAND: " << command;
+    if (argc > 1) {
+      const char* failed_resp_command = argv[1];
+      if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_PING_COMMAND)) {
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_GET_SERVER_INFO)) {
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_GET_CHANNELS)) {
+      }
+    }
+    return;
   }
+
+  WARNING_LOG() << "UNKNOWN COMMAND: " << command;
 }
 
 common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc,

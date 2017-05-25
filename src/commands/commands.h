@@ -51,7 +51,7 @@
 // server commands
 #define SERVER_PING_COMMAND "server_ping"  // ping client
 #define SERVER_WHO_ARE_YOU_COMMAND "who_are_you"
-#define SERVER_PLEASE_SYSTEM_INFO_COMMAND "plz_system_info"
+#define SERVER_GET_CLIENT_INFO_COMMAND "plz_system_info"
 
 // request
 // [uint8_t](0) [hex_string]seq [std::string]command args ...

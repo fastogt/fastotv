@@ -212,7 +212,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       DEBUG_MSG_ERROR(err);
     }
     return;
-  } else if (IS_EQUAL_COMMAND(command, SERVER_PLEASE_SYSTEM_INFO_COMMAND)) {
+  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {
     const common::system_info::CpuInfo& c1 = common::system_info::CurrentCpuInfo();
     std::string brand = c1.BrandName();
 
@@ -284,6 +284,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
         connection->SetName(config_.ainf.login);
         fApp->PostEvent(new core::events::ClientAuthorizedEvent(this, config_.ainf));
+      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_GET_CLIENT_INFO_COMMAND)) {
       }
     }
     return;
@@ -297,6 +298,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
         auto ex_event =
             make_exception_event(new core::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO_COMMAND)) {
       }
     }
     return;
