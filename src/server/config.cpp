@@ -41,15 +41,6 @@
   bandwidth_server=localhost:5544
 */
 
-#define DEFAULT_BANDWIDTH_PORT 5544
-
-namespace {
-const common::net::HostAndPort bandwidth_default_host =
-    common::net::HostAndPort::CreateLocalHost(DEFAULT_BANDWIDTH_PORT);
-const common::net::HostAndPort redis_default_host = common::net::HostAndPort::CreateLocalHost(6379);
-const std::string redis_default_unix_path = "/var/run/redis/redis.sock";
-}
-
 namespace fasto {
 namespace fastotv {
 namespace server {
@@ -103,7 +94,7 @@ int ini_handler_fasto(void* user_data, const char* section, const char* name, co
 }
 }
 
-Settings::Settings() : redis(), bandwidth_host() {
+Settings::Settings() : host(), redis(), bandwidth_host() {
   // in config by default
   // redis.redis_host = redis_default_host;
   // redis.redis_unix_socket = redis_default_unix_path;
