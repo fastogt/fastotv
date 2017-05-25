@@ -24,16 +24,13 @@ struct json_object;
 
 #define LOGIN_FIELD "login"
 #define PASSWORD_FIELD "password"
-#define BANDWIDTH_FIELD "bandwidth"
 
 namespace fasto {
 namespace fastotv {
 
-typedef uint64_t bandwidth_t;
-
 struct AuthInfo {
   AuthInfo();
-  AuthInfo(const std::string& login, const std::string& password, bandwidth_t band);
+  AuthInfo(const std::string& login, const std::string& password);
 
   bool IsValid() const;
 
@@ -42,7 +39,6 @@ struct AuthInfo {
 
   std::string login;  // unique
   std::string password;
-  bandwidth_t bandwidth;
 };
 
 inline bool operator==(const AuthInfo& lhs, const AuthInfo& rhs) {

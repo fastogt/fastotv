@@ -44,8 +44,8 @@ namespace {
 class PrivateHandler : public inner::InnerTcpHandler {
  public:
   typedef inner::InnerTcpHandler base_class;
-  PrivateHandler(const common::net::HostAndPort& innerHost, AuthInfoSPtr ainf)
-      : base_class(innerHost, ainf)
+  PrivateHandler(const inner::StartConfig& conf)
+      : base_class(conf)
 #ifdef HAVE_LIRC
         ,
         client_(nullptr)
@@ -118,8 +118,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
 }
 
 IoService::IoService()
-    : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {
-}
+    : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
 
 void IoService::Start() {
   ILoopController::Start();
@@ -129,8 +128,7 @@ void IoService::Stop() {
   ILoopController::Stop();
 }
 
-IoService::~IoService() {
-}
+IoService::~IoService() {}
 
 void IoService::ConnectToServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
@@ -149,6 +147,14 @@ void IoService::DisconnectFromServer() const {
   }
 }
 
+void IoService::RequestServerInfo() const {
+  PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
+  if (handler) {
+    auto cb = [handler]() { handler->RequestServerInfo(); };
+    ExecInLoopThread(cb);
+  }
+}
+
 void IoService::RequestChannels() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {
@@ -158,8 +164,10 @@ void IoService::RequestChannels() const {
 }
 
 common::libev::IoLoopObserver* IoService::CreateHandler() {
-  PrivateHandler* handler = new PrivateHandler(
-      g_service_host, common::make_shared<AuthInfo>(USER_LOGIN, USER_PASSWORD, 0));
+  inner::StartConfig conf;
+  conf.inner_host = g_service_host;
+  conf.ainf = AuthInfo(USER_LOGIN, USER_PASSWORD);
+  PrivateHandler* handler = new PrivateHandler(conf);
   return handler;
 }
 

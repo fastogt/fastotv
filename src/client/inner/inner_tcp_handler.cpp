@@ -48,12 +48,8 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
-InnerTcpHandler::InnerTcpHandler(const common::net::HostAndPort& innerHost, AuthInfoSPtr ainf)
-    : inner_connection_(nullptr),
-      ping_server_id_timer_(INVALID_TIMER_ID),
-      innerHost_(innerHost),
-      ainf_(ainf) {
-}
+InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
+    : inner_connection_(nullptr), ping_server_id_timer_(INVALID_TIMER_ID), config_(config) {}
 
 InnerTcpHandler::~InnerTcpHandler() {
   delete inner_connection_;
@@ -81,7 +77,7 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
     return;
   }
 
-  core::events::ConnectInfo cinf(innerHost_);
+  core::events::ConnectInfo cinf(config_.inner_host);
   fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, cinf));
   inner_connection_ = nullptr;
 }
@@ -124,16 +120,33 @@ void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::
   }
 }
 
+void InnerTcpHandler::RequestServerInfo() {
+  if (!inner_connection_) {
+    return;
+  }
+
+  const cmd_request_t channels_request = GetServerInfoRequest(NextRequestID());
+  fasto::fastotv::inner::InnerClient* client = inner_connection_;
+  common::Error err = client->Write(channels_request);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    client->Close();
+    delete client;
+  }
+}
+
 void InnerTcpHandler::RequestChannels() {
-  if (inner_connection_) {
-    const cmd_request_t channels_request = GetChannelsRequest(NextRequestID());
-    fasto::fastotv::inner::InnerClient* client = inner_connection_;
-    common::Error err = client->Write(channels_request);
-    if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
-      client->Close();
-      delete client;
-    }
+  if (!inner_connection_) {
+    return;
+  }
+
+  const cmd_request_t channels_request = GetChannelsRequest(NextRequestID());
+  fasto::fastotv::inner::InnerClient* client = inner_connection_;
+  common::Error err = client->Write(channels_request);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    client->Close();
+    delete client;
   }
 }
 
@@ -144,12 +157,12 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
 
   DisConnect(common::make_error_value("Reconnect", common::Value::E_ERROR));
 
+  common::net::HostAndPort host = config_.inner_host;
   common::net::socket_info client_info;
-  common::ErrnoError err =
-      common::net::connect(innerHost_, common::net::ST_SOCK_STREAM, 0, &client_info);
+  common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, 0, &client_info);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
-    core::events::ConnectInfo cinf(innerHost_);
+    core::events::ConnectInfo cinf(host);
     auto ex_event = make_exception_event(new core::events::ClientConnectedEvent(this, cinf), err);
     fApp->PostEvent(ex_event);
     return;
@@ -184,9 +197,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       DEBUG_MSG_ERROR(err);
     }
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
-    AuthInfo* ainf_ptr = ainf_.get();
-
-    json_object* jauth = AuthInfo::MakeJobject(*ainf_ptr);
+    json_object* jauth = AuthInfo::MakeJobject(config_.ainf);
     std::string auth_str = json_object_get_string(jauth);
     std::string enc_auth = Encode(auth_str);
     json_object_put(jauth);
@@ -259,6 +270,47 @@ void InnerTcpHandler::HandleInnerResponceCommand(fasto::fastotv::inner::InnerCli
           DEBUG_MSG_ERROR(err);
         }
       }
+    } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_SERVER_INFO)) {
+      if (argc > 2) {
+        const char* hex_encoded_channels = argv[2];
+        if (!hex_encoded_channels) {
+          cmd_approve_t resp = GetServerInfoApproveResponceFail(id, "Invalid input argument(s)");
+          common::Error err = connection->Write(resp);
+          if (err && err->IsError()) {
+            DEBUG_MSG_ERROR(err);
+          }
+          return;
+        }
+
+        common::buffer_t buff = Decode(hex_encoded_channels);
+        std::string buff_str(buff.begin(), buff.end());
+        json_object* obj = json_tokener_parse(buff_str.c_str());
+        if (!obj) {
+          cmd_approve_t resp = GetServerInfoApproveResponceFail(id, "Invalid input argument(s)");
+          common::Error err = connection->Write(resp);
+          if (err && err->IsError()) {
+            DEBUG_MSG_ERROR(err);
+          }
+          return;
+        }
+
+        #pragma message "IMPL PLZ"
+        /*channels_t channels = MakeChannelsClass(obj);
+        json_object_put(obj);
+        fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, channels));
+        const cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
+        common::Error err = connection->Write(resp);
+        if (err && err->IsError()) {
+          DEBUG_MSG_ERROR(err);
+          return;
+        }*/
+      } else {
+        cmd_approve_t resp = GetServerInfoApproveResponceFail(id, "Invalid input argument(s)");
+        common::Error err = connection->Write(resp);
+        if (err && err->IsError()) {
+          DEBUG_MSG_ERROR(err);
+        }
+      }
     } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
       if (argc > 2) {
         const char* hex_encoded_channels = argv[2];
@@ -320,8 +372,8 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       const char* okrespcommand = argv[1];
       if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
-        connection->SetName(ainf_->login);
-        fApp->PostEvent(new core::events::ClientAuthorizedEvent(this, ainf_));
+        connection->SetName(config_.ainf.login);
+        fApp->PostEvent(new core::events::ClientAuthorizedEvent(this, config_.ainf));
       }
     }
   } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {
@@ -332,7 +384,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
         common::Error err =
             common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
         auto ex_event =
-            make_exception_event(new core::events::ClientAuthorizedEvent(this, ainf_), err);
+            make_exception_event(new core::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
       }
     }

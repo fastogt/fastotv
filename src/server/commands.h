@@ -41,6 +41,10 @@ cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id);
 cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text);
 
 // responces
+// get_server_info
+cmd_responce_t GetServerInfoResponceSuccsess(cmd_seq_t id, const std::string& server_info);
+cmd_responce_t GetServerInfoResponceFail(cmd_seq_t id, const std::string& error_text);
+
 // get_channels
 cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const std::string& channels);
 cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text);

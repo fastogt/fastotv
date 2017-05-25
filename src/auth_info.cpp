@@ -31,8 +31,8 @@ namespace fastotv {
 AuthInfo::AuthInfo() : login(), password() {
 }
 
-AuthInfo::AuthInfo(const std::string& login, const std::string& password, bandwidth_t band)
-    : login(login), password(password), bandwidth(band) {
+AuthInfo::AuthInfo(const std::string& login, const std::string& password)
+    : login(login), password(password) {
 }
 
 bool AuthInfo::IsValid() const {
@@ -43,10 +43,8 @@ struct json_object* AuthInfo::MakeJobject(const AuthInfo& ainf) {
   json_object* obj = json_object_new_object();
   const std::string login_str = ainf.login;
   const std::string password_str = ainf.password;
-  const bandwidth_t band = ainf.bandwidth;
   json_object_object_add(obj, LOGIN_FIELD, json_object_new_string(login_str.c_str()));
   json_object_object_add(obj, PASSWORD_FIELD, json_object_new_string(password_str.c_str()));
-  json_object_object_add(obj, BANDWIDTH_FIELD, json_object_new_int64(band));
   return obj;
 }
 
@@ -63,14 +61,7 @@ AuthInfo AuthInfo::MakeClass(json_object* obj) {
     return fasto::fastotv::AuthInfo();
   }
 
-  bandwidth_t band = 0;
-  json_object* jband = NULL;
-  json_bool jband_exists = json_object_object_get_ex(obj, BANDWIDTH_FIELD, &jband);
-  if (jband_exists) {
-    band = json_object_get_int64(jband);
-  }
-
-  fasto::fastotv::AuthInfo ainf(json_object_get_string(jlogin), json_object_get_string(jpass), band);
+  fasto::fastotv::AuthInfo ainf(json_object_get_string(jlogin), json_object_get_string(jpass));
   return ainf;
 }
 

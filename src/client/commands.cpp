@@ -24,6 +24,11 @@
 #define CLIENT_PING_COMMAND_APPROVE_FAIL_1E GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "'%s'")
 #define CLIENT_PING_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "")
 
+// get_server_info
+#define CLIENT_GET_SERVER_INFO_REQ GENERATE_FMT(CLIENT_GET_SERVER_INFO, "")
+#define CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_SERVER_INFO, "'%s'")
+#define CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_GET_SERVER_INFO, "")
+
 // get_channels
 #define CLIENT_GET_CHANNELS_REQ GENERATE_FMT(CLIENT_GET_CHANNELS, "")
 #define CLIENT_GET_CHANNELS_APPROVE_FAIL_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "'%s'")
@@ -60,6 +65,18 @@ cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id) {
 
 cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeApproveResponce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1E, error_text);
+}
+
+cmd_request_t GetServerInfoRequest(cmd_seq_t id) {
+  return MakeRequest(id, CLIENT_GET_SERVER_INFO_REQ);
+}
+
+cmd_approve_t GetServerInfoApproveResponceSuccsess(cmd_seq_t id) {
+  return MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS);
+}
+
+cmd_approve_t GetServerInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
+  return MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E, error_text);
 }
 
 cmd_request_t GetChannelsRequest(cmd_seq_t id) {

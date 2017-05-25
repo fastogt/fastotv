@@ -55,10 +55,8 @@ json_object* UserInfo::MakeJobject(const UserInfo& uinfo) {
   fasto::fastotv::AuthInfo ainfo = uinfo.auth;
   const std::string login_str = ainfo.login;
   const std::string password_str = ainfo.password;
-  const bandwidth_t band = ainfo.bandwidth;
   json_object_object_add(obj, LOGIN_FIELD, json_object_new_string(login_str.c_str()));
   json_object_object_add(obj, PASSWORD_FIELD, json_object_new_string(password_str.c_str()));
-  json_object_object_add(obj, BANDWIDTH_FIELD, json_object_new_int(band));
 
   json_object* jchannels = MakeJobjectFromChannels(uinfo.channels);
   json_object_object_add(obj, CHANNELS_FIELD, jchannels);

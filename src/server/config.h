@@ -18,45 +18,28 @@
 
 #pragma once
 
-#include <string>
+#include "redis/redis_helpers.h"
 
 namespace fasto {
 namespace fastotv {
-namespace client {
+namespace server {
 
-struct Point {
-  Point() : x(0), y(0) {}
-  Point(int x, int y) : x(x), y(y) {}
+struct Settings {
+  Settings();
 
-  int x;
-  int y;
+  redis_sub_configuration_t redis;
+  common::net::HostAndPort bandwidth_host;
 };
 
-struct Size {
-  Size() : width(0), height(0) {}
-  Size(int width, int height) : width(width), height(height) {}
+struct Config {
+  Config();
 
-  bool IsValid() { return width != 0 && height != 0; }
-
-  int width;
-  int height;
+  Settings server;
 };
 
-struct Rect {
-  Rect(int x, int y, int width, int height) : x(x), y(y), w(width), h(height) {}
-  int x, y;
-  int w, h;
-};
+bool load_config_file(const std::string& config_absolute_path, Config* options);
+bool save_config_file(const std::string& config_absolute_path, Config* options);
 
-}
-}
-}
-
-
-namespace common {
-std::string ConvertToString(const fasto::fastotv::client::Point& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::Point* out);
-
-std::string ConvertToString(const fasto::fastotv::client::Size& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::Size* out);
-}
+}  // namespace server
+}  // namespace fastotv
+}  // namespace fasto

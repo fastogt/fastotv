@@ -81,6 +81,7 @@ SET(SOURCES_INNER_SERVER
 SET(BUILD_SERVER_SOURCES
   server_host.cpp server_host.h
   user_info.h user_info.cpp
+  config.h config.cpp
   ${HEADERS_REDIS} ${SOURCES_REDIS}
   ${HEADERS_COMMANDS} ${SOURCES_COMMANDS}
   ${HEADERS_INNER} ${SOURCES_INNER}

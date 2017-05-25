@@ -141,8 +141,8 @@ void InnerTcpHandlerHost::DataReadyToWrite(common::libev::IoClient* client) {
   UNUSED(client);
 }
 
-void InnerTcpHandlerHost::SetStorageConfig(const redis_sub_configuration_t& config) {
-  sub_commands_in_->SetConfig(config);
+void InnerTcpHandlerHost::SetConfig(const Config& config) {
+  sub_commands_in_->SetConfig(config.server.redis);
   bool result = redis_subscribe_command_in_thread_->Start();
   if (!result) {
     WARNING_LOG() << "Don't started listen thread for external commands.";
@@ -183,6 +183,33 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
+  } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_SERVER_INFO)) {
+    inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
+    AuthInfo hinf = client->ServerHostInfo();
+    UserInfo user;
+    user_id_t uid;
+    common::Error err = parent_->FindUser(hinf, &uid, &user);
+    if (err && err->IsError()) {
+      cmd_responce_t resp = GetServerInfoResponceFail(id, err->Description());
+      common::Error err = connection->Write(resp);
+      if (err && err->IsError()) {
+        DEBUG_MSG_ERROR(err);
+      }
+      connection->Close();
+      delete connection;
+      return;
+    }
+
+    #pragma message "IMPL PLZ"
+    /*json_object* jchannels = MakeJobjectFromChannels(user.channels);
+    std::string channels_str = json_object_get_string(jchannels);
+    json_object_put(jchannels);
+    std::string hex_channels = Encode(channels_str);
+    cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, hex_channels);
+    err = connection->Write(channels_responce);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    }*/
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
     AuthInfo hinf = client->ServerHostInfo();

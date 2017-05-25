@@ -22,8 +22,6 @@
 #include <string>
 #include <iostream>
 
-#include "inih/ini.h"
-
 #include <common/logger.h>
 #include <common/utils.h>
 #include <common/file_system.h>
@@ -32,60 +30,18 @@
 #include "server_host.h"
 #include "server_config.h"
 
-#define MAXLINE 80
-#define SBUF_SIZE 256
-#define BUF_SIZE 4096
-
 #define HOST_PATH "/"
-#define CHANNEL_COMMANDS_IN_NAME "COMMANDS_IN"
-#define CHANNEL_COMMANDS_OUT_NAME "COMMANDS_OUT"
-#define CHANNEL_CLIENTS_STATE_NAME "CLIENTS_STATE"
 
-/*
-  [server]
-  redis_server=localhost:6379
-  redis_unix_path=/var/run/redis/redis.sock
-*/
-
-const common::net::HostAndPort redis_default_host = common::net::HostAndPort::CreateLocalHost(6379);
-const std::string redis_default_unix_path = "/var/run/redis/redis.sock";
-
-sig_atomic_t is_stop = 0;
 const char* config_path = SERVER_CONFIG_FILE_PATH;
 
+#ifdef OS_POSIX
+sig_atomic_t is_stop = 0;
+#endif
+
+namespace {
 fasto::fastotv::server::Config config;
-
-int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  fasto::fastotv::server::Config* pconfig = reinterpret_cast<fasto::fastotv::server::Config*>(user);
-
-#define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-  if (MATCH("server", "redis_server")) {
-    common::net::HostAndPort hs;
-    bool res = common::ConvertFromString(value, &hs);
-    if (!res) {
-      WARNING_LOG() << "Invalid host value: " << value;
-      return 0;
-    }
-    pconfig->server.redis.redis_host = hs;
-    return 1;
-  } else if (MATCH("server", "redis_unix_path")) {
-    pconfig->server.redis.redis_unix_socket = value;
-    return 1;
-  } else if (MATCH("server", "redis_channel_in_name")) {
-    pconfig->server.redis.channel_in = value;
-    return 1;
-  } else if (MATCH("server", "redis_channel_out_name")) {
-    pconfig->server.redis.channel_out = value;
-    return 1;
-  } else if (MATCH("server", "redis_channel_clients_state_name")) {
-    pconfig->server.redis.channel_clients_state = value;
-    return 1;
-  } else {
-    return 0; /* unknown section/name, error */
-  }
+fasto::fastotv::server::ServerHost* server = NULL;
 }
-
-static fasto::fastotv::server::ServerHost* server = NULL;
 
 void signal_handler(int sig);
 void sync_config();
@@ -156,20 +112,6 @@ void signal_handler(int sig) {
 #endif
 
 void sync_config() {
-  /*{
-    "user": "atopilski@gmail.com",
-    "password": "1234"
-  }*/
-
-  // config.server.redis.redis_host = redis_default_host;
-  // config.server.redis.redis_unix_socket = redis_default_unix_path;
-  config.server.redis.channel_in = CHANNEL_COMMANDS_IN_NAME;
-  config.server.redis.channel_out = CHANNEL_COMMANDS_OUT_NAME;
-  config.server.redis.channel_clients_state = CHANNEL_CLIENTS_STATE_NAME;
-  // try to parse settings file
-  if (ini_parse(config_path, ini_handler_fasto, &config) < 0) {
-    INFO_LOG() << "Can't load config " << config_path << ", use default settings.";
-  }
-
+  fasto::fastotv::server::load_config_file(config_path, &config);
   server->SetConfig(config);
 }

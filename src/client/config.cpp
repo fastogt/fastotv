@@ -291,7 +291,7 @@ bool load_config_file(const std::string& config_absolute_path, TVConfig* options
 }
 
 bool save_config_file(const std::string& config_absolute_path, TVConfig* options) {
-  if (!options) {
+  if (!options || config_absolute_path.empty()) {
     return false;
   }
 

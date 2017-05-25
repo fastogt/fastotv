@@ -26,8 +26,7 @@
 
 #include "inner/inner_server_command_seq_parser.h"
 
-#include "redis/redis_helpers.h"
-
+#include "server/config.h"
 #include "server/user_info.h"
 
 namespace fasto {
@@ -61,7 +60,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   virtual ~InnerTcpHandlerHost();
 
-  void SetStorageConfig(const redis_sub_configuration_t& config);
+  void SetConfig(const Config& config);
 
   bool PublishToChannelOut(const std::string& msg);
   inner::InnerTcpClient* FindInnerConnectionByID(const std::string& login) const;

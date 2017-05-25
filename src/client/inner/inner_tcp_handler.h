@@ -32,6 +32,11 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
+struct StartConfig {
+  common::net::HostAndPort inner_host;
+  AuthInfo ainf;
+};
+
 class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParser,
                         public common::libev::IoLoopObserver {
  public:
@@ -39,9 +44,10 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
     ping_timeout_server = 30  // sec
   };
 
-  explicit InnerTcpHandler(const common::net::HostAndPort& innerHost, AuthInfoSPtr ainf);
+  explicit InnerTcpHandler(const StartConfig& config);
   ~InnerTcpHandler();
 
+  void RequestServerInfo();                     // should be execute in network thread
   void RequestChannels();                       // should be execute in network thread
   void Connect(common::libev::IoLoop* server);  // should be execute in network thread
   void DisConnect(common::Error err);           // should be execute in network thread
@@ -72,8 +78,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   fasto::fastotv::inner::InnerClient* inner_connection_;
   common::libev::timer_id_t ping_server_id_timer_;
 
-  const common::net::HostAndPort innerHost_;
-  AuthInfoSPtr ainf_;  // owner
+  const StartConfig config_;
 };
 
 }  // namespace inner

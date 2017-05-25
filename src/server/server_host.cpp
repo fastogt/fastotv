@@ -156,7 +156,7 @@ inner::InnerTcpClient* ServerHost::FindInnerConnectionByID(user_id_t user_id) co
 
 void ServerHost::SetConfig(const Config& conf) {
   rstorage_.SetConfig(conf.server.redis);
-  handler_->SetStorageConfig(conf.server.redis);
+  handler_->SetConfig(conf);
 }
 
 }  // namespace server

@@ -45,6 +45,7 @@
 
 // client commands
 #define CLIENT_PING_COMMAND "client_ping"
+#define CLIENT_GET_SERVER_INFO "get_server_info"
 #define CLIENT_GET_CHANNELS "get_channels"
 
 // server commands

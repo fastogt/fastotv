@@ -27,6 +27,8 @@
 
 #include "redis/redis_helpers.h"
 
+#include "server/config.h"
+
 namespace fasto {
 namespace fastotv {
 namespace server {
@@ -36,14 +38,6 @@ class InnerTcpClient;
 class InnerTcpHandlerHost;
 class InnerTcpServer;
 }  // namespace inner
-
-struct Settings {
-  redis_sub_configuration_t redis;
-};
-
-struct Config {
-  Settings server;
-};
 
 class ServerHost {
  public:
