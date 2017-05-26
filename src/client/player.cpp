@@ -706,8 +706,7 @@ void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent
 void Player::HandleClientAuthorizedEvent(core::events::ClientAuthorizedEvent* event) {
   UNUSED(event);
 
-  controller_->RequestServerInfo();
-  // controller_->RequestChannels();
+  controller_->RequestChannels();
 }
 
 void Player::HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event) {
