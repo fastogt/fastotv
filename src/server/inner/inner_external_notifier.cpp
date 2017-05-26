@@ -81,7 +81,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
     char* command = argv[0];
 
-    ResponceInfo resp(id, FAIL_COMMAND, command, "{cause: not connected}");
+    ResponceInfo resp(id, FAIL_COMMAND, command, "{\"cause\": \"not connected\"}");
     WARNING_LOG() << resp.ToString();
     PublishResponce(resp);
     sdsfreesplitres(argv, argc);
@@ -95,7 +95,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
     char* command = argv[0];
 
-    ResponceInfo resp(id, FAIL_COMMAND, command, "{cause: not handled}");
+    ResponceInfo resp(id, FAIL_COMMAND, command, "{\"cause\": \"not handled\"}");
     WARNING_LOG() << resp.ToString();
     PublishResponce(resp);
     sdsfreesplitres(argv, argc);
