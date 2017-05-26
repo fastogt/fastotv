@@ -26,30 +26,28 @@ extern "C" {
 
 #include "server/inner/inner_tcp_client.h"
 
-// publish COMMANDS_IN 'host 0 1 ping' 0 => request
+// publish COMMANDS_IN 'user_id 0 1 ping' 0 => request
 // publish COMMANDS_OUT '1 [OK|FAIL] ping args...'
-// id cmd cuase
-#define SERVER_COMMANDS_OUT_FAIL_3SEE "%s " FAIL_COMMAND " '%s' '%s'"
+// id cmd cause
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
 
-InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) {
-}
+InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) {}
 
-InnerSubHandler::~InnerSubHandler() {
-}
+InnerSubHandler::~InnerSubHandler() {}
 
-void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {
-  std::string join = request_id;
-  for (int i = 0; i < argc; ++i) {
-    join += " ";
-    join += argv[i];
-  }
+void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id,
+                                        int argc,
+                                        char* argv[]) {          // incoming responce
+  const char* state_command = argc > 0 ? argv[0] : FAIL_COMMAND;       // [OK|FAIL]
+  const char* command = argc > 1 ? argv[1] : "null";            // command
+  const std::string json = argc > 2 ? Decode(argv[2]) : "{}";  // encoded args
 
-  PublishToChannelOut(join);
+  ResponceInfo resp(request_id, state_command, command, json);
+  PublishResponce(resp);
 }
 
 void InnerSubHandler::HandleMessage(const std::string& channel, const std::string& msg) {
@@ -60,7 +58,6 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
   if (space_pos == std::string::npos) {
     const std::string resp = common::MemSPrintf("UNKNOWN COMMAND: %s", msg);
     WARNING_LOG() << resp;
-    PublishToChannelOut(resp);
     return;
   }
 
@@ -75,7 +72,6 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
   if (err && err->IsError()) {
     std::string resp = err->Description();
     WARNING_LOG() << resp;
-    PublishToChannelOut(resp);
     return;
   }
 
@@ -85,10 +81,9 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
     char* command = argv[0];
 
-    std::string resp =
-        common::MemSPrintf(SERVER_COMMANDS_OUT_FAIL_3SEE, id, command, "Not connected");
-    WARNING_LOG() << resp;
-    PublishToChannelOut(resp);
+    ResponceInfo resp(id, FAIL_COMMAND, command, "{cause: not connected}");
+    WARNING_LOG() << resp.ToString();
+    PublishResponce(resp);
     sdsfreesplitres(argv, argc);
     return;
   }
@@ -100,27 +95,24 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
     char* command = argv[0];
 
-    std::string resp =
-        common::MemSPrintf(SERVER_COMMANDS_OUT_FAIL_3SEE, id, command, "Not handled");
-    WARNING_LOG() << resp;
-    PublishToChannelOut(resp);
+    ResponceInfo resp(id, FAIL_COMMAND, command, "{cause: not handled}");
+    WARNING_LOG() << resp.ToString();
+    PublishResponce(resp);
     sdsfreesplitres(argv, argc);
     return;
   }
 
-  auto cb = std::bind(&InnerSubHandler::ProcessSubscribed,
-                      this,
-                      std::placeholders::_1,
-                      std::placeholders::_2,
-                      std::placeholders::_3);
+  auto cb = std::bind(&InnerSubHandler::ProcessSubscribed, this, std::placeholders::_1,
+                      std::placeholders::_2, std::placeholders::_3);
   fasto::fastotv::inner::RequestCallback rc(id, cb);
   parent_->SubscribeRequest(rc);
 }
 
-void InnerSubHandler::PublishToChannelOut(const std::string& msg) {
-  bool res = parent_->PublishToChannelOut(msg);
+void InnerSubHandler::PublishResponce(const ResponceInfo& resp) {
+  std::string resp_str = resp.ToString();
+  bool res = parent_->PublishToChannelOut(resp_str);
   if (!res) {
-    WARNING_LOG() << "Publish message: " << msg << " to channel out failed.";
+    WARNING_LOG() << "Publish message: " << resp_str << " to channel out failed.";
   }
 }
 

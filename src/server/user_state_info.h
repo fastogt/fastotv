@@ -18,35 +18,26 @@
 
 #pragma once
 
-#include "commands/commands.h"
-#include "redis/redis_helpers.h"
+#include "user_info.h"
 
-#include "server/responce_info.h"
+#define USER_STATE_INFO_ID_FIELD "user_id"
+#define USER_STATE_INFO_CONNECTED_FIELD "connected"
 
 namespace fasto {
 namespace fastotv {
 namespace server {
-namespace inner {
 
-class InnerTcpHandlerHost;
+struct UserStateInfo {
+  UserStateInfo();
+  UserStateInfo(const user_id_t& uid, bool connected);
 
-class InnerSubHandler : public RedisSubHandler {
- public:
-  explicit InnerSubHandler(InnerTcpHandlerHost* parent);
-  virtual ~InnerSubHandler();
+  static json_object* MakeJobject(const UserStateInfo& url);  // allocate json_object
+  static UserStateInfo MakeClass(json_object* obj);           // pass valid json obj
 
- protected:
-  virtual void HandleMessage(const std::string& channel, const std::string& msg) override;
-
- private:
-  void ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]);
-
-  void PublishResponce(const ResponceInfo& resp);
-
-  InnerTcpHandlerHost* parent_;
+  user_id_t user_id;
+  bool connected;
 };
 
-}  // namespace inner
-}  // namespace server
+}
 }  // namespace fastotv
 }  // namespace fasto

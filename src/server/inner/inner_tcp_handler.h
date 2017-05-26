@@ -29,6 +29,8 @@
 #include "server/config.h"
 #include "server/user_info.h"
 
+#include "server/user_state_info.h"
+
 namespace fasto {
 namespace fastotv {
 namespace server {
@@ -64,7 +66,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
   inner::InnerTcpClient* FindInnerConnectionByID(const std::string& login) const;
 
  private:
-  void PublishStateToChannel(user_id_t uid, bool connected);
+  void PublishUserStateInfo(const UserStateInfo& state);
 
   virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,

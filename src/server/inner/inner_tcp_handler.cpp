@@ -40,9 +40,6 @@
 
 #include "server/inner/inner_external_notifier.h"
 
-#define SERVER_NOTIFY_CLIENT_CONNECTED_1S "%s connected"
-#define SERVER_NOTIFY_CLIENT_DISCONNECTED_1S "%s disconnected"
-
 namespace fasto {
 namespace fastotv {
 namespace server {
@@ -130,7 +127,7 @@ void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
   InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
   if (iconnection) {
     user_id_t uid = iconnection->GetUid();
-    PublishStateToChannel(uid, false);
+    PublishUserStateInfo(UserStateInfo(uid, false));
   }
 }
 
@@ -156,13 +153,10 @@ bool InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
   return sub_commands_in_->PublishToChannelOut(msg);
 }
 
-void InnerTcpHandlerHost::PublishStateToChannel(user_id_t uid, bool connected) {
-  std::string connected_resp;
-  if (!connected) {
-    connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_DISCONNECTED_1S, uid);
-  } else {
-    connected_resp = common::MemSPrintf(SERVER_NOTIFY_CLIENT_CONNECTED_1S, uid);
-  }
+void InnerTcpHandlerHost::PublishUserStateInfo(const UserStateInfo& state) {
+  json_object* user_state_json = UserStateInfo::MakeJobject(state);
+  std::string connected_resp = json_object_get_string(user_state_json);
+  json_object_put(user_state_json);
   bool res = sub_commands_in_->PublishStateToChannel(connected_resp);
   if (!res) {
     WARNING_LOG() << "Publish message: " << connected_resp << " to channel clients state failed.";
@@ -363,7 +357,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       return err;
     }
 
-    PublishStateToChannel(uid, true);
+    PublishUserStateInfo(UserStateInfo(uid, true));
     return common::Error();
   } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {  // encoded
     json_object* obj = NULL;

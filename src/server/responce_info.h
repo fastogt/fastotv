@@ -18,35 +18,34 @@
 
 #pragma once
 
-#include "commands/commands.h"
-#include "redis/redis_helpers.h"
+#include "user_info.h"
 
-#include "server/responce_info.h"
+#define RESPONCE_INFO_REQUEST_ID_FIELD "request_id"
+#define RESPONCE_INFO_STATE_FIELD "state"
+#define RESPONCE_INFO_COMMAND_FIELD "command"
+#define RESPONCE_INFO_RESPONCE_FIELD "responce_json"
 
 namespace fasto {
 namespace fastotv {
 namespace server {
-namespace inner {
 
-class InnerTcpHandlerHost;
+struct ResponceInfo {
+  ResponceInfo();
+  ResponceInfo(const std::string& request_id,
+               const std::string& state_command,
+               const std::string& command,
+               const std::string& responce);
 
-class InnerSubHandler : public RedisSubHandler {
- public:
-  explicit InnerSubHandler(InnerTcpHandlerHost* parent);
-  virtual ~InnerSubHandler();
+  static json_object* MakeJobject(const ResponceInfo& url);  // allocate json_object
+  static ResponceInfo MakeClass(json_object* obj);           // pass valid json obj
 
- protected:
-  virtual void HandleMessage(const std::string& channel, const std::string& msg) override;
+  std::string ToString() const;
 
- private:
-  void ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]);
-
-  void PublishResponce(const ResponceInfo& resp);
-
-  InnerTcpHandlerHost* parent_;
+  std::string request_id;
+  std::string state;
+  std::string command;
+  std::string responce_json;
 };
-
-}  // namespace inner
-}  // namespace server
+}
 }  // namespace fastotv
 }  // namespace fasto
