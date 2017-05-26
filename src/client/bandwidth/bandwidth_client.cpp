@@ -16,27 +16,27 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/events/network_events.h"
+#include "client/bandwidth/bandwidth_client.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
-namespace core {
-namespace events {
-BandwidtInfo::BandwidtInfo() : host(), bandwidth(0) {
+namespace bandwidth {
+
+BandwidthClient::BandwidthClient(common::libev::IoLoop* server,
+                                 const common::net::socket_info& info)
+    : common::libev::tcp::TcpClient(server, info) {
 }
 
-BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band)
-    : host(host), bandwidth(band) {
+const char* BandwidthClient::ClassName() const {
+  return "InnerClient";
 }
 
-ConnectInfo::ConnectInfo() {
+common::Error BandwidthClient::StartSession() {
+  return common::Error();
 }
 
-ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {
-}
-}
-}
-}
-}
-}
+}  // namespace bandwidth
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

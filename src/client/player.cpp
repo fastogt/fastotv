@@ -192,6 +192,7 @@ Player::Player(const PlayerOptions& options,
 
   fApp->Subscribe(this, core::events::ClientConfigChangeEvent::EventType);
   fApp->Subscribe(this, core::events::ReceiveChannelsEvent::EventType);
+  fApp->Subscribe(this, core::events::BandwidthEstimationEvent::EventType);
 }
 
 void Player::SetFullScreen(bool full_screen) {
@@ -289,6 +290,10 @@ void Player::HandleEvent(event_t* event) {
     core::events::ReceiveChannelsEvent* channels_event =
         static_cast<core::events::ReceiveChannelsEvent*>(event);
     HandleReceiveChannelsEvent(channels_event);
+  } else if (event->GetEventType() == core::events::BandwidthEstimationEvent::EventType) {
+    core::events::BandwidthEstimationEvent* band_event =
+        static_cast<core::events::BandwidthEstimationEvent*>(event);
+    HandleBandwidthEstimationEvent(band_event);
   }
 }
 
@@ -302,6 +307,7 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
     // core::events::ClientConnectedEvent* connect_event =
     //    static_cast<core::events::ClientConnectedEvent*>(event);
     SwitchToUnAuthorizeMode();
+  } else if (event->GetEventType() == core::events::BandwidthEstimationEvent::EventType) {
   }
 }
 
@@ -706,7 +712,8 @@ void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent
 void Player::HandleClientAuthorizedEvent(core::events::ClientAuthorizedEvent* event) {
   UNUSED(event);
 
-  controller_->RequestChannels();
+  controller_->RequestServerInfo();
+  // controller_->RequestChannels();
 }
 
 void Player::HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event) {
@@ -724,6 +731,9 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
   channels_t chan = event->info();
   play_list_ = chan;
   SwitchToPlayingMode();
+}
+
+void Player::HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event) {
 }
 
 std::string Player::GetCurrentUrlName() const {

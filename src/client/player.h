@@ -119,6 +119,7 @@ class Player : public core::VideoStateHandler {
   virtual void HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event);
   virtual void HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event);
   virtual void HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event);
+  virtual void HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event);
 
  private:
   bool GetCurrentUrl(Url* url) const;

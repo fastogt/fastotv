@@ -32,6 +32,13 @@ namespace core {
 namespace events {
 
 class TvConfig {};
+struct BandwidtInfo {
+  BandwidtInfo();
+  explicit BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band);
+
+  common::net::HostAndPort host;
+  bandwidth_t bandwidth;
+};
 struct ConnectInfo {
   ConnectInfo();
   explicit ConnectInfo(const common::net::HostAndPort& host);
@@ -45,6 +52,7 @@ typedef EventBase<CLIENT_AUTHORIZED_EVENT, AuthInfo> ClientAuthorizedEvent;
 typedef EventBase<CLIENT_UNAUTHORIZED_EVENT, AuthInfo> ClientUnAuthorizedEvent;
 typedef EventBase<CLIENT_CONFIG_CHANGE_EVENT, TvConfig> ClientConfigChangeEvent;
 typedef EventBase<CLIENT_RECEIVE_CHANNELS_EVENT, channels_t> ReceiveChannelsEvent;
+typedef EventBase<CLIENT_BANDWIDTH_ESTIMATION_EVENT, BandwidtInfo> BandwidthEstimationEvent;
 
 }  // namespace events {
 }

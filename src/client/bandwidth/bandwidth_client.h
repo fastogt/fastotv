@@ -16,27 +16,24 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/events/network_events.h"
+#pragma once
+
+#include <common/libev/tcp/tcp_client.h>
 
 namespace fasto {
 namespace fastotv {
 namespace client {
-namespace core {
-namespace events {
-BandwidtInfo::BandwidtInfo() : host(), bandwidth(0) {
-}
+namespace bandwidth {
 
-BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band)
-    : host(host), bandwidth(band) {
-}
+class BandwidthClient : public common::libev::tcp::TcpClient {
+ public:
+  BandwidthClient(common::libev::IoLoop* server, const common::net::socket_info& info);
+  const char* ClassName() const override;
 
-ConnectInfo::ConnectInfo() {
-}
+  common::Error StartSession() WARN_UNUSED_RESULT;
+};
 
-ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {
-}
-}
-}
-}
-}
-}
+}  // namespace bandwidth
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

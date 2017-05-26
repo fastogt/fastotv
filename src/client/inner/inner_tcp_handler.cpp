@@ -40,6 +40,7 @@
 
 #include "client/commands.h"
 #include "client/core/events/network_events.h"
+#include "client/bandwidth/bandwidth_client.h"
 
 namespace fasto {
 namespace fastotv {
@@ -47,10 +48,17 @@ namespace client {
 namespace inner {
 
 InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
-    : inner_connection_(nullptr), ping_server_id_timer_(INVALID_TIMER_ID), config_(config) {
+    : inner_connection_(nullptr),
+      bandwidth_requests_(),
+      ping_server_id_timer_(INVALID_TIMER_ID),
+      config_(config) {
 }
 
 InnerTcpHandler::~InnerTcpHandler() {
+  for (bandwidth::BandwidthClient* ban : bandwidth_requests_) {
+    delete ban;
+  }
+  bandwidth_requests_.clear();
   delete inner_connection_;
   inner_connection_ = nullptr;
 }
@@ -82,18 +90,21 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
 }
 
 void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
-  std::string buff;
-  fasto::fastotv::inner::InnerClient* iclient =
-      static_cast<fasto::fastotv::inner::InnerClient*>(client);
-  common::Error err = iclient->ReadCommand(&buff);
-  if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
-    client->Close();
-    delete client;
+  if (client == inner_connection_) {
+    std::string buff;
+    fasto::fastotv::inner::InnerClient* iclient =
+        static_cast<fasto::fastotv::inner::InnerClient*>(client);
+    common::Error err = iclient->ReadCommand(&buff);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      client->Close();
+      delete client;
+      return;
+    }
+
+    HandleInnerDataReceived(iclient, buff);
     return;
   }
-
-  HandleInnerDataReceived(iclient, buff);
 }
 
 void InnerTcpHandler::DataReadyToWrite(common::libev::IoClient* client) {
@@ -180,6 +191,32 @@ void InnerTcpHandler::DisConnect(common::Error err) {
     connection->Close();
     delete connection;
   }
+}
+
+common::Error InnerTcpHandler::CreateAndConnectBandwidthClient(
+    common::libev::IoLoop* server,
+    const common::net::HostAndPort& host,
+    bandwidth::BandwidthClient** out_band) {
+  if (!server || !out_band) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  common::net::socket_info client_info;
+  common::Error err = common::net::connect(host, common::net::ST_SOCK_STREAM, 0, &client_info);
+  if (err && err->IsError()) {
+    return err;
+  }
+
+  bandwidth::BandwidthClient* connection = new bandwidth::BandwidthClient(server, client_info);
+  err = connection->StartSession();
+  if (err && err->IsError()) {
+    connection->Close();
+    delete connection;
+    return err;
+  }
+
+  *out_band = connection;
+  return common::Error();
 }
 
 void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
@@ -340,13 +377,22 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
 
     ServerInfo sinf = ServerInfo::MakeClass(obj);
     json_object_put(obj);
-    /*fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, channels));
-    const cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
-    common::Error err = connection->Write(resp);
+
+    common::net::HostAndPort host = sinf.bandwidth_host;
+    bandwidth::BandwidthClient* band_connection = NULL;
+    common::libev::IoLoop* server = connection->Server();
+    common::Error err = CreateAndConnectBandwidthClient(server, host, &band_connection);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-      return;
-    }*/
+      core::events::BandwidtInfo cinf(host, 0);
+      auto ex_event =
+          make_exception_event(new core::events::BandwidthEstimationEvent(this, cinf), err);
+      fApp->PostEvent(ex_event);
+      return err;
+    }
+
+    bandwidth_requests_.push_back(band_connection);
+    server->RegisterClient(band_connection);
     return common::Error();
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     json_object* obj = NULL;
