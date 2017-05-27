@@ -101,7 +101,7 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   bandwidth_requests_.erase(it);
   common::net::socket_info info = band_client->Info();
   const common::net::HostAndPort host(info.host(), info.port());
-  const BandWidthHostType hs = band_client->HostType();
+  const BandwidthHostType hs = band_client->HostType();
   if (hs == MAIN_SERVER) {
     current_bandwidth_ = band_client->DownloadBytesPerSecond();
   }
@@ -234,7 +234,7 @@ void InnerTcpHandler::DisConnect(common::Error err) {
 common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(
     common::libev::IoLoop* server,
     const common::net::HostAndPort& host,
-    BandWidthHostType hs,
+    BandwidthHostType hs,
     bandwidth::TcpBandwidthClient** out_band) {
   if (!server || !out_band) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
@@ -421,7 +421,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     common::net::HostAndPort host = sinf.bandwidth_host;
     bandwidth::TcpBandwidthClient* band_connection = NULL;
     common::libev::IoLoop* server = connection->Server();
-    const BandWidthHostType hs = MAIN_SERVER;
+    const BandwidthHostType hs = MAIN_SERVER;
     common::Error err = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);

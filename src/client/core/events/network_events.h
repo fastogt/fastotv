@@ -24,6 +24,7 @@
 
 #include "auth_info.h"
 #include "channel_info.h"
+#include "client/types.h"
 
 namespace fasto {
 namespace fastotv {
@@ -34,11 +35,13 @@ namespace events {
 class TvConfig {};
 struct BandwidtInfo {
   BandwidtInfo();
-  explicit BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandWidthHostType hs);
+  explicit BandwidtInfo(const common::net::HostAndPort& host,
+                        bandwidth_t band,
+                        BandwidthHostType hs);
 
   common::net::HostAndPort host;
   bandwidth_t bandwidth;
-  BandWidthHostType host_type;
+  BandwidthHostType host_type;
 };
 struct ConnectInfo {
   ConnectInfo();

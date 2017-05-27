@@ -24,6 +24,8 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
+enum BandwidthHostType { UNKNOWN_SERVER, MAIN_SERVER, CHANNEL_SERVER };
+
 struct Point {
   Point() : x(0), y(0) {}
   Point(int x, int y) : x(x), y(y) {}
@@ -47,11 +49,9 @@ struct Rect {
   int x, y;
   int w, h;
 };
-
 }
 }
 }
-
 
 namespace common {
 std::string ConvertToString(const fasto::fastotv::client::Point& value);

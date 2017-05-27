@@ -34,7 +34,7 @@ struct ServerPingInfo {
   static json_object* MakeJobject(const ServerPingInfo& inf);  // allocate json_object
   static ServerPingInfo MakeClass(json_object* obj);           // pass valid json obj
 
-  timestamp_t timestamp;
+  timestamp_t timestamp;  // utc time
 };
 
 struct ClientPingInfo {
@@ -43,7 +43,7 @@ struct ClientPingInfo {
   static json_object* MakeJobject(const ClientPingInfo& inf);  // allocate json_object
   static ClientPingInfo MakeClass(json_object* obj);           // pass valid json obj
 
-  timestamp_t timestamp;
+  timestamp_t timestamp;  // utc time
 };
 
 }  // namespace fastotv

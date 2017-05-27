@@ -27,8 +27,7 @@
 namespace fasto {
 namespace fastotv {
 
-ServerPingInfo::ServerPingInfo() : timestamp(common::time::current_mstime()) {
-}
+ServerPingInfo::ServerPingInfo() : timestamp(common::time::current_utc_mstime()) {}
 
 struct json_object* ServerPingInfo::MakeJobject(const ServerPingInfo& inf) {
   json_object* obj = json_object_new_object();
@@ -47,8 +46,7 @@ ServerPingInfo ServerPingInfo::MakeClass(json_object* obj) {
   return inf;
 }
 
-ClientPingInfo::ClientPingInfo() : timestamp(common::time::current_mstime()) {
-}
+ClientPingInfo::ClientPingInfo() : timestamp(common::time::current_utc_mstime()) {}
 
 struct json_object* ClientPingInfo::MakeJobject(const ClientPingInfo& inf) {
   json_object* obj = json_object_new_object();

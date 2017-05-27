@@ -37,7 +37,7 @@ namespace bandwidth {
 
 TcpBandwidthClient::TcpBandwidthClient(common::libev::IoLoop* server,
                                        const common::net::socket_info& info,
-                                       BandWidthHostType hs)
+                                       BandwidthHostType hs)
     : base_class(server, info),
       duration_(0),
       total_downloaded_bytes_(0),
@@ -72,7 +72,7 @@ bandwidth_t TcpBandwidthClient::DownloadBytesPerSecond() const {
   return downloaded_bytes_per_sec_;
 }
 
-BandWidthHostType TcpBandwidthClient::HostType() const {
+BandwidthHostType TcpBandwidthClient::HostType() const {
   return host_type_;
 }
 
@@ -88,9 +88,11 @@ common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
   }
   total_downloaded_bytes_ += *nread;
 
-  common::time64_t data_interval = cur_ts - start_ts_;
-  if (duration_ && data_interval > duration_) {
-    downloaded_bytes_per_sec_ = total_downloaded_bytes_ * 1000 / data_interval;
+  const common::time64_t data_interval = cur_ts - start_ts_;
+  if (duration_ && data_interval >= duration_) {
+    bandwidth_t butes_per_msec = total_downloaded_bytes_ / data_interval;
+    bandwidth_t butes_per_sec = butes_per_msec * 1000;
+    downloaded_bytes_per_sec_ = butes_per_sec;
     Close();
   }
   return common::Error();

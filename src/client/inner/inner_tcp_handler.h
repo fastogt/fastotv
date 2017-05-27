@@ -67,7 +67,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
  private:
   common::Error CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,
                                                    const common::net::HostAndPort& host,
-                                                   BandWidthHostType hs,
+                                                   BandwidthHostType hs,
                                                    bandwidth::TcpBandwidthClient** out_band)
       WARN_UNUSED_RESULT;
 

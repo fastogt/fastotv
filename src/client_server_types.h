@@ -31,7 +31,6 @@ static const stream_id invalid_stream_id = stream_id();
 
 typedef std::string login_t;  // unique, user email now
 typedef int64_t bandwidth_t;   // bytes/s
-enum BandWidthHostType { UNKNOWN_SERVER, MAIN_SERVER, CHANNEL_SERVER };
 typedef common::time64_t timestamp_t;
 
 // simple encode/decode algorithm

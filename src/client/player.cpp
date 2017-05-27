@@ -303,6 +303,9 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
     //    static_cast<core::events::ClientConnectedEvent*>(event);
     SwitchToUnAuthorizeMode();
   } else if (event->GetEventType() == core::events::BandwidthEstimationEvent::EventType) {
+    core::events::BandwidthEstimationEvent* band_event =
+        static_cast<core::events::BandwidthEstimationEvent*>(event);
+    HandleBandwidthEstimationEvent(band_event);
   }
 }
 
@@ -694,7 +697,6 @@ void Player::HandleClientAuthorizedEvent(core::events::ClientAuthorizedEvent* ev
   UNUSED(event);
 
   controller_->RequestServerInfo();
-  controller_->RequestChannels();
 }
 
 void Player::HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event) {
@@ -716,7 +718,9 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
 
 void Player::HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event) {
   core::events::BandwidtInfo band_inf = event->info();
-
+  if (band_inf.host_type == MAIN_SERVER) {
+    controller_->RequestChannels();
+  }
 }
 
 std::string Player::GetCurrentUrlName() const {
