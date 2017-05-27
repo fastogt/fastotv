@@ -80,12 +80,8 @@ bool CreateWindowFunc(Size window_size,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL,
-                                         SDL_WINDOWPOS_UNDEFINED,
-                                         SDL_WINDOWPOS_UNDEFINED,
-                                         window_size.width,
-                                         window_size.height,
-                                         flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                         window_size.width, window_size.height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -122,8 +118,7 @@ PlayerOptions::PlayerOptions()
       is_full_screen(false),
       default_size(width, height),
       screen_size(0, 0),
-      audio_volume(volume) {
-}
+      audio_volume(volume) {}
 
 Player::Player(const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -327,12 +322,8 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this,
-                             wanted_channel_layout,
-                             wanted_nb_channels,
-                             wanted_sample_rate,
-                             &laudio_hw_params,
-                             sdl_audio_callback);
+  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
+                             &laudio_hw_params, sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -363,13 +354,14 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(
-          &frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
+  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
+                     false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of " << frame->width << "x" << frame->height
+                   "size of "
+                << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -384,20 +376,9 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect,
-                               xleft_,
-                               ytop_,
-                               window_size_.width,
-                               window_size_.height,
-                               frame->width,
-                               frame->height,
-                               frame->sar);
-  SDL_RenderCopyEx(renderer_,
-                   frame->bmp,
-                   NULL,
-                   &rect,
-                   0,
-                   NULL,
+  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height,
+                               frame->width, frame->height, frame->sar);
+  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
                    frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   DrawInfo();
@@ -713,7 +694,7 @@ void Player::HandleClientAuthorizedEvent(core::events::ClientAuthorizedEvent* ev
   UNUSED(event);
 
   controller_->RequestServerInfo();
-  // controller_->RequestChannels();
+  controller_->RequestChannels();
 }
 
 void Player::HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event) {
@@ -734,6 +715,8 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
 }
 
 void Player::HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event) {
+  core::events::BandwidtInfo band_inf = event->info();
+
 }
 
 std::string Player::GetCurrentUrlName() const {
@@ -917,9 +900,7 @@ void Player::DrawFooter() {
   SDL_Surface* text = TTF_RenderText_Solid(font_, footer_text.c_str(), text_color);
   const Rect footer_rect = GetFooterRect();
   SDL_Rect dst = {footer_rect.w / 2 - text->w / 2,
-                  footer_rect.y + (footer_rect.h / 2 - text->h / 2),
-                  text->w,
-                  text->h};
+                  footer_rect.y + (footer_rect.h / 2 - text->h / 2), text->w, text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
@@ -938,9 +919,7 @@ void Player::DrawVolume() {
   static const SDL_Color text_color = {255, 255, 255, 0};
   SDL_Surface* text = TTF_RenderText_Solid(font_, vol_str.c_str(), text_color);
   SDL_Rect dst = {volume_rect.w / 2 - text->w / 2,
-                  volume_rect.y + (volume_rect.h / 2 - text->h / 2),
-                  text->w,
-                  text->h};
+                  volume_rect.y + (volume_rect.h / 2 - text->h / 2), text->w, text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);

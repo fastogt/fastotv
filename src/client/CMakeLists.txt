@@ -369,10 +369,10 @@ SET_DESKTOP_TARGET()
 
 #project
 SET(HEADERS_BANDWIDTH_CLIENT
-  bandwidth/bandwidth_client.h
+  bandwidth/tcp_bandwidth_client.h
 )
 SET(SOURCES_BANDWIDTH_CLIENT
-  bandwidth/bandwidth_client.cpp
+  bandwidth/tcp_bandwidth_client.cpp
 )
 
 SET(HEADERS_INNER_CLIENT

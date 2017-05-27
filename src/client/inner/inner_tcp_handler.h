@@ -31,7 +31,7 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace bandwidth {
-class BandwidthClient;
+class TcpBandwidthClient;
 }
 namespace inner {
 
@@ -65,9 +65,10 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   virtual void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
 
  private:
-  common::Error CreateAndConnectBandwidthClient(common::libev::IoLoop* server,
-                                                const common::net::HostAndPort& host,
-                                                bandwidth::BandwidthClient** out_band)
+  common::Error CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,
+                                                   const common::net::HostAndPort& host,
+                                                   BandWidthHostType hs,
+                                                   bandwidth::TcpBandwidthClient** out_band)
       WARN_UNUSED_RESULT;
 
   virtual void HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
@@ -98,10 +99,12 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
                                               json_object** out) WARN_UNUSED_RESULT;
 
   fasto::fastotv::inner::InnerClient* inner_connection_;
-  std::vector<bandwidth::BandwidthClient*> bandwidth_requests_;
+  std::vector<bandwidth::TcpBandwidthClient*> bandwidth_requests_;
   common::libev::timer_id_t ping_server_id_timer_;
 
   const StartConfig config_;
+
+  bandwidth_t current_bandwidth_;
 };
 
 }  // namespace inner

@@ -20,17 +20,36 @@
 
 #include <common/libev/tcp/tcp_client.h>
 
+#include "client_server_types.h"
+
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace bandwidth {
 
-class BandwidthClient : public common::libev::tcp::TcpClient {
+class TcpBandwidthClient : public common::libev::tcp::TcpClient {
  public:
-  BandwidthClient(common::libev::IoLoop* server, const common::net::socket_info& info);
+  typedef common::libev::tcp::TcpClient base_class;
+  enum { max_payload_len = 1400 };
+  TcpBandwidthClient(common::libev::IoLoop* server,
+                     const common::net::socket_info& info,
+                     BandWidthHostType hs);
   const char* ClassName() const override;
 
-  common::Error StartSession() WARN_UNUSED_RESULT;
+  common::Error StartSession(uint16_t ms_betwen_send, common::time64_t duration) WARN_UNUSED_RESULT;
+
+  virtual common::Error Read(char* out, size_t size, size_t* nread) override;
+
+  size_t TotalDownloadedBytes() const;
+  bandwidth_t DownloadBytesPerSecond() const;
+  BandWidthHostType HostType() const;
+
+ private:
+  common::time64_t duration_;
+  size_t total_downloaded_bytes_;
+  common::time64_t start_ts_;
+  bandwidth_t downloaded_bytes_per_sec_;
+  const BandWidthHostType host_type_;
 };
 
 }  // namespace bandwidth

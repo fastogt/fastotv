@@ -40,7 +40,7 @@
 
 #include "client/commands.h"
 #include "client/core/events/network_events.h"
-#include "client/bandwidth/bandwidth_client.h"
+#include "client/bandwidth/tcp_bandwidth_client.h"
 
 namespace fasto {
 namespace fastotv {
@@ -51,11 +51,11 @@ InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
     : inner_connection_(nullptr),
       bandwidth_requests_(),
       ping_server_id_timer_(INVALID_TIMER_ID),
-      config_(config) {
-}
+      config_(config),
+      current_bandwidth_(0) {}
 
 InnerTcpHandler::~InnerTcpHandler() {
-  for (bandwidth::BandwidthClient* ban : bandwidth_requests_) {
+  for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {
     delete ban;
   }
   bandwidth_requests_.clear();
@@ -80,13 +80,35 @@ void InnerTcpHandler::Moved(common::libev::IoLoop* server, common::libev::IoClie
 }
 
 void InnerTcpHandler::Closed(common::libev::IoClient* client) {
-  if (client != inner_connection_) {
+  if (client == inner_connection_) {
+    fasto::fastotv::inner::InnerClient* iclient =
+        static_cast<fasto::fastotv::inner::InnerClient*>(client);
+    common::net::socket_info info = iclient->Info();
+    common::net::HostAndPort host(info.host(), info.port());
+    core::events::ConnectInfo cinf(host);
+    fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, cinf));
+    inner_connection_ = nullptr;
     return;
   }
 
-  core::events::ConnectInfo cinf(config_.inner_host);
-  fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, cinf));
-  inner_connection_ = nullptr;
+  // bandwidth
+  bandwidth::TcpBandwidthClient* band_client = static_cast<bandwidth::TcpBandwidthClient*>(client);
+  auto it = std::remove(bandwidth_requests_.begin(), bandwidth_requests_.end(), band_client);
+  if (it == bandwidth_requests_.end()) {
+    return;
+  }
+
+  bandwidth_requests_.erase(it);
+  common::net::socket_info info = band_client->Info();
+  const common::net::HostAndPort host(info.host(), info.port());
+  const BandWidthHostType hs = band_client->HostType();
+  if (hs == MAIN_SERVER) {
+    current_bandwidth_ = band_client->DownloadBytesPerSecond();
+  }
+  core::events::BandwidtInfo cinf(host, band_client->DownloadBytesPerSecond(), hs);
+  core::events::BandwidthEstimationEvent* band_event =
+      new core::events::BandwidthEstimationEvent(this, cinf);
+  fApp->PostEvent(band_event);
 }
 
 void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
@@ -105,6 +127,19 @@ void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
     HandleInnerDataReceived(iclient, buff);
     return;
   }
+
+  // bandwidth
+  bandwidth::TcpBandwidthClient* band_client = static_cast<bandwidth::TcpBandwidthClient*>(client);
+  char buff[bandwidth::TcpBandwidthClient::max_payload_len];
+  size_t nwread;
+  common::Error err =
+      band_client->Read(buff, bandwidth::TcpBandwidthClient::max_payload_len, &nwread);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    client->Close();
+    delete client;
+    return;
+  }
 }
 
 void InnerTcpHandler::DataReadyToWrite(common::libev::IoClient* client) {
@@ -113,6 +148,9 @@ void InnerTcpHandler::DataReadyToWrite(common::libev::IoClient* client) {
 
 void InnerTcpHandler::PostLooped(common::libev::IoLoop* server) {
   UNUSED(server);
+  for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {
+    ban->Close();
+  }
   DisConnect(common::Error());
 }
 
@@ -193,10 +231,11 @@ void InnerTcpHandler::DisConnect(common::Error err) {
   }
 }
 
-common::Error InnerTcpHandler::CreateAndConnectBandwidthClient(
+common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(
     common::libev::IoLoop* server,
     const common::net::HostAndPort& host,
-    bandwidth::BandwidthClient** out_band) {
+    BandWidthHostType hs,
+    bandwidth::TcpBandwidthClient** out_band) {
   if (!server || !out_band) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
@@ -207,8 +246,9 @@ common::Error InnerTcpHandler::CreateAndConnectBandwidthClient(
     return err;
   }
 
-  bandwidth::BandwidthClient* connection = new bandwidth::BandwidthClient(server, client_info);
-  err = connection->StartSession();
+  bandwidth::TcpBandwidthClient* connection =
+      new bandwidth::TcpBandwidthClient(server, client_info, hs);
+  err = connection->StartSession(0, 1000);
   if (err && err->IsError()) {
     connection->Close();
     delete connection;
@@ -268,7 +308,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     info.cpu_brand = brand;
     info.ram_total = ram_total;
     info.ram_free = ram_free;
-    info.bandwidth = 0;
+    info.bandwidth = current_bandwidth_;
     json_object* info_json = ClientInfo::MakeJobject(info);
     std::string info_json_string = json_object_get_string(info_json);
     std::string enc_info = Encode(info_json_string);
@@ -379,12 +419,14 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     json_object_put(obj);
 
     common::net::HostAndPort host = sinf.bandwidth_host;
-    bandwidth::BandwidthClient* band_connection = NULL;
+    bandwidth::TcpBandwidthClient* band_connection = NULL;
     common::libev::IoLoop* server = connection->Server();
-    common::Error err = CreateAndConnectBandwidthClient(server, host, &band_connection);
+    const BandWidthHostType hs = MAIN_SERVER;
+    common::Error err = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
-      core::events::BandwidtInfo cinf(host, 0);
+      core::events::BandwidtInfo cinf(host, 0, hs);
+      current_bandwidth_ = 0;
       auto ex_event =
           make_exception_event(new core::events::BandwidthEstimationEvent(this, cinf), err);
       fApp->PostEvent(ex_event);

@@ -34,10 +34,11 @@ namespace events {
 class TvConfig {};
 struct BandwidtInfo {
   BandwidtInfo();
-  explicit BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band);
+  explicit BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandWidthHostType hs);
 
   common::net::HostAndPort host;
   bandwidth_t bandwidth;
+  BandWidthHostType host_type;
 };
 struct ConnectInfo {
   ConnectInfo();
