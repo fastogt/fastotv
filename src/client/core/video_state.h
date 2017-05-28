@@ -42,6 +42,7 @@ extern "C" {
 #include "client/core/types.h"
 #include "client/core/app_options.h"
 #include "client/core/clock.h"
+#include "client/core/stream_info.h"
 
 struct SwrContext;
 struct InputStream;
@@ -242,6 +243,7 @@ class VideoState {
   Stats stats_;
   VideoStateHandler* handler_;
   InputStream* input_st_;
+  StreamInfo stream_info_;
 };
 
 }  // namespace core

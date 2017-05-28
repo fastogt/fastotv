@@ -238,6 +238,7 @@ SET(HEADERS_CORE
   core/types.h
   core/utils.h
   core/clock.h
+  core/stream_info.h
   core/packet_queue.h
   core/frame_queue.h
   core/decoder.h
@@ -250,6 +251,7 @@ SET(HEADERS_CORE
   core/application/sdl2_application.h
   core/video_state.h
   core/video_state_handler.h
+  core/bandwidth_estimation.h
 
   ${HEADERS_CORE_EVENTS}
 )
@@ -269,6 +271,7 @@ SET(SOURCES_CORE
   core/types.cpp
   core/utils.cpp
   core/clock.cpp
+  core/stream_info.cpp
   core/packet_queue.cpp
   core/frame_queue.cpp
   core/decoder.cpp
@@ -281,6 +284,7 @@ SET(SOURCES_CORE
   core/application/sdl2_application.cpp
   core/video_state.cpp
   core/video_state_handler.cpp
+  core/bandwidth_estimation.cpp
 
   ${SOURCES_CORE_EVENTS}
 )

@@ -85,11 +85,7 @@ void avlog_cb(void*, int level, const char* sz_fmt, va_list varg) {
   }
 
   char* ret = NULL;
-#ifdef OS_POSIX
-  int res = vasprintf(&ret, sz_fmt, varg);
-#else
-  int res = ERROR_RESULT_VALUE;
-#endif
+  int res = common::vasprintf(&ret, sz_fmt, varg);
   if (res == ERROR_RESULT_VALUE || !ret) {
     return;
   }

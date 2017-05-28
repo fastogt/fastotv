@@ -18,23 +18,23 @@
 
 #pragma once
 
-#include <string>
-
-#include <common/types.h>
-#include <common/time.h>
+#include "client/core/bandwidth_estimation.h"
 
 namespace fasto {
 namespace fastotv {
+namespace client {
+namespace core {
 
-typedef std::string stream_id;  // must be unique
-static const stream_id invalid_stream_id = stream_id();
+struct StreamInfo {
+  StreamInfo();
 
-typedef std::string login_t;  // unique, user email now
-typedef size_t bandwidth_t;   // bytes/s
-typedef common::time64_t timestamp_t;
+  DesireBytesPerSec StreamBitrate() const;
 
-// simple encode/decode algorithm
-std::string Encode(const std::string& data);
-std::string Decode(const std::string& data);
+  DesireBytesPerSec video_bitrate;
+  DesireBytesPerSec audio_bitrate;
+};
+
+}
+}
 }
 }

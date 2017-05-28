@@ -23,6 +23,7 @@ extern "C" {
 }
 
 #include "client/core/events/events_base.h"
+#include "client/core/stream_info.h"
 
 namespace fasto {
 namespace fastotv {
@@ -40,6 +41,8 @@ class VideoStateHandler : public core::events::EventListener {
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override = 0;
 
   virtual ~VideoStateHandler();
+
+  virtual void HandleStreamInfo(core::VideoState* stream, const StreamInfo& info) = 0;
 
   // audio
   virtual bool HandleRequestAudio(VideoState* stream,

@@ -76,6 +76,8 @@ class Player : public core::VideoStateHandler {
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
+  virtual void HandleStreamInfo(core::VideoState* stream, const core::StreamInfo& info) override;
+
   virtual bool HandleRequestAudio(core::VideoState* stream,
                                   int64_t wanted_channel_layout,
                                   int wanted_nb_channels,

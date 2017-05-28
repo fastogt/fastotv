@@ -16,25 +16,20 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include <string>
-
-#include <common/types.h>
-#include <common/time.h>
+#include "client/core/stream_info.h"
 
 namespace fasto {
 namespace fastotv {
+namespace client {
+namespace core {
 
-typedef std::string stream_id;  // must be unique
-static const stream_id invalid_stream_id = stream_id();
+StreamInfo::StreamInfo() : video_bitrate(), audio_bitrate() {}
 
-typedef std::string login_t;  // unique, user email now
-typedef size_t bandwidth_t;   // bytes/s
-typedef common::time64_t timestamp_t;
+DesireBytesPerSec StreamInfo::StreamBitrate() const {
+  return video_bitrate + audio_bitrate;
+}
 
-// simple encode/decode algorithm
-std::string Encode(const std::string& data);
-std::string Decode(const std::string& data);
+}  // namespace core
+}
 }
 }

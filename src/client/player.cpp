@@ -309,6 +309,10 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
   }
 }
 
+void Player::HandleStreamInfo(core::VideoState* stream, const core::StreamInfo& info) {
+
+}
+
 bool Player::HandleRequestAudio(core::VideoState* stream,
                                 int64_t wanted_channel_layout,
                                 int wanted_nb_channels,

@@ -45,6 +45,11 @@ class FakeHandler : public VideoStateHandler {
 
   virtual ~FakeHandler() {}
 
+  virtual void HandleStreamInfo(core::VideoState* stream, const core::StreamInfo& info) {
+    UNUSED(stream);
+    UNUSED(info);
+  }
+
   // audio
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,
@@ -120,8 +125,8 @@ class FakeApplication : public common::application::IApplicationImpl {
     core::AppOptions opt;
     opt.auto_exit = true;
     DictionaryOptions* dict = new DictionaryOptions;
-    const core::ComplexOptions copt(
-        dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+    const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
+                                    dict->codec_opts);
     VideoStateHandler* handler = new FakeHandler;
     VideoState* vs = new VideoState(id, uri, opt, copt, handler);
     int res = vs->Exec();
