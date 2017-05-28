@@ -30,10 +30,12 @@ inline DesireBytesPerSec operator+(const DesireBytesPerSec& left, const DesireBy
   return tmp;
 }
 
-DesireBytesPerSec CalculateDesireAudioBandwidthBytesPerSec(int rate, int channels);
+DesireBytesPerSec CalculateDesireAudioBandwidthBytesPerSec(int rate, int channels);  // raw
+DesireBytesPerSec CalculateDesireAACBandwidthBytesPerSec(int channels);
 
-DesireBytesPerSec CalculateDesireX264BandwidthBytesPerSec(Size encoded_frame_size, int framerate);
-
+DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_size,
+                                                          double framerate,
+                                                          int profile);
 DesireBytesPerSec CalculateDesireMPEGBandwidthBytesPerSec(Size encoded_frame_size);
 
 }  // namespace core

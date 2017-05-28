@@ -309,10 +309,6 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
   }
 }
 
-void Player::HandleStreamInfo(core::VideoState* stream, const core::StreamInfo& info) {
-
-}
-
 bool Player::HandleRequestAudio(core::VideoState* stream,
                                 int64_t wanted_channel_layout,
                                 int wanted_nb_channels,
@@ -401,9 +397,10 @@ bool Player::HandleRequestVideo(core::VideoState* stream) {
   return true;
 }
 
-void Player::HandleDefaultWindowSize(int width, int height, AVRational sar) {
+void Player::HandleDefaultWindowSize(Size frame_size, AVRational sar) {
   SDL_Rect rect;
-  core::calculate_display_rect(&rect, 0, 0, INT_MAX, height, width, height, sar);
+  core::calculate_display_rect(&rect, 0, 0, INT_MAX, frame_size.height, frame_size.width,
+                               frame_size.height, sar);
   options_.default_size.width = rect.w;
   options_.default_size.height = rect.h;
 }

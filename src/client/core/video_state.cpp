@@ -113,15 +113,6 @@ namespace client {
 namespace core {
 
 namespace {
-StreamInfo MakeStreamInfo(AVFormatContext* ic) {
-  StreamInfo inf;
-  if (ic->bit_rate) {
-    //inf.bitrate = ic->bit_rate;
-  } else {
-  }
-
-  return inf;
-}
 
 int decode_interrupt_callback(void* user_data) {
   VideoState* is = static_cast<VideoState*>(user_data);
@@ -239,8 +230,7 @@ VideoState::VideoState(stream_id id,
       abort_request_(false),
       stats_(),
       handler_(handler),
-      input_st_(static_cast<InputStream*>(calloc(1, sizeof(InputStream)))),
-      stream_info_() {
+      input_st_(static_cast<InputStream*>(calloc(1, sizeof(InputStream)))) {
   CHECK(handler_);
   CHECK(id_ != invalid_stream_id);
 
@@ -371,7 +361,8 @@ int VideoState::StreamComponentOpen(int stream_index) {
   eof_ = false;
   stream->discard = AVDISCARD_DEFAULT;
   if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
-    bool opened = vstream_->Open(stream_index, stream);
+    AVRational frame_rate = av_guess_frame_rate(ic_, stream, NULL);
+    bool opened = vstream_->Open(stream_index, stream, frame_rate);
     UNUSED(opened);
     core::PacketQueue* packet_queue = vstream_->Queue();
     video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
@@ -543,7 +534,7 @@ clock_t VideoState::GetMasterClock() const {
 
 int VideoState::VideoOpen(core::VideoFrame* vp) {
   if (vp && vp->width && vp->height) {
-    handler_->HandleDefaultWindowSize(vp->width, vp->height, vp->sar);
+    handler_->HandleDefaultWindowSize(Size(vp->width, vp->height), vp->sar);
   }
 
   bool res = handler_->HandleRequestVideo(this);
@@ -1190,9 +1181,6 @@ int VideoState::ReadThread() {
     av_dump_format(ic, 0, id_.c_str(), 0);
   }
 
-  stream_info_ = MakeStreamInfo(ic);
-  handler_->HandleStreamInfo(this, stream_info_);
-
   for (int i = 0; i < static_cast<int>(ic->nb_streams); i++) {
     AVStream* st = ic->streams[i];
     enum AVMediaType type = st->codecpar->codec_type;
@@ -1224,7 +1212,7 @@ int VideoState::ReadThread() {
     AVCodecParameters* codecpar = st->codecpar;
     AVRational sar = av_guess_sample_aspect_ratio(ic, st, NULL);
     if (codecpar->width && codecpar->height) {
-      handler_->HandleDefaultWindowSize(codecpar->width, codecpar->height, sar);
+      handler_->HandleDefaultWindowSize(Size(codecpar->width, codecpar->height), sar);
     }
   }
 
@@ -1252,6 +1240,11 @@ int VideoState::ReadThread() {
     return ERROR_RESULT_VALUE;
   }
 
+  DesireBytesPerSec band = video_stream->DesireBandwith() + audio_stream->DesireBandwith();
+  if (ic_->bit_rate) {
+    bandwidth_t byte_per_sec = ic_->bit_rate / 8;
+    DCHECK(band.InRange(byte_per_sec));
+  }
   if (opt_.infinite_buffer < 0 && realtime_) {
     opt_.infinite_buffer = 1;
   }

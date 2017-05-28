@@ -31,8 +31,11 @@ namespace client {
 namespace core {
 
 Stream::Stream()
-    : packet_queue_(new PacketQueue), clock_(new Clock), stream_index_(-1), stream_st_(NULL) {
-}
+    : packet_queue_(new PacketQueue),
+      clock_(new Clock),
+      stream_index_(-1),
+      stream_st_(NULL),
+      bandwidth_() {}
 
 bool Stream::Open(int index, AVStream* av_stream_st) {
   stream_index_ = index;
@@ -114,10 +117,46 @@ PacketQueue* Stream::Queue() const {
   return packet_queue_;
 }
 
-VideoStream::VideoStream() : Stream() {
+DesireBytesPerSec Stream::DesireBandwith() const {
+  return bandwidth_;
 }
 
-AudioStream::AudioStream() : Stream() {
+void Stream::SetBandwidth(const DesireBytesPerSec& band) {
+  bandwidth_ = band;
+}
+
+VideoStream::VideoStream() : Stream() {}
+
+bool VideoStream::Open(int index, AVStream* av_stream_st, AVRational frame_rate) {
+  AVCodecParameters* codecpar = av_stream_st->codecpar;
+  Size frame_size(codecpar->width, codecpar->height);
+  int profile = codecpar->profile;
+  DesireBytesPerSec band;
+  if (codecpar->codec_id == AV_CODEC_ID_H264) {
+    band = CalculateDesireH264BandwidthBytesPerSec(frame_size, av_q2d(frame_rate), profile);
+  } else if (codecpar->codec_id == AV_CODEC_ID_MPEG2TS) {
+    band = CalculateDesireMPEGBandwidthBytesPerSec(frame_size);
+  } else {
+    NOTREACHED();
+  }
+
+  SetBandwidth(band);
+  return Stream::Open(index, av_stream_st);
+}
+
+AudioStream::AudioStream() : Stream() {}
+
+bool AudioStream::Open(int index, AVStream* av_stream_st) {
+  AVCodecParameters* codecpar = av_stream_st->codecpar;
+  DesireBytesPerSec band;
+  if (codecpar->codec_id == AV_CODEC_ID_AAC || codecpar->codec_id == AV_CODEC_ID_AAC_LATM) {
+    band = CalculateDesireAACBandwidthBytesPerSec(codecpar->channels);
+  } else {
+    NOTREACHED();
+  }
+
+  SetBandwidth(band);
+  return Stream::Open(index, av_stream_st);
 }
 
 }  // namespace core

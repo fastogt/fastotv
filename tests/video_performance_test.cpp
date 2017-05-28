@@ -45,11 +45,6 @@ class FakeHandler : public VideoStateHandler {
 
   virtual ~FakeHandler() {}
 
-  virtual void HandleStreamInfo(core::VideoState* stream, const core::StreamInfo& info) {
-    UNUSED(stream);
-    UNUSED(info);
-  }
-
   // audio
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,
@@ -95,9 +90,8 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(stream);
     UNUSED(frame);
   }
-  virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) override {
-    UNUSED(width);
-    UNUSED(height);
+  virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) override {
+    UNUSED(frame_size);
     UNUSED(sar);
   }
 };

@@ -23,7 +23,7 @@ extern "C" {
 }
 
 #include "client/core/events/events_base.h"
-#include "client/core/stream_info.h"
+#include "client/types.h"
 
 namespace fasto {
 namespace fastotv {
@@ -42,8 +42,6 @@ class VideoStateHandler : public core::events::EventListener {
 
   virtual ~VideoStateHandler();
 
-  virtual void HandleStreamInfo(core::VideoState* stream, const StreamInfo& info) = 0;
-
   // audio
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,
@@ -60,7 +58,7 @@ class VideoStateHandler : public core::events::EventListener {
   virtual bool HandleRequestVideo(VideoState* stream) = 0;
   virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) = 0;
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) = 0;
-  virtual void HandleDefaultWindowSize(int width, int height, AVRational sar) = 0;
+  virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) = 0;
 };
 }
 }

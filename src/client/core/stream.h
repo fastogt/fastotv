@@ -27,6 +27,7 @@ extern "C" {
 #include <common/macros.h>
 
 #include "client/core/types.h"
+#include "client/core/bandwidth_estimation.h"
 
 namespace fasto {
 namespace fastotv {
@@ -60,9 +61,11 @@ class Stream {
   void SyncSerialClock();
 
   PacketQueue* Queue() const;
+  DesireBytesPerSec DesireBandwith() const;
 
  protected:
   Stream();
+  void SetBandwidth(const DesireBytesPerSec& band);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Stream);
@@ -71,16 +74,24 @@ class Stream {
   Clock* clock_;
   int stream_index_;
   AVStream* stream_st_;
+  DesireBytesPerSec bandwidth_;
 };
 
 class VideoStream : public Stream {
  public:
   VideoStream();
+
+  virtual bool Open(int index, AVStream* av_stream_st, AVRational frame_rate);
+
+ private:
+  using Stream::Open;
 };
 
 class AudioStream : public Stream {
  public:
   AudioStream();
+
+  virtual bool Open(int index, AVStream* av_stream_st) override;
 };
 
 }  // namespace core
