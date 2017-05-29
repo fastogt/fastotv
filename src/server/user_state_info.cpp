@@ -29,18 +29,20 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-UserStateInfo::UserStateInfo() : user_id(), connected(false) {}
+UserStateInfo::UserStateInfo() : user_id(), connected(false) {
+}
 
 UserStateInfo::UserStateInfo(const user_id_t& uid, bool connected)
-    : user_id(uid), connected(connected) {}
+    : user_id(uid), connected(connected) {
+}
 
 json_object* UserStateInfo::MakeJobject(const UserStateInfo& uinfo) {
   json_object* obj = json_object_new_object();
 
-  json_object_object_add(obj, USER_STATE_INFO_ID_FIELD,
-                         json_object_new_string(uinfo.user_id.c_str()));
-  json_object_object_add(obj, USER_STATE_INFO_CONNECTED_FIELD,
-                         json_object_new_boolean(uinfo.connected));
+  json_object_object_add(
+      obj, USER_STATE_INFO_ID_FIELD, json_object_new_string(uinfo.user_id.c_str()));
+  json_object_object_add(
+      obj, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(uinfo.connected));
 
   return obj;
 }

@@ -52,7 +52,8 @@ InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
       bandwidth_requests_(),
       ping_server_id_timer_(INVALID_TIMER_ID),
       config_(config),
-      current_bandwidth_(0) {}
+      current_bandwidth_(0) {
+}
 
 InnerTcpHandler::~InnerTcpHandler() {
   for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {

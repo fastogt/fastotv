@@ -44,7 +44,8 @@ struct json_object* AuthInfo::MakeJobject(const AuthInfo& ainf) {
   const std::string login_str = ainf.login;
   const std::string password_str = ainf.password;
   json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_str.c_str()));
-  json_object_object_add(obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_str.c_str()));
+  json_object_object_add(
+      obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_str.c_str()));
   return obj;
 }
 

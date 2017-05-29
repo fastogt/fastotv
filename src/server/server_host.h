@@ -62,6 +62,7 @@ class ServerHost {
                          UserInfo* uinf) const WARN_UNUSED_RESULT;
 
   inner::InnerTcpClient* FindInnerConnectionByID(user_id_t user_id) const;
+
  private:
   DISALLOW_COPY_AND_ASSIGN(ServerHost);
   common::mutex stop_mutex_;

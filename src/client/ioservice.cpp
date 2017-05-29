@@ -116,7 +116,8 @@ class PrivateHandler : public inner::InnerTcpHandler {
 }
 
 IoService::IoService()
-    : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
+    : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {
+}
 
 void IoService::Start() {
   ILoopController::Start();
@@ -126,7 +127,8 @@ void IoService::Stop() {
   ILoopController::Stop();
 }
 
-IoService::~IoService() {}
+IoService::~IoService() {
+}
 
 void IoService::ConnectToServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);

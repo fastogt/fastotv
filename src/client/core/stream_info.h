@@ -33,7 +33,6 @@ struct StreamInfo {
   DesireBytesPerSec video_bitrate;
   DesireBytesPerSec audio_bitrate;
 };
-
 }
 }
 }

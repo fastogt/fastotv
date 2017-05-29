@@ -37,7 +37,6 @@ struct UserStateInfo {
   user_id_t user_id;
   bool connected;
 };
-
 }
 }  // namespace fastotv
 }  // namespace fasto

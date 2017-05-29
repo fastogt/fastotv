@@ -27,7 +27,8 @@
 namespace fasto {
 namespace fastotv {
 
-ServerInfo::ServerInfo() : bandwidth_host() {}
+ServerInfo::ServerInfo() : bandwidth_host() {
+}
 
 struct json_object* ServerInfo::MakeJobject(const ServerInfo& inf) {
   json_object* obj = json_object_new_object();

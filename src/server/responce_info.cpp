@@ -29,25 +29,27 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-ResponceInfo::ResponceInfo() : request_id(), state(), command(), responce_json() {}
+ResponceInfo::ResponceInfo() : request_id(), state(), command(), responce_json() {
+}
 
 ResponceInfo::ResponceInfo(const std::string& request_id,
                            const std::string& state_command,
                            const std::string& command,
                            const std::string& responce)
-    : request_id(request_id), state(state_command), command(command), responce_json(responce) {}
+    : request_id(request_id), state(state_command), command(command), responce_json(responce) {
+}
 
 json_object* ResponceInfo::MakeJobject(const ResponceInfo& uinfo) {
   json_object* obj = json_object_new_object();
 
-  json_object_object_add(obj, RESPONCE_INFO_REQUEST_ID_FIELD,
-                         json_object_new_string(uinfo.request_id.c_str()));
-  json_object_object_add(obj, RESPONCE_INFO_STATE_FIELD,
-                         json_object_new_string(uinfo.state.c_str()));
-  json_object_object_add(obj, RESPONCE_INFO_COMMAND_FIELD,
-                         json_object_new_string(uinfo.command.c_str()));
-  json_object_object_add(obj, RESPONCE_INFO_RESPONCE_FIELD,
-                         json_object_new_string(uinfo.responce_json.c_str()));
+  json_object_object_add(
+      obj, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(uinfo.request_id.c_str()));
+  json_object_object_add(
+      obj, RESPONCE_INFO_STATE_FIELD, json_object_new_string(uinfo.state.c_str()));
+  json_object_object_add(
+      obj, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(uinfo.command.c_str()));
+  json_object_object_add(
+      obj, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(uinfo.responce_json.c_str()));
 
   return obj;
 }
