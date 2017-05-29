@@ -31,6 +31,15 @@ namespace fastotv {
 namespace client {
 namespace core {
 
+bandwidth_t CalculateBandwidth(size_t total_downloaded_bytes, msec_t data_interval) {
+  if (data_interval == 0) {
+    return 0;
+  }
+
+  bandwidth_t bytes_per_msec = total_downloaded_bytes / data_interval;
+  return bytes_per_msec * 1000;
+}
+
 clock_t invalid_clock() {
   return -1;
 }

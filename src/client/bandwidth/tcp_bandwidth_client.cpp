@@ -20,6 +20,8 @@
 
 #include <common/time.h>
 
+#include "client/core/types.h"
+
 namespace {
 struct new_session_pkt {
   uint8_t type;
@@ -89,7 +91,7 @@ common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
   total_downloaded_bytes_ += *nread;
   const common::time64_t data_interval = cur_ts - start_ts_;
   if (duration_ && data_interval >= duration_) {
-    downloaded_bytes_per_sec_ = CalculateBandwidth(total_downloaded_bytes_, data_interval);
+    downloaded_bytes_per_sec_ = core::CalculateBandwidth(total_downloaded_bytes_, data_interval);
     Close();
   }
   return common::Error();

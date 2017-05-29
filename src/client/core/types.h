@@ -22,6 +22,8 @@
 
 #include <common/time.h>
 
+#include "client_server_types.h"
+
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -30,6 +32,8 @@ namespace core {
 typedef common::time64_t msec_t;
 typedef common::time64_t clock_t;
 clock_t invalid_clock();
+
+bandwidth_t CalculateBandwidth(size_t total_downloaded_bytes, msec_t data_interval);
 
 bool IsValidClock(clock_t clock);
 clock_t GetRealClockTime();  // msec

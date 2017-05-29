@@ -33,8 +33,6 @@ typedef std::string login_t;  // unique, user email now
 typedef size_t bandwidth_t;   // bytes/s
 typedef common::time64_t timestamp_t;
 
-bandwidth_t CalculateBandwidth(size_t total_downloaded_bytes, common::time64_t data_interval);
-
 // simple encode/decode algorithm
 std::string Encode(const std::string& data);
 std::string Decode(const std::string& data);

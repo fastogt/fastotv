@@ -35,7 +35,9 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
-  int lfd = lirc_init(const_cast<char*>(PROJECT_NAME_LOWERCASE), 1);
+  char* copy = common::strdup(PROJECT_NAME_LOWERCASE);  // copy for removing warning
+  int lfd = lirc_init(copy, 1);
+  common::utils::freeifnotnull(copy);
   if (lfd == -1) {
     return common::make_error_value("Lirc init failed!", common::Value::E_ERROR);
   }
@@ -51,8 +53,10 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   const std::string lirc_config_path =
       common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
   const char* lirc_config_path_ptr = common::utils::c_strornull(lirc_config_path);
-  char* lirc_config_ptr = const_cast<char*>(lirc_config_path_ptr);
-  if (lirc_readconfig(lirc_config_ptr, &lcfg, NULL) == -1) {
+  char* lirc_config_copy_ptr = common::strdup(lirc_config_path_ptr);  // copy for removing warning
+  int res = lirc_readconfig(lirc_config_copy_ptr, &lcfg, NULL);
+  common::utils::freeifnotnull(lirc_config_copy_ptr);
+  if (res == -1) {
     LircDeinit(lfd, NULL);
     std::string msg_error =
         common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
