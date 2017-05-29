@@ -18,34 +18,27 @@
 
 #pragma once
 
-#include <limits>
-
-#include <common/url.h>
-
-#include "client_server_types.h"
-#include "serializer/json_serializer.h"
+#include <common/error.h>
 
 namespace fasto {
 namespace fastotv {
 
-class Url : public JsonSerializer<Url> {
+template <typename T, typename S = std::string>
+class ISerializer {
  public:
-  Url();
-  Url(stream_id id, const common::uri::Uri& uri, const std::string& name);
+  typedef T value_type;
+  typedef S serialize_type;
 
-  bool IsValid() const;
-  common::uri::Uri GetUrl() const;
-  std::string GetName() const;
-  stream_id Id() const;
-
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
-  static common::Error DeSerialize(const serialize_type& serialized,
-                                   value_type* obj) WARN_UNUSED_RESULT;
-
- private:
-  stream_id id_;
-  common::uri::Uri uri_;
-  std::string name_;
+ protected:
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT {
+    return static_cast<const T*>(this)->Serialize(deserialized);
+  }
+  static common::Error DeSerialize(const serialize_type& serialized, T* obj) WARN_UNUSED_RESULT {
+    if (!obj) {
+      return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    }
+    return T::DeSerialize(serialized, obj);
+  }
 };
 }
 }

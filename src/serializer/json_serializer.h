@@ -18,34 +18,31 @@
 
 #pragma once
 
-#include <limits>
+#include "serializer/iserializer.h"
 
-#include <common/url.h>
-
-#include "client_server_types.h"
-#include "serializer/json_serializer.h"
+#include "third-party/json-c/json-c/json.h"  // for json_object_...
 
 namespace fasto {
 namespace fastotv {
 
-class Url : public JsonSerializer<Url> {
+template <typename T>
+class JsonSerializer : public ISerializer<T, struct json_object*> {
  public:
-  Url();
-  Url(stream_id id, const common::uri::Uri& uri, const std::string& name);
+  typedef ISerializer<T, struct json_object*> base_class;
+  typedef typename base_class::value_type value_type;
+  typedef typename base_class::serialize_type serialize_type;
 
-  bool IsValid() const;
-  common::uri::Uri GetUrl() const;
-  std::string GetName() const;
-  stream_id Id() const;
+  common::Error SerializeToString(std::string* deserialized) const WARN_UNUSED_RESULT {
+    serialize_type des = NULL;
+    common::Error err = base_class::Serialize(&des);
+    if (err && err->IsError()) {
+      return err;
+    }
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
-  static common::Error DeSerialize(const serialize_type& serialized,
-                                   value_type* obj) WARN_UNUSED_RESULT;
-
- private:
-  stream_id id_;
-  common::uri::Uri uri_;
-  std::string name_;
+    *deserialized = json_object_get_string(des);
+    json_object_put(des);
+    return common::Error();
+  }
 };
 }
 }

@@ -16,36 +16,10 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include <limits>
-
-#include <common/url.h>
-
 #include "client_server_types.h"
-#include "serializer/json_serializer.h"
+
+#include <common/convert2string.h>
 
 namespace fasto {
-namespace fastotv {
-
-class Url : public JsonSerializer<Url> {
- public:
-  Url();
-  Url(stream_id id, const common::uri::Uri& uri, const std::string& name);
-
-  bool IsValid() const;
-  common::uri::Uri GetUrl() const;
-  std::string GetName() const;
-  stream_id Id() const;
-
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
-  static common::Error DeSerialize(const serialize_type& serialized,
-                                   value_type* obj) WARN_UNUSED_RESULT;
-
- private:
-  stream_id id_;
-  common::uri::Uri uri_;
-  std::string name_;
-};
-}
+namespace fastotv {}
 }

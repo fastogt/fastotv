@@ -21,8 +21,7 @@
 #include <string>
 
 #include "client_server_types.h"
-
-struct json_object;
+#include "serializer/json_serializer.h"
 
 #define AUTH_INFO_LOGIN_FIELD "login"
 #define AUTH_INFO_PASSWORD_FIELD "password"
@@ -30,14 +29,15 @@ struct json_object;
 namespace fasto {
 namespace fastotv {
 
-struct AuthInfo {
+struct AuthInfo : public JsonSerializer<AuthInfo> {
   AuthInfo();
   AuthInfo(const std::string& login, const std::string& password);
 
   bool IsValid() const;
 
-  static json_object* MakeJobject(const AuthInfo& ainf);  // allocate json_object
-  static AuthInfo MakeClass(json_object* obj);            // pass valid json obj
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized,
+                                   value_type* obj) WARN_UNUSED_RESULT;
 
   login_t login;  // unique
   std::string password;

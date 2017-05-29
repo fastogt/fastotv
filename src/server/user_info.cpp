@@ -49,32 +49,38 @@ bool UserInfo::IsValid() const {
   return auth.IsValid();
 }
 
-json_object* UserInfo::MakeJobject(const UserInfo& uinfo) {
+common::Error UserInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
 
-  fasto::fastotv::AuthInfo ainfo = uinfo.auth;
-  const std::string login_str = ainfo.login;
-  const std::string password_str = ainfo.password;
+  const std::string login_str = auth.login;
+  const std::string password_str = auth.password;
   json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_str.c_str()));
   json_object_object_add(
       obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_str.c_str()));
 
-  json_object* jchannels = MakeJobjectFromChannels(uinfo.channels);
+  json_object* jchannels = MakeJobjectFromChannels(channels);
   json_object_object_add(obj, CHANNELS_FIELD, jchannels);
-  return obj;
+
+  *deserialized = obj;
+  return common::Error();
 }
 
-UserInfo UserInfo::MakeClass(json_object* obj) {
+common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   channels_t chan;
   json_object* jchan = NULL;
-  json_bool jchan_exists = json_object_object_get_ex(obj, CHANNELS_FIELD, &jchan);
+  json_bool jchan_exists = json_object_object_get_ex(serialized, CHANNELS_FIELD, &jchan);
   if (jchan_exists) {
-    int len = json_object_array_length(jchan);
-    for (int i = 0; i < len; ++i) {
-      chan.push_back(Url::MakeClass(json_object_array_get_idx(jchan, i)));
-    }
+    chan = MakeChannelsClass(jchan);
   }
-  return UserInfo(AuthInfo::MakeClass(obj), chan);
+
+  AuthInfo ainf;
+  common::Error err = AuthInfo::DeSerialize(serialized, &ainf);
+  if (err && err->IsError()) {
+    return err;
+  }
+
+  *obj = UserInfo(ainf, chan);
+  return common::Error();
 }
 }
 }  // namespace fastotv

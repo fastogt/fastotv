@@ -50,6 +50,16 @@ SET(SOURCES_INNER
   ${SOURCE_ROOT}/inner/inner_client.cpp
 )
 
+SET(HEADERS_SERIALIZER
+  ${SOURCE_ROOT}/serializer/iserializer.h
+  ${SOURCE_ROOT}/serializer/json_serializer.h
+)
+
+SET(SOURCES_SERIALIZER
+  ${SOURCE_ROOT}/serializer/iserializer.cpp
+  ${SOURCE_ROOT}/serializer/json_serializer.cpp
+)
+
 SET(SOURCES_SDS
   ${SOURCE_ROOT}/third-party/sds/sds.c
 )
@@ -455,7 +465,11 @@ SET(BUILD_CLIENT_SOURCES
   cmdutils.h cmdutils.cpp
   sdl_utils.h sdl_utils.cpp
   ioservice.h ioservice.cpp
-  ${HEADERS_INNER} ${SOURCES_INNER} ${CLIENT_SERVER_SOURCES}
+
+  ${HEADERS_INNER} ${SOURCES_INNER}
+  ${HEADERS_SERIALIZER} ${SOURCES_SERIALIZER}
+  ${CLIENT_SERVER_SOURCES}
+
   ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}
   ${HEADERS_BANDWIDTH_CLIENT} ${SOURCES_BANDWIDTH_CLIENT}
   ${DEPENDENS_CLIENT_SOURCES} ${DEPENDENS_CLIENT_HEADERS}

@@ -31,7 +31,12 @@ namespace fastotv {
 json_object* MakeJobjectFromChannels(const channels_t& channels) {
   json_object* jchannels = json_object_new_array();
   for (Url url : channels) {
-    json_object_array_add(jchannels, Url::MakeJobject(url));
+    json_object* jurl = NULL;
+    common::Error err = url.Serialize(&jurl);
+    if (err && err->IsError()) {
+      continue;
+    }
+    json_object_array_add(jchannels, jurl);
   }
   return jchannels;
 }
@@ -40,7 +45,13 @@ channels_t MakeChannelsClass(json_object* obj) {
   channels_t chan;
   int len = json_object_array_length(obj);
   for (int i = 0; i < len; ++i) {
-    chan.push_back(Url::MakeClass(json_object_array_get_idx(obj, i)));
+    json_object* jurl = json_object_array_get_idx(obj, i);
+    Url url;
+    common::Error err = Url::DeSerialize(jurl, &url);
+    if (err && err->IsError()) {
+      continue;
+    }
+    chan.push_back(url);
   }
   return chan;
 }

@@ -84,7 +84,15 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     char* command = argv[0];
 
     ResponceInfo resp(id, FAIL_COMMAND, command, "{\"cause\": \"not connected\"}");
-    WARNING_LOG() << resp.ToString();
+    std::string resp_str;
+    common::Error err = resp.SerializeToString(&resp_str);
+    if (err && err->IsError()) {
+      PublishResponce(resp);
+      sdsfreesplitres(argv, argc);
+      return;
+    }
+
+    WARNING_LOG() << resp_str;
     PublishResponce(resp);
     sdsfreesplitres(argv, argc);
     return;
@@ -98,7 +106,15 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     char* command = argv[0];
 
     ResponceInfo resp(id, FAIL_COMMAND, command, "{\"cause\": \"not handled\"}");
-    WARNING_LOG() << resp.ToString();
+    std::string resp_str;
+    common::Error err = resp.SerializeToString(&resp_str);
+    if (err && err->IsError()) {
+      PublishResponce(resp);
+      sdsfreesplitres(argv, argc);
+      return;
+    }
+
+    WARNING_LOG() << resp_str;
     PublishResponce(resp);
     sdsfreesplitres(argv, argc);
     return;
@@ -114,7 +130,13 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
 }
 
 void InnerSubHandler::PublishResponce(const ResponceInfo& resp) {
-  std::string resp_str = resp.ToString();
+  std::string resp_str;
+  common::Error err = resp.SerializeToString(&resp_str);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    return;
+  }
+
   bool res = parent_->PublishToChannelOut(resp_str);
   if (!res) {
     WARNING_LOG() << "Publish message: " << resp_str << " to channel out failed.";

@@ -270,23 +270,33 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
 
   if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
     ServerPingInfo ping;
-    json_object* jping = ServerPingInfo::MakeJobject(ping);
+    json_object* jping = NULL;
+    common::Error err = ping.Serialize(&jping);
+    if (err && err->IsError()) {
+      NOTREACHED();
+    }
     std::string ping_str = json_object_get_string(jping);
     std::string enc_ping = Encode(ping_str);
     json_object_put(jping);
     const cmd_responce_t pong = PingResponceSuccsess(id, enc_ping);
-    common::Error err = connection->Write(pong);
+    err = connection->Write(pong);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
-    json_object* jauth = AuthInfo::MakeJobject(config_.ainf);
+    json_object* jauth = NULL;
+    common::Error err = config_.ainf.Serialize(&jauth);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      return;
+    }
+
     std::string auth_str = json_object_get_string(jauth);
     std::string enc_auth = Encode(auth_str);
     json_object_put(jauth);
     cmd_responce_t iAm = WhoAreYouResponceSuccsess(id, enc_auth);
-    common::Error err = connection->Write(iAm);
+    err = connection->Write(iAm);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
@@ -311,15 +321,21 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     info.ram_total = ram_total;
     info.ram_free = ram_free;
     info.bandwidth = current_bandwidth_;
-    json_object* info_json = ClientInfo::MakeJobject(info);
+    json_object* info_json = NULL;
+    common::Error err = info.Serialize(&info_json);
+    json_object_put(info_json);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      return;
+    }
+
     std::string info_json_string = json_object_get_string(info_json);
     std::string enc_info = Encode(info_json_string);
     cmd_responce_t resp = SystemInfoResponceSuccsess(id, enc_info);
-    common::Error err = connection->Write(resp);
+    err = connection->Write(resp);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
-    json_object_put(info_json);
     return;
   }
 
@@ -402,9 +418,13 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
       return parse_err;
     }
 
-    ClientPingInfo ping_info = ClientPingInfo::MakeClass(obj);
-    UNUSED(ping_info);
+    ClientPingInfo ping_info;
+    common::Error err = ClientPingInfo::DeSerialize(obj, &ping_info);
     json_object_put(obj);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      return err;
+    }
     cmd_approve_t resp = PingApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_SERVER_INFO)) {
@@ -417,14 +437,19 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
       return parse_err;
     }
 
-    ServerInfo sinf = ServerInfo::MakeClass(obj);
+    ServerInfo sinf;
+    common::Error err = ServerInfo::DeSerialize(obj, &sinf);
     json_object_put(obj);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      return err;
+    }
 
     common::net::HostAndPort host = sinf.bandwidth_host;
     bandwidth::TcpBandwidthClient* band_connection = NULL;
     common::libev::IoLoop* server = connection->Server();
     const BandwidthHostType hs = MAIN_SERVER;
-    common::Error err = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
+    err = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
       core::events::BandwidtInfo cinf(host, 0, hs);

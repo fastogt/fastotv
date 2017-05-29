@@ -39,61 +39,56 @@ ResponceInfo::ResponceInfo(const std::string& request_id,
     : request_id(request_id), state(state_command), command(command), responce_json(responce) {
 }
 
-json_object* ResponceInfo::MakeJobject(const ResponceInfo& uinfo) {
+common::Error ResponceInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
 
   json_object_object_add(
-      obj, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(uinfo.request_id.c_str()));
+      obj, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(request_id.c_str()));
+  json_object_object_add(obj, RESPONCE_INFO_STATE_FIELD, json_object_new_string(state.c_str()));
+  json_object_object_add(obj, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(command.c_str()));
   json_object_object_add(
-      obj, RESPONCE_INFO_STATE_FIELD, json_object_new_string(uinfo.state.c_str()));
-  json_object_object_add(
-      obj, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(uinfo.command.c_str()));
-  json_object_object_add(
-      obj, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(uinfo.responce_json.c_str()));
+      obj, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(responce_json.c_str()));
 
-  return obj;
+  *deserialized = obj;
+  return common::Error();
 }
 
-std::string ResponceInfo::ToString() const {
-  json_object* obj = MakeJobject(*this);
-  std::string str = json_object_get_string(obj);
-  json_object_put(obj);
-  return str;
-}
-
-ResponceInfo ResponceInfo::MakeClass(json_object* obj) {
+common::Error ResponceInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!obj) {
-    return ResponceInfo();
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   ResponceInfo inf;
   json_object* jrequest_id = NULL;
   json_bool jrequest_id_exists =
-      json_object_object_get_ex(obj, RESPONCE_INFO_REQUEST_ID_FIELD, &jrequest_id);
+      json_object_object_get_ex(serialized, RESPONCE_INFO_REQUEST_ID_FIELD, &jrequest_id);
   if (jrequest_id_exists) {
     inf.request_id = json_object_get_string(jrequest_id);
   }
 
   json_object* jstate = NULL;
-  json_bool jstate_exists = json_object_object_get_ex(obj, RESPONCE_INFO_STATE_FIELD, &jstate);
+  json_bool jstate_exists =
+      json_object_object_get_ex(serialized, RESPONCE_INFO_STATE_FIELD, &jstate);
   if (jstate_exists) {
     inf.state = json_object_get_string(jstate);
   }
 
   json_object* jcommand = NULL;
   json_bool jcommand_exists =
-      json_object_object_get_ex(obj, RESPONCE_INFO_COMMAND_FIELD, &jcommand);
+      json_object_object_get_ex(serialized, RESPONCE_INFO_COMMAND_FIELD, &jcommand);
   if (jcommand_exists) {
     inf.command = json_object_get_string(jcommand);
   }
 
   json_object* jresponce = NULL;
   json_bool jresponce_exists =
-      json_object_object_get_ex(obj, RESPONCE_INFO_RESPONCE_FIELD, &jresponce);
+      json_object_object_get_ex(serialized, RESPONCE_INFO_RESPONCE_FIELD, &jresponce);
   if (jresponce_exists) {
     inf.responce_json = json_object_get_string(jresponce);
   }
-  return inf;
+
+  *obj = inf;
+  return common::Error();
 }
 }
 }  // namespace fastotv

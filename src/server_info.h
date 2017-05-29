@@ -22,18 +22,18 @@
 
 #include <common/net/net.h>
 
-struct json_object;
+#include "serializer/json_serializer.h"
 
 #define BANDWIDTH_HOST_FIELD "bandwidth_host"
 
 namespace fasto {
 namespace fastotv {
 
-struct ServerInfo {
+struct ServerInfo : public JsonSerializer<ServerInfo> {
   ServerInfo();
-
-  static json_object* MakeJobject(const ServerInfo& inf);  // allocate json_object
-  static ServerInfo MakeClass(json_object* obj);           // pass valid json obj
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized,
+                                   value_type* obj) WARN_UNUSED_RESULT;
 
   common::net::HostAndPort bandwidth_host;
 };

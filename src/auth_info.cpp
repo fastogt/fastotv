@@ -39,31 +39,31 @@ bool AuthInfo::IsValid() const {
   return !login.empty();
 }
 
-struct json_object* AuthInfo::MakeJobject(const AuthInfo& ainf) {
+common::Error AuthInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
-  const std::string login_str = ainf.login;
-  const std::string password_str = ainf.password;
-  json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_str.c_str()));
-  json_object_object_add(
-      obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_str.c_str()));
-  return obj;
+  json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login.c_str()));
+  json_object_object_add(obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password.c_str()));
+
+  *deserialized = obj;
+  return common::Error();
 }
 
-AuthInfo AuthInfo::MakeClass(json_object* obj) {
+common::Error AuthInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   json_object* jlogin = NULL;
-  json_bool jlogin_exists = json_object_object_get_ex(obj, AUTH_INFO_LOGIN_FIELD, &jlogin);
+  json_bool jlogin_exists = json_object_object_get_ex(serialized, AUTH_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
-    return fasto::fastotv::AuthInfo();
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   json_object* jpass = NULL;
-  json_bool jpass_exists = json_object_object_get_ex(obj, AUTH_INFO_PASSWORD_FIELD, &jpass);
+  json_bool jpass_exists = json_object_object_get_ex(serialized, AUTH_INFO_PASSWORD_FIELD, &jpass);
   if (!jpass_exists) {
-    return fasto::fastotv::AuthInfo();
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   fasto::fastotv::AuthInfo ainf(json_object_get_string(jlogin), json_object_get_string(jpass));
-  return ainf;
+  *obj = ainf;
+  return common::Error();
 }
 
 }  // namespace fastotv

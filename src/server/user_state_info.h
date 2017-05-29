@@ -19,6 +19,7 @@
 #pragma once
 
 #include "user_info.h"
+#include "serializer/json_serializer.h"
 
 #define USER_STATE_INFO_ID_FIELD "user_id"
 #define USER_STATE_INFO_CONNECTED_FIELD "connected"
@@ -27,12 +28,13 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-struct UserStateInfo {
+struct UserStateInfo : public JsonSerializer<UserStateInfo> {
   UserStateInfo();
   UserStateInfo(const user_id_t& uid, bool connected);
 
-  static json_object* MakeJobject(const UserStateInfo& url);  // allocate json_object
-  static UserStateInfo MakeClass(json_object* obj);           // pass valid json obj
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized,
+                                   value_type* obj) WARN_UNUSED_RESULT;
 
   user_id_t user_id;
   bool connected;

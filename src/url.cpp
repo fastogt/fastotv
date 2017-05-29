@@ -49,44 +49,44 @@ stream_id Url::Id() const {
   return id_;
 }
 
-struct json_object* Url::MakeJobject(const Url& url) {
+common::Error Url::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
-  std::string id_str = url.Id();
-  json_object_object_add(obj, ID_FIELD, json_object_new_string(id_str.c_str()));
-  common::uri::Uri uri = url.GetUrl();
-  const std::string url_str = uri.Url();
+  json_object_object_add(obj, ID_FIELD, json_object_new_string(id_.c_str()));
+  const std::string url_str = uri_.Url();
   json_object_object_add(obj, URL_FIELD, json_object_new_string(url_str.c_str()));
-  const std::string name_str = url.GetName();
-  json_object_object_add(obj, NAME_FIELD, json_object_new_string(name_str.c_str()));
-  return obj;
+  json_object_object_add(obj, NAME_FIELD, json_object_new_string(name_.c_str()));
+  *deserialized = obj;
+  return common::Error();
 }
 
-fasto::fastotv::Url Url::MakeClass(struct json_object* obj) {
+common::Error Url::DeSerialize(const serialize_type& serialized, value_type* obj) {
   json_object* jid = NULL;
-  json_bool jid_exists = json_object_object_get_ex(obj, ID_FIELD, &jid);
+  json_bool jid_exists = json_object_object_get_ex(serialized, ID_FIELD, &jid);
   if (!jid_exists) {
-    return fasto::fastotv::Url();
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   json_object* jurl = NULL;
-  json_bool jurls_exists = json_object_object_get_ex(obj, URL_FIELD, &jurl);
+  json_bool jurls_exists = json_object_object_get_ex(serialized, URL_FIELD, &jurl);
   if (!jurls_exists) {
-    return fasto::fastotv::Url();
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   json_object* jname = NULL;
-  json_bool jname_exists = json_object_object_get_ex(obj, NAME_FIELD, &jname);
+  json_bool jname_exists = json_object_object_get_ex(serialized, NAME_FIELD, &jname);
   if (!jname_exists) {
-    return fasto::fastotv::Url();
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   fasto::fastotv::Url url(json_object_get_string(jid),
                           common::uri::Uri(json_object_get_string(jurl)),
                           json_object_get_string(jname));
   if (!url.IsValid()) {
-    return fasto::fastotv::Url();
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
-  return url;
+
+  *obj = url;
+  return common::Error();
 }
 }
 }

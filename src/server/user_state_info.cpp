@@ -36,35 +36,36 @@ UserStateInfo::UserStateInfo(const user_id_t& uid, bool connected)
     : user_id(uid), connected(connected) {
 }
 
-json_object* UserStateInfo::MakeJobject(const UserStateInfo& uinfo) {
+common::Error UserStateInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
+  json_object_object_add(obj, USER_STATE_INFO_ID_FIELD, json_object_new_string(user_id.c_str()));
+  json_object_object_add(obj, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(connected));
 
-  json_object_object_add(
-      obj, USER_STATE_INFO_ID_FIELD, json_object_new_string(uinfo.user_id.c_str()));
-  json_object_object_add(
-      obj, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(uinfo.connected));
-
-  return obj;
+  *deserialized = obj;
+  return common::Error();
 }
 
-UserStateInfo UserStateInfo::MakeClass(json_object* obj) {
+common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!obj) {
-    return UserStateInfo();
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   UserStateInfo inf;
   json_object* jid = NULL;
-  json_bool jid_exists = json_object_object_get_ex(obj, USER_STATE_INFO_ID_FIELD, &jid);
+  json_bool jid_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_ID_FIELD, &jid);
   if (jid_exists) {
     inf.user_id = json_object_get_string(jid);
   }
 
   json_object* jcon = NULL;
-  json_bool jcon_exists = json_object_object_get_ex(obj, USER_STATE_INFO_CONNECTED_FIELD, &jcon);
+  json_bool jcon_exists =
+      json_object_object_get_ex(serialized, USER_STATE_INFO_CONNECTED_FIELD, &jcon);
   if (jcon_exists) {
     inf.connected = json_object_get_string(jcon);
   }
-  return inf;
+
+  *obj = inf;
+  return common::Error();
 }
 }
 }  // namespace fastotv

@@ -21,8 +21,7 @@
 #include <string>
 
 #include "client_server_types.h"
-
-struct json_object;
+#include "serializer/json_serializer.h"
 
 #define CLIENT_INFO_LOGIN_FIELD "login"
 #define CLIENT_INFO_BANDWIDTH_FIELD "bandwidth"
@@ -34,12 +33,13 @@ struct json_object;
 namespace fasto {
 namespace fastotv {
 
-struct ClientInfo {
+struct ClientInfo : public JsonSerializer<ClientInfo> {
   ClientInfo();
   bool IsValid() const;
 
-  static json_object* MakeJobject(const ClientInfo& inf);  // allocate json_object
-  static ClientInfo MakeClass(json_object* obj);           // pass valid json obj
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized,
+                                   value_type* obj) WARN_UNUSED_RESULT;
 
   login_t login;
   std::string os;

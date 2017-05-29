@@ -19,8 +19,7 @@
 #pragma once
 
 #include "client_server_types.h"
-
-struct json_object;
+#include "serializer/json_serializer.h"
 
 #define SERVER_INFO_TIMESTAMP_FIELD "timestamp"
 #define CLIENT_INFO_TIMESTAMP_FIELD "timestamp"
@@ -28,20 +27,22 @@ struct json_object;
 namespace fasto {
 namespace fastotv {
 
-struct ServerPingInfo {
+struct ServerPingInfo : public JsonSerializer<ServerPingInfo> {
   ServerPingInfo();
 
-  static json_object* MakeJobject(const ServerPingInfo& inf);  // allocate json_object
-  static ServerPingInfo MakeClass(json_object* obj);           // pass valid json obj
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized,
+                                   value_type* obj) WARN_UNUSED_RESULT;
 
   timestamp_t timestamp;  // utc time
 };
 
-struct ClientPingInfo {
+struct ClientPingInfo : public JsonSerializer<ClientPingInfo> {
   ClientPingInfo();
 
-  static json_object* MakeJobject(const ClientPingInfo& inf);  // allocate json_object
-  static ClientPingInfo MakeClass(json_object* obj);           // pass valid json obj
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized,
+                                   value_type* obj) WARN_UNUSED_RESULT;
 
   timestamp_t timestamp;  // utc time
 };

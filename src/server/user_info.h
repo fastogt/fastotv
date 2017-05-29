@@ -26,6 +26,7 @@
 
 #include "auth_info.h"
 #include "channel_info.h"
+#include "serializer/json_serializer.h"
 
 namespace fasto {
 namespace fastotv {
@@ -33,7 +34,7 @@ namespace server {
 
 typedef std::string user_id_t;  // mongodb/redis id
 
-struct UserInfo {
+struct UserInfo : public JsonSerializer<UserInfo> {
   UserInfo();
   explicit UserInfo(const AuthInfo& a, const channels_t& ch);
 
@@ -41,9 +42,9 @@ struct UserInfo {
   std::string GetLogin() const;
   std::string GetPassword() const;
 
-  static json_object* MakeJobject(const UserInfo& url);  // allocate json_object
-  static UserInfo MakeClass(json_object* obj);           // pass valid json obj
-
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized,
+                                   value_type* obj) WARN_UNUSED_RESULT;
   AuthInfo auth;
   channels_t channels;
 };

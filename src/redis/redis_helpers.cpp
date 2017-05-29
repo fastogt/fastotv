@@ -86,8 +86,15 @@ common::Error parse_user_json(const char* userJson, user_id_t* out_uid, UserInfo
     return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);
   }
 
+  UserInfo uinf;
+  common::Error err = UserInfo::DeSerialize(obj, &uinf);
+  if (err && err->IsError()) {
+    json_object_put(obj);
+    return err;
+  }
+
   *out_uid = json_object_get_string(jid);
-  *out_info = UserInfo::MakeClass(obj);
+  *out_info = uinf;
   json_object_put(obj);
   return common::Error();
 }

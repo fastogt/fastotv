@@ -154,7 +154,13 @@ bool InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
 }
 
 void InnerTcpHandlerHost::PublishUserStateInfo(const UserStateInfo& state) {
-  json_object* user_state_json = UserStateInfo::MakeJobject(state);
+  json_object* user_state_json = NULL;
+  common::Error err = state.Serialize(&user_state_json);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    return;
+  }
+
   std::string connected_resp = json_object_get_string(user_state_json);
   json_object_put(user_state_json);
   bool res = sub_commands_in_->PublishStateToChannel(connected_resp);
@@ -176,13 +182,17 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
   char* command = argv[0];
   if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
     ClientPingInfo ping;
-    json_object* jping_info = ClientPingInfo::MakeJobject(ping);
+    json_object* jping_info = NULL;
+    common::Error err = ping.Serialize(&jping_info);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    }
     std::string ping_info_str = json_object_get_string(jping_info);
     json_object_put(jping_info);
     std::string ping_info = Encode(ping_info_str);
 
     cmd_responce_t pong = PingResponceSuccsess(id, ping_info);
-    common::Error err = connection->Write(pong);
+    err = connection->Write(pong);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
     }
@@ -207,7 +217,12 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     ServerInfo serv;
     serv.bandwidth_host = config_.server.bandwidth_host;
 
-    json_object* jserver_info = ServerInfo::MakeJobject(serv);
+    json_object* jserver_info = NULL;
+    err = serv.Serialize(&jserver_info);
+    if (err && err->IsError()) {
+      NOTREACHED();
+    }
+
     std::string server_info_str = json_object_get_string(jserver_info);
     json_object_put(jserver_info);
     std::string hex_server_info = Encode(server_info_str);
@@ -298,11 +313,18 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       return parse_err;
     }
 
-    ServerPingInfo ping_info = ServerPingInfo::MakeClass(obj);
-    UNUSED(ping_info);
+    ServerPingInfo ping_info;
+    common::Error err = ServerPingInfo::DeSerialize(obj, &ping_info);
     json_object_put(obj);
+    if (err && err->IsError()) {
+      cmd_approve_t resp = PingApproveResponceFail(id, parse_err->Description());
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return err;
+    }
+
     cmd_approve_t resp = PingApproveResponceSuccsess(id);
-    common::Error err = connection->Write(resp);
+    err = connection->Write(resp);
     if (err && err->IsError()) {
       return err;
     }
@@ -317,8 +339,17 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       return parse_err;
     }
 
-    AuthInfo uauth = AuthInfo::MakeClass(obj);
+    AuthInfo uauth;
+    common::Error err = AuthInfo::DeSerialize(obj, &uauth);
     json_object_put(obj);
+    if (err && err->IsError()) {
+      const std::string error_str = err->Description();
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return err;
+    }
+
     if (!uauth.IsValid()) {
       const std::string error_str = "Invalid input argument(s)";
       cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
@@ -328,7 +359,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     }
 
     user_id_t uid;
-    common::Error err = parent_->FindUserAuth(uauth, &uid);
+    err = parent_->FindUserAuth(uauth, &uid);
     if (err && err->IsError()) {
       cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->Description());
       common::Error write_err = connection->Write(resp);
@@ -369,8 +400,17 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       return parse_err;
     }
 
-    ClientInfo cinf = ClientInfo::MakeClass(obj);
+    ClientInfo cinf;
+    common::Error err = ClientInfo::DeSerialize(obj, &cinf);
     json_object_put(obj);
+    if (err && err->IsError()) {
+      const std::string error_str = err->Description();
+      cmd_approve_t resp = SystemInfoApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return err;
+    }
+
     if (!cinf.IsValid()) {
       const std::string error_str = "Invalid input argument(s)";
       cmd_approve_t resp = SystemInfoApproveResponceFail(id, error_str);
@@ -380,7 +420,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     }
 
     cmd_approve_t resp = SystemInfoApproveResponceSuccsess(id);
-    common::Error err = connection->Write(resp);
+    err = connection->Write(resp);
     if (err && err->IsError()) {
       return err;
     }

@@ -20,9 +20,9 @@
 
 #include <string>
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
-
 #include <common/convert2string.h>
+
+#include "third-party/json-c/json-c/json.h"  // for json_object_...
 
 namespace fasto {
 namespace fastotv {
@@ -30,16 +30,17 @@ namespace fastotv {
 ServerInfo::ServerInfo() : bandwidth_host() {
 }
 
-struct json_object* ServerInfo::MakeJobject(const ServerInfo& inf) {
+common::Error ServerInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
-  const std::string host_str = common::ConvertToString(inf.bandwidth_host);
+  const std::string host_str = common::ConvertToString(bandwidth_host);
   json_object_object_add(obj, BANDWIDTH_HOST_FIELD, json_object_new_string(host_str.c_str()));
-  return obj;
+  *deserialized = obj;
+  return common::Error();
 }
 
-ServerInfo ServerInfo::MakeClass(json_object* obj) {
+common::Error ServerInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   json_object* jband = NULL;
-  json_bool jband_exists = json_object_object_get_ex(obj, BANDWIDTH_HOST_FIELD, &jband);
+  json_bool jband_exists = json_object_object_get_ex(serialized, BANDWIDTH_HOST_FIELD, &jband);
   ServerInfo inf;
   if (jband_exists) {
     const std::string host_str = json_object_get_string(jband);
@@ -48,7 +49,8 @@ ServerInfo ServerInfo::MakeClass(json_object* obj) {
       inf.bandwidth_host = hs;
     }
   }
-  return inf;
+  *obj = inf;
+  return common::Error();
 }
 
 }  // namespace fastotv

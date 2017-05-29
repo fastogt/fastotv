@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "user_info.h"
+#include "serializer/json_serializer.h"
 
 #define RESPONCE_INFO_REQUEST_ID_FIELD "request_id"
 #define RESPONCE_INFO_STATE_FIELD "state"
@@ -29,17 +29,16 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-struct ResponceInfo {
+struct ResponceInfo : public JsonSerializer<ResponceInfo> {
   ResponceInfo();
   ResponceInfo(const std::string& request_id,
                const std::string& state_command,
                const std::string& command,
                const std::string& responce);
 
-  static json_object* MakeJobject(const ResponceInfo& url);  // allocate json_object
-  static ResponceInfo MakeClass(json_object* obj);           // pass valid json obj
-
-  std::string ToString() const;
+  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized,
+                                   value_type* obj) WARN_UNUSED_RESULT;
 
   std::string request_id;
   std::string state;
