@@ -90,9 +90,7 @@ common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
 
   const common::time64_t data_interval = cur_ts - start_ts_;
   if (duration_ && data_interval >= duration_) {
-    bandwidth_t butes_per_msec = total_downloaded_bytes_ / data_interval;
-    bandwidth_t butes_per_sec = butes_per_msec * 1000;
-    downloaded_bytes_per_sec_ = butes_per_sec;
+    downloaded_bytes_per_sec_ = CalculateBandwidth(total_downloaded_bytes_, data_interval);
     Close();
   }
   return common::Error();

@@ -61,11 +61,14 @@ class Stream {
   void SyncSerialClock();
 
   PacketQueue* Queue() const;
+  bandwidth_t Bandwidth() const;
   DesireBytesPerSec DesireBandwith() const;
+  size_t TotalDownloadedBytes() const;
+  void RegisterPacket(const AVPacket* packet);
 
  protected:
   Stream();
-  void SetBandwidth(const DesireBytesPerSec& band);
+  void SetDesireBandwith(const DesireBytesPerSec& band);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(Stream);
@@ -74,7 +77,10 @@ class Stream {
   Clock* clock_;
   int stream_index_;
   AVStream* stream_st_;
+
   DesireBytesPerSec bandwidth_;
+  common::time64_t start_ts_;
+  size_t total_downloaded_bytes_;
 };
 
 class VideoStream : public Stream {

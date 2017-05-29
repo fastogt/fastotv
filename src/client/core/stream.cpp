@@ -35,7 +35,9 @@ Stream::Stream()
       clock_(new Clock),
       stream_index_(-1),
       stream_st_(NULL),
-      bandwidth_() {}
+      bandwidth_(),
+      start_ts_(0),
+      total_downloaded_bytes_(0) {}
 
 bool Stream::Open(int index, AVStream* av_stream_st) {
   stream_index_ = index;
@@ -103,6 +105,9 @@ void Stream::SetClock(clock_t pts) {
 
 void Stream::SetPaused(bool pause) {
   clock_->SetPaused(pause);
+
+  total_downloaded_bytes_ = 0;
+  start_ts_ = 0;
 }
 
 clock_t Stream::LastUpdatedClock() const {
@@ -117,11 +122,34 @@ PacketQueue* Stream::Queue() const {
   return packet_queue_;
 }
 
+void Stream::RegisterPacket(const AVPacket* packet) {
+  if (!packet || packet->size < 0) {
+    return;
+  }
+
+  unsigned int packet_size = static_cast<unsigned int>(packet->size);
+  common::time64_t cur_ts = common::time::current_mstime();
+  if (total_downloaded_bytes_ == 0) {
+    start_ts_ = cur_ts;
+  }
+  total_downloaded_bytes_ += packet_size;
+}
+
+bandwidth_t Stream::Bandwidth() const {
+  common::time64_t cur_ts = common::time::current_mstime();
+  const common::time64_t data_interval = cur_ts - start_ts_;
+  return CalculateBandwidth(total_downloaded_bytes_, data_interval);
+}
+
+size_t Stream::TotalDownloadedBytes() const {
+  return total_downloaded_bytes_;
+}
+
 DesireBytesPerSec Stream::DesireBandwith() const {
   return bandwidth_;
 }
 
-void Stream::SetBandwidth(const DesireBytesPerSec& band) {
+void Stream::SetDesireBandwith(const DesireBytesPerSec& band) {
   bandwidth_ = band;
 }
 
@@ -140,7 +168,7 @@ bool VideoStream::Open(int index, AVStream* av_stream_st, AVRational frame_rate)
     NOTREACHED();
   }
 
-  SetBandwidth(band);
+  SetDesireBandwith(band);
   return Stream::Open(index, av_stream_st);
 }
 
@@ -155,7 +183,7 @@ bool AudioStream::Open(int index, AVStream* av_stream_st) {
     NOTREACHED();
   }
 
-  SetBandwidth(band);
+  SetDesireBandwith(band);
   return Stream::Open(index, av_stream_st);
 }
 

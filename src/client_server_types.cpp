@@ -23,6 +23,15 @@
 namespace fasto {
 namespace fastotv {
 
+bandwidth_t CalculateBandwidth(size_t total_downloaded_bytes, common::time64_t data_interval) {
+  if (data_interval == 0) {
+    return 0;
+  }
+
+  bandwidth_t bytes_per_msec = total_downloaded_bytes / data_interval;
+  return bytes_per_msec * 1000;
+}
+
 std::string Encode(const std::string& data) {
   std::string enc_data = common::HexEncode(data, false);
   return enc_data;

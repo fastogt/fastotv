@@ -179,7 +179,6 @@ class VideoState {
 
   common::shared_ptr<common::threads::Thread<int> > read_tid_;
   bool force_refresh_;
-  bool queue_attachments_req_;
   int read_pause_return_;
   AVFormatContext* ic_;
   bool realtime_;

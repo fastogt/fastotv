@@ -40,7 +40,7 @@ AppOptions::AppOptions()
       hwaccel_id(HWACCEL_NONE),
       hwaccel_device(),
       hwaccel_output_format(),
-      auto_exit(false)
+      auto_exit(true)
 #if CONFIG_AVFILTER
       ,
       vfilters(),

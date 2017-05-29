@@ -180,7 +180,6 @@ VideoState::VideoState(stream_id id,
       copt_(copt),
       read_tid_(THREAD_MANAGER()->CreateThread(&VideoState::ReadThread, this)),
       force_refresh_(false),
-      queue_attachments_req_(false),
       read_pause_return_(0),
       ic_(NULL),
       realtime_(false),
@@ -372,7 +371,6 @@ int VideoState::StreamComponentOpen(int stream_index) {
       destroy(&viddec_);
       goto out;
     }
-    queue_attachments_req_ = true;
   } else if (avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
 #if CONFIG_AVFILTER
     {
@@ -933,33 +931,45 @@ void VideoState::TryRefreshVideo() {
       }
     }
     force_refresh_ = false;
-    if (opt_.show_status) {
-      msec_t cur_time = GetCurrentMsec();
-      static msec_t last_time = cur_time;
-      msec_t diff = cur_time - last_time;
-      if (diff >= SHOW_STATUS_TIMEOUT_MSEC) {
-        int aqsize = 0, vqsize = 0;
-        if (video_st) {
-          vqsize = video_packet_queue->Size();
-        }
-        if (audio_st) {
-          aqsize = audio_packet_queue->Size();
-        }
-        clock_t av_diff = 0;
-        if (audio_st && video_st) {
-          av_diff = astream_->GetClock() - vstream_->GetClock();
-        } else if (video_st) {
-          av_diff = GetMasterClock() - vstream_->GetClock();
-        } else if (audio_st) {
-          av_diff = GetMasterClock() - astream_->GetClock();
-        }
-        const char* fmt =
-            (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
-        INFO_LOG() << GetMasterClock() << " " << fmt << ":" << av_diff << " msec fd=("
-                   << stats_.frame_drops_early << "/" << stats_.frame_drops_late
-                   << ") aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB";
-        last_time = cur_time;
+    if (!opt_.show_status) {
+      return;
+    }
+
+    msec_t cur_time = GetCurrentMsec();
+    static msec_t last_time = cur_time;
+    msec_t diff = cur_time - last_time;
+    if (diff >= SHOW_STATUS_TIMEOUT_MSEC) {
+      int aqsize = 0, vqsize = 0;
+      bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
+      DesireBytesPerSec video_bandwidth_calc, audio_bandwidth_calc;
+      if (video_st) {
+        vqsize = video_packet_queue->Size();
+        video_bandwidth = vstream_->Bandwidth();
+        video_bandwidth_calc = vstream_->DesireBandwith();
       }
+      if (audio_st) {
+        aqsize = audio_packet_queue->Size();
+        audio_bandwidth = astream_->Bandwidth();
+        audio_bandwidth_calc = astream_->DesireBandwith();
+      }
+      clock_t av_diff = 0;
+      if (audio_st && video_st) {
+        av_diff = astream_->GetClock() - vstream_->GetClock();
+      } else if (video_st) {
+        av_diff = GetMasterClock() - vstream_->GetClock();
+      } else if (audio_st) {
+        av_diff = GetMasterClock() - astream_->GetClock();
+      }
+      const char* fmt =
+          (audio_st && video_st) ? "A-V" : (video_st ? "M-V" : (audio_st ? "M-A" : "   "));
+      INFO_LOG() << GetMasterClock() << " " << fmt << ": diff=" << av_diff << "msec fd=("
+                 << stats_.frame_drops_early << "/" << stats_.frame_drops_late
+                 << ") video_bitrate=(" << video_bandwidth_calc.min * 8 / 1024 << "/"
+                 << video_bandwidth * 8 / 1024 << "/" << video_bandwidth_calc.max * 8 / 1024
+                 << ")kb/s audio_bitrate=(" << audio_bandwidth_calc.min * 8 / 1024 << "/"
+                 << audio_bandwidth * 8 / 1024 << "/" << audio_bandwidth_calc.max * 8 / 1024
+                 << ")kb/s aq=" << aqsize / 1024 << "KB vq=" << vqsize / 1024 << "KB";
+      last_time = cur_time;
     }
   }
 }
@@ -1240,7 +1250,7 @@ int VideoState::ReadThread() {
     return ERROR_RESULT_VALUE;
   }
 
-  DesireBytesPerSec band = video_stream->DesireBandwith() + audio_stream->DesireBandwith();
+  const DesireBytesPerSec band = video_stream->DesireBandwith() + audio_stream->DesireBandwith();
   if (ic_->bit_rate) {
     bandwidth_t byte_per_sec = ic_->bit_rate / 8;
     DCHECK(band.InRange(byte_per_sec));
@@ -1261,23 +1271,6 @@ int VideoState::ReadThread() {
       } else {
         av_read_play(ic);
       }
-    }
-    if (queue_attachments_req_) {
-      if (video_st->disposition & AV_DISPOSITION_ATTACHED_PIC) {
-        AVPacket copy;
-        int ret = av_copy_packet(&copy, &video_st->attached_pic);
-        if (ret < 0) {
-          std::string err_str = ffmpeg_errno_to_string(ret);
-          common::Error err = common::make_error_value(err_str, common::Value::E_ERROR);
-          events::QuitStreamEvent* qevent =
-              new events::QuitStreamEvent(this, events::QuitStreamInfo(this, ret, err));
-          fApp->PostEvent(qevent);
-          return ERROR_RESULT_VALUE;
-        }
-        video_packet_queue->Put(&copy);
-        video_packet_queue->PutNullpacket(video_stream->Index());
-      }
-      queue_attachments_req_ = false;
     }
 
     /* if the queue are full, no need to read more */
@@ -1321,10 +1314,15 @@ int VideoState::ReadThread() {
     }
 
     if (pkt->stream_index == audio_stream->Index()) {
+      audio_stream->RegisterPacket(pkt);
       audio_packet_queue->Put(pkt);
-    } else if (pkt->stream_index == video_stream->Index() &&
-               !(video_st->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
-      video_packet_queue->Put(pkt);
+    } else if (pkt->stream_index == video_stream->Index()) {
+      if (video_st->disposition & AV_DISPOSITION_ATTACHED_PIC) {
+        av_packet_unref(pkt);
+      } else {
+        video_stream->RegisterPacket(pkt);
+        video_packet_queue->Put(pkt);
+      }
     } else {
       av_packet_unref(pkt);
     }
