@@ -102,10 +102,11 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   common::net::socket_info info = band_client->Info();
   const common::net::HostAndPort host(info.host(), info.port());
   const BandwidthHostType hs = band_client->HostType();
+  const bandwidth_t band = band_client->DownloadBytesPerSecond();
   if (hs == MAIN_SERVER) {
-    current_bandwidth_ = band_client->DownloadBytesPerSecond();
+    current_bandwidth_ = band;
   }
-  core::events::BandwidtInfo cinf(host, band_client->DownloadBytesPerSecond(), hs);
+  core::events::BandwidtInfo cinf(host, band, hs);
   core::events::BandwidthEstimationEvent* band_event =
       new core::events::BandwidthEstimationEvent(this, cinf);
   fApp->PostEvent(band_event);

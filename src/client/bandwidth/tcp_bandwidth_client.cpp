@@ -87,7 +87,6 @@ common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
     start_ts_ = cur_ts;
   }
   total_downloaded_bytes_ += *nread;
-
   const common::time64_t data_interval = cur_ts - start_ts_;
   if (duration_ && data_interval >= duration_) {
     downloaded_bytes_per_sec_ = CalculateBandwidth(total_downloaded_bytes_, data_interval);

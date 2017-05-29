@@ -53,13 +53,13 @@ DesireBytesPerSec CalculateDesireAudioBandwidthBytesPerSec(int rate, int channel
 DesireBytesPerSec CalculateDesireAACBandwidthBytesPerSec(int channels) {
   // https://toolstud.io/video/audiosize.php
   if (channels == 1) {
-    return DesireBytesPerSec(KBITS_TO_BYTES(32), KBITS_TO_BYTES(64));
+    return DesireBytesPerSec(KBITS_TO_BYTES(32), KBITS_TO_BYTES(96));
   } else if (channels == 2) {
-    return DesireBytesPerSec(KBITS_TO_BYTES(64), KBITS_TO_BYTES(128));
+    return DesireBytesPerSec(KBITS_TO_BYTES(96), KBITS_TO_BYTES(160));
   } else if (channels == 4) {
-    return DesireBytesPerSec(KBITS_TO_BYTES(128), KBITS_TO_BYTES(256));
+    return DesireBytesPerSec(KBITS_TO_BYTES(160), KBITS_TO_BYTES(352));
   } else if (channels == 6) {
-    return DesireBytesPerSec(KBITS_TO_BYTES(256), KBITS_TO_BYTES(384));
+    return DesireBytesPerSec(KBITS_TO_BYTES(352), KBITS_TO_BYTES(416));
   }
 
   DNOTREACHED();
