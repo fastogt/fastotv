@@ -31,8 +31,11 @@ inline DesireBytesPerSec operator+(const DesireBytesPerSec& left, const DesireBy
 }
 
 DesireBytesPerSec CalculateDesireAudioBandwidthBytesPerSec(int rate, int channels);  // raw
+DesireBytesPerSec AudioBitrateAverage(bandwidth_t bytes_per_sec);
 DesireBytesPerSec CalculateDesireAACBandwidthBytesPerSec(int channels);
+DesireBytesPerSec CalculateDesireMP2BandwidthBytesPerSec(int channels);
 
+DesireBytesPerSec VideoBitrateAverage(bandwidth_t bytes_per_sec);
 DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_size,
                                                           double framerate,
                                                           int profile);

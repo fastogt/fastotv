@@ -105,8 +105,8 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       } else if (retcd == AVERROR_EOF) {
         return 0;
       }
-      DNOTREACHED() << "avcodec_send_packet error: " << retcd;
-      return -1;
+      ERROR_LOG() << "audio avcodec_send_packet error: " << retcd;
+      return 0;
     }
 
   read:
@@ -117,8 +117,8 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       } else if (retcd == AVERROR_EOF) {
         return 0;
       }
-      DNOTREACHED() << "avcodec_receive_frame error: " << retcd;
-      return -1;
+      ERROR_LOG() << "audio avcodec_receive_frame error: " << retcd;
+      return 0;
     }
 
     AVRational tb = {1, frame->sample_rate};
@@ -168,7 +168,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
       } else if (retcd == AVERROR_EOF) {
         return 0;
       }
-      DNOTREACHED();
+      ERROR_LOG() << "video avcodec_send_packet error: " << retcd;
       return -1;
     }
 
@@ -180,7 +180,7 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
       } else if (retcd == AVERROR_EOF) {
         return 0;
       }
-      DNOTREACHED();
+      ERROR_LOG() << "video avcodec_receive_frame error: " << retcd;
       return -1;
     }
 

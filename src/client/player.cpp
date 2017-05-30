@@ -441,6 +441,7 @@ void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
     return;
   }
 
+  stream_->Abort();
   destroy(&stream_);
   SwitchToChannelErrorMode(inf.error);
 }
