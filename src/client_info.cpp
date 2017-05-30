@@ -43,6 +43,7 @@ common::Error ClientInfo::Serialize(serialize_type* deserialized) const {
   json_object_object_add(obj, CLIENT_INFO_RAM_FREE_FIELD, json_object_new_int64(ram_free));
   json_object_object_add(obj, CLIENT_INFO_BANDWIDTH_FIELD, json_object_new_int64(bandwidth));
   *deserialized = obj;
+  return common::Error();
 }
 
 common::Error ClientInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {

@@ -185,7 +185,14 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     json_object* jping_info = NULL;
     common::Error err = ping.Serialize(&jping_info);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      cmd_responce_t resp = PingResponceFail(id, err->Description());
+      common::Error err = connection->Write(resp);
+      if (err && err->IsError()) {
+        DEBUG_MSG_ERROR(err);
+      }
+      connection->Close();
+      delete connection;
+      return;
     }
     std::string ping_info_str = json_object_get_string(jping_info);
     json_object_put(jping_info);

@@ -52,8 +52,7 @@ InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
       bandwidth_requests_(),
       ping_server_id_timer_(INVALID_TIMER_ID),
       config_(config),
-      current_bandwidth_(0) {
-}
+      current_bandwidth_(0) {}
 
 InnerTcpHandler::~InnerTcpHandler() {
   for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {
@@ -293,8 +292,8 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     }
 
     std::string auth_str = json_object_get_string(jauth);
-    std::string enc_auth = Encode(auth_str);
     json_object_put(jauth);
+    std::string enc_auth = Encode(auth_str);
     cmd_responce_t iAm = WhoAreYouResponceSuccsess(id, enc_auth);
     err = connection->Write(iAm);
     if (err && err->IsError()) {
@@ -321,15 +320,13 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     info.ram_total = ram_total;
     info.ram_free = ram_free;
     info.bandwidth = current_bandwidth_;
-    json_object* info_json = NULL;
-    common::Error err = info.Serialize(&info_json);
-    json_object_put(info_json);
+    std::string info_json_string;
+    common::Error err = info.SerializeToString(&info_json_string);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
       return;
     }
 
-    std::string info_json_string = json_object_get_string(info_json);
     std::string enc_info = Encode(info_json_string);
     cmd_responce_t resp = SystemInfoResponceSuccsess(id, enc_info);
     err = connection->Write(resp);
