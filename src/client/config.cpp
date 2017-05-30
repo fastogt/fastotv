@@ -47,6 +47,8 @@
 #define CONFIG_APP_OPTIONS_INFBUF_FIELD "infbuf"
 #define CONFIG_APP_OPTIONS_VF_FIELD "vf"
 #define CONFIG_APP_OPTIONS_AF_FIELD "af"
+#define CONFIG_APP_OPTIONS_VN_FIELD "vn"
+#define CONFIG_APP_OPTIONS_AN_FIELD "an"
 #define CONFIG_APP_OPTIONS_ACODEC_FIELD "acodec"
 #define CONFIG_APP_OPTIONS_VCODEC_FIELD "vcodec"
 #define CONFIG_APP_OPTIONS_HWACCEL_FIELD "hwaccel"
@@ -180,8 +182,8 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_LOWRES_FIELD)) {
     int lowres;
-    if (parse_number(
-            value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), &lowres)) {
+    if (parse_number(value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
+                     &lowres)) {
       pconfig->app_options.lowres = lowres;
     }
     return 1;
@@ -210,6 +212,18 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     int inf;
     if (parse_number(value, -1, 1, &inf)) {
       pconfig->app_options.infinite_buffer = inf;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VN_FIELD)) {
+    bool disable_video;
+    if (parse_bool(value, &disable_video)) {
+      pconfig->app_options.disable_video = disable_video;
+    }
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AN_FIELD)) {
+    bool disable_audio;
+    if (parse_bool(value, &disable_audio)) {
+      pconfig->app_options.disable_audio = disable_audio;
     }
     return 1;
 #if CONFIG_AVFILTER
@@ -265,8 +279,7 @@ TVConfig::TVConfig()
       loglevel(common::logging::L_INFO),
       app_options(),
       player_options(),
-      dict(new DictionaryOptions) {
-}
+      dict(new DictionaryOptions) {}
 
 TVConfig::~TVConfig() {
   destroy(&dict);
@@ -329,6 +342,11 @@ bool save_config_file(const std::string& config_absolute_path, TVConfig* options
                                  options->app_options.framedrop);
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_INFBUF_FIELD "=%d\n",
                                  options->app_options.infinite_buffer);
+
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VN_FIELD "=%s\n",
+                                 common::ConvertToString(options->app_options.disable_video));
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_AN_FIELD "=%s\n",
+                                 common::ConvertToString(options->app_options.disable_audio));
 #if CONFIG_AVFILTER
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VF_FIELD "=%s\n",
                                  options->app_options.vfilters);

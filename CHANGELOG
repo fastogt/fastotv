@@ -5,6 +5,7 @@
 - Simple encode traffic
 - Device info
 - Bandwidth estimation
+- Enable/Disable audio/video in channel
 
 0.2.0 / May 21, 2017
 [Alexandr Topilski]

@@ -23,15 +23,19 @@
 #define ID_FIELD "id"
 #define URL_FIELD "url"
 #define NAME_FIELD "name"
+#define VIDEO_ENABLE_FIELD "video"
+#define AUDIO_ENABLE_FIELD "audio"
 
 namespace fasto {
 namespace fastotv {
-Url::Url() : id_(invalid_stream_id), uri_(), name_() {
-}
+Url::Url() : id_(invalid_stream_id), uri_(), name_(), enable_audio_(true), enable_video_(true) {}
 
-Url::Url(stream_id id, const common::uri::Uri& uri, const std::string& name)
-    : id_(id), uri_(uri), name_(name) {
-}
+Url::Url(stream_id id,
+         const common::uri::Uri& uri,
+         const std::string& name,
+         bool enable_audio,
+         bool enable_video)
+    : id_(id), uri_(uri), name_(name), enable_audio_(enable_audio), enable_video_(enable_video) {}
 
 bool Url::IsValid() const {
   return id_ != invalid_stream_id && uri_.IsValid();
@@ -49,12 +53,22 @@ stream_id Url::Id() const {
   return id_;
 }
 
+bool Url::IsEnableAudio() const {
+  return enable_audio_;
+}
+
+bool Url::IsEnableVideo() const {
+  return enable_video_;
+}
+
 common::Error Url::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
   json_object_object_add(obj, ID_FIELD, json_object_new_string(id_.c_str()));
   const std::string url_str = uri_.Url();
   json_object_object_add(obj, URL_FIELD, json_object_new_string(url_str.c_str()));
   json_object_object_add(obj, NAME_FIELD, json_object_new_string(name_.c_str()));
+  json_object_object_add(obj, AUDIO_ENABLE_FIELD, json_object_new_boolean(enable_audio_));
+  json_object_object_add(obj, VIDEO_ENABLE_FIELD, json_object_new_boolean(enable_video_));
   *deserialized = obj;
   return common::Error();
 }
@@ -78,9 +92,25 @@ common::Error Url::DeSerialize(const serialize_type& serialized, value_type* obj
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
+  bool enable_audio = true;
+  json_object* jenable_audio = NULL;
+  json_bool jenable_audio_exists =
+      json_object_object_get_ex(serialized, AUDIO_ENABLE_FIELD, &jenable_audio);
+  if (jenable_audio_exists) {
+    enable_audio = json_object_get_boolean(jenable_audio);
+  }
+
+  bool enable_video = true;
+  json_object* jdisable_video = NULL;
+  json_bool jdisable_video_exists =
+      json_object_object_get_ex(serialized, VIDEO_ENABLE_FIELD, &jdisable_video);
+  if (jdisable_video_exists) {
+    enable_video = !json_object_get_boolean(jdisable_video);
+  }
+
   fasto::fastotv::Url url(json_object_get_string(jid),
                           common::uri::Uri(json_object_get_string(jurl)),
-                          json_object_get_string(jname));
+                          json_object_get_string(jname), enable_audio, enable_video);
   if (!url.IsValid()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

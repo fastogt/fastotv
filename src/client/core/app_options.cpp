@@ -40,7 +40,9 @@ AppOptions::AppOptions()
       hwaccel_id(HWACCEL_NONE),
       hwaccel_device(),
       hwaccel_output_format(),
-      auto_exit(true)
+      auto_exit(true),
+      disable_video(false),
+      disable_audio(false)
 #if CONFIG_AVFILTER
       ,
       vfilters(),
@@ -50,8 +52,7 @@ AppOptions::AppOptions()
 }
 
 ComplexOptions::ComplexOptions()
-    : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {
-}
+    : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {}
 
 ComplexOptions::ComplexOptions(AVDictionary* sws_d,
                                AVDictionary* swr_o,

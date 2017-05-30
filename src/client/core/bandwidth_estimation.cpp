@@ -155,10 +155,10 @@ DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_siz
                                  KBITS_TO_BYTES(16000) * KOEF_BASE_TO_HIGHT);
       } else if (encoded_frame_size.width >= 1920 &&
                  encoded_frame_size.height >= 1080) {  // 1080p 12000 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(4000), KBITS_TO_BYTES(12000));
+        return DesireBytesPerSec(KBITS_TO_BYTES(3000), KBITS_TO_BYTES(12000));
       } else if (encoded_frame_size.width >= 1280 &&
                  encoded_frame_size.height >= 720) {  // 720p 6000 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(1500), KBITS_TO_BYTES(6000));
+        return DesireBytesPerSec(KBITS_TO_BYTES(1000), KBITS_TO_BYTES(6000));
       } else if (encoded_frame_size.width >= 854 &&
                  encoded_frame_size.height >= 480) {  // 480p 2500 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(500) * KOEF_BASE_TO_HIGHT,

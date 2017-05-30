@@ -31,12 +31,19 @@ namespace fastotv {
 class Url : public JsonSerializer<Url> {
  public:
   Url();
-  Url(stream_id id, const common::uri::Uri& uri, const std::string& name);
+  Url(stream_id id,
+      const common::uri::Uri& uri,
+      const std::string& name,
+      bool disable_audio,
+      bool disable_video);
 
   bool IsValid() const;
   common::uri::Uri GetUrl() const;
   std::string GetName() const;
   stream_id Id() const;
+
+  bool IsEnableAudio() const;
+  bool IsEnableVideo() const;
 
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
@@ -46,6 +53,9 @@ class Url : public JsonSerializer<Url> {
   stream_id id_;
   common::uri::Uri uri_;
   std::string name_;
+
+  bool enable_audio_;
+  bool enable_video_;
 };
 }
 }

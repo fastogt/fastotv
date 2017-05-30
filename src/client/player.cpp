@@ -1074,7 +1074,10 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   curent_stream_pos_ = pos;
   Url url = play_list_[curent_stream_pos_];
-  core::VideoState* stream = new core::VideoState(url.Id(), url.GetUrl(), opt_, copt_, this);
+  core::AppOptions copy = opt_;
+  copy.disable_audio = !url.IsEnableAudio();
+  copy.disable_video = !url.IsEnableVideo();
+  core::VideoState* stream = new core::VideoState(url.Id(), url.GetUrl(), copy, copt_, this);
   return stream;
 }
 
