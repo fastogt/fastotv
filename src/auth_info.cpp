@@ -37,10 +37,14 @@ AuthInfo::AuthInfo(const std::string& login, const std::string& password)
 }
 
 bool AuthInfo::IsValid() const {
-  return !login_.empty();
+  return !login_.empty() || password_.empty();
 }
 
 common::Error AuthInfo::Serialize(serialize_type* deserialized) const {
+  if (!IsValid()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* obj = json_object_new_object();
   json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));

@@ -38,7 +38,7 @@ Url::Url(stream_id id,
 }
 
 bool Url::IsValid() const {
-  return id_ != invalid_stream_id && uri_.IsValid();
+  return id_ != invalid_stream_id && uri_.IsValid() && !name_.empty();
 }
 
 common::uri::Uri Url::GetUrl() const {
@@ -62,6 +62,10 @@ bool Url::IsEnableVideo() const {
 }
 
 common::Error Url::Serialize(serialize_type* deserialized) const {
+  if (!IsValid()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* obj = json_object_new_object();
   json_object_object_add(obj, ID_FIELD, json_object_new_string(id_.c_str()));
   const std::string url_str = uri_.Url();
@@ -79,6 +83,10 @@ common::Error Url::DeSerialize(const serialize_type& serialized, value_type* obj
   if (!jid_exists) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
+  stream_id id = json_object_get_string(jid);
+  if (id == invalid_stream_id) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
 
   json_object* jurl = NULL;
   json_bool jurls_exists = json_object_object_get_ex(serialized, URL_FIELD, &jurl);
@@ -86,9 +94,19 @@ common::Error Url::DeSerialize(const serialize_type& serialized, value_type* obj
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
+  common::uri::Uri uri(json_object_get_string(jurl));
+  if (!uri.IsValid()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* jname = NULL;
   json_bool jname_exists = json_object_object_get_ex(serialized, NAME_FIELD, &jname);
   if (!jname_exists) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  std::string name = json_object_get_string(jname);
+  if (name.empty()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
@@ -108,11 +126,7 @@ common::Error Url::DeSerialize(const serialize_type& serialized, value_type* obj
     enable_video = json_object_get_boolean(jdisable_video);
   }
 
-  fasto::fastotv::Url url(json_object_get_string(jid),
-                          common::uri::Uri(json_object_get_string(jurl)),
-                          json_object_get_string(jname),
-                          enable_audio,
-                          enable_video);
+  fasto::fastotv::Url url(id, uri, name, enable_audio, enable_video);
   if (!url.IsValid()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

@@ -37,7 +37,7 @@ typedef std::string user_id_t;  // mongodb/redis id
 class UserInfo : public JsonSerializer<UserInfo> {
  public:
   UserInfo();
-  explicit UserInfo(const AuthInfo& a, const ChannelsInfo& ch);
+  explicit UserInfo(const AuthInfo& auth, const ChannelsInfo& ch);
 
   bool IsValid() const;
 

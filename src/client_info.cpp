@@ -55,6 +55,10 @@ bool ClientInfo::IsValid() const {
 }
 
 common::Error ClientInfo::Serialize(serialize_type* deserialized) const {
+  if (!IsValid()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* obj = json_object_new_object();
   json_object_object_add(obj, CLIENT_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(obj, CLIENT_INFO_OS_FIELD, json_object_new_string(os_.c_str()));
@@ -71,9 +75,16 @@ common::Error ClientInfo::DeSerialize(const serialize_type& serialized, value_ty
 
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, CLIENT_INFO_LOGIN_FIELD, &jlogin);
-  if (jlogin_exists) {
-    inf.login_ = json_object_get_string(jlogin);
+  if (!jlogin_exists) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
+
+  std::string login = json_object_get_string(jlogin);
+  if (login.empty()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  inf.login_ = login;
 
   json_object* jos = NULL;
   json_bool jos_exists = json_object_object_get_ex(serialized, CLIENT_INFO_OS_FIELD, &jos);

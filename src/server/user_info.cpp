@@ -23,17 +23,18 @@
 #include <common/sprintf.h>
 #include <common/convert2string.h>
 
-#define AUTH_FIELD "auth"
 #define CHANNELS_FIELD "channels"
+#define USER_INFO_LOGIN_FIELD "login"
+#define USER_INFO_PASSWORD_FIELD "password"
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 
-UserInfo::UserInfo() : auth_() {
+UserInfo::UserInfo() : auth_(), ch_() {
 }
 
-UserInfo::UserInfo(const AuthInfo& a, const ChannelsInfo& ch) : auth_(a), ch_(ch) {
+UserInfo::UserInfo(const AuthInfo& auth, const ChannelsInfo& ch) : auth_(auth), ch_(ch) {
 }
 
 bool UserInfo::IsValid() const {
@@ -41,17 +42,19 @@ bool UserInfo::IsValid() const {
 }
 
 common::Error UserInfo::Serialize(serialize_type* deserialized) const {
+  if (!IsValid()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* obj = json_object_new_object();
 
-  json_object* jauth = NULL;
-  common::Error err = auth_.Serialize(&jauth);
-  if (err && err->IsError()) {
-    return err;
-  }
-  json_object_object_add(obj, AUTH_FIELD, jauth);
+  const std::string login = auth_.GetLogin();
+  const std::string password = auth_.GetPassword();
+  json_object_object_add(obj, USER_INFO_LOGIN_FIELD, json_object_new_string(login.c_str()));
+  json_object_object_add(obj, USER_INFO_PASSWORD_FIELD, json_object_new_string(password.c_str()));
 
   json_object* jchannels = NULL;
-  err = ch_.Serialize(&jchannels);
+  common::Error err = ch_.Serialize(&jchannels);
   if (err && err->IsError()) {
     return err;
   }
@@ -72,17 +75,24 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
     }
   }
 
-  AuthInfo ainf;
-  json_object* jainf = NULL;
-  json_bool jauth_exists = json_object_object_get_ex(serialized, AUTH_FIELD, &jainf);
-  if (jauth_exists) {
-    common::Error err = AuthInfo::DeSerialize(jainf, &ainf);
-    if (err && err->IsError()) {
-      return err;
-    }
+  std::string login;
+  json_object* jlogin = NULL;
+  json_bool jlogin_exists = json_object_object_get_ex(serialized, USER_INFO_LOGIN_FIELD, &jlogin);
+  if (!jlogin_exists) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
+  login = json_object_get_string(jlogin);
 
-  *obj = UserInfo(ainf, chan);
+  std::string password;
+  json_object* jpassword = NULL;
+  json_bool jpassword_exists =
+      json_object_object_get_ex(serialized, USER_INFO_PASSWORD_FIELD, &jpassword);
+  if (!jpassword_exists) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+  password = json_object_get_string(jpassword);
+
+  *obj = UserInfo(AuthInfo(login, password), chan);
   return common::Error();
 }
 

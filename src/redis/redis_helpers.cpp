@@ -69,12 +69,12 @@ redisContext* redis_connect(const redis_configuration_t& config) {
   return redis;
 }
 
-common::Error parse_user_json(const char* userJson, user_id_t* out_uid, UserInfo* out_info) {
-  if (!userJson || !out_uid || !out_info) {
+common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInfo* out_info) {
+  if (!user_json || !out_uid || !out_info) {
     return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
   }
 
-  json_object* obj = json_tokener_parse(userJson);
+  json_object* obj = json_tokener_parse(user_json);
   if (!obj) {
     return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);
   }
@@ -131,10 +131,10 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
     return common::make_error_value("User not found", common::ErrorValue::E_ERROR);
   }
 
-  const char* userJson = reply->str;
+  const char* user_json = reply->str;
   UserInfo linfo;
   user_id_t luid;
-  common::Error err = parse_user_json(userJson, &luid, &linfo);
+  common::Error err = parse_user_json(user_json, &luid, &linfo);
   if (err && err->IsError()) {
     freeReplyObject(reply);
     redisFree(redis);
