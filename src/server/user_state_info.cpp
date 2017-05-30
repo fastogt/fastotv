@@ -27,17 +27,29 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-UserStateInfo::UserStateInfo() : user_id(), connected(false) {
+UserStateInfo::UserStateInfo() : user_id_(), connected_(false) {
 }
 
 UserStateInfo::UserStateInfo(const user_id_t& uid, bool connected)
-    : user_id(uid), connected(connected) {
+    : user_id_(uid), connected_(connected) {
+}
+
+user_id_t UserStateInfo::GetUserId() const {
+  return user_id_;
+}
+
+bool UserStateInfo::IsConnected() const {
+  return connected_;
+}
+
+bool UserStateInfo::Equals(const UserStateInfo& state) const {
+  return user_id_ == state.user_id_ && connected_ == state.connected_;
 }
 
 common::Error UserStateInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
-  json_object_object_add(obj, USER_STATE_INFO_ID_FIELD, json_object_new_string(user_id.c_str()));
-  json_object_object_add(obj, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(connected));
+  json_object_object_add(obj, USER_STATE_INFO_ID_FIELD, json_object_new_string(user_id_.c_str()));
+  json_object_object_add(obj, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(connected_));
 
   *deserialized = obj;
   return common::Error();
@@ -52,14 +64,14 @@ common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, value
   json_object* jid = NULL;
   json_bool jid_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_ID_FIELD, &jid);
   if (jid_exists) {
-    inf.user_id = json_object_get_string(jid);
+    inf.user_id_ = json_object_get_string(jid);
   }
 
   json_object* jcon = NULL;
   json_bool jcon_exists =
       json_object_object_get_ex(serialized, USER_STATE_INFO_CONNECTED_FIELD, &jcon);
   if (jcon_exists) {
-    inf.connected = json_object_get_string(jcon);
+    inf.connected_ = json_object_get_boolean(jcon);
   }
 
   *obj = inf;

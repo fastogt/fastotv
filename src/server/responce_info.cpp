@@ -27,25 +27,26 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-ResponceInfo::ResponceInfo() : request_id(), state(), command(), responce_json() {
+ResponceInfo::ResponceInfo() : request_id_(), state_(), command_(), responce_json_() {
 }
 
 ResponceInfo::ResponceInfo(const std::string& request_id,
                            const std::string& state_command,
                            const std::string& command,
                            const std::string& responce)
-    : request_id(request_id), state(state_command), command(command), responce_json(responce) {
+    : request_id_(request_id), state_(state_command), command_(command), responce_json_(responce) {
 }
 
 common::Error ResponceInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
 
   json_object_object_add(
-      obj, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(request_id.c_str()));
-  json_object_object_add(obj, RESPONCE_INFO_STATE_FIELD, json_object_new_string(state.c_str()));
-  json_object_object_add(obj, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(command.c_str()));
+      obj, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(request_id_.c_str()));
+  json_object_object_add(obj, RESPONCE_INFO_STATE_FIELD, json_object_new_string(state_.c_str()));
   json_object_object_add(
-      obj, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(responce_json.c_str()));
+      obj, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(command_.c_str()));
+  json_object_object_add(
+      obj, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(responce_json_.c_str()));
 
   *deserialized = obj;
   return common::Error();
@@ -61,32 +62,53 @@ common::Error ResponceInfo::DeSerialize(const serialize_type& serialized, value_
   json_bool jrequest_id_exists =
       json_object_object_get_ex(serialized, RESPONCE_INFO_REQUEST_ID_FIELD, &jrequest_id);
   if (jrequest_id_exists) {
-    inf.request_id = json_object_get_string(jrequest_id);
+    inf.request_id_ = json_object_get_string(jrequest_id);
   }
 
   json_object* jstate = NULL;
   json_bool jstate_exists =
       json_object_object_get_ex(serialized, RESPONCE_INFO_STATE_FIELD, &jstate);
   if (jstate_exists) {
-    inf.state = json_object_get_string(jstate);
+    inf.state_ = json_object_get_string(jstate);
   }
 
   json_object* jcommand = NULL;
   json_bool jcommand_exists =
       json_object_object_get_ex(serialized, RESPONCE_INFO_COMMAND_FIELD, &jcommand);
   if (jcommand_exists) {
-    inf.command = json_object_get_string(jcommand);
+    inf.command_ = json_object_get_string(jcommand);
   }
 
   json_object* jresponce = NULL;
   json_bool jresponce_exists =
       json_object_object_get_ex(serialized, RESPONCE_INFO_RESPONCE_FIELD, &jresponce);
   if (jresponce_exists) {
-    inf.responce_json = json_object_get_string(jresponce);
+    inf.responce_json_ = json_object_get_string(jresponce);
   }
 
   *obj = inf;
   return common::Error();
+}
+
+std::string ResponceInfo::GetRequestId() const {
+  return request_id_;
+}
+
+std::string ResponceInfo::GetState() const {
+  return state_;
+}
+
+std::string ResponceInfo::GetCommand() const {
+  return command_;
+}
+
+std::string ResponceInfo::GetResponceJson() const {
+  return responce_json_;
+}
+
+bool ResponceInfo::Equals(const ResponceInfo& inf) const {
+  return request_id_ == inf.request_id_ && state_ == inf.state_ && command_ == inf.command_ &&
+         responce_json_ == inf.responce_json_;
 }
 }
 }  // namespace fastotv

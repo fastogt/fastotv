@@ -52,7 +52,8 @@ AppOptions::AppOptions()
 }
 
 ComplexOptions::ComplexOptions()
-    : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {}
+    : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {
+}
 
 ComplexOptions::ComplexOptions(AVDictionary* sws_d,
                                AVDictionary* swr_o,

@@ -21,8 +21,10 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-DesireBytesPerSec::DesireBytesPerSec() : min(0), max(0) {}
-DesireBytesPerSec::DesireBytesPerSec(bandwidth_t min, bandwidth_t max) : min(min), max(max) {}
+DesireBytesPerSec::DesireBytesPerSec() : min(0), max(0) {
+}
+DesireBytesPerSec::DesireBytesPerSec(bandwidth_t min, bandwidth_t max) : min(min), max(max) {
+}
 
 bool DesireBytesPerSec::IsValid() const {
   if (min == 0 && max == 0) {

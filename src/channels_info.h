@@ -43,9 +43,19 @@ class ChannelsInfo : public JsonSerializer<ChannelsInfo> {
   size_t Size() const;
   bool IsEmpty() const;
 
+  bool Equals(const ChannelsInfo& chan) const;
+
  private:
   channels_t channels_;
 };
+
+inline bool operator==(const ChannelsInfo& lhs, const ChannelsInfo& rhs) {
+  return lhs.Equals(rhs);
+}
+
+inline bool operator!=(const ChannelsInfo& x, const ChannelsInfo& y) {
+  return !(x == y);
+}
 
 }  // namespace fastotv
 }  // namespace fasto

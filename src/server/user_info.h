@@ -34,23 +34,29 @@ namespace server {
 
 typedef std::string user_id_t;  // mongodb/redis id
 
-struct UserInfo : public JsonSerializer<UserInfo> {
+class UserInfo : public JsonSerializer<UserInfo> {
+ public:
   UserInfo();
   explicit UserInfo(const AuthInfo& a, const ChannelsInfo& ch);
 
   bool IsValid() const;
-  std::string GetLogin() const;
-  std::string GetPassword() const;
 
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
-  AuthInfo auth;
-  ChannelsInfo ch;
+
+  AuthInfo GetAuthInfo() const;
+  ChannelsInfo GetChannelInfo() const;
+
+  bool Equals(const UserInfo& inf) const;
+
+ private:
+  AuthInfo auth_;
+  ChannelsInfo ch_;
 };
 
 inline bool operator==(const UserInfo& lhs, const UserInfo& rhs) {
-  return lhs.auth == rhs.auth;
+  return lhs.Equals(rhs);
 }
 
 inline bool operator!=(const UserInfo& x, const UserInfo& y) {

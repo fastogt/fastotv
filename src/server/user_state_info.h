@@ -28,7 +28,8 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-struct UserStateInfo : public JsonSerializer<UserStateInfo> {
+class UserStateInfo : public JsonSerializer<UserStateInfo> {
+ public:
   UserStateInfo();
   UserStateInfo(const user_id_t& uid, bool connected);
 
@@ -36,9 +37,23 @@ struct UserStateInfo : public JsonSerializer<UserStateInfo> {
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
-  user_id_t user_id;
-  bool connected;
+  user_id_t GetUserId() const;
+  bool IsConnected() const;
+
+  bool Equals(const UserStateInfo& state) const;
+
+ private:
+  user_id_t user_id_;
+  bool connected_;
 };
+
+inline bool operator==(const UserStateInfo& lhs, const UserStateInfo& rhs) {
+  return lhs.Equals(rhs);
+}
+
+inline bool operator!=(const UserStateInfo& x, const UserStateInfo& y) {
+  return !(x == y);
+}
 }
 }  // namespace fastotv
 }  // namespace fasto

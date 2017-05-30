@@ -8,6 +8,12 @@ ADD_DEFINITIONS(-DPROJECT_TEST_SOURCES_DIR="${CMAKE_SOURCE_DIR}/tests"
   -DSERVICE_HOST_PORT=${SERVICE_HOST_PORT}
 )
 
+IF(DEVELOPER_ENABLE_TESTS)
+  ########## PREPARE GTEST LIBRARY ##########
+  ADD_SUBDIRECTORY(${CMAKE_HOME_DIRECTORY}/tests/googletest googletest)
+  ########## PREPARE GTEST LIBRARY ##########
+ENDIF(DEVELOPER_ENABLE_TESTS)
+
 IF(BUILD_CLIENT)  # build client
   ADD_SUBDIRECTORY(client)
 ENDIF(BUILD_CLIENT)
@@ -17,28 +23,29 @@ IF(BUILD_SERVER)  # build server
 ENDIF(BUILD_SERVER)
 
 IF(DEVELOPER_ENABLE_TESTS)
-  IF(DEVELOPER_ENABLE_UNIT_TESTS)
   FIND_PACKAGE(Common REQUIRED)
-  ########## PREPARE GTEST LIBRARY ##########
-    ADD_SUBDIRECTORY(${CMAKE_HOME_DIRECTORY}/tests/googletest googletest)
-    INCLUDE_DIRECTORIES(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT} ${COMMON_INCLUDE_DIR})
-  ########## PREPARE GTEST LIBRARY ##########
-    ADD_EXECUTABLE(unit_tests
-      ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp commands/commands.cpp client/commands.cpp
-      ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_serializer.cpp url.cpp server_info.cpp
-      ping_info.cpp client_info.cpp channels_info.cpp auth_info.cpp
-    )
+  SET(PRIVATE_INCLUDE_DIRECTORIES_TEST
+    ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT} ${COMMON_INCLUDE_DIR}
+  )
+  ADD_EXECUTABLE(unit_tests
+    ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_serializer.cpp
+    url.cpp server_info.cpp
+    ping_info.cpp client_info.cpp
+    channels_info.cpp
+    auth_info.cpp
+  )
 
-    TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main ${COMMON_LIBRARIES} json-c)
-    ADD_TEST_TARGET(unit_tests)
-    SET_PROPERTY(TARGET unit_tests PROPERTY FOLDER "Unit tests")
+  SET(PROJECT_UNIT_TEST unit_tests)
+  TARGET_INCLUDE_DIRECTORIES(${PROJECT_UNIT_TEST} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_TEST})
+  TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST} gtest gtest_main ${COMMON_LIBRARIES} json-c)
+  ADD_TEST_TARGET(${PROJECT_UNIT_TEST})
+  SET_PROPERTY(TARGET ${PROJECT_UNIT_TEST} PROPERTY FOLDER "Unit tests")
 
-    #Mock tests
-    #ADD_EXECUTABLE(mock_tests
-      #${CMAKE_SOURCE_DIR}/tests/mock_tests/test_connections.cpp
-    #)
-    #TARGET_LINK_LIBRARIES(mock_tests gmock gmock_main ${PROJECT_CORE_LIBRARY} common)
-    #ADD_TEST_TARGET(mock_tests)
-    #SET_PROPERTY(TARGET mock_tests PROPERTY FOLDER "Mock tests")
-  ENDIF(DEVELOPER_ENABLE_UNIT_TESTS)
+  #Mock tests
+  #ADD_EXECUTABLE(mock_tests
+    #${CMAKE_SOURCE_DIR}/tests/mock_tests/test_connections.cpp
+  #)
+  #TARGET_LINK_LIBRARIES(mock_tests gmock gmock_main ${PROJECT_CORE_LIBRARY} common)
+  #ADD_TEST_TARGET(mock_tests)
+  #SET_PROPERTY(TARGET mock_tests PROPERTY FOLDER "Mock tests")
 ENDIF(DEVELOPER_ENABLE_TESTS)

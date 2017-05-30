@@ -23,6 +23,9 @@
 #include <common/sprintf.h>
 #include <common/convert2string.h>
 
+#define AUTH_INFO_LOGIN_FIELD "login"
+#define AUTH_INFO_PASSWORD_FIELD "password"
+
 namespace fasto {
 namespace fastotv {
 

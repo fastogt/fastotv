@@ -759,7 +759,6 @@ bool Player::GetCurrentUrl(Url* url) const {
     return false;
   }
 
-
   *url = channels[curent_stream_pos_];
   return true;
 }

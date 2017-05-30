@@ -70,8 +70,7 @@ common::Error ClientInfo::DeSerialize(const serialize_type& serialized, value_ty
   ClientInfo inf;
 
   json_object* jlogin = NULL;
-  json_bool jlogin_exists =
-      json_object_object_get_ex(serialized, CLIENT_INFO_LOGIN_FIELD, &jlogin);
+  json_bool jlogin_exists = json_object_object_get_ex(serialized, CLIENT_INFO_LOGIN_FIELD, &jlogin);
   if (jlogin_exists) {
     inf.login_ = json_object_get_string(jlogin);
   }

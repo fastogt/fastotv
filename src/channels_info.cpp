@@ -45,6 +45,10 @@ bool ChannelsInfo::IsEmpty() const {
   return channels_.empty();
 }
 
+bool ChannelsInfo::Equals(const ChannelsInfo& chan) const {
+  return channels_ == chan.channels_;
+}
+
 common::Error ChannelsInfo::Serialize(serialize_type* deserialized) const {
   json_object* jchannels = json_object_new_array();
   for (Url url : channels_) {

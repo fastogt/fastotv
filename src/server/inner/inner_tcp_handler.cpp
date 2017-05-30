@@ -256,7 +256,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     }
 
     std::string channels_str;
-    err = user.ch.SerializeToString(&channels_str);
+    ChannelsInfo chan = user.GetChannelInfo();
+    err = chan.SerializeToString(&channels_str);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
       return;

@@ -29,7 +29,8 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-struct ResponceInfo : public JsonSerializer<ResponceInfo> {
+class ResponceInfo : public JsonSerializer<ResponceInfo> {
+ public:
   ResponceInfo();
   ResponceInfo(const std::string& request_id,
                const std::string& state_command,
@@ -40,11 +41,27 @@ struct ResponceInfo : public JsonSerializer<ResponceInfo> {
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
-  std::string request_id;
-  std::string state;
-  std::string command;
-  std::string responce_json;
+  std::string GetRequestId() const;
+  std::string GetState() const;
+  std::string GetCommand() const;
+  std::string GetResponceJson() const;
+
+  bool Equals(const ResponceInfo& inf) const;
+
+ private:
+  std::string request_id_;
+  std::string state_;
+  std::string command_;
+  std::string responce_json_;
 };
+
+inline bool operator==(const ResponceInfo& lhs, const ResponceInfo& rhs) {
+  return lhs.Equals(rhs);
+}
+
+inline bool operator!=(const ResponceInfo& x, const ResponceInfo& y) {
+  return !(x == y);
+}
 }
 }  // namespace fastotv
 }  // namespace fasto

@@ -23,9 +23,6 @@
 #include "client_server_types.h"
 #include "serializer/json_serializer.h"
 
-#define AUTH_INFO_LOGIN_FIELD "login"
-#define AUTH_INFO_PASSWORD_FIELD "password"
-
 namespace fasto {
 namespace fastotv {
 

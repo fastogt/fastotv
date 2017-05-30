@@ -120,7 +120,7 @@ TEST(channels_t, serialize_deserialize) {
   err = channels.DeSerialize(ser, &dchannels);
   ASSERT_TRUE(!err);
 
-  ASSERT_EQ(channels.GetChannels(), dchannels.GetChannels());
+  ASSERT_EQ(channels, dchannels);
 }
 
 TEST(AuthInfo, serialize_deserialize) {
