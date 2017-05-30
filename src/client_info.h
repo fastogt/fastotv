@@ -23,30 +23,39 @@
 #include "client_server_types.h"
 #include "serializer/json_serializer.h"
 
-#define CLIENT_INFO_LOGIN_FIELD "login"
-#define CLIENT_INFO_BANDWIDTH_FIELD "bandwidth"
-#define CLIENT_INFO_OS_FIELD "os"
-#define CLIENT_INFO_CPU_FIELD "cpu"
-#define CLIENT_INFO_RAM_TOTAL_FIELD "ram_total"
-#define CLIENT_INFO_RAM_FREE_FIELD "ram_free"
-
 namespace fasto {
 namespace fastotv {
 
-struct ClientInfo : public JsonSerializer<ClientInfo> {
+class ClientInfo : public JsonSerializer<ClientInfo> {
+ public:
   ClientInfo();
+  ClientInfo(const login_t& login,
+             const std::string& os,
+             const std::string& cpu_brand,
+             int64_t ram_total,
+             int64_t ram_free,
+             bandwidth_t bandwidth);
+
   bool IsValid() const;
 
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
-  login_t login;
-  std::string os;
-  std::string cpu_brand;
-  int64_t ram_total;
-  int64_t ram_free;
-  bandwidth_t bandwidth;
+  login_t GetLogin() const;
+  std::string GetOs() const;
+  std::string GetCpuBrand() const;
+  int64_t GetRamTotal() const;
+  int64_t GetRamFree() const;
+  bandwidth_t GetBandwidth() const;
+
+ private:
+  login_t login_;
+  std::string os_;
+  std::string cpu_brand_;
+  int64_t ram_total_;
+  int64_t ram_free_;
+  bandwidth_t bandwidth_;
 };
 
 }  // namespace fastotv

@@ -29,13 +29,19 @@
 namespace fasto {
 namespace fastotv {
 
-struct ServerInfo : public JsonSerializer<ServerInfo> {
+class ServerInfo : public JsonSerializer<ServerInfo> {
+ public:
   ServerInfo();
+  ServerInfo(const common::net::HostAndPort& bandwidth_host);
+
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
-  common::net::HostAndPort bandwidth_host;
+  common::net::HostAndPort GetBandwidthHost() const;
+
+ private:
+  common::net::HostAndPort bandwidth_host_;
 };
 
 }  // namespace fastotv

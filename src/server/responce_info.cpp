@@ -20,8 +20,6 @@
 
 #include <string>
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
-
 #include <common/sprintf.h>
 #include <common/convert2string.h>
 

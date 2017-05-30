@@ -133,7 +133,7 @@ common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
   iconnection->SetServerHostInfo(user);
   iconnection->SetUid(user_id);
 
-  std::string login = user.login;
+  std::string login = user.GetLogin();
   connections_[user_id] = iconnection;
   connection->SetName(login);
   return common::Error();

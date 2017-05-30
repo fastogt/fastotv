@@ -25,6 +25,8 @@ IF(DEVELOPER_ENABLE_TESTS)
   ########## PREPARE GTEST LIBRARY ##########
     ADD_EXECUTABLE(unit_tests
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_parse_commands.cpp commands/commands.cpp client/commands.cpp
+      ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_serializer.cpp url.cpp server_info.cpp
+      ping_info.cpp client_info.cpp channels_info.cpp auth_info.cpp
     )
 
     TARGET_LINK_LIBRARIES(unit_tests gtest gtest_main ${COMMON_LIBRARIES} json-c)

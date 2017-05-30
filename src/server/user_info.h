@@ -25,7 +25,7 @@
 #include <common/smart_ptr.h>
 
 #include "auth_info.h"
-#include "channel_info.h"
+#include "channels_info.h"
 #include "serializer/json_serializer.h"
 
 namespace fasto {
@@ -36,7 +36,7 @@ typedef std::string user_id_t;  // mongodb/redis id
 
 struct UserInfo : public JsonSerializer<UserInfo> {
   UserInfo();
-  explicit UserInfo(const AuthInfo& a, const channels_t& ch);
+  explicit UserInfo(const AuthInfo& a, const ChannelsInfo& ch);
 
   bool IsValid() const;
   std::string GetLogin() const;
@@ -46,7 +46,7 @@ struct UserInfo : public JsonSerializer<UserInfo> {
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
   AuthInfo auth;
-  channels_t channels;
+  ChannelsInfo ch;
 };
 
 inline bool operator==(const UserInfo& lhs, const UserInfo& rhs) {

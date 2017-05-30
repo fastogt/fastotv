@@ -20,19 +20,17 @@
 
 #include <string>
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
-
 #include <common/convert2string.h>
 
 namespace fasto {
 namespace fastotv {
 
-ServerPingInfo::ServerPingInfo() : timestamp(common::time::current_utc_mstime()) {
+ServerPingInfo::ServerPingInfo() : timestamp_(common::time::current_utc_mstime()) {
 }
 
 common::Error ServerPingInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
-  json_object_object_add(obj, SERVER_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp));
+  json_object_object_add(obj, SERVER_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp_));
   *deserialized = obj;
   return common::Error();
 }
@@ -43,19 +41,23 @@ common::Error ServerPingInfo::DeSerialize(const serialize_type& serialized, valu
       json_object_object_get_ex(serialized, SERVER_INFO_TIMESTAMP_FIELD, &jtimestamp);
   ServerPingInfo inf;
   if (jtimestamp_exists) {
-    inf.timestamp = json_object_get_int64(jtimestamp);
+    inf.timestamp_ = json_object_get_int64(jtimestamp);
   }
 
   *obj = inf;
   return common::Error();
 }
 
-ClientPingInfo::ClientPingInfo() : timestamp(common::time::current_utc_mstime()) {
+timestamp_t ServerPingInfo::GetTimeStamp() const {
+  return timestamp_;
+}
+
+ClientPingInfo::ClientPingInfo() : timestamp_(common::time::current_utc_mstime()) {
 }
 
 common::Error ClientPingInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
-  json_object_object_add(obj, CLIENT_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp));
+  json_object_object_add(obj, CLIENT_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp_));
   *deserialized = obj;
   return common::Error();
 }
@@ -66,11 +68,15 @@ common::Error ClientPingInfo::DeSerialize(const serialize_type& serialized, valu
       json_object_object_get_ex(serialized, CLIENT_INFO_TIMESTAMP_FIELD, &jtimestamp);
   ClientPingInfo inf;
   if (jtimestamp_exists) {
-    inf.timestamp = json_object_get_int64(jtimestamp);
+    inf.timestamp_ = json_object_get_int64(jtimestamp);
   }
 
   *obj = inf;
   return common::Error();
+}
+
+timestamp_t ClientPingInfo::GetTimeStamp() const {
+  return timestamp_;
 }
 
 }  // namespace fastotv

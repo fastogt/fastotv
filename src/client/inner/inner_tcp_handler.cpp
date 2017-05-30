@@ -52,7 +52,8 @@ InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
       bandwidth_requests_(),
       ping_server_id_timer_(INVALID_TIMER_ID),
       config_(config),
-      current_bandwidth_(0) {}
+      current_bandwidth_(0) {
+}
 
 InnerTcpHandler::~InnerTcpHandler() {
   for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {
@@ -313,13 +314,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
 
     std::string os = common::MemSPrintf("%s %s(%s)", os_name, os_version, os_arch);
 
-    ClientInfo info;
-    info.login = config_.ainf.login;
-    info.os = os;
-    info.cpu_brand = brand;
-    info.ram_total = ram_total;
-    info.ram_free = ram_free;
-    info.bandwidth = current_bandwidth_;
+    ClientInfo info(config_.ainf.GetLogin(), os, brand, ram_total, ram_free, current_bandwidth_);
     std::string info_json_string;
     common::Error err = info.SerializeToString(&info_json_string);
     if (err && err->IsError()) {
@@ -374,7 +369,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       const char* okrespcommand = argv[1];
       if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
-        connection->SetName(config_.ainf.login);
+        connection->SetName(config_.ainf.GetLogin());
         fApp->PostEvent(new core::events::ClientAuthorizedEvent(this, config_.ainf));
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_GET_CLIENT_INFO_COMMAND)) {
       }
@@ -442,7 +437,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
       return err;
     }
 
-    common::net::HostAndPort host = sinf.bandwidth_host;
+    common::net::HostAndPort host = sinf.GetBandwidthHost();
     bandwidth::TcpBandwidthClient* band_connection = NULL;
     common::libev::IoLoop* server = connection->Server();
     const BandwidthHostType hs = MAIN_SERVER;
@@ -470,9 +465,15 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
       return parse_err;
     }
 
-    channels_t channels = MakeChannelsClass(obj);
+    ChannelsInfo chan;
+    common::Error err = ChannelsInfo::DeSerialize(obj, &chan);
     json_object_put(obj);
-    fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, channels));
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      return err;
+    }
+
+    fApp->PostEvent(new core::events::ReceiveChannelsEvent(this, chan));
     const cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
     return connection->Write(resp);
   }

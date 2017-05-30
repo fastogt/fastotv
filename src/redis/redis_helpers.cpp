@@ -123,7 +123,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
     return common::make_error_value("Can't connect to user database", common::ErrorValue::E_ERROR);
   }
 
-  std::string login = user.login;
+  std::string login = user.GetLogin();
   const char* login_str = login.c_str();
   redisReply* reply = reinterpret_cast<redisReply*>(redisCommand(redis, GET_USER_1E, login_str));
   if (!reply) {
@@ -141,7 +141,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
     return err;
   }
 
-  if (user.password != linfo.GetPassword()) {
+  if (user.GetPassword() != linfo.GetPassword()) {
     freeReplyObject(reply);
     redisFree(redis);
     return common::make_error_value("Password missmatch", common::ErrorValue::E_ERROR);

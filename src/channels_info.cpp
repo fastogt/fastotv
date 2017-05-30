@@ -16,11 +16,9 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "channel_info.h"
+#include "channels_info.h"
 
 #include <string>
-
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
 
 #include <common/sprintf.h>
 #include <common/convert2string.h>
@@ -28,9 +26,28 @@
 namespace fasto {
 namespace fastotv {
 
-json_object* MakeJobjectFromChannels(const channels_t& channels) {
+ChannelsInfo::ChannelsInfo() : channels_() {
+}
+
+void ChannelsInfo::AddChannel(const Url& channel) {
+  channels_.push_back(channel);
+}
+
+ChannelsInfo::channels_t ChannelsInfo::GetChannels() const {
+  return channels_;
+}
+
+size_t ChannelsInfo::Size() const {
+  return channels_.size();
+}
+
+bool ChannelsInfo::IsEmpty() const {
+  return channels_.empty();
+}
+
+common::Error ChannelsInfo::Serialize(serialize_type* deserialized) const {
   json_object* jchannels = json_object_new_array();
-  for (Url url : channels) {
+  for (Url url : channels_) {
     json_object* jurl = NULL;
     common::Error err = url.Serialize(&jurl);
     if (err && err->IsError()) {
@@ -38,14 +55,16 @@ json_object* MakeJobjectFromChannels(const channels_t& channels) {
     }
     json_object_array_add(jchannels, jurl);
   }
-  return jchannels;
+
+  *deserialized = jchannels;
+  return common::Error();
 }
 
-channels_t MakeChannelsClass(json_object* obj) {
+common::Error ChannelsInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   channels_t chan;
-  int len = json_object_array_length(obj);
+  int len = json_object_array_length(serialized);
   for (int i = 0; i < len; ++i) {
-    json_object* jurl = json_object_array_get_idx(obj, i);
+    json_object* jurl = json_object_array_get_idx(serialized, i);
     Url url;
     common::Error err = Url::DeSerialize(jurl, &url);
     if (err && err->IsError()) {
@@ -53,7 +72,9 @@ channels_t MakeChannelsClass(json_object* obj) {
     }
     chan.push_back(url);
   }
-  return chan;
+
+  (*obj).channels_ = chan;
+  return common::Error();
 }
 
 }  // namespace fastotv

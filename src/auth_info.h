@@ -29,7 +29,8 @@
 namespace fasto {
 namespace fastotv {
 
-struct AuthInfo : public JsonSerializer<AuthInfo> {
+class AuthInfo : public JsonSerializer<AuthInfo> {
+ public:
   AuthInfo();
   AuthInfo(const std::string& login, const std::string& password);
 
@@ -39,12 +40,17 @@ struct AuthInfo : public JsonSerializer<AuthInfo> {
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
-  login_t login;  // unique
-  std::string password;
+  login_t GetLogin() const;
+  std::string GetPassword() const;
+  bool Equals(const AuthInfo& auth) const;
+
+ private:
+  login_t login_;  // unique
+  std::string password_;
 };
 
 inline bool operator==(const AuthInfo& lhs, const AuthInfo& rhs) {
-  return lhs.login == rhs.login && lhs.password == rhs.password;
+  return lhs.Equals(rhs);
 }
 
 inline bool operator!=(const AuthInfo& x, const AuthInfo& y) {

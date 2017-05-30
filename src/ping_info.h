@@ -27,24 +27,32 @@
 namespace fasto {
 namespace fastotv {
 
-struct ServerPingInfo : public JsonSerializer<ServerPingInfo> {
+class ServerPingInfo : public JsonSerializer<ServerPingInfo> {
+ public:
   ServerPingInfo();
 
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
-  timestamp_t timestamp;  // utc time
+  timestamp_t GetTimeStamp() const;
+
+ private:
+  timestamp_t timestamp_;  // utc time
 };
 
-struct ClientPingInfo : public JsonSerializer<ClientPingInfo> {
+class ClientPingInfo : public JsonSerializer<ClientPingInfo> {
+ public:
   ClientPingInfo();
 
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
-  timestamp_t timestamp;  // utc time
+  timestamp_t GetTimeStamp() const;
+
+ private:
+  timestamp_t timestamp_;  // utc time
 };
 
 }  // namespace fastotv

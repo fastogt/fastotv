@@ -732,7 +732,7 @@ void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent
 }
 
 void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event) {
-  channels_t chan = event->info();
+  ChannelsInfo chan = event->info();
   play_list_ = chan;
   SwitchToPlayingMode();
 }
@@ -754,11 +754,13 @@ std::string Player::GetCurrentUrlName() const {
 }
 
 bool Player::GetCurrentUrl(Url* url) const {
-  if (!url || play_list_.empty()) {
+  auto channels = play_list_.GetChannels();
+  if (!url || channels.empty()) {
     return false;
   }
 
-  *url = play_list_[curent_stream_pos_];
+
+  *url = channels[curent_stream_pos_];
   return true;
 }
 
@@ -1021,7 +1023,7 @@ void Player::MoveToPreviousStream() {
 }
 
 core::VideoState* Player::CreateCurrentStream() {
-  if (play_list_.empty()) {
+  if (play_list_.IsEmpty()) {
     return nullptr;
   }
 
@@ -1038,7 +1040,7 @@ core::VideoState* Player::CreateCurrentStream() {
 
 core::VideoState* Player::CreateNextStream() {
   // check is executed in main thread?
-  if (play_list_.empty()) {
+  if (play_list_.IsEmpty()) {
     return nullptr;
   }
 
@@ -1055,7 +1057,7 @@ core::VideoState* Player::CreateNextStream() {
 
 core::VideoState* Player::CreatePrevStream() {
   // check is executed in main thread?
-  if (play_list_.empty()) {
+  if (play_list_.IsEmpty()) {
     return nullptr;
   }
 
@@ -1073,16 +1075,17 @@ core::VideoState* Player::CreatePrevStream() {
 core::VideoState* Player::CreateStreamPos(size_t pos) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   curent_stream_pos_ = pos;
-  Url url = play_list_[curent_stream_pos_];
+  auto channels = play_list_.GetChannels();
+  Url url = channels[curent_stream_pos_];
   core::AppOptions copy = opt_;
   copy.disable_audio = !url.IsEnableAudio();
   copy.disable_video = !url.IsEnableVideo();
-  core::VideoState* stream = new core::VideoState(url.Id(), url.GetUrl(), copy, copt_, this);
+  core::VideoState* stream = new core::VideoState(url.GetId(), url.GetUrl(), copy, copt_, this);
   return stream;
 }
 
 size_t Player::GenerateNextPosition() const {
-  if (curent_stream_pos_ + 1 == play_list_.size()) {
+  if (curent_stream_pos_ + 1 == play_list_.Size()) {
     return 0;
   }
 
@@ -1091,7 +1094,7 @@ size_t Player::GenerateNextPosition() const {
 
 size_t Player::GeneratePrevPosition() const {
   if (curent_stream_pos_ == 0) {
-    return play_list_.size() - 1;
+    return play_list_.Size() - 1;
   }
 
   return curent_stream_pos_ - 1;

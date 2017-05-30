@@ -18,8 +18,6 @@
 
 #include "url.h"
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
-
 #define ID_FIELD "id"
 #define URL_FIELD "url"
 #define NAME_FIELD "name"
@@ -28,14 +26,16 @@
 
 namespace fasto {
 namespace fastotv {
-Url::Url() : id_(invalid_stream_id), uri_(), name_(), enable_audio_(true), enable_video_(true) {}
+Url::Url() : id_(invalid_stream_id), uri_(), name_(), enable_audio_(true), enable_video_(true) {
+}
 
 Url::Url(stream_id id,
          const common::uri::Uri& uri,
          const std::string& name,
          bool enable_audio,
          bool enable_video)
-    : id_(id), uri_(uri), name_(name), enable_audio_(enable_audio), enable_video_(enable_video) {}
+    : id_(id), uri_(uri), name_(name), enable_audio_(enable_audio), enable_video_(enable_video) {
+}
 
 bool Url::IsValid() const {
   return id_ != invalid_stream_id && uri_.IsValid();
@@ -49,7 +49,7 @@ std::string Url::GetName() const {
   return name_;
 }
 
-stream_id Url::Id() const {
+stream_id Url::GetId() const {
   return id_;
 }
 
@@ -105,18 +105,25 @@ common::Error Url::DeSerialize(const serialize_type& serialized, value_type* obj
   json_bool jdisable_video_exists =
       json_object_object_get_ex(serialized, VIDEO_ENABLE_FIELD, &jdisable_video);
   if (jdisable_video_exists) {
-    enable_video = !json_object_get_boolean(jdisable_video);
+    enable_video = json_object_get_boolean(jdisable_video);
   }
 
   fasto::fastotv::Url url(json_object_get_string(jid),
                           common::uri::Uri(json_object_get_string(jurl)),
-                          json_object_get_string(jname), enable_audio, enable_video);
+                          json_object_get_string(jname),
+                          enable_audio,
+                          enable_video);
   if (!url.IsValid()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   *obj = url;
   return common::Error();
+}
+
+bool Url::Equals(const Url& url) const {
+  return id_ == url.id_ && uri_ == url.uri_ && name_ == url.name_ &&
+         enable_audio_ == url.enable_audio_ && enable_video_ == url.enable_video_;
 }
 }
 }

@@ -177,7 +177,7 @@ class Player : public core::VideoStateHandler {
   PlayerOptions options_;
   const core::AppOptions opt_;
   const core::ComplexOptions copt_;
-  channels_t play_list_;
+  ChannelsInfo play_list_;
 
   core::AudioParams* audio_params_;
   int audio_buff_size_;

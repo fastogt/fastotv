@@ -20,8 +20,6 @@
 
 #include <string>
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
-
 #include <common/sprintf.h>
 #include <common/convert2string.h>
 
@@ -34,15 +32,15 @@ namespace server {
 UserInfo::UserInfo() : auth() {
 }
 
-UserInfo::UserInfo(const AuthInfo& a, const channels_t& ch) : auth(a), channels(ch) {
+UserInfo::UserInfo(const AuthInfo& a, const ChannelsInfo& ch) : auth(a), ch(ch) {
 }
 
 std::string UserInfo::GetLogin() const {
-  return auth.login;
+  return auth.GetLogin();
 }
 
 std::string UserInfo::GetPassword() const {
-  return auth.password;
+  return auth.GetPassword();
 }
 
 bool UserInfo::IsValid() const {
@@ -52,13 +50,17 @@ bool UserInfo::IsValid() const {
 common::Error UserInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
 
-  const std::string login_str = auth.login;
-  const std::string password_str = auth.password;
+  const std::string login_str = auth.GetLogin();
+  const std::string password_str = auth.GetPassword();
   json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_str.c_str()));
   json_object_object_add(
       obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_str.c_str()));
 
-  json_object* jchannels = MakeJobjectFromChannels(channels);
+  json_object* jchannels = NULL;
+  common::Error err = ch.Serialize(&jchannels);
+  if (err && err->IsError()) {
+    return err;
+  }
   json_object_object_add(obj, CHANNELS_FIELD, jchannels);
 
   *deserialized = obj;
@@ -66,11 +68,14 @@ common::Error UserInfo::Serialize(serialize_type* deserialized) const {
 }
 
 common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
-  channels_t chan;
+  ChannelsInfo chan;
   json_object* jchan = NULL;
   json_bool jchan_exists = json_object_object_get_ex(serialized, CHANNELS_FIELD, &jchan);
   if (jchan_exists) {
-    chan = MakeChannelsClass(jchan);
+    common::Error err = ChannelsInfo::DeSerialize(jchan, &chan);
+    if (err && err->IsError()) {
+      return err;
+    }
   }
 
   AuthInfo ainf;

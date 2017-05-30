@@ -20,28 +20,48 @@
 
 #include <string>
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
-
 #include <common/convert2string.h>
+
+#define CLIENT_INFO_LOGIN_FIELD "login"
+#define CLIENT_INFO_BANDWIDTH_FIELD "bandwidth"
+#define CLIENT_INFO_OS_FIELD "os"
+#define CLIENT_INFO_CPU_FIELD "cpu"
+#define CLIENT_INFO_RAM_TOTAL_FIELD "ram_total"
+#define CLIENT_INFO_RAM_FREE_FIELD "ram_free"
 
 namespace fasto {
 namespace fastotv {
 
-ClientInfo::ClientInfo() : login(), os(), cpu_brand(), ram_total(0), ram_free(0), bandwidth(0) {
+ClientInfo::ClientInfo()
+    : login_(), os_(), cpu_brand_(), ram_total_(0), ram_free_(0), bandwidth_(0) {
+}
+
+ClientInfo::ClientInfo(const login_t& login,
+                       const std::string& os,
+                       const std::string& cpu_brand,
+                       int64_t ram_total,
+                       int64_t ram_free,
+                       bandwidth_t bandwidth)
+    : login_(login),
+      os_(os),
+      cpu_brand_(cpu_brand),
+      ram_total_(ram_total),
+      ram_free_(ram_free),
+      bandwidth_(bandwidth) {
 }
 
 bool ClientInfo::IsValid() const {
-  return !login.empty();
+  return !login_.empty();
 }
 
 common::Error ClientInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
-  json_object_object_add(obj, CLIENT_INFO_LOGIN_FIELD, json_object_new_string(login.c_str()));
-  json_object_object_add(obj, CLIENT_INFO_OS_FIELD, json_object_new_string(os.c_str()));
-  json_object_object_add(obj, CLIENT_INFO_CPU_FIELD, json_object_new_string(cpu_brand.c_str()));
-  json_object_object_add(obj, CLIENT_INFO_RAM_TOTAL_FIELD, json_object_new_int64(ram_total));
-  json_object_object_add(obj, CLIENT_INFO_RAM_FREE_FIELD, json_object_new_int64(ram_free));
-  json_object_object_add(obj, CLIENT_INFO_BANDWIDTH_FIELD, json_object_new_int64(bandwidth));
+  json_object_object_add(obj, CLIENT_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
+  json_object_object_add(obj, CLIENT_INFO_OS_FIELD, json_object_new_string(os_.c_str()));
+  json_object_object_add(obj, CLIENT_INFO_CPU_FIELD, json_object_new_string(cpu_brand_.c_str()));
+  json_object_object_add(obj, CLIENT_INFO_RAM_TOTAL_FIELD, json_object_new_int64(ram_total_));
+  json_object_object_add(obj, CLIENT_INFO_RAM_FREE_FIELD, json_object_new_int64(ram_free_));
+  json_object_object_add(obj, CLIENT_INFO_BANDWIDTH_FIELD, json_object_new_int64(bandwidth_));
   *deserialized = obj;
   return common::Error();
 }
@@ -51,46 +71,70 @@ common::Error ClientInfo::DeSerialize(const serialize_type& serialized, value_ty
 
   json_object* jlogin = NULL;
   json_bool jlogin_exists =
-      json_object_object_get_ex(serialized, CLIENT_INFO_BANDWIDTH_FIELD, &jlogin);
+      json_object_object_get_ex(serialized, CLIENT_INFO_LOGIN_FIELD, &jlogin);
   if (jlogin_exists) {
-    inf.login = json_object_get_string(jlogin);
+    inf.login_ = json_object_get_string(jlogin);
   }
 
   json_object* jos = NULL;
   json_bool jos_exists = json_object_object_get_ex(serialized, CLIENT_INFO_OS_FIELD, &jos);
   if (jos_exists) {
-    inf.os = json_object_get_string(jos);
+    inf.os_ = json_object_get_string(jos);
   }
 
   json_object* jcpu = NULL;
   json_bool jcpu_exists = json_object_object_get_ex(serialized, CLIENT_INFO_CPU_FIELD, &jcpu);
   if (jcpu_exists) {
-    inf.cpu_brand = json_object_get_string(jcpu);
+    inf.cpu_brand_ = json_object_get_string(jcpu);
   }
 
   json_object* jram_total = NULL;
   json_bool jram_total_exists =
       json_object_object_get_ex(serialized, CLIENT_INFO_RAM_TOTAL_FIELD, &jram_total);
   if (jram_total_exists) {
-    inf.ram_total = json_object_get_int64(jram_total);
+    inf.ram_total_ = json_object_get_int64(jram_total);
   }
 
   json_object* jram_free = NULL;
   json_bool jram_free_exists =
-      json_object_object_get_ex(serialized, CLIENT_INFO_RAM_TOTAL_FIELD, &jram_free);
+      json_object_object_get_ex(serialized, CLIENT_INFO_RAM_FREE_FIELD, &jram_free);
   if (jram_free_exists) {
-    inf.ram_free = json_object_get_int64(jram_free);
+    inf.ram_free_ = json_object_get_int64(jram_free);
   }
 
   json_object* jband = NULL;
   json_bool jband_exists =
       json_object_object_get_ex(serialized, CLIENT_INFO_BANDWIDTH_FIELD, &jband);
   if (jband_exists) {
-    inf.bandwidth = json_object_get_int64(jband);
+    inf.bandwidth_ = json_object_get_int64(jband);
   }
 
   *obj = inf;
   return common::Error();
+}
+
+login_t ClientInfo::GetLogin() const {
+  return login_;
+}
+
+std::string ClientInfo::GetOs() const {
+  return os_;
+}
+
+std::string ClientInfo::GetCpuBrand() const {
+  return cpu_brand_;
+}
+
+int64_t ClientInfo::GetRamTotal() const {
+  return ram_total_;
+}
+
+int64_t ClientInfo::GetRamFree() const {
+  return ram_free_;
+}
+
+bandwidth_t ClientInfo::GetBandwidth() const {
+  return bandwidth_;
 }
 
 }  // namespace fastotv

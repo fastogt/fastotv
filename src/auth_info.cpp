@@ -20,29 +20,27 @@
 
 #include <string>
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
-
 #include <common/sprintf.h>
 #include <common/convert2string.h>
 
 namespace fasto {
 namespace fastotv {
 
-AuthInfo::AuthInfo() : login(), password() {
+AuthInfo::AuthInfo() : login_(), password_() {
 }
 
 AuthInfo::AuthInfo(const std::string& login, const std::string& password)
-    : login(login), password(password) {
+    : login_(login), password_(password) {
 }
 
 bool AuthInfo::IsValid() const {
-  return !login.empty();
+  return !login_.empty();
 }
 
 common::Error AuthInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
-  json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login.c_str()));
-  json_object_object_add(obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password.c_str()));
+  json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
+  json_object_object_add(obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
 
   *deserialized = obj;
   return common::Error();
@@ -64,6 +62,18 @@ common::Error AuthInfo::DeSerialize(const serialize_type& serialized, value_type
   fasto::fastotv::AuthInfo ainf(json_object_get_string(jlogin), json_object_get_string(jpass));
   *obj = ainf;
   return common::Error();
+}
+
+login_t AuthInfo::GetLogin() const {
+  return login_;
+}
+
+std::string AuthInfo::GetPassword() const {
+  return password_;
+}
+
+bool AuthInfo::Equals(const AuthInfo& auth) const {
+  return login_ == auth.login_ && password_ == auth.password_;
 }
 
 }  // namespace fastotv

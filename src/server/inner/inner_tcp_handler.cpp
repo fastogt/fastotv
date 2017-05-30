@@ -221,9 +221,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
 
-    ServerInfo serv;
-    serv.bandwidth_host = config_.server.bandwidth_host;
-
+    ServerInfo serv(config_.server.bandwidth_host);
     json_object* jserver_info = NULL;
     err = serv.Serialize(&jserver_info);
     if (err && err->IsError()) {
@@ -257,11 +255,14 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
 
-    json_object* jchannels = MakeJobjectFromChannels(user.channels);
-    std::string channels_str = json_object_get_string(jchannels);
-    std::string enc_channels = Encode(channels_str);
-    json_object_put(jchannels);
+    std::string channels_str;
+    err = user.ch.SerializeToString(&channels_str);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+      return;
+    }
 
+    std::string enc_channels = Encode(channels_str);
     cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, enc_channels);
     err = connection->Write(channels_responce);
     if (err && err->IsError()) {
@@ -374,7 +375,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       return err;
     }
 
-    std::string login = uauth.login;
+    std::string login = uauth.GetLogin();
     InnerTcpClient* fclient = parent_->FindInnerConnectionByID(login);
     if (fclient) {
       const std::string error_str = "Double connection reject";

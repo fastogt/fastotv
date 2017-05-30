@@ -34,13 +34,13 @@ class Url : public JsonSerializer<Url> {
   Url(stream_id id,
       const common::uri::Uri& uri,
       const std::string& name,
-      bool disable_audio,
-      bool disable_video);
+      bool enable_audio,
+      bool enable_video);
 
   bool IsValid() const;
   common::uri::Uri GetUrl() const;
   std::string GetName() const;
-  stream_id Id() const;
+  stream_id GetId() const;
 
   bool IsEnableAudio() const;
   bool IsEnableVideo() const;
@@ -48,6 +48,8 @@ class Url : public JsonSerializer<Url> {
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
+
+  bool Equals(const Url& url) const;
 
  private:
   stream_id id_;
@@ -57,5 +59,10 @@ class Url : public JsonSerializer<Url> {
   bool enable_audio_;
   bool enable_video_;
 };
+
+inline bool operator==(const Url& left, const Url& right) {
+  return left.Equals(right);
+}
+
 }
 }
