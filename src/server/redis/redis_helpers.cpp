@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "redis/redis_helpers.h"
+#include "server/redis/redis_helpers.h"
 
 #include <hiredis/hiredis.h>
 
@@ -29,6 +29,8 @@
 #include "third-party/json-c/json-c/json.h"
 
 #define GET_USER_1E "GET %s"
+
+#define ID_FIELD "id"
 
 #undef ERROR
 
@@ -80,7 +82,7 @@ common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInf
   }
 
   json_object* jid = NULL;
-  json_bool jid_exists = json_object_object_get_ex(obj, "id", &jid);  // mongodb id
+  json_bool jid_exists = json_object_object_get_ex(obj, ID_FIELD, &jid);  // mongodb id
   if (!jid_exists) {
     json_object_put(obj);
     return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);

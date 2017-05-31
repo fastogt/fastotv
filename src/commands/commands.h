@@ -33,7 +33,8 @@
 
 #define CID_FMT PRIu8
 
-#define GENERATE_FMT(CMD, CMD_FMT) "%" CID_FMT " %s " CMD " " CMD_FMT END_OF_COMMAND
+#define GENERATE_REQUEST_FMT(CMD) "%" CID_FMT " %s " CMD END_OF_COMMAND
+
 #define GENEATATE_SUCCESS_FMT(CMD, CMD_FMT) \
   "%" CID_FMT " %s " SUCCESS_COMMAND " " CMD " " CMD_FMT END_OF_COMMAND
 #define GENEATATE_FAIL_FMT(CMD, CMD_FMT) \
@@ -54,7 +55,7 @@
 #define SERVER_GET_CLIENT_INFO_COMMAND "get_client_info"
 
 // request
-// [uint8_t](0) [hex_string]seq [std::string]command args ...
+// [uint8_t](0) [hex_string]seq [std::string]command
 
 // responce
 // [uint8_t](1) [hex_string]seq [OK|FAIL] [std::string]command args ...

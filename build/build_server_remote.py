@@ -8,6 +8,7 @@ import config
 import pika
 from pybuild_utils.base import system_info, utils
 
+
 def print_usage():
     print("Usage:\n"
           "[optional] argv[1] platform\n"

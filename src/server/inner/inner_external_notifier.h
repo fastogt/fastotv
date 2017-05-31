@@ -19,7 +19,7 @@
 #pragma once
 
 #include "commands/commands.h"
-#include "redis/redis_helpers.h"
+#include "server/redis/redis_helpers.h"
 
 #include "server/responce_info.h"
 

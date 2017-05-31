@@ -24,8 +24,8 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-struct Settings {
-  Settings();
+struct ServerSettings {
+  ServerSettings();
 
   common::net::HostAndPort host;
   redis_sub_configuration_t redis;
@@ -35,7 +35,7 @@ struct Settings {
 struct Config {
   Config();
 
-  Settings server;
+  ServerSettings server;
 };
 
 bool load_config_file(const std::string& config_absolute_path, Config* options);

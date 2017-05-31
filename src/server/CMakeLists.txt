@@ -67,11 +67,11 @@ IF(USE_PTHREAD)
 ENDIF(USE_PTHREAD)
 
 SET(HEADERS_REDIS
-  ${SOURCE_ROOT}/redis/redis_helpers.h
+  redis/redis_helpers.h
 )
 
 SET(SOURCES_REDIS
-  ${SOURCE_ROOT}/redis/redis_helpers.cpp
+  redis/redis_helpers.cpp
 )
 
 SET(HEADERS_INNER_SERVER

@@ -20,11 +20,14 @@ SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
 FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
 PNG_SRC_ROOT = "https://sourceforge.net/projects/libpng/files/libpng16/older-releases/"
+OPENSSL_SRC_ROOT = "https://www.openssl.org/source/"
 
 ARCH_CMAKE_COMP = "gz"
 ARCH_CMAKE_EXT = "tar." + ARCH_CMAKE_COMP
 ARCH_PNG_COMP = "gz"
 ARCH_PNG_EXT = "tar." + ARCH_PNG_COMP
+ARCH_OPENSSL_COMP = "gz"
+ARCH_OPENSSL_EXT = "tar." + ARCH_OPENSSL_COMP
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
 ARCH_FFMPEG_COMP = "bz2"
@@ -219,12 +222,12 @@ class BuildRequest(object):
             if distribution == 'RHEL':
                 subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
 
-    def build(self, url, compiler_flags: utils.CompileInfo):
-        utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_)
+    def build(self, url, compiler_flags: utils.CompileInfo, executable='./configure'):
+        utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_, executable)
 
     def build_ffmpeg(self, version):
         ffmpeg_platform_args = ['--disable-doc',
-                                '--disable-programs',
+                                '--disable-programs', '--enable-openssl',
                                 '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
@@ -251,6 +254,12 @@ class BuildRequest(object):
     def build_sdl2_ttf(self, version):
         compiler_flags = utils.CompileInfo([], [])
         self.build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
+
+    def build_openssl(self, version):
+        compiler_flags = utils.CompileInfo([], ['no-shared'])
+        url = '{0}openssl-{1}.{2}'.format(OPENSSL_SRC_ROOT, version, ARCH_OPENSSL_EXT)
+        print(url)
+        self.build(url, compiler_flags, './config')
 
     def build_libpng(self, version):
         compiler_flags = utils.CompileInfo([], [])
@@ -295,6 +304,7 @@ if __name__ == "__main__":
     libpng_default_version = '1.6.21'
     sdl2_default_version = '2.0.5'
     sdl2_ttf_default_version = '2.0.14'
+    openssl_default_version = '1.0.2l'
     ffmpeg_default_version = '3.3'
     cmake_default_version = '3.8.1'
 
@@ -310,7 +320,7 @@ if __name__ == "__main__":
     parser.add_argument('--without-device', help='build without device dependencies', dest='with_device',
                         action='store_false')
     parser.add_argument('--device',
-                        help='device (default: {0}, availible: {1})'.format(default_device, availible_devices),
+                        help='device (default: {0}, available: {1})'.format(default_device, availible_devices),
                         default=default_device)
     parser.set_defaults(with_device=True)
 
@@ -340,6 +350,13 @@ if __name__ == "__main__":
     parser.add_argument('--sdl2-ttf-version', help='sdl2 ttf version (default: {0})'.format(sdl2_ttf_default_version),
                         default=sdl2_ttf_default_version)
     parser.set_defaults(with_sdl2_ttf=True)
+
+    parser.add_argument('--with-openssl', help='build openssl (default, version:{0})'.format(openssl_default_version),
+                        dest='with_openssl', action='store_true')
+    parser.add_argument('--without-openssl', help='build without openssl', dest='with_openssl', action='store_false')
+    parser.add_argument('--openssl-version', help='openssl version (default: {0})'.format(openssl_default_version),
+                        default=openssl_default_version)
+    parser.set_defaults(with_openssl=True)
 
     parser.add_argument('--with-ffmpeg', help='build ffmpeg (default, version:{0})'.format(ffmpeg_default_version),
                         dest='with_ffmpeg', action='store_true')
@@ -393,5 +410,7 @@ if __name__ == "__main__":
         request.build_sdl2(argv.sdl2_version)
     if argv.with_sdl2_ttf:
         request.build_sdl2_ttf(argv.sdl2_ttf_version)
+    if argv.with_openssl:
+        request.build_openssl(argv.openssl_version)
     if argv.with_ffmpeg:
         request.build_ffmpeg(argv.ffmpeg_version)

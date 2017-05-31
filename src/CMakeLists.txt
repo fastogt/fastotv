@@ -36,6 +36,9 @@ IF(DEVELOPER_ENABLE_TESTS)
       ping_info.cpp client_info.cpp
       channels_info.cpp
       auth_info.cpp
+
+      ${CMAKE_SOURCE_DIR}/tests/unit_tests/encode_decode.cpp
+      client_server_types.cpp
     )
 
     SET(PROJECT_UNIT_TEST unit_tests)

@@ -94,7 +94,7 @@ int ini_handler_fasto(void* user_data, const char* section, const char* name, co
 }
 }
 
-Settings::Settings() : host(), redis(), bandwidth_host() {
+ServerSettings::ServerSettings() : host(), redis(), bandwidth_host() {
   // in config by default
   // redis.redis_host = redis_default_host;
   // redis.redis_unix_socket = redis_default_unix_path;
