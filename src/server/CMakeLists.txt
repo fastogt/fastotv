@@ -159,25 +159,27 @@ IF (DEVELOPER_CHECK_STYLE)
 ENDIF(DEVELOPER_CHECK_STYLE)
 
 IF(DEVELOPER_ENABLE_TESTS)
-  SET(PRIVATE_INCLUDE_DIRECTORIES_SERVER_TEST
-    ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT} ${COMMON_INCLUDE_DIR}
-  )
+  IF(DEVELOPER_ENABLE_UNIT_TESTS)
+    SET(PRIVATE_INCLUDE_DIRECTORIES_SERVER_TEST
+      ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${SOURCE_ROOT} ${COMMON_INCLUDE_DIR}
+    )
 
-  SET(PROJECT_UNIT_TEST_CLIENT unit_tests_server)
-  ADD_EXECUTABLE(${PROJECT_UNIT_TEST_CLIENT}
-    ${CMAKE_SOURCE_DIR}/tests/unit_tests/server/test_parse_commands.cpp commands.cpp
-    ${SOURCE_ROOT}/commands/commands.cpp
+    SET(PROJECT_UNIT_TEST_CLIENT unit_tests_server)
+    ADD_EXECUTABLE(${PROJECT_UNIT_TEST_CLIENT}
+      ${CMAKE_SOURCE_DIR}/tests/unit_tests/server/test_parse_commands.cpp commands.cpp
+      ${SOURCE_ROOT}/commands/commands.cpp
 
-    ${CMAKE_SOURCE_DIR}/tests/unit_tests/server/test_serializer.cpp
-    user_info.cpp
-    user_state_info.cpp
-    responce_info.cpp
-    ${SOURCE_ROOT}/channels_info.cpp
-    ${SOURCE_ROOT}/auth_info.cpp
-    ${SOURCE_ROOT}/url.cpp
-  )
-  TARGET_INCLUDE_DIRECTORIES(${PROJECT_UNIT_TEST_CLIENT} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_SERVER_TEST})
-  TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST_CLIENT} gtest gtest_main ${COMMON_LIBRARIES} json-c)
-  ADD_TEST_TARGET(${PROJECT_UNIT_TEST_CLIENT})
-  SET_PROPERTY(TARGET ${PROJECT_UNIT_TEST_CLIENT} PROPERTY FOLDER "Unit tests")
+      ${CMAKE_SOURCE_DIR}/tests/unit_tests/server/test_serializer.cpp
+      user_info.cpp
+      user_state_info.cpp
+      responce_info.cpp
+      ${SOURCE_ROOT}/channels_info.cpp
+      ${SOURCE_ROOT}/auth_info.cpp
+      ${SOURCE_ROOT}/url.cpp
+    )
+    TARGET_INCLUDE_DIRECTORIES(${PROJECT_UNIT_TEST_CLIENT} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_SERVER_TEST})
+    TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST_CLIENT} gtest gtest_main ${COMMON_LIBRARIES} json-c)
+    ADD_TEST_TARGET(${PROJECT_UNIT_TEST_CLIENT})
+    SET_PROPERTY(TARGET ${PROJECT_UNIT_TEST_CLIENT} PROPERTY FOLDER "Unit tests")
+  ENDIF(DEVELOPER_ENABLE_UNIT_TESTS)
 ENDIF(DEVELOPER_ENABLE_TESTS)
