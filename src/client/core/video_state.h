@@ -35,6 +35,7 @@ extern "C" {
 #include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN, etc
 #include <common/smart_ptr.h>
 #include <common/url.h>
+#include <common/threads/types.h>
 
 #include "client_server_types.h"
 
@@ -119,6 +120,10 @@ class VideoState {
   void TogglePause();
 
   void StepToNextFrame();
+  void SeekNextChunk();
+  void SeekPrevChunk();
+  void SeekChapter(int incr);
+  void Seek(int incr);
   void StreamCycleChannel(AVMediaType codec_type);
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
@@ -127,6 +132,8 @@ class VideoState {
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
  private:
+  void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);
+
   void Close();
 
   bool IsVideoReady() const;
@@ -241,6 +248,14 @@ class VideoState {
   Stats stats_;
   VideoStateHandler* handler_;
   InputStream* input_st_;
+
+  bool seek_req_;
+  int64_t seek_pos_;
+  int64_t seek_rel_;
+  int seek_flags_;
+
+  common::condition_variable read_thread_cond_;
+  common::mutex read_thread_mutex_;
 };
 
 }  // namespace core

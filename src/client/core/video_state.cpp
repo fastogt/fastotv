@@ -229,7 +229,13 @@ VideoState::VideoState(stream_id id,
       abort_request_(false),
       stats_(),
       handler_(handler),
-      input_st_(static_cast<InputStream*>(calloc(1, sizeof(InputStream)))) {
+      input_st_(static_cast<InputStream*>(calloc(1, sizeof(InputStream)))),
+      seek_req_(false),
+      seek_pos_(0),
+      seek_rel_(0),
+      seek_flags_(0),
+      read_thread_cond_(),
+      read_thread_mutex_() {
   CHECK(handler_);
   CHECK(id_ != invalid_stream_id);
 
@@ -487,6 +493,98 @@ void VideoState::StepToNextFrame() {
     StreamTogglePause();
   }
   step_ = true;
+}
+
+void VideoState::SeekNextChunk() {
+  int incr = 0;
+  if (ic_->nb_chapters <= 1) {
+    incr = 600.0;
+  }
+  SeekChapter(1);
+  Seek(incr);
+}
+
+void VideoState::SeekPrevChunk() {
+  int incr = 0;
+  if (ic_->nb_chapters <= 1) {
+    incr = -600.0;
+  }
+  SeekChapter(-1);
+  Seek(incr);
+}
+
+void VideoState::SeekChapter(int incr) {
+  clock_t pos = GetMasterClock() * AV_TIME_BASE;
+  if (!ic_->nb_chapters) {
+    return;
+  }
+
+  int i;
+  /* find the current chapter */
+  for (i = 0; i < ic_->nb_chapters; i++) {
+    AVChapter* ch = ic_->chapters[i];
+    if (av_compare_ts(pos, AV_TIME_BASE_Q, ch->start, ch->time_base) < 0) {
+      i--;
+      break;
+    }
+  }
+
+  i += incr;
+  i = FFMAX(i, 0);
+  if (i >= ic_->nb_chapters) {
+    return;
+  }
+
+  DEBUG_LOG() << "Seeking to chapter " << i << ".";
+
+  int64_t poss = av_rescale_q(ic_->chapters[i]->start, ic_->chapters[i]->time_base, AV_TIME_BASE_Q);
+  StreamSeek(poss, 0, false);
+}
+
+void VideoState::StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes) {
+  if (!seek_req_) {
+    seek_pos_ = pos;
+    seek_rel_ = rel;
+    seek_flags_ &= ~AVSEEK_FLAG_BYTE;
+    if (seek_by_bytes) {
+      seek_flags_ |= AVSEEK_FLAG_BYTE;
+    }
+    seek_req_ = true;
+    read_thread_cond_.notify_one();
+  }
+}
+
+void VideoState::Seek(int incr) {
+  if (opt_.seek_by_bytes == SEEK_BY_BYTES_ON) {
+    int pos = -1;
+    if (pos < 0 && vstream_->IsOpened()) {
+      pos = video_frame_queue_->GetLastPos();
+    }
+    if (pos < 0 && astream_->IsOpened()) {
+      pos = audio_frame_queue_->GetLastPos();
+    }
+    if (pos < 0) {
+      pos = avio_tell(ic_->pb);
+    }
+    if (ic_->bit_rate) {
+      incr *= ic_->bit_rate / 8.0;
+    } else {
+      incr *= 180000.0;
+    }
+    pos += incr;
+    StreamSeek(pos, incr, 1);
+    return;
+  }
+
+  clock_t pos = GetMasterClock();
+  if (!IsValidClock(pos)) {
+    pos = (double)seek_pos_ / AV_TIME_BASE;
+  }
+  pos += incr;
+  if (ic_->start_time != AV_NOPTS_VALUE && pos < ic_->start_time / (double)AV_TIME_BASE) {
+    pos = ic_->start_time / (double)AV_TIME_BASE;
+  }
+  StreamSeek((int64_t)(pos * AV_TIME_BASE), (int64_t)(incr * AV_TIME_BASE), 0);
 }
 
 int VideoState::GetMasterSyncType() const {
@@ -1197,6 +1295,12 @@ int VideoState::ReadThread() {
   }
 
   max_frame_duration_ = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10000 : 3600000;
+
+  if (opt_.seek_by_bytes == SEEK_AUTO) {
+    bool seek = !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
+    opt_.seek_by_bytes = seek ? SEEK_BY_BYTES_ON : SEEK_BY_BYTES_OFF;
+  }
+
   realtime_ = core::is_realtime(ic);
 
   if (opt_.show_status) {
@@ -1285,10 +1389,45 @@ int VideoState::ReadThread() {
       }
     }
 
+    if (seek_req_) {
+      int64_t seek_target = seek_pos_;
+      int64_t seek_min = seek_rel_ > 0 ? seek_target - seek_rel_ + 2 : INT64_MIN;
+      int64_t seek_max = seek_rel_ < 0 ? seek_target - seek_rel_ - 2 : INT64_MAX;
+      // FIXME the +-2 is due to rounding being not done in the correct direction in generation
+      //      of the seek_pos/seek_rel variables
+
+      int ret = avformat_seek_file(ic, -1, seek_min, seek_target, seek_max, seek_flags_);
+      if (ret < 0) {
+        ERROR_LOG() << ic->filename << ": error while seeking";
+      } else {
+        if (video_stream->IsOpened()) {
+          video_packet_queue->PutNullpacket(video_stream->Index());
+        }
+        if (audio_stream->IsOpened()) {
+          audio_packet_queue->PutNullpacket(audio_stream->Index());
+        }
+        /*if (seek_flags_ & AVSEEK_FLAG_BYTE) {
+          set_clock(&is->extclk, NAN, 0);
+        } else {
+          set_clock(&is->extclk, seek_target / (double)AV_TIME_BASE, 0);
+        }*/
+      }
+      seek_req_ = 0;
+      eof_ = false;
+      if (paused_) {
+        StepToNextFrame();
+      }
+    }
+
     /* if the queue are full, no need to read more */
     if (opt_.infinite_buffer < 1 &&
         (video_packet_queue->Size() + audio_packet_queue->Size() > MAX_QUEUE_SIZE ||
          (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
+      common::unique_lock<common::mutex> lock(read_thread_mutex_);
+      std::cv_status interrupt_status =
+          read_thread_cond_.wait_for(lock, std::chrono::milliseconds(10));
+      if (interrupt_status == std::cv_status::no_timeout) {  // if notify
+      }
       continue;
     }
     if (!paused_ && eof_) {

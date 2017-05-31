@@ -629,6 +629,37 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     case FASTO_KEY_w: {
       break;
     }
+    //
+    case FASTO_KEY_PAGEUP:
+      if (stream_) {
+        stream_->SeekNextChunk();
+      }
+      break;
+    case FASTO_KEY_PAGEDOWN:
+      if (stream_) {
+        stream_->SeekPrevChunk();
+      }
+      break;
+    case FASTO_KEY_LEFT:
+      if (stream_) {
+        stream_->Seek(-10.0);
+      }
+      break;
+    case FASTO_KEY_RIGHT:
+      if (stream_) {
+        stream_->Seek(10.0);
+      }
+      break;
+    case FASTO_KEY_UP:
+      if (stream_) {
+        stream_->Seek(60.0);
+      }
+      break;
+    case FASTO_KEY_DOWN:
+      if (stream_) {
+        stream_->Seek(-60.0);
+      }
+      break;
     case FASTO_KEY_LEFTBRACKET: {
       MoveToPreviousStream();
       break;

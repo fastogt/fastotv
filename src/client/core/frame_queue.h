@@ -47,6 +47,15 @@ class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {
     base_class::RindexUpInner();
     base_class::Signal();
   }
+
+  clock_t GetLastPos() const {
+    pointer_type fp = base_class::RindexElementInner();
+    if (base_class::RindexShown()) {
+      return fp->pos;
+    }
+
+    return invalid_clock();
+  }
 };
 
 template <size_t buffer_size>
@@ -65,6 +74,15 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
     fp->ClearFrame();
     base_class::RindexUpInner();
     base_class::Signal();
+  }
+
+  clock_t GetLastPos() const {
+    pointer_type fp = base_class::RindexElementInner();
+    if (base_class::RindexShown()) {
+      return fp->pos;
+    }
+
+    return invalid_clock();
   }
 };
 

@@ -44,12 +44,14 @@ namespace core {
 // 1920x1080
 
 enum FRAME_DROP_STRATEGY { FRAME_DROP_AUTO = -1, FRAME_DROP_OFF = 0, FRAME_DROP_ON = 1 };
+enum SEEK_STRATEGY { SEEK_AUTO = -1, SEEK_BY_BYTES_OFF = 0, SEEK_BY_BYTES_ON = 1 };
 
 struct AppOptions {
   AppOptions();
   bool autorotate;
 
   FRAME_DROP_STRATEGY framedrop;
+  SEEK_STRATEGY seek_by_bytes;
   bool genpts;
   AvSyncType av_sync_type;
   bool show_status;

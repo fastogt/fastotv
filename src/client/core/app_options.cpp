@@ -28,6 +28,7 @@ namespace core {
 AppOptions::AppOptions()
     : autorotate(true),
       framedrop(FRAME_DROP_AUTO),
+      seek_by_bytes(SEEK_AUTO),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
       show_status(true),
