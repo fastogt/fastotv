@@ -74,12 +74,12 @@ extern const HWAccel hwaccels[];
 
 size_t hwaccel_count();
 const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt);
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace common {
 std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value);
 bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out);
-}
+}  // namespace common

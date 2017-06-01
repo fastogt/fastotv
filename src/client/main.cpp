@@ -33,8 +33,8 @@ extern "C" {
 #include <common/system/system.h>
 #include <common/utils.h>
 
-#include "client/core/types.h"
 #include "client/core/application/sdl2_application.h"
+#include "client/core/types.h"
 
 #include "client/player.h"
 
@@ -95,7 +95,7 @@ void avlog_cb(void*, int level, const char* sz_fmt, va_list varg) {
   info_stream << ret;
   free(ret);
 }
-}
+}  // namespace
 
 template <typename B>
 class FFmpegApplication : public B {
@@ -287,8 +287,8 @@ static int main_single_application(int argc,
   }
 
   DictionaryOptions* dict = main_options.dict;
-  fasto::fastotv::client::core::ComplexOptions copt(
-      dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict,
+                                                    dict->format_opts, dict->codec_opts);
   fasto::fastotv::client::Player* player = new fasto::fastotv::client::Player(
       main_options.player_options, main_options.app_options, copt);
   res = app.Exec();
@@ -416,6 +416,6 @@ int main(int argc, char** argv) {
       common::file_system::is_absolute_path(app_directory_path)
           ? app_directory_path
           : common::file_system::absolute_path_from_relative(app_directory_path);
-  return main_single_application(
-      argc, argv, app_directory_absolute_path, runtime_directory_absolute_path);
+  return main_single_application(argc, argv, app_directory_absolute_path,
+                                 runtime_directory_absolute_path);
 }

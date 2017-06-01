@@ -61,10 +61,10 @@ const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
   }
   return NULL;
 }
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace common {
 std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value) {
@@ -106,4 +106,4 @@ bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HW
     return false;
   }
 }
-}
+}  // namespace common
