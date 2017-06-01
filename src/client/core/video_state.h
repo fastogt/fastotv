@@ -123,7 +123,8 @@ class VideoState {
   void SeekNextChunk();
   void SeekPrevChunk();
   void SeekChapter(int incr);
-  void Seek(int incr);
+  void Seek(clock_t msec);
+  void SeekMsec(clock_t msec);
   void StreamCycleChannel(AVMediaType codec_type);
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;

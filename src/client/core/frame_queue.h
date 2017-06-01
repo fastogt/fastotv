@@ -48,13 +48,13 @@ class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {
     base_class::Signal();
   }
 
-  clock_t GetLastPos() const {
+  int64_t GetLastPos() const {
     pointer_type fp = base_class::RindexElementInner();
     if (base_class::RindexShown()) {
       return fp->pos;
     }
 
-    return invalid_clock();
+    return -1;
   }
 };
 
@@ -76,13 +76,13 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
     base_class::Signal();
   }
 
-  clock_t GetLastPos() const {
+  int64_t GetLastPos() const {
     pointer_type fp = base_class::RindexElementInner();
     if (base_class::RindexShown()) {
       return fp->pos;
     }
 
-    return invalid_clock();
+    return -1;
   }
 };
 
