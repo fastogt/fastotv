@@ -239,8 +239,8 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
-  bool is_loaded = load_config_file(config_absolute_path, &main_options);
-  if (!is_loaded) {
+  common::Error err = load_config_file(config_absolute_path, &main_options);
+  if (err && err->IsError()) {
     return EXIT_FAILURE;
   }
 
@@ -264,7 +264,7 @@ static int main_single_application(int argc,
   const uint32_t fl =
       common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE;
   common::file_system::File lock_pid_file;
-  common::ErrnoError err = lock_pid_file.Open(pid_absolute_path, fl);
+  err = lock_pid_file.Open(pid_absolute_path, fl);
   if (err && err->IsError()) {
     ERROR_LOG() << "Can't open pid file path: " << pid_absolute_path;
     return EXIT_FAILURE;
@@ -312,9 +312,7 @@ static int main_single_application(int argc,
   }
 
   // save config file
-  bool is_saved = save_config_file(config_absolute_path, &main_options);
-  UNUSED(is_saved);
-
+  err = save_config_file(config_absolute_path, &main_options);
   if (main_options.power_off_on_exit) {
     common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);
     if (err_shut && err_shut->IsError()) {

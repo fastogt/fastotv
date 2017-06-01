@@ -23,5 +23,5 @@ namespace fastotv {
 namespace core {
 namespace client {}
 }  // namespace core
-}
-}
+}  // namespace fastotv
+}  // namespace fasto

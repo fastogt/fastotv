@@ -74,6 +74,6 @@ class PacketQueue {  // compressed queue data
 };
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

@@ -21,8 +21,8 @@
 #include <stddef.h>  // for size_t
 #include <stdint.h>  // for int64_t
 
-#include "client/core/ring_buffer.h"
 #include "client/core/audio_frame.h"
+#include "client/core/ring_buffer.h"
 #include "client/core/video_frame.h"
 
 namespace fasto {
@@ -87,6 +87,6 @@ class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
 };
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

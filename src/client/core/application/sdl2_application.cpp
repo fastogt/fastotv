@@ -41,7 +41,7 @@ Keysym SDLKeySymToOur(SDL_Keysym sks) {
   ks.sym = sks.sym;
   return ks;
 }
-}
+}  // namespace
 
 namespace fasto {
 namespace fastotv {
@@ -50,8 +50,7 @@ namespace core {
 namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
-    : common::application::IApplicationImpl(argc, argv), dispatcher_() {
-}
+    : common::application::IApplicationImpl(argc, argv), dispatcher_() {}
 
 Sdl2Application::~Sdl2Application() {
   THREAD_MANAGER()->FreeInstance();
@@ -271,8 +270,8 @@ Uint32 Sdl2Application::timer_callback(Uint32 interval, void* user_data) {
   app->PostEvent(timer_event);
   return interval;
 }
-}
-}
-}
-}
-}
+}  // namespace application
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

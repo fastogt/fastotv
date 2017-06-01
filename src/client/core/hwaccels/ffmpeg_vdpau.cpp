@@ -162,7 +162,7 @@ int vdpau_init(AVCodecContext* decoder_ctx) {
 
   return vdpau_alloc(decoder_ctx);
 }
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

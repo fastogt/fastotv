@@ -29,7 +29,7 @@ namespace threads {
 template <typename RT>
 class Thread;
 }
-}
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {
@@ -60,6 +60,6 @@ class IoService : public common::libev::ILoopController {
   common::shared_ptr<common::threads::Thread<int> > loop_thread_;
 };
 
-}  // namespace network
+}  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

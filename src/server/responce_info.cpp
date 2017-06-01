@@ -20,33 +20,31 @@
 
 #include <string>
 
-#include <common/sprintf.h>
 #include <common/convert2string.h>
+#include <common/sprintf.h>
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 
-ResponceInfo::ResponceInfo() : request_id_(), state_(), command_(), responce_json_() {
-}
+ResponceInfo::ResponceInfo() : request_id_(), state_(), command_(), responce_json_() {}
 
 ResponceInfo::ResponceInfo(const std::string& request_id,
                            const std::string& state_command,
                            const std::string& command,
                            const std::string& responce)
-    : request_id_(request_id), state_(state_command), command_(command), responce_json_(responce) {
-}
+    : request_id_(request_id), state_(state_command), command_(command), responce_json_(responce) {}
 
 common::Error ResponceInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
 
-  json_object_object_add(
-      obj, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(request_id_.c_str()));
+  json_object_object_add(obj, RESPONCE_INFO_REQUEST_ID_FIELD,
+                         json_object_new_string(request_id_.c_str()));
   json_object_object_add(obj, RESPONCE_INFO_STATE_FIELD, json_object_new_string(state_.c_str()));
-  json_object_object_add(
-      obj, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(command_.c_str()));
-  json_object_object_add(
-      obj, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(responce_json_.c_str()));
+  json_object_object_add(obj, RESPONCE_INFO_COMMAND_FIELD,
+                         json_object_new_string(command_.c_str()));
+  json_object_object_add(obj, RESPONCE_INFO_RESPONCE_FIELD,
+                         json_object_new_string(responce_json_.c_str()));
 
   *deserialized = obj;
   return common::Error();
@@ -110,6 +108,6 @@ bool ResponceInfo::Equals(const ResponceInfo& inf) const {
   return request_id_ == inf.request_id_ && state_ == inf.state_ && command_ == inf.command_ &&
          responce_json_ == inf.responce_json_;
 }
-}
+}  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

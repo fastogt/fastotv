@@ -20,8 +20,8 @@
 
 #include <vector>
 
-#include "url.h"
 #include "serializer/json_serializer.h"
+#include "url.h"
 
 #define CHANNELS_FIELD "channels"
 

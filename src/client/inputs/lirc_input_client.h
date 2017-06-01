@@ -51,7 +51,7 @@ class LircInputClient : public common::libev::IoClient {
   common::net::SocketHolder sock_;
   struct lirc_config* cfg_;
 };
-}
-}
-}
-}
+}  // namespace inputs
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

@@ -20,8 +20,8 @@
 
 #include <string>
 
-#include <common/sprintf.h>
 #include <common/convert2string.h>
+#include <common/sprintf.h>
 
 #define AUTH_INFO_LOGIN_FIELD "login"
 #define AUTH_INFO_PASSWORD_FIELD "password"
@@ -29,12 +29,10 @@
 namespace fasto {
 namespace fastotv {
 
-AuthInfo::AuthInfo() : login_(), password_() {
-}
+AuthInfo::AuthInfo() : login_(), password_() {}
 
 AuthInfo::AuthInfo(const std::string& login, const std::string& password)
-    : login_(login), password_(password) {
-}
+    : login_(login), password_(password) {}
 
 bool AuthInfo::IsValid() const {
   return !login_.empty() || password_.empty();

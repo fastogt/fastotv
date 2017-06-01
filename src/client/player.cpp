@@ -27,18 +27,18 @@ extern "C" {
 
 #include "third-party/json-c/json-c/json.h"  // for json_object_...
 
-#include <common/file_system.h>
 #include <common/application/application.h>
+#include <common/file_system.h>
 #include <common/threads/thread_manager.h>
 #include <common/utils.h>
 
-#include "client/sdl_utils.h"
 #include "client/ioservice.h"
+#include "client/sdl_utils.h"
 
-#include "client/core/video_state.h"
 #include "client/core/app_options.h"
 #include "client/core/utils.h"
 #include "client/core/video_frame.h"
+#include "client/core/video_state.h"
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
@@ -1106,6 +1106,6 @@ size_t Player::GeneratePrevPosition() const {
 
   return curent_stream_pos_ - 1;
 }
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

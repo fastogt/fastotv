@@ -208,6 +208,6 @@ class RingBuffer {
 };
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

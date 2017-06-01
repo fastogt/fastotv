@@ -62,6 +62,6 @@ void Clock::SetPaused(bool paused) {
 }
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

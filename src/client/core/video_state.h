@@ -34,15 +34,15 @@ extern "C" {
 
 #include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN, etc
 #include <common/smart_ptr.h>
-#include <common/url.h>
 #include <common/threads/types.h>
+#include <common/url.h>
 
 #include "client_server_types.h"
 
-#include "client/core/audio_params.h"  // for AudioParams
-#include "client/core/types.h"
 #include "client/core/app_options.h"
+#include "client/core/audio_params.h"  // for AudioParams
 #include "client/core/clock.h"
+#include "client/core/types.h"
 
 struct SwrContext;
 struct InputStream;
@@ -52,7 +52,7 @@ namespace threads {
 template <typename RT>
 class Thread;
 }
-}
+}  // namespace common
 
 /* no AV correction is done if too big error */
 #define VIDEO_PICTURE_QUEUE_SIZE 3
@@ -111,8 +111,8 @@ class VideoState {
 
   bool IsAborted() const;
   bool IsStreamReady() const;
-  stream_id Id() const;
-  const common::uri::Uri& Uri() const;
+  stream_id GetId() const;
+  const common::uri::Uri& GetUri() const;
   virtual ~VideoState();
 
   void RefreshRequest();
@@ -147,7 +147,7 @@ class VideoState {
   void StreamComponentClose(int stream_index);
   void StreamTogglePause();
 
-  int GetMasterSyncType() const;
+  AvSyncType GetMasterSyncType() const;
   clock_t ComputeTargetDelay(clock_t delay) const;
   clock_t GetMasterClock() const;
 #if CONFIG_AVFILTER
@@ -260,6 +260,6 @@ class VideoState {
 };
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

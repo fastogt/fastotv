@@ -20,8 +20,8 @@
 
 #include <lirc/lirc_client.h>
 
-#include <common/logger.h>
 #include <common/file_system.h>
+#include <common/logger.h>
 #include <common/net/net.h>
 #include <common/utils.h>
 
@@ -84,8 +84,7 @@ common::Error LircDeinit(int fd, struct lirc_config** cfg) {
 }
 
 LircInputClient::LircInputClient(common::libev::IoLoop* server, int fd, struct lirc_config* cfg)
-    : common::libev::IoClient(server), sock_(fd), cfg_(cfg) {
-}
+    : common::libev::IoClient(server), sock_(fd), cfg_(cfg) {}
 
 common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
   char* code = NULL;
@@ -128,7 +127,7 @@ void LircInputClient::CloseImpl() {
     DEBUG_MSG_ERROR(err);
   }
 }
-}
-}
-}
-}
+}  // namespace inputs
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

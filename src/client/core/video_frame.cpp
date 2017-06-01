@@ -38,8 +38,7 @@ VideoFrame::VideoFrame()
       format(0),
       sar{0, 0},
       uploaded(false),
-      flip_v(false) {
-}
+      flip_v(false) {}
 
 VideoFrame::~VideoFrame() {
   ClearFrame();
@@ -65,6 +64,6 @@ clock_t VideoFrame::VpDuration(core::VideoFrame* vp,
 }
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

@@ -108,6 +108,6 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
 };
 
 }  // namespace inner
-}
+}  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

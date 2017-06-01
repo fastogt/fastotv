@@ -20,18 +20,18 @@
 
 #include <string>
 
+#include <common/application/application.h>
 #include <common/convert2string.h>
 #include <common/file_system.h>
 #include <common/logger.h>
-#include <common/application/application.h>
 #include <common/threads/thread_manager.h>
 
 #include "client/inner/inner_tcp_handler.h"
 #include "client/inner/inner_tcp_server.h"
 
 #ifdef HAVE_LIRC
-#include "client/inputs/lirc_input_client.h"
 #include "client/core/events/lirc_events.h"
+#include "client/inputs/lirc_input_client.h"
 #endif
 
 namespace fasto {
@@ -113,11 +113,10 @@ class PrivateHandler : public inner::InnerTcpHandler {
   inputs::LircInputClient* client_;
 #endif
 };
-}
+}  // namespace
 
 IoService::IoService()
-    : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {
-}
+    : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
 
 void IoService::Start() {
   ILoopController::Start();
@@ -127,8 +126,7 @@ void IoService::Stop() {
   ILoopController::Stop();
 }
 
-IoService::~IoService() {
-}
+IoService::~IoService() {}
 
 void IoService::ConnectToServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
@@ -186,6 +184,6 @@ void IoService::HandleStoped() {
   loop_thread_->JoinAndGet();
 }
 
-}  // namespace network
+}  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

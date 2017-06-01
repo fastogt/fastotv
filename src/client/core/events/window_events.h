@@ -41,8 +41,8 @@ typedef EventBase<WINDOW_RESIZE_EVENT, WindowResizeInfo> WindowResizeEvent;
 typedef EventBase<WINDOW_EXPOSE_EVENT, WindowExposeInfo> WindowExposeEvent;
 typedef EventBase<WINDOW_CLOSE_EVENT, WindowCloseInfo> WindowCloseEvent;
 
-}  // namespace events {
-}
-}
-}
-}
+}  // namespace events
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

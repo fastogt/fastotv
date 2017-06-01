@@ -25,12 +25,10 @@
 namespace fasto {
 namespace fastotv {
 
-ServerInfo::ServerInfo() : bandwidth_host_() {
-}
+ServerInfo::ServerInfo() : bandwidth_host_() {}
 
 ServerInfo::ServerInfo(const common::net::HostAndPort& bandwidth_host)
-    : bandwidth_host_(bandwidth_host) {
-}
+    : bandwidth_host_(bandwidth_host) {}
 
 common::Error ServerInfo::Serialize(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();

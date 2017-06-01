@@ -18,36 +18,36 @@
 
 #include "video_state.h"
 
+#include <errno.h>     // for ENOMEM, EINVAL, EAGAIN, etc
+#include <inttypes.h>  // for PRIx64
 #include <limits.h>    // for INT_MAX, INT_MIN
+#include <math.h>      // for fabs, isnan, NAN, exp, log
 #include <stdio.h>     // for snprintf, stdout
 #include <stdlib.h>    // for EXIT_SUCCESS, EXIT_FAILURE
 #include <string.h>    // for memset, strlen, memcpy, etc
-#include <errno.h>     // for ENOMEM, EINVAL, EAGAIN, etc
-#include <inttypes.h>  // for PRIx64
-#include <math.h>      // for fabs, isnan, NAN, exp, log
 
-#include <ostream>  // for operator<<, basic_ostream, etc
 #include <memory>
+#include <ostream>  // for operator<<, basic_ostream, etc
 
 extern "C" {
 #include <libavcodec/avcodec.h>  // for AVCodecContext, etc
 #include <libavcodec/version.h>  // for FF_API_EMU_EDGE
 #include <libavformat/avio.h>    // for AVIOContext, etc
-#include <libavutil/avutil.h>    // for AV_NOPTS_VALUE, etc
+#include <libavutil/avstring.h>
+#include <libavutil/avutil.h>  // for AV_NOPTS_VALUE, etc
 #include <libavutil/channel_layout.h>
 #include <libavutil/common.h>       // for FFMAX, av_clip, FFMIN
 #include <libavutil/dict.h>         // for av_dict_free, av_dict_get, etc
 #include <libavutil/error.h>        // for AVERROR, AVERROR_EOF, etc
 #include <libavutil/mathematics.h>  // for av_compare_ts, av_rescale_q
 #include <libavutil/mem.h>          // for av_freep, av_fast_malloc, etc
-#include <libavutil/pixfmt.h>       // for AVPixelFormat, etc
 #include <libavutil/opt.h>
-#include <libavutil/samplefmt.h>  // for AVSampleFormat, etc
-#include <libavutil/avstring.h>
-#include <libavutil/time.h>
 #include <libavutil/pixdesc.h>
-#include <libswscale/swscale.h>
+#include <libavutil/pixfmt.h>     // for AVPixelFormat, etc
+#include <libavutil/samplefmt.h>  // for AVSampleFormat, etc
+#include <libavutil/time.h>
 #include <libswresample/swresample.h>
+#include <libswscale/swscale.h>
 
 #if CONFIG_AVFILTER
 #include <libavfilter/avfilter.h>
@@ -56,25 +56,25 @@ extern "C" {
 #endif
 }
 
+#include <common/application/application.h>
 #include <common/logger.h>  // for LogMessage, etc
 #include <common/macros.h>  // for destroy, ERROR_RESULT_VALUE, etc
-#include <common/threads/thread_manager.h>
-#include <common/application/application.h>
-#include <common/utils.h>
 #include <common/sprintf.h>
+#include <common/threads/thread_manager.h>
+#include <common/utils.h>
 
 #include "ffmpeg_internal.h"
 
 #include "video_state_handler.h"
 
-#include "client/core/types.h"  // for get_valid_channel_layout, etc
-#include "client/core/utils.h"  // for configure_filtergraph, etc
-#include "client/core/stream.h"
-#include "client/core/frame_queue.h"
 #include "client/core/app_options.h"
 #include "client/core/decoder.h"
-#include "client/core/packet_queue.h"
 #include "client/core/events/events.h"
+#include "client/core/frame_queue.h"
+#include "client/core/packet_queue.h"
+#include "client/core/stream.h"
+#include "client/core/types.h"  // for get_valid_channel_layout, etc
+#include "client/core/utils.h"  // for configure_filtergraph, etc
 
 #undef ERROR
 
@@ -105,7 +105,7 @@ std::string ffmpeg_errno_to_string(int err) {
   }
   return errbuf;
 }
-}
+}  // namespace
 
 namespace fasto {
 namespace fastotv {
@@ -167,7 +167,7 @@ int get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
 
   return avcodec_default_get_buffer2(s, frame, flags);
 }
-}
+}  // namespace
 
 VideoState::VideoState(stream_id id,
                        const common::uri::Uri& uri,
@@ -280,7 +280,11 @@ int VideoState::StreamComponentOpen(int stream_index) {
   }
 
   const char* forced_codec_name = NULL;
+#define CUDA 0
+#if CUDA == 1
+#else
   av_codec_set_pkt_timebase(avctx, stream->time_base);
+#endif
   AVCodec* codec = avcodec_find_decoder(avctx->codec_id);
 
   if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
@@ -383,7 +387,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
       audio_filter_src_.freq = avctx->sample_rate;
       audio_filter_src_.channels = avctx->channels;
       audio_filter_src_.channel_layout =
-          core::get_valid_channel_layout(avctx->channel_layout, avctx->channels);
+          get_valid_channel_layout(avctx->channel_layout, avctx->channels);
       audio_filter_src_.fmt = avctx->sample_fmt;
       ret = ConfigureAudioFilters(opt_.afilters, 0);
       if (ret < 0) {
@@ -463,7 +467,7 @@ void VideoState::StreamComponentClose(int stream_index) {
       vdecoder_tid_ = NULL;
     }
     if (input_st_->hwaccel_uninit) {
-      input_st_->hwaccel_uninit(viddec_->AvCtx());
+      input_st_->hwaccel_uninit(viddec_->GetAvCtx());
       input_st_->hwaccel_uninit = NULL;
     }
     destroy(&viddec_);
@@ -514,44 +518,46 @@ void VideoState::SeekPrevChunk() {
 }
 
 void VideoState::SeekChapter(int incr) {
-  clock_t pos = GetMasterClock() * AV_TIME_BASE;
   if (!ic_->nb_chapters) {
     return;
   }
 
+  const AVRational tb = {1, AV_TIME_BASE};  // AV_TIME_BASE_Q
+  const clock_t pos = GetMasterClock() * AV_TIME_BASE * 1000;
   int i;
   /* find the current chapter */
   for (i = 0; i < ic_->nb_chapters; i++) {
     AVChapter* ch = ic_->chapters[i];
-    if (av_compare_ts(pos, AV_TIME_BASE_Q, ch->start, ch->time_base) < 0) {
+    if (av_compare_ts(pos, tb, ch->start, ch->time_base) < 0) {
       i--;
       break;
     }
   }
 
   i += incr;
-  i = FFMAX(i, 0);
-  if (i >= ic_->nb_chapters) {
+  unsigned int chapter = FFMAX(i, 0);
+  if (chapter >= ic_->nb_chapters) {
     return;
   }
 
-  DEBUG_LOG() << "Seeking to chapter " << i << ".";
-
-  int64_t poss = av_rescale_q(ic_->chapters[i]->start, ic_->chapters[i]->time_base, AV_TIME_BASE_Q);
+  DEBUG_LOG() << "Seeking to chapter " << chapter << ".";
+  int64_t poss = av_rescale_q(ic_->chapters[chapter]->start, ic_->chapters[chapter]->time_base, tb);
   StreamSeek(poss, 0, false);
 }
 
 void VideoState::StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes) {
-  if (!seek_req_) {
-    seek_pos_ = pos;
-    seek_rel_ = rel;
-    seek_flags_ &= ~AVSEEK_FLAG_BYTE;
-    if (seek_by_bytes) {
-      seek_flags_ |= AVSEEK_FLAG_BYTE;
-    }
-    seek_req_ = true;
-    read_thread_cond_.notify_one();
+  if (seek_req_) {
+    return;
   }
+
+  seek_pos_ = pos;
+  seek_rel_ = rel;
+  seek_flags_ &= ~AVSEEK_FLAG_BYTE;
+  if (seek_by_bytes) {
+    seek_flags_ |= AVSEEK_FLAG_BYTE;
+  }
+  seek_req_ = true;
+  read_thread_cond_.notify_one();
 }
 
 void VideoState::Seek(clock_t msec) {
@@ -599,7 +605,7 @@ void VideoState::SeekMsec(clock_t clock) {
   StreamSeek(pos_seek, incr_seek, false);
 }
 
-int VideoState::GetMasterSyncType() const {
+AvSyncType VideoState::GetMasterSyncType() const {
   return opt_.av_sync_type;
 }
 
@@ -727,11 +733,11 @@ bool VideoState::IsStreamReady() const {
   return IsAudioReady() && IsVideoReady() && !IsAborted();
 }
 
-stream_id VideoState::Id() const {
+stream_id VideoState::GetId() const {
   return id_;
 }
 
-const common::uri::Uri& VideoState::Uri() const {
+const common::uri::Uri& VideoState::GetUri() const {
   return uri_;
 }
 
@@ -938,8 +944,9 @@ int VideoState::AudioDecodeFrame() {
       return ERROR_RESULT_VALUE;
     }
     if (wanted_nb_samples != af->frame->nb_samples) {
-      if (swr_set_compensation(swr_ctx_, (wanted_nb_samples - af->frame->nb_samples) *
-                                             audio_tgt_.freq / af->frame->sample_rate,
+      if (swr_set_compensation(swr_ctx_,
+                               (wanted_nb_samples - af->frame->nb_samples) * audio_tgt_.freq /
+                                   af->frame->sample_rate,
                                wanted_nb_samples * audio_tgt_.freq / af->frame->sample_rate) < 0) {
         ERROR_LOG() << "swr_set_compensation() failed";
         return ERROR_RESULT_VALUE;
@@ -1021,9 +1028,10 @@ void VideoState::TryRefreshVideo() {
         core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
         if (nextvp) {
           clock_t duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
-          if (!step_ && (opt_.framedrop == FRAME_DROP_AUTO ||
-                         (opt_.framedrop == FRAME_DROP_ON ||
-                          (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER))) &&
+          if (!step_ &&
+              (opt_.framedrop == FRAME_DROP_AUTO ||
+               (opt_.framedrop == FRAME_DROP_ON ||
+                (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER))) &&
               (time > frame_timer_ + duration)) {
             stats_.frame_drops_late++;
             video_frame_queue_->MoveToNext();
@@ -1301,7 +1309,7 @@ int VideoState::ReadThread() {
   max_frame_duration_ = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10000 : 3600000;
 
   if (opt_.seek_by_bytes == SEEK_AUTO) {
-    bool seek = !!(ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
+    bool seek = (ic->iformat->flags & AVFMT_TS_DISCONT) && strcmp("ogg", ic->iformat->name);
     opt_.seek_by_bytes = seek ? SEEK_BY_BYTES_ON : SEEK_BY_BYTES_OFF;
   }
 
@@ -1519,7 +1527,7 @@ int VideoState::AudioThread() {
 
 #if CONFIG_AVFILTER
       dec_channel_layout =
-          core::get_valid_channel_layout(frame->channel_layout, av_frame_get_channels(frame));
+          get_valid_channel_layout(frame->channel_layout, av_frame_get_channels(frame));
 
       reconfigure = core::cmp_audio_fmts(audio_filter_src_.fmt, audio_filter_src_.channels,
                                          static_cast<AVSampleFormat>(frame->format),
@@ -1622,7 +1630,7 @@ int VideoState::VideoThread() {
     }
 
     if (input_st_->hwaccel_retrieve_data && frame->format == input_st_->hwaccel_pix_fmt) {
-      int err = input_st_->hwaccel_retrieve_data(viddec_->AvCtx(), frame);
+      int err = input_st_->hwaccel_retrieve_data(viddec_->GetAvCtx(), frame);
       if (err < 0) {
         continue;
       }
@@ -1905,6 +1913,6 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
 #endif /* CONFIG_AVFILTER */
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

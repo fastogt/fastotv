@@ -44,6 +44,7 @@
 #define CONFIG_APP_OPTIONS_LOWRES_FIELD "lowres"
 #define CONFIG_APP_OPTIONS_SYNC_FIELD "sync"
 #define CONFIG_APP_OPTIONS_FRAMEDROP_FIELD "framedrop"
+#define CONFIG_APP_OPTIONS_BYTES_FIELD "bytes"
 #define CONFIG_APP_OPTIONS_INFBUF_FIELD "infbuf"
 #define CONFIG_APP_OPTIONS_VF_FIELD "vf"
 #define CONFIG_APP_OPTIONS_AF_FIELD "af"
@@ -182,8 +183,8 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_LOWRES_FIELD)) {
     int lowres;
-    if (parse_number(
-            value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), &lowres)) {
+    if (parse_number(value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
+                     &lowres)) {
       pconfig->app_options.lowres = lowres;
     }
     return 1;
@@ -203,6 +204,18 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
       pconfig->app_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_OFF;
     } else if (strcmp(value, "on") == 0) {
       pconfig->app_options.framedrop = fasto::fastotv::client::core::FRAME_DROP_ON;
+    } else {
+      return 0;
+    }
+
+    return 1;
+  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_BYTES_FIELD)) {
+    if (strcmp(value, "auto") == 0) {
+      pconfig->app_options.seek_by_bytes = fasto::fastotv::client::core::SEEK_AUTO;
+    } else if (strcmp(value, "off") == 0) {
+      pconfig->app_options.seek_by_bytes = fasto::fastotv::client::core::SEEK_BY_BYTES_OFF;
+    } else if (strcmp(value, "on") == 0) {
+      pconfig->app_options.seek_by_bytes = fasto::fastotv::client::core::SEEK_BY_BYTES_ON;
     } else {
       return 0;
     }
@@ -272,23 +285,22 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     return 0; /* unknown section/name, error */
   }
 }
-}
+}  // namespace
 
 TVConfig::TVConfig()
     : power_off_on_exit(false),
       loglevel(common::logging::L_INFO),
       app_options(),
       player_options(),
-      dict(new DictionaryOptions) {
-}
+      dict(new DictionaryOptions) {}
 
 TVConfig::~TVConfig() {
   destroy(&dict);
 }
 
-bool load_config_file(const std::string& config_absolute_path, TVConfig* options) {
+common::Error load_config_file(const std::string& config_absolute_path, TVConfig* options) {
   if (!options) {
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   std::string copy_config_absolute_path = config_absolute_path;
@@ -301,18 +313,19 @@ bool load_config_file(const std::string& config_absolute_path, TVConfig* options
 
   const char* copy_config_absolute_path_ptr = common::utils::c_strornull(copy_config_absolute_path);
   ini_parse(copy_config_absolute_path_ptr, ini_handler_fasto, options);
-  return true;
+  return common::Error();
 }
 
-bool save_config_file(const std::string& config_absolute_path, TVConfig* options) {
+common::Error save_config_file(const std::string& config_absolute_path, TVConfig* options) {
   if (!options || config_absolute_path.empty()) {
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   common::file_system::ascii_string_path config_path(config_absolute_path);
   common::file_system::ANSIFile config_save_file(config_path);
-  if (!config_save_file.Open("w")) {
-    return false;
+  common::ErrnoError err = config_save_file.Open("w");
+  if (err && err->IsError()) {
+    return err;
   }
 
   config_save_file.Write("[" CONFIG_MAIN_OPTIONS "]\n");
@@ -341,6 +354,8 @@ bool save_config_file(const std::string& config_absolute_path, TVConfig* options
           : "video");
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_FRAMEDROP_FIELD "=%d\n",
                                  options->app_options.framedrop);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_BYTES_FIELD "=%d\n",
+                                 options->app_options.seek_by_bytes);
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_INFBUF_FIELD "=%d\n",
                                  options->app_options.infinite_buffer);
 
@@ -383,8 +398,8 @@ bool save_config_file(const std::string& config_absolute_path, TVConfig* options
       common::ConvertToString(options->player_options.exit_on_mousedown));
 
   config_save_file.Close();
-  return true;
+  return common::Error();
 }
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

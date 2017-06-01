@@ -33,7 +33,7 @@ enum LircCode {
 namespace common {
 std::string ConvertToString(LircCode value);
 bool ConvertFromString(const std::string& from, LircCode* out);
-}
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {
@@ -46,8 +46,8 @@ struct LircPressInfo {
 };
 typedef EventBase<LIRC_PRESS_EVENT, LircPressInfo> LircPressEvent;
 
-}  // namespace events {
-}
-}
-}
-}
+}  // namespace events
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

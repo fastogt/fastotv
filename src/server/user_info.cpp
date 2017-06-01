@@ -20,8 +20,8 @@
 
 #include <string>
 
-#include <common/sprintf.h>
 #include <common/convert2string.h>
+#include <common/sprintf.h>
 
 #define CHANNELS_FIELD "channels"
 #define USER_INFO_LOGIN_FIELD "login"
@@ -31,11 +31,9 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-UserInfo::UserInfo() : auth_(), ch_() {
-}
+UserInfo::UserInfo() : auth_(), ch_() {}
 
-UserInfo::UserInfo(const AuthInfo& auth, const ChannelsInfo& ch) : auth_(auth), ch_(ch) {
-}
+UserInfo::UserInfo(const AuthInfo& auth, const ChannelsInfo& ch) : auth_(auth), ch_(ch) {}
 
 bool UserInfo::IsValid() const {
   return auth_.IsValid();
@@ -107,6 +105,6 @@ ChannelsInfo UserInfo::GetChannelInfo() const {
 bool UserInfo::Equals(const UserInfo& uinf) const {
   return auth_ == uinf.auth_ && ch_ == uinf.ch_;
 }
-}
+}  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

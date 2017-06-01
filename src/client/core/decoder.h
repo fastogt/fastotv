@@ -44,8 +44,8 @@ class Decoder {
   bool IsFinished() const;
   void SetFinished(bool finished);
 
-  AVMediaType CodecType() const;
-  AVCodecContext* AvCtx() const;
+  AVMediaType GetCodecType() const;
+  AVCodecContext* GetAvCtx() const;
 
  protected:
   void Flush();
@@ -81,12 +81,12 @@ class VideoDecoder : public IFrameDecoder {
  public:
   VideoDecoder(AVCodecContext* avctx, PacketQueue* queue);
 
-  int width() const;
-  int height() const;
+  int GetWidth() const;
+  int GetHeight() const;
 
   int DecodeFrame(AVFrame* frame) override;
 };
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

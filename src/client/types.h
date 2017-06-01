@@ -49,9 +49,9 @@ struct Rect {
   int x, y;
   int w, h;
 };
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace common {
 std::string ConvertToString(const fasto::fastotv::client::Point& value);
@@ -59,4 +59,4 @@ bool ConvertFromString(const std::string& from, fasto::fastotv::client::Point* o
 
 std::string ConvertToString(const fasto::fastotv::client::Size& value);
 bool ConvertFromString(const std::string& from, fasto::fastotv::client::Size* out);
-}
+}  // namespace common

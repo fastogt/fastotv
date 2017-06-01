@@ -18,8 +18,8 @@
 
 #include "commands/commands.h"
 
-#include <common/utils.h>
 #include <common/convert2string.h>
+#include <common/utils.h>
 
 namespace fasto {
 namespace fastotv {
@@ -81,5 +81,5 @@ common::Error ParseCommand(const std::string& command,
   *cmd_str = id_ptr + 1;
   return common::Error();
 }
-}
-}
+}  // namespace fastotv
+}  // namespace fasto

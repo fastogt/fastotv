@@ -103,6 +103,6 @@ cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& syste
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const std::string& ping_info) {
   return MakeResponce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info);
 }
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

@@ -61,7 +61,7 @@ struct event_traits<EventsType> {
   static const unsigned max_count = COUNT_EVENTS;
   static const unsigned id = EVENT_LOOP_ID;
 };
-}
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {
@@ -98,8 +98,8 @@ class EventBase<event_t, void> : public common::Event<EventsType, event_t> {
 
   explicit EventBase(senders_t* sender) : base_class_t(sender) {}
 };
-}
-}
-}
-}
-}
+}  // namespace events
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

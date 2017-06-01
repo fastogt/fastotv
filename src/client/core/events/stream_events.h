@@ -50,8 +50,8 @@ struct QuitStreamInfo : public StreamInfo {
 typedef EventBase<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
 typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
 
-}  // namespace events {
-}
-}
-}
-}
+}  // namespace events
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

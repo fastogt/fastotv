@@ -58,8 +58,8 @@ typedef EventBase<CLIENT_CONFIG_CHANGE_EVENT, TvConfig> ClientConfigChangeEvent;
 typedef EventBase<CLIENT_RECEIVE_CHANNELS_EVENT, ChannelsInfo> ReceiveChannelsEvent;
 typedef EventBase<CLIENT_BANDWIDTH_ESTIMATION_EVENT, BandwidtInfo> BandwidthEstimationEvent;
 
-}  // namespace events {
-}
-}
-}
-}
+}  // namespace events
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

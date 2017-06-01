@@ -22,18 +22,18 @@
 
 #include <string>
 
-#include <common/threads/thread_manager.h>
 #include <common/logger.h>
+#include <common/threads/thread_manager.h>
 
 #include "commands/commands.h"
 
 #include <common/libev/tcp/tcp_client.h>
 
-#include "inner/inner_tcp_client.h"
 #include "inner/inner_server_command_seq_parser.h"
+#include "inner/inner_tcp_client.h"
 
-#include "server/inner/inner_tcp_server.h"
 #include "server/inner/inner_tcp_handler.h"
+#include "server/inner/inner_tcp_server.h"
 
 #define BUF_SIZE 4096
 #define UNKNOWN_CLIENT_NAME "Unknown"
@@ -56,7 +56,7 @@ int exec_server(common::libev::tcp::TcpServer* server) {
 
   return server->Exec();
 }
-}
+}  // namespace
 namespace server {
 
 ServerHost::ServerHost(const Config& config)

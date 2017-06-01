@@ -18,14 +18,14 @@
 
 #include "client/types.h"
 
-#include <common/sprintf.h>
 #include <common/convert2string.h>
+#include <common/sprintf.h>
 
 namespace fasto {
 namespace fastotv {
 namespace client {}
-}
-}
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace common {
 
@@ -86,4 +86,4 @@ bool ConvertFromString(const std::string& from, fasto::fastotv::client::Size* ou
   *out = res;
   return true;
 }
-}
+}  // namespace common

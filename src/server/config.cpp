@@ -92,7 +92,7 @@ int ini_handler_fasto(void* user_data, const char* section, const char* name, co
     return 0; /* unknown section/name, error */
   }
 }
-}
+}  // namespace
 
 ServerSettings::ServerSettings() : host(), redis(), bandwidth_host() {
   // in config by default
@@ -106,24 +106,23 @@ ServerSettings::ServerSettings() : host(), redis(), bandwidth_host() {
   // bandwidth_host = bandwidth_default_host;
 }
 
-Config::Config() : server() {
-}
+Config::Config() : server() {}
 
-bool load_config_file(const std::string& config_absolute_path, Config* options) {
+common::Error load_config_file(const std::string& config_absolute_path, Config* options) {
   if (!options || config_absolute_path.empty()) {
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   ini_parse(config_absolute_path.c_str(), ini_handler_fasto, options);
-  return true;
+  return common::Error();
 }
 
-bool save_config_file(const std::string& config_absolute_path, Config* options) {
+common::Error save_config_file(const std::string& config_absolute_path, Config* options) {
   if (!options || config_absolute_path.empty()) {
-    return false;
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
-  return true;
+  return common::Error();
 }
 
 }  // namespace server

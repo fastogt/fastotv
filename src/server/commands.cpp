@@ -110,6 +110,6 @@ cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const std::string& ping_info) 
 cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E, error_text);
 }
-}
-}
-}
+}  // namespace server
+}  // namespace fastotv
+}  // namespace fasto

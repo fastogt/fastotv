@@ -33,7 +33,7 @@ struct StreamInfo {
   DesireBytesPerSec video_bitrate;
   DesireBytesPerSec audio_bitrate;
 };
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

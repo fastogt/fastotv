@@ -24,18 +24,15 @@ namespace client {
 namespace core {
 namespace events {
 
-StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {
-}
+StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {}
 
 FrameInfo::FrameInfo(VideoState* stream, core::VideoFrame* frame)
-    : StreamInfo(stream), frame(frame) {
-}
+    : StreamInfo(stream), frame(frame) {}
 
 QuitStreamInfo::QuitStreamInfo(VideoState* stream, int exit_code, common::Error err)
-    : StreamInfo(stream), exit_code(exit_code), error(err) {
-}
-}
-}
-}
-}
-}
+    : StreamInfo(stream), exit_code(exit_code), error(err) {}
+}  // namespace events
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

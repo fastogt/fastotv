@@ -30,7 +30,7 @@ struct new_session_pkt {
   uint16_t payload_len;
   uint16_t iat;  // Time between packets in ms, only used for TCP
 };
-}
+}  // namespace
 
 namespace fasto {
 namespace fastotv {
@@ -45,8 +45,7 @@ TcpBandwidthClient::TcpBandwidthClient(common::libev::IoLoop* server,
       total_downloaded_bytes_(0),
       start_ts_(0),
       downloaded_bytes_per_sec_(0),
-      host_type_(hs) {
-}
+      host_type_(hs) {}
 
 const char* TcpBandwidthClient::ClassName() const {
   return "TcpBandwidthClient";

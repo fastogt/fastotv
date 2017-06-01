@@ -44,5 +44,5 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
     return common::Error();
   }
 };
-}
-}
+}  // namespace fastotv
+}  // namespace fasto

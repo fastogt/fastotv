@@ -18,9 +18,9 @@
 
 #include <common/log_levels.h>
 
+#include "client/core/app_options.h"
 #include "cmdutils.h"
 #include "player.h"
-#include "client/core/app_options.h"
 
 namespace fasto {
 namespace fastotv {
@@ -41,8 +41,10 @@ struct TVConfig {
   DISALLOW_COPY_AND_ASSIGN(TVConfig);
 };
 
-bool load_config_file(const std::string& config_absolute_path, TVConfig* options);
-bool save_config_file(const std::string& config_absolute_path, TVConfig* options);
-}
-}
-}
+common::Error load_config_file(const std::string& config_absolute_path,
+                               TVConfig* options) WARN_UNUSED_RESULT;
+common::Error save_config_file(const std::string& config_absolute_path,
+                               TVConfig* options) WARN_UNUSED_RESULT;
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

@@ -20,13 +20,13 @@
 
 #include <string>
 
+#include <common/application/application.h>
+#include <common/convert2string.h>
 #include <common/error.h>
 #include <common/logger.h>
 #include <common/net/net.h>
 #include <common/system_info/cpu_info.h>
 #include <common/system_info/system_info.h>
-#include <common/convert2string.h>
-#include <common/application/application.h>
 
 #include "third-party/json-c/json-c/json.h"
 
@@ -34,13 +34,13 @@
 
 #include "inner/inner_client.h"
 
-#include "server_info.h"
 #include "client_info.h"
 #include "ping_info.h"
+#include "server_info.h"
 
+#include "client/bandwidth/tcp_bandwidth_client.h"
 #include "client/commands.h"
 #include "client/core/events/network_events.h"
-#include "client/bandwidth/tcp_bandwidth_client.h"
 
 namespace fasto {
 namespace fastotv {
@@ -52,8 +52,7 @@ InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
       bandwidth_requests_(),
       ping_server_id_timer_(INVALID_TIMER_ID),
       config_(config),
-      current_bandwidth_(0) {
-}
+      current_bandwidth_(0) {}
 
 InnerTcpHandler::~InnerTcpHandler() {
   for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {
@@ -520,6 +519,6 @@ common::Error InnerTcpHandler::ParserResponceResponceCommand(int argc,
 }
 
 }  // namespace inner
-}
+}  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

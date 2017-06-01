@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "user_info.h"
 #include "serializer/json_serializer.h"
+#include "user_info.h"
 
 #define USER_STATE_INFO_ID_FIELD "user_id"
 #define USER_STATE_INFO_CONNECTED_FIELD "connected"
@@ -54,6 +54,6 @@ inline bool operator==(const UserStateInfo& lhs, const UserStateInfo& rhs) {
 inline bool operator!=(const UserStateInfo& x, const UserStateInfo& y) {
   return !(x == y);
 }
-}
+}  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

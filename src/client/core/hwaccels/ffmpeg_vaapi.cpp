@@ -199,7 +199,7 @@ int vaapi_decode_init(AVCodecContext* avctx) {
   INFO_LOG() << "Using VAAPI to decode input stream.";
   return 0;
 }
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

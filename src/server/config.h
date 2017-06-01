@@ -38,8 +38,10 @@ struct Config {
   ServerSettings server;
 };
 
-bool load_config_file(const std::string& config_absolute_path, Config* options);
-bool save_config_file(const std::string& config_absolute_path, Config* options);
+common::Error load_config_file(const std::string& config_absolute_path,
+                               Config* options) WARN_UNUSED_RESULT;
+common::Error save_config_file(const std::string& config_absolute_path,
+                               Config* options) WARN_UNUSED_RESULT;
 
 }  // namespace server
 }  // namespace fastotv

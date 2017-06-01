@@ -60,7 +60,7 @@ class VideoStateHandler : public core::events::EventListener {
   virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) = 0;
   virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) = 0;
 };
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

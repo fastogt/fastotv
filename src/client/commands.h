@@ -49,6 +49,6 @@ cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const std::string& auth);
 cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info);  // escaped
 // ping
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const std::string& ping_info);  // escaped
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

@@ -20,8 +20,8 @@
 
 #include <common/logger.h>
 
-#include "server/inner/inner_tcp_server.h"
 #include "server/commands.h"
+#include "server/inner/inner_tcp_server.h"
 
 #define BUF_SIZE 4096
 
@@ -32,15 +32,13 @@ namespace inner {
 
 InnerTcpClient::InnerTcpClient(common::libev::tcp::TcpServer* server,
                                const common::net::socket_info& info)
-    : InnerClient(server, info), hinfo_(), uid_() {
-}
+    : InnerClient(server, info), hinfo_(), uid_() {}
 
 const char* InnerTcpClient::ClassName() const {
   return "InnerTcpClient";
 }
 
-InnerTcpClient::~InnerTcpClient() {
-}
+InnerTcpClient::~InnerTcpClient() {}
 
 void InnerTcpClient::SetServerHostInfo(const AuthInfo& info) {
   hinfo_ = info;

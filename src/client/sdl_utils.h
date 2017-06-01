@@ -43,6 +43,6 @@ SDL_Texture* CreateTexture(SDL_Renderer* renderer,
                            SDL_BlendMode blendmode,
                            bool init_texture);
 SDL_Surface* IMG_LoadPNG(const char* path);
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

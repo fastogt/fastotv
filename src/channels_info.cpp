@@ -20,14 +20,13 @@
 
 #include <string>
 
-#include <common/sprintf.h>
 #include <common/convert2string.h>
+#include <common/sprintf.h>
 
 namespace fasto {
 namespace fastotv {
 
-ChannelsInfo::ChannelsInfo() : channels_() {
-}
+ChannelsInfo::ChannelsInfo() : channels_() {}
 
 void ChannelsInfo::AddChannel(const Url& channel) {
   channels_.push_back(channel);

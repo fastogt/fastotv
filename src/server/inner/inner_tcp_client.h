@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "server/user_info.h"
 
@@ -30,8 +30,8 @@ namespace libev {
 namespace tcp {
 class TcpServer;
 }  // namespace tcp
-}
-}
+}  // namespace libev
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {

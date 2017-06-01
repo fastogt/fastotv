@@ -23,8 +23,7 @@ namespace fastotv {
 namespace inner {
 
 InnerClient::InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info)
-    : common::libev::tcp::TcpClient(server, info) {
-}
+    : common::libev::tcp::TcpClient(server, info) {}
 
 const char* InnerClient::ClassName() const {
   return "InnerClient";
@@ -60,8 +59,7 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
     }
     return common::make_error_value(
         common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
-                           sizeof(protocoled_size_t),
-                           nread),
+                           sizeof(protocoled_size_t), nread),
         common::ErrorValue::E_ERROR);
   }
 
@@ -85,8 +83,8 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
       return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
     }
     return common::make_error_value(
-        common::MemSPrintf(
-            "Error when reading needed to read: %lu bytes, but readed: %lu", size, nread),
+        common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu", size,
+                           nread),
         common::ErrorValue::E_ERROR);
   }
 
@@ -136,8 +134,7 @@ common::Error InnerClient::WriteInner(const std::string& data) {
     free(protocoled_data);
     return common::make_error_value(
         common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu",
-                           protocoled_data_len,
-                           nwrite),
+                           protocoled_data_len, nwrite),
         common::ErrorValue::E_ERROR);
   }
   free(protocoled_data);

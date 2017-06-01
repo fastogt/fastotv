@@ -40,5 +40,5 @@ class ISerializer {
     return T::DeSerialize(serialized, obj);
   }
 };
-}
-}
+}  // namespace fastotv
+}  // namespace fasto

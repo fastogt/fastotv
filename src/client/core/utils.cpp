@@ -18,11 +18,11 @@
 
 #include "client/core/utils.h"
 
+#include <errno.h>   // for ENOMEM
 #include <math.h>    // for lrint, fabs, floor, round
 #include <stdint.h>  // for uint8_t
 #include <stdlib.h>  // for atoi, exit
 #include <string.h>  // for NULL, strcmp, strncmp, etc
-#include <errno.h>   // for ENOMEM
 
 #include <ostream>  // for operator<<, basic_ostream, etc
 
@@ -182,7 +182,7 @@ int configure_filtergraph(AVFilterGraph* graph,
                           const std::string& filtergraph,
                           AVFilterContext* source_ctx,
                           AVFilterContext* sink_ctx) {
-  AVFilterInOut* outputs = NULL, *inputs = NULL;
+  AVFilterInOut *outputs = NULL, *inputs = NULL;
   int ret;
   if (!filtergraph.empty()) {
     outputs = avfilter_inout_alloc();
@@ -273,19 +273,11 @@ int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
       ERROR_LOG() << "Negative linesize is not supported for YUV.";
       return -1;
     }
-    return SDL_UpdateYUVTexture(tex,
-                                NULL,
-                                frame->data[0],
-                                frame->linesize[0],
-                                frame->data[1],
-                                frame->linesize[1],
-                                frame->data[2],
-                                frame->linesize[2]);
+    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1],
+                                frame->linesize[1], frame->data[2], frame->linesize[2]);
   } else if (frame->format == AV_PIX_FMT_BGRA) {
     if (frame->linesize[0] < 0) {
-      return SDL_UpdateTexture(tex,
-                               NULL,
-                               frame->data[0] + frame->linesize[0] * (frame->height - 1),
+      return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
                                -frame->linesize[0]);
     }
     return SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
@@ -420,6 +412,6 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1,
 }
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

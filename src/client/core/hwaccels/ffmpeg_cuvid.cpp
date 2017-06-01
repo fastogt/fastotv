@@ -74,7 +74,7 @@ int cuvid_init(AVCodecContext* avctx) {
   INFO_LOG() << "Using CUDA to decode input stream.";
   return 0;
 }
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

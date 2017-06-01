@@ -20,8 +20,8 @@
 
 #include <string>
 
-#include <common/net/types.h>
 #include <common/error.h>
+#include <common/net/types.h>
 
 #include "server/user_info.h"
 

@@ -19,9 +19,9 @@
 #include "client/core/types.h"
 
 extern "C" {
+#include <libavutil/avutil.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/time.h>
-#include <libavutil/avutil.h>
 }
 
 #include <common/macros.h>
@@ -76,6 +76,6 @@ bool IsValidPts(pts_t pts) {
 }
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

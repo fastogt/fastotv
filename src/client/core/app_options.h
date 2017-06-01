@@ -25,14 +25,14 @@
 #include "ffmpeg_config.h"
 
 extern "C" {
-#include <libavutil/dict.h>
 #include <libavutil/avutil.h>
+#include <libavutil/dict.h>
 }
 
 #include <common/macros.h>
 
-#include "ffmpeg_internal.h"
 #include "client/core/types.h"
+#include "ffmpeg_internal.h"
 
 namespace fasto {
 namespace fastotv {
@@ -94,6 +94,6 @@ struct ComplexOptions {
 };
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

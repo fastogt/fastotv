@@ -63,8 +63,8 @@ typedef EventBase<MOUSE_MOVE_EVENT, MouseMoveInfo> MouseMoveEvent;
 typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
 typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
 
-}  // namespace events {
-}
-}
-}
-}
+}  // namespace events
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

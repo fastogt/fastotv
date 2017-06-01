@@ -48,7 +48,7 @@ class Clock {
   clock_t last_updated_;
   double speed_;
 };
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

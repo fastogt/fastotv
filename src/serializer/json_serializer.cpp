@@ -22,4 +22,4 @@
 
 namespace fasto {
 namespace fastotv {}
-}
+}  // namespace fasto

@@ -21,8 +21,8 @@
 #include <inttypes.h>
 #include <string>
 
-#include <common/sprintf.h>
 #include <common/error.h>
+#include <common/sprintf.h>
 
 #define END_OF_COMMAND "\r\n"
 

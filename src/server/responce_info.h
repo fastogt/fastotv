@@ -62,6 +62,6 @@ inline bool operator==(const ResponceInfo& lhs, const ResponceInfo& rhs) {
 inline bool operator!=(const ResponceInfo& x, const ResponceInfo& y) {
   return !(x == y);
 }
-}
+}  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

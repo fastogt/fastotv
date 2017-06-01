@@ -21,11 +21,11 @@
 #include "client/core/events/events_base.h"
 
 #include "client/core/events/key_events.h"
-#include "client/core/events/mouse_events.h"
-#include "client/core/events/window_events.h"
-#include "client/core/events/stream_events.h"
-#include "client/core/events/network_events.h"
 #include "client/core/events/lirc_events.h"
+#include "client/core/events/mouse_events.h"
+#include "client/core/events/network_events.h"
+#include "client/core/events/stream_events.h"
+#include "client/core/events/window_events.h"
 
 namespace fasto {
 namespace fastotv {
@@ -57,8 +57,8 @@ typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
 
 typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;
 
-}  // namespace events {
-}
-}
-}
-}
+}  // namespace events
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

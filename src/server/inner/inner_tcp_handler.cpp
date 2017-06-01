@@ -24,17 +24,17 @@
 #include "third-party/json-c/json-c/json.h"  // for json_object_...
 
 #undef ERROR
-#include <common/net/net.h>
-#include <common/logger.h>
-#include <common/threads/thread_manager.h>
 #include <common/convert2string.h>
+#include <common/logger.h>
+#include <common/net/net.h>
+#include <common/threads/thread_manager.h>
 
 #include "server/commands.h"
 #include "server/server_host.h"
 
-#include "server_info.h"
 #include "client_info.h"
 #include "ping_info.h"
+#include "server_info.h"
 
 #include "server/inner/inner_tcp_client.h"
 

@@ -24,8 +24,7 @@ namespace client {
 namespace core {
 
 PacketQueue::PacketQueue()
-    : queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {
-}
+    : queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
 
 int PacketQueue::PutNullpacket(int stream_index) {
   AVPacket pkt1, *pkt = &pkt1;
@@ -134,6 +133,6 @@ PacketQueue::~PacketQueue() {
 }
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

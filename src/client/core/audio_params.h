@@ -39,6 +39,6 @@ struct AudioParams {
 };
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

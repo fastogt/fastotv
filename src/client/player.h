@@ -22,15 +22,15 @@
 #include <SDL2/SDL_ttf.h>
 
 #include <common/smart_ptr.h>
-#include <common/url.h>
 #include <common/time.h>
+#include <common/url.h>
 
-#include "url.h"
 #include "types.h"
+#include "url.h"
 
-#include "client/core/video_state_handler.h"
 #include "client/core/app_options.h"
 #include "client/core/events/events.h"
+#include "client/core/video_state_handler.h"
 
 namespace fasto {
 namespace fastotv {
@@ -213,6 +213,6 @@ class Player : public core::VideoStateHandler {
 
   bool muted_;
 };
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

@@ -26,8 +26,8 @@ extern "C" {
 
 #include <common/macros.h>
 
-#include "client/core/types.h"
 #include "client/core/bandwidth_estimation.h"
+#include "client/core/types.h"
 
 namespace fasto {
 namespace fastotv {
@@ -101,6 +101,6 @@ class AudioStream : public Stream {
 };
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

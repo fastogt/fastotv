@@ -63,5 +63,5 @@ class Url : public JsonSerializer<Url> {
 inline bool operator==(const Url& left, const Url& right) {
   return left.Equals(right);
 }
-}
-}
+}  // namespace fastotv
+}  // namespace fasto

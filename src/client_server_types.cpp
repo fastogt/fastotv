@@ -32,5 +32,5 @@ std::string Decode(const std::string& data) {
   common::buffer_t dec = common::HexDecode(data);
   return common::ConvertToString(dec);
 }
-}
-}
+}  // namespace fastotv
+}  // namespace fasto

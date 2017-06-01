@@ -58,11 +58,11 @@ void Decoder::SetFinished(bool finished) {
   finished_ = finished;
 }
 
-AVMediaType Decoder::CodecType() const {
+AVMediaType Decoder::GetCodecType() const {
   return avctx_->codec_type;
 }
 
-AVCodecContext* Decoder::AvCtx() const {
+AVCodecContext* Decoder::GetAvCtx() const {
   return avctx_;
 }
 
@@ -71,12 +71,11 @@ void Decoder::Flush() {
   avcodec_flush_buffers(avctx_);
 }
 
-IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue) : Decoder(avctx, queue) {
-}
+IFrameDecoder::IFrameDecoder(AVCodecContext* avctx, PacketQueue* queue) : Decoder(avctx, queue) {}
 
 AudioDecoder::AudioDecoder(AVCodecContext* avctx, PacketQueue* queue)
     : IFrameDecoder(avctx, queue), start_pts_(invalid_pts()), start_pts_tb_{0, 0} {
-  CHECK(CodecType() == AVMEDIA_TYPE_AUDIO);
+  CHECK(GetCodecType() == AVMEDIA_TYPE_AUDIO);
 }
 
 void AudioDecoder::SetStartPts(int64_t start_pts, AVRational start_pts_tb) {
@@ -136,14 +135,14 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
 
 VideoDecoder::VideoDecoder(AVCodecContext* avctx, PacketQueue* queue)
     : IFrameDecoder(avctx, queue) {
-  CHECK(CodecType() == AVMEDIA_TYPE_VIDEO);
+  CHECK(GetCodecType() == AVMEDIA_TYPE_VIDEO);
 }
 
-int VideoDecoder::width() const {
+int VideoDecoder::GetWidth() const {
   return avctx_->width;
 }
 
-int VideoDecoder::height() const {
+int VideoDecoder::GetHeight() const {
   return avctx_->height;
 }
 
@@ -192,6 +191,6 @@ int VideoDecoder::DecodeFrame(AVFrame* frame) {
 }
 
 }  // namespace core
-}
-}
-}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

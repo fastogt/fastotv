@@ -20,8 +20,8 @@
 
 #include <common/libev/tcp/tcp_client.h>
 
-#include "client_server_types.h"
 #include "client/types.h"
+#include "client_server_types.h"
 
 namespace fasto {
 namespace fastotv {
