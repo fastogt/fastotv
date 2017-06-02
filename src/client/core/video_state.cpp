@@ -280,11 +280,9 @@ int VideoState::StreamComponentOpen(int stream_index) {
   }
 
   const char* forced_codec_name = NULL;
-#define CUDA 0
-#if CUDA == 1
-#else
-  av_codec_set_pkt_timebase(avctx, stream->time_base);
-#endif
+
+  AVRational tb = stream->time_base;
+  av_codec_set_pkt_timebase(avctx, tb);
   AVCodec* codec = avcodec_find_decoder(avctx->codec_id);
 
   if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
@@ -985,6 +983,75 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
+void VideoState::RefreshVideo() {
+retry:
+  if (video_frame_queue_->IsEmpty()) {
+    // nothing to do, no picture to display in the queue
+  } else {
+    /* dequeue the picture */
+    core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
+    core::VideoFrame* vp = video_frame_queue_->Peek();
+
+    if (frame_timer_ == 0) {
+      frame_timer_ = GetRealClockTime();
+    }
+
+    if (paused_) {
+      goto display;
+    }
+
+    /* compute nominal last_duration */
+    clock_t last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
+    clock_t delay = ComputeTargetDelay(last_duration);
+    clock_t time = GetRealClockTime();
+    clock_t next_frame_ts = frame_timer_ + delay;
+    if (time < next_frame_ts) {
+      goto display;
+    }
+
+    frame_timer_ = next_frame_ts;
+    if (delay > 0) {
+      if (time - frame_timer_ > AV_SYNC_THRESHOLD_MAX_MSEC) {
+        frame_timer_ = time;
+      }
+    }
+
+    const clock_t pts = vp->pts;
+    if (IsValidClock(pts)) {
+      /* update current video pts */
+      vstream_->SetClockAt(pts, time);
+    }
+
+    core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
+    if (nextvp) {
+      clock_t duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
+      if (!step_ &&
+          (opt_.framedrop == FRAME_DROP_AUTO ||
+           (opt_.framedrop == FRAME_DROP_ON || (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)))) {
+        clock_t next_next_frame_ts = frame_timer_ + duration;
+        clock_t diff_drop = time - next_next_frame_ts;
+        if (diff_drop > 0) {
+          stats_.frame_drops_late++;
+          video_frame_queue_->MoveToNext();
+          goto retry;
+        }
+      }
+    }
+
+    video_frame_queue_->MoveToNext();
+    force_refresh_ = true;
+
+    if (step_ && !paused_) {
+      StreamTogglePause();
+    }
+  }
+display:
+  /* display picture */
+  if (force_refresh_ && video_frame_queue_->RindexShown()) {
+    VideoDisplay();
+  }
+}
+
 void VideoState::TryRefreshVideo() {
   if (!paused_ || force_refresh_) {
     AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
@@ -993,64 +1060,7 @@ void VideoState::TryRefreshVideo() {
     core::PacketQueue* audio_packet_queue = astream_->Queue();
 
     if (video_st && video_frame_queue_) {
-    retry:
-      if (video_frame_queue_->IsEmpty()) {
-        // nothing to do, no picture to display in the queue
-      } else {
-        /* dequeue the picture */
-        core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
-        core::VideoFrame* vp = video_frame_queue_->Peek();
-        if (paused_) {
-          goto display;
-        }
-
-        /* compute nominal last_duration */
-        clock_t last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
-        clock_t delay = ComputeTargetDelay(last_duration);
-        clock_t time = GetRealClockTime();
-        if (time < frame_timer_ + delay) {
-          goto display;
-        }
-
-        frame_timer_ += delay;
-        if (delay > 0 && time - frame_timer_ > AV_SYNC_THRESHOLD_MAX_MSEC) {
-          frame_timer_ = time;
-        }
-
-        {
-          const clock_t pts = vp->pts;
-          if (IsValidClock(pts)) {
-            /* update current video pts */
-            vstream_->SetClockAt(pts, time);
-          }
-        }
-
-        core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
-        if (nextvp) {
-          clock_t duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
-          if (!step_ &&
-              (opt_.framedrop == FRAME_DROP_AUTO ||
-               (opt_.framedrop == FRAME_DROP_ON ||
-                (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER))) &&
-              (time > frame_timer_ + duration)) {
-            stats_.frame_drops_late++;
-            video_frame_queue_->MoveToNext();
-            goto retry;
-          }
-        }
-
-        video_frame_queue_->MoveToNext();
-        force_refresh_ = true;
-
-        if (step_ && !paused_) {
-          StreamTogglePause();
-        }
-      }
-    display:
-      /* display picture */
-      if (force_refresh_ && video_frame_queue_->RindexShown()) {
-        VideoDisplay();
-      }
+      RefreshVideo();
     }
     force_refresh_ = false;
     if (!opt_.show_status) {

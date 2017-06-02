@@ -139,8 +139,8 @@ Player::Player(const PlayerOptions& options,
       volume_last_shown_(0),
       last_mouse_left_click_(0),
       curent_stream_pos_(0),
-      offline_channel_texture_(NULL),
-      connection_error_texture_(NULL),
+      offline_channel_texture_(nullptr),
+      connection_error_texture_(nullptr),
       font_(NULL),
       stream_(nullptr),
       window_size_(),
@@ -436,13 +436,25 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
         common::file_system::make_path(absolute_source_dir, IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     const char* offline_channel_img_full_path_ptr =
         common::utils::c_strornull(offline_channel_img_full_path);
-    offline_channel_texture_ = new TextureSaver(IMG_LoadPNG(offline_channel_img_full_path_ptr));
+    SDL_Surface* surface = NULL;
+    common::Error err = IMG_LoadPNG(offline_channel_img_full_path_ptr, &surface);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    } else {
+      offline_channel_texture_ = new TextureSaver(surface);
+    }
 
     const std::string connection_error_img_full_path =
         common::file_system::make_path(absolute_source_dir, IMG_CONNECTION_ERROR_PATH_RELATIVE);
     const char* connection_error_img_full_path_ptr =
         common::utils::c_strornull(connection_error_img_full_path);
-    connection_error_texture_ = new TextureSaver(IMG_LoadPNG(connection_error_img_full_path_ptr));
+    SDL_Surface* surface2 = NULL;
+    err = IMG_LoadPNG(connection_error_img_full_path_ptr, &surface2);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    } else {
+      connection_error_texture_ = new TextureSaver(surface2);
+    }
 
     const std::string font_path =
         common::file_system::make_path(absolute_source_dir, MAIN_FONT_PATH_RELATIVE);
@@ -807,10 +819,16 @@ int Player::ReallocTexture(SDL_Texture** texture,
   if (SDL_QueryTexture(*texture, &format, &access, &w, &h) < 0 || new_width != w ||
       new_height != h || new_format != format) {
     SDL_DestroyTexture(*texture);
-    *texture = CreateTexture(renderer_, new_format, new_width, new_height, blendmode, init_texture);
-    if (!*texture) {
+    *texture = NULL;
+
+    SDL_Texture* ltexture = NULL;
+    common::Error err = CreateTexture(renderer_, new_format, new_width, new_height, blendmode,
+                                      init_texture, &ltexture);
+    if (err && err->IsError()) {
+      DNOTREACHED();
       return ERROR_RESULT_VALUE;
     }
+    *texture = ltexture;
   }
   return SUCCESS_RESULT_VALUE;
 }
@@ -866,9 +884,11 @@ void Player::DrawPlayingStatus() {
 
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
-  SDL_Texture* img = offline_channel_texture_->GetTexture(renderer_);
-  if (img) {
-    SDL_RenderCopy(renderer_, img, NULL, NULL);
+  if (offline_channel_texture_) {
+    SDL_Texture* img = offline_channel_texture_->GetTexture(renderer_);
+    if (img) {
+      SDL_RenderCopy(renderer_, img, NULL, NULL);
+    }
   }
   DrawInfo();
   SDL_RenderPresent(renderer_);
@@ -877,9 +897,11 @@ void Player::DrawPlayingStatus() {
 void Player::DrawInitStatus() {
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
-  SDL_Texture* img = connection_error_texture_->GetTexture(renderer_);
-  if (img) {
-    SDL_RenderCopy(renderer_, img, NULL, NULL);
+  if (connection_error_texture_) {
+    SDL_Texture* img = connection_error_texture_->GetTexture(renderer_);
+    if (img) {
+      SDL_RenderCopy(renderer_, img, NULL, NULL);
+    }
   }
   DrawInfo();
   SDL_RenderPresent(renderer_);

@@ -81,8 +81,8 @@ class PcDevice(SupportedDevice):
 
 # Raspberry Pi
 class RaspberryPiDevice(SupportedDevice):
-    def __init__(self):
-        SupportedDevice.__init__(self, 'pc', {'linux': [
+    def __init__(self, name):
+        SupportedDevice.__init__(self, name, {'linux': [
             'libgl1-mesa-devel',  # redhat
             'libgl1-mesa-dev'  # raspbian
         ]}, utils.CompileInfo([], []), utils.CompileInfo([], []))
@@ -138,7 +138,7 @@ class OrangePiPC(OrangePiDevice):  # armv7l
 
 class OrangePiPlus2(OrangePiDevice):  # armv7l
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-pc')
+        OrangePiDevice.__init__(self, 'orange-pi-plus2')
         linux_libs = self.system_platform_libs_.get('linux')
         linux_libs.extend(['liblircclient-dev'])
 

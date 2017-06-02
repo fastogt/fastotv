@@ -20,6 +20,8 @@
 
 #include <SDL2/SDL_render.h>
 
+#include <common/error.h>
+
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -36,13 +38,14 @@ class TextureSaver {
   mutable SDL_Renderer* renderer_;
 };
 
-SDL_Texture* CreateTexture(SDL_Renderer* renderer,
-                           Uint32 new_format,
-                           int new_width,
-                           int new_height,
-                           SDL_BlendMode blendmode,
-                           bool init_texture);
-SDL_Surface* IMG_LoadPNG(const char* path);
+common::Error CreateTexture(SDL_Renderer* renderer,
+                            Uint32 new_format,
+                            int new_width,
+                            int new_height,
+                            SDL_BlendMode blendmode,
+                            bool init_texture,
+                            SDL_Texture** texture_out);
+common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out);
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

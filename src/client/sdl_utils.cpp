@@ -65,74 +65,72 @@ SDL_Texture* TextureSaver::GetTexture(SDL_Renderer* renderer) const {
   return texture_;
 }
 
-SDL_Texture* CreateTexture(SDL_Renderer* renderer,
-                           Uint32 new_format,
-                           int new_width,
-                           int new_height,
-                           SDL_BlendMode blendmode,
-                           bool init_texture) {
+common::Error CreateTexture(SDL_Renderer* renderer,
+                            Uint32 new_format,
+                            int new_width,
+                            int new_height,
+                            SDL_BlendMode blendmode,
+                            bool init_texture,
+                            SDL_Texture** texture_out) {
   SDL_Texture* ltexture =
       SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
   if (!ltexture) {
-    NOTREACHED();
-    return nullptr;
+    return common::make_error_value("Couldn't allocate memory for texture", common::Value::E_ERROR);
   }
   if (SDL_SetTextureBlendMode(ltexture, blendmode) < 0) {
-    NOTREACHED();
     SDL_DestroyTexture(ltexture);
-    return nullptr;
+    return common::make_error_value("Couldn't set blend mode for texture", common::Value::E_ERROR);
   }
   if (init_texture) {
     void* pixels;
     int pitch;
     if (SDL_LockTexture(ltexture, NULL, &pixels, &pitch) < 0) {
-      NOTREACHED();
       SDL_DestroyTexture(ltexture);
-      return nullptr;
+      return common::make_error_value("Couldn't lock texture", common::Value::E_ERROR);
     }
     const size_t pixels_size = pitch * new_height;
     memset(pixels, 0, pixels_size);
     SDL_UnlockTexture(ltexture);
   }
 
-  return ltexture;
+  *texture_out = ltexture;
+  return common::Error();
 }
 
-SDL_Surface* IMG_LoadPNG(const char* path) {
-  if (!path) {
-    WARNING_LOG() << "Invalid input argument(s)";
-    return NULL;
+common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
+  if (!path || !sur_out) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
   unsigned char header[8];  // 8 is the maximum size that can be checked
   FILE* fp = fopen(path, "rb");
   if (!fp) {
-    WARNING_LOG() << "Couldn't open png file path: " << path;
-    return NULL;
+    const std::string error_msg = common::MemSPrintf("Couldn't open png file path: %s", path);
+    return common::make_error_value(error_msg, common::Value::E_ERROR);
   }
 
   size_t res = fread(header, sizeof(unsigned char), SIZEOFMASS(header), fp);
   if (res != SIZEOFMASS(header) || png_sig_cmp(header, 0, SIZEOFMASS(header))) {
-    WARNING_LOG() << "Invalid png header path: " << path;
     fclose(fp);
-    return NULL;
+    const std::string error_msg = common::MemSPrintf("Invalid png header path: %s", path);
+    return common::make_error_value(error_msg, common::Value::E_ERROR);
   }
 
   /* Create the PNG loading context structure */
   png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   if (png_ptr == NULL) {
-    WARNING_LOG() << "Couldn't allocate memory for PNG file or incompatible PNG dll";
     fclose(fp);
-    return NULL;
+    return common::make_error_value("Couldn't allocate memory for PNG file or incompatible PNG dll",
+                                    common::Value::E_ERROR);
   }
 
   /* Allocate/initialize the memory for image information.  REQUIRED. */
   png_infop info_ptr = png_create_info_struct(png_ptr);
   if (info_ptr == NULL) {
-    WARNING_LOG() << "Couldn't create image information for PNG file";
     png_destroy_read_struct(&png_ptr, NULL, NULL);
     fclose(fp);
-    return NULL;
+    return common::make_error_value("Couldn't create image information for PNG file",
+                                    common::Value::E_ERROR);
   }
 
 /* Set error handling if you are using setjmp/longjmp method (this is
@@ -145,10 +143,9 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
 #else
   if (setjmp(png_ptr->jmpbuf)) {
 #endif
-    WARNING_LOG() << "Error reading the PNG file.";
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     fclose(fp);
-    return NULL;
+    return common::make_error_value("Error reading the PNG file.", common::Value::E_ERROR);
   }
 
   /* Set up the input control */
@@ -241,10 +238,9 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
   SDL_Surface* volatile surface = SDL_CreateRGBSurface(
       SDL_SWSURFACE, width, height, bit_depth * num_channels, Rmask, Gmask, Bmask, Amask);
   if (surface == NULL) {
-    WARNING_LOG() << SDL_GetError();
     png_destroy_read_struct(&png_ptr, NULL, NULL);
     fclose(fp);
-    return NULL;
+    return common::make_error_value(SDL_GetError(), common::Value::E_ERROR);
   }
 
   if (ckey != -1) {
@@ -260,10 +256,9 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
   png_bytep* volatile row_pointers =
       static_cast<png_bytep*>(SDL_malloc(sizeof(png_bytep) * height));
   if (!row_pointers) {
-    WARNING_LOG() << "Out of memory";
     png_destroy_read_struct(&png_ptr, NULL, NULL);
     fclose(fp);
-    return NULL;
+    return common::make_error_value("Out of memory", common::Value::E_ERROR);
   }
   for (png_uint_32 row = 0; row < height; row++) {
     row_pointers[row] = static_cast<png_bytep>(surface->pixels) + row * surface->pitch;
@@ -306,7 +301,8 @@ SDL_Surface* IMG_LoadPNG(const char* path) {
   SDL_free(row_pointers);
   png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
   fclose(fp);
-  return (surface);
+  *sur_out = surface;
+  return common::Error();
 }
 }  // namespace client
 }  // namespace fastotv

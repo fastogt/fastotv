@@ -46,7 +46,8 @@ extern "C" {
 #include "client/core/audio_params.h"  // for AudioParams
 
 /* Calculate actual buffer size keeping in mind not cause too frequent audio callbacks */
-#define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 30
+#define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 10
+#define SDL_AUDIO_MIN_BUFFER_SIZE 512
 
 namespace fasto {
 namespace fastotv {
@@ -321,7 +322,8 @@ int audio_open(void* opaque,
   wanted_spec.format = AUDIO_S16SYS;
   const double samples_per_call =
       static_cast<double>(wanted_spec.freq) / SDL_AUDIO_MAX_CALLBACKS_PER_SEC;
-  const Uint16 audio_buff_size = 2 << av_log2(samples_per_call);
+  const Uint16 audio_buff_size_calc = 2 << av_log2(samples_per_call);
+  const Uint16 audio_buff_size = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE, audio_buff_size_calc);
   wanted_spec.samples =
       FFMAX(AUDIO_MIN_BUFFER_SIZE, audio_buff_size);  // Audio buffer size in samples
   wanted_spec.callback = cb;

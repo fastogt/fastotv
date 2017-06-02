@@ -134,6 +134,7 @@ class VideoState {
 
  private:
   void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);
+  void RefreshVideo();
 
   void Close();
 

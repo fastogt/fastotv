@@ -28,7 +28,7 @@ namespace inner {
 
 class InnerClient : public common::libev::tcp::TcpClient {
  public:
-  typedef uint32_t protocoled_size_t;  // 4 byte
+  typedef uint32_t protocoled_size_t;  // sizeof 4 byte
   InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info);
   const char* ClassName() const override;
 
