@@ -45,11 +45,13 @@ class Url : public JsonSerializer<Url> {
   bool IsEnableAudio() const;
   bool IsEnableVideo() const;
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
   bool Equals(const Url& url) const;
+
+ protected:
+  common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   stream_id id_;

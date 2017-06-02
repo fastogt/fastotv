@@ -37,7 +37,6 @@ class ResponceInfo : public JsonSerializer<ResponceInfo> {
                const std::string& command,
                const std::string& responce);
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
@@ -47,6 +46,9 @@ class ResponceInfo : public JsonSerializer<ResponceInfo> {
   std::string GetResponceJson() const;
 
   bool Equals(const ResponceInfo& inf) const;
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   std::string request_id_;

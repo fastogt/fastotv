@@ -39,7 +39,7 @@ bool UserInfo::IsValid() const {
   return auth_.IsValid();
 }
 
-common::Error UserInfo::Serialize(serialize_type* deserialized) const {
+common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

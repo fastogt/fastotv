@@ -38,7 +38,7 @@ bool AuthInfo::IsValid() const {
   return !login_.empty() || password_.empty();
 }
 
-common::Error AuthInfo::Serialize(serialize_type* deserialized) const {
+common::Error AuthInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

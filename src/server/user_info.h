@@ -41,7 +41,6 @@ class UserInfo : public JsonSerializer<UserInfo> {
 
   bool IsValid() const;
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
@@ -49,6 +48,9 @@ class UserInfo : public JsonSerializer<UserInfo> {
   ChannelsInfo GetChannelInfo() const;
 
   bool Equals(const UserInfo& inf) const;
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   AuthInfo auth_;

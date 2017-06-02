@@ -15,5 +15,5 @@ TEST(commands, parse_commands) {
   ASSERT_TRUE(!err);
   ASSERT_EQ(cmd_id, REQUEST_COMMAND);
   ASSERT_EQ(seq_id, seq_id_const);
-  ASSERT_EQ(command_str, CLIENT_PING_COMMAND " ");
+  ASSERT_EQ(command_str, CLIENT_PING_COMMAND);
 }

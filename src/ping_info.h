@@ -31,11 +31,13 @@ class ServerPingInfo : public JsonSerializer<ServerPingInfo> {
  public:
   ServerPingInfo();
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
   timestamp_t GetTimeStamp() const;
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   timestamp_t timestamp_;  // utc time
@@ -45,11 +47,13 @@ class ClientPingInfo : public JsonSerializer<ClientPingInfo> {
  public:
   ClientPingInfo();
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
   timestamp_t GetTimeStamp() const;
+
+ protected:
+  common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   timestamp_t timestamp_;  // utc time

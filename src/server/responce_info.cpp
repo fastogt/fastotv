@@ -35,7 +35,7 @@ ResponceInfo::ResponceInfo(const std::string& request_id,
                            const std::string& responce)
     : request_id_(request_id), state_(state_command), command_(command), responce_json_(responce) {}
 
-common::Error ResponceInfo::Serialize(serialize_type* deserialized) const {
+common::Error ResponceInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
 
   json_object_object_add(obj, RESPONCE_INFO_REQUEST_ID_FIELD,

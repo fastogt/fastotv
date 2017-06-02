@@ -30,7 +30,7 @@ ServerInfo::ServerInfo() : bandwidth_host_() {}
 ServerInfo::ServerInfo(const common::net::HostAndPort& bandwidth_host)
     : bandwidth_host_(bandwidth_host) {}
 
-common::Error ServerInfo::Serialize(serialize_type* deserialized) const {
+common::Error ServerInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
   const std::string host_str = common::ConvertToString(bandwidth_host_);
   json_object_object_add(obj, BANDWIDTH_HOST_FIELD, json_object_new_string(host_str.c_str()));

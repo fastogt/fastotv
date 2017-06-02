@@ -33,13 +33,15 @@ class AuthInfo : public JsonSerializer<AuthInfo> {
 
   bool IsValid() const;
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
   login_t GetLogin() const;
   std::string GetPassword() const;
   bool Equals(const AuthInfo& auth) const;
+
+ protected:
+  common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   login_t login_;  // unique

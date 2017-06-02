@@ -33,7 +33,6 @@ class ChannelsInfo : public JsonSerializer<ChannelsInfo> {
   typedef std::vector<Url> channels_t;
   ChannelsInfo();
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
@@ -44,6 +43,9 @@ class ChannelsInfo : public JsonSerializer<ChannelsInfo> {
   bool IsEmpty() const;
 
   bool Equals(const ChannelsInfo& chan) const;
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   channels_t channels_;

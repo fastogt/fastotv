@@ -32,7 +32,7 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
   typedef typename base_class::value_type value_type;
   typedef typename base_class::serialize_type serialize_type;
 
-  common::Error SerializeToString(std::string* deserialized) const WARN_UNUSED_RESULT {
+  virtual common::Error SerializeToString(std::string* deserialized) const final {
     serialize_type des = NULL;
     common::Error err = base_class::Serialize(&des);
     if (err && err->IsError()) {
@@ -43,6 +43,10 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
     json_object_put(des);
     return common::Error();
   }
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const = 0;
 };
+
 }  // namespace fastotv
 }  // namespace fasto

@@ -33,7 +33,6 @@ class UserStateInfo : public JsonSerializer<UserStateInfo> {
   UserStateInfo();
   UserStateInfo(const user_id_t& uid, bool connected);
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
@@ -41,6 +40,9 @@ class UserStateInfo : public JsonSerializer<UserStateInfo> {
   bool IsConnected() const;
 
   bool Equals(const UserStateInfo& state) const;
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const WARN_UNUSED_RESULT;
 
  private:
   user_id_t user_id_;

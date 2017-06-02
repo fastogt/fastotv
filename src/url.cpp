@@ -59,7 +59,7 @@ bool Url::IsEnableVideo() const {
   return enable_video_;
 }
 
-common::Error Url::Serialize(serialize_type* deserialized) const {
+common::Error Url::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

@@ -44,7 +44,7 @@ bool UserStateInfo::Equals(const UserStateInfo& state) const {
   return user_id_ == state.user_id_ && connected_ == state.connected_;
 }
 
-common::Error UserStateInfo::Serialize(serialize_type* deserialized) const {
+common::Error UserStateInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
   json_object_object_add(obj, USER_STATE_INFO_ID_FIELD, json_object_new_string(user_id_.c_str()));
   json_object_object_add(obj, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(connected_));

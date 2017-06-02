@@ -34,11 +34,13 @@ class ServerInfo : public JsonSerializer<ServerInfo> {
   ServerInfo();
   ServerInfo(const common::net::HostAndPort& bandwidth_host);
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
   common::net::HostAndPort GetBandwidthHost() const;
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   common::net::HostAndPort bandwidth_host_;

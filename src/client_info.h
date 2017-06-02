@@ -38,7 +38,6 @@ class ClientInfo : public JsonSerializer<ClientInfo> {
 
   bool IsValid() const;
 
-  common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT;
   static common::Error DeSerialize(const serialize_type& serialized,
                                    value_type* obj) WARN_UNUSED_RESULT;
 
@@ -48,6 +47,9 @@ class ClientInfo : public JsonSerializer<ClientInfo> {
   int64_t GetRamTotal() const;
   int64_t GetRamFree() const;
   bandwidth_t GetBandwidth() const;
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   login_t login_;

@@ -52,7 +52,7 @@ bool ClientInfo::IsValid() const {
   return !login_.empty();
 }
 
-common::Error ClientInfo::Serialize(serialize_type* deserialized) const {
+common::Error ClientInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

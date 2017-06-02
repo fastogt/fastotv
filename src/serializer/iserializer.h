@@ -28,17 +28,18 @@ class ISerializer {
  public:
   typedef T value_type;
   typedef S serialize_type;
-
- protected:
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT {
-    return static_cast<const T*>(this)->Serialize(deserialized);
-  }
-  static common::Error DeSerialize(const serialize_type& serialized, T* obj) WARN_UNUSED_RESULT {
-    if (!obj) {
+    if (!deserialized) {
       return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
     }
-    return T::DeSerialize(serialized, obj);
+    return SerializeImpl(deserialized);
   }
+
+  virtual common::Error SerializeToString(std::string* deserialized) const = 0;
+
+ protected:
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const = 0;
 };
+
 }  // namespace fastotv
 }  // namespace fasto
