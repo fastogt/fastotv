@@ -54,7 +54,7 @@ common::Error UserStateInfo::SerializeImpl(serialize_type* deserialized) const {
 }
 
 common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
-  if (!obj) {
+  if (!serialized || !obj) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 

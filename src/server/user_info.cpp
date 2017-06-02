@@ -63,6 +63,10 @@ common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
 }
 
 common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+  if (!serialized || !obj) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   ChannelsInfo chan;
   json_object* jchan = NULL;
   json_bool jchan_exists = json_object_object_get_ex(serialized, CHANNELS_FIELD, &jchan);

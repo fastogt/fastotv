@@ -39,6 +39,10 @@ common::Error ServerInfo::SerializeImpl(serialize_type* deserialized) const {
 }
 
 common::Error ServerInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+  if (!serialized || !obj) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* jband = NULL;
   json_bool jband_exists = json_object_object_get_ex(serialized, BANDWIDTH_HOST_FIELD, &jband);
   ServerInfo inf;

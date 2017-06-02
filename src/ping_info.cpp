@@ -35,6 +35,10 @@ common::Error ServerPingInfo::SerializeImpl(serialize_type* deserialized) const 
 }
 
 common::Error ServerPingInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+  if (!serialized || !obj) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* jtimestamp = NULL;
   json_bool jtimestamp_exists =
       json_object_object_get_ex(serialized, SERVER_INFO_TIMESTAMP_FIELD, &jtimestamp);
@@ -61,6 +65,10 @@ common::Error ClientPingInfo::SerializeImpl(serialize_type* deserialized) const 
 }
 
 common::Error ClientPingInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+  if (!serialized || !obj) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* jtimestamp = NULL;
   json_bool jtimestamp_exists =
       json_object_object_get_ex(serialized, CLIENT_INFO_TIMESTAMP_FIELD, &jtimestamp);

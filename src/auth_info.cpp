@@ -52,6 +52,10 @@ common::Error AuthInfo::SerializeImpl(serialize_type* deserialized) const {
 }
 
 common::Error AuthInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+  if (!serialized || !obj) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, AUTH_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {

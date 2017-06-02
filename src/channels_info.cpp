@@ -64,6 +64,10 @@ common::Error ChannelsInfo::SerializeImpl(serialize_type* deserialized) const {
 }
 
 common::Error ChannelsInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+  if (!serialized || !obj) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
   channels_t chan;
   int len = json_object_array_length(serialized);
   for (int i = 0; i < len; ++i) {

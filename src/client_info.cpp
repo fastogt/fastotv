@@ -69,8 +69,11 @@ common::Error ClientInfo::SerializeImpl(serialize_type* deserialized) const {
 }
 
 common::Error ClientInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
-  ClientInfo inf;
+  if (!serialized || !obj) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
 
+  ClientInfo inf;
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, CLIENT_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
