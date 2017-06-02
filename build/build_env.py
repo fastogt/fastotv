@@ -67,6 +67,7 @@ class SupportedDevice(metaclass=ABCMeta):
         pass
 
 
+# PC
 class PcDevice(SupportedDevice):
     def __init__(self):
         SupportedDevice.__init__(self, 'pc', {'linux': [
@@ -78,6 +79,29 @@ class PcDevice(SupportedDevice):
         return
 
 
+# Raspberry Pi
+class RaspberryPiDevice(SupportedDevice):
+    def __init__(self):
+        SupportedDevice.__init__(self, 'pc', {'linux': [
+            'libgl1-mesa-devel',  # redhat
+            'libgl1-mesa-dev'  # raspbian
+        ]}, utils.CompileInfo([], []), utils.CompileInfo([], []))
+
+    def install_specific(self):
+        return
+
+
+class RaspberryPi1ModelB(RaspberryPiDevice):
+    def __init__(self):
+        RaspberryPiDevice.__init__(self, 'raspberry-pi-model-b')
+
+
+class RaspberryPi1ModelBPlus(RaspberryPiDevice):  # armv6l
+    def __init__(self):
+        RaspberryPiDevice.__init__(self, 'raspberry-pi-model-b+')
+
+
+# Orange Pi
 class OrangePiDevice(SupportedDevice):
     def __init__(self, name):
         SupportedDevice.__init__(self, name,
@@ -93,26 +117,35 @@ class OrangePiDevice(SupportedDevice):
         orange_pi.install_orange_pi()
 
 
-class OrangePiOne(OrangePiDevice):
+class OrangePiOne(OrangePiDevice):  # armv7l
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-one')
 
 
-class OrangePiLite(OrangePiDevice):
+class OrangePiLite(OrangePiDevice):  # armv7l
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-lite')
         linux_libs = self.system_platform_libs_.get('linux')
         linux_libs.extend(['liblircclient-dev'])
 
 
-class OrangePiPC2(OrangePiDevice):
+class OrangePiPC(OrangePiDevice):  # armv7l
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-pc2')
+        OrangePiDevice.__init__(self, 'orange-pi-pc')
         linux_libs = self.system_platform_libs_.get('linux')
         linux_libs.extend(['liblircclient-dev'])
 
 
-SUPPORTED_DEVICES = [PcDevice(), OrangePiOne(), OrangePiLite(), OrangePiPC2()]
+class OrangePiPlus2(OrangePiDevice):  # armv7l
+    def __init__(self):
+        OrangePiDevice.__init__(self, 'orange-pi-pc')
+        linux_libs = self.system_platform_libs_.get('linux')
+        linux_libs.extend(['liblircclient-dev'])
+
+
+SUPPORTED_DEVICES = [PcDevice(),
+                     RaspberryPi1ModelB(), RaspberryPi1ModelBPlus(),
+                     OrangePiOne(), OrangePiLite(), OrangePiPC(), OrangePiPlus2()]
 
 
 def get_device() -> SupportedDevice:
