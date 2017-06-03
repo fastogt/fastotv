@@ -19,8 +19,9 @@
 #include "client/cmdutils.h"
 
 #ifdef _WIN32
-#include <winbase.h>
 #include <windef.h>
+
+#include <winbase.h>
 #endif
 
 #include <errno.h>   // for EINVAL, ENOMEM, ENOSYS
@@ -176,9 +177,8 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
                                                    indent);                                       \
           warned_cfg = true;                                                                      \
         }                                                                                         \
-        RUNTIME_LOG(level) << indent                                                              \
-                           << common::MemSPrintf("%s%-11s configuration: %s", indent, #libname,   \
-                                                 cfg);                                            \
+        RUNTIME_LOG(level) << indent << common::MemSPrintf("%s%-11s configuration: %s", indent,   \
+                                                           #libname, cfg);                        \
       }                                                                                           \
     }                                                                                             \
   }
@@ -294,11 +294,10 @@ void print_codecs(bool encoder) {
 void show_formats_devices(bool device_only) {
   AVInputFormat* ifmt = NULL;
   AVOutputFormat* ofmt = NULL;
-  std::cout << (device_only ? "Devices:" : "File formats:")
-            << "\n"
-               " D. = Demuxing supported\n"
-               " .E = Muxing supported\n"
-               " --"
+  std::cout << (device_only ? "Devices:" : "File formats:") << "\n"
+                                                               " D. = Demuxing supported\n"
+                                                               " .E = Muxing supported\n"
+                                                               " --"
             << std::endl;
 
   const char* last_name = "000";
