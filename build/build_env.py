@@ -85,7 +85,10 @@ class RaspberryPiDevice(SupportedDevice):
         SupportedDevice.__init__(self, name, {'linux': [
             'libgl1-mesa-devel',  # redhat
             'libgl1-mesa-dev'  # raspbian
-        ]}, utils.CompileInfo([], []), utils.CompileInfo([], []))
+        ]}, utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
+                                   '--enable-video-opengles2']),
+                                 utils.CompileInfo([], ['--enable-mmal', '--enable-omx', '--enable-omx-rpi',
+                                                        '--enable-decoder=h264_mmal']))
 
     def install_specific(self):
         return
@@ -260,7 +263,7 @@ class BuildRequest(object):
 
     def build_ffmpeg(self, version):
         ffmpeg_platform_args = ['--disable-doc',
-                                '--disable-programs', '--enable-openssl',
+                                '--disable-programs',  # '--enable-openssl',
                                 '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
