@@ -200,12 +200,14 @@ ELSEIF(OS_LINUX)
   # openmax
   FIND_LIBRARY(OPENMAXIL_LIBRARY
     NAMES openmaxil
-    DOC "Path to OpenMAX IL Library"
-    PATHS /opt/vc/lib)
+    DOC "Path to OpenMAX IL library"
+    PATHS /opt/vc/lib
+  )
   FIND_PATH(OPENMAXIL_INCLUDE_DIR
     NAMES OMX_Core.h
     DOC "Openmax include directory"
-  PATHS /opt/vc/include /opt/vc/include/IL)
+    PATHS /opt/vc/include /opt/vc/include/IL
+  )
   IF(OPENMAXIL_LIBRARY AND OPENMAXIL_INCLUDE_DIR)
     SET(CONFIG_OMX 1)
     SET(DEPENDENS_LIBRARIES ${DEPENDENS_LIBRARIES} ${OPENMAXIL_LIBRARY})
@@ -215,17 +217,47 @@ ELSEIF(OS_LINUX)
   # broadcom
   FIND_LIBRARY(BCM_HOST_LIBRARY
     NAMES bcm_host
-    DOC "Path to Broadcom Host Library"
-    PATHS /opt/vc/lib)
+    DOC "Path to Broadcom host library"
+    PATHS /opt/vc/lib
+  )
   FIND_PATH(BROADCOM_INCLUDE_DIR
     NAMES bcm_host.h
     DOC "Broadcom include directory"
-    PATHS /opt/vc/include)
-  IF(OPENMAXIL_LIBRARY AND BROADCOM_INCLUDE_DIR)
+    PATHS /opt/vc/include
+  )
+  IF(BCM_HOST_LIBRARY AND BROADCOM_INCLUDE_DIR)
     SET(CONFIG_OMX_RPI 1)
     SET(DEPENDENS_LIBRARIES ${DEPENDENS_LIBRARIES} ${BCM_HOST_LIBRARY})
     SET(DEPENDENS_INCLUDE_DIRS ${DEPENDENS_INCLUDE_DIRS} ${BROADCOM_INCLUDE_DIR})
-  ENDIF(OPENMAXIL_LIBRARY AND BROADCOM_INCLUDE_DIR)
+
+    # broadcom mmal
+    FIND_LIBRARY(MMAL_CORE_LIBRARY
+      NAMES mmal_core
+      DOC "Path to Broadcom mmal core library"
+      PATHS /opt/vc/lib
+    )
+    IF(MMAL_CORE_LIBRARY)
+      SET(DEPENDENS_LIBRARIES ${DEPENDENS_LIBRARIES} ${MMAL_CORE_LIBRARY})
+    ENDIF(MMAL_CORE_LIBRARY)
+
+    FIND_LIBRARY(MMAL_UTIL_LIBRARY
+      NAMES mmal_util
+      DOC "Path to Broadcom mmal util library"
+      PATHS /opt/vc/lib
+    )
+    IF(MMAL_UTIL_LIBRARY)
+      SET(DEPENDENS_LIBRARIES ${DEPENDENS_LIBRARIES} ${MMAL_UTIL_LIBRARY})
+    ENDIF(MMAL_UTIL_LIBRARY)
+
+    FIND_LIBRARY(MMAL_VC_CLIENT_LIBRARY
+      NAMES lmmal_vc_client
+      DOC "Path to Broadcom mmal vc client library"
+      PATHS /opt/vc/lib
+    )
+    IF(MMAL_VC_CLIENT_LIBRARY)
+      SET(DEPENDENS_LIBRARIES ${DEPENDENS_LIBRARIES} ${MMAL_VC_CLIENT_LIBRARY})
+    ENDIF(MMAL_VC_CLIENT_LIBRARY)
+  ENDIF(BCM_HOST_LIBRARY AND BROADCOM_INCLUDE_DIR)
 
   PKG_CHECK_MODULES(VDPAU vdpau)
   IF(VDPAU_FOUND)
