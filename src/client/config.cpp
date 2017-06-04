@@ -183,8 +183,7 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_LOWRES_FIELD)) {
     int lowres;
-    if (parse_number(value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(),
-                     &lowres)) {
+    if (parse_number(value, std::numeric_limits<int>::min(), std::numeric_limits<int>::max(), &lowres)) {
       pconfig->app_options.lowres = lowres;
     }
     return 1;
@@ -305,10 +304,8 @@ common::Error load_config_file(const std::string& config_absolute_path, TVConfig
 
   std::string copy_config_absolute_path = config_absolute_path;
   if (!common::file_system::is_file_exist(config_absolute_path)) {
-    const std::string absolute_source_dir =
-        common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
-    copy_config_absolute_path =
-        common::file_system::make_path(absolute_source_dir, CONFIG_FILE_PATH_RELATIVE);
+    const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+    copy_config_absolute_path = common::file_system::make_path(absolute_source_dir, CONFIG_FILE_PATH_RELATIVE);
   }
 
   const char* copy_config_absolute_path_ptr = common::utils::c_strornull(copy_config_absolute_path);
@@ -345,57 +342,43 @@ common::Error save_config_file(const std::string& config_absolute_path, TVConfig
                                  common::ConvertToString(options->app_options.fast));
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_GENPTS_FIELD "=%s\n",
                                  common::ConvertToString(options->app_options.genpts));
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_LOWRES_FIELD "=%d\n",
-                                 options->app_options.lowres);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_LOWRES_FIELD "=%d\n", options->app_options.lowres);
   config_save_file.WriteFormated(
       CONFIG_APP_OPTIONS_SYNC_FIELD "=%s\n",
-      options->app_options.av_sync_type == fasto::fastotv::client::core::AV_SYNC_AUDIO_MASTER
-          ? "audio"
-          : "video");
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_FRAMEDROP_FIELD "=%d\n",
-                                 options->app_options.framedrop);
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_BYTES_FIELD "=%d\n",
-                                 options->app_options.seek_by_bytes);
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_INFBUF_FIELD "=%d\n",
-                                 options->app_options.infinite_buffer);
+      options->app_options.av_sync_type == fasto::fastotv::client::core::AV_SYNC_AUDIO_MASTER ? "audio" : "video");
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_FRAMEDROP_FIELD "=%d\n", options->app_options.framedrop);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_BYTES_FIELD "=%d\n", options->app_options.seek_by_bytes);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_INFBUF_FIELD "=%d\n", options->app_options.infinite_buffer);
 
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VN_FIELD "=%s\n",
                                  common::ConvertToString(options->app_options.disable_video));
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_AN_FIELD "=%s\n",
                                  common::ConvertToString(options->app_options.disable_audio));
 #if CONFIG_AVFILTER
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VF_FIELD "=%s\n",
-                                 options->app_options.vfilters);
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_AF_FIELD "=%s\n",
-                                 options->app_options.afilters);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VF_FIELD "=%s\n", options->app_options.vfilters);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_AF_FIELD "=%s\n", options->app_options.afilters);
 #endif
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_ACODEC_FIELD "=%s\n",
-                                 options->app_options.audio_codec_name);
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VCODEC_FIELD "=%s\n",
-                                 options->app_options.video_codec_name);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_ACODEC_FIELD "=%s\n", options->app_options.audio_codec_name);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VCODEC_FIELD "=%s\n", options->app_options.video_codec_name);
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_HWACCEL_FIELD "=%s\n",
                                  common::ConvertToString(options->app_options.hwaccel_id));
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_HWACCEL_DEVICE_FIELD "=%s\n",
-                                 options->app_options.hwaccel_device);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_HWACCEL_DEVICE_FIELD "=%s\n", options->app_options.hwaccel_device);
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_HWACCEL_OUTPUT_FORMAT_FIELD "=%s\n",
                                  options->app_options.hwaccel_output_format);
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_AUTOROTATE_FIELD "=%s\n",
                                  common::ConvertToString(options->app_options.autorotate));
 
   config_save_file.Write("[" CONFIG_PLAYER_OPTIONS "]\n");
-  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_WIDTH_FIELD "=%d\n",
-                                 options->player_options.screen_size.width);
+  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_WIDTH_FIELD "=%d\n", options->player_options.screen_size.width);
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD "=%d\n",
                                  options->player_options.screen_size.height);
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD "=%s\n",
                                  common::ConvertToString(options->player_options.is_full_screen));
-  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "=%d\n",
-                                 options->player_options.audio_volume);
+  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "=%d\n", options->player_options.audio_volume);
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD "=%s\n",
                                  common::ConvertToString(options->player_options.exit_on_keydown));
-  config_save_file.WriteFormated(
-      CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "=%s\n",
-      common::ConvertToString(options->player_options.exit_on_mousedown));
+  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "=%s\n",
+                                 common::ConvertToString(options->player_options.exit_on_mousedown));
 
   config_save_file.Close();
   return common::Error();

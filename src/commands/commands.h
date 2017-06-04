@@ -35,10 +35,8 @@
 
 #define GENERATE_REQUEST_FMT(CMD) "%" CID_FMT " %s " CMD END_OF_COMMAND
 
-#define GENEATATE_SUCCESS_FMT(CMD, CMD_FMT) \
-  "%" CID_FMT " %s " SUCCESS_COMMAND " " CMD " " CMD_FMT END_OF_COMMAND
-#define GENEATATE_FAIL_FMT(CMD, CMD_FMT) \
-  "%" CID_FMT " %s " FAIL_COMMAND " " CMD " " CMD_FMT END_OF_COMMAND
+#define GENEATATE_SUCCESS_FMT(CMD, CMD_FMT) "%" CID_FMT " %s " SUCCESS_COMMAND " " CMD " " CMD_FMT END_OF_COMMAND
+#define GENEATATE_FAIL_FMT(CMD, CMD_FMT) "%" CID_FMT " %s " FAIL_COMMAND " " CMD " " CMD_FMT END_OF_COMMAND
 
 #define REQUEST_COMMAND 0
 #define RESPONCE_COMMAND 1
@@ -72,10 +70,7 @@ typedef uint8_t cmd_id_t;
 std::string CmdIdToString(cmd_id_t id);
 
 common::Error StableCommand(const std::string& command, std::string* stabled_command);
-common::Error ParseCommand(const std::string& command,
-                           cmd_id_t* cmd_id,
-                           cmd_seq_t* seq_id,
-                           std::string* cmd_str);
+common::Error ParseCommand(const std::string& command, cmd_id_t* cmd_id, cmd_seq_t* seq_id, std::string* cmd_str);
 
 template <cmd_id_t cmd_id>
 class InnerCmd {

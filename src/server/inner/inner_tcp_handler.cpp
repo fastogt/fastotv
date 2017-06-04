@@ -53,8 +53,7 @@ InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent, const Config& confi
       config_(config) {
   handler_ = new InnerSubHandler(this);
   sub_commands_in_ = new RedisSub(handler_);
-  redis_subscribe_command_in_thread_ =
-      THREAD_MANAGER()->CreateThread(&RedisSub::Listen, sub_commands_in_);
+  redis_subscribe_command_in_thread_ = THREAD_MANAGER()->CreateThread(&RedisSub::Listen, sub_commands_in_);
 
   sub_commands_in_->SetConfig(config.server.redis);
   bool result = redis_subscribe_command_in_thread_->Start();
@@ -97,9 +96,8 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
           client->Close();
           delete client;
         } else {
-          INFO_LOG() << "Pinged to client[" << client->FormatedName() << "], from server["
-                     << server->FormatedName() << "], " << online_clients.size()
-                     << " client(s) connected.";
+          INFO_LOG() << "Pinged to client[" << client->FormatedName() << "], from server[" << server->FormatedName()
+                     << "], " << online_clients.size() << " client(s) connected.";
         }
       }
     }
@@ -169,8 +167,7 @@ void InnerTcpHandlerHost::PublishUserStateInfo(const UserStateInfo& state) {
   }
 }
 
-inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByID(
-    const std::string& login) const {
+inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByID(const std::string& login) const {
   return parent_->FindInnerConnectionByID(login);
 }
 
@@ -306,11 +303,10 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
   delete connection;
 }
 
-common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
-    fastotv::inner::InnerClient* connection,
-    cmd_seq_t id,
-    int argc,
-    char* argv[]) {
+common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
+                                                                      cmd_seq_t id,
+                                                                      int argc,
+                                                                      char* argv[]) {
   char* command = argv[1];
   if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
     json_object* obj = NULL;
@@ -440,11 +436,10 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
   return common::make_error_value(error_str, common::Value::E_ERROR);
 }
 
-common::Error InnerTcpHandlerHost::HandleInnerFailedResponceCommand(
-    fastotv::inner::InnerClient* connection,
-    cmd_seq_t id,
-    int argc,
-    char* argv[]) {
+common::Error InnerTcpHandlerHost::HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
+                                                                    cmd_seq_t id,
+                                                                    int argc,
+                                                                    char* argv[]) {
   UNUSED(connection);
   UNUSED(id);
   UNUSED(argc);
@@ -486,9 +481,7 @@ void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient*
   WARNING_LOG() << "UNKNOWN COMMAND: " << command;
 }
 
-common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc,
-                                                                 char* argv[],
-                                                                 json_object** out) {
+common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc, char* argv[], json_object** out) {
   if (argc < 2) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

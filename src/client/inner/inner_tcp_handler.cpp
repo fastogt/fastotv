@@ -81,8 +81,7 @@ void InnerTcpHandler::Moved(common::libev::IoLoop* server, common::libev::IoClie
 
 void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   if (client == inner_connection_) {
-    fasto::fastotv::inner::InnerClient* iclient =
-        static_cast<fasto::fastotv::inner::InnerClient*>(client);
+    fasto::fastotv::inner::InnerClient* iclient = static_cast<fasto::fastotv::inner::InnerClient*>(client);
     common::net::socket_info info = iclient->Info();
     common::net::HostAndPort host(info.host(), info.port());
     core::events::ConnectInfo cinf(host);
@@ -107,16 +106,14 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
     current_bandwidth_ = band;
   }
   core::events::BandwidtInfo cinf(host, band, hs);
-  core::events::BandwidthEstimationEvent* band_event =
-      new core::events::BandwidthEstimationEvent(this, cinf);
+  core::events::BandwidthEstimationEvent* band_event = new core::events::BandwidthEstimationEvent(this, cinf);
   fApp->PostEvent(band_event);
 }
 
 void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
   if (client == inner_connection_) {
     std::string buff;
-    fasto::fastotv::inner::InnerClient* iclient =
-        static_cast<fasto::fastotv::inner::InnerClient*>(client);
+    fasto::fastotv::inner::InnerClient* iclient = static_cast<fasto::fastotv::inner::InnerClient*>(client);
     common::Error err = iclient->ReadCommand(&buff);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
@@ -133,8 +130,7 @@ void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
   bandwidth::TcpBandwidthClient* band_client = static_cast<bandwidth::TcpBandwidthClient*>(client);
   char buff[bandwidth::TcpBandwidthClient::max_payload_len];
   size_t nwread;
-  common::Error err =
-      band_client->Read(buff, bandwidth::TcpBandwidthClient::max_payload_len, &nwread);
+  common::Error err = band_client->Read(buff, bandwidth::TcpBandwidthClient::max_payload_len, &nwread);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
     client->Close();
@@ -217,8 +213,7 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
     return;
   }
 
-  fasto::fastotv::inner::InnerClient* connection =
-      new fasto::fastotv::inner::InnerClient(server, client_info);
+  fasto::fastotv::inner::InnerClient* connection = new fasto::fastotv::inner::InnerClient(server, client_info);
   inner_connection_ = connection;
   server->RegisterClient(connection);
 }
@@ -232,11 +227,10 @@ void InnerTcpHandler::DisConnect(common::Error err) {
   }
 }
 
-common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(
-    common::libev::IoLoop* server,
-    const common::net::HostAndPort& host,
-    BandwidthHostType hs,
-    bandwidth::TcpBandwidthClient** out_band) {
+common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,
+                                                                  const common::net::HostAndPort& host,
+                                                                  BandwidthHostType hs,
+                                                                  bandwidth::TcpBandwidthClient** out_band) {
   if (!server || !out_band) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
@@ -247,8 +241,7 @@ common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(
     return err;
   }
 
-  bandwidth::TcpBandwidthClient* connection =
-      new bandwidth::TcpBandwidthClient(server, client_info, hs);
+  bandwidth::TcpBandwidthClient* connection = new bandwidth::TcpBandwidthClient(server, client_info, hs);
   err = connection->StartSession(0, 1000);
   if (err && err->IsError()) {
     connection->Close();
@@ -379,10 +372,8 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
       const char* failed_resp_command = argv[1];
       if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU_COMMAND)) {
-        common::Error err =
-            common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
-        auto ex_event =
-            make_exception_event(new core::events::ClientAuthorizedEvent(this, config_.ainf), err);
+        common::Error err = common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
+        auto ex_event = make_exception_event(new core::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO_COMMAND)) {
       }
@@ -393,11 +384,10 @@ void InnerTcpHandler::HandleInnerApproveCommand(fasto::fastotv::inner::InnerClie
   WARNING_LOG() << "UNKNOWN COMMAND: " << command;
 }
 
-common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
-    fastotv::inner::InnerClient* connection,
-    cmd_seq_t id,
-    int argc,
-    char* argv[]) {
+common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
+                                                                  cmd_seq_t id,
+                                                                  int argc,
+                                                                  char* argv[]) {
   char* command = argv[1];
   if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
     json_object* obj = NULL;
@@ -445,8 +435,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
       DEBUG_MSG_ERROR(err);
       core::events::BandwidtInfo cinf(host, 0, hs);
       current_bandwidth_ = 0;
-      auto ex_event =
-          make_exception_event(new core::events::BandwidthEstimationEvent(this, cinf), err);
+      auto ex_event = make_exception_event(new core::events::BandwidthEstimationEvent(this, cinf), err);
       fApp->PostEvent(ex_event);
       return err;
     }
@@ -481,11 +470,10 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(
   return common::make_error_value(error_str, common::Value::E_ERROR);
 }
 
-common::Error InnerTcpHandler::HandleInnerFailedResponceCommand(
-    fastotv::inner::InnerClient* connection,
-    cmd_seq_t id,
-    int argc,
-    char* argv[]) {
+common::Error InnerTcpHandler::HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
+                                                                cmd_seq_t id,
+                                                                int argc,
+                                                                char* argv[]) {
   UNUSED(connection);
   UNUSED(id);
   UNUSED(argc);
@@ -496,9 +484,7 @@ common::Error InnerTcpHandler::HandleInnerFailedResponceCommand(
   return common::make_error_value(error_str, common::Value::E_ERROR);
 }
 
-common::Error InnerTcpHandler::ParserResponceResponceCommand(int argc,
-                                                             char* argv[],
-                                                             json_object** out) {
+common::Error InnerTcpHandler::ParserResponceResponceCommand(int argc, char* argv[], json_object** out) {
   if (argc < 2) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

@@ -25,9 +25,7 @@ namespace core {
 namespace events {
 BandwidtInfo::BandwidtInfo() : host(), bandwidth(0), host_type(UNKNOWN_SERVER) {}
 
-BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host,
-                           bandwidth_t band,
-                           BandwidthHostType hs)
+BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandwidthHostType hs)
     : host(host), bandwidth(band), host_type(hs) {}
 
 ConnectInfo::ConnectInfo() {}

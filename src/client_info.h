@@ -38,8 +38,7 @@ class ClientInfo : public JsonSerializer<ClientInfo> {
 
   bool IsValid() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized,
-                                   value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
   login_t GetLogin() const;
   std::string GetOs() const;

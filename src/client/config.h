@@ -41,10 +41,8 @@ struct TVConfig {
   DISALLOW_COPY_AND_ASSIGN(TVConfig);
 };
 
-common::Error load_config_file(const std::string& config_absolute_path,
-                               TVConfig* options) WARN_UNUSED_RESULT;
-common::Error save_config_file(const std::string& config_absolute_path,
-                               TVConfig* options) WARN_UNUSED_RESULT;
+common::Error load_config_file(const std::string& config_absolute_path, TVConfig* options) WARN_UNUSED_RESULT;
+common::Error save_config_file(const std::string& config_absolute_path, TVConfig* options) WARN_UNUSED_RESULT;
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

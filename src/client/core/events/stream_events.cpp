@@ -26,8 +26,7 @@ namespace events {
 
 StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {}
 
-FrameInfo::FrameInfo(VideoState* stream, core::VideoFrame* frame)
-    : StreamInfo(stream), frame(frame) {}
+FrameInfo::FrameInfo(VideoState* stream, core::VideoFrame* frame) : StreamInfo(stream), frame(frame) {}
 
 QuitStreamInfo::QuitStreamInfo(VideoState* stream, int exit_code, common::Error err)
     : StreamInfo(stream), exit_code(exit_code), error(err) {}

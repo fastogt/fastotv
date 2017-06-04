@@ -23,8 +23,7 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-PacketQueue::PacketQueue()
-    : queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
+PacketQueue::PacketQueue() : queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
 
 int PacketQueue::PutNullpacket(int stream_index) {
   AVPacket pkt1, *pkt = &pkt1;

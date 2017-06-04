@@ -89,117 +89,78 @@ DesireBytesPerSec VideoBitrateAverage(bandwidth_t bytes_per_sec) {
   return DesireBytesPerSec(bytes_per_sec * 0.5, bytes_per_sec * 1.5);
 }
 
-DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_size,
-                                                          double framerate,
-                                                          int profile) {
+DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_size, double framerate, int profile) {
   // https://support.google.com/youtube/answer/2853702?hl=en
   // https://support.ustream.tv/hc/en-us/articles/207852117-Internet-connection-and-recommended-encoding-settings
   // https://support.google.com/youtube/answer/1722171?hl=en
   if (profile < PROFILE_H264_MAIN) {
     if (framerate <= 30.0) {
-      if (encoded_frame_size.width >= 3840 &&
-          encoded_frame_size.height >= 2160) {  // 2160p (4k) 40000 Kbps
+      if (encoded_frame_size.width >= 3840 && encoded_frame_size.height >= 2160) {  // 2160p (4k) 40000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(13000), KBITS_TO_BYTES(40000));
-      } else if (encoded_frame_size.width >= 2560 &&
-                 encoded_frame_size.height >= 1440) {  // 1440p (2k) 16000 Kbps
+      } else if (encoded_frame_size.width >= 2560 && encoded_frame_size.height >= 1440) {  // 1440p (2k) 16000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(6000), KBITS_TO_BYTES(16000));
-      } else if (encoded_frame_size.width >= 1920 &&
-                 encoded_frame_size.height >= 1080) {  // 1080p 8000 Kbps
+      } else if (encoded_frame_size.width >= 1920 && encoded_frame_size.height >= 1080) {  // 1080p 8000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(3000), KBITS_TO_BYTES(8000));
-      } else if (encoded_frame_size.width >= 1280 &&
-                 encoded_frame_size.height >= 720) {  // 720p 5000 Kbps
+      } else if (encoded_frame_size.width >= 1280 && encoded_frame_size.height >= 720) {  // 720p 5000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(1500), KBITS_TO_BYTES(5000));
-      } else if (encoded_frame_size.width >= 854 &&
-                 encoded_frame_size.height >= 480) {  // 480p 2500 Kbps
+      } else if (encoded_frame_size.width >= 854 && encoded_frame_size.height >= 480) {  // 480p 2500 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(500), KBITS_TO_BYTES(2500));
-      } else if (encoded_frame_size.width >= 640 &&
-                 encoded_frame_size.height >= 360) {  // 360p 1000 Kbps
+      } else if (encoded_frame_size.width >= 640 && encoded_frame_size.height >= 360) {  // 360p 1000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(400), KBITS_TO_BYTES(1000));
-      } else if (encoded_frame_size.width >= 426 &&
-                 encoded_frame_size.height >= 240) {  // 240p 600 Kbps
+      } else if (encoded_frame_size.width >= 426 && encoded_frame_size.height >= 240) {  // 240p 600 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(300), KBITS_TO_BYTES(700));
       }
     } else {
-      if (encoded_frame_size.width >= 3840 &&
-          encoded_frame_size.height >= 2160) {  // 2160p 60000 Kbps
+      if (encoded_frame_size.width >= 3840 && encoded_frame_size.height >= 2160) {  // 2160p 60000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(20000), KBITS_TO_BYTES(60000));
-      } else if (encoded_frame_size.width >= 2560 &&
-                 encoded_frame_size.height >= 1440) {  // 1440p 24000 Kbps
+      } else if (encoded_frame_size.width >= 2560 && encoded_frame_size.height >= 1440) {  // 1440p 24000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(9000), KBITS_TO_BYTES(24000));
-      } else if (encoded_frame_size.width >= 1920 &&
-                 encoded_frame_size.height >= 1080) {  // 1080p 12000 Kbps
+      } else if (encoded_frame_size.width >= 1920 && encoded_frame_size.height >= 1080) {  // 1080p 12000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(4500), KBITS_TO_BYTES(12000));
-      } else if (encoded_frame_size.width >= 1280 &&
-                 encoded_frame_size.height >= 720) {  // 720p 7500 Kbps
+      } else if (encoded_frame_size.width >= 1280 && encoded_frame_size.height >= 720) {  // 720p 7500 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(2250), KBITS_TO_BYTES(7500));
-      } else if (encoded_frame_size.width >= 854 &&
-                 encoded_frame_size.height >= 480) {  // 480p 4000 Kbps
+      } else if (encoded_frame_size.width >= 854 && encoded_frame_size.height >= 480) {  // 480p 4000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(1000), KBITS_TO_BYTES(4000));
-      } else if (encoded_frame_size.width >= 640 &&
-                 encoded_frame_size.height >= 360) {  // 360p 1500 Kbps
+      } else if (encoded_frame_size.width >= 640 && encoded_frame_size.height >= 360) {  // 360p 1500 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(600), KBITS_TO_BYTES(1500));
-      } else if (encoded_frame_size.width >= 426 &&
-                 encoded_frame_size.height >= 240) {  // 240p 900 Kbps
+      } else if (encoded_frame_size.width >= 426 && encoded_frame_size.height >= 240) {  // 240p 900 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(400), KBITS_TO_BYTES(900));
       }
     }
   } else if (profile <= PROFILE_H264_HIGH) {
     if (framerate <= 30.0) {
-      if (encoded_frame_size.width >= 3840 &&
-          encoded_frame_size.height >= 2160) {  // 2160p (4k) 40000 Kbps
+      if (encoded_frame_size.width >= 3840 && encoded_frame_size.height >= 2160) {  // 2160p (4k) 40000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(13000) * KOEF_BASE_TO_HIGHT,
                                  KBITS_TO_BYTES(40000) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 2560 &&
-                 encoded_frame_size.height >= 1440) {  // 1440p (2k) 16000 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(6000) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(16000) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 1920 &&
-                 encoded_frame_size.height >= 1080) {  // 1080p 12000 Kbps
+      } else if (encoded_frame_size.width >= 2560 && encoded_frame_size.height >= 1440) {  // 1440p (2k) 16000 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(6000) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(16000) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 1920 && encoded_frame_size.height >= 1080) {  // 1080p 12000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(3000), KBITS_TO_BYTES(12000));
-      } else if (encoded_frame_size.width >= 1280 &&
-                 encoded_frame_size.height >= 720) {  // 720p 6000 Kbps
+      } else if (encoded_frame_size.width >= 1280 && encoded_frame_size.height >= 720) {  // 720p 6000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(1000), KBITS_TO_BYTES(6000));
-      } else if (encoded_frame_size.width >= 854 &&
-                 encoded_frame_size.height >= 480) {  // 480p 2500 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(500) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(2500) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 640 &&
-                 encoded_frame_size.height >= 360) {  // 360p 2500 Kbps
+      } else if (encoded_frame_size.width >= 854 && encoded_frame_size.height >= 480) {  // 480p 2500 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(500) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(2500) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 640 && encoded_frame_size.height >= 360) {  // 360p 2500 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(600), KBITS_TO_BYTES(2500));
-      } else if (encoded_frame_size.width >= 426 &&
-                 encoded_frame_size.height >= 240) {  // 240p 600 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(300) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(700) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 426 && encoded_frame_size.height >= 240) {  // 240p 600 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(300) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(700) * KOEF_BASE_TO_HIGHT);
       }
     } else {
-      if (encoded_frame_size.width >= 3840 &&
-          encoded_frame_size.height >= 2160) {  // 2160p 60000 Kbps
+      if (encoded_frame_size.width >= 3840 && encoded_frame_size.height >= 2160) {  // 2160p 60000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(20000) * KOEF_BASE_TO_HIGHT,
                                  KBITS_TO_BYTES(60000) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 2560 &&
-                 encoded_frame_size.height >= 1440) {  // 1440p 24000 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(9000) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(24000) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 1920 &&
-                 encoded_frame_size.height >= 1080) {  // 1080p 12000 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(4500) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(12000) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 1280 &&
-                 encoded_frame_size.height >= 720) {  // 720p 7500 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(2250) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(7500) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 854 &&
-                 encoded_frame_size.height >= 480) {  // 480p 4000 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(1000) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(4000) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 640 &&
-                 encoded_frame_size.height >= 360) {  // 360p 1500 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(600) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(1500) * KOEF_BASE_TO_HIGHT);
-      } else if (encoded_frame_size.width >= 426 &&
-                 encoded_frame_size.height >= 240) {  // 240p 900 Kbps
-        return DesireBytesPerSec(KBITS_TO_BYTES(400) * KOEF_BASE_TO_HIGHT,
-                                 KBITS_TO_BYTES(900) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 2560 && encoded_frame_size.height >= 1440) {  // 1440p 24000 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(9000) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(24000) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 1920 && encoded_frame_size.height >= 1080) {  // 1080p 12000 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(4500) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(12000) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 1280 && encoded_frame_size.height >= 720) {  // 720p 7500 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(2250) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(7500) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 854 && encoded_frame_size.height >= 480) {  // 480p 4000 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(1000) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(4000) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 640 && encoded_frame_size.height >= 360) {  // 360p 1500 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(600) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(1500) * KOEF_BASE_TO_HIGHT);
+      } else if (encoded_frame_size.width >= 426 && encoded_frame_size.height >= 240) {  // 240p 900 Kbps
+        return DesireBytesPerSec(KBITS_TO_BYTES(400) * KOEF_BASE_TO_HIGHT, KBITS_TO_BYTES(900) * KOEF_BASE_TO_HIGHT);
       }
     }
   }

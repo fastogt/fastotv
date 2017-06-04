@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 from devices.orange_pi import orange_pi
 from pybuild_utils.base import system_info, utils
 
-# Script for building enviroment on clean machine
+# Script for building environment on clean machine
 
 # Known issues
 # For windows 32 please specify architecture 32
@@ -80,7 +80,7 @@ class PcDevice(SupportedDevice):
 
 
 # Raspberry Pi
-class RaspberryPiDevice(SupportedDevice):
+class RaspberryPiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': [
             'libgles2-mesa-devel', 'libgl1-mesa-devel',  # redhat
@@ -104,7 +104,7 @@ class RaspberryPi1ModelBPlus(RaspberryPiDevice):  # armv6l
 
 
 # Orange Pi
-class OrangePiDevice(SupportedDevice):
+class OrangePiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev', 'libgl1-mesa-dev',
@@ -119,26 +119,26 @@ class OrangePiDevice(SupportedDevice):
         orange_pi.install_orange_pi()
 
 
-class OrangePiOne(OrangePiDevice):  # armv7l
+class OrangePiOne(OrangePiDevice):  # armv7l, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-one')
 
 
-class OrangePiLite(OrangePiDevice):  # armv7l
+class OrangePiLite(OrangePiDevice):  # armv7l, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-lite')
         linux_libs = self.system_platform_libs_.get('linux')
         linux_libs.extend(['liblircclient-dev'])
 
 
-class OrangePiPC(OrangePiDevice):  # armv7l
+class OrangePiPC(OrangePiDevice):  # armv7l, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-pc')
         linux_libs = self.system_platform_libs_.get('linux')
         linux_libs.extend(['liblircclient-dev'])
 
 
-class OrangePiPlus2(OrangePiDevice):  # armv7l
+class OrangePiPlus2(OrangePiDevice):  # armv7l, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-plus2')
         linux_libs = self.system_platform_libs_.get('linux')
@@ -419,14 +419,15 @@ if __name__ == "__main__":
 
     argv = parser.parse_args()
 
-    platform_str = argv.platform
-    prefix_path = argv.prefix_path
-    architecture = argv.architecture
-    device = get_supported_device_by_name(argv.device)
-    if not device:
+    arg_platform = argv.platform
+    arg_prefix_path = argv.prefix_path
+    arg_architecture = argv.architecture
+    sup_device = get_supported_device_by_name(argv.device)
+    if not sup_device:
         raise utils.BuildError('invalid device')
 
-    request = BuildRequest(device, platform_str, architecture, 'build_' + platform_str + '_env', prefix_path)
+    request = BuildRequest(sup_device, arg_platform, arg_architecture, 'build_' + arg_platform + '_env',
+                           arg_prefix_path)
     if argv.with_system:
         request.install_system()
 

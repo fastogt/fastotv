@@ -92,8 +92,8 @@ bool parse_number(const std::string& number_str, T min, T max, T* result) {
   }
 
   if (lresult < min || lresult > max) {
-    WARNING_LOG() << "The value for " << number_str << " was " << lresult << " which is not within "
-                  << min << " - " << max;
+    WARNING_LOG() << "The value for " << number_str << " was " << lresult << " which is not within " << min << " - "
+                  << max;
     return false;
   }
 

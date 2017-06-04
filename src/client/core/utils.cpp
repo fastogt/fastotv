@@ -119,11 +119,9 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
       }
 
     if (av_opt_find(&cc, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ) || !codec ||
-        (codec->priv_class &&
-         av_opt_find(&codec->priv_class, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ))) {
+        (codec->priv_class && av_opt_find(&codec->priv_class, t->key, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ))) {
       av_dict_set(&ret, t->key, t->value, 0);
-    } else if (t->key[0] == prefix &&
-               av_opt_find(&cc, t->key + 1, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ)) {
+    } else if (t->key[0] == prefix && av_opt_find(&cc, t->key + 1, NULL, flags, AV_OPT_SEARCH_FAKE_OBJ)) {
       av_dict_set(&ret, t->key + 1, t->value, 0);
     }
 
@@ -146,8 +144,7 @@ AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* cod
   }
 
   for (unsigned int i = 0; i < s->nb_streams; i++) {
-    opts[i] =
-        filter_codec_opts(codec_opts, s->streams[i]->codecpar->codec_id, s, s->streams[i], NULL);
+    opts[i] = filter_codec_opts(codec_opts, s->streams[i]->codecpar->codec_id, s, s->streams[i], NULL);
   }
   return opts;
 }
@@ -274,8 +271,8 @@ int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
       ERROR_LOG() << "Negative linesize is not supported for YUV.";
       return -1;
     }
-    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1],
-                                frame->linesize[1], frame->data[2], frame->linesize[2]);
+    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1], frame->linesize[1],
+                                frame->data[2], frame->linesize[2]);
   } else if (frame->format == AV_PIX_FMT_BGRA) {
     if (frame->linesize[0] < 0) {
       return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
@@ -304,8 +301,7 @@ int audio_open(void* opaque,
     wanted_nb_channels = atoi(env);
     wanted_channel_layout = av_get_default_channel_layout(wanted_nb_channels);
   }
-  if (!wanted_channel_layout ||
-      wanted_nb_channels != av_get_channel_layout_nb_channels(wanted_channel_layout)) {
+  if (!wanted_channel_layout || wanted_nb_channels != av_get_channel_layout_nb_channels(wanted_channel_layout)) {
     wanted_channel_layout = av_get_default_channel_layout(wanted_nb_channels);
     wanted_channel_layout &= ~AV_CH_LAYOUT_STEREO_DOWNMIX;
   }
@@ -320,17 +316,15 @@ int audio_open(void* opaque,
     next_sample_rate_idx--;
   }
   wanted_spec.format = AUDIO_S16SYS;
-  const double samples_per_call =
-      static_cast<double>(wanted_spec.freq) / SDL_AUDIO_MAX_CALLBACKS_PER_SEC;
+  const double samples_per_call = static_cast<double>(wanted_spec.freq) / SDL_AUDIO_MAX_CALLBACKS_PER_SEC;
   const Uint16 audio_buff_size_calc = 2 << av_log2(samples_per_call);
   const Uint16 audio_buff_size = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE, audio_buff_size_calc);
-  wanted_spec.samples =
-      FFMAX(AUDIO_MIN_BUFFER_SIZE, audio_buff_size);  // Audio buffer size in samples
+  wanted_spec.samples = FFMAX(AUDIO_MIN_BUFFER_SIZE, audio_buff_size);  // Audio buffer size in samples
   wanted_spec.callback = cb;
   wanted_spec.userdata = opaque;
   while (SDL_OpenAudio(&wanted_spec, &spec) < 0) {
-    WARNING_LOG() << "SDL_OpenAudio (" << static_cast<int>(wanted_spec.channels) << " channels, "
-                  << wanted_spec.freq << " Hz): " << SDL_GetError();
+    WARNING_LOG() << "SDL_OpenAudio (" << static_cast<int>(wanted_spec.channels) << " channels, " << wanted_spec.freq
+                  << " Hz): " << SDL_GetError();
     wanted_spec.channels = next_nb_channels[FFMIN(7, wanted_spec.channels)];
     if (!wanted_spec.channels) {
       wanted_spec.freq = next_sample_rates[next_sample_rate_idx--];
@@ -364,10 +358,7 @@ int audio_open(void* opaque,
   return spec.size;
 }
 
-bool init_audio_params(int64_t wanted_channel_layout,
-                       int freq,
-                       int channels,
-                       struct AudioParams* audio_hw_params) {
+bool init_audio_params(int64_t wanted_channel_layout, int freq, int channels, struct AudioParams* audio_hw_params) {
   if (!audio_hw_params) {
     return false;
   }
@@ -377,10 +368,9 @@ bool init_audio_params(int64_t wanted_channel_layout,
   laudio_hw_params.freq = freq;
   laudio_hw_params.channel_layout = wanted_channel_layout;
   laudio_hw_params.channels = channels;
-  laudio_hw_params.frame_size =
-      av_samples_get_buffer_size(NULL, laudio_hw_params.channels, 1, laudio_hw_params.fmt, 1);
-  laudio_hw_params.bytes_per_sec = av_samples_get_buffer_size(
-      NULL, laudio_hw_params.channels, laudio_hw_params.freq, laudio_hw_params.fmt, 1);
+  laudio_hw_params.frame_size = av_samples_get_buffer_size(NULL, laudio_hw_params.channels, 1, laudio_hw_params.fmt, 1);
+  laudio_hw_params.bytes_per_sec =
+      av_samples_get_buffer_size(NULL, laudio_hw_params.channels, laudio_hw_params.freq, laudio_hw_params.fmt, 1);
   if (laudio_hw_params.bytes_per_sec <= 0 || laudio_hw_params.frame_size <= 0) {
     return false;
   }
@@ -390,8 +380,7 @@ bool init_audio_params(int64_t wanted_channel_layout,
 }
 
 bool is_realtime(AVFormatContext* s) {
-  if (!strcmp(s->iformat->name, "rtp") || !strcmp(s->iformat->name, "rtsp") ||
-      !strcmp(s->iformat->name, "sdp")) {
+  if (!strcmp(s->iformat->name, "rtp") || !strcmp(s->iformat->name, "rtsp") || !strcmp(s->iformat->name, "sdp")) {
     return true;
   }
 
@@ -401,10 +390,7 @@ bool is_realtime(AVFormatContext* s) {
   return false;
 }
 
-int cmp_audio_fmts(enum AVSampleFormat fmt1,
-                   int64_t channel_count1,
-                   enum AVSampleFormat fmt2,
-                   int64_t channel_count2) {
+int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1, enum AVSampleFormat fmt2, int64_t channel_count2) {
   /* If channel count == 1, planar and non-planar formats are the same */
   if (channel_count1 == 1 && channel_count2 == 1) {
     return av_get_packed_sample_fmt(fmt1) != av_get_packed_sample_fmt(fmt2);

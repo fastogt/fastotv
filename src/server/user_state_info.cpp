@@ -29,8 +29,7 @@ namespace server {
 
 UserStateInfo::UserStateInfo() : user_id_(), connected_(false) {}
 
-UserStateInfo::UserStateInfo(const user_id_t& uid, bool connected)
-    : user_id_(uid), connected_(connected) {}
+UserStateInfo::UserStateInfo(const user_id_t& uid, bool connected) : user_id_(uid), connected_(connected) {}
 
 user_id_t UserStateInfo::GetUserId() const {
   return user_id_;
@@ -66,8 +65,7 @@ common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, value
   }
 
   json_object* jcon = NULL;
-  json_bool jcon_exists =
-      json_object_object_get_ex(serialized, USER_STATE_INFO_CONNECTED_FIELD, &jcon);
+  json_bool jcon_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_CONNECTED_FIELD, &jcon);
   if (jcon_exists) {
     inf.connected_ = json_object_get_boolean(jcon);
   }

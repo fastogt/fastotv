@@ -36,8 +36,7 @@ namespace fasto {
 namespace fastotv {
 namespace inner {
 
-RequestCallback::RequestCallback(cmd_seq_t request_id, callback_t cb)
-    : request_id_(request_id), cb_(cb) {}
+RequestCallback::RequestCallback(cmd_seq_t request_id, callback_t cb) : request_id_(request_id), cb_(cb) {}
 
 cmd_seq_t RequestCallback::GetRequestID() const {
   return request_id_;
@@ -77,18 +76,16 @@ bool exec_reqest(RequestCallback req, cmd_seq_t request_id, int argc, char* argv
 }  // namespace
 
 void InnerServerCommandSeqParser::ProcessRequest(cmd_seq_t request_id, int argc, char* argv[]) {
-  subscribed_requests_.erase(
-      std::remove_if(subscribed_requests_.begin(), subscribed_requests_.end(),
-                     std::bind(&exec_reqest, std::placeholders::_1, request_id, argc, argv)),
-      subscribed_requests_.end());
+  subscribed_requests_.erase(std::remove_if(subscribed_requests_.begin(), subscribed_requests_.end(),
+                                            std::bind(&exec_reqest, std::placeholders::_1, request_id, argc, argv)),
+                             subscribed_requests_.end());
 }
 
 void InnerServerCommandSeqParser::SubscribeRequest(const RequestCallback& req) {
   subscribed_requests_.push_back(req);
 }
 
-void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connection,
-                                                          const std::string& input_command) {
+void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connection, const std::string& input_command) {
   cmd_id_t seq;
   cmd_seq_t id;
   std::string cmd_str;
@@ -112,8 +109,8 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   }
 
   ProcessRequest(id, argc, argv);
-  INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->FormatedName()
-             << "] seq: " << CmdIdToString(seq) << ", id:" << id << ", cmd: " << cmd_str;
+  INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->FormatedName() << "] seq: " << CmdIdToString(seq)
+             << ", id:" << id << ", cmd: " << cmd_str;
   if (seq == REQUEST_COMMAND) {
     HandleInnerRequestCommand(connection, id, argc, argv);
   } else if (seq == RESPONCE_COMMAND) {

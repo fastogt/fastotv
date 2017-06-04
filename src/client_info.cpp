@@ -32,8 +32,7 @@
 namespace fasto {
 namespace fastotv {
 
-ClientInfo::ClientInfo()
-    : login_(), os_(), cpu_brand_(), ram_total_(0), ram_free_(0), bandwidth_(0) {}
+ClientInfo::ClientInfo() : login_(), os_(), cpu_brand_(), ram_total_(0), ram_free_(0), bandwidth_(0) {}
 
 ClientInfo::ClientInfo(const login_t& login,
                        const std::string& os,
@@ -100,22 +99,19 @@ common::Error ClientInfo::DeSerialize(const serialize_type& serialized, value_ty
   }
 
   json_object* jram_total = NULL;
-  json_bool jram_total_exists =
-      json_object_object_get_ex(serialized, CLIENT_INFO_RAM_TOTAL_FIELD, &jram_total);
+  json_bool jram_total_exists = json_object_object_get_ex(serialized, CLIENT_INFO_RAM_TOTAL_FIELD, &jram_total);
   if (jram_total_exists) {
     inf.ram_total_ = json_object_get_int64(jram_total);
   }
 
   json_object* jram_free = NULL;
-  json_bool jram_free_exists =
-      json_object_object_get_ex(serialized, CLIENT_INFO_RAM_FREE_FIELD, &jram_free);
+  json_bool jram_free_exists = json_object_object_get_ex(serialized, CLIENT_INFO_RAM_FREE_FIELD, &jram_free);
   if (jram_free_exists) {
     inf.ram_free_ = json_object_get_int64(jram_free);
   }
 
   json_object* jband = NULL;
-  json_bool jband_exists =
-      json_object_object_get_ex(serialized, CLIENT_INFO_BANDWIDTH_FIELD, &jband);
+  json_bool jband_exists = json_object_object_get_ex(serialized, CLIENT_INFO_BANDWIDTH_FIELD, &jband);
   if (jband_exists) {
     inf.bandwidth_ = json_object_get_int64(jband);
   }

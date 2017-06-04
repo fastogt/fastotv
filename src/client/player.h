@@ -62,9 +62,7 @@ class Player : public core::VideoStateHandler {
  public:
   enum { footer_height = 50 };
   enum States { INIT_STATE, PLAYING_STATE };
-  Player(const PlayerOptions& options,
-         const core::AppOptions& opt,
-         const core::ComplexOptions& copt);
+  Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt);
   void SetFullScreen(bool full_screen);
   void SetMute(bool mute);
   void Mute();
@@ -82,10 +80,7 @@ class Player : public core::VideoStateHandler {
                                   int wanted_sample_rate,
                                   core::AudioParams* audio_hw_params,
                                   int* audio_buff_size) override;
-  virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
-                             const uint8_t* src,
-                             uint32_t len,
-                             int volume) override;
+  virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override;
 
   virtual bool HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
   virtual void HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) override;

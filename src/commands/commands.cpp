@@ -47,10 +47,7 @@ common::Error StableCommand(const std::string& command, std::string* stabled_com
   return common::Error();
 }
 
-common::Error ParseCommand(const std::string& command,
-                           cmd_id_t* cmd_id,
-                           cmd_seq_t* seq_id,
-                           std::string* cmd_str) {
+common::Error ParseCommand(const std::string& command, cmd_id_t* cmd_id, cmd_seq_t* seq_id, std::string* cmd_str) {
   if (command.empty() || !cmd_id || !seq_id || !cmd_str) {
     return common::make_error_value("Parse command, invalid input", common::Value::E_ERROR);
   }
@@ -64,8 +61,7 @@ common::Error ParseCommand(const std::string& command,
   char* star_seq = NULL;
   cmd_id_t lcmd_id = strtoul(stabled_command.c_str(), &star_seq, 10);
   if (*star_seq != ' ') {
-    return common::make_error_value("PROBLEM EXTRACTING SEQUENCE: " + command,
-                                    common::Value::E_ERROR);
+    return common::make_error_value("PROBLEM EXTRACTING SEQUENCE: " + command, common::Value::E_ERROR);
   }
 
   const char* id_ptr = strchr(star_seq + 1, ' ');

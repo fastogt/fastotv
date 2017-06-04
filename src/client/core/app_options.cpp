@@ -52,13 +52,9 @@ AppOptions::AppOptions()
 {
 }
 
-ComplexOptions::ComplexOptions()
-    : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {}
+ComplexOptions::ComplexOptions() : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {}
 
-ComplexOptions::ComplexOptions(AVDictionary* sws_d,
-                               AVDictionary* swr_o,
-                               AVDictionary* format_o,
-                               AVDictionary* codec_o)
+ComplexOptions::ComplexOptions(AVDictionary* sws_d, AVDictionary* swr_o, AVDictionary* format_o, AVDictionary* codec_o)
     : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {
   if (sws_dict) {
     av_dict_copy(&sws_dict, sws_d, 0);

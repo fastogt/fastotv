@@ -90,8 +90,7 @@ void avlog_cb(void*, int level, const char* sz_fmt, va_list varg) {
     return;
   }
 
-  static std::ostream& info_stream =
-      common::logging::LogMessage(common::logging::L_INFO, false).Stream();
+  static std::ostream& info_stream = common::logging::LogMessage(common::logging::L_INFO, false).Stream();
   info_stream << ret;
   free(ret);
 }
@@ -178,15 +177,13 @@ class FFmpegApplication : public B {
 };
 
 common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** argv) {
-  return new FFmpegApplication<fasto::fastotv::client::core::application::Sdl2Application>(argc,
-                                                                                           argv);
+  return new FFmpegApplication<fasto::fastotv::client::core::application::Sdl2Application>(argc, argv);
 }
 
 static int prepare_to_start(const std::string& app_directory_absolute_path,
                             const std::string& runtime_directory_absolute_path) {
   if (!common::file_system::is_directory_exist(app_directory_absolute_path)) {
-    common::ErrnoError err =
-        common::file_system::create_directory(app_directory_absolute_path, true);
+    common::ErrnoError err = common::file_system::create_directory(app_directory_absolute_path, true);
     if (err && err->IsError()) {
       std::cout << "Can't create app directory error:(" << err->Description()
                 << "), path: " << app_directory_absolute_path << std::endl;
@@ -196,14 +193,12 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
 
   common::ErrnoError err = common::file_system::node_access(app_directory_absolute_path);
   if (err && err->IsError()) {
-    std::cout << "Can't have permissions to app directory path: " << app_directory_absolute_path
-              << std::endl;
+    std::cout << "Can't have permissions to app directory path: " << app_directory_absolute_path << std::endl;
     return EXIT_FAILURE;
   }
 
   if (!common::file_system::is_directory_exist(runtime_directory_absolute_path)) {
-    common::ErrnoError err =
-        common::file_system::create_directory(runtime_directory_absolute_path, true);
+    common::ErrnoError err = common::file_system::create_directory(runtime_directory_absolute_path, true);
     if (err && err->IsError()) {
       std::cout << "Can't create runtime directory error:(" << err->Description()
                 << "), path: " << runtime_directory_absolute_path << std::endl;
@@ -213,8 +208,7 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
 
   err = common::file_system::node_access(runtime_directory_absolute_path);
   if (err && err->IsError()) {
-    std::cout << "Can't have permissions to runtime directory path: "
-              << runtime_directory_absolute_path << std::endl;
+    std::cout << "Can't have permissions to runtime directory path: " << runtime_directory_absolute_path << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -245,8 +239,7 @@ static int main_single_application(int argc,
   }
 
 #if defined(LOG_TO_FILE)
-  const std::string log_path =
-      common::file_system::make_path(app_directory_absolute_path, std::string(LOG_FILE_NAME));
+  const std::string log_path = common::file_system::make_path(app_directory_absolute_path, std::string(LOG_FILE_NAME));
   INIT_LOGGER(PROJECT_NAME_TITLE, log_path, main_options.loglevel);
 #else
   INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
@@ -254,15 +247,13 @@ static int main_single_application(int argc,
 
   common::application::Application app(argc, argv, &CreateApplicationImpl);
 
-  const std::string pid_absolute_path =
-      common::file_system::make_path(runtime_directory_absolute_path, PID_FILE_NAME);
+  const std::string pid_absolute_path = common::file_system::make_path(runtime_directory_absolute_path, PID_FILE_NAME);
   if (!common::file_system::is_valid_path(pid_absolute_path)) {
     ERROR_LOG() << "Can't get pid file path: " << pid_absolute_path;
     return EXIT_FAILURE;
   }
 
-  const uint32_t fl =
-      common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE;
+  const uint32_t fl = common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE;
   common::file_system::File lock_pid_file;
   err = lock_pid_file.Open(pid_absolute_path, fl);
   if (err && err->IsError()) {
@@ -287,10 +278,10 @@ static int main_single_application(int argc,
   }
 
   DictionaryOptions* dict = main_options.dict;
-  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict,
-                                                    dict->format_opts, dict->codec_opts);
-  fasto::fastotv::client::Player* player = new fasto::fastotv::client::Player(
-      main_options.player_options, main_options.app_options, copt);
+  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
+                                                    dict->codec_opts);
+  fasto::fastotv::client::Player* player =
+      new fasto::fastotv::client::Player(main_options.player_options, main_options.app_options, copt);
   res = app.Exec();
   destroy(&player);
 
@@ -301,14 +292,12 @@ static int main_single_application(int argc,
 
   err = lock_pid_file.Close();
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't close pid file path: " << pid_absolute_path
-                  << ", error: " << err->Description();
+    WARNING_LOG() << "Can't close pid file path: " << pid_absolute_path << ", error: " << err->Description();
   }
 
   err = common::file_system::remove_file(pid_absolute_path);
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't remove file: " << pid_absolute_path
-                  << ", error: " << err->Description();
+    WARNING_LOG() << "Can't remove file: " << pid_absolute_path << ", error: " << err->Description();
   }
 
   // save config file
@@ -416,6 +405,5 @@ int main(int argc, char** argv) {
       common::file_system::is_absolute_path(app_directory_path)
           ? app_directory_path
           : common::file_system::absolute_path_from_relative(app_directory_path);
-  return main_single_application(argc, argv, app_directory_absolute_path,
-                                 runtime_directory_absolute_path);
+  return main_single_application(argc, argv, app_directory_absolute_path, runtime_directory_absolute_path);
 }

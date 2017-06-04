@@ -87,8 +87,7 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
 
   std::string password;
   json_object* jpassword = NULL;
-  json_bool jpassword_exists =
-      json_object_object_get_ex(serialized, USER_INFO_PASSWORD_FIELD, &jpassword);
+  json_bool jpassword_exists = json_object_object_get_ex(serialized, USER_INFO_PASSWORD_FIELD, &jpassword);
   if (!jpassword_exists) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }

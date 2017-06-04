@@ -120,17 +120,11 @@ int audio_open(void* opaque,
                struct AudioParams* audio_hw_params,
                SDL_AudioCallback cb);
 
-bool init_audio_params(int64_t wanted_channel_layout,
-                       int freq,
-                       int channels,
-                       struct AudioParams* audio_hw_params);
+bool init_audio_params(int64_t wanted_channel_layout, int freq, int channels, struct AudioParams* audio_hw_params);
 
 bool is_realtime(AVFormatContext* s);
 
-int cmp_audio_fmts(enum AVSampleFormat fmt1,
-                   int64_t channel_count1,
-                   enum AVSampleFormat fmt2,
-                   int64_t channel_count2);
+int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1, enum AVSampleFormat fmt2, int64_t channel_count2);
 
 }  // namespace core
 }  // namespace client

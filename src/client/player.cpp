@@ -80,14 +80,13 @@ bool CreateWindowFunc(Size window_size,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                         window_size.width, window_size.height, flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_size.width,
+                                         window_size.height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
     SDL_RendererInfo info;
-    lrenderer =
-        SDL_CreateRenderer(lwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    lrenderer = SDL_CreateRenderer(lwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (lrenderer) {
       if (!SDL_GetRendererInfo(lrenderer, &info)) {
         DEBUG_LOG() << "Initialized " << info.name << " renderer.";
@@ -120,9 +119,7 @@ PlayerOptions::PlayerOptions()
       screen_size(0, 0),
       audio_volume(volume) {}
 
-Player::Player(const PlayerOptions& options,
-               const core::AppOptions& opt,
-               const core::ComplexOptions& copt)
+Player::Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt)
     : options_(options),
       opt_(opt),
       copt_(copt),
@@ -227,8 +224,7 @@ void Player::HandleEvent(event_t* event) {
     core::events::AllocFrameEvent* avent = static_cast<core::events::AllocFrameEvent*>(event);
     HandleAllocFrameEvent(avent);
   } else if (event->GetEventType() == core::events::QuitStreamEvent::EventType) {
-    core::events::QuitStreamEvent* quit_stream_event =
-        static_cast<core::events::QuitStreamEvent*>(event);
+    core::events::QuitStreamEvent* quit_stream_event = static_cast<core::events::QuitStreamEvent*>(event);
     HandleQuitStreamEvent(quit_stream_event);
   } else if (event->GetEventType() == core::events::TimerEvent::EventType) {
     core::events::TimerEvent* tevent = static_cast<core::events::TimerEvent*>(event);
@@ -237,20 +233,16 @@ void Player::HandleEvent(event_t* event) {
     core::events::KeyPressEvent* key_press_event = static_cast<core::events::KeyPressEvent*>(event);
     HandleKeyPressEvent(key_press_event);
   } else if (event->GetEventType() == core::events::LircPressEvent::EventType) {
-    core::events::LircPressEvent* lirc_press_event =
-        static_cast<core::events::LircPressEvent*>(event);
+    core::events::LircPressEvent* lirc_press_event = static_cast<core::events::LircPressEvent*>(event);
     HandleLircPressEvent(lirc_press_event);
   } else if (event->GetEventType() == core::events::WindowResizeEvent::EventType) {
-    core::events::WindowResizeEvent* win_resize_event =
-        static_cast<core::events::WindowResizeEvent*>(event);
+    core::events::WindowResizeEvent* win_resize_event = static_cast<core::events::WindowResizeEvent*>(event);
     HandleWindowResizeEvent(win_resize_event);
   } else if (event->GetEventType() == core::events::WindowExposeEvent::EventType) {
-    core::events::WindowExposeEvent* win_expose =
-        static_cast<core::events::WindowExposeEvent*>(event);
+    core::events::WindowExposeEvent* win_expose = static_cast<core::events::WindowExposeEvent*>(event);
     HandleWindowExposeEvent(win_expose);
   } else if (event->GetEventType() == core::events::WindowCloseEvent::EventType) {
-    core::events::WindowCloseEvent* window_close =
-        static_cast<core::events::WindowCloseEvent*>(event);
+    core::events::WindowCloseEvent* window_close = static_cast<core::events::WindowCloseEvent*>(event);
     HandleWindowCloseEvent(window_close);
   } else if (event->GetEventType() == core::events::MouseMoveEvent::EventType) {
     core::events::MouseMoveEvent* mouse_move = static_cast<core::events::MouseMoveEvent*>(event);
@@ -262,32 +254,26 @@ void Player::HandleEvent(event_t* event) {
     core::events::QuitEvent* quit_event = static_cast<core::events::QuitEvent*>(event);
     HandleQuitEvent(quit_event);
   } else if (event->GetEventType() == core::events::ClientConnectedEvent::EventType) {
-    core::events::ClientConnectedEvent* connect_event =
-        static_cast<core::events::ClientConnectedEvent*>(event);
+    core::events::ClientConnectedEvent* connect_event = static_cast<core::events::ClientConnectedEvent*>(event);
     HandleClientConnectedEvent(connect_event);
   } else if (event->GetEventType() == core::events::ClientDisconnectedEvent::EventType) {
-    core::events::ClientDisconnectedEvent* disc_event =
-        static_cast<core::events::ClientDisconnectedEvent*>(event);
+    core::events::ClientDisconnectedEvent* disc_event = static_cast<core::events::ClientDisconnectedEvent*>(event);
     HandleClientDisconnectedEvent(disc_event);
   } else if (event->GetEventType() == core::events::ClientAuthorizedEvent::EventType) {
-    core::events::ClientAuthorizedEvent* auth_event =
-        static_cast<core::events::ClientAuthorizedEvent*>(event);
+    core::events::ClientAuthorizedEvent* auth_event = static_cast<core::events::ClientAuthorizedEvent*>(event);
     HandleClientAuthorizedEvent(auth_event);
   } else if (event->GetEventType() == core::events::ClientUnAuthorizedEvent::EventType) {
-    core::events::ClientUnAuthorizedEvent* unauth_event =
-        static_cast<core::events::ClientUnAuthorizedEvent*>(event);
+    core::events::ClientUnAuthorizedEvent* unauth_event = static_cast<core::events::ClientUnAuthorizedEvent*>(event);
     HandleClientUnAuthorizedEvent(unauth_event);
   } else if (event->GetEventType() == core::events::ClientConfigChangeEvent::EventType) {
     core::events::ClientConfigChangeEvent* conf_change_event =
         static_cast<core::events::ClientConfigChangeEvent*>(event);
     HandleClientConfigChangeEvent(conf_change_event);
   } else if (event->GetEventType() == core::events::ReceiveChannelsEvent::EventType) {
-    core::events::ReceiveChannelsEvent* channels_event =
-        static_cast<core::events::ReceiveChannelsEvent*>(event);
+    core::events::ReceiveChannelsEvent* channels_event = static_cast<core::events::ReceiveChannelsEvent*>(event);
     HandleReceiveChannelsEvent(channels_event);
   } else if (event->GetEventType() == core::events::BandwidthEstimationEvent::EventType) {
-    core::events::BandwidthEstimationEvent* band_event =
-        static_cast<core::events::BandwidthEstimationEvent*>(event);
+    core::events::BandwidthEstimationEvent* band_event = static_cast<core::events::BandwidthEstimationEvent*>(event);
     HandleBandwidthEstimationEvent(band_event);
   }
 }
@@ -303,8 +289,7 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
     //    static_cast<core::events::ClientConnectedEvent*>(event);
     SwitchToUnAuthorizeMode();
   } else if (event->GetEventType() == core::events::BandwidthEstimationEvent::EventType) {
-    core::events::BandwidthEstimationEvent* band_event =
-        static_cast<core::events::BandwidthEstimationEvent*>(event);
+    core::events::BandwidthEstimationEvent* band_event = static_cast<core::events::BandwidthEstimationEvent*>(event);
     HandleBandwidthEstimationEvent(band_event);
   }
 }
@@ -325,8 +310,8 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate,
-                             &laudio_hw_params, sdl_audio_callback);
+  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, &laudio_hw_params,
+                             sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -340,10 +325,7 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
   return true;
 }
 
-void Player::HanleAudioMix(uint8_t* audio_stream_ptr,
-                           const uint8_t* src,
-                           uint32_t len,
-                           int volume) {
+void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) {
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 
@@ -357,16 +339,14 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE,
-                     false) < 0) {
+  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                                           "to reduce the image size.";
     return false;
   }
 
@@ -379,10 +359,9 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height,
-                               frame->width, frame->height, frame->sar);
-  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL,
-                   frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
+  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
+                               frame->height, frame->sar);
+  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL, frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   DrawInfo();
   SDL_RenderPresent(renderer_);
@@ -399,8 +378,7 @@ bool Player::HandleRequestVideo(core::VideoState* stream) {
 
 void Player::HandleDefaultWindowSize(Size frame_size, AVRational sar) {
   SDL_Rect rect;
-  core::calculate_display_rect(&rect, 0, 0, INT_MAX, frame_size.height, frame_size.width,
-                               frame_size.height, sar);
+  core::calculate_display_rect(&rect, 0, 0, INT_MAX, frame_size.height, frame_size.width, frame_size.height, sar);
   options_.default_size.width = rect.w;
   options_.default_size.height = rect.h;
 }
@@ -430,12 +408,10 @@ void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
 void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
-    const std::string absolute_source_dir =
-        common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+    const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
     const std::string offline_channel_img_full_path =
         common::file_system::make_path(absolute_source_dir, IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
-    const char* offline_channel_img_full_path_ptr =
-        common::utils::c_strornull(offline_channel_img_full_path);
+    const char* offline_channel_img_full_path_ptr = common::utils::c_strornull(offline_channel_img_full_path);
     SDL_Surface* surface = NULL;
     common::Error err = IMG_LoadPNG(offline_channel_img_full_path_ptr, &surface);
     if (err && err->IsError()) {
@@ -446,8 +422,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
 
     const std::string connection_error_img_full_path =
         common::file_system::make_path(absolute_source_dir, IMG_CONNECTION_ERROR_PATH_RELATIVE);
-    const char* connection_error_img_full_path_ptr =
-        common::utils::c_strornull(connection_error_img_full_path);
+    const char* connection_error_img_full_path_ptr = common::utils::c_strornull(connection_error_img_full_path);
     SDL_Surface* surface2 = NULL;
     err = IMG_LoadPNG(connection_error_img_full_path_ptr, &surface2);
     if (err && err->IsError()) {
@@ -456,8 +431,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
       connection_error_texture_ = new TextureSaver(surface2);
     }
 
-    const std::string font_path =
-        common::file_system::make_path(absolute_source_dir, MAIN_FONT_PATH_RELATIVE);
+    const std::string font_path = common::file_system::make_path(absolute_source_dir, MAIN_FONT_PATH_RELATIVE);
     const char* font_path_ptr = common::utils::c_strornull(font_path);
     font_ = TTF_OpenFont(font_path_ptr, 24);
     if (!font_) {
@@ -816,14 +790,13 @@ int Player::ReallocTexture(SDL_Texture** texture,
                            bool init_texture) {
   Uint32 format;
   int access, w, h;
-  if (SDL_QueryTexture(*texture, &format, &access, &w, &h) < 0 || new_width != w ||
-      new_height != h || new_format != format) {
+  if (SDL_QueryTexture(*texture, &format, &access, &w, &h) < 0 || new_width != w || new_height != h ||
+      new_format != format) {
     SDL_DestroyTexture(*texture);
     *texture = NULL;
 
     SDL_Texture* ltexture = NULL;
-    common::Error err = CreateTexture(renderer_, new_format, new_width, new_height, blendmode,
-                                      init_texture, &ltexture);
+    common::Error err = CreateTexture(renderer_, new_format, new_width, new_height, blendmode, init_texture, &ltexture);
     if (err && err->IsError()) {
       DNOTREACHED();
       return ERROR_RESULT_VALUE;
@@ -959,8 +932,7 @@ void Player::DrawFooter() {
   static const SDL_Color text_color = {255, 255, 255, 0};
   SDL_Surface* text = TTF_RenderText_Solid(font_, footer_text.c_str(), text_color);
   const Rect footer_rect = GetFooterRect();
-  SDL_Rect dst = {footer_rect.w / 2 - text->w / 2,
-                  footer_rect.y + (footer_rect.h / 2 - text->h / 2), text->w, text->h};
+  SDL_Rect dst = {footer_rect.w / 2 - text->w / 2, footer_rect.y + (footer_rect.h / 2 - text->h / 2), text->w, text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
@@ -978,8 +950,7 @@ void Player::DrawVolume() {
 
   static const SDL_Color text_color = {255, 255, 255, 0};
   SDL_Surface* text = TTF_RenderText_Solid(font_, vol_str.c_str(), text_color);
-  SDL_Rect dst = {volume_rect.w / 2 - text->w / 2,
-                  volume_rect.y + (volume_rect.h / 2 - text->h / 2), text->w, text->h};
+  SDL_Rect dst = {volume_rect.w / 2 - text->w / 2, volume_rect.y + (volume_rect.h / 2 - text->h / 2), text->w, text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);

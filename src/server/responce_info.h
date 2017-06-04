@@ -37,8 +37,7 @@ class ResponceInfo : public JsonSerializer<ResponceInfo> {
                const std::string& command,
                const std::string& responce);
 
-  static common::Error DeSerialize(const serialize_type& serialized,
-                                   value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
   std::string GetRequestId() const;
   std::string GetState() const;

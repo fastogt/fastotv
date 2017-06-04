@@ -31,8 +31,7 @@ class ServerPingInfo : public JsonSerializer<ServerPingInfo> {
  public:
   ServerPingInfo();
 
-  static common::Error DeSerialize(const serialize_type& serialized,
-                                   value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
   timestamp_t GetTimeStamp() const;
 
@@ -47,8 +46,7 @@ class ClientPingInfo : public JsonSerializer<ClientPingInfo> {
  public:
   ClientPingInfo();
 
-  static common::Error DeSerialize(const serialize_type& serialized,
-                                   value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
   timestamp_t GetTimeStamp() const;
 

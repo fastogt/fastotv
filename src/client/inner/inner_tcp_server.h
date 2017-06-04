@@ -31,8 +31,7 @@ class InnerTcpServer : public common::libev::IoLoop {
   virtual const char* ClassName() const override;
 
  protected:
-  virtual common::libev::tcp::TcpClient* CreateClient(
-      const common::net::socket_info& info) override;
+  virtual common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner

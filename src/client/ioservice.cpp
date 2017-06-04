@@ -115,8 +115,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
 };
 }  // namespace
 
-IoService::IoService()
-    : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
+IoService::IoService() : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
 
 void IoService::Start() {
   ILoopController::Start();

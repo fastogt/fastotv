@@ -91,8 +91,7 @@ int ServerHost::Exec() {
 
   while (!stop_) {
     common::unique_lock<common::mutex> lock(stop_mutex_);
-    std::cv_status interrupt_status =
-        stop_cond_.wait_for(lock, std::chrono::seconds(timeout_seconds));
+    std::cv_status interrupt_status = stop_cond_.wait_for(lock, std::chrono::seconds(timeout_seconds));
     if (interrupt_status == std::cv_status::no_timeout) {  // if notify
       if (stop_) {
         break;

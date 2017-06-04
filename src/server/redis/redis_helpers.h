@@ -45,8 +45,7 @@ class RedisStorage {
   RedisStorage();
   void SetConfig(const redis_configuration_t& config);
 
-  common::Error FindUserAuth(const AuthInfo& user,
-                             user_id_t* uid) const WARN_UNUSED_RESULT;  // check password
+  common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;  // check password
   common::Error FindUser(const AuthInfo& user,
                          user_id_t* uid,
                          UserInfo* uinf) const WARN_UNUSED_RESULT;  // check password

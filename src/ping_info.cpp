@@ -40,8 +40,7 @@ common::Error ServerPingInfo::DeSerialize(const serialize_type& serialized, valu
   }
 
   json_object* jtimestamp = NULL;
-  json_bool jtimestamp_exists =
-      json_object_object_get_ex(serialized, SERVER_INFO_TIMESTAMP_FIELD, &jtimestamp);
+  json_bool jtimestamp_exists = json_object_object_get_ex(serialized, SERVER_INFO_TIMESTAMP_FIELD, &jtimestamp);
   ServerPingInfo inf;
   if (jtimestamp_exists) {
     inf.timestamp_ = json_object_get_int64(jtimestamp);
@@ -70,8 +69,7 @@ common::Error ClientPingInfo::DeSerialize(const serialize_type& serialized, valu
   }
 
   json_object* jtimestamp = NULL;
-  json_bool jtimestamp_exists =
-      json_object_object_get_ex(serialized, CLIENT_INFO_TIMESTAMP_FIELD, &jtimestamp);
+  json_bool jtimestamp_exists = json_object_object_get_ex(serialized, CLIENT_INFO_TIMESTAMP_FIELD, &jtimestamp);
   ClientPingInfo inf;
   if (jtimestamp_exists) {
     inf.timestamp_ = json_object_get_int64(jtimestamp);

@@ -58,21 +58,19 @@ class InnerServerCommandSeqParser {
  private:
   void ProcessRequest(cmd_seq_t request_id, int argc, char* argv[]);
 
-  virtual void HandleInnerRequestCommand(
-      InnerClient* connection,
-      cmd_seq_t id,
-      int argc,
-      char* argv[]) = 0;  // called when argv not NULL and argc > 0 , only responce
+  virtual void HandleInnerRequestCommand(InnerClient* connection,
+                                         cmd_seq_t id,
+                                         int argc,
+                                         char* argv[]) = 0;  // called when argv not NULL and argc > 0 , only responce
   virtual void HandleInnerResponceCommand(
       InnerClient* connection,
       cmd_seq_t id,
       int argc,
       char* argv[]) = 0;  // called when argv not NULL and argc > 0, only approve responce
-  virtual void HandleInnerApproveCommand(
-      InnerClient* connection,
-      cmd_seq_t id,
-      int argc,
-      char* argv[]) = 0;  // called when argv not NULL and argc > 0
+  virtual void HandleInnerApproveCommand(InnerClient* connection,
+                                         cmd_seq_t id,
+                                         int argc,
+                                         char* argv[]) = 0;  // called when argv not NULL and argc > 0
 
   common::atomic<id_t> id_;
   std::vector<RequestCallback> subscribed_requests_;

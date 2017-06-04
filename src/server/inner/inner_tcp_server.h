@@ -36,8 +36,7 @@ class InnerTcpServer : public common::libev::tcp::TcpServer {
   virtual const char* ClassName() const override;
 
  private:
-  virtual common::libev::tcp::TcpClient* CreateClient(
-      const common::net::socket_info& info) override;
+  virtual common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner

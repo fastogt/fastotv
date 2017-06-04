@@ -78,10 +78,7 @@ struct AppOptions {
 
 struct ComplexOptions {
   ComplexOptions();
-  ComplexOptions(AVDictionary* sws_dict,
-                 AVDictionary* swr_opts,
-                 AVDictionary* format_opts,
-                 AVDictionary* codec_opts);
+  ComplexOptions(AVDictionary* sws_dict, AVDictionary* swr_opts, AVDictionary* format_opts, AVDictionary* codec_opts);
 
   ~ComplexOptions();
   ComplexOptions(const ComplexOptions& other);

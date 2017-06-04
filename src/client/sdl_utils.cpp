@@ -28,8 +28,7 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
-TextureSaver::TextureSaver(SDL_Surface* surface)
-    : surface_(surface), texture_(NULL), renderer_(NULL) {}
+TextureSaver::TextureSaver(SDL_Surface* surface) : surface_(surface), texture_(NULL), renderer_(NULL) {}
 
 TextureSaver::~TextureSaver() {
   if (renderer_) {
@@ -72,8 +71,7 @@ common::Error CreateTexture(SDL_Renderer* renderer,
                             SDL_BlendMode blendmode,
                             bool init_texture,
                             SDL_Texture** texture_out) {
-  SDL_Texture* ltexture =
-      SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
+  SDL_Texture* ltexture = SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
   if (!ltexture) {
     return common::make_error_value("Couldn't allocate memory for texture", common::Value::E_ERROR);
   }
@@ -129,8 +127,7 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
   if (info_ptr == NULL) {
     png_destroy_read_struct(&png_ptr, NULL, NULL);
     fclose(fp);
-    return common::make_error_value("Couldn't create image information for PNG file",
-                                    common::Value::E_ERROR);
+    return common::make_error_value("Couldn't create image information for PNG file", common::Value::E_ERROR);
   }
 
 /* Set error handling if you are using setjmp/longjmp method (this is
@@ -159,8 +156,7 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
   png_color_16* transv;
   /* Read PNG header info */
   png_read_info(png_ptr, info_ptr);
-  png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL,
-               NULL);
+  png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
 
   /* tell libpng to strip 16 bit/color files down to 8 bits/color */
   png_set_strip_16(png_ptr);
@@ -212,8 +208,7 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
 
   png_read_update_info(png_ptr, info_ptr);
 
-  png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL,
-               NULL);
+  png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
 
   /* Allocate the SDL surface to hold the image */
   Uint32 Rmask = 0;
@@ -235,8 +230,8 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
     Amask = 0x000000FF >> s;
 #endif
   }
-  SDL_Surface* volatile surface = SDL_CreateRGBSurface(
-      SDL_SWSURFACE, width, height, bit_depth * num_channels, Rmask, Gmask, Bmask, Amask);
+  SDL_Surface* volatile surface =
+      SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, bit_depth * num_channels, Rmask, Gmask, Bmask, Amask);
   if (surface == NULL) {
     png_destroy_read_struct(&png_ptr, NULL, NULL);
     fclose(fp);
@@ -246,15 +241,13 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
   if (ckey != -1) {
     if (color_type != PNG_COLOR_TYPE_PALETTE) {
       /* FIXME: Should these be truncated or shifted down? */
-      ckey = SDL_MapRGB(surface->format, (Uint8)transv->red, (Uint8)transv->green,
-                        (Uint8)transv->blue);
+      ckey = SDL_MapRGB(surface->format, (Uint8)transv->red, (Uint8)transv->green, (Uint8)transv->blue);
     }
     SDL_SetColorKey(surface, SDL_TRUE, ckey);
   }
 
   /* Create the array of pointers to image data */
-  png_bytep* volatile row_pointers =
-      static_cast<png_bytep*>(SDL_malloc(sizeof(png_bytep) * height));
+  png_bytep* volatile row_pointers = static_cast<png_bytep*>(SDL_malloc(sizeof(png_bytep) * height));
   if (!row_pointers) {
     png_destroy_read_struct(&png_ptr, NULL, NULL);
     fclose(fp);

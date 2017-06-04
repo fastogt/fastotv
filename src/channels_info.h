@@ -33,8 +33,7 @@ class ChannelsInfo : public JsonSerializer<ChannelsInfo> {
   typedef std::vector<Url> channels_t;
   ChannelsInfo();
 
-  static common::Error DeSerialize(const serialize_type& serialized,
-                                   value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
   void AddChannel(const Url& channel);
   channels_t GetChannels() const;

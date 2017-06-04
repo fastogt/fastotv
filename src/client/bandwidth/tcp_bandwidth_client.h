@@ -32,9 +32,7 @@ class TcpBandwidthClient : public common::libev::tcp::TcpClient {
  public:
   typedef common::libev::tcp::TcpClient base_class;
   enum { max_payload_len = 1400 };
-  TcpBandwidthClient(common::libev::IoLoop* server,
-                     const common::net::socket_info& info,
-                     BandwidthHostType hs);
+  TcpBandwidthClient(common::libev::IoLoop* server, const common::net::socket_info& info, BandwidthHostType hs);
   const char* ClassName() const override;
 
   common::Error StartSession(uint16_t ms_betwen_send, common::time64_t duration) WARN_UNUSED_RESULT;

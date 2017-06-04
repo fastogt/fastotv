@@ -33,14 +33,12 @@ cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_tex
 // get_server_info
 cmd_request_t GetServerInfoRequest(cmd_seq_t id);
 cmd_approve_t GetServerInfoApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t GetServerInfoApproveResponceFail(cmd_seq_t id,
-                                               const std::string& error_text);  // escaped
+cmd_approve_t GetServerInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 
 // get_channels
 cmd_request_t GetChannelsRequest(cmd_seq_t id);
 cmd_approve_t GetChannelsApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id,
-                                             const std::string& error_text);  // escaped
+cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 
 // responces
 // who are you

@@ -53,9 +53,7 @@ void VideoFrame::ClearFrame() {
   av_frame_unref(frame);
 }
 
-clock_t VideoFrame::VpDuration(core::VideoFrame* vp,
-                               core::VideoFrame* nextvp,
-                               clock_t max_frame_duration) {
+clock_t VideoFrame::VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp, clock_t max_frame_duration) {
   clock_t duration = nextvp->pts - vp->pts;
   if (!IsValidClock(duration) || duration <= 0 || duration > max_frame_duration) {
     return vp->duration;

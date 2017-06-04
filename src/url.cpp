@@ -28,11 +28,7 @@ namespace fasto {
 namespace fastotv {
 Url::Url() : id_(invalid_stream_id), uri_(), name_(), enable_audio_(true), enable_video_(true) {}
 
-Url::Url(stream_id id,
-         const common::uri::Uri& uri,
-         const std::string& name,
-         bool enable_audio,
-         bool enable_video)
+Url::Url(stream_id id, const common::uri::Uri& uri, const std::string& name, bool enable_audio, bool enable_video)
     : id_(id), uri_(uri), name_(name), enable_audio_(enable_audio), enable_video_(enable_video) {}
 
 bool Url::IsValid() const {
@@ -114,16 +110,14 @@ common::Error Url::DeSerialize(const serialize_type& serialized, value_type* obj
 
   bool enable_audio = true;
   json_object* jenable_audio = NULL;
-  json_bool jenable_audio_exists =
-      json_object_object_get_ex(serialized, AUDIO_ENABLE_FIELD, &jenable_audio);
+  json_bool jenable_audio_exists = json_object_object_get_ex(serialized, AUDIO_ENABLE_FIELD, &jenable_audio);
   if (jenable_audio_exists) {
     enable_audio = json_object_get_boolean(jenable_audio);
   }
 
   bool enable_video = true;
   json_object* jdisable_video = NULL;
-  json_bool jdisable_video_exists =
-      json_object_object_get_ex(serialized, VIDEO_ENABLE_FIELD, &jdisable_video);
+  json_bool jdisable_video_exists = json_object_object_get_ex(serialized, VIDEO_ENABLE_FIELD, &jdisable_video);
   if (jdisable_video_exists) {
     enable_video = json_object_get_boolean(jdisable_video);
   }
@@ -138,8 +132,8 @@ common::Error Url::DeSerialize(const serialize_type& serialized, value_type* obj
 }
 
 bool Url::Equals(const Url& url) const {
-  return id_ == url.id_ && uri_ == url.uri_ && name_ == url.name_ &&
-         enable_audio_ == url.enable_audio_ && enable_video_ == url.enable_video_;
+  return id_ == url.id_ && uri_ == url.uri_ && name_ == url.name_ && enable_audio_ == url.enable_audio_ &&
+         enable_video_ == url.enable_video_;
 }
 }  // namespace fastotv
 }  // namespace fasto

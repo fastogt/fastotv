@@ -49,10 +49,7 @@ class VideoStateHandler : public core::events::EventListener {
                                   int wanted_sample_rate,
                                   core::AudioParams* audio_hw_params,
                                   int* audio_buff_size) = 0;
-  virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
-                             const uint8_t* src,
-                             uint32_t len,
-                             int volume) = 0;
+  virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) = 0;
 
   // video
   virtual bool HandleRequestVideo(VideoState* stream) = 0;

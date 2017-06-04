@@ -32,8 +32,7 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue)
-    : avctx_(avctx), queue_(queue), finished_(false) {
+Decoder::Decoder(AVCodecContext* avctx, PacketQueue* queue) : avctx_(avctx), queue_(queue), finished_(false) {
   CHECK(queue);
 }
 
@@ -133,8 +132,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
   return got_frame;
 }
 
-VideoDecoder::VideoDecoder(AVCodecContext* avctx, PacketQueue* queue)
-    : IFrameDecoder(avctx, queue) {
+VideoDecoder::VideoDecoder(AVCodecContext* avctx, PacketQueue* queue) : IFrameDecoder(avctx, queue) {
   CHECK(GetCodecType() == AVMEDIA_TYPE_VIDEO);
 }
 

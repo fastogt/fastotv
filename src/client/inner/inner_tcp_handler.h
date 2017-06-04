@@ -68,8 +68,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   common::Error CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,
                                                    const common::net::HostAndPort& host,
                                                    BandwidthHostType hs,
-                                                   bandwidth::TcpBandwidthClient** out_band)
-      WARN_UNUSED_RESULT;
+                                                   bandwidth::TcpBandwidthClient** out_band) WARN_UNUSED_RESULT;
 
   virtual void HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
@@ -94,9 +93,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
                                                  int argc,
                                                  char* argv[]) WARN_UNUSED_RESULT;
 
-  common::Error ParserResponceResponceCommand(int argc,
-                                              char* argv[],
-                                              json_object** out) WARN_UNUSED_RESULT;
+  common::Error ParserResponceResponceCommand(int argc, char* argv[], json_object** out) WARN_UNUSED_RESULT;
 
   fasto::fastotv::inner::InnerClient* inner_connection_;
   std::vector<bandwidth::TcpBandwidthClient*> bandwidth_requests_;

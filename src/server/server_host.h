@@ -50,16 +50,12 @@ class ServerHost {
   void Stop();
   int Exec();
 
-  common::Error UnRegisterInnerConnectionByHost(common::libev::IoClient* connection)
-      WARN_UNUSED_RESULT;
+  common::Error UnRegisterInnerConnectionByHost(common::libev::IoClient* connection) WARN_UNUSED_RESULT;
   common::Error RegisterInnerConnectionByUser(user_id_t user_id,
                                               const AuthInfo& user,
-                                              common::libev::IoClient* connection)
-      WARN_UNUSED_RESULT;
+                                              common::libev::IoClient* connection) WARN_UNUSED_RESULT;
   common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;
-  common::Error FindUser(const AuthInfo& auth,
-                         user_id_t* uid,
-                         UserInfo* uinf) const WARN_UNUSED_RESULT;
+  common::Error FindUser(const AuthInfo& auth, user_id_t* uid, UserInfo* uinf) const WARN_UNUSED_RESULT;
 
   inner::InnerTcpClient* FindInnerConnectionByID(user_id_t user_id) const;
 

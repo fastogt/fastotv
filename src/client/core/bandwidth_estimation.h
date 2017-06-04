@@ -36,9 +36,7 @@ DesireBytesPerSec CalculateDesireAACBandwidthBytesPerSec(int channels);
 DesireBytesPerSec CalculateDesireMP2BandwidthBytesPerSec(int channels);
 
 DesireBytesPerSec VideoBitrateAverage(bandwidth_t bytes_per_sec);
-DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_size,
-                                                          double framerate,
-                                                          int profile);
+DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_size, double framerate, int profile);
 DesireBytesPerSec CalculateDesireMPEGBandwidthBytesPerSec(Size encoded_frame_size);
 
 }  // namespace core

@@ -57,10 +57,9 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
     if (nread == 0) {
       return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
     }
-    return common::make_error_value(
-        common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
-                           sizeof(protocoled_size_t), nread),
-        common::ErrorValue::E_ERROR);
+    return common::make_error_value(common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
+                                                       sizeof(protocoled_size_t), nread),
+                                    common::ErrorValue::E_ERROR);
   }
 
   *sz = lsz;
@@ -83,8 +82,7 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
       return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
     }
     return common::make_error_value(
-        common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu", size,
-                           nread),
+        common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu", size, nread),
         common::ErrorValue::E_ERROR);
   }
 
@@ -133,8 +131,7 @@ common::Error InnerClient::WriteInner(const std::string& data) {
   if (nwrite != protocoled_data_len) {  // connection closed
     free(protocoled_data);
     return common::make_error_value(
-        common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu",
-                           protocoled_data_len, nwrite),
+        common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu", protocoled_data_len, nwrite),
         common::ErrorValue::E_ERROR);
   }
   free(protocoled_data);

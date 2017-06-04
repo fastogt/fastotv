@@ -39,12 +39,10 @@ InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) 
 
 InnerSubHandler::~InnerSubHandler() {}
 
-void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id,
-                                        int argc,
-                                        char* argv[]) {           // incoming responce
-  const char* state_command = argc > 0 ? argv[0] : FAIL_COMMAND;  // [OK|FAIL]
-  const char* command = argc > 1 ? argv[1] : "null";              // command
-  const std::string json = argc > 2 ? Decode(argv[2]) : "{}";     // encoded args
+void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {  // incoming responce
+  const char* state_command = argc > 0 ? argv[0] : FAIL_COMMAND;                         // [OK|FAIL]
+  const char* command = argc > 1 ? argv[1] : "null";                                     // command
+  const std::string json = argc > 2 ? Decode(argv[2]) : "{}";                            // encoded args
 
   ResponceInfo resp(request_id, state_command, command, json);
   PublishResponce(resp);
@@ -63,8 +61,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
 
   const user_id_t uid = msg.substr(0, space_pos);
   const std::string cmd = msg.substr(space_pos + 1);
-  const std::string input_command =
-      common::MemSPrintf(STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND, cmd);
+  const std::string input_command = common::MemSPrintf(STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND, cmd);
   cmd_id_t seq;
   cmd_seq_t id;
   std::string cmd_str;
@@ -118,8 +115,8 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  auto cb = std::bind(&InnerSubHandler::ProcessSubscribed, this, std::placeholders::_1,
-                      std::placeholders::_2, std::placeholders::_3);
+  auto cb = std::bind(&InnerSubHandler::ProcessSubscribed, this, std::placeholders::_1, std::placeholders::_2,
+                      std::placeholders::_3);
   fasto::fastotv::inner::RequestCallback rc(id, cb);
   parent_->SubscribeRequest(rc);
 }

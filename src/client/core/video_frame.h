@@ -57,9 +57,7 @@ struct VideoFrame {
   bool uploaded;
   bool flip_v;
 
-  static clock_t VpDuration(core::VideoFrame* vp,
-                            core::VideoFrame* nextvp,
-                            clock_t max_frame_duration);
+  static clock_t VpDuration(core::VideoFrame* vp, core::VideoFrame* nextvp, clock_t max_frame_duration);
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoFrame);
