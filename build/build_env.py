@@ -83,12 +83,11 @@ class PcDevice(SupportedDevice):
 class RaspberryPiDevice(SupportedDevice):
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': [
-            'libgl1-mesa-devel',  # redhat
-            'libgl1-mesa-dev'  # raspbian
+            'libgles2-mesa-devel', 'libgl1-mesa-devel',  # redhat
+            'libgles2-mesa-dev', 'libgl1-mesa-dev'  # raspbian
         ]}, utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
                                    '--enable-video-opengles2']),
-                                 utils.CompileInfo([], ['--enable-mmal', '--enable-omx', '--enable-omx-rpi',
-                                                        '--enable-decoder=h264_mmal']))
+                                 utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal']))
 
     def install_specific(self):
         return
@@ -110,7 +109,7 @@ class OrangePiDevice(SupportedDevice):
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev', 'libgl1-mesa-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy',
-                                            'libcedrus1-dev', 'libvdpau-dev']},
+                                            'libcedrus1-dev']},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
                                                    ['--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2']),
