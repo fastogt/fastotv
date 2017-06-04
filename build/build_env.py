@@ -87,7 +87,8 @@ class RaspberryPiDevice(SupportedDevice):  # gles2
             'libgles2-mesa-dev', 'libgl1-mesa-dev'  # raspbian
         ]}, utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
                                    '--enable-video-opengles2']),
-                                 utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal']))
+                                 utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
+                                                        '--enable-omx-rpi']))
 
     def install_specific(self):
         return
