@@ -250,7 +250,7 @@ ELSEIF(OS_LINUX)
     ENDIF(MMAL_UTIL_LIBRARY)
 
     FIND_LIBRARY(MMAL_VC_CLIENT_LIBRARY
-      NAMES lmmal_vc_client
+      NAMES mmal_vc_client
       DOC "Path to Broadcom mmal vc client library"
       PATHS /opt/vc/lib
     )
