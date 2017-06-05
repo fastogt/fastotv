@@ -153,7 +153,7 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
   int bit_depth, color_type, interlace_type;
   SDL_Palette* palette;
   int ckey = -1;
-  png_color_16* transv;
+  png_color_16* transv = NULL;
   /* Read PNG header info */
   png_read_info(png_ptr, info_ptr);
   png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, &interlace_type, NULL, NULL);
@@ -167,8 +167,9 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
   png_set_packing(png_ptr);
 
   /* scale greyscale values to the range 0..255 */
-  if (color_type == PNG_COLOR_TYPE_GRAY)
+  if (color_type == PNG_COLOR_TYPE_GRAY) {
     png_set_expand(png_ptr);
+  }
 
   /* For images with a single "transparent colour", set colour key;
      if more than one index has transparency, or if partially transparent
@@ -241,7 +242,8 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
   if (ckey != -1) {
     if (color_type != PNG_COLOR_TYPE_PALETTE) {
       /* FIXME: Should these be truncated or shifted down? */
-      ckey = SDL_MapRGB(surface->format, (Uint8)transv->red, (Uint8)transv->green, (Uint8)transv->blue);
+      ckey = SDL_MapRGB(surface->format, static_cast<Uint8>(transv->red), static_cast<Uint8>(transv->green),
+                        static_cast<Uint8>(transv->blue));
     }
     SDL_SetColorKey(surface, SDL_TRUE, ckey);
   }
