@@ -68,9 +68,6 @@ extern "C" {
 #include <libswresample/version.h>     // for LIBSWRESAMPLE_VERSION_MAJOR, etc
 #include <libswscale/swscale.h>        // for sws_alloc_context, etc
 #include <libswscale/version.h>        // for LIBSWSCALE_VERSION_MAJOR, etc
-#if CONFIG_NETWORK
-#include <libavformat/network.h>
-#endif
 }
 
 #include <common/log_levels.h>  // for LEVEL_LOG::L_INFO, etc

@@ -4,16 +4,9 @@
 #cmakedefine01 CONFIG_AVDEVICE
 #cmakedefine01 CONFIG_AVUTIL
 #cmakedefine01 CONFIG_AVCODEC
-#cmakedefine01 CONFIG_OPENCL
 #cmakedefine01 CONFIG_AVFORMAT
 #cmakedefine01 CONFIG_SWSCALE
 #cmakedefine01 CONFIG_SWRESAMPLE
-#cmakedefine01 CONFIG_AVRESAMPLE
-#cmakedefine01 CONFIG_POSTPROC
-#cmakedefine01 CONFIG_NETWORK
-
-#cmakedefine01 HAVE_SYS_RESOURCE_H
-#cmakedefine01 HAVE_COMMANDLINETOARGVW
 
 #cmakedefine01 CONFIG_DXVA2
 #cmakedefine01 HAVE_DXVA2_LIB
