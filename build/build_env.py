@@ -7,6 +7,7 @@ import sys
 from abc import ABCMeta, abstractmethod
 
 from devices.orange_pi import orange_pi
+from devices.raspberry_pi import raspberry_pi
 from pybuild_utils.base import system_info, utils
 
 # Script for building environment on clean machine
@@ -82,16 +83,14 @@ class PcDevice(SupportedDevice):
 # Raspberry Pi
 class RaspberryPiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
-        SupportedDevice.__init__(self, name, {'linux': [
-            'libgles2-mesa-devel', 'libgl1-mesa-devel',  # redhat
-            'libgles2-mesa-dev', 'libgl1-mesa-dev'  # raspbian
-        ]}, utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
-                                   '--enable-video-opengles2']),
+        SupportedDevice.__init__(self, name, {'linux': []},
+                                 utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
+                                                        '--enable-video-opengles2']),
                                  utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                                         '--enable-omx-rpi']))
 
     def install_specific(self):
-        return
+        raspberry_pi.install_raspberry_pi()
 
 
 class RaspberryPi1ModelB(RaspberryPiDevice):

@@ -99,6 +99,12 @@ bool CreateWindowFunc(Size window_size,
 
   if (!lwindow || !lrenderer) {
     ERROR_LOG() << "SDL: could not set video mode - exiting";
+    if (lrenderer) {
+      SDL_DestroyRenderer(lrenderer);
+    }
+    if (lwindow) {
+      SDL_DestroyWindow(lwindow);
+    }
     return false;
   }
 
