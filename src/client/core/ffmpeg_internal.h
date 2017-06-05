@@ -18,12 +18,15 @@
 
 #pragma once
 
+#include <string>  // for string
+
 #include "ffmpeg_config.h"
 
-#include <string>
-
 extern "C" {
-#include <libavcodec/avcodec.h>
+#include <libavcodec/avcodec.h>  // for AVCodecContext
+#include <libavutil/buffer.h>    // for AVBufferRef
+#include <libavutil/frame.h>     // for AVFrame
+#include <libavutil/pixfmt.h>    // for AVPixelFormat
 }
 
 typedef void hw_uninit_callback_t(AVCodecContext* s);

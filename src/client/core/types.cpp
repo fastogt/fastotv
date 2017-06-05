@@ -19,12 +19,11 @@
 #include "client/core/types.h"
 
 extern "C" {
-#include <libavutil/avutil.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/time.h>
+#include <libavutil/avutil.h>          // for AV_NOPTS_VALUE
+#include <libavutil/channel_layout.h>  // for av_get_channel_layout_nb_channels
 }
 
-#include <common/macros.h>
+#include <common/time.h>  // for current_mstime
 
 namespace fasto {
 namespace fastotv {

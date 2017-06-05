@@ -18,7 +18,7 @@
 
 #include "client/bandwidth/tcp_bandwidth_client.h"
 
-#include <common/time.h>
+#include <common/time.h>  // for current_mstime
 
 #include "client/core/types.h"
 

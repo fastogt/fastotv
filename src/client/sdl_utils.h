@@ -18,9 +18,12 @@
 
 #pragma once
 
-#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_blendmode.h>  // for SDL_BlendMode
+#include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Texture
+#include <SDL2/SDL_stdinc.h>     // for Uint32
+#include <SDL2/SDL_surface.h>    // for SDL_Surface
 
-#include <common/error.h>
+#include <common/error.h>  // for Error
 
 namespace fasto {
 namespace fastotv {

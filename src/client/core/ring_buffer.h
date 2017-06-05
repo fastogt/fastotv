@@ -18,14 +18,10 @@
 
 #pragma once
 
-#include <stddef.h>  // for size_t
-
-#include <common/logger.h>         // for COMPACT_LOG_FILE_CRIT, etc
+#include <common/logger.h>         // for COMPACT_LOG_FILE_CRIT
 #include <common/macros.h>         // for DCHECK
 #include <common/threads/types.h>  // for condition_variable, mutex
-
-#include <atomic>
-#include <mutex>  // for unique_lock
+#include <common/types.h>
 
 namespace fasto {
 namespace fastotv {
@@ -202,8 +198,8 @@ class RingBuffer {
   size_t rindex_shown_;
   const bool keep_last_;
   size_t rindex_;
-  std::atomic<size_t> windex_;
-  std::atomic<size_t> size_;
+  common::atomic<size_t> windex_;
+  common::atomic<size_t> size_;
   bool stoped_;
 };
 

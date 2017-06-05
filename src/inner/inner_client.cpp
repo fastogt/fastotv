@@ -18,6 +18,10 @@
 
 #include "inner/inner_client.h"
 
+#include <netinet/in.h>  // for ntohl
+#include <stdlib.h>      // for free, malloc
+#include <string.h>      // for memcpy
+
 namespace fasto {
 namespace fastotv {
 namespace inner {

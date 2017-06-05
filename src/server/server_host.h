@@ -18,26 +18,56 @@
 
 #pragma once
 
-#include <string>
-#include <unordered_map>
+#include <common/error.h>          // for Error
+#include <common/macros.h>         // for WARN_UNUSED_RESULT, DISALLOW_COPY_...
+#include <common/threads/types.h>  // for condition_variable, mutex
 
-#include <common/threads/types.h>
+#include "redis/redis_helpers.h"  // for RedisStorage
 
-#include <common/libev/tcp/tcp_client.h>
+#include "server/config.h"     // for Config
+#include "server/user_info.h"  // for user_id_t, UserInfo (ptr only)
 
-#include "redis/redis_helpers.h"
-
-#include "server/config.h"
+namespace common {
+namespace libev {
+class IoClient;
+}
+}  // namespace common
+namespace fasto {
+namespace fastotv {
+class AuthInfo;
+}
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace server {
+namespace inner {
+class InnerTcpClient;
+}
+}  // namespace server
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace server {
+namespace inner {
+class InnerTcpHandlerHost;
+}
+}  // namespace server
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace server {
+namespace inner {
+class InnerTcpServer;
+}
+}  // namespace server
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {
 namespace server {
-
-namespace inner {
-class InnerTcpClient;
-class InnerTcpHandlerHost;
-class InnerTcpServer;
-}  // namespace inner
 
 class ServerHost {
  public:

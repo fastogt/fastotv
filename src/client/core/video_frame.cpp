@@ -18,8 +18,9 @@
 
 #include "client/core/video_frame.h"
 
-#include <math.h>    // for isnan
 #include <stddef.h>  // for NULL
+
+#include <SDL2/SDL_render.h>  // for SDL_DestroyTexture
 
 namespace fasto {
 namespace fastotv {

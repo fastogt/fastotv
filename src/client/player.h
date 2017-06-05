@@ -18,45 +18,87 @@
 
 #pragma once
 
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_ttf.h>
+#include <stdint.h>  // for uint8_t, uint32_t
+#include <string>    // for string
 
-#include <common/smart_ptr.h>
-#include <common/time.h>
-#include <common/url.h>
+#include <SDL2/SDL_blendmode.h>  // for SDL_BlendMode
+#include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Tex...
+#include <SDL2/SDL_stdinc.h>     // for Uint32
+#include <SDL2/SDL_ttf.h>        // for TTF_Font
+#include <SDL2/SDL_video.h>      // for SDL_Window'
 
-#include "types.h"
-#include "url.h"
+extern "C" {
+#include <libavutil/rational.h>  // for AVRational
+}
 
-#include "client/core/app_options.h"
-#include "client/core/events/events.h"
-#include "client/core/video_state_handler.h"
+#include <common/error.h>  // for Error
+
+#include "auth_info.h"
+#include "channels_info.h"  // for ChannelsInfo
+
+#include "client/core/app_options.h"            // for AppOptions, ComplexOp...
+#include "client/core/events/events.h"          // for PostExecEvent, PreExe...
+#include "client/core/events/key_events.h"      // for KeyPressEvent
+#include "client/core/events/lirc_events.h"     // for LircPressEvent
+#include "client/core/events/mouse_events.h"    // for MouseMoveEvent, Mouse...
+#include "client/core/events/network_events.h"  // for BandwidthEstimationEvent
+#include "client/core/events/stream_events.h"   // for AllocFrameEvent, Quit...
+#include "client/core/events/window_events.h"   // for WindowCloseEvent, Win...
+#include "client/core/types.h"                  // for msec_t
+#include "client/core/video_state_handler.h"    // for VideoStateHandler
+#include "client/player_options.h"
+#include "client/types.h"  // for Size, Rect
+
+namespace fasto {
+namespace fastotv {
+class Url;
+}
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+class IoService;
+}
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+class TextureSaver;
+}
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+class VideoState;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+struct AudioParams;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+struct VideoFrame;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {
 namespace client {
-
-class TextureSaver;
-
-namespace core {
-class VideoState;
-}
-
-class IoService;
-
-struct PlayerOptions {
-  enum { width = 640, height = 480, volume = 100 };
-  PlayerOptions();
-
-  bool exit_on_keydown;
-  bool exit_on_mousedown;
-  bool is_full_screen;
-
-  Size default_size;
-  Size screen_size;
-
-  int audio_volume;  // Range: 0 - 100
-};
 
 class Player : public core::VideoStateHandler {
  public:

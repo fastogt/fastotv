@@ -18,9 +18,21 @@
 
 #pragma once
 
-#include <common/libev/io_client.h>
+#include <functional>  // for function
+#include <string>      // for string
+
+#include <common/error.h>            // for Error
+#include <common/libev/io_client.h>  // for IoClient
+#include <common/macros.h>           // for WARN_UNUSED_RESULT
+#include <common/net/socket_tcp.h>   // for SocketHolder
 
 struct lirc_config;
+
+namespace common {
+namespace libev {
+class IoLoop;
+}
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {
@@ -43,9 +55,7 @@ class LircInputClient : public common::libev::IoClient {
   virtual void CloseImpl() override;
 
  private:
-  virtual common::Error Write(const char* data,
-                              size_t size,
-                              size_t* nwrite) final WARN_UNUSED_RESULT;
+  virtual common::Error Write(const char* data, size_t size, size_t* nwrite) final WARN_UNUSED_RESULT;
   virtual common::Error Read(char* out, size_t max_size, size_t* nread) final WARN_UNUSED_RESULT;
 
   common::net::SocketHolder sock_;

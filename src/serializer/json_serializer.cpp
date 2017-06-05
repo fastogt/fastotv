@@ -16,9 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client_server_types.h"
-
-#include <common/convert2string.h>
+#include "serializer/json_serializer.h"
 
 namespace fasto {
 namespace fastotv {}

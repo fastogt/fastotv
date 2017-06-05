@@ -18,15 +18,24 @@
 
 #include "client/core/hwaccels/ffmpeg_vdpau.h"
 
+#include <errno.h>   // for EINVAL, ENOMEM
+#include <stddef.h>  // for NULL
+
 extern "C" {
-#include <libavcodec/vdpau.h>
-#include <libavutil/hwcontext.h>
-#include <libavutil/hwcontext_vdpau.h>
+#include <libavcodec/vdpau.h>           // for av_vdpau_bind_context
+#include <libavutil/buffer.h>           // for AVBufferRef, av_buffer_unref
+#include <libavutil/error.h>            // for AVERROR
+#include <libavutil/frame.h>            // for AVFrame, av_frame_unref
+#include <libavutil/hwcontext.h>        // for AVHWFramesContext, AVHWDevi...
+#include <libavutil/hwcontext_vdpau.h>  // for AVVDPAUDeviceContext
+#include <libavutil/mem.h>              // for av_free, av_freep, av_mallocz
+#include <libavutil/pixfmt.h>           // for AVPixelFormat::AV_PIX_FMT_V...
 }
 
-#include <common/macros.h>
+#include <common/logger.h>  // for COMPACT_LOG_ERROR, ERROR_LOG
+#include <common/macros.h>  // for UNUSED
 
-#include "client/core/ffmpeg_internal.h"
+#include "client/core/ffmpeg_internal.h"  // for InputStream
 
 namespace fasto {
 namespace fastotv {
@@ -108,8 +117,7 @@ static int vdpau_alloc(AVCodecContext* s) {
   }
 
   AVBufferRef* device_ref = NULL;
-  int ret =
-      av_hwdevice_ctx_create(&device_ref, AV_HWDEVICE_TYPE_VDPAU, ist->hwaccel_device, NULL, 0);
+  int ret = av_hwdevice_ctx_create(&device_ref, AV_HWDEVICE_TYPE_VDPAU, ist->hwaccel_device, NULL, 0);
   if (ret < 0) {
     ERROR_LOG() << "VDPAU init failed error: " << ret;
     vdpau_uninit(s);

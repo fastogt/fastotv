@@ -18,7 +18,9 @@
 
 #pragma once
 
-#include "client/core/events/events_base.h"
+#include <string>  // for string
+
+#include "client/core/events/events_base.h"  // for EventBase, EventsType::L...
 
 enum LircCode {
   LIRC_KEY_OK = 0,

@@ -18,10 +18,10 @@
 
 #include "server/user_info.h"
 
-#include <string>
+#include <stddef.h>  // for NULL
+#include <string>    // for string
 
-#include <common/convert2string.h>
-#include <common/sprintf.h>
+#include "third-party/json-c/json-c/json_object.h"  // for json_object, json...
 
 #define CHANNELS_FIELD "channels"
 #define USER_INFO_LOGIN_FIELD "login"

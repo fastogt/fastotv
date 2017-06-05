@@ -18,12 +18,6 @@
 
 #include "client/core/clock.h"
 
-#include <math.h>
-
-extern "C" {
-#include <libavutil/time.h>
-}
-
 namespace fasto {
 namespace fastotv {
 namespace client {

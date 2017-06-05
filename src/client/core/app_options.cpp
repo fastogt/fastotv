@@ -20,6 +20,8 @@
 
 #include <stddef.h>  // for NULL
 
+#include "client/core/ffmpeg_internal.h"  // for HWAccelID::HWACCEL_NONE
+
 namespace fasto {
 namespace fastotv {
 namespace client {

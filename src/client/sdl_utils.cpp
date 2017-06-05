@@ -18,11 +18,20 @@
 
 #include "client/sdl_utils.h"
 
+#include <setjmp.h>  // for longjmp, jmp_buf, setjmp
+#include <stdio.h>   // for NULL, fclose, fopen, FILE
+#include <string>    // for string
+
+#include <SDL2/SDL_endian.h>  // for SDL_BYTEORDER, SDL_LIL_ENDIAN
+#include <SDL2/SDL_pixels.h>  // for SDL_Color, SDL_Palette, SDL_PixelFormat
+
 extern "C" {
-#include <png.h>
+#include <png.h>      // for png_destroy_read_struct, png_set_expand
+#include <pngconf.h>  // for png_bytep
 }
 
-#include <common/macros.h>
+#include <common/macros.h>  // for SIZEOFMASS, PROJECT_VERSION_CHECK, PROJ...
+#include <common/value.h>   // for Value, Value::ErrorsType::E_ERROR
 
 namespace fasto {
 namespace fastotv {

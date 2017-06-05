@@ -16,43 +16,20 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/events/lirc_events.h"
-
-#include <common/macros.h>  // for SIZEOFMASS
-
-namespace {
-
-const std::string LircTypes[] = {"LIRC_KEY_OK",   "LIRC_KEY_LEFT", "LIRC_KEY_UP",  "LIRC_KEY_RIGHT",
-                                 "LIRC_KEY_DOWN", "LIRC_KEY_EXIT", "LIRC_KEY_MUTE"};
-}
-
-namespace common {
-std::string ConvertToString(LircCode value) {
-  return LircTypes[value];
-}
-
-bool ConvertFromString(const std::string& from, LircCode* out) {
-  if (!out) {
-    return false;
-  }
-
-  for (uint32_t i = 0; i < SIZEOFMASS(LircTypes); ++i) {
-    if (from == LircTypes[i]) {
-      *out = static_cast<LircCode>(i);
-      return true;
-    }
-  }
-
-  return false;
-}
-}  // namespace common
+#include "client/player_options.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
-namespace core {
-namespace events {}
-}  // namespace core
+
+PlayerOptions::PlayerOptions()
+    : exit_on_keydown(false),
+      exit_on_mousedown(false),
+      is_full_screen(false),
+      default_size(width, height),
+      screen_size(0, 0),
+      audio_volume(volume) {}
+
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

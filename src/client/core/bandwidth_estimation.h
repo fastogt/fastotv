@@ -1,10 +1,7 @@
 #pragma once
 
-#include <stddef.h>
-
-#include "client_server_types.h"
-
 #include "client/types.h"
+#include "client_server_types.h"  // for bandwidth_t
 
 namespace fasto {
 namespace fastotv {

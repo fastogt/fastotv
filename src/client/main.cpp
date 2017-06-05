@@ -15,30 +15,43 @@
     You should have received a copy of the GNU General Public License
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
-#include <signal.h>
 
-#include <iostream>
+#include <signal.h>  // for signal, SIGINT, SIGTERM
+#include <stdarg.h>  // for va_list
+#include <stdint.h>  // for uint32_t
+#include <stdlib.h>  // for EXIT_SUCCESS, EXIT_FAILURE
+#include <string.h>  // for strcmp, NULL
+#include <iostream>  // for ostream
+#include <string>    // for string
 
-#include "ffmpeg_config.h"
+#include "ffmpeg_config.h"  // for CONFIG_AVDEVICE, CONFIG_...
 
 extern "C" {
-#include <libavcodec/avcodec.h>    // for av_lockmgr_register, etc
+#include <libavcodec/avcodec.h>    // for av_lockmgr_register, AVL...
 #include <libavdevice/avdevice.h>  // for avdevice_register_all
-#if CONFIG_AVFILTER
-#include <libavfilter/avfilter.h>  // for avfilter_get_class, etc
-#endif
+#include <libavfilter/avfilter.h>  // for avfilter_register_all
+#include <libavformat/avformat.h>  // for av_register_all, avforma...
+#include <libavutil/log.h>         // for AV_LOG_ERROR, AV_LOG_FATAL
 }
 
-#include <common/file_system.h>
-#include <common/system/system.h>
+#include <common/application/application.h>  // for Application, IApplicatio...
+#include <common/error.h>                    // for ErrnoError, Error
+#include <common/file_system.h>              // for File, create_directory
+#include <common/log_levels.h>               // for LEVEL_LOG, LEVEL_LOG::L_...
+#include <common/logger.h>                   // for COMPACT_LOG_ERROR, ERROR...
+#include <common/macros.h>                   // for ERROR_RESULT_VALUE, UNUSED
+#include <common/string_util_posix.h>        // for vasprintf
+#include <common/system/system.h>            // for Shutdown, shutdown_t::SH...
+#include <common/threads/types.h>            // for mutex
 #include <common/utils.h>
 
+#include "client/cmdutils.h"            // for DictionaryOptions, show_...
+#include "client/core/app_options.h"    // for ComplexOptions
+#include "client/core/events/events.h"  // for PostExecEvent, PostExecInfo
+#include "client/player.h"              // for Player
 #include "client/core/application/sdl2_application.h"
-#include "client/core/types.h"
 
-#include "client/player.h"
-
-#include "config.h"
+#include "client/config.h"                     // for TVConfig, load_config_file
 
 #undef ERROR
 

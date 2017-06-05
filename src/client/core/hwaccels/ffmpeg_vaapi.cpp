@@ -18,11 +18,20 @@
 
 #include "client/core/hwaccels/ffmpeg_vaapi.h"
 
+#include <errno.h>   // for ENOMEM
+#include <stddef.h>  // for NULL
+
 extern "C" {
-#include <libavutil/hwcontext.h>
+#include <libavutil/buffer.h>     // for av_buffer_unref, AVBufferRef
+#include <libavutil/error.h>      // for AVERROR
+#include <libavutil/frame.h>      // for av_frame_free, AVFrame, av_...
+#include <libavutil/hwcontext.h>  // for AVHWFramesContext, AVHWDevi...
+#include <libavutil/mem.h>        // for av_free, av_mallocz
+#include <libavutil/pixfmt.h>     // for AVPixelFormat::AV_PIX_FMT_V...
 }
 
-#include <common/macros.h>
+#include <common/logger.h>  // for COMPACT_LOG_ERROR, ERROR_LOG
+#include <common/macros.h>  // for UNUSED
 
 #include "client/core/ffmpeg_internal.h"
 
@@ -168,8 +177,7 @@ int vaapi_decode_init(AVCodecContext* avctx) {
   // It would be nice if we could query the available formats here,
   // but unfortunately we don't have a VAConfigID to do it with.
   // For now, just assume an NV12 format (or P010 if 10-bit).
-  ctx->frames->sw_format =
-      (avctx->sw_pix_fmt == AV_PIX_FMT_YUV420P10 ? AV_PIX_FMT_P010 : AV_PIX_FMT_NV12);
+  ctx->frames->sw_format = (avctx->sw_pix_fmt == AV_PIX_FMT_YUV420P10 ? AV_PIX_FMT_P010 : AV_PIX_FMT_NV12);
 
   // For frame-threaded decoding, at least one additional surface
   // is needed for each thread.

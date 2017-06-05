@@ -18,6 +18,8 @@
 
 #include "client/core/packet_queue.h"
 
+#include <stddef.h>  // for NULL
+
 namespace fasto {
 namespace fastotv {
 namespace client {

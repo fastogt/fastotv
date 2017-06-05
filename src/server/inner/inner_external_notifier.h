@@ -18,17 +18,33 @@
 
 #pragma once
 
-#include "commands/commands.h"
-#include "server/redis/redis_helpers.h"
+#include <string>                        // for string
 
-#include "server/responce_info.h"
+#include "commands/commands.h"           // for cmd_seq_t
+
+#include "server/redis/redis_helpers.h"  // for RedisSubHandler
+
+namespace fasto {
+namespace fastotv {
+namespace server {
+class ResponceInfo;
+}
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace server {
+namespace inner {
+class InnerTcpHandlerHost;
+}
+}  // namespace server
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
-
-class InnerTcpHandlerHost;
 
 class InnerSubHandler : public RedisSubHandler {
  public:

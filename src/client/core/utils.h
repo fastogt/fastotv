@@ -22,8 +22,8 @@
 #include <SDL2/SDL_rect.h>    // for SDL_Rect
 #include <SDL2/SDL_render.h>  // for SDL_Renderer, SDL_Texture
 
-#include <stdint.h>  // for int64_t
-#include <string>    // for string
+#include <sys/types.h>  // for int64_t
+#include <string>       // for string
 
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 
@@ -33,7 +33,6 @@ extern "C" {
 #include <libavfilter/avfilter.h>
 #endif
 #include <libavformat/avformat.h>  // for AVFormatContext, AVStream
-#include <libavutil/attributes.h>  // for av_noreturn
 #include <libavutil/dict.h>        // for AVDictionary
 #include <libavutil/frame.h>       // for AVFrame
 #include <libavutil/rational.h>    // for AVRational

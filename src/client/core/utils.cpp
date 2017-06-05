@@ -18,30 +18,28 @@
 
 #include "client/core/utils.h"
 
+#include <SDL2/SDL_stdinc.h>  // for SDL_getenv, Uint16
+
 #include <errno.h>   // for ENOMEM
 #include <math.h>    // for lrint, fabs, floor, round
 #include <stdint.h>  // for uint8_t
-#include <stdlib.h>  // for atoi, exit
-#include <string.h>  // for NULL, strcmp, strncmp, etc
-
-#include <ostream>  // for operator<<, basic_ostream, etc
+#include <stdlib.h>  // for NULL, atoi
+#include <string.h>  // for strcmp, strncmp, strchr
 
 extern "C" {
-#include <libavutil/avutil.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/common.h>   // for av_log2, FFMAX, FFMIN, etc
-#include <libavutil/display.h>  // for av_display_rotation_get
-#include <libavutil/error.h>    // for AVERROR
-#include <libavutil/eval.h>     // for av_strtod
-#include <libavutil/log.h>      // for AVClass
-#include <libavutil/mem.h>      // for av_strdup, av_mallocz_array
-#include <libavutil/opt.h>      // for av_opt_find, etc
-#include <libavutil/pixfmt.h>
-#include <libswscale/swscale.h>  // for sws_getCachedContext, etc
+#include <libavutil/avutil.h>          // for AVMediaType::AVMEDIA_TYPE_ATTA...
+#include <libavutil/channel_layout.h>  // for av_get_default_channel_layout
+#include <libavutil/display.h>         // for av_display_rotation_get
+#include <libavutil/error.h>           // for AVERROR
+#include <libavutil/eval.h>            // for av_strtod
+#include <libavutil/log.h>             // for AVClass
+#include <libavutil/mem.h>             // for av_strdup, av_mallocz_array
+#include <libavutil/opt.h>             // for av_opt_find, AV_OPT_SEARCH_FAK...
+#include <libavutil/pixfmt.h>          // for AVPixelFormat::AV_PIX_FMT_BGRA
 }
 
-#include <common/logger.h>  // for LogMessage, etc
-#include <common/macros.h>
+#include <common/logger.h>  // for COMPACT_LOG_ERROR, ERROR_LOG
+#include <common/macros.h>  // for NOTREACHED
 
 #include "client/core/audio_params.h"  // for AudioParams
 

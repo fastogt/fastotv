@@ -18,15 +18,18 @@
 
 #include "inner/inner_server_command_seq_parser.h"
 
-#include <string>
+#include <stddef.h>  // for NULL
+#include <string>    // for string
 
+#include <common/error.h>   // for Error
+#include <common/logger.h>  // for COMPACT_LOG_WARNING, WARNING_LOG
+#include <common/macros.h>  // for betoh_memcpy, DNOTREACHED
 #include <common/convert2string.h>
-#include <common/logger.h>
 
-#include "inner/inner_client.h"
+#include "inner/inner_client.h"  // for InnerClient
 
 extern "C" {
-#include "sds.h"
+#include "sds.h"  // for sdsfreesplitres, sds
 }
 
 #define GB (1024 * 1024 * 1024)

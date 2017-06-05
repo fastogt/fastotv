@@ -18,21 +18,19 @@
 
 #include "server/server_host.h"
 
-#include <unistd.h>
+#include <stdlib.h>  // for EXIT_FAILURE
 
-#include <string>
+#include <condition_variable>  // for cv_status, cv_status::no...
+#include <mutex>               // for mutex, unique_lock
+#include <string>              // for string
 
-#include <common/logger.h>
-#include <common/threads/thread_manager.h>
+#include <common/libev/tcp/tcp_server.h>    // for TcpServer
+#include <common/logger.h>                  // for COMPACT_LOG_FILE_CRIT
+#include <common/threads/thread_manager.h>  // for THREAD_MANAGER
 
-#include "commands/commands.h"
+#include "inner/inner_tcp_client.h"          // for InnerTcpClient
 
-#include <common/libev/tcp/tcp_client.h>
-
-#include "inner/inner_server_command_seq_parser.h"
-#include "inner/inner_tcp_client.h"
-
-#include "server/inner/inner_tcp_handler.h"
+#include "server/inner/inner_tcp_handler.h"  // for InnerTcpHandlerHost
 #include "server/inner/inner_tcp_server.h"
 
 #define BUF_SIZE 4096

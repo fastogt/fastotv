@@ -18,12 +18,24 @@
 
 #pragma once
 
-#include <common/threads/thread.h>
-#include <common/threads/types.h>
+#include <common/libev/tcp/tcp_client.h>  // for TcpClient
+#include <common/libev/tcp/tcp_server.h>  // for TcpServer
 
-#include "inner/inner_server_command_seq_parser.h"
-
-#include <common/libev/tcp/tcp_server.h>
+namespace common {
+namespace libev {
+class IoLoopObserver;
+}
+}  // namespace common
+namespace common {
+namespace net {
+class socket_info;
+}
+}  // namespace common
+namespace common {
+namespace net {
+struct HostAndPort;
+}
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {

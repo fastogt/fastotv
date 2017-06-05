@@ -22,9 +22,17 @@ extern "C" {
 #include "sds.h"
 }
 
-#include "server/inner/inner_tcp_handler.h"
+#include <common/error.h>   // for Error, DEBUG_MSG_...
+#include <common/logger.h>  // for COMPACT_LOG_WARNING
+#include <common/macros.h>  // for STRINGIZE
+
+#include "inner/inner_server_command_seq_parser.h"  // for RequestCallback
 
 #include "server/inner/inner_tcp_client.h"
+#include "server/inner/inner_tcp_handler.h"
+
+#include "server/responce_info.h"  // for ResponceInfo
+#include "server/user_info.h"      // for user_id_t
 
 // publish COMMANDS_IN 'user_id 0 1 ping' 0 => request
 // publish COMMANDS_OUT '1 [OK|FAIL] ping args...'

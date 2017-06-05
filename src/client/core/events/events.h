@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <common/types.h>  // for time64_t
+
 #include "client/core/events/events_base.h"
 
 #include "client/core/events/key_events.h"

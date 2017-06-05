@@ -18,7 +18,8 @@
 
 #include "client_info.h"
 
-#include <string>
+#include <stddef.h>  // for NULL
+#include <string>    // for string
 
 #include <common/convert2string.h>
 

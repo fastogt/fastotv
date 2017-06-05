@@ -18,63 +18,63 @@
 
 #include "video_state.h"
 
-#include <errno.h>     // for ENOMEM, EINVAL, EAGAIN, etc
-#include <inttypes.h>  // for PRIx64
-#include <limits.h>    // for INT_MAX, INT_MIN
-#include <math.h>      // for fabs, isnan, NAN, exp, log
-#include <stdio.h>     // for snprintf, stdout
-#include <stdlib.h>    // for EXIT_SUCCESS, EXIT_FAILURE
-#include <string.h>    // for memset, strlen, memcpy, etc
-
-#include <memory>
-#include <ostream>  // for operator<<, basic_ostream, etc
+#include <errno.h>             // for ENOMEM, EINVAL, EAGAIN
+#include <inttypes.h>          // for PRIx64
+#include <math.h>              // for fabs, exp, log
+#include <stdio.h>             // for snprintf
+#include <stdlib.h>            // for NULL, abs, calloc, free
+#include <string.h>            // for memset, strcmp, strlen
+#include <condition_variable>  // for cv_status, cv_status::...
 
 extern "C" {
-#include <libavcodec/avcodec.h>  // for AVCodecContext, etc
-#include <libavcodec/version.h>  // for FF_API_EMU_EDGE
-#include <libavformat/avio.h>    // for AVIOContext, etc
-#include <libavutil/avstring.h>
-#include <libavutil/avutil.h>  // for AV_NOPTS_VALUE, etc
-#include <libavutil/channel_layout.h>
-#include <libavutil/common.h>       // for FFMAX, av_clip, FFMIN
-#include <libavutil/dict.h>         // for av_dict_free, av_dict_get, etc
-#include <libavutil/error.h>        // for AVERROR, AVERROR_EOF, etc
-#include <libavutil/mathematics.h>  // for av_compare_ts, av_rescale_q
-#include <libavutil/mem.h>          // for av_freep, av_fast_malloc, etc
-#include <libavutil/opt.h>
-#include <libavutil/pixdesc.h>
-#include <libavutil/pixfmt.h>     // for AVPixelFormat, etc
-#include <libavutil/samplefmt.h>  // for AVSampleFormat, etc
-#include <libavutil/time.h>
-#include <libswresample/swresample.h>
-#include <libswscale/swscale.h>
+#include <libavcodec/avcodec.h>        // for AVCodecContext, AVCode...
+#include <libavcodec/version.h>        // for FF_API_EMU_EDGE
+#include <libavformat/avio.h>          // for AVIOContext, AVIOInter...
+#include <libavutil/avstring.h>        // for av_strlcatf
+#include <libavutil/avutil.h>          // for AVMediaType::AVMEDIA_T...
+#include <libavutil/buffer.h>          // for av_buffer_ref
+#include <libavutil/channel_layout.h>  // for av_get_channel_layout_...
+#include <libavutil/dict.h>            // for av_dict_free, av_dict_get
+#include <libavutil/error.h>           // for AVERROR, AVERROR_EOF
+#include <libavutil/mathematics.h>     // for av_compare_ts, av_resc...
+#include <libavutil/mem.h>             // for av_freep, av_fast_malloc
+#include <libavutil/opt.h>             // for AV_OPT_SEARCH_CHILDREN
+#include <libavutil/pixdesc.h>         // for AVPixFmtDescriptor
+#include <libavutil/pixfmt.h>          // for AVPixelFormat, AVPixel...
+#include <libavutil/rational.h>        // for AVRational
+#include <libavutil/samplefmt.h>       // for AVSampleFormat, av_sam...
+#include <libswresample/swresample.h>  // for swr_free, swr_init
 
 #if CONFIG_AVFILTER
-#include <libavfilter/avfilter.h>
-#include <libavfilter/buffersink.h>
-#include <libavfilter/buffersrc.h>
+#include <libavfilter/avfilter.h>    // for avfilter_graph_free
+#include <libavfilter/buffersink.h>  // for av_buffersink_get_fram...
+#include <libavfilter/buffersrc.h>   // for av_buffersrc_add_frame
 #endif
 }
 
-#include <common/application/application.h>
-#include <common/logger.h>  // for LogMessage, etc
-#include <common/macros.h>  // for destroy, ERROR_RESULT_VALUE, etc
-#include <common/sprintf.h>
-#include <common/threads/thread_manager.h>
-#include <common/utils.h>
+#include <common/application/application.h>  // for fApp
+#include <common/error.h>                    // for Error, make_error_valu...
+#include <common/logger.h>                   // for COMPACT_LOG_WARNING
+#include <common/macros.h>                   // for ERROR_RESULT_VALUE
+#include <common/threads/thread_manager.h>   // for THREAD_MANAGER
+#include <common/utils.h>                    // for freeifnotnull
+#include <common/value.h>                    // for Value, Value::ErrorsTy...
 
 #include "ffmpeg_internal.h"
 
-#include "video_state_handler.h"
-
-#include "client/core/app_options.h"
-#include "client/core/decoder.h"
-#include "client/core/events/events.h"
-#include "client/core/frame_queue.h"
-#include "client/core/packet_queue.h"
-#include "client/core/stream.h"
-#include "client/core/types.h"  // for get_valid_channel_layout, etc
-#include "client/core/utils.h"  // for configure_filtergraph, etc
+#include "client/core/video_state_handler.h"
+#include "client/core/app_options.h"           // for ComplexOptions, AppOpt...
+#include "client/core/audio_frame.h"           // for AudioFrame
+#include "client/core/bandwidth_estimation.h"  // for DesireBytesPerSec
+#include "client/core/decoder.h"               // for VideoDecoder, AudioDec...
+#include "client/core/events/stream_events.h"  // for QuitStreamEvent, Alloc...
+#include "client/core/frame_queue.h"           // for VideoDecoder, AudioDec...
+#include "client/core/packet_queue.h"          // for PacketQueue
+#include "client/core/stream.h"                // for AudioStream, VideoStream
+#include "client/core/types.h"                 // for clock_t, IsValidClock
+#include "client/core/utils.h"                 // for q2d_diff, configure_fi...
+#include "client/core/video_frame.h"           // for VideoFrame
+#include "client/types.h"                      // for Size
 
 #undef ERROR
 
@@ -1623,8 +1623,9 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
-                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height,
+          static_cast<const char*>(
+              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

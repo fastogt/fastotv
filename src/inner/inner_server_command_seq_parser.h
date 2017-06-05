@@ -18,10 +18,19 @@
 
 #pragma once
 
-#include <functional>
-#include <vector>
+#include <stdint.h>    // for uintmax_t
+#include <functional>  // for function
+#include <string>      // for string
 
-#include "commands/commands.h"
+#include "commands/commands.h"  // for cmd_seq_t
+
+namespace fasto {
+namespace fastotv {
+namespace inner {
+class InnerClient;
+}
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {

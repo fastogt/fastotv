@@ -19,7 +19,11 @@
 #pragma once
 
 #include "serializer/json_serializer.h"
-#include "user_info.h"
+
+#include <common/error.h>   // for Error
+#include <common/macros.h>  // for WARN_UNUSED_RESULT
+
+#include "server/user_info.h"  // for user_id_t
 
 #define USER_STATE_INFO_ID_FIELD "user_id"
 #define USER_STATE_INFO_CONNECTED_FIELD "connected"

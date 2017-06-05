@@ -18,27 +18,32 @@
 
 #include "server/inner/inner_tcp_handler.h"
 
-#include <string>
-#include <vector>
+#include <stddef.h>  // for NULL
+#include <string>    // for string
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
+#include <common/libev/io_client.h>         // for IoClient
+#include <common/libev/io_loop.h>           // for IoLoop
+#include <common/logger.h>                  // for COMPACT_LOG_WARNING
+#include <common/threads/thread_manager.h>  // for THREAD_MANAGER
+#include <common/value.h>                   // for Value, Value::Erro...
 
-#undef ERROR
-#include <common/convert2string.h>
-#include <common/logger.h>
-#include <common/net/net.h>
-#include <common/threads/thread_manager.h>
+#include "auth_info.h"            // for AuthInfo
+#include "channels_info.h"        // for ChannelsInfo
+#include "client_info.h"          // for ClientInfo
+#include "client_server_types.h"  // for Encode
+#include "inner/inner_client.h"   // for InnerClient
+#include "ping_info.h"            // for ClientPingInfo
 
 #include "server/commands.h"
-#include "server/server_host.h"
+#include "server/inner/inner_external_notifier.h"  // for InnerSubHandler
+#include "server/inner/inner_tcp_client.h"         // for InnerTcpClient
+#include "server/redis/redis_helpers.h"            // for RedisSub
+#include "server/server_host.h"                    // for ServerHost
+#include "server/user_info.h"                      // for user_id_t, UserInfo
+#include "server/user_state_info.h"                // for UserStateInfo
+#include "server_info.h"                           // for ServerInfo
 
-#include "client_info.h"
-#include "ping_info.h"
-#include "server_info.h"
-
-#include "server/inner/inner_tcp_client.h"
-
-#include "server/inner/inner_external_notifier.h"
+#include "third-party/json-c/json-c/json.h"  // for json_object
 
 namespace fasto {
 namespace fastotv {

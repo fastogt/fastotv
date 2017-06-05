@@ -18,9 +18,25 @@
 
 #pragma once
 
-#include <common/libev/tcp/tcp_client.h>
+#include <stdint.h>  // for uint32_t
+#include <string>    // for string
 
-#include "commands/commands.h"
+#include <common/error.h>                 // for Error
+#include <common/libev/tcp/tcp_client.h>  // for TcpClient
+#include <common/macros.h>                // for WARN_UNUSED_RESULT
+
+#include "commands/commands.h"  // for cmd_approve_t, cmd_request_t
+
+namespace common {
+namespace libev {
+class IoLoop;
+}
+}  // namespace common
+namespace common {
+namespace net {
+class socket_info;
+}
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {

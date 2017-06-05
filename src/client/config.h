@@ -16,11 +16,17 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <common/log_levels.h>
+#include <string>  // for string
 
-#include "client/core/app_options.h"
-#include "cmdutils.h"
-#include "player.h"
+#include <common/error.h>       // for Error
+#include <common/log_levels.h>  // for LEVEL_LOG
+#include <common/macros.h>      // for WARN_UNUSED_RESULT, DISALLOW_CO...
+
+#include "client/core/app_options.h"  // for AppOptions
+
+#include "player_options.h"  // for PlayerOptions
+
+struct DictionaryOptions;
 
 namespace fasto {
 namespace fastotv {

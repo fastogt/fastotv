@@ -18,9 +18,11 @@
 
 #pragma once
 
-#include <limits>
+#include <string>  // for string
 
-#include <common/url.h>
+#include <common/error.h>   // for Error
+#include <common/macros.h>  // for WARN_UNUSED_RESULT
+#include <common/url.h>     // for Uri
 
 #include "client_server_types.h"
 #include "serializer/json_serializer.h"

@@ -18,12 +18,19 @@
 
 #pragma once
 
-#include <string>
+#include <string>  // for string
 
-#include <common/error.h>
-#include <common/net/types.h>
+#include <common/error.h>      // for Error
+#include <common/macros.h>     // for WARN_UNUSED_RESULT
+#include <common/net/types.h>  // for HostAndPort
 
-#include "server/user_info.h"
+#include "server/user_info.h"  // for user_id_t, UserInfo (ptr only)
+
+namespace fasto {
+namespace fastotv {
+class AuthInfo;
+}
+}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {

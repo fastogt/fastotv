@@ -18,7 +18,7 @@
 
 #include "channels_info.h"
 
-#include <string>
+#include <stddef.h>  // for NULL
 
 #include <common/convert2string.h>
 #include <common/sprintf.h>

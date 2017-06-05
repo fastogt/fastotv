@@ -18,13 +18,21 @@
 
 #pragma once
 
-#include "ffmpeg_config.h"  // for CONFIG_AVDEVICE, etc
+#include <inttypes.h>       // for PRIx64
+#include <stdio.h>          // for snprintf
+#include <string>           // for string
+#include "ffmpeg_config.h"  // for CONFIG_AVDEVICE
 
 extern "C" {
-#include <libavutil/dict.h>  // for AVDictionary
+#include <libavutil/avutil.h>          // for av_get_media_type_string
+#include <libavutil/channel_layout.h>  // for av_get_channel_layout_string
+#include <libavutil/dict.h>            // for AVDictionary
+#include <libavutil/pixdesc.h>         // for av_get_pix_fmt_name
+#include <libavutil/samplefmt.h>       // for av_get_sample_fmt_name
 }
 
 #include <common/convert2string.h>  // for ConvertFromString
+#include <common/logger.h>          // for COMPACT_LOG_WARNING, WARNING_LOG
 #include <common/macros.h>          // for DISALLOW_COPY_AND_ASSIGN
 
 void show_license();

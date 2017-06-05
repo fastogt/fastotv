@@ -18,10 +18,11 @@
 
 #include "server/user_state_info.h"
 
-#include <string>
+#include <stddef.h>  // for NULL
 
-#include <common/convert2string.h>
-#include <common/sprintf.h>
+#include "server/user_info.h"  // for user_id_t
+
+#include "third-party/json-c/json-c/json_object.h"  // for json_object, json...
 
 namespace fasto {
 namespace fastotv {

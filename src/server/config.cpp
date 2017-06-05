@@ -18,6 +18,10 @@
 
 #include "server/config.h"
 
+#include <string.h>  // for strcmp
+
+#include <common/logger.h>  // for COMPACT_LOG_WARNING, WARNING_LOG
+
 #include "inih/ini.h"
 
 #define CHANNEL_COMMANDS_IN_NAME "COMMANDS_IN"

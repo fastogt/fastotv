@@ -18,27 +18,88 @@
 
 #pragma once
 
-#include <common/threads/thread.h>
-#include <common/threads/types.h>
+#include <memory>  // for shared_ptr
+#include <string>  // for string
 
-#include <common/libev/io_loop_observer.h>
-#include <common/libev/tcp/tcp_server.h>
+#include <common/error.h>                   // for Error
+#include <common/libev/io_loop_observer.h>  // for IoLoopObserver
+#include <common/libev/types.h>             // for timer_id_t
+#include <common/macros.h>                  // for WARN_UNUSED_RESULT
 
-#include "inner/inner_server_command_seq_parser.h"
+#include "commands/commands.h"                      // for cmd_seq_t
+#include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
-#include "server/config.h"
-#include "server/user_info.h"
+#include "server/config.h"  // for Config
 
-#include "server/user_state_info.h"
+#include "third-party/json-c/json-c/json_object.h"  // for json_object
 
+namespace common {
+namespace libev {
+class IoClient;
+}
+}  // namespace common
+namespace common {
+namespace libev {
+class IoLoop;
+}
+}  // namespace common
+namespace common {
+namespace threads {
+template <typename RT>
+class Thread;
+}
+}  // namespace common
+namespace fasto {
+namespace fastotv {
+namespace inner {
+class InnerClient;
+}
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace server {
+class RedisSub;
+}
+}  // namespace fastotv
+}  // namespace fasto
 namespace fasto {
 namespace fastotv {
 namespace server {
 class ServerHost;
+}
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace server {
+class UserStateInfo;
+}
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace server {
 namespace inner {
-
-class InnerTcpClient;
 class InnerSubHandler;
+}
+}  // namespace server
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace server {
+namespace inner {
+class InnerTcpClient;
+}
+}  // namespace server
+}  // namespace fastotv
+}  // namespace fasto
+
+namespace fasto {
+namespace fastotv {
+namespace server {
+namespace inner {
 
 class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqParser,
                             public common::libev::IoLoopObserver {

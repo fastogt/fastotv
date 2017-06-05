@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
+#include "server/responce_info.h"
 #include "server/user_info.h"
 #include "server/user_state_info.h"
-#include "server/responce_info.h"
 
 typedef fasto::fastotv::Url::serialize_type serialize_t;
 

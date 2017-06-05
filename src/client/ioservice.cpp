@@ -18,21 +18,28 @@
 
 #include "client/ioservice.h"
 
-#include <string>
+#include <stddef.h>  // for NULL
+#include <string>    // for string
 
-#include <common/application/application.h>
-#include <common/convert2string.h>
-#include <common/file_system.h>
-#include <common/logger.h>
-#include <common/threads/thread_manager.h>
+#include <common/application/application.h>  // for fApp
+#include <common/error.h>                    // for DEBUG_MSG_ERROR, Error
+#include <common/logger.h>                   // for COMPACT_LOG_FILE_CRIT
+#include <common/macros.h>                   // for DCHECK, UNUSED
+#include <common/threads/thread_manager.h>   // for THREAD_MANAGER
 
-#include "client/inner/inner_tcp_handler.h"
-#include "client/inner/inner_tcp_server.h"
+#include "client/inner/inner_tcp_handler.h"  // for InnerTcpHandler, StartC...
+#include "client/inner/inner_tcp_server.h"   // for InnerTcpServer
 
 #ifdef HAVE_LIRC
-#include "client/core/events/lirc_events.h"
-#include "client/inputs/lirc_input_client.h"
+#include "client/core/events/lirc_events.h"   // for ConvertFromString, Lirc...
+#include "client/inputs/lirc_input_client.h"  // for LircInit, LircInputClient
 #endif
+
+namespace common {
+namespace libev {
+class IoClient;
+}
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {

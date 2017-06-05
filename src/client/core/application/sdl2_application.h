@@ -18,12 +18,14 @@
 
 #pragma once
 
-#include <SDL2/SDL_events.h>  // for SDL_EventState, SDL_IGNORE, etc
+#include <SDL2/SDL_events.h>  // for SDL_MouseButtonEvent
+#include <SDL2/SDL_stdinc.h>  // for Uint32
 
-#include <common/application/application.h>
-#include <common/threads/event_dispatcher.h>
+#include <common/application/application.h>   // for IApplicationImpl
+#include <common/event.h>                     // for IListener (ptr only)
+#include <common/threads/event_dispatcher.h>  // for EventDispatcher
 
-#include "client/core/events/events_base.h"
+#include "client/core/events/events_base.h"  // for Event, EventsType
 
 namespace fasto {
 namespace fastotv {

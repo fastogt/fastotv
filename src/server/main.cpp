@@ -16,17 +16,14 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <unistd.h>
+#include <stdio.h>   // for fprintf, stderr
+#include <stdlib.h>  // for exit, EXIT_FAILURE
+#include <unistd.h>  // for getopt, optind
 
-#include <iostream>
-#include <string>
+#include <common/log_levels.h>  // for LEVEL_LOG, LEVEL_LOG::L_DEBUG
 
-#include <common/convert2string.h>
-#include <common/file_system.h>
-#include <common/logger.h>
-#include <common/utils.h>
-
-#include "server_host.h"
+#include "server/config.h"  // for Config
+#include "server_host.h"    // for ServerHost
 
 const char* config_path = SERVER_CONFIG_FILE_PATH;
 

@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <limits>
+#include <stdint.h>  // for int64_t
 
-#include <common/time.h>
+#include <common/types.h>  // for time64_t
 
-#include "client_server_types.h"
+#include "client_server_types.h"  // for bandwidth_t
 
 namespace fasto {
 namespace fastotv {

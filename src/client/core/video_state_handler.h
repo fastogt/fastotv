@@ -18,12 +18,50 @@
 
 #pragma once
 
+#include <stdint.h>  // for uint8_t, int64_t, uint32_t
+
 extern "C" {
-#include <libavutil/rational.h>
+#include <libavutil/rational.h>  // for AVRational
 }
 
+#include <common/error.h>  // for Error
+
 #include "client/core/events/events_base.h"
-#include "client/types.h"
+
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+class VideoState;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+struct AudioParams;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+struct VideoFrame;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+struct Size;
+}
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {

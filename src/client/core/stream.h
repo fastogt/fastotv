@@ -21,20 +21,41 @@
 #include "ffmpeg_config.h"
 
 extern "C" {
-#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>    // for AVPacket
+#include <libavformat/avformat.h>  // for AVStream
+#include <libavutil/rational.h>    // for AVRational
 }
 
-#include <common/macros.h>
+#include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN
+#include <common/types.h>   // for time64_t
 
-#include "client/core/bandwidth_estimation.h"
-#include "client/core/types.h"
+#include "client/core/bandwidth_estimation.h"  // for DesireBytesPerSec
+#include "client/core/types.h"                 // for clock_t
+#include "client_server_types.h"               // for bandwidth_t
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
 class Clock;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
 class PacketQueue;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
 
 class Stream {
  public:

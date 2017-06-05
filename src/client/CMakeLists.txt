@@ -526,6 +526,7 @@ ENDIF(ENABLE_LIRC)
 
 SET(BUILD_CLIENT_SOURCES
   types.h types.cpp
+  player_options.h player_options.cpp
   player.h player.cpp
   config.h config.cpp
   cmdutils.h cmdutils.cpp
@@ -750,6 +751,7 @@ IF(DEVELOPER_CHECK_STYLE)
   )
   REGISTER_CHECK_STYLE_TARGET(check_style_client "${CHECK_SOURCES_CLIENT}")
   REGISTER_CHECK_INCLUDES_TARGET(${PROJECT_NAME})
+  REGISTER_CHECK_INCLUDES_TARGET(${PROJECT_CORE_LIBRARY})
 ENDIF(DEVELOPER_CHECK_STYLE)
 
 IF(DEVELOPER_ENABLE_TESTS)

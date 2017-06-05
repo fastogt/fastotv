@@ -18,12 +18,28 @@
 
 #pragma once
 
-#include <stddef.h>  // for size_t
-#include <stdint.h>  // for int64_t
+#include <stdint.h>                   // for int64_t
 
-#include "client/core/audio_frame.h"
-#include "client/core/ring_buffer.h"
-#include "client/core/video_frame.h"
+#include "client/core/ring_buffer.h"  // for RingBuffer
+
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+struct AudioFrame;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+struct VideoFrame;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {

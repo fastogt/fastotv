@@ -18,10 +18,18 @@
 
 #include "config.h"
 
-#include <common/file_system.h>
+#include <string.h>  // for strcmp
+
+#include <common/file_system.h>  // for ANSIFile, ascii_string_path
 #include <common/utils.h>
 
-#include "inih/ini.h"
+#include "inih/ini.h"  // for ini_parse
+
+#include "client/cmdutils.h"              // for DictionaryOptions
+#include "client/core/ffmpeg_internal.h"  // for HWAccelID
+#include "client/types.h"                 // for Size
+
+#include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 
 #define CONFIG_MAIN_OPTIONS "main_options"
 #define CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "loglevel"

@@ -18,7 +18,18 @@
 
 #pragma once
 
-#include <common/libev/tcp/tcp_server.h>
+#include <common/libev/io_loop.h>         // for IoLoop
+#include <common/libev/tcp/tcp_client.h>  // for TcpClient
+namespace common {
+namespace libev {
+class IoLoopObserver;
+}
+}  // namespace common
+namespace common {
+namespace net {
+class socket_info;
+}
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {

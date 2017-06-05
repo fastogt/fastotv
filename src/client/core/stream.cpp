@@ -19,11 +19,15 @@
 #include "client/core/stream.h"
 
 #include <stddef.h>  // for NULL
-#include <atomic>    // for atomic
 
-#include "client/core/clock.h"
-#include "client/core/packet_queue.h"
-#include "client/core/utils.h"
+#include <common/logger.h>  // for COMPACT_LOG_FILE_CRIT
+#include <common/time.h>    // for current_mstime
+
+#include "client/core/clock.h"         // for Clock
+#include "client/core/packet_queue.h"  // for PacketQueue
+#include "client/core/utils.h"         // for q2d_diff
+
+#include "client/types.h"  // for Size
 
 namespace fasto {
 namespace fastotv {

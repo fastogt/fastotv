@@ -18,12 +18,7 @@
 
 #include "server/inner/inner_tcp_client.h"
 
-#include <common/logger.h>
-
-#include "server/commands.h"
-#include "server/inner/inner_tcp_server.h"
-
-#define BUF_SIZE 4096
+#include <common/libev/tcp/tcp_server.h>
 
 namespace fasto {
 namespace fastotv {

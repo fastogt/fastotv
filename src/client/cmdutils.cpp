@@ -25,22 +25,18 @@
 #endif
 
 #include <errno.h>   // for EINVAL, ENOMEM, ENOSYS
-#include <math.h>    // for fabs, floor, round
 #include <stddef.h>  // for size_t
 #include <stdint.h>  // for int64_t, uint64_t, uint8_t, etc
-#include <stdlib.h>  // for exit, strtol
 #include <string.h>  // for strcmp, strchr, strlen, etc
 
-#include <algorithm>  // for sort, transform
 #include <iostream>
-#include <limits>  // for numeric_limits
-#include <vector>  // for
 
 /* Include only the enabled headers since some compilers (namely, Sun
    Studio) will not omit unused inline functions and create undefined
    references to libraries that are not being built. */
 
 extern "C" {
+#include <libavcodec/avcodec.h>        // for AVCodec, AVCodecDescriptor
 #include <libavcodec/version.h>        // for LIBAVCODEC_VERSION_MAJOR, etc
 #include <libavdevice/avdevice.h>      // for AVDeviceInfoList, etc
 #include <libavdevice/version.h>       // for LIBAVDEVICE_VERSION_MAJOR, etc
@@ -50,15 +46,12 @@ extern "C" {
 #include <libavformat/avio.h>          // for avio_enum_protocols
 #include <libavformat/version.h>       // for LIBAVFORMAT_VERSION_MAJOR, etc
 #include <libavutil/avstring.h>        // for av_match_name, av_strlcat, etc
-#include <libavutil/common.h>          // for FFDIFFSIGN, FFMIN
-#include <libavutil/cpu.h>             // for av_force_cpu_flags, etc
+#include <libavutil/common.h>          // for AVERROR, etc
 #include <libavutil/dict.h>            // for av_dict_free, AVDictionary, etc
-#include <libavutil/display.h>         // for av_display_rotation_get
 #include <libavutil/error.h>           // for AVERROR, etc
-#include <libavutil/eval.h>            // for av_strtod
 #include <libavutil/ffversion.h>       // for FFMPEG_VERSION
+#include <libavutil/log.h>             // for AVClass, AV_IS_INPUT_DEVICE
 #include <libavutil/mem.h>             // for av_free, av_freep, etc
-#include <libavutil/opt.h>             // for AVOption, etc
 #include <libavutil/parseutils.h>      // for av_get_known_color_name, etc
 #include <libavutil/pixdesc.h>         // for AVPixFmtDescriptor, etc
 #include <libavutil/pixfmt.h>          // for AVPixelFormat, etc
@@ -246,16 +239,17 @@ void print_codecs_for_id(enum AVCodecID id, int encoder) {
 }
 
 void print_codecs(bool encoder) {
-  std::cout << (encoder ? "Encoders" : "Decoders") << ":\n"
-                                                      " V..... = Video\n"
-                                                      " A..... = Audio\n"
-                                                      " S..... = Subtitle\n"
-                                                      " .F.... = Frame-level multithreading\n"
-                                                      " ..S... = Slice-level multithreading\n"
-                                                      " ...X.. = Codec is experimental\n"
-                                                      " ....B. = Supports draw_horiz_band\n"
-                                                      " .....D = Supports direct rendering method 1\n"
-                                                      " ------"
+  std::cout << (encoder ? "Encoders" : "Decoders")
+            << ":\n"
+               " V..... = Video\n"
+               " A..... = Audio\n"
+               " S..... = Subtitle\n"
+               " .F.... = Frame-level multithreading\n"
+               " ..S... = Slice-level multithreading\n"
+               " ...X.. = Codec is experimental\n"
+               " ....B. = Supports draw_horiz_band\n"
+               " .....D = Supports direct rendering method 1\n"
+               " ------"
             << std::endl;
 
   std::vector<const AVCodecDescriptor*> codecs;
@@ -286,10 +280,11 @@ void print_codecs(bool encoder) {
 void show_formats_devices(bool device_only) {
   AVInputFormat* ifmt = NULL;
   AVOutputFormat* ofmt = NULL;
-  std::cout << (device_only ? "Devices:" : "File formats:") << "\n"
-                                                               " D. = Demuxing supported\n"
-                                                               " .E = Muxing supported\n"
-                                                               " --"
+  std::cout << (device_only ? "Devices:" : "File formats:")
+            << "\n"
+               " D. = Demuxing supported\n"
+               " .E = Muxing supported\n"
+               " --"
             << std::endl;
 
   const char* last_name = "000";

@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include <vector>
+#include <common/error.h>   // for Error
+#include <common/macros.h>  // for WARN_UNUSED_RESULT
 
 #include "serializer/json_serializer.h"
 #include "url.h"

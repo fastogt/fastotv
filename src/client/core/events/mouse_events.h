@@ -18,7 +18,9 @@
 
 #pragma once
 
-#include "client/core/events/events_base.h"
+#include <stdint.h>  // for uint8_t
+
+#include "client/core/events/events_base.h"  // for EventBase, EventsType::M...
 
 /**
  *  Used as a mask when testing buttons in buttonstate.

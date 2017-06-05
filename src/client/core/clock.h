@@ -18,11 +18,7 @@
 
 #pragma once
 
-#include <math.h>
-
-#include <common/types.h>
-
-#include "client/core/types.h"
+#include "client/core/types.h"  // for clock_t
 
 namespace fasto {
 namespace fastotv {

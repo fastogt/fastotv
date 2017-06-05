@@ -18,7 +18,11 @@
 
 #pragma once
 
-#include "client_server_types.h"
+#include <common/error.h>   // for Error
+#include <common/macros.h>  // for WARN_UNUSED_RESULT
+
+#include "client_server_types.h"  // for timestamp_t
+
 #include "serializer/json_serializer.h"
 
 #define SERVER_INFO_TIMESTAMP_FIELD "timestamp"

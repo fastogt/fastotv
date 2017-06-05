@@ -18,21 +18,20 @@
 
 #pragma once
 
-#include <stdint.h>  // for int64_t
-#include <string>
-#include <vector>
+#include <string>  // for string
 
 #include "ffmpeg_config.h"
 
 extern "C" {
-#include <libavutil/avutil.h>
-#include <libavutil/dict.h>
+#include <libavutil/avutil.h>  // for AVMediaType::AVMEDIA_TYPE_NB
+#include <libavutil/dict.h>    // for AVDictionary
 }
 
 #include <common/macros.h>
 
-#include "client/core/types.h"
-#include "ffmpeg_internal.h"
+#include "client/core/types.h"  // for AvSyncType
+
+#include "ffmpeg_internal.h"  // for HWAccelID
 
 namespace fasto {
 namespace fastotv {

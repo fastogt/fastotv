@@ -18,12 +18,14 @@
 
 #include "client/inputs/lirc_input_client.h"
 
-#include <lirc/lirc_client.h>
+#include <stdlib.h>  // for NULL, free
 
+#include <lirc/lirc_client.h>  // for lirc_code2char, lirc_deinit
+
+#include <common/net/net.h>            // for set_blocking_socket
+#include <common/string_util_posix.h>  // for strdup
+#include <common/utils.h>              // for freeifnotnull
 #include <common/file_system.h>
-#include <common/logger.h>
-#include <common/net/net.h>
-#include <common/utils.h>
 
 namespace fasto {
 namespace fastotv {
@@ -48,18 +50,15 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   }
 
   lirc_config* lcfg = NULL;
-  const std::string absolute_source_dir =
-      common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
-  const std::string lirc_config_path =
-      common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
+  const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+  const std::string lirc_config_path = common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
   const char* lirc_config_path_ptr = common::utils::c_strornull(lirc_config_path);
   char* lirc_config_copy_ptr = common::strdup(lirc_config_path_ptr);  // copy for removing warning
   int res = lirc_readconfig(lirc_config_copy_ptr, &lcfg, NULL);
   common::utils::freeifnotnull(lirc_config_copy_ptr);
   if (res == -1) {
     LircDeinit(lfd, NULL);
-    std::string msg_error =
-        common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
+    std::string msg_error = common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
     return common::make_error_value(msg_error, common::Value::E_ERROR);
   }
 

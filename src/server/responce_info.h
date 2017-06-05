@@ -18,6 +18,11 @@
 
 #pragma once
 
+#include <string>  // for string
+
+#include <common/error.h>   // for Error
+#include <common/macros.h>  // for WARN_UNUSED_RESULT
+
 #include "serializer/json_serializer.h"
 
 #define RESPONCE_INFO_REQUEST_ID_FIELD "request_id"

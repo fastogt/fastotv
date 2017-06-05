@@ -18,27 +18,39 @@
 
 #include "client/player.h"
 
-#include <SDL2/SDL_audio.h>  // for SDL_MIX_MAXVOLUME, etc
-#include <SDL2/SDL_hints.h>
+#include <stdlib.h>  // for NULL, EXIT_FAILURE, EXIT...
+#include <string.h>  // for memset
 
-extern "C" {
-#include <libavutil/time.h>
-}
+#include <SDL2/SDL_audio.h>    // for SDL_CloseAudio, SDL_MIX_...
+#include <SDL2/SDL_hints.h>    // for SDL_SetHint, SDL_HINT_RE...
+#include <SDL2/SDL_pixels.h>   // for SDL_Color, ::SDL_PIXELFO...
+#include <SDL2/SDL_rect.h>     // for SDL_Rect
+#include <SDL2/SDL_surface.h>  // for SDL_Surface, SDL_FreeSur...
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
-
-#include <common/application/application.h>
+#include <common/application/application.h>  // for fApp, Application
 #include <common/file_system.h>
-#include <common/threads/thread_manager.h>
+#include <common/logger.h>                  // for COMPACT_LOG_FILE_CRIT
+#include <common/macros.h>                  // for UNUSED, NOTREACHED, ERRO...
+#include <common/threads/thread_manager.h>  // for THREAD_MANAGER
+#include <common/threads/types.h>           // for thread
 #include <common/utils.h>
 
-#include "client/ioservice.h"
-#include "client/sdl_utils.h"
+extern "C" {
+#include <libavutil/avutil.h>  // for AVMediaType::AVMEDIA_TYP...
+#include <libavutil/buffer.h>  // for av_buffer_unref
+#include <libavutil/pixfmt.h>  // for AVPixelFormat::AV_PIX_FM...
+}
 
-#include "client/core/app_options.h"
-#include "client/core/utils.h"
-#include "client/core/video_frame.h"
-#include "client/core/video_state.h"
+#include "client/core/app_options.h"      // for AppOptions, ComplexOptio...
+#include "client/core/audio_params.h"     // for AudioParams
+#include "client/core/ffmpeg_internal.h"  // for hw_device_ctx
+#include "client/core/utils.h"            // for audio_open, calculate_di...
+#include "client/core/video_frame.h"      // for VideoFrame
+#include "client/core/video_state.h"      // for VideoState
+#include "client/ioservice.h"             // for IoService
+#include "client/sdl_utils.h"             // for IMG_LoadPNG, TextureSaver
+
+#include "url.h"  // for Url
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
@@ -116,14 +128,6 @@ bool CreateWindowFunc(Size window_size,
   return true;
 }
 }  // namespace
-
-PlayerOptions::PlayerOptions()
-    : exit_on_keydown(false),
-      exit_on_mousedown(false),
-      is_full_screen(false),
-      default_size(width, height),
-      screen_size(0, 0),
-      audio_volume(volume) {}
 
 Player::Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt)
     : options_(options),
@@ -351,8 +355,9 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                                           "to reduce the image size.";
+                << frame->width << "x" << frame->height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return false;
   }
 

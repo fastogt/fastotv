@@ -18,15 +18,18 @@
 
 #include "server/redis/redis_helpers.h"
 
-#include <hiredis/hiredis.h>
+#include <stddef.h>  // for NULL
+#include <string>    // for string
 
-#include <string>
-#include <vector>
+#include <hiredis/hiredis.h>  // for redisFree, freeR...
 
-#include <common/logger.h>
+#include <common/logger.h>  // for COMPACT_LOG_ERROR
 #include <common/utils.h>
 
-#include "third-party/json-c/json-c/json.h"
+#include "auth_info.h"  // for AuthInfo
+
+#include "third-party/json-c/json-c/json_object.h"   // for json_object_put
+#include "third-party/json-c/json-c/json_tokener.h"  // for json_tokener_parse
 
 #define GET_USER_1E "GET %s"
 

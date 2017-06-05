@@ -18,31 +18,91 @@
 
 #pragma once
 
-#include <stddef.h>  // for size_t
-#include <stdint.h>  // for int64_t, uint8_t, int16_t
-#include <memory>    // for shared_ptr
+#include <stdint.h>  // for int64_t, uint8_t
 #include <string>    // for string
 
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 
 extern "C" {
-#include <libavfilter/avfilter.h>  // for AVFilterContext (ptr only), etc
-#include <libavformat/avformat.h>  // for AVInputFormat, etc
+#include <libavfilter/avfilter.h>  // for AVFilterContext, AVFilterGraph
+#include <libavformat/avformat.h>  // for AVFormatContext
+#include <libavutil/avutil.h>      // for AVMediaType
 #include <libavutil/frame.h>       // for AVFrame
-#include <libavutil/rational.h>    // for AVRational
 }
 
-#include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN, etc
+#include <common/macros.h>  // for WARN_UNUSED_RESULT, DISALLOW_C...
 #include <common/smart_ptr.h>
-#include <common/threads/types.h>
-#include <common/url.h>
+#include <common/threads/types.h>  // for condition_variable, mutex
+#include <common/url.h>            // for Uri
 
-#include "client_server_types.h"
-
-#include "client/core/app_options.h"
+#include "client/core/app_options.h"   // for AppOptions, ComplexOptions
 #include "client/core/audio_params.h"  // for AudioParams
-#include "client/core/clock.h"
-#include "client/core/types.h"
+#include "client/core/types.h"         // for clock_t, AvSyncType
+#include "client_server_types.h"       // for stream_id
+
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+class AudioDecoder;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+class AudioStream;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+class VideoDecoder;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+class VideoStateHandler;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+class VideoStream;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+struct InputStream;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+namespace core {
+struct VideoFrame;
+}
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto
 
 struct SwrContext;
 struct InputStream;

@@ -18,9 +18,14 @@
 
 #pragma once
 
-#include <string>
+#include <stdint.h>  // for int64_t
+#include <string>    // for string
 
-#include "client_server_types.h"
+#include <common/error.h>   // for Error
+#include <common/macros.h>  // for WARN_UNUSED_RESULT
+
+#include "client_server_types.h"  // for bandwidth_t, login_t
+
 #include "serializer/json_serializer.h"
 
 namespace fasto {

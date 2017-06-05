@@ -18,9 +18,14 @@
 
 #pragma once
 
-#include "serializer/iserializer.h"
+#include <stddef.h>  // for NULL
+#include <string>    // for string
 
-#include "third-party/json-c/json-c/json.h"  // for json_object_...
+#include <common/error.h>  // for Error
+
+#include "serializer/iserializer.h"  // for ISerializer
+
+#include "third-party/json-c/json-c/json_object.h"
 
 namespace fasto {
 namespace fastotv {

@@ -18,16 +18,24 @@
 
 #include "client/core/application/sdl2_application.h"
 
-#include <SDL2/SDL.h>         // for SDL_INIT_AUDIO, etc
-#include <SDL2/SDL_error.h>   // for SDL_GetError
-#include <SDL2/SDL_mutex.h>   // for SDL_CreateMutex, etc
-#include <SDL2/SDL_stdinc.h>  // for SDL_getenv, SDL_setenv, etc
-#include <SDL2/SDL_ttf.h>
+#include <stdlib.h>  // for EXIT_SUCCESS, EXIT_FAI...
 
-#include <common/threads/event_bus.h>
+#include <SDL2/SDL.h>           // for SDL_Init, SDL_Quit
+#include <SDL2/SDL_keyboard.h>  // for SDL_Keysym
+#include <SDL2/SDL_mouse.h>     // for SDL_ShowCursor
+#include <SDL2/SDL_stdinc.h>    // for Uint32
+#include <SDL2/SDL_timer.h>     // for SDL_AddTimer, SDL_Remo...
+#include <SDL2/SDL_ttf.h>       // for TTF_Init, TTF_Quit
+#include <SDL2/SDL_video.h>     // for ::SDL_WINDOWEVENT_CLOSE
 
-#include "client/core/events/events.h"
-#include "client/core/types.h"
+#include <common/logger.h>                  // for COMPACT_LOG_ERROR, COM...
+#include <common/macros.h>                  // for UNUSED, DNOTREACHED
+#include <common/threads/thread_manager.h>  // for THREAD_MANAGER
+
+#include "client/core/events/events.h"  // for QuitEvent, QuitInfo
+
+#include "client/core/types.h"  // for GetCurrentMsec, msec_t
+#include "client/types.h"       // for Size
 
 #define FASTO_EVENT (SDL_USEREVENT)
 

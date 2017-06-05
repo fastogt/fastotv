@@ -16,12 +16,18 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <errno.h>   // for ENOMEM
+#include <stddef.h>  // for NULL
+
 extern "C" {
-#include <libavutil/hwcontext.h>
-#include <libavutil/pixdesc.h>
+#include <libavcodec/avcodec.h>   // for AVCodecContext
+#include <libavutil/buffer.h>     // for av_buffer_unref, AVBufferRef
+#include <libavutil/error.h>      // for AVERROR
+#include <libavutil/hwcontext.h>  // for AVHWFramesContext, av_hwdev...
+#include <libavutil/pixfmt.h>     // for AVPixelFormat::AV_PIX_FMT_CUDA
 }
 
-#include <common/macros.h>
+#include <common/logger.h>  // for COMPACT_LOG_ERROR, ERROR_LOG
 
 #include "client/core/ffmpeg_internal.h"
 
@@ -41,8 +47,7 @@ int cuvid_init(AVCodecContext* avctx) {
   int ret;
 
   if (!hw_device_ctx) {
-    ret =
-        av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, ist->hwaccel_device, NULL, 0);
+    ret = av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_CUDA, ist->hwaccel_device, NULL, 0);
     if (ret < 0) {
       ERROR_LOG() << "Error creating a CUDA device";
       return ret;

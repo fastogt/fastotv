@@ -18,7 +18,13 @@
 
 #pragma once
 
-#include "redis/redis_helpers.h"
+#include <string>  // for string
+
+#include <common/error.h>      // for Error
+#include <common/macros.h>     // for WARN_UNUSED_RESULT
+#include <common/net/types.h>  // for HostAndPort
+
+#include "redis/redis_helpers.h"  // for redis_sub_configuration_t
 
 namespace fasto {
 namespace fastotv {

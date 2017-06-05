@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <stdint.h>  // for int32_t, uint16_t
+
 #include "client/core/events/events_base.h"
 
 enum Scancode {

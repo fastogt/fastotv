@@ -18,14 +18,14 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
+#include <string>  // for string
 
-#include <common/net/types.h>
-#include <common/smart_ptr.h>
+#include <common/error.h>   // for Error
+#include <common/macros.h>  // for WARN_UNUSED_RESULT
 
-#include "auth_info.h"
-#include "channels_info.h"
+#include "auth_info.h"      // for AuthInfo
+#include "channels_info.h"  // for ChannelsInfo
+
 #include "serializer/json_serializer.h"
 
 namespace fasto {

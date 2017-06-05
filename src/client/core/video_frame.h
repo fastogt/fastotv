@@ -18,11 +18,18 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <stdint.h>  // for int64_t
 
-#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_render.h>  // for SDL_Texture
 
-#include "ffmpeg_config.h"
+extern "C" {
+#include <libavutil/frame.h>     // for AVFrame
+#include <libavutil/rational.h>  // for AVRational
+}
+
+#include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN
+
+#include "client/core/types.h"  // for clock_t
 
 extern "C" {
 #include <libavutil/frame.h>     // for AVFrame

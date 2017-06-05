@@ -18,19 +18,23 @@
 
 #pragma once
 
-#include <utility>
-#include <vector>
+#include "auth_info.h"  // for AuthInfo
 
-#include "server/user_info.h"
+#include "inner/inner_client.h"  // for InnerClient
 
-#include "inner/inner_client.h"
+#include "server/user_info.h"  // for user_id_t
 
 namespace common {
 namespace libev {
 namespace tcp {
 class TcpServer;
-}  // namespace tcp
+}
 }  // namespace libev
+}  // namespace common
+namespace common {
+namespace net {
+class socket_info;
+}
 }  // namespace common
 
 namespace fasto {

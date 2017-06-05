@@ -18,7 +18,9 @@
 
 #pragma once
 
-#include "commands/commands.h"
+#include <string>  // for string
+
+#include "commands/commands.h"  // for cmd_seq_t, cmd_approve_t, cmd_responce_t
 
 namespace fasto {
 namespace fastotv {

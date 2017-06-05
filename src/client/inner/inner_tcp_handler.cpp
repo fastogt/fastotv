@@ -18,29 +18,32 @@
 
 #include "client/inner/inner_tcp_handler.h"
 
-#include <string>
+#include <stddef.h>  // for NULL
+#include <stdint.h>  // for int64_t
+#include <string>    // for string
 
-#include <common/application/application.h>
-#include <common/convert2string.h>
-#include <common/error.h>
-#include <common/logger.h>
-#include <common/net/net.h>
-#include <common/system_info/cpu_info.h>
-#include <common/system_info/system_info.h>
+#include <common/application/application.h>  // for fApp
+#include <common/error.h>                    // for DEBUG_MSG_ERROR
+#include <common/libev/io_client.h>          // for IoClient
+#include <common/libev/io_loop.h>            // for IoLoop
+#include <common/logger.h>                   // for COMPACT_LOG_WARNING
+#include <common/net/net.h>                  // for connect
+#include <common/system_info/cpu_info.h>     // for CurrentCpuInfo
+#include <common/system_info/system_info.h>  // for AmountOfAvailable...
+
+#include "client/bandwidth/tcp_bandwidth_client.h"  // for TcpBandwidthClient
+#include "client/core/events/network_events.h"      // for BandwidtInfo, Con...
+#include "client_info.h"                            // for ClientInfo
+#include "client/commands.h"
 
 #include "third-party/json-c/json-c/json.h"
 
-#include <common/libev/tcp/tcp_server.h>
+#include "inner/inner_client.h"  // for InnerClient
 
-#include "inner/inner_client.h"
-
-#include "client_info.h"
-#include "ping_info.h"
-#include "server_info.h"
-
-#include "client/bandwidth/tcp_bandwidth_client.h"
-#include "client/commands.h"
-#include "client/core/events/network_events.h"
+#include "channels_info.h"  // for ChannelsInfo
+#include "ping_info.h"      // for ClientPingInfo
+#include "server_info.h"    // for ServerInfo
+#include "url.h"
 
 namespace fasto {
 namespace fastotv {

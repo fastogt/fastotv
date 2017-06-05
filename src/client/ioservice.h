@@ -18,11 +18,9 @@
 
 #pragma once
 
-#include <string>
-
-#include <common/smart_ptr.h>
-
-#include <common/libev/loop_controller.h>
+#include <common/libev/io_loop.h>           // for IoLoop
+#include <common/libev/io_loop_observer.h>  // for IoLoopObserver
+#include <common/libev/loop_controller.h>   // for ILoopController
 
 namespace common {
 namespace threads {

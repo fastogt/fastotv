@@ -1,5 +1,7 @@
 #include "client/core/ffmpeg_internal.h"
 
+#include <stddef.h>  // for NULL
+
 #include <algorithm>
 
 #ifdef HAVE_VDPAU

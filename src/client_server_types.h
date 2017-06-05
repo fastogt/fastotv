@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include <string>
+#include <string>  // for string
 
 #include <common/time.h>
-#include <common/types.h>
+#include <common/types.h>  // for time64_t
 
 namespace fasto {
 namespace fastotv {
