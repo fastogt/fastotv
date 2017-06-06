@@ -18,9 +18,13 @@
 
 #include "inner/inner_client.h"
 
+#if defined(OS_POSIX)
 #include <netinet/in.h>  // for ntohl
-#include <stdlib.h>      // for free, malloc
-#include <string.h>      // for memcpy
+#else
+#include <winsock2.h>  // for ntohl
+#endif
+#include <stdlib.h>  // for free, malloc
+#include <string.h>  // for memcpy
 
 namespace fasto {
 namespace fastotv {

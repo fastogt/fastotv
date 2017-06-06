@@ -62,8 +62,7 @@ InnerTcpHandler::~InnerTcpHandler() {
     delete ban;
   }
   bandwidth_requests_.clear();
-  delete inner_connection_;
-  inner_connection_ = nullptr;
+  destroy(&inner_connection_);
 }
 
 void InnerTcpHandler::PreLooped(common::libev::IoLoop* server) {

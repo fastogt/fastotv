@@ -74,7 +74,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
   };
 
   explicit InnerTcpHandler(const StartConfig& config);
-  ~InnerTcpHandler();
+  virtual ~InnerTcpHandler();
 
   void RequestServerInfo();                     // should be execute in network thread
   void RequestChannels();                       // should be execute in network thread

@@ -58,6 +58,8 @@ class PrivateHandler : public inner::InnerTcpHandler {
   {
   }
 
+  virtual ~PrivateHandler() {}
+
   virtual void PreLooped(common::libev::IoLoop* server) override {
 #ifdef HAVE_LIRC
     int fd;
