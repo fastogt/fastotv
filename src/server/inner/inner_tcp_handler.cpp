@@ -35,13 +35,16 @@
 #include "ping_info.h"            // for ClientPingInfo
 
 #include "server/commands.h"
+
+#include "server/redis/redis_pub_sub.h"
+
 #include "server/inner/inner_external_notifier.h"  // for InnerSubHandler
 #include "server/inner/inner_tcp_client.h"         // for InnerTcpClient
-#include "server/redis/redis_helpers.h"            // for RedisSub
-#include "server/server_host.h"                    // for ServerHost
-#include "server/user_info.h"                      // for user_id_t, UserInfo
-#include "server/user_state_info.h"                // for UserStateInfo
-#include "server_info.h"                           // for ServerInfo
+
+#include "server/server_host.h"      // for ServerHost
+#include "server/user_info.h"        // for user_id_t, UserInfo
+#include "server/user_state_info.h"  // for UserStateInfo
+#include "server_info.h"             // for ServerInfo
 
 #include "third-party/json-c/json-c/json.h"  // for json_object
 
@@ -57,8 +60,8 @@ InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent, const Config& confi
       ping_client_id_timer_(INVALID_TIMER_ID),
       config_(config) {
   handler_ = new InnerSubHandler(this);
-  sub_commands_in_ = new RedisSub(handler_);
-  redis_subscribe_command_in_thread_ = THREAD_MANAGER()->CreateThread(&RedisSub::Listen, sub_commands_in_);
+  sub_commands_in_ = new RedisPubSub(handler_);
+  redis_subscribe_command_in_thread_ = THREAD_MANAGER()->CreateThread(&RedisPubSub::Listen, sub_commands_in_);
 
   sub_commands_in_->SetConfig(config.server.redis);
   bool result = redis_subscribe_command_in_thread_->Start();

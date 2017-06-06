@@ -67,11 +67,23 @@ IF(USE_PTHREAD)
 ENDIF(USE_PTHREAD)
 
 SET(HEADERS_REDIS
-  redis/redis_helpers.h
+  redis/redis_connect.h
+  redis/redis_storage.h
+  redis/redis_config.h
+
+  redis/redis_sub_config.h
+  redis/redis_pub_sub.h
+  redis/redis_pub_sub_handler.h
 )
 
 SET(SOURCES_REDIS
-  redis/redis_helpers.cpp
+  redis/redis_connect.cpp
+  redis/redis_storage.cpp
+  redis/redis_config.cpp
+
+  redis/redis_pub_sub.cpp
+  redis/redis_pub_sub_handler.cpp
+  redis/redis_sub_config.cpp
 )
 
 SET(HEADERS_INNER_SERVER

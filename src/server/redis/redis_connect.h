@@ -18,34 +18,15 @@
 
 #pragma once
 
-#include <string>  // for string
+#include "server/redis/redis_config.h"
 
-#include <common/error.h>      // for Error
-#include <common/macros.h>     // for WARN_UNUSED_RESULT
-#include <common/net/types.h>  // for HostAndPort
-
-#include "redis/redis_sub_config.h"
+struct redisContext;
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 
-struct ServerSettings {
-  ServerSettings();
-
-  common::net::HostAndPort host;
-  RedisSubConfig redis;
-  common::net::HostAndPort bandwidth_host;
-};
-
-struct Config {
-  Config();
-
-  ServerSettings server;
-};
-
-common::Error load_config_file(const std::string& config_absolute_path, Config* options) WARN_UNUSED_RESULT;
-common::Error save_config_file(const std::string& config_absolute_path, Config* options) WARN_UNUSED_RESULT;
+redisContext* redis_connect(const RedisConfig& config);
 
 }  // namespace server
 }  // namespace fastotv

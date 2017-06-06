@@ -22,7 +22,7 @@
 #include <common/macros.h>         // for WARN_UNUSED_RESULT, DISALLOW_COPY_...
 #include <common/threads/types.h>  // for condition_variable, mutex
 
-#include "redis/redis_helpers.h"  // for RedisStorage
+#include "redis/redis_storage.h"
 
 #include "server/config.h"     // for Config
 #include "server/user_info.h"  // for user_id_t, UserInfo (ptr only)

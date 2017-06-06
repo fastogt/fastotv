@@ -21,36 +21,20 @@
 #include <string>  // for string
 
 #include <common/error.h>      // for Error
-#include <common/macros.h>     // for WARN_UNUSED_RESULT
 #include <common/net/types.h>  // for HostAndPort
 
 #include "server/user_info.h"  // for user_id_t, UserInfo (ptr only)
 
-namespace fasto {
-namespace fastotv {
-class AuthInfo;
-}
-}  // namespace fasto
+#include "server/redis/redis_config.h"
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 
-struct redis_configuration_t {
-  common::net::HostAndPort redis_host;
-  std::string redis_unix_socket;
-};
-
-struct redis_sub_configuration_t : public redis_configuration_t {
-  std::string channel_in;
-  std::string channel_out;
-  std::string channel_clients_state;
-};
-
 class RedisStorage {
  public:
   RedisStorage();
-  void SetConfig(const redis_configuration_t& config);
+  void SetConfig(const RedisConfig& config);
 
   common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;  // check password
   common::Error FindUser(const AuthInfo& user,
@@ -58,31 +42,7 @@ class RedisStorage {
                          UserInfo* uinf) const WARN_UNUSED_RESULT;  // check password
 
  private:
-  redis_configuration_t config_;
-};
-
-class RedisSubHandler {
- public:
-  virtual void HandleMessage(const std::string& channel, const std::string& msg) = 0;
-  virtual ~RedisSubHandler();
-};
-
-class RedisSub {
- public:
-  explicit RedisSub(RedisSubHandler* handler);
-
-  void SetConfig(const redis_sub_configuration_t& config);
-  void Listen();
-  void Stop();
-
-  bool PublishStateToChannel(const std::string& msg) WARN_UNUSED_RESULT;
-  bool PublishToChannelOut(const std::string& msg) WARN_UNUSED_RESULT;
-  bool Publish(const char* chn, size_t chn_len, const char* msg, size_t msg_len) WARN_UNUSED_RESULT;
-
- private:
-  RedisSubHandler* const handler_;
-  redis_sub_configuration_t config_;
-  bool stop_;
+  RedisConfig config_;
 };
 
 }  // namespace server

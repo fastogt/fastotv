@@ -25,6 +25,7 @@
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/libev/types.h>             // for timer_id_t
 #include <common/macros.h>                  // for WARN_UNUSED_RESULT
+#include <common/smart_ptr.h>
 
 #include "commands/commands.h"                      // for cmd_seq_t
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
@@ -59,7 +60,7 @@ class InnerClient;
 namespace fasto {
 namespace fastotv {
 namespace server {
-class RedisSub;
+class RedisPubSub;
 }
 }  // namespace fastotv
 }  // namespace fasto
@@ -156,7 +157,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   ServerHost* const parent_;
 
-  RedisSub* sub_commands_in_;
+  RedisPubSub* sub_commands_in_;
   InnerSubHandler* handler_;
   std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
   common::libev::timer_id_t ping_client_id_timer_;

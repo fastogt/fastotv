@@ -22,7 +22,7 @@
 
 #include "commands/commands.h"           // for cmd_seq_t
 
-#include "server/redis/redis_helpers.h"  // for RedisSubHandler
+#include "server/redis/redis_pub_sub_handler.h"
 
 namespace fasto {
 namespace fastotv {
