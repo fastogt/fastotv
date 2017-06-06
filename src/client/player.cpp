@@ -97,11 +97,27 @@ bool CreateWindowFunc(Size window_size,
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
-    SDL_RendererInfo info;
+    int n = SDL_GetNumRenderDrivers();
+    for (int i = 0; i < n; ++i) {
+      SDL_RendererInfo renderer_info;
+      int res = SDL_GetRenderDriverInfo(i, &renderer_info);
+      if (res == 0) {
+        bool is_hardware_renderer = renderer_info.flags & SDL_RENDERER_ACCELERATED;
+        std::string screen_size =
+            common::MemSPrintf(" maximum texture size can be %dx%d.",
+                               renderer_info.max_texture_width == 0 ? INT_MAX : renderer_info.max_texture_width,
+                               renderer_info.max_texture_height == 0 ? INT_MAX : renderer_info.max_texture_height);
+        DEBUG_LOG() << "Avalible " << renderer_info.name
+                    << (is_hardware_renderer ? " hardware renderer," : " software renderer,") << screen_size;
+      }
+    }
     lrenderer = SDL_CreateRenderer(lwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (lrenderer) {
-      if (!SDL_GetRendererInfo(lrenderer, &info)) {
-        DEBUG_LOG() << "Initialized " << info.name << " renderer.";
+      SDL_RendererInfo info;
+      if (SDL_GetRendererInfo(lrenderer, &info) == 0) {
+        bool is_hardware_renderer = info.flags & SDL_RENDERER_ACCELERATED;
+        DEBUG_LOG() << "Initialized " << info.name
+                    << (is_hardware_renderer ? " hardware renderer." : " software renderer.");
       }
     } else {
       WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
@@ -355,9 +371,8 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                                           "to reduce the image size.";
     return false;
   }
 
