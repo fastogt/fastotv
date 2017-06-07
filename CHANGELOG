@@ -1,4 +1,4 @@
-0.3.0 /
+0.3.0 / June 7, 2017
 [Alexandr Topilski]
 - MacOSX build
 - Json responce
@@ -7,15 +7,17 @@
 - Bandwidth estimation
 - Enable/Disable audio/video in channel
 - Seek stream
+- Raspberry PI base support
+- Cuda hwaccel stabilization
 
 0.2.0 / May 21, 2017
 [Alexandr Topilski]
 - LIRC support
-- added hwaccels: Cuvid, Videotoolbox
-- footer text
-- config file
+- Added hwaccels: Cuvid, Videotoolbox
+- Footer text
+- Config file
 
 0.1.0 / April 17, 2017
 [Alexandr Topilski]
-- added hwaccels: VDPAU, VAAPI, DXVA2
+- Added hwaccels: VDPAU, VAAPI, DXVA2
 
