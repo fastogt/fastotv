@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "video_state.h"
+#include "client/core/video_state.h"
 
 #include <errno.h>             // for ENOMEM, EINVAL, EAGAIN
 #include <inttypes.h>          // for PRIx64

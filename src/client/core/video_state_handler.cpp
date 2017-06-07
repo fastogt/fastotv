@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "video_state_handler.h"
+#include "client/core/video_state_handler.h"
 
 namespace fasto {
 namespace fastotv {
