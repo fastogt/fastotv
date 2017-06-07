@@ -2,8 +2,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.3.0) # deb package fix in 3.3.0
 ###################### Branding ##########################
 
 SET(BRANDING_PROJECT_NAME "FastoTV" CACHE STRING "Branding for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_VERSION "0.3.0.0" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "release" CACHE STRING "Build version type for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_VERSION "0.4.0.0" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "alfa" CACHE STRING "Build version type for ${BRANDING_PROJECT_NAME}") #default
   #possible variables: alfa, beta, rc, release
 
 SET(BRANDING_PROJECT_DOMAIN "http://www.fastogt.com" CACHE STRING "Branding domain url for ${BRANDING_PROJECT_NAME}") #default
@@ -16,9 +16,9 @@ SET(BRANDING_PROJECT_MAINTAINER_NAME "Alexandr Topilski" CACHE STRING "Name of m
 SET(BRANDING_PROJECT_GITHUB_FORK "https://www.github.com/fastogt/fastotv" CACHE STRING "Branding fork url for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_GITHUB_ISSUES "https://www.github.com/fastogt/fastotv/issues" CACHE STRING "Branding issues url for ${BRANDING_PROJECT_NAME}") #default
 
-SET(BRANDING_PROJECT_HOMEPAGE_LINK "http://www.fastogt.com" CACHE STRING "Home page link for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_FACEBOOK_LINK "https://www.facebook.com/profile.php?id=100010049712549" CACHE STRING "Facebook link for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_TWITTER_LINK "https://www.twitter.com/FastoGT" CACHE STRING "Twitter link for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_HOMEPAGE_LINK "http://www.fastotv.com" CACHE STRING "Home page link for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_FACEBOOK_LINK "https://www.facebook.com/profile.php?id=100016809641223" CACHE STRING "Facebook link for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_TWITTER_LINK "https://twitter.com/FastoTv" CACHE STRING "Twitter link for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_GITHUB_LINK "https://www.github.com/fastogt/fastotv" CACHE STRING "Github link for ${BRANDING_PROJECT_NAME}") #default
 
 SET(BRANDING_PROJECT_SUMMARY "Cross-platform open source tv player."

@@ -51,7 +51,8 @@ namespace client {
 namespace inner {
 
 InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
-    : fasto::fastotv::inner::InnerServerCommandSeqParser(), common::libev::IoLoopObserver(),
+    : fasto::fastotv::inner::InnerServerCommandSeqParser(),
+      common::libev::IoLoopObserver(),
       inner_connection_(nullptr),
       bandwidth_requests_(),
       ping_server_id_timer_(INVALID_TIMER_ID),

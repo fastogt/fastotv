@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include <string>                        // for string
+#include <string>  // for string
 
-#include "commands/commands.h"           // for cmd_seq_t
+#include "commands/commands.h"  // for cmd_seq_t
 
 #include "server/redis/redis_pub_sub_handler.h"
 

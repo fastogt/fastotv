@@ -41,8 +41,8 @@ extern "C" {
 #include <common/logger.h>                   // for COMPACT_LOG_ERROR, ERROR...
 #include <common/macros.h>                   // for ERROR_RESULT_VALUE, UNUSED
 #include <common/string_util.h>
-#include <common/system/system.h>            // for Shutdown, shutdown_t::SH...
-#include <common/threads/types.h>            // for mutex
+#include <common/system/system.h>  // for Shutdown, shutdown_t::SH...
+#include <common/threads/types.h>  // for mutex
 #include <common/utils.h>
 
 #include "client/cmdutils.h"            // for DictionaryOptions, show_...
@@ -51,7 +51,7 @@ extern "C" {
 #include "client/player.h"              // for Player
 #include "client/core/application/sdl2_application.h"
 
-#include "client/config.h"                     // for TVConfig, load_config_file
+#include "client/config.h"  // for TVConfig, load_config_file
 
 #undef ERROR
 

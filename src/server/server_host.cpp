@@ -28,7 +28,7 @@
 #include <common/logger.h>                  // for COMPACT_LOG_FILE_CRIT
 #include <common/threads/thread_manager.h>  // for THREAD_MANAGER
 
-#include "inner/inner_tcp_client.h"          // for InnerTcpClient
+#include "inner/inner_tcp_client.h"  // for InnerTcpClient
 
 #include "server/inner/inner_tcp_handler.h"  // for InnerTcpHandlerHost
 #include "server/inner/inner_tcp_server.h"

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <stdint.h>                   // for int64_t
+#include <stdint.h>  // for int64_t
 
 #include "client/core/ring_buffer.h"  // for RingBuffer
 
