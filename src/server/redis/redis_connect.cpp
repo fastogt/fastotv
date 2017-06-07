@@ -23,43 +23,95 @@
 
 #include <hiredis/hiredis.h>  // for redisFree, redisContext
 
-#include <common/logger.h>     // for COMPACT_LOG_ERROR, ERROR_LOG
 #include <common/net/types.h>  // for HostAndPort
 
 namespace fasto {
 namespace fastotv {
 namespace server {
 
-redisContext* redis_connect(const RedisConfig& config) {
-  const common::net::HostAndPort redisHost = config.redis_host;
-  const std::string unixPath = config.redis_unix_socket;
+common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisContext** conn) {
+  if (!conn || !host.IsValid()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
 
-  if (!redisHost.IsValid() && unixPath.empty()) {
-    return NULL;
+  struct redisContext* redis = redisConnect(host.host.c_str(), host.port);
+  if (!redis || redis->err) {
+    if (redis) {
+      common::Error err = common::make_error_value(redis->errstr, common::Value::E_ERROR);
+      redisFree(redis);
+      redis = NULL;
+      return err;
+    }
+
+    std::string host_str = common::ConvertToString(host);
+    return common::make_error_value(common::MemSPrintf("Could not connect to Redis at %s : no context", host_str),
+                                    common::Value::E_ERROR);
+  }
+
+  *conn = redis;
+  return common::Error();
+}
+
+common::Error redis_unix_connect(const std::string& unix_path, redisContext** conn) {
+  if (!conn || unix_path.empty()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  struct redisContext* redis = redisConnectUnix(unix_path.c_str());
+  if (!redis || redis->err) {
+    if (redis) {
+      common::Error err = common::make_error_value(redis->errstr, common::Value::E_ERROR);
+      redisFree(redis);
+      redis = NULL;
+      return err;
+    }
+
+    return common::make_error_value(common::MemSPrintf("Could not connect to Redis at %s : no context", unix_path),
+                                    common::Value::E_ERROR);
+  }
+
+  *conn = redis;
+  return common::Error();
+}
+
+common::Error redis_connect(const RedisConfig& config, redisContext** conn) {
+  if (!conn) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  const common::net::HostAndPort redis_host = config.redis_host;
+  const std::string unix_path = config.redis_unix_socket;
+
+  if (!redis_host.IsValid() && unix_path.empty()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  if (unix_path.empty()) {
+    struct redisContext* redis = NULL;
+    common::Error err = redis_tcp_connect(redis_host, &redis);
+    if (err && err->IsError()) {
+      return err;
+    }
+
+    *conn = redis;
+    return common::Error();
   }
 
   struct redisContext* redis = NULL;
-  if (unixPath.empty()) {
-    redis = redisConnect(redisHost.host.c_str(), redisHost.port);
-  } else {
-    redis = redisConnectUnix(unixPath.c_str());
-    if (!redis || redis->err) {
-      if (redis) {
-        ERROR_LOG() << "REDIS UNIX CONNECTION ERROR: " << redis->errstr;
-        redisFree(redis);
-        redis = NULL;
-      }
-      redis = redisConnect(redisHost.host.c_str(), redisHost.port);
+  common::Error err = redis_unix_connect(unix_path, &redis);
+  if (err && err->IsError()) {
+    if (!redis_host.IsValid()) {
+      return err;
+    }
+
+    common::Error tcp_err = redis_tcp_connect(redis_host, &redis);
+    if (tcp_err && tcp_err->IsError()) {
+      return err;
     }
   }
 
-  if (redis->err) {
-    ERROR_LOG() << "REDIS CONNECTION ERROR: " << redis->errstr;
-    redisFree(redis);
-    return NULL;
-  }
-
-  return redis;
+  *conn = redis;
+  return common::Error();
 }
 
 }  // namespace server

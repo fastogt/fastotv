@@ -155,7 +155,7 @@ void InnerTcpHandlerHost::DataReadyToWrite(common::libev::IoClient* client) {
   UNUSED(client);
 }
 
-bool InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
+common::Error InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
   return sub_commands_in_->PublishToChannelOut(msg);
 }
 
@@ -169,8 +169,8 @@ void InnerTcpHandlerHost::PublishUserStateInfo(const UserStateInfo& state) {
 
   std::string connected_resp = json_object_get_string(user_state_json);
   json_object_put(user_state_json);
-  bool res = sub_commands_in_->PublishStateToChannel(connected_resp);
-  if (!res) {
+  err = sub_commands_in_->PublishStateToChannel(connected_resp);
+  if (err && err->IsError()) {
     WARNING_LOG() << "Publish message: " << connected_resp << " to channel clients state failed.";
   }
 }

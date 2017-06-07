@@ -44,7 +44,7 @@ namespace {
 
 common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInfo* out_info) {
   if (!user_json || !out_uid || !out_info) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   json_object* obj = json_tokener_parse(user_json);
@@ -87,12 +87,13 @@ common::Error RedisStorage::FindUserAuth(const AuthInfo& user, user_id_t* uid) c
 
 common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserInfo* uinf) const {
   if (!user.IsValid() || !uid || !uinf) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
-  redisContext* redis = redis_connect(config_);
-  if (!redis) {
-    return common::make_error_value("Can't connect to user database", common::ErrorValue::E_ERROR);
+  redisContext* redis = NULL;
+  common::Error err = redis_connect(config_, &redis);
+  if (err && err->IsError()) {
+    return err;
   }
 
   std::string login = user.GetLogin();
@@ -106,7 +107,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
   const char* user_json = reply->str;
   UserInfo linfo;
   user_id_t luid;
-  common::Error err = parse_user_json(user_json, &luid, &linfo);
+  err = parse_user_json(user_json, &luid, &linfo);
   if (err && err->IsError()) {
     freeReplyObject(reply);
     redisFree(redis);

@@ -105,12 +105,12 @@ common::Error ServerHost::UnRegisterInnerConnectionByHost(common::libev::IoClien
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   user_id_t uid = iconnection->GetUid();
   if (uid.empty()) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   connections_.erase(uid);
@@ -124,7 +124,7 @@ common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   iconnection->SetServerHostInfo(user);

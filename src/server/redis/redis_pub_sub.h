@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <common/error.h>
+
 #include "server/redis/redis_pub_sub_handler.h"
 #include "server/redis/redis_sub_config.h"
 
@@ -33,9 +35,9 @@ class RedisPubSub {
   void Listen();
   void Stop();
 
-  bool PublishStateToChannel(const std::string& msg) WARN_UNUSED_RESULT;
-  bool PublishToChannelOut(const std::string& msg) WARN_UNUSED_RESULT;
-  bool Publish(const std::string& channel, const std::string& msg) WARN_UNUSED_RESULT;
+  common::Error PublishStateToChannel(const std::string& msg) WARN_UNUSED_RESULT;
+  common::Error PublishToChannelOut(const std::string& msg) WARN_UNUSED_RESULT;
+  common::Error Publish(const std::string& channel, const std::string& msg) WARN_UNUSED_RESULT;
 
  private:
   RedisSubHandler* const handler_;

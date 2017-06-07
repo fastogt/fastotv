@@ -51,7 +51,7 @@ common::Error InnerClient::Write(const cmd_approve_t& approve) {
 
 common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
   if (!sz) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   protocoled_size_t lsz = 0;
@@ -76,7 +76,7 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
 
 common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
   if (!out || size == 0) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   size_t nread;
@@ -99,7 +99,7 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
 
 common::Error InnerClient::ReadCommand(std::string* out) {
   if (!out) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   protocoled_size_t message_size;
@@ -123,7 +123,7 @@ common::Error InnerClient::ReadCommand(std::string* out) {
 
 common::Error InnerClient::WriteInner(const std::string& data) {
   if (data.empty()) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
   const char* data_ptr = data.data();
   const size_t size = data.size();

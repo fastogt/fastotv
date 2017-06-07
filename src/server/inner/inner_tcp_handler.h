@@ -124,7 +124,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   virtual ~InnerTcpHandlerHost();
 
-  bool PublishToChannelOut(const std::string& msg);
+  common::Error PublishToChannelOut(const std::string& msg);
   inner::InnerTcpClient* FindInnerConnectionByID(const std::string& login) const;
 
  private:

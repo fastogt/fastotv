@@ -137,8 +137,8 @@ void InnerSubHandler::PublishResponce(const ResponceInfo& resp) {
     return;
   }
 
-  bool res = parent_->PublishToChannelOut(resp_str);
-  if (!res) {
+  err = parent_->PublishToChannelOut(resp_str);
+  if (err && err->IsError()) {
     WARNING_LOG() << "Publish message: " << resp_str << " to channel out failed.";
   }
 }

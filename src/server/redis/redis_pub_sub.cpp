@@ -38,8 +38,10 @@ void RedisPubSub::SetConfig(const RedisSubConfig& config) {
 }
 
 void RedisPubSub::Listen() {
-  redisContext* redis_sub = redis_connect(config_);
-  if (!redis_sub) {
+  redisContext* redis_sub = NULL;
+  common::Error err = redis_connect(config_, &redis_sub);
+  if (err && err->IsError()) {
+    WARNING_LOG() << "REDIS PUB/SUB CONNECTION ERROR: " << err->Description();
     return;
   }
 
@@ -88,39 +90,37 @@ void RedisPubSub::Stop() {
   stop_ = true;
 }
 
-bool RedisPubSub::PublishStateToChannel(const std::string& msg) {
+common::Error RedisPubSub::PublishStateToChannel(const std::string& msg) {
   return Publish(config_.channel_clients_state, msg);
 }
 
-bool RedisPubSub::PublishToChannelOut(const std::string& msg) {
+common::Error RedisPubSub::PublishToChannelOut(const std::string& msg) {
   return Publish(config_.channel_out, msg);
 }
 
-bool RedisPubSub::Publish(const std::string& channel, const std::string& msg) {
-  if (channel.empty()) {
-    return false;
+common::Error RedisPubSub::Publish(const std::string& channel, const std::string& msg) {
+  if (channel.empty() || msg.empty()) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
-  if (msg.empty()) {
-    return false;
-  }
-
-  redisContext* redis_sub = redis_connect(config_);
-  if (!redis_sub) {
-    return false;
+  redisContext* redis_sub = NULL;
+  common::Error err = redis_connect(config_, &redis_sub);
+  if (err && err->IsError()) {
+    return err;
   }
 
   const char* chn = common::utils::c_strornull(channel);
   const char* m = common::utils::c_strornull(msg);
   void* rreply = redisCommand(redis_sub, "PUBLISH %s %s", chn, m);
   if (!rreply) {
+    err = common::make_error_value(redis_sub->errstr, common::Value::E_ERROR);
     redisFree(redis_sub);
-    return false;
+    return err;
   }
 
   freeReplyObject(rreply);
   redisFree(redis_sub);
-  return true;
+  return common::Error();
 }
 
 }  // namespace server
