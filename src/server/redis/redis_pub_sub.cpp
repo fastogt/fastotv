@@ -32,7 +32,8 @@ namespace fastotv {
 namespace server {
 namespace redis {
 
-RedisPubSub::RedisPubSub(RedisSubHandler* handler) : handler_(handler), stop_(false) {}
+RedisPubSub::RedisPubSub(RedisSubHandler* handler) : handler_(handler), stop_(false) {
+}
 
 void RedisPubSub::SetConfig(const RedisSubConfig& config) {
   config_ = config;

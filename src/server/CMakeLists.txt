@@ -136,18 +136,14 @@ IF(DEVELOPER_ENABLE_TESTS)
     SET(PROJECT_UNIT_TEST_CLIENT unit_tests_server)
     ADD_EXECUTABLE(${PROJECT_UNIT_TEST_CLIENT}
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/server/test_parse_commands.cpp commands.cpp
-      ${SOURCE_ROOT}/commands/commands.cpp
-
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/server/test_serializer.cpp
-      user_info.cpp
-      user_state_info.cpp
-      responce_info.cpp
-      ${SOURCE_ROOT}/channels_info.cpp
-      ${SOURCE_ROOT}/auth_info.cpp
-      ${SOURCE_ROOT}/url.cpp
+
+      user_info.cpp user_state_info.cpp responce_info.cpp
     )
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_UNIT_TEST_CLIENT} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_SERVER_TEST})
-    TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST_CLIENT} gtest gtest_main ${COMMON_LIBRARIES} json-c)
+    TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST_CLIENT} gtest gtest_main
+      ${PROJECT_CLIENT_SERVER_LIBRARY} ${COMMON_LIBRARIES} json-c
+    )
     ADD_TEST_TARGET(${PROJECT_UNIT_TEST_CLIENT})
     SET_PROPERTY(TARGET ${PROJECT_UNIT_TEST_CLIENT} PROPERTY FOLDER "Unit tests")
   ENDIF(DEVELOPER_ENABLE_UNIT_TESTS)

@@ -39,7 +39,8 @@ namespace fasto {
 namespace fastotv {
 namespace inner {
 
-RequestCallback::RequestCallback(cmd_seq_t request_id, callback_t cb) : request_id_(request_id), cb_(cb) {}
+RequestCallback::RequestCallback(cmd_seq_t request_id, callback_t cb) : request_id_(request_id), cb_(cb) {
+}
 
 cmd_seq_t RequestCallback::GetRequestID() const {
   return request_id_;
@@ -53,9 +54,11 @@ void RequestCallback::Execute(int argc, char* argv[]) {
   return cb_(request_id_, argc, argv);
 }
 
-InnerServerCommandSeqParser::InnerServerCommandSeqParser() : id_() {}
+InnerServerCommandSeqParser::InnerServerCommandSeqParser() : id_() {
+}
 
-InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
+InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {
+}
 
 cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
   id_t next_id = id_++;
@@ -79,7 +82,8 @@ bool exec_reqest(RequestCallback req, cmd_seq_t request_id, int argc, char* argv
 }  // namespace
 
 void InnerServerCommandSeqParser::ProcessRequest(cmd_seq_t request_id, int argc, char* argv[]) {
-  subscribed_requests_.erase(std::remove_if(subscribed_requests_.begin(), subscribed_requests_.end(),
+  subscribed_requests_.erase(std::remove_if(subscribed_requests_.begin(),
+                                            subscribed_requests_.end(),
                                             std::bind(&exec_reqest, std::placeholders::_1, request_id, argc, argv)),
                              subscribed_requests_.end());
 }

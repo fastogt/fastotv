@@ -27,13 +27,15 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-ResponceInfo::ResponceInfo() : request_id_(), state_(), command_(), responce_json_() {}
+ResponceInfo::ResponceInfo() : request_id_(), state_(), command_(), responce_json_() {
+}
 
 ResponceInfo::ResponceInfo(const std::string& request_id,
                            const std::string& state_command,
                            const std::string& command,
                            const std::string& responce)
-    : request_id_(request_id), state_(state_command), command_(command), responce_json_(responce) {}
+    : request_id_(request_id), state_(state_command), command_(command), responce_json_(responce) {
+}
 
 common::Error ResponceInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();

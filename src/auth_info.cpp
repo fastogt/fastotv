@@ -30,9 +30,11 @@
 namespace fasto {
 namespace fastotv {
 
-AuthInfo::AuthInfo() : login_(), password_() {}
+AuthInfo::AuthInfo() : login_(), password_() {
+}
 
-AuthInfo::AuthInfo(const std::string& login, const std::string& password) : login_(login), password_(password) {}
+AuthInfo::AuthInfo(const std::string& login, const std::string& password) : login_(login), password_(password) {
+}
 
 bool AuthInfo::IsValid() const {
   return !login_.empty() || password_.empty();

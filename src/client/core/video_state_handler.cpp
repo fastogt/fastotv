@@ -23,9 +23,11 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-VideoStateHandler::VideoStateHandler() {}
+VideoStateHandler::VideoStateHandler() {
+}
 
-VideoStateHandler::~VideoStateHandler() {}
+VideoStateHandler::~VideoStateHandler() {
+}
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

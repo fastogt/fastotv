@@ -25,7 +25,8 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
-InnerTcpServer::InnerTcpServer(common::libev::IoLoopObserver* observer) : IoLoop(observer) {}
+InnerTcpServer::InnerTcpServer(common::libev::IoLoopObserver* observer) : IoLoop(observer) {
+}
 
 const char* InnerTcpServer::ClassName() const {
   return "InnerTcpServer";

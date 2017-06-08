@@ -37,7 +37,8 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
-TextureSaver::TextureSaver(SDL_Surface* surface) : surface_(surface), texture_(NULL), renderer_(NULL) {}
+TextureSaver::TextureSaver(SDL_Surface* surface) : surface_(surface), texture_(NULL), renderer_(NULL) {
+}
 
 TextureSaver::~TextureSaver() {
   if (renderer_) {
@@ -251,7 +252,9 @@ common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out) {
   if (ckey != -1) {
     if (color_type != PNG_COLOR_TYPE_PALETTE) {
       /* FIXME: Should these be truncated or shifted down? */
-      ckey = SDL_MapRGB(surface->format, static_cast<Uint8>(transv->red), static_cast<Uint8>(transv->green),
+      ckey = SDL_MapRGB(surface->format,
+                        static_cast<Uint8>(transv->red),
+                        static_cast<Uint8>(transv->green),
                         static_cast<Uint8>(transv->blue));
     }
     SDL_SetColorKey(surface, SDL_TRUE, ckey);

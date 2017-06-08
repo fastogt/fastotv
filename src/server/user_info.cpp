@@ -31,9 +31,11 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-UserInfo::UserInfo() : auth_(), ch_() {}
+UserInfo::UserInfo() : auth_(), ch_() {
+}
 
-UserInfo::UserInfo(const AuthInfo& auth, const ChannelsInfo& ch) : auth_(auth), ch_(ch) {}
+UserInfo::UserInfo(const AuthInfo& auth, const ChannelsInfo& ch) : auth_(auth), ch_(ch) {
+}
 
 bool UserInfo::IsValid() const {
   return auth_.IsValid();

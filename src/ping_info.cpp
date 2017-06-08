@@ -25,7 +25,8 @@
 namespace fasto {
 namespace fastotv {
 
-ServerPingInfo::ServerPingInfo() : timestamp_(common::time::current_utc_mstime()) {}
+ServerPingInfo::ServerPingInfo() : timestamp_(common::time::current_utc_mstime()) {
+}
 
 common::Error ServerPingInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
@@ -54,7 +55,8 @@ timestamp_t ServerPingInfo::GetTimeStamp() const {
   return timestamp_;
 }
 
-ClientPingInfo::ClientPingInfo() : timestamp_(common::time::current_utc_mstime()) {}
+ClientPingInfo::ClientPingInfo() : timestamp_(common::time::current_utc_mstime()) {
+}
 
 common::Error ClientPingInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();

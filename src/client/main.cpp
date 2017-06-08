@@ -292,8 +292,8 @@ static int main_single_application(int argc,
   }
 
   DictionaryOptions* dict = main_options.dict;
-  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
-                                                    dict->codec_opts);
+  fasto::fastotv::client::core::ComplexOptions copt(
+      dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
   fasto::fastotv::client::Player* player =
       new fasto::fastotv::client::Player(main_options.player_options, main_options.app_options, copt);
   res = app.Exec();

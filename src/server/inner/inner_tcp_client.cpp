@@ -26,13 +26,15 @@ namespace server {
 namespace inner {
 
 InnerTcpClient::InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info)
-    : InnerClient(server, info), hinfo_(), uid_() {}
+    : InnerClient(server, info), hinfo_(), uid_() {
+}
 
 const char* InnerTcpClient::ClassName() const {
   return "InnerTcpClient";
 }
 
-InnerTcpClient::~InnerTcpClient() {}
+InnerTcpClient::~InnerTcpClient() {
+}
 
 void InnerTcpClient::SetServerHostInfo(const AuthInfo& info) {
   hinfo_ = info;

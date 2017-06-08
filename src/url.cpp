@@ -26,10 +26,12 @@
 
 namespace fasto {
 namespace fastotv {
-Url::Url() : id_(invalid_stream_id), uri_(), name_(), enable_audio_(true), enable_video_(true) {}
+Url::Url() : id_(invalid_stream_id), uri_(), name_(), enable_audio_(true), enable_video_(true) {
+}
 
 Url::Url(stream_id id, const common::uri::Uri& uri, const std::string& name, bool enable_audio, bool enable_video)
-    : id_(id), uri_(uri), name_(name), enable_audio_(enable_audio), enable_video_(enable_video) {}
+    : id_(id), uri_(uri), name_(name), enable_audio_(enable_audio), enable_video_(enable_video) {
+}
 
 bool Url::IsValid() const {
   return id_ != invalid_stream_id && uri_.IsValid() && !name_.empty();

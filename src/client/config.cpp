@@ -299,7 +299,8 @@ TVConfig::TVConfig()
       loglevel(common::logging::L_INFO),
       app_options(),
       player_options(),
-      dict(new DictionaryOptions) {}
+      dict(new DictionaryOptions) {
+}
 
 TVConfig::~TVConfig() {
   destroy(&dict);

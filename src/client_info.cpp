@@ -33,7 +33,8 @@
 namespace fasto {
 namespace fastotv {
 
-ClientInfo::ClientInfo() : login_(), os_(), cpu_brand_(), ram_total_(0), ram_free_(0), bandwidth_(0) {}
+ClientInfo::ClientInfo() : login_(), os_(), cpu_brand_(), ram_total_(0), ram_free_(0), bandwidth_(0) {
+}
 
 ClientInfo::ClientInfo(const login_t& login,
                        const std::string& os,
@@ -41,12 +42,8 @@ ClientInfo::ClientInfo(const login_t& login,
                        int64_t ram_total,
                        int64_t ram_free,
                        bandwidth_t bandwidth)
-    : login_(login),
-      os_(os),
-      cpu_brand_(cpu_brand),
-      ram_total_(ram_total),
-      ram_free_(ram_free),
-      bandwidth_(bandwidth) {}
+    : login_(login), os_(os), cpu_brand_(cpu_brand), ram_total_(ram_total), ram_free_(ram_free), bandwidth_(bandwidth) {
+}
 
 bool ClientInfo::IsValid() const {
   return !login_.empty();
