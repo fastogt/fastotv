@@ -32,7 +32,7 @@ struct RedisSubConfig : public RedisConfig {
   std::string channel_out;
   std::string channel_clients_state;
 };
-}
+}  // namespace redis
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

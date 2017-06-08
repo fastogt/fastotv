@@ -35,10 +35,12 @@ extern "C" {
 #include <common/threads/types.h>  // for condition_variable, mutex
 #include <common/url.h>            // for Uri
 
+#include "client_server_types.h"  // for stream_id
+
 #include "client/core/app_options.h"   // for AppOptions, ComplexOptions
 #include "client/core/audio_params.h"  // for AudioParams
-#include "client/core/types.h"         // for clock_t, AvSyncType
-#include "client_server_types.h"       // for stream_id
+#include "client/core/stream_statistic.h"
+#include "client/core/types.h"  // for clock_t, AvSyncType
 
 namespace fasto {
 namespace fastotv {
@@ -146,16 +148,10 @@ class VideoFrameQueue;
 }
 namespace core {
 
-struct Stats {
-  Stats() : frame_drops_early(0), frame_drops_late(0) {}
-
-  int frame_drops_early;
-  int frame_drops_late;
-};
-
 class VideoStateHandler;
 class VideoState {
  public:
+  typedef Stats stats_t;
   enum { invalid_stream_index = -1 };
   VideoState(stream_id id,
              const common::uri::Uri& uri,
@@ -191,6 +187,8 @@ class VideoState {
 
   void TryRefreshVideo();
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
+
+  stats_t GetStatistic() const;
 
  private:
   void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);
@@ -307,7 +305,7 @@ class VideoState {
   bool eof_;
   bool abort_request_;
 
-  Stats stats_;
+  stats_t stats_;
   VideoStateHandler* handler_;
   InputStream* input_st_;
 

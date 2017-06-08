@@ -24,8 +24,7 @@ namespace client {
 namespace core {
 namespace events {
 
-WindowResizeInfo::WindowResizeInfo(const Size& size) : size(size) {
-}
+WindowResizeInfo::WindowResizeInfo(const Size& size) : size(size) {}
 }  // namespace events
 }  // namespace core
 }  // namespace client

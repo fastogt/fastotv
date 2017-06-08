@@ -25,7 +25,8 @@
 #include <common/macros.h>                // for WARN_UNUSED_RESULT
 #include <common/types.h>                 // for time64_t
 
-#include "client/types.h"         // for BandwidthHostType
+#include "client/types.h"  // for BandwidthHostType
+
 #include "client_server_types.h"  // for bandwidth_t
 
 namespace common {

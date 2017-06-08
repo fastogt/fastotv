@@ -24,7 +24,8 @@
 #include <common/macros.h>                  // for WARN_UNUSED_RESULT
 #include <common/net/types.h>               // for HostAndPort
 
-#include "auth_info.h"            // for AuthInfo
+#include "auth_info.h"  // for AuthInfo
+
 #include "client/types.h"         // for BandwidthHostType
 #include "client_server_types.h"  // for bandwidth_t
 

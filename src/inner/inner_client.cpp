@@ -31,8 +31,7 @@ namespace fastotv {
 namespace inner {
 
 InnerClient::InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info)
-    : common::libev::tcp::TcpClient(server, info) {
-}
+    : common::libev::tcp::TcpClient(server, info) {}
 
 const char* InnerClient::ClassName() const {
   return "InnerClient";
@@ -66,10 +65,9 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
     if (nread == 0) {
       return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
     }
-    return common::make_error_value(
-        common::MemSPrintf(
-            "Error when reading needed to read: %lu bytes, but readed: %lu", sizeof(protocoled_size_t), nread),
-        common::ErrorValue::E_ERROR);
+    return common::make_error_value(common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
+                                                       sizeof(protocoled_size_t), nread),
+                                    common::ErrorValue::E_ERROR);
   }
 
   *sz = lsz;

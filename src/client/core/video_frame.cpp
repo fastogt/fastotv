@@ -39,8 +39,7 @@ VideoFrame::VideoFrame()
       format(0),
       sar{0, 0},
       uploaded(false),
-      flip_v(false) {
-}
+      flip_v(false) {}
 
 VideoFrame::~VideoFrame() {
   ClearFrame();

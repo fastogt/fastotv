@@ -22,10 +22,10 @@
 
 #include <lirc/lirc_client.h>  // for lirc_code2char, lirc_deinit
 
+#include <common/file_system.h>
 #include <common/net/net.h>            // for set_blocking_socket
 #include <common/string_util_posix.h>  // for strdup
 #include <common/utils.h>              // for freeifnotnull
-#include <common/file_system.h>
 
 namespace fasto {
 namespace fastotv {

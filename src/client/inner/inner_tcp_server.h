@@ -20,6 +20,7 @@
 
 #include <common/libev/io_loop.h>         // for IoLoop
 #include <common/libev/tcp/tcp_client.h>  // for TcpClient
+
 namespace common {
 namespace libev {
 class IoLoopObserver;

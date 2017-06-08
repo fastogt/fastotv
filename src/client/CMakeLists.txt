@@ -268,6 +268,7 @@ SET(HEADERS_CORE_EVENTS
 
 SET(HEADERS_CORE
   core/types.h
+  core/stream_statistic.h
   core/utils.h
   core/clock.h
   core/stream_info.h
@@ -301,6 +302,7 @@ SET(SOURCES_CORE_EVENTS
 
 SET(SOURCES_CORE
   core/types.cpp
+  core/stream_statistic.cpp
   core/utils.cpp
   core/clock.cpp
   core/stream_info.cpp
@@ -499,11 +501,11 @@ SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${ICON_FILE} ${RES
 
 IF(NOT TARGET inih)
   ADD_SUBDIRECTORY(${SOURCE_ROOT}/third-party/ini inih)
-ENDIF()
+ENDIF(NOT TARGET inih)
 
 IF(NOT TARGET json-c)
   ADD_SUBDIRECTORY(${SOURCE_ROOT}/third-party/json-c json-c)
-ENDIF()
+ENDIF(NOT TARGET json-c)
 
 SET(PRIVATE_INCLUDE_DIRECTORIES_CLIENT
   ${SOURCE_ROOT}

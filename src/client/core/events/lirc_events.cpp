@@ -22,18 +22,13 @@
 
 namespace {
 
-const std::string LircTypes[] = {"LIRC_KEY_OK",
-                                 "LIRC_KEY_LEFT",
-                                 "LIRC_KEY_UP",
-                                 "LIRC_KEY_RIGHT",
-                                 "LIRC_KEY_DOWN",
-                                 "LIRC_KEY_EXIT",
-                                 "LIRC_KEY_MUTE"};
+const std::string g_lirc_types[] = {"LIRC_KEY_OK",   "LIRC_KEY_LEFT", "LIRC_KEY_UP",  "LIRC_KEY_RIGHT",
+                                 "LIRC_KEY_DOWN", "LIRC_KEY_EXIT", "LIRC_KEY_MUTE"};
 }
 
 namespace common {
 std::string ConvertToString(LircCode value) {
-  return LircTypes[value];
+  return g_lirc_types[value];
 }
 
 bool ConvertFromString(const std::string& from, LircCode* out) {
@@ -41,8 +36,8 @@ bool ConvertFromString(const std::string& from, LircCode* out) {
     return false;
   }
 
-  for (uint32_t i = 0; i < SIZEOFMASS(LircTypes); ++i) {
-    if (from == LircTypes[i]) {
+  for (uint32_t i = 0; i < SIZEOFMASS(g_lirc_types); ++i) {
+    if (from == g_lirc_types[i]) {
       *out = static_cast<LircCode>(i);
       return true;
     }

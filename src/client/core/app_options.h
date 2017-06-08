@@ -53,7 +53,6 @@ struct AppOptions {
   SEEK_STRATEGY seek_by_bytes;
   bool genpts;
   AvSyncType av_sync_type;
-  bool show_status;
   int infinite_buffer;
   std::string wanted_stream_spec[AVMEDIA_TYPE_NB];
   int lowres;

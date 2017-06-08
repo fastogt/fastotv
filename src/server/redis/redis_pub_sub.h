@@ -44,7 +44,7 @@ class RedisPubSub {
   RedisSubConfig config_;
   bool stop_;
 };
-}
+}  // namespace redis
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

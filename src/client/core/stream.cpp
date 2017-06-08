@@ -41,8 +41,7 @@ Stream::Stream()
       stream_st_(NULL),
       bandwidth_(),
       start_ts_(0),
-      total_downloaded_bytes_(0) {
-}
+      total_downloaded_bytes_(0) {}
 
 bool Stream::Open(int index, AVStream* av_stream_st) {
   stream_index_ = index;
@@ -158,8 +157,7 @@ void Stream::SetDesireBandwith(const DesireBytesPerSec& band) {
   bandwidth_ = band;
 }
 
-VideoStream::VideoStream() : Stream() {
-}
+VideoStream::VideoStream() : Stream() {}
 
 bool VideoStream::Open(int index, AVStream* av_stream_st, AVRational frame_rate) {
   AVCodecParameters* codecpar = av_stream_st->codecpar;
@@ -182,8 +180,7 @@ bool VideoStream::Open(int index, AVStream* av_stream_st, AVRational frame_rate)
   return Stream::Open(index, av_stream_st);
 }
 
-AudioStream::AudioStream() : Stream() {
-}
+AudioStream::AudioStream() : Stream() {}
 
 bool AudioStream::Open(int index, AVStream* av_stream_st) {
   AVCodecParameters* codecpar = av_stream_st->codecpar;

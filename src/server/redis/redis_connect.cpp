@@ -113,7 +113,7 @@ common::Error redis_connect(const RedisConfig& config, redisContext** conn) {
   *conn = redis;
   return common::Error();
 }
-}
+}  // namespace redis
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

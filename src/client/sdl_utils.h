@@ -36,6 +36,7 @@ class TextureSaver {
   SDL_Texture* GetTexture(SDL_Renderer* renderer) const;
 
  private:
+  DISALLOW_COPY_AND_ASSIGN(TextureSaver);
   SDL_Surface* surface_;
   mutable SDL_Texture* texture_;
   mutable SDL_Renderer* renderer_;

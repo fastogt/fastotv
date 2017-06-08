@@ -85,11 +85,11 @@ ADD_SUBDIRECTORY(${SOURCE_ROOT}/third-party/redis redis)
 
 IF(NOT TARGET inih)
   ADD_SUBDIRECTORY(${SOURCE_ROOT}/third-party/ini inih)
-ENDIF()
+ENDIF(NOT TARGET inih)
 
 IF(NOT TARGET json-c)
   ADD_SUBDIRECTORY(${SOURCE_ROOT}/third-party/json-c json-c)
-ENDIF()
+ENDIF(NOT TARGET json-c)
 SET(PRIVATE_INCLUDE_DIRECTORIES_SERVER
   ${SOURCE_ROOT}
   ${SOURCE_ROOT}/third-party/ini

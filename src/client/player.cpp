@@ -28,6 +28,7 @@
 #include <SDL2/SDL_surface.h>  // for SDL_Surface, SDL_FreeSur...
 
 #include <common/application/application.h>  // for fApp, Application
+#include <common/convert2string.h>
 #include <common/file_system.h>
 #include <common/logger.h>                  // for COMPACT_LOG_FILE_CRIT
 #include <common/macros.h>                  // for UNUSED, NOTREACHED, ERRO...
@@ -79,6 +80,23 @@ int ConvertToSDLVolume(int val) {
   return av_clip(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
+void DrawLine(SDL_Renderer* renderer, TTF_Font* font, const SDL_Rect* dst, SDL_Color color, const char* text) {
+  if (!renderer || !text || !font || !dst) {
+    return;
+  }
+
+  int font_height = TTF_FontHeight(font);
+  if (font_height > dst->h) {
+    return;
+  }
+
+  SDL_Surface* text_surf = TTF_RenderText_Solid(font, text, color);
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, text_surf);
+  SDL_RenderCopy(renderer, texture, NULL, dst);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(text_surf);
+}
+
 bool CreateWindowFunc(Size window_size,
                       bool is_full_screen,
                       const std::string& title,
@@ -92,8 +110,8 @@ bool CreateWindowFunc(Size window_size,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
-  SDL_Window* lwindow = SDL_CreateWindow(
-      NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_size.width, window_size.height, flags);
+  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_size.width,
+                                         window_size.height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -172,7 +190,8 @@ Player::Player(const PlayerOptions& options, const core::AppOptions& opt, const 
       controller_(new IoService),
       current_state_(INIT_STATE),
       current_state_str_("Init"),
-      muted_(false) {
+      muted_(false),
+      show_statstic_(false) {
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -336,8 +355,8 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(
-      this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, &laudio_hw_params, sdl_audio_callback);
+  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, &laudio_hw_params,
+                             sdl_audio_callback);
   if (ret < 0) {
     return false;
   }
@@ -370,7 +389,8 @@ bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
-                   "size of " << frame->width << "x" << frame->height
+                   "size of "
+                << frame->width << "x" << frame->height
                 << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
                    "to reduce the image size.";
     return false;
@@ -385,8 +405,8 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
-  core::calculate_display_rect(
-      &rect, xleft_, ytop_, window_size_.width, window_size_.height, frame->width, frame->height, frame->sar);
+  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
+                               frame->height, frame->sar);
   SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL, frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   DrawInfo();
@@ -577,6 +597,10 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     case FASTO_KEY_f: {
       bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);
+      break;
+    }
+    case FASTO_KEY_F3: {
+      ToggleStatistic();
       break;
     }
     case FASTO_KEY_p:
@@ -907,20 +931,21 @@ void Player::DrawInitStatus() {
 }
 
 void Player::DrawInfo() {
-  const Size display_size = window_size_;
-
-  DrawChannelsInfo(display_size);
-  DrawVideoInfo(display_size);
+  DrawChannelsInfo();
+  DrawStatistic();
   DrawFooter();
   DrawVolume();
 }
 
-void Player::DrawChannelsInfo(Size display_size) {
-  UNUSED(display_size);
-}
+void Player::DrawChannelsInfo() {}
 
-void Player::DrawVideoInfo(Size display_size) {
-  UNUSED(display_size);
+Rect Player::GetStatisticRect() const {
+  const Size display_size = window_size_;
+  int x = 0;
+  int y = 0;
+  int w = display_size.width / 3;
+  int h = display_size.height;
+  return Rect(x, y, w, h);
 }
 
 Rect Player::GetFooterRect() const {
@@ -941,6 +966,70 @@ Rect Player::GetVolumeRect() const {
   return Rect(x, y, w, h);
 }
 
+void Player::DrawStatistic() {
+  if (!show_statstic_ || !font_) {
+    return;
+  }
+
+  core::VideoState::stats_t stats;
+  if (stream_) {
+    stats = stream_->GetStatistic();
+  }
+
+  static const SDL_Color text_color = {255, 255, 255, 0};
+  const Rect statistic_rect = GetStatisticRect();
+  const bool is_unknown = stats.fmt == core::UNKNOWN_STREAM;
+  /*INFO_LOG() << stats.master_clock << " " << common::ConvertToString(stats.fmt) << ": diff=" << stats.GetDiffStreams()
+             << "msec fd=(" << stats.frame_drops_early << "/" << stats.frame_drops_late << ") video_bitrate=("
+             << video_bandwidth_calc.min * 8 / 1024 << "/" << stats.video_bandwidth * 8 / 1024 << "/"
+             << video_bandwidth_calc.max * 8 / 1024 << ")kb/s audio_bitrate=(" << audio_bandwidth_calc.min * 8 / 1024
+             << "/" << stats.audio_bandwidth * 8 / 1024 << "/" << audio_bandwidth_calc.max * 8 / 1024
+             << ")kb/s aq=" << stats.audio_queue_size / 1024 << "KB vq=" << stats.video_queue_size / 1024 << "KB";*/
+
+  std::string fmt_text = (is_unknown ? "N/A" : common::ConvertToString(stats.fmt));
+  std::string pts_text = (is_unknown ? "N/A" : common::ConvertToString(stats.master_clock));
+  std::string diff_text = (is_unknown ? "N/A" : common::ConvertToString(stats.GetDiffStreams()));
+  std::string fd_text =
+      (is_unknown ? "N/A" : common::MemSPrintf("%d/%d", stats.frame_drops_early, stats.frame_drops_late));
+  bandwidth_t bitrate = stats.video_bandwidth * 8 / 1024 + stats.audio_bandwidth * 8 / 1024;
+  std::string bitrate_text = (is_unknown ? "N/A" : common::ConvertToString(bitrate));
+  std::string video_queue_text = (is_unknown ? "N/A" : common::ConvertToString(stats.video_queue_size / 1024));
+  std::string audio_queue_text = (is_unknown ? "N/A" : common::ConvertToString(stats.audio_queue_size / 1024));
+
+#define STATS_LINES_COUNT 7
+  const std::string result_text = common::MemSPrintf(
+      "FMT: %s\n"
+      "PTS: %s\n"
+      "DIFF: %s msec\n"
+      "FRAMEDROP: %s\n"
+      "BITRATE: %s kb/s\n"
+      "VQUEUE: %s KB\n"
+      "AQUEUE: %s KB\n",
+      fmt_text, pts_text, diff_text, fd_text, bitrate_text, video_queue_text, audio_queue_text);
+  const char* text_ptr = result_text.c_str();
+  int w = 0, h = 0;
+  int r = TTF_SizeText(font_, text_ptr, &w, &h);
+  if (r != 0) {
+    return;
+  }
+
+  if (w > statistic_rect.width) {
+    w = statistic_rect.width;
+  }
+
+  h = h * STATS_LINES_COUNT;
+  if (h > statistic_rect.height) {
+    h = statistic_rect.height;
+  }
+
+  SDL_Rect dst = {statistic_rect.x, statistic_rect.y, w, h};
+  SDL_Surface* text_surf = TTF_RenderText_Blended_Wrapped(font_, text_ptr, text_color, statistic_rect.width);
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
+  SDL_RenderCopy(renderer_, texture, NULL, &dst);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(text_surf);
+}
+
 void Player::DrawFooter() {
   if (!show_footer_ || !font_) {
     return;
@@ -958,7 +1047,8 @@ void Player::DrawFooter() {
   static const SDL_Color text_color = {255, 255, 255, 0};
   SDL_Surface* text = TTF_RenderText_Solid(font_, footer_text.c_str(), text_color);
   const Rect footer_rect = GetFooterRect();
-  SDL_Rect dst = {footer_rect.w / 2 - text->w / 2, footer_rect.y + (footer_rect.h / 2 - text->h / 2), text->w, text->h};
+  SDL_Rect dst = {footer_rect.width / 2 - text->w / 2, footer_rect.y + (footer_rect.height / 2 - text->h / 2), text->w,
+                  text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
@@ -976,7 +1066,8 @@ void Player::DrawVolume() {
 
   static const SDL_Color text_color = {255, 255, 255, 0};
   SDL_Surface* text = TTF_RenderText_Solid(font_, vol_str.c_str(), text_color);
-  SDL_Rect dst = {volume_rect.w / 2 - text->w / 2, volume_rect.y + (volume_rect.h / 2 - text->h / 2), text->w, text->h};
+  SDL_Rect dst = {volume_rect.width / 2 - text->w / 2, volume_rect.y + (volume_rect.height / 2 - text->h / 2), text->w,
+                  text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
@@ -1008,6 +1099,10 @@ void Player::CalculateDispalySize() {
   } else {
     window_size_ = options_.default_size;
   }
+}
+
+void Player::ToggleStatistic() {
+  show_statstic_ = !show_statstic_;
 }
 
 void Player::PauseStream() {

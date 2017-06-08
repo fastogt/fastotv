@@ -28,11 +28,9 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-UserStateInfo::UserStateInfo() : user_id_(), connected_(false) {
-}
+UserStateInfo::UserStateInfo() : user_id_(), connected_(false) {}
 
-UserStateInfo::UserStateInfo(const user_id_t& uid, bool connected) : user_id_(uid), connected_(connected) {
-}
+UserStateInfo::UserStateInfo(const user_id_t& uid, bool connected) : user_id_(uid), connected_(connected) {}
 
 user_id_t UserStateInfo::GetUserId() const {
   return user_id_;

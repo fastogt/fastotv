@@ -33,7 +33,6 @@ AppOptions::AppOptions()
       seek_by_bytes(SEEK_AUTO),
       genpts(false),
       av_sync_type(AV_SYNC_AUDIO_MASTER),
-      show_status(true),
       infinite_buffer(-1),
       wanted_stream_spec(),
       lowres(0),
@@ -54,8 +53,7 @@ AppOptions::AppOptions()
 {
 }
 
-ComplexOptions::ComplexOptions() : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {
-}
+ComplexOptions::ComplexOptions() : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {}
 
 ComplexOptions::ComplexOptions(AVDictionary* sws_d, AVDictionary* swr_o, AVDictionary* format_o, AVDictionary* codec_o)
     : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {

@@ -18,9 +18,10 @@
 
 #pragma once
 
-#include <inttypes.h>       // for PRIx64
-#include <stdio.h>          // for snprintf
-#include <string>           // for string
+#include <inttypes.h>  // for PRIx64
+#include <stdio.h>     // for snprintf
+#include <string>      // for string
+
 #include "ffmpeg_config.h"  // for CONFIG_AVDEVICE
 
 extern "C" {

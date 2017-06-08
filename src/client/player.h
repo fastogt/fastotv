@@ -103,7 +103,7 @@ namespace client {
 
 class Player : public core::VideoStateHandler {
  public:
-  enum { footer_height = 50 };
+  enum { footer_height = 50, update_stats_timeout_msec = 1000 };
   enum States { INIT_STATE, PLAYING_STATE };
   Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt);
   void SetFullScreen(bool full_screen);
@@ -182,6 +182,7 @@ class Player : public core::VideoStateHandler {
   void MoveToPreviousStream();
 
   // player modes
+  void ToggleStatistic();
   void SwitchToPlayingMode();
   void SwitchToChannelErrorMode(common::Error err);
 
@@ -196,11 +197,12 @@ class Player : public core::VideoStateHandler {
   void DrawInitStatus();
 
   void DrawInfo();
-  void DrawChannelsInfo(Size display_size);
-  void DrawVideoInfo(Size display_size);
+  void DrawChannelsInfo();
+  void DrawStatistic();
   void DrawFooter();
   void DrawVolume();
 
+  Rect GetStatisticRect() const;
   Rect GetFooterRect() const;
   Rect GetVolumeRect() const;
 
@@ -250,6 +252,7 @@ class Player : public core::VideoStateHandler {
   std::string current_state_str_;
 
   bool muted_;
+  bool show_statstic_;
 };
 }  // namespace client
 }  // namespace fastotv

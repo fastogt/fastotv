@@ -16,28 +16,43 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/inner/inner_tcp_server.h"
+#pragma once
 
-#include "server/inner/inner_tcp_client.h"
+#include "client/core/types.h"  // for clock_t
 
 namespace fasto {
 namespace fastotv {
-namespace server {
-namespace inner {
+namespace client {
+namespace core {
 
-InnerTcpServer::InnerTcpServer(const common::net::HostAndPort& host, common::libev::IoLoopObserver* observer)
-    : TcpServer(host, observer) {}
+enum StreamFmt { UNKNOWN_STREAM, ONLY_AUDIO_STREAM, ONLY_VIDEO_STREAM, VIDEO_AUDIO_STREAM };
 
-const char* InnerTcpServer::ClassName() const {
-  return "InnerTcpServer";
-}
+struct Stats {
+  Stats();
 
-common::libev::tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
-  InnerTcpClient* client = new InnerTcpClient(this, info);
-  return client;
-}
+  clock_t GetDiffStreams() const;
 
-}  // namespace inner
-}  // namespace server
+  int frame_drops_early;
+  int frame_drops_late;
+
+  clock_t master_clock;
+  clock_t audio_clock;
+  clock_t video_clock;
+  StreamFmt fmt;
+
+  int audio_queue_size;
+  int video_queue_size;
+
+  bandwidth_t video_bandwidth;
+  bandwidth_t audio_bandwidth;
+};
+
+}  // namespace core
+}  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
+
+namespace common {
+std::string ConvertToString(fasto::fastotv::client::core::StreamFmt value);
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::StreamFmt* out);
+}  // namespace common

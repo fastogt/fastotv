@@ -23,8 +23,7 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-StreamInfo::StreamInfo() : video_bitrate(), audio_bitrate() {
-}
+StreamInfo::StreamInfo() : video_bitrate(), audio_bitrate() {}
 
 DesireBytesPerSec StreamInfo::StreamBitrate() const {
   return video_bitrate + audio_bitrate;

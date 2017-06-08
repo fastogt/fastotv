@@ -27,27 +27,27 @@ namespace client {
 enum BandwidthHostType { UNKNOWN_SERVER, MAIN_SERVER, CHANNEL_SERVER };
 
 struct Point {
-  Point() : x(0), y(0) {}
-  Point(int x, int y) : x(x), y(y) {}
+  Point();
+  Point(int x, int y);
 
   int x;
   int y;
 };
 
 struct Size {
-  Size() : width(0), height(0) {}
-  Size(int width, int height) : width(width), height(height) {}
+  Size();
+  Size(int width, int height);
 
-  bool IsValid() { return width != 0 && height != 0; }
+  bool IsValid() const;
 
   int width;
   int height;
 };
 
 struct Rect {
-  Rect(int x, int y, int width, int height) : x(x), y(y), w(width), h(height) {}
+  Rect(int x, int y, int width, int height);
   int x, y;
-  int w, h;
+  int width, height;
 };
 }  // namespace client
 }  // namespace fastotv

@@ -48,9 +48,9 @@ extern "C" {
 #include "client/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/player.h"    // for Player
 
-#include "client/core/app_options.h"    // for ComplexOptions
-#include "client/core/events/events.h"  // for PostExecEvent, PostExecInfo
+#include "client/core/app_options.h"  // for ComplexOptions
 #include "client/core/application/sdl2_application.h"
+#include "client/core/events/events.h"  // for PostExecEvent, PostExecInfo
 
 #include "client/config.h"  // for TVConfig, load_config_file
 
@@ -292,8 +292,8 @@ static int main_single_application(int argc,
   }
 
   DictionaryOptions* dict = main_options.dict;
-  fasto::fastotv::client::core::ComplexOptions copt(
-      dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
+                                                    dict->codec_opts);
   fasto::fastotv::client::Player* player =
       new fasto::fastotv::client::Player(main_options.player_options, main_options.app_options, copt);
   res = app.Exec();

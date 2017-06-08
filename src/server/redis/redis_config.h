@@ -31,7 +31,7 @@ struct RedisConfig {
   common::net::HostAndPort redis_host;
   std::string redis_unix_socket;
 };
-}
+}  // namespace redis
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

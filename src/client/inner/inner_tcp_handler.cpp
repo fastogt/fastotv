@@ -32,9 +32,9 @@
 #include <common/system_info/system_info.h>  // for AmountOfAvailable...
 
 #include "client/bandwidth/tcp_bandwidth_client.h"  // for TcpBandwidthClient
-#include "client/core/events/network_events.h"      // for BandwidtInfo, Con...
-#include "client_info.h"                            // for ClientInfo
 #include "client/commands.h"
+#include "client/core/events/network_events.h"  // for BandwidtInfo, Con...
+#include "client_info.h"                        // for ClientInfo
 
 #include "third-party/json-c/json-c/json.h"
 
@@ -57,8 +57,7 @@ InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
       bandwidth_requests_(),
       ping_server_id_timer_(INVALID_TIMER_ID),
       config_(config),
-      current_bandwidth_(0) {
-}
+      current_bandwidth_(0) {}
 
 InnerTcpHandler::~InnerTcpHandler() {
   for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {

@@ -110,8 +110,7 @@ ServerSettings::ServerSettings() : host(), redis(), bandwidth_host() {
   // bandwidth_host = bandwidth_default_host;
 }
 
-Config::Config() : server() {
-}
+Config::Config() : server() {}
 
 common::Error load_config_file(const std::string& config_absolute_path, Config* options) {
   if (!options || config_absolute_path.empty()) {

@@ -46,7 +46,6 @@
 #define CONFIG_APP_OPTIONS "app_options"
 #define CONFIG_APP_OPTIONS_AST_FIELD "ast"
 #define CONFIG_APP_OPTIONS_VST_FIELD "vst"
-#define CONFIG_APP_OPTIONS_STATS_FIELD "stats"
 #define CONFIG_APP_OPTIONS_FAST_FIELD "fast"
 #define CONFIG_APP_OPTIONS_GENPTS_FIELD "genpts"
 #define CONFIG_APP_OPTIONS_LOWRES_FIELD "lowres"
@@ -171,12 +170,6 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VST_FIELD)) {
     pconfig->app_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO] = value;
     return 1;
-  } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_STATS_FIELD)) {
-    bool show_stats;
-    if (parse_bool(value, &show_stats)) {
-      pconfig->app_options.show_status = show_stats;
-    }
-    return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_FAST_FIELD)) {
     bool fast;
     if (parse_bool(value, &fast)) {
@@ -299,8 +292,7 @@ TVConfig::TVConfig()
       loglevel(common::logging::L_INFO),
       app_options(),
       player_options(),
-      dict(new DictionaryOptions) {
-}
+      dict(new DictionaryOptions) {}
 
 TVConfig::~TVConfig() {
   destroy(&dict);
@@ -345,8 +337,6 @@ common::Error save_config_file(const std::string& config_absolute_path, TVConfig
                                  options->app_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO]);
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VST_FIELD "=%s\n",
                                  options->app_options.wanted_stream_spec[AVMEDIA_TYPE_VIDEO]);
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_STATS_FIELD "=%s\n",
-                                 common::ConvertToString(options->app_options.show_status));
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_FAST_FIELD "=%s\n",
                                  common::ConvertToString(options->app_options.fast));
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_GENPTS_FIELD "=%s\n",

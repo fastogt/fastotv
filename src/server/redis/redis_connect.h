@@ -32,7 +32,7 @@ common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisConte
 common::Error redis_unix_connect(const std::string& unix_path, redisContext** conn);
 
 common::Error redis_connect(const RedisConfig& config, redisContext** conn);
-}
+}  // namespace redis
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

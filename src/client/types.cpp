@@ -23,7 +23,23 @@
 
 namespace fasto {
 namespace fastotv {
-namespace client {}
+namespace client {
+
+Point::Point() : x(0), y(0) {}
+
+Point::Point(int x, int y) : x(x), y(y) {}
+
+Size::Size() : width(0), height(0) {}
+
+Size::Size(int width, int height) : width(width), height(height) {}
+
+bool Size::IsValid() const {
+  return width != 0 && height != 0;
+}
+
+Rect::Rect(int x, int y, int width, int height) : x(x), y(y), width(width), height(height) {}
+
+}  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
 

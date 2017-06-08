@@ -63,7 +63,7 @@ namespace server {
 namespace redis {
 class RedisPubSub;
 }
-}
+}  // namespace server
 }  // namespace fastotv
 }  // namespace fasto
 namespace fasto {

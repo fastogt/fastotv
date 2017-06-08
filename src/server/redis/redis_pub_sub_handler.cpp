@@ -22,9 +22,8 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
-RedisSubHandler::~RedisSubHandler() {
-}
-}
+RedisSubHandler::~RedisSubHandler() {}
+}  // namespace redis
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto
