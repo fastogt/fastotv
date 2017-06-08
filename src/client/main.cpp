@@ -45,8 +45,8 @@ extern "C" {
 #include <common/threads/types.h>  // for mutex
 #include <common/utils.h>
 
-#include "client/cmdutils.h"            // for DictionaryOptions, show_...
-#include "client/player.h"              // for Player
+#include "client/cmdutils.h"  // for DictionaryOptions, show_...
+#include "client/player.h"    // for Player
 
 #include "client/core/app_options.h"    // for ComplexOptions
 #include "client/core/events/events.h"  // for PostExecEvent, PostExecInfo
