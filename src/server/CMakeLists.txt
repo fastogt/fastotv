@@ -2,48 +2,6 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.3.0)
 
 SET(PROJECT_SERVER_NAME ${PROJECT_NAME_LOWERCASE}_server)
 
-SET(HEADERS_COMMANDS
-  ${SOURCE_ROOT}/commands/commands.h
-)
-
-SET(SOURCES_COMMANDS
-  ${SOURCE_ROOT}/commands/commands.cpp
-)
-
-SET(HEADERS_INNER
-  ${SOURCE_ROOT}/inner/inner_server_command_seq_parser.h
-  ${SOURCE_ROOT}/inner/inner_client.h
-)
-
-SET(SOURCES_INNER
-  ${SOURCE_ROOT}/inner/inner_server_command_seq_parser.cpp
-  ${SOURCE_ROOT}/inner/inner_client.cpp
-)
-
-SET(HEADERS_SERIALIZER
-  ${SOURCE_ROOT}/serializer/iserializer.h
-  ${SOURCE_ROOT}/serializer/json_serializer.h
-)
-
-SET(SOURCES_SERIALIZER
-  ${SOURCE_ROOT}/serializer/iserializer.cpp
-  ${SOURCE_ROOT}/serializer/json_serializer.cpp
-)
-
-SET(SOURCES_SDS
-  ${SOURCE_ROOT}/third-party/sds/sds.c
-)
-
-SET(CLIENT_SERVER_SOURCES
-  ${SOURCE_ROOT}/ping_info.h ${SOURCE_ROOT}/ping_info.cpp
-  ${SOURCE_ROOT}/auth_info.h ${SOURCE_ROOT}/auth_info.cpp
-  ${SOURCE_ROOT}/server_info.h ${SOURCE_ROOT}/server_info.cpp
-  ${SOURCE_ROOT}/client_info.h ${SOURCE_ROOT}/client_info.cpp
-  ${SOURCE_ROOT}/channels_info.h ${SOURCE_ROOT}/channels_info.cpp
-  ${SOURCE_ROOT}/url.h ${SOURCE_ROOT}/url.cpp
-  ${SOURCE_ROOT}/client_server_types.h ${SOURCE_ROOT}/client_server_types.cpp
-)
-
 IF(OS_WINDOWS)
   SET(PLATFORM_HDRS)
   SET(PLATFORM_SRCS)
@@ -109,11 +67,6 @@ SET(BUILD_SERVER_SOURCES
   responce_info.h responce_info.cpp
   config.h config.cpp
   ${HEADERS_REDIS} ${SOURCES_REDIS}
-  ${HEADERS_COMMANDS} ${SOURCES_COMMANDS}
-
-  ${HEADERS_INNER} ${SOURCES_INNER}
-  ${HEADERS_SERIALIZER} ${SOURCES_SERIALIZER}
-  ${CLIENT_SERVER_SOURCES}
 
   ${HEADERS_INNER_SERVER} ${SOURCES_INNER_SERVER}
   ${HEADERS_PARSE_COMMANDS} ${SOURCES_PARSE_COMMANDS}
@@ -140,17 +93,18 @@ ENDIF()
 SET(PRIVATE_INCLUDE_DIRECTORIES_SERVER
   ${SOURCE_ROOT}
   ${SOURCE_ROOT}/third-party/ini
-  ${SOURCE_ROOT}/third-party/redis/deps
   ${SOURCE_ROOT}/third-party/sds
+  ${SOURCE_ROOT}/third-party/redis/deps
   ${COMMON_INCLUDE_DIR}
 )
 
 ADD_EXECUTABLE(${PROJECT_SERVER_NAME}
   main.cpp
-  ${BUILD_SERVER_SOURCES} ${SOURCES_SDS}
+  ${BUILD_SERVER_SOURCES}
 )
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_SERVER_NAME} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_SERVER})
 TARGET_LINK_LIBRARIES(${PROJECT_SERVER_NAME}
+  ${PROJECT_CLIENT_SERVER_LIBRARY}
   json-c inih hiredis ${COMMON_LIBRARIES} ${PLATFORM_LIBRARIES}
 )
 

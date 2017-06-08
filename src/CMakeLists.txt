@@ -16,6 +16,65 @@ IF(DEVELOPER_ENABLE_TESTS)
   ENDIF(DEVELOPER_ENABLE_UNIT_TESTS)
 ENDIF(DEVELOPER_ENABLE_TESTS)
 
+#module
+SET(PROJECT_CLIENT_SERVER_LIBRARY ${PROJECT_NAME_LOWERCASE}_client_server)
+
+SET(HEADERS_COMMANDS
+  commands/commands.h
+)
+
+SET(SOURCES_COMMANDS
+  commands/commands.cpp
+)
+
+SET(HEADERS_INNER
+  inner/inner_server_command_seq_parser.h
+  inner/inner_client.h
+)
+
+SET(SOURCES_INNER
+  inner/inner_server_command_seq_parser.cpp
+  inner/inner_client.cpp
+)
+
+SET(HEADERS_SERIALIZER
+  serializer/iserializer.h
+  serializer/json_serializer.h
+)
+
+SET(SOURCES_SERIALIZER
+  serializer/iserializer.cpp
+  serializer/json_serializer.cpp
+)
+
+SET(SOURCES_SDS
+  third-party/sds/sds.c
+)
+
+SET(CLIENT_SERVER_SOURCES
+  ping_info.h ${SOURCE_ROOT}/ping_info.cpp
+  channels_info.h ${SOURCE_ROOT}/channels_info.cpp
+  auth_info.h ${SOURCE_ROOT}/auth_info.cpp
+  server_info.h ${SOURCE_ROOT}/server_info.cpp
+  client_info.h ${SOURCE_ROOT}/client_info.cpp
+  url.h ${SOURCE_ROOT}/url.cpp
+  client_server_types.h ${SOURCE_ROOT}/client_server_types.cpp
+) # server and client common sources
+
+SET(CLIENT_SERVER_SOURCES
+  ${HEADERS_COMMANDS} ${SOURCES_COMMANDS}
+  ${HEADERS_INNER} ${SOURCES_INNER}
+  ${HEADERS_SERIALIZER} ${SOURCES_SERIALIZER}
+  ${SOURCES_SDS} ${CLIENT_SERVER_SOURCES}
+)
+
+SET(PRIVATE_INCLUDE_DIRECTORIES_CLIENT_SERVER
+  ${SOURCE_ROOT}
+  ${SOURCE_ROOT}/third-party/sds
+)
+ADD_LIBRARY(${PROJECT_CLIENT_SERVER_LIBRARY} STATIC ${CLIENT_SERVER_SOURCES})
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_CLIENT_SERVER_LIBRARY} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_CLIENT_SERVER})
+
 IF(BUILD_CLIENT)  # build client
   ADD_SUBDIRECTORY(client)
 ENDIF(BUILD_CLIENT)
@@ -23,6 +82,14 @@ ENDIF(BUILD_CLIENT)
 IF(BUILD_SERVER)  # build server
   ADD_SUBDIRECTORY(server)
 ENDIF(BUILD_SERVER)
+
+IF (DEVELOPER_CHECK_STYLE)
+  SET(CHECK_SOURCES_CLIENT_SERVER
+    ${CLIENT_SERVER_SOURCES}
+  )
+  REGISTER_CHECK_STYLE_TARGET(check_style_client_server "${CHECK_SOURCES_CLIENT_SERVER}")
+  REGISTER_CHECK_INCLUDES_TARGET(${PROJECT_CLIENT_SERVER_LIBRARY})
+ENDIF(DEVELOPER_CHECK_STYLE)
 
 IF(DEVELOPER_ENABLE_TESTS)
   IF(DEVELOPER_ENABLE_UNIT_TESTS)
@@ -32,18 +99,15 @@ IF(DEVELOPER_ENABLE_TESTS)
     )
     ADD_EXECUTABLE(unit_tests
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/test_serializer.cpp
-      url.cpp server_info.cpp
-      ping_info.cpp client_info.cpp
-      channels_info.cpp
-      auth_info.cpp
-
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/encode_decode.cpp
-      client_server_types.cpp
     )
 
     SET(PROJECT_UNIT_TEST unit_tests)
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_UNIT_TEST} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_TEST})
-    TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST} gtest gtest_main ${COMMON_LIBRARIES} json-c)
+    TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST}
+      gtest gtest_main
+      ${COMMON_LIBRARIES} json-c ${PROJECT_CLIENT_SERVER_LIBRARY}
+    )
     ADD_TEST_TARGET(${PROJECT_UNIT_TEST})
     SET_PROPERTY(TARGET ${PROJECT_UNIT_TEST} PROPERTY FOLDER "Unit tests")
 
