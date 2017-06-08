@@ -30,6 +30,7 @@
 namespace fasto {
 namespace fastotv {
 namespace server {
+namespace redis {
 
 RedisPubSub::RedisPubSub(RedisSubHandler* handler) : handler_(handler), stop_(false) {}
 
@@ -68,7 +69,9 @@ void RedisPubSub::Listen() {
     bool is_error_reply = lreply->type != REDIS_REPLY_ARRAY || lreply->elements != 3 ||
                           lreply->element[1]->type != REDIS_REPLY_STRING ||
                           lreply->element[2]->type != REDIS_REPLY_STRING;
-    UNUSED(is_error_reply);
+    if (is_error_reply) {
+      continue;
+    }
 
     char* chn = lreply->element[1]->str;
     size_t chn_len = lreply->element[1]->len;
@@ -122,7 +125,7 @@ common::Error RedisPubSub::Publish(const std::string& channel, const std::string
   redisFree(redis_sub);
   return common::Error();
 }
-
+}
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

@@ -36,6 +36,9 @@ extern "C" {
 #include "auth_info.h"
 #include "channels_info.h"  // for ChannelsInfo
 
+#include "client/player_options.h"
+#include "client/types.h"  // for Size, Rect
+
 #include "client/core/app_options.h"            // for AppOptions, ComplexOp...
 #include "client/core/events/events.h"          // for PostExecEvent, PreExe...
 #include "client/core/events/key_events.h"      // for KeyPressEvent
@@ -46,8 +49,6 @@ extern "C" {
 #include "client/core/events/window_events.h"   // for WindowCloseEvent, Win...
 #include "client/core/types.h"                  // for msec_t
 #include "client/core/video_state_handler.h"    // for VideoStateHandler
-#include "client/player_options.h"
-#include "client/types.h"  // for Size, Rect
 
 namespace fasto {
 namespace fastotv {

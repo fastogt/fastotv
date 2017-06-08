@@ -23,13 +23,14 @@
 namespace fasto {
 namespace fastotv {
 namespace server {
-
+namespace redis {
 class RedisSubHandler {
  public:
   virtual void HandleMessage(const std::string& channel, const std::string& msg) = 0;
   virtual ~RedisSubHandler();
 };
 
+}
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

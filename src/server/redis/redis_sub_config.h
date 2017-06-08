@@ -25,13 +25,14 @@
 namespace fasto {
 namespace fastotv {
 namespace server {
+namespace redis {
 
 struct RedisSubConfig : public RedisConfig {
   std::string channel_in;
   std::string channel_out;
   std::string channel_clients_state;
 };
-
+}
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

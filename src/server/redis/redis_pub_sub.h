@@ -26,7 +26,7 @@
 namespace fasto {
 namespace fastotv {
 namespace server {
-
+namespace redis {
 class RedisPubSub {
  public:
   explicit RedisPubSub(RedisSubHandler* handler);
@@ -44,7 +44,7 @@ class RedisPubSub {
   RedisSubConfig config_;
   bool stop_;
 };
-
+}
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

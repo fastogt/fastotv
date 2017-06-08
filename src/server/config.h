@@ -34,7 +34,7 @@ struct ServerSettings {
   ServerSettings();
 
   common::net::HostAndPort host;
-  RedisSubConfig redis;
+  redis::RedisSubConfig redis;
   common::net::HostAndPort bandwidth_host;
 };
 

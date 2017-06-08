@@ -40,6 +40,7 @@
 namespace fasto {
 namespace fastotv {
 namespace server {
+namespace redis {
 namespace {
 
 common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInfo* out_info) {
@@ -127,7 +128,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
   redisFree(redis);
   return common::Error();
 }
-
+}
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

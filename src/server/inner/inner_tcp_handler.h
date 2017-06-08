@@ -60,7 +60,9 @@ class InnerClient;
 namespace fasto {
 namespace fastotv {
 namespace server {
+namespace redis {
 class RedisPubSub;
+}
 }
 }  // namespace fastotv
 }  // namespace fasto
@@ -157,7 +159,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 
   ServerHost* const parent_;
 
-  RedisPubSub* sub_commands_in_;
+  redis::RedisPubSub* sub_commands_in_;
   InnerSubHandler* handler_;
   std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
   common::libev::timer_id_t ping_client_id_timer_;

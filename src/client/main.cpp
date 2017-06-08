@@ -46,9 +46,10 @@ extern "C" {
 #include <common/utils.h>
 
 #include "client/cmdutils.h"            // for DictionaryOptions, show_...
+#include "client/player.h"              // for Player
+
 #include "client/core/app_options.h"    // for ComplexOptions
 #include "client/core/events/events.h"  // for PostExecEvent, PostExecInfo
-#include "client/player.h"              // for Player
 #include "client/core/application/sdl2_application.h"
 
 #include "client/config.h"  // for TVConfig, load_config_file

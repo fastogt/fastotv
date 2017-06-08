@@ -60,8 +60,8 @@ InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent, const Config& confi
       ping_client_id_timer_(INVALID_TIMER_ID),
       config_(config) {
   handler_ = new InnerSubHandler(this);
-  sub_commands_in_ = new RedisPubSub(handler_);
-  redis_subscribe_command_in_thread_ = THREAD_MANAGER()->CreateThread(&RedisPubSub::Listen, sub_commands_in_);
+  sub_commands_in_ = new redis::RedisPubSub(handler_);
+  redis_subscribe_command_in_thread_ = THREAD_MANAGER()->CreateThread(&redis::RedisPubSub::Listen, sub_commands_in_);
 
   sub_commands_in_->SetConfig(config.server.redis);
   bool result = redis_subscribe_command_in_thread_->Start();

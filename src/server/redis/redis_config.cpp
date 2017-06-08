@@ -20,6 +20,8 @@
 
 namespace fasto {
 namespace fastotv {
-namespace server {}  // namespace server
+namespace server {
+namespace redis {}
+}  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

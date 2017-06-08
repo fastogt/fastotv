@@ -25,12 +25,13 @@
 namespace fasto {
 namespace fastotv {
 namespace server {
+namespace redis {
 
 struct RedisConfig {
   common::net::HostAndPort redis_host;
   std::string redis_unix_socket;
 };
-
+}
 }  // namespace server
 }  // namespace fastotv
 }  // namespace fasto

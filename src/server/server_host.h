@@ -99,7 +99,7 @@ class ServerHost {
   inner::InnerTcpServer* server_;
 
   inner_connections_type connections_;
-  RedisStorage rstorage_;
+  redis::RedisStorage rstorage_;
   const Config config_;
 };
 

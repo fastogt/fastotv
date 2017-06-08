@@ -46,7 +46,7 @@ namespace fastotv {
 namespace server {
 namespace inner {
 
-class InnerSubHandler : public RedisSubHandler {
+class InnerSubHandler : public redis::RedisSubHandler {
  public:
   explicit InnerSubHandler(InnerTcpHandlerHost* parent);
   virtual ~InnerSubHandler();
