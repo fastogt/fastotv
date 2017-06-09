@@ -109,7 +109,7 @@ class OrangePiDevice(SupportedDevice):  # gles2
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev', 'libgl1-mesa-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy',
-                                            'libcedrus1-dev']},
+                                            'libcedrus1-dev', 'liblircclient-dev']},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
                                                    ['--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2']),
@@ -127,27 +127,37 @@ class OrangePiOne(OrangePiDevice):  # armv7l, vdpau/cedrus
 class OrangePiLite(OrangePiDevice):  # armv7l, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-lite')
-        linux_libs = self.system_platform_libs_.get('linux')
-        linux_libs.extend(['liblircclient-dev'])
+
+
+class OrangePiZeroPlus2H3(OrangePiDevice):  # armv8l, vdpau/cedrus
+    def __init__(self):
+        OrangePiDevice.__init__(self, 'orange-pi-zero-plus2-h3')
 
 
 class OrangePiPC(OrangePiDevice):  # armv7l, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-pc')
-        linux_libs = self.system_platform_libs_.get('linux')
-        linux_libs.extend(['liblircclient-dev'])
 
 
 class OrangePiPlus2(OrangePiDevice):  # armv7l, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-plus2')
-        linux_libs = self.system_platform_libs_.get('linux')
-        linux_libs.extend(['liblircclient-dev'])
+
+
+class OrangePiPC2(OrangePiDevice):  # armv8l, vdpau/cedrus
+    def __init__(self):
+        OrangePiDevice.__init__(self, 'orange-pi-pc2')
+
+
+class OrangePiZeroPlus2H5(OrangePiDevice):  # armv8l, vdpau/cedrus
+    def __init__(self):
+        OrangePiDevice.__init__(self, 'orange-pi-zero-plus2-h5')
 
 
 SUPPORTED_DEVICES = [PcDevice(),
                      RaspberryPi1ModelB(), RaspberryPi1ModelBPlus(),
-                     OrangePiOne(), OrangePiLite(), OrangePiPC(), OrangePiPlus2()]
+                     OrangePiOne(), OrangePiLite(), OrangePiZeroPlus2H3(), OrangePiPC(), OrangePiPlus2(), OrangePiPC2(),
+                     OrangePiZeroPlus2H5()]
 
 
 def get_device() -> SupportedDevice:
