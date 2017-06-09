@@ -81,12 +81,12 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(stream);
     return true;
   }
-  virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) override {
+  virtual bool HandleReallocFrame(VideoState* stream, VideoFrame* frame) override {
     UNUSED(stream);
     UNUSED(frame);
     return true;
   }
-  virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) override {
+  virtual void HanleDisplayFrame(VideoState* stream, const VideoFrame* frame) override {
     UNUSED(stream);
     UNUSED(frame);
   }

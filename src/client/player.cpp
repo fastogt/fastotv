@@ -1017,22 +1017,13 @@ void Player::DrawStatistic() {
       fmt_text, pts_text, fps_text, diff_text, fd_text, vbitrate_text, abitrate_text, video_queue_text,
       audio_queue_text);
   const char* text_ptr = result_text.c_str();
-  int w = 0, h = 0;
-  int r = TTF_SizeText(font_, text_ptr, &w, &h);
-  if (r != 0) {
-    return;
-  }
 
-  if (w > statistic_rect.width) {
-    w = statistic_rect.width;
-  }
-
-  h = h * STATS_LINES_COUNT;
+  int h = TTF_FontHeight(font_) * STATS_LINES_COUNT;
   if (h > statistic_rect.height) {
     h = statistic_rect.height;
   }
 
-  SDL_Rect dst = {statistic_rect.x, statistic_rect.y, w, h};
+  SDL_Rect dst = {statistic_rect.x, statistic_rect.y, statistic_rect.width, h};
   SDL_Surface* text_surf = TTF_RenderText_Blended_Wrapped(font_, text_ptr, text_color, statistic_rect.width);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
