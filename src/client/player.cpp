@@ -374,7 +374,7 @@ void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 
-bool Player::HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame) {
+bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) {
   UNUSED(stream);
 
   Uint32 sdl_format;

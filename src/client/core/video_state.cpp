@@ -170,8 +170,8 @@ int get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
 
 VideoState::VideoState(stream_id id,
                        const common::uri::Uri& uri,
-                       const core::AppOptions& opt,
-                       const core::ComplexOptions& copt,
+                       const AppOptions& opt,
+                       const ComplexOptions& copt,
                        VideoStateHandler* handler)
     : id_(id),
       uri_(uri),
@@ -182,8 +182,8 @@ VideoState::VideoState(stream_id id,
       read_pause_return_(0),
       ic_(NULL),
       realtime_(false),
-      vstream_(new core::VideoStream),
-      astream_(new core::AudioStream),
+      vstream_(new VideoStream),
+      astream_(new AudioStream),
       viddec_(nullptr),
       auddec_(nullptr),
       video_frame_queue_(nullptr),
@@ -334,7 +334,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     avctx->thread_safe_callbacks = 1;
   }
 
-  AVDictionary* opts = core::filter_codec_opts(copt_.codec_opts, avctx->codec_id, ic_, stream, codec);
+  AVDictionary* opts = filter_codec_opts(copt_.codec_opts, avctx->codec_id, ic_, stream, codec);
   if (!av_dict_get(opts, "threads", NULL, 0)) {
     av_dict_set(&opts, "threads", "auto", 0);
   }
@@ -367,9 +367,9 @@ int VideoState::StreamComponentOpen(int stream_index) {
     AVRational frame_rate = av_guess_frame_rate(ic_, stream, NULL);
     bool opened = vstream_->Open(stream_index, stream, frame_rate);
     UNUSED(opened);
-    core::PacketQueue* packet_queue = vstream_->Queue();
-    video_frame_queue_ = new core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
-    viddec_ = new core::VideoDecoder(avctx, packet_queue);
+    PacketQueue* packet_queue = vstream_->Queue();
+    video_frame_queue_ = new VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
+    viddec_ = new VideoDecoder(avctx, packet_queue);
     viddec_->Start();
     if (!vdecoder_tid_->Start()) {
       destroy(&viddec_);
@@ -423,9 +423,9 @@ int VideoState::StreamComponentOpen(int stream_index) {
         static_cast<double>(audio_hw_buf_size_) / static_cast<double>(audio_tgt_.bytes_per_sec) * 1000;
     bool opened = astream_->Open(stream_index, stream);
     UNUSED(opened);
-    core::PacketQueue* packet_queue = astream_->Queue();
-    audio_frame_queue_ = new core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
-    auddec_ = new core::AudioDecoder(avctx, packet_queue);
+    PacketQueue* packet_queue = astream_->Queue();
+    audio_frame_queue_ = new AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
+    auddec_ = new AudioDecoder(avctx, packet_queue);
     if ((ic_->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
         !ic_->iformat->read_seek) {
       auddec_->SetStartPts(stream->start_time, stream->time_base);
@@ -606,7 +606,7 @@ clock_t VideoState::ComputeTargetDelay(clock_t delay) const {
   clock_t diff = 0;
 
   /* update delay to follow master synchronisation source */
-  if (GetMasterSyncType() != core::AV_SYNC_VIDEO_MASTER) {
+  if (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER) {
     /* if video is slave, we try to correct big delays by
        duplicating or deleting a frame */
     diff = vstream_->GetClock() - GetMasterClock();
@@ -631,14 +631,14 @@ clock_t VideoState::ComputeTargetDelay(clock_t delay) const {
 
 /* get the current master clock value */
 clock_t VideoState::GetMasterClock() const {
-  if (GetMasterSyncType() == core::AV_SYNC_VIDEO_MASTER) {
+  if (GetMasterSyncType() == AV_SYNC_VIDEO_MASTER) {
     return vstream_->GetClock();
   }
 
   return astream_->GetClock();
 }
 
-int VideoState::VideoOpen(core::VideoFrame* vp) {
+int VideoState::VideoOpen(VideoFrame* vp) {
   if (vp && vp->width && vp->height) {
     handler_->HandleDefaultWindowSize(Size(vp->width, vp->height), vp->sar);
   }
@@ -652,18 +652,18 @@ int VideoState::VideoOpen(core::VideoFrame* vp) {
 }
 
 int VideoState::AllocPicture() {
-  core::VideoFrame* vp = video_frame_queue_->Windex();
+  VideoFrame* vp = video_frame_queue_->Windex();
 
   int res = VideoOpen(vp);
   if (res == ERROR_RESULT_VALUE) {
     return ERROR_RESULT_VALUE;
   }
 
-  if (!handler_->HandleRealocFrame(this, vp)) {
+  if (!handler_->HandleReallocFrame(this, vp)) {
     return ERROR_RESULT_VALUE;
   }
 
-  video_frame_queue_->ChangeSafeAndNotify([](core::VideoFrame* fr) { fr->allocated = true; }, vp);
+  video_frame_queue_->ChangeSafeAndNotify([](VideoFrame* fr) { fr->allocated = true; }, vp);
   return SUCCESS_RESULT_VALUE;
 }
 
@@ -677,7 +677,7 @@ void VideoState::VideoDisplay() {
     return;
   }
 
-  core::VideoFrame* vp = video_frame_queue_->PeekLast();
+  VideoFrame* vp = video_frame_queue_->PeekLast();
   if (vp->bmp) {
     if (!vp->uploaded) {
       if (upload_texture(vp->bmp, vp->frame) < 0) {
@@ -853,7 +853,7 @@ int VideoState::SynchronizeAudio(int nb_samples) {
   int wanted_nb_samples = nb_samples;
 
   /* if not master, then we try to remove or add samples to correct the clock */
-  if (GetMasterSyncType() != core::AV_SYNC_AUDIO_MASTER) {
+  if (GetMasterSyncType() != AV_SYNC_AUDIO_MASTER) {
     clock_t diff = astream_->GetClock() - GetMasterClock();
     if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC) {
       audio_diff_cum_ = diff + audio_diff_avg_coef_ * audio_diff_cum_;
@@ -892,7 +892,7 @@ int VideoState::AudioDecodeFrame() {
     return ERROR_RESULT_VALUE;
   }
 
-  core::AudioFrame* af = audio_frame_queue_->GetPeekReadable();
+  AudioFrame* af = audio_frame_queue_->GetPeekReadable();
   if (!af) {
     return ERROR_RESULT_VALUE;
   }
@@ -984,8 +984,8 @@ retry:
     // nothing to do, no picture to display in the queue
   } else {
     /* dequeue the picture */
-    core::VideoFrame* lastvp = video_frame_queue_->PeekLast();
-    core::VideoFrame* vp = video_frame_queue_->Peek();
+    VideoFrame* lastvp = video_frame_queue_->PeekLast();
+    VideoFrame* vp = video_frame_queue_->Peek();
 
     if (frame_timer_ == 0) {
       frame_timer_ = GetRealClockTime();
@@ -996,7 +996,7 @@ retry:
     }
 
     /* compute nominal last_duration */
-    clock_t last_duration = core::VideoFrame::VpDuration(lastvp, vp, max_frame_duration_);
+    clock_t last_duration = CalcDurationBetweenVideoFrames(lastvp, vp, max_frame_duration_);
     clock_t delay = ComputeTargetDelay(last_duration);
     clock_t time = GetRealClockTime();
     clock_t next_frame_ts = frame_timer_ + delay;
@@ -1017,9 +1017,9 @@ retry:
       vstream_->SetClockAt(pts, time);
     }
 
-    core::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
+    VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
     if (nextvp) {
-      clock_t duration = core::VideoFrame::VpDuration(vp, nextvp, max_frame_duration_);
+      clock_t duration = CalcDurationBetweenVideoFrames(vp, nextvp, max_frame_duration_);
       if (!step_ && (opt_.framedrop == FRAME_DROP_AUTO ||
                      (opt_.framedrop == FRAME_DROP_ON || (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)))) {
         clock_t next_next_frame_ts = frame_timer_ + duration;
@@ -1050,8 +1050,8 @@ void VideoState::TryRefreshVideo() {
   if (!paused_ || force_refresh_) {
     AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
     AVStream* audio_st = astream_->IsOpened() ? astream_->AvStream() : NULL;
-    core::PacketQueue* video_packet_queue = vstream_->Queue();
-    core::PacketQueue* audio_packet_queue = astream_->Queue();
+    PacketQueue* video_packet_queue = vstream_->Queue();
+    PacketQueue* audio_packet_queue = astream_->Queue();
 
     if (video_st && video_frame_queue_) {
       RefreshVideo();
@@ -1060,16 +1060,13 @@ void VideoState::TryRefreshVideo() {
 
     int aqsize = 0, vqsize = 0;
     bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
-    DesireBytesPerSec video_bandwidth_calc, audio_bandwidth_calc;
     if (video_st) {
       vqsize = video_packet_queue->Size();
       video_bandwidth = vstream_->Bandwidth();
-      video_bandwidth_calc = vstream_->DesireBandwith();
     }
     if (audio_st) {
       aqsize = audio_packet_queue->Size();
       audio_bandwidth = astream_->Bandwidth();
-      audio_bandwidth_calc = astream_->DesireBandwith();
     }
 
     stats_->master_clock = GetMasterClock();
@@ -1134,8 +1131,8 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
 }
 
 int VideoState::QueuePicture(AVFrame* src_frame, clock_t pts, clock_t duration, int64_t pos) {
-  core::PacketQueue* video_packet_queue = vstream_->Queue();
-  core::VideoFrame* vp = video_frame_queue_->GetPeekWritable();
+  PacketQueue* video_packet_queue = vstream_->Queue();
+  VideoFrame* vp = video_frame_queue_->GetPeekWritable();
   if (!vp) {
     return ERROR_RESULT_VALUE;
   }
@@ -1189,7 +1186,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
       if (IsValidPts(frame->pts)) {
         clock_t dpts = vstream_->q2d() * frame->pts;
         clock_t diff = dpts - GetMasterClock();
-        core::PacketQueue* video_packet_queue = vstream_->Queue();
+        PacketQueue* video_packet_queue = vstream_->Queue();
         if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC && diff - frame_last_filter_delay_ < 0 &&
             video_packet_queue->NbPackets()) {
           stats_->frame_drops_early++;
@@ -1256,10 +1253,10 @@ int VideoState::ReadThread() {
   }*/
   ic_ = ic;
 
-  core::VideoStream* video_stream = vstream_;
-  core::AudioStream* audio_stream = astream_;
-  core::PacketQueue* video_packet_queue = video_stream->Queue();
-  core::PacketQueue* audio_packet_queue = audio_stream->Queue();
+  VideoStream* video_stream = vstream_;
+  AudioStream* audio_stream = astream_;
+  PacketQueue* video_packet_queue = video_stream->Queue();
+  PacketQueue* audio_packet_queue = audio_stream->Queue();
   int st_index[AVMEDIA_TYPE_NB];
   memset(st_index, -1, sizeof(st_index));
 
@@ -1269,7 +1266,7 @@ int VideoState::ReadThread() {
 
   av_format_inject_global_side_data(ic);
 
-  AVDictionary** opts = core::setup_find_stream_info_opts(ic, copt_.codec_opts);
+  AVDictionary** opts = setup_find_stream_info_opts(ic, copt_.codec_opts);
   unsigned int orig_nb_streams = ic->nb_streams;
 
   int find_stream_info_result = avformat_find_stream_info(ic, opts);
@@ -1299,7 +1296,7 @@ int VideoState::ReadThread() {
     opt_.seek_by_bytes = seek ? SEEK_BY_BYTES_ON : SEEK_BY_BYTES_OFF;
   }
 
-  realtime_ = core::is_realtime(ic);
+  realtime_ = is_realtime(ic);
 
   // av_dump_format(ic, 0, id_.c_str(), 0);
 
@@ -1361,7 +1358,11 @@ int VideoState::ReadThread() {
     return ERROR_RESULT_VALUE;
   }*/
 
-  const DesireBytesPerSec band = video_stream->DesireBandwith() + audio_stream->DesireBandwith();
+  DesireBytesPerSec video_bandwidth_calc = video_stream->DesireBandwith();
+  DCHECK(video_bandwidth_calc.IsValid());
+  DesireBytesPerSec audio_bandwidth_calc = audio_stream->DesireBandwith();
+  DCHECK(audio_bandwidth_calc.IsValid());
+  const DesireBytesPerSec band = video_bandwidth_calc + audio_bandwidth_calc;
   if (ic_->bit_rate) {
     bandwidth_t byte_per_sec = ic_->bit_rate / 8;
     DCHECK(band.InRange(byte_per_sec));
@@ -1483,7 +1484,7 @@ int VideoState::ReadThread() {
 }
 
 int VideoState::AudioThread() {
-  core::AudioFrame* af = nullptr;
+  AudioFrame* af = nullptr;
 #if CONFIG_AVFILTER
   int64_t dec_channel_layout;
   int reconfigure;
@@ -1507,8 +1508,8 @@ int VideoState::AudioThread() {
 #if CONFIG_AVFILTER
       dec_channel_layout = get_valid_channel_layout(frame->channel_layout, av_frame_get_channels(frame));
 
-      reconfigure = core::cmp_audio_fmts(audio_filter_src_.fmt, audio_filter_src_.channels,
-                                         static_cast<AVSampleFormat>(frame->format), av_frame_get_channels(frame)) ||
+      reconfigure = cmp_audio_fmts(audio_filter_src_.fmt, audio_filter_src_.channels,
+                                   static_cast<AVSampleFormat>(frame->format), av_frame_get_channels(frame)) ||
                     audio_filter_src_.channel_layout != dec_channel_layout ||
                     audio_filter_src_.freq != frame->sample_rate;
 
@@ -1759,7 +1760,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const std::string& v
   } while (0)
 
   if (opt_.autorotate) {
-    double theta = core::get_rotation(video_st);
+    double theta = get_rotation(video_st);
 
     if (fabs(theta - 90) < 1.0) {
       INSERT_FILT("transpose", "clock");
@@ -1775,7 +1776,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const std::string& v
     }
   }
 
-  if ((ret = core::configure_filtergraph(graph, vfilters, filt_src, last_filter)) < 0) {
+  if ((ret = configure_filtergraph(graph, vfilters, filt_src, last_filter)) < 0) {
     WARNING_LOG() << "Failed to configure_filtergraph ret: " << ret;
     return ret;
   }
@@ -1865,7 +1866,7 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
     }
   }
 
-  ret = core::configure_filtergraph(agraph_, afilters, filt_asrc, filt_asink);
+  ret = configure_filtergraph(agraph_, afilters, filt_asrc, filt_asink);
   if (ret < 0) {
     avfilter_graph_free(&agraph_);
     return ret;

@@ -271,7 +271,6 @@ SET(HEADERS_CORE
   core/stream_statistic.h
   core/utils.h
   core/clock.h
-  core/stream_info.h
   core/packet_queue.h
   core/frame_queue.h
   core/decoder.h
@@ -305,7 +304,6 @@ SET(SOURCES_CORE
   core/stream_statistic.cpp
   core/utils.cpp
   core/clock.cpp
-  core/stream_info.cpp
   core/packet_queue.cpp
   core/frame_queue.cpp
   core/decoder.cpp

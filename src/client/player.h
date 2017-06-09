@@ -125,7 +125,7 @@ class Player : public core::VideoStateHandler {
                                   int* audio_buff_size) override;
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override;
 
-  virtual bool HandleRealocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
+  virtual bool HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
   virtual void HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) override;
   virtual bool HandleRequestVideo(core::VideoState* stream) override;
   virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) override;

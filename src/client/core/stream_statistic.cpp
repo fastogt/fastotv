@@ -64,7 +64,7 @@ double Stats::GetFps() const {
   return fps_per_msec * 1000;
 }
 
-std::string ConvertStreamFormatToString(stream_foramat_t fmt) {
+std::string ConvertStreamFormatToString(stream_format_t fmt) {
   if (fmt == (fasto::fastotv::client::core::HAVE_VIDEO_STREAM | fasto::fastotv::client::core::HAVE_AUDIO_STREAM)) {
     return VIDEO_AUDIO_TEXT;
   } else if (fmt == fasto::fastotv::client::core::HAVE_VIDEO_STREAM) {

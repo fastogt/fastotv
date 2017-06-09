@@ -68,10 +68,6 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-struct AudioParams;
-class VideoState;
-struct VideoFrame;
-
 class VideoStateHandler : public core::events::EventListener {
  public:
   VideoStateHandler();
@@ -85,14 +81,14 @@ class VideoStateHandler : public core::events::EventListener {
                                   int64_t wanted_channel_layout,
                                   int wanted_nb_channels,
                                   int wanted_sample_rate,
-                                  core::AudioParams* audio_hw_params,
-                                  int* audio_buff_size) = 0;
+                                  AudioParams* audio_hw_params,
+                                  int* audio_buff_size) WARN_UNUSED_RESULT = 0;  // init audio
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) = 0;
 
   // video
-  virtual bool HandleRequestVideo(VideoState* stream) = 0;
-  virtual bool HandleRealocFrame(VideoState* stream, core::VideoFrame* frame) = 0;
-  virtual void HanleDisplayFrame(VideoState* stream, const core::VideoFrame* frame) = 0;
+  virtual bool HandleRequestVideo(VideoState* stream) WARN_UNUSED_RESULT = 0;  // init video
+  virtual bool HandleReallocFrame(VideoState* stream, VideoFrame* frame) WARN_UNUSED_RESULT = 0;
+  virtual void HanleDisplayFrame(VideoState* stream, const VideoFrame* frame) = 0;
   virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) = 0;
 };
 }  // namespace core

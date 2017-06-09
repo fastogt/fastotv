@@ -25,39 +25,35 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-typedef uint32_t stream_foramat_t;
-enum StreamFmt : stream_foramat_t {
-  UNKNOWN_STREAM = 0,
-  HAVE_AUDIO_STREAM = (1 << 0),
-  HAVE_VIDEO_STREAM = (1 << 1)
-};
+typedef uint32_t stream_format_t;
+enum StreamFmt : stream_format_t { UNKNOWN_STREAM = 0, HAVE_AUDIO_STREAM = (1 << 0), HAVE_VIDEO_STREAM = (1 << 1) };
 
-struct Stats {
+struct Stats {  // stream realtime statistic
   Stats();
 
-  clock_t GetDiffStreams() const;
+  clock_t GetDiffStreams() const;  // msec
   double GetFps() const;
 
-  uintmax_t frame_drops_early;
-  uintmax_t frame_drops_late;
-  uintmax_t frame_processed;
+  size_t frame_drops_early;
+  size_t frame_drops_late;
+  size_t frame_processed;
 
-  clock_t master_clock;
-  clock_t audio_clock;
-  clock_t video_clock;
-  stream_foramat_t fmt;
+  clock_t master_clock;  // msec
+  clock_t audio_clock;   // msec
+  clock_t video_clock;   // msec
+  stream_format_t fmt;
 
-  int audio_queue_size;
-  int video_queue_size;
+  int audio_queue_size;  // bytes
+  int video_queue_size;  // bytes
 
-  bandwidth_t video_bandwidth;
-  bandwidth_t audio_bandwidth;
+  bandwidth_t video_bandwidth;  // bytes/s
+  bandwidth_t audio_bandwidth;  // bytes/s
 
  private:
   const common::time64_t start_ts_;
 };
 
-std::string ConvertStreamFormatToString(stream_foramat_t fmt);
+std::string ConvertStreamFormatToString(stream_format_t fmt);
 
 }  // namespace core
 }  // namespace client

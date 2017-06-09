@@ -287,7 +287,7 @@ int audio_open(void* opaque,
                int64_t wanted_channel_layout,
                int wanted_nb_channels,
                int wanted_sample_rate,
-               struct AudioParams* audio_hw_params,
+               AudioParams* audio_hw_params,
                SDL_AudioCallback cb) {
   SDL_AudioSpec wanted_spec, spec;
   static const int next_nb_channels[] = {0, 0, 1, 6, 2, 6, 4, 6};
@@ -346,7 +346,7 @@ int audio_open(void* opaque,
     }
   }
 
-  struct AudioParams laudio_hw_params;
+  AudioParams laudio_hw_params;
   if (!init_audio_params(wanted_channel_layout, spec.freq, spec.channels, &laudio_hw_params)) {
     ERROR_LOG() << "Failed to init audio parametrs";
     return -1;
@@ -356,12 +356,12 @@ int audio_open(void* opaque,
   return spec.size;
 }
 
-bool init_audio_params(int64_t wanted_channel_layout, int freq, int channels, struct AudioParams* audio_hw_params) {
+bool init_audio_params(int64_t wanted_channel_layout, int freq, int channels, AudioParams* audio_hw_params) {
   if (!audio_hw_params) {
     return false;
   }
 
-  struct AudioParams laudio_hw_params;
+  AudioParams laudio_hw_params;
   laudio_hw_params.fmt = AV_SAMPLE_FMT_S16;
   laudio_hw_params.freq = freq;
   laudio_hw_params.channel_layout = wanted_channel_layout;

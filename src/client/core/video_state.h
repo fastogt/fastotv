@@ -148,15 +148,14 @@ class VideoFrameQueue;
 }
 namespace core {
 
-class VideoStateHandler;
 class VideoState {
  public:
   typedef common::shared_ptr<Stats> stats_t;
   enum { invalid_stream_index = -1 };
   VideoState(stream_id id,
              const common::uri::Uri& uri,
-             const core::AppOptions& opt,
-             const core::ComplexOptions& copt,
+             const AppOptions& opt,
+             const ComplexOptions& copt,
              VideoStateHandler* handler);
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
@@ -214,7 +213,7 @@ class VideoState {
   int ConfigureAudioFilters(const std::string& afilters, int force_output_format);
 #endif
 
-  int VideoOpen(core::VideoFrame* vp);
+  int VideoOpen(VideoFrame* vp);
   /* allocate a picture (needs to do that in main thread to avoid
      potential locking problems */
   int AllocPicture();
@@ -241,8 +240,8 @@ class VideoState {
   const stream_id id_;
   const common::uri::Uri uri_;
 
-  core::AppOptions opt_;
-  core::ComplexOptions copt_;
+  AppOptions opt_;
+  ComplexOptions copt_;
 
   common::shared_ptr<common::threads::Thread<int> > read_tid_;
   bool force_refresh_;
@@ -250,14 +249,14 @@ class VideoState {
   AVFormatContext* ic_;
   bool realtime_;
 
-  core::VideoStream* vstream_;
-  core::AudioStream* astream_;
+  VideoStream* vstream_;
+  AudioStream* astream_;
 
-  core::VideoDecoder* viddec_;
-  core::AudioDecoder* auddec_;
+  VideoDecoder* viddec_;
+  AudioDecoder* auddec_;
 
-  core::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
-  core::AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
+  VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
+  AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
 
   clock_t audio_clock_;
   clock_t audio_diff_cum_; /* used for AV difference average computation */
@@ -271,11 +270,11 @@ class VideoState {
   unsigned int audio_buf1_size_;
   int audio_buf_index_; /* in bytes */
   int audio_write_buf_size_;
-  struct core::AudioParams audio_src_;
+  AudioParams audio_src_;
 #if CONFIG_AVFILTER
-  struct core::AudioParams audio_filter_src_;
+  AudioParams audio_filter_src_;
 #endif
-  struct core::AudioParams audio_tgt_;
+  AudioParams audio_tgt_;
   struct SwrContext* swr_ctx_;
 
   clock_t frame_timer_;

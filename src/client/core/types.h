@@ -41,7 +41,7 @@ clock_t GetRealClockTime();  // msec
 msec_t ClockToMsec(clock_t clock);
 msec_t GetCurrentMsec();
 
-typedef int64_t pts_t;
+typedef clock_t pts_t;
 pts_t invalid_pts();
 bool IsValidPts(pts_t pts);
 
