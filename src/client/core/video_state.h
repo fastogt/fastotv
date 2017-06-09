@@ -151,7 +151,7 @@ namespace core {
 class VideoStateHandler;
 class VideoState {
  public:
-  typedef Stats stats_t;
+  typedef common::shared_ptr<Stats> stats_t;
   enum { invalid_stream_index = -1 };
   VideoState(stream_id id,
              const common::uri::Uri& uri,

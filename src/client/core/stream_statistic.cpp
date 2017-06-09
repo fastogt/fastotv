@@ -18,9 +18,10 @@
 
 #include "client/core/stream_statistic.h"
 
-namespace {
-const std::string g_formats_types[] = {"   ", "M-A", "M-V", "A-V"};
-}
+#define UNKNOWN_STREAM_TEXT "   "
+#define ONLY_VIDEO_TEXT "M-V"
+#define ONLY_AUDIO_TEXT "M-A"
+#define VIDEO_AUDIO_TEXT "A-V"
 
 namespace fasto {
 namespace fastotv {
@@ -30,6 +31,7 @@ namespace core {
 Stats::Stats()
     : frame_drops_early(0),
       frame_drops_late(0),
+      frame_processed(0),
       master_clock(0),
       audio_clock(0),
       video_clock(0),
@@ -37,39 +39,44 @@ Stats::Stats()
       audio_queue_size(0),
       video_queue_size(0),
       video_bandwidth(0),
-      audio_bandwidth(0) {}
+      audio_bandwidth(0),
+      start_ts_(common::time::current_mstime()) {}
 
 clock_t Stats::GetDiffStreams() const {
-  if (fmt == VIDEO_AUDIO_STREAM) {
+  if (fmt == (HAVE_VIDEO_STREAM | HAVE_AUDIO_STREAM)) {
     return audio_clock - video_clock;
-  } else if (fmt == ONLY_VIDEO_STREAM) {
+  } else if (fmt == HAVE_VIDEO_STREAM) {
     return master_clock - video_clock;
-  } else if (fmt == ONLY_AUDIO_STREAM) {
+  } else if (fmt == HAVE_AUDIO_STREAM) {
     return master_clock - audio_clock;
   }
 
   return 0;
 }
 
+double Stats::GetFps() const {
+  common::time64_t diff = common::time::current_mstime() - start_ts_;
+  if (diff <= 0) {
+    return 0.0;
+  }
+
+  double fps_per_msec = static_cast<double>(frame_processed) / diff;
+  return fps_per_msec * 1000;
+}
+
+std::string ConvertStreamFormatToString(stream_foramat_t fmt) {
+  if (fmt == (fasto::fastotv::client::core::HAVE_VIDEO_STREAM | fasto::fastotv::client::core::HAVE_AUDIO_STREAM)) {
+    return VIDEO_AUDIO_TEXT;
+  } else if (fmt == fasto::fastotv::client::core::HAVE_VIDEO_STREAM) {
+    return ONLY_VIDEO_TEXT;
+  } else if (fmt == fasto::fastotv::client::core::HAVE_AUDIO_STREAM) {
+    return ONLY_AUDIO_TEXT;
+  }
+
+  return UNKNOWN_STREAM_TEXT;
+}
+
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
-
-namespace common {
-std::string ConvertToString(fasto::fastotv::client::core::StreamFmt value) {
-  return g_formats_types[value];
-}
-
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::StreamFmt* out) {
-  for (uint32_t i = 0; i < SIZEOFMASS(g_formats_types); ++i) {
-    if (from == g_formats_types[i]) {
-      *out = static_cast<fasto::fastotv::client::core::StreamFmt>(i);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-}  // namespace common

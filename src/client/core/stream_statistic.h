@@ -25,34 +25,41 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-enum StreamFmt { UNKNOWN_STREAM, ONLY_AUDIO_STREAM, ONLY_VIDEO_STREAM, VIDEO_AUDIO_STREAM };
+typedef uint32_t stream_foramat_t;
+enum StreamFmt : stream_foramat_t {
+  UNKNOWN_STREAM = 0,
+  HAVE_AUDIO_STREAM = (1 << 0),
+  HAVE_VIDEO_STREAM = (1 << 1)
+};
 
 struct Stats {
   Stats();
 
   clock_t GetDiffStreams() const;
+  double GetFps() const;
 
-  int frame_drops_early;
-  int frame_drops_late;
+  uintmax_t frame_drops_early;
+  uintmax_t frame_drops_late;
+  uintmax_t frame_processed;
 
   clock_t master_clock;
   clock_t audio_clock;
   clock_t video_clock;
-  StreamFmt fmt;
+  stream_foramat_t fmt;
 
   int audio_queue_size;
   int video_queue_size;
 
   bandwidth_t video_bandwidth;
   bandwidth_t audio_bandwidth;
+
+ private:
+  const common::time64_t start_ts_;
 };
+
+std::string ConvertStreamFormatToString(stream_foramat_t fmt);
 
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
-
-namespace common {
-std::string ConvertToString(fasto::fastotv::client::core::StreamFmt value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::StreamFmt* out);
-}  // namespace common

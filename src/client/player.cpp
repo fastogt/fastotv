@@ -971,14 +971,14 @@ void Player::DrawStatistic() {
     return;
   }
 
-  core::VideoState::stats_t stats;
+  core::VideoState::stats_t stats = common::make_shared<core::Stats>();
   if (stream_) {
     stats = stream_->GetStatistic();
   }
 
   static const SDL_Color text_color = {255, 255, 255, 0};
   const Rect statistic_rect = GetStatisticRect();
-  const bool is_unknown = stats.fmt == core::UNKNOWN_STREAM;
+  const bool is_unknown = stats->fmt == core::UNKNOWN_STREAM;
   /*INFO_LOG() << stats.master_clock << " " << common::ConvertToString(stats.fmt) << ": diff=" << stats.GetDiffStreams()
              << "msec fd=(" << stats.frame_drops_early << "/" << stats.frame_drops_late << ") video_bitrate=("
              << video_bandwidth_calc.min * 8 / 1024 << "/" << stats.video_bandwidth * 8 / 1024 << "/"
@@ -986,26 +986,36 @@ void Player::DrawStatistic() {
              << "/" << stats.audio_bandwidth * 8 / 1024 << "/" << audio_bandwidth_calc.max * 8 / 1024
              << ")kb/s aq=" << stats.audio_queue_size / 1024 << "KB vq=" << stats.video_queue_size / 1024 << "KB";*/
 
-  std::string fmt_text = (is_unknown ? "N/A" : common::ConvertToString(stats.fmt));
-  std::string pts_text = (is_unknown ? "N/A" : common::ConvertToString(stats.master_clock));
-  std::string diff_text = (is_unknown ? "N/A" : common::ConvertToString(stats.GetDiffStreams()));
-  std::string fd_text =
-      (is_unknown ? "N/A" : common::MemSPrintf("%d/%d", stats.frame_drops_early, stats.frame_drops_late));
-  bandwidth_t bitrate = stats.video_bandwidth * 8 / 1024 + stats.audio_bandwidth * 8 / 1024;
-  std::string bitrate_text = (is_unknown ? "N/A" : common::ConvertToString(bitrate));
-  std::string video_queue_text = (is_unknown ? "N/A" : common::ConvertToString(stats.video_queue_size / 1024));
-  std::string audio_queue_text = (is_unknown ? "N/A" : common::ConvertToString(stats.audio_queue_size / 1024));
+  std::string fmt_text = (is_unknown ? "N/A" : core::ConvertStreamFormatToString(stats->fmt));
+  double pts = stats->master_clock / 1000.0;
+  std::string pts_text = (is_unknown ? "N/A" : common::ConvertToString(pts, 3));
+  std::string fps_text = (is_unknown ? "N/A" : common::ConvertToString(stats->GetFps()));
+  std::string diff_text = (is_unknown ? "N/A" : common::ConvertToString(stats->GetDiffStreams()));
+  std::string fd_text = (stats->fmt & core::HAVE_VIDEO_STREAM
+                             ? common::MemSPrintf("%d/%d", stats->frame_drops_early, stats->frame_drops_late)
+                             : "N/A");
+  std::string vbitrate_text =
+      (stats->fmt & core::HAVE_VIDEO_STREAM ? common::ConvertToString(stats->video_bandwidth * 8 / 1024) : "N/A");
+  std::string abitrate_text =
+      (stats->fmt & core::HAVE_AUDIO_STREAM ? common::ConvertToString(stats->audio_bandwidth * 8 / 1024) : "N/A");
+  std::string video_queue_text =
+      (stats->fmt & core::HAVE_VIDEO_STREAM ? common::ConvertToString(stats->video_queue_size / 1024) : "N/A");
+  std::string audio_queue_text =
+      (stats->fmt & core::HAVE_AUDIO_STREAM ? common::ConvertToString(stats->audio_queue_size / 1024) : "N/A");
 
 #define STATS_LINES_COUNT 7
   const std::string result_text = common::MemSPrintf(
       "FMT: %s\n"
       "PTS: %s\n"
+      "FPS: %s\n"
       "DIFF: %s msec\n"
       "FRAMEDROP: %s\n"
-      "BITRATE: %s kb/s\n"
+      "VBITRATE: %s kb/s\n"
+      "ABITRATE: %s kb/s\n"
       "VQUEUE: %s KB\n"
       "AQUEUE: %s KB\n",
-      fmt_text, pts_text, diff_text, fd_text, bitrate_text, video_queue_text, audio_queue_text);
+      fmt_text, pts_text, fps_text, diff_text, fd_text, vbitrate_text, abitrate_text, video_queue_text,
+      audio_queue_text);
   const char* text_ptr = result_text.c_str();
   int w = 0, h = 0;
   int r = TTF_SizeText(font_, text_ptr, &w, &h);

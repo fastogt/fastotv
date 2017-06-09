@@ -226,7 +226,7 @@ VideoState::VideoState(stream_id id,
       last_paused_(false),
       eof_(false),
       abort_request_(false),
-      stats_(),
+      stats_(new Stats),
       handler_(handler),
       input_st_(static_cast<InputStream*>(calloc(1, sizeof(InputStream)))),
       seek_req_(false),
@@ -669,19 +669,26 @@ int VideoState::AllocPicture() {
 
 /* display the current picture, if any */
 void VideoState::VideoDisplay() {
-  if (vstream_->IsOpened() && video_frame_queue_) {
-    core::VideoFrame* vp = video_frame_queue_->PeekLast();
-    if (vp->bmp) {
-      if (!vp->uploaded) {
-        if (upload_texture(vp->bmp, vp->frame) < 0) {
-          return;
-        }
-        vp->uploaded = true;
-        vp->flip_v = vp->frame->linesize[0] < 0;
-      }
+  if (!vstream_->IsOpened()) {
+    return;
+  }
 
-      handler_->HanleDisplayFrame(this, vp);
+  if (!video_frame_queue_) {
+    return;
+  }
+
+  core::VideoFrame* vp = video_frame_queue_->PeekLast();
+  if (vp->bmp) {
+    if (!vp->uploaded) {
+      if (upload_texture(vp->bmp, vp->frame) < 0) {
+        return;
+      }
+      vp->uploaded = true;
+      vp->flip_v = vp->frame->linesize[0] < 0;
     }
+
+    handler_->HanleDisplayFrame(this, vp);
+    stats_->frame_processed++;
   }
 }
 
@@ -1018,7 +1025,7 @@ retry:
         clock_t next_next_frame_ts = frame_timer_ + duration;
         clock_t diff_drop = time - next_next_frame_ts;
         if (diff_drop > 0) {
-          stats_.frame_drops_late++;
+          stats_->frame_drops_late++;
           video_frame_queue_->MoveToNext();
           goto retry;
         }
@@ -1065,16 +1072,16 @@ void VideoState::TryRefreshVideo() {
       audio_bandwidth_calc = astream_->DesireBandwith();
     }
 
-    stats_.master_clock = GetMasterClock();
-    stats_.video_clock = vstream_->GetClock();
-    stats_.audio_clock = astream_->GetClock();
-    stats_.fmt = (audio_st && video_st)
-                     ? VIDEO_AUDIO_STREAM
-                     : (video_st ? ONLY_VIDEO_STREAM : (audio_st ? ONLY_AUDIO_STREAM : UNKNOWN_STREAM));
-    stats_.audio_queue_size = aqsize;
-    stats_.video_queue_size = vqsize;
-    stats_.audio_bandwidth = audio_bandwidth;
-    stats_.video_bandwidth = video_bandwidth;
+    stats_->master_clock = GetMasterClock();
+    stats_->video_clock = vstream_->GetClock();
+    stats_->audio_clock = astream_->GetClock();
+    stats_->fmt = (audio_st && video_st)
+                      ? (HAVE_VIDEO_STREAM | HAVE_AUDIO_STREAM)
+                      : (video_st ? HAVE_VIDEO_STREAM : (audio_st ? HAVE_AUDIO_STREAM : UNKNOWN_STREAM));
+    stats_->audio_queue_size = aqsize;
+    stats_->video_queue_size = vqsize;
+    stats_->audio_bandwidth = audio_bandwidth;
+    stats_->video_bandwidth = video_bandwidth;
   }
 }
 
@@ -1185,7 +1192,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
         core::PacketQueue* video_packet_queue = vstream_->Queue();
         if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC && diff - frame_last_filter_delay_ < 0 &&
             video_packet_queue->NbPackets()) {
-          stats_.frame_drops_early++;
+          stats_->frame_drops_early++;
           av_frame_unref(frame);
           got_picture = 0;
         }
@@ -1366,6 +1373,7 @@ int VideoState::ReadThread() {
   AVStream* const video_st = video_stream->AvStream();
   AVStream* const audio_st = audio_stream->AvStream();
   UNUSED(audio_st);
+  stats_.reset(new Stats);
 
   while (!IsAborted()) {
     if (paused_ != last_paused_) {
