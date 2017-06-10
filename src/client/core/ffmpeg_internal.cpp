@@ -2,8 +2,6 @@
 
 #include <stddef.h>  // for NULL
 
-#include <algorithm>
-
 #ifdef HAVE_VDPAU
 #include "client/core/hwaccels/ffmpeg_vdpau.h"
 #endif
@@ -67,45 +65,3 @@ const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
-
-namespace common {
-std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value) {
-  if (value == fasto::fastotv::client::core::HWACCEL_AUTO) {
-    return "auto";
-  } else if (value == fasto::fastotv::client::core::HWACCEL_NONE) {
-    return "none";
-  }
-
-  for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
-    if (value == fasto::fastotv::client::core::hwaccels[i].id) {
-      return fasto::fastotv::client::core::hwaccels[i].name;
-    }
-  }
-
-  return std::string();
-}
-
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out) {
-  if (from.empty() || !out) {
-    return false;
-  }
-
-  std::string from_copy = from;
-  std::transform(from_copy.begin(), from_copy.end(), from_copy.begin(), ::tolower);
-  if (from_copy == "auto") {
-    *out = fasto::fastotv::client::core::HWACCEL_AUTO;
-    return true;
-  } else if (from_copy == "none") {
-    *out = fasto::fastotv::client::core::HWACCEL_NONE;
-    return true;
-  } else {
-    for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
-      if (strcmp(fasto::fastotv::client::core::hwaccels[i].name, from.c_str()) == 0) {
-        *out = fasto::fastotv::client::core::hwaccels[i].id;
-        return true;
-      }
-    }
-    return false;
-  }
-}
-}  // namespace common

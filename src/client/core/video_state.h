@@ -40,7 +40,7 @@ extern "C" {
 #include "client/core/app_options.h"   // for AppOptions, ComplexOptions
 #include "client/core/audio_params.h"  // for AudioParams
 #include "client/core/stream_statistic.h"
-#include "client/core/types.h"  // for clock_t, AvSyncType
+#include "client/core/types.h"  // for clock64_t, AvSyncType
 
 namespace fasto {
 namespace fastotv {
@@ -178,8 +178,8 @@ class VideoState {
   void SeekNextChunk();
   void SeekPrevChunk();
   void SeekChapter(int incr);
-  void Seek(clock_t msec);
-  void SeekMsec(clock_t msec);
+  void Seek(clock64_t msec);
+  void SeekMsec(clock64_t msec);
   void StreamCycleChannel(AVMediaType codec_type);
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
@@ -193,6 +193,7 @@ class VideoState {
   void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);
   void RefreshVideo();
 
+  void ResetStats();
   void Close();
 
   bool IsVideoReady() const;
@@ -206,8 +207,8 @@ class VideoState {
   void StreamTogglePause();
 
   AvSyncType GetMasterSyncType() const;
-  clock_t ComputeTargetDelay(clock_t delay) const;
-  clock_t GetMasterClock() const;
+  clock64_t ComputeTargetDelay(clock64_t delay) const;
+  clock64_t GetMasterClock() const;
 #if CONFIG_AVFILTER
   int ConfigureVideoFilters(AVFilterGraph* graph, const std::string& vfilters, AVFrame* frame);
   int ConfigureAudioFilters(const std::string& afilters, int force_output_format);
@@ -231,7 +232,7 @@ class VideoState {
    */
   int AudioDecodeFrame();
   int GetVideoFrame(AVFrame* frame);
-  int QueuePicture(AVFrame* src_frame, clock_t pts, clock_t duration, int64_t pos);
+  int QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t duration, int64_t pos);
 
   int ReadThread();
   int VideoThread();
@@ -258,8 +259,8 @@ class VideoState {
   VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
   AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
 
-  clock_t audio_clock_;
-  clock_t audio_diff_cum_; /* used for AV difference average computation */
+  clock64_t audio_clock_;
+  clock64_t audio_diff_cum_; /* used for AV difference average computation */
   double audio_diff_avg_coef_;
   double audio_diff_threshold_;
   int audio_diff_avg_count_;
@@ -277,10 +278,10 @@ class VideoState {
   AudioParams audio_tgt_;
   struct SwrContext* swr_ctx_;
 
-  clock_t frame_timer_;
-  clock_t frame_last_returned_time_;
-  clock_t frame_last_filter_delay_;
-  clock_t max_frame_duration_;  // maximum duration of a frame - above this, we consider the jump a
+  clock64_t frame_timer_;
+  clock64_t frame_last_returned_time_;
+  clock64_t frame_last_filter_delay_;
+  clock64_t max_frame_duration_;  // maximum duration of a frame - above this, we consider the jump a
                                 // timestamp discontinuity
 
   bool step_;

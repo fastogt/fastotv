@@ -40,9 +40,10 @@ Stats::Stats()
       video_queue_size(0),
       video_bandwidth(0),
       audio_bandwidth(0),
+      active_hwaccel(HWACCEL_NONE),
       start_ts_(common::time::current_mstime()) {}
 
-clock_t Stats::GetDiffStreams() const {
+clock64_t Stats::GetDiffStreams() const {
   if (fmt == (HAVE_VIDEO_STREAM | HAVE_AUDIO_STREAM)) {
     return audio_clock - video_clock;
   } else if (fmt == HAVE_VIDEO_STREAM) {

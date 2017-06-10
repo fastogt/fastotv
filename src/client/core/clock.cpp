@@ -27,27 +27,27 @@ Clock::Clock() : paused_(false), speed_(1.0) {
   SetClock(invalid_clock());
 }
 
-void Clock::SetClockAt(clock_t pts, clock_t time) {
+void Clock::SetClockAt(clock64_t pts, clock64_t time) {
   pts_ = pts;
   last_updated_ = time;
   pts_drift_ = pts - time;
 }
 
-void Clock::SetClock(clock_t pts) {
-  clock_t time = GetRealClockTime();
+void Clock::SetClock(clock64_t pts) {
+  clock64_t time = GetRealClockTime();
   SetClockAt(pts, time);
 }
 
-clock_t Clock::GetClock() const {
+clock64_t Clock::GetClock() const {
   if (paused_) {
     return pts_;
   }
 
-  clock_t time = GetRealClockTime();
+  clock64_t time = GetRealClockTime();
   return pts_drift_ + time - (time - last_updated_) * (1.0 - speed_);
 }
 
-clock_t Clock::LastUpdated() const {
+clock64_t Clock::LastUpdated() const {
   return last_updated_;
 }
 

@@ -29,7 +29,7 @@ extern "C" {
 
 #include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN
 
-#include "client/core/types.h"  // for clock_t
+#include "client/core/types.h"  // for clock64_t
 
 extern "C" {
 #include <libavutil/frame.h>     // for AVFrame
@@ -52,8 +52,8 @@ struct VideoFrame {
   void ClearFrame();
 
   AVFrame* frame;
-  clock_t pts;      /* presentation timestamp for the frame */
-  clock_t duration; /* estimated duration of the frame */
+  clock64_t pts;      /* presentation timestamp for the frame */
+  clock64_t duration; /* estimated duration of the frame */
   int64_t pos;      /* byte position of the frame in the input file */
   SDL_Texture* bmp;
   bool allocated;
@@ -68,7 +68,7 @@ struct VideoFrame {
   DISALLOW_COPY_AND_ASSIGN(VideoFrame);
 };
 
-clock_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock_t max_frame_duration);
+clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock64_t max_frame_duration);
 
 }  // namespace core
 }  // namespace client

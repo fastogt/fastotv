@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "client/core/types.h"  // for clock_t
+#include "client/core/types.h"  // for clock64_t
 
 namespace fasto {
 namespace fastotv {
@@ -31,16 +31,16 @@ enum StreamFmt : stream_format_t { UNKNOWN_STREAM = 0, HAVE_AUDIO_STREAM = (1 <<
 struct Stats {  // stream realtime statistic
   Stats();
 
-  clock_t GetDiffStreams() const;  // msec
+  clock64_t GetDiffStreams() const;  // msec
   double GetFps() const;
 
   size_t frame_drops_early;
   size_t frame_drops_late;
   size_t frame_processed;
 
-  clock_t master_clock;  // msec
-  clock_t audio_clock;   // msec
-  clock_t video_clock;   // msec
+  clock64_t master_clock;  // msec
+  clock64_t audio_clock;   // msec
+  clock64_t video_clock;   // msec
   stream_format_t fmt;
 
   int audio_queue_size;  // bytes
@@ -48,6 +48,7 @@ struct Stats {  // stream realtime statistic
 
   bandwidth_t video_bandwidth;  // bytes/s
   bandwidth_t audio_bandwidth;  // bytes/s
+  HWAccelID active_hwaccel;
 
  private:
   const common::time64_t start_ts_;

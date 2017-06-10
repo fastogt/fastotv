@@ -54,8 +54,8 @@ void VideoFrame::ClearFrame() {
   av_frame_unref(frame);
 }
 
-clock_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock_t max_frame_duration) {
-  clock_t duration = nextvp->pts - vp->pts;
+clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock64_t max_frame_duration) {
+  clock64_t duration = nextvp->pts - vp->pts;
   if (!IsValidClock(duration) || duration <= 0 || duration > max_frame_duration) {
     return vp->duration;
   }

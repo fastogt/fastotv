@@ -29,6 +29,8 @@ extern "C" {
 #include <libavutil/pixfmt.h>    // for AVPixelFormat
 }
 
+#include "client/core/types.h"
+
 typedef void hw_uninit_callback_t(AVCodecContext* s);
 typedef int hw_get_buffer_callback_t(AVCodecContext* s, AVFrame* frame, int flags);
 typedef int hw_retrieve_data_callback_t(AVCodecContext* s, AVFrame* frame);
@@ -40,37 +42,25 @@ namespace core {
 
 extern AVBufferRef* hw_device_ctx;
 
-enum HWAccelID {
-  HWACCEL_NONE = 0,
-  HWACCEL_AUTO,
-  HWACCEL_VDPAU,
-  HWACCEL_DXVA2,
-  HWACCEL_VDA,
-  HWACCEL_VIDEOTOOLBOX,
-  HWACCEL_QSV,
-  HWACCEL_VAAPI,
-  HWACCEL_CUVID
-};
-
 struct InputStream {
   void* hwaccel_ctx;
   hw_uninit_callback_t* hwaccel_uninit;
   hw_get_buffer_callback_t* hwaccel_get_buffer;
   hw_retrieve_data_callback_t* hwaccel_retrieve_data;
   char* hwaccel_device;
-  enum AVPixelFormat hwaccel_pix_fmt;
-  enum HWAccelID active_hwaccel_id;
-  enum HWAccelID hwaccel_id;
+  AVPixelFormat hwaccel_pix_fmt;
+  HWAccelID active_hwaccel_id;
+  HWAccelID hwaccel_id;
   AVBufferRef* hw_frames_ctx;
-  enum AVPixelFormat hwaccel_output_format;
-  enum AVPixelFormat hwaccel_retrieved_pix_fmt;
+  AVPixelFormat hwaccel_output_format;
+  AVPixelFormat hwaccel_retrieved_pix_fmt;
 };
 
 struct HWAccel {
   const char* name;
   int (*init)(AVCodecContext* s);
-  enum HWAccelID id;
-  enum AVPixelFormat pix_fmt;
+  HWAccelID id;
+  AVPixelFormat pix_fmt;
 };
 
 extern const HWAccel hwaccels[];
@@ -81,8 +71,3 @@ const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt);
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
-
-namespace common {
-std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out);
-}  // namespace common

@@ -95,15 +95,15 @@ double Stream::q2d() const {
   return q2d_diff(stream_st_->time_base);
 }
 
-clock_t Stream::GetClock() const {
+clock64_t Stream::GetClock() const {
   return clock_->GetClock();
 }
 
-void Stream::SetClockAt(clock_t pts, clock_t time) {
+void Stream::SetClockAt(clock64_t pts, clock64_t time) {
   clock_->SetClockAt(pts, time);
 }
 
-void Stream::SetClock(clock_t pts) {
+void Stream::SetClock(clock64_t pts) {
   clock_->SetClock(pts);
 }
 
@@ -114,7 +114,7 @@ void Stream::SetPaused(bool pause) {
   start_ts_ = 0;
 }
 
-clock_t Stream::LastUpdatedClock() const {
+clock64_t Stream::LastUpdatedClock() const {
   return clock_->LastUpdated();
 }
 

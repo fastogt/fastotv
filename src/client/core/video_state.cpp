@@ -70,7 +70,7 @@ extern "C" {
 #include "client/core/frame_queue.h"           // for VideoDecoder, AudioDec...
 #include "client/core/packet_queue.h"          // for PacketQueue
 #include "client/core/stream.h"                // for AudioStream, VideoStream
-#include "client/core/types.h"                 // for clock_t, IsValidClock
+#include "client/core/types.h"                 // for clock64_t, IsValidClock
 #include "client/core/utils.h"                 // for q2d_diff, configure_fi...
 #include "client/core/video_frame.h"           // for VideoFrame
 #include "client/core/video_state_handler.h"
@@ -493,7 +493,7 @@ void VideoState::StepToNextFrame() {
 }
 
 void VideoState::SeekNextChunk() {
-  clock_t incr = 0;
+  clock64_t incr = 0;
   if (ic_->nb_chapters <= 1) {
     incr = 60000;
   }
@@ -502,7 +502,7 @@ void VideoState::SeekNextChunk() {
 }
 
 void VideoState::SeekPrevChunk() {
-  clock_t incr = 0;
+  clock64_t incr = 0;
   if (ic_->nb_chapters <= 1) {
     incr = -60000;
   }
@@ -516,7 +516,7 @@ void VideoState::SeekChapter(int incr) {
   }
 
   const AVRational tb = {1, AV_TIME_BASE};  // AV_TIME_BASE_Q
-  const clock_t pos = GetMasterClock() * AV_TIME_BASE * 1000;
+  const clock64_t pos = GetMasterClock() * AV_TIME_BASE * 1000;
   int i;
   /* find the current chapter */
   for (i = 0; i < ic_->nb_chapters; i++) {
@@ -553,7 +553,7 @@ void VideoState::StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes) {
   read_thread_cond_.notify_one();
 }
 
-void VideoState::Seek(clock_t msec) {
+void VideoState::Seek(clock64_t msec) {
   if (opt_.seek_by_bytes == SEEK_BY_BYTES_ON) {
     int64_t pos = -1;
     if (pos < 0 && vstream_->IsOpened()) {
@@ -580,14 +580,14 @@ void VideoState::Seek(clock_t msec) {
   SeekMsec(msec);
 }
 
-void VideoState::SeekMsec(clock_t clock) {
-  clock_t pos = GetMasterClock();
+void VideoState::SeekMsec(clock64_t clock) {
+  clock64_t pos = GetMasterClock();
   if (!IsValidClock(pos)) {
     pos = seek_pos_ / AV_TIME_BASE * 1000;
   }
   pos += clock;
   if (ic_->start_time != AV_NOPTS_VALUE) {  // if selected out of range move to start
-    clock_t st = ic_->start_time / AV_TIME_BASE * 1000;
+    clock64_t st = ic_->start_time / AV_TIME_BASE * 1000;
     if (pos < st) {
       pos = st;
     }
@@ -602,8 +602,8 @@ AvSyncType VideoState::GetMasterSyncType() const {
   return opt_.av_sync_type;
 }
 
-clock_t VideoState::ComputeTargetDelay(clock_t delay) const {
-  clock_t diff = 0;
+clock64_t VideoState::ComputeTargetDelay(clock64_t delay) const {
+  clock64_t diff = 0;
 
   /* update delay to follow master synchronisation source */
   if (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER) {
@@ -614,7 +614,7 @@ clock_t VideoState::ComputeTargetDelay(clock_t delay) const {
     /* skip or repeat frame. We take into account the
        delay to compute the threshold. I still don't know
        if it is the best guess */
-    clock_t sync_threshold = FFMAX(AV_SYNC_THRESHOLD_MIN_MSEC, FFMIN(AV_SYNC_THRESHOLD_MAX_MSEC, delay));
+    clock64_t sync_threshold = FFMAX(AV_SYNC_THRESHOLD_MIN_MSEC, FFMIN(AV_SYNC_THRESHOLD_MAX_MSEC, delay));
     if (IsValidClock(diff) && std::abs(diff) < max_frame_duration_) {
       if (diff <= -sync_threshold) {
         delay = FFMAX(0, delay + diff);
@@ -630,7 +630,7 @@ clock_t VideoState::ComputeTargetDelay(clock_t delay) const {
 }
 
 /* get the current master clock value */
-clock_t VideoState::GetMasterClock() const {
+clock64_t VideoState::GetMasterClock() const {
   if (GetMasterSyncType() == AV_SYNC_VIDEO_MASTER) {
     return vstream_->GetClock();
   }
@@ -762,6 +762,10 @@ void VideoState::TogglePause() {
   step_ = false;
 }
 
+void VideoState::ResetStats() {
+  stats_.reset(new Stats);
+}
+
 void VideoState::Close() {
   /* close each stream */
   if (vstream_->IsOpened()) {
@@ -854,7 +858,7 @@ int VideoState::SynchronizeAudio(int nb_samples) {
 
   /* if not master, then we try to remove or add samples to correct the clock */
   if (GetMasterSyncType() != AV_SYNC_AUDIO_MASTER) {
-    clock_t diff = astream_->GetClock() - GetMasterClock();
+    clock64_t diff = astream_->GetClock() - GetMasterClock();
     if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC) {
       audio_diff_cum_ = diff + audio_diff_avg_coef_ * audio_diff_cum_;
       if (audio_diff_avg_count_ < AUDIO_DIFF_AVG_NB) {
@@ -970,7 +974,7 @@ int VideoState::AudioDecodeFrame() {
   /* update the audio clock with the pts */
   if (IsValidClock(af->pts)) {
     const double div = static_cast<double>(af->frame->nb_samples) / af->frame->sample_rate;
-    const clock_t dur = div * 1000;
+    const clock64_t dur = div * 1000;
     audio_clock_ = af->pts + dur;
   } else {
     audio_clock_ = invalid_clock();
@@ -996,10 +1000,10 @@ retry:
     }
 
     /* compute nominal last_duration */
-    clock_t last_duration = CalcDurationBetweenVideoFrames(lastvp, vp, max_frame_duration_);
-    clock_t delay = ComputeTargetDelay(last_duration);
-    clock_t time = GetRealClockTime();
-    clock_t next_frame_ts = frame_timer_ + delay;
+    clock64_t last_duration = CalcDurationBetweenVideoFrames(lastvp, vp, max_frame_duration_);
+    clock64_t delay = ComputeTargetDelay(last_duration);
+    clock64_t time = GetRealClockTime();
+    clock64_t next_frame_ts = frame_timer_ + delay;
     if (time < next_frame_ts) {
       goto display;
     }
@@ -1011,7 +1015,7 @@ retry:
       }
     }
 
-    const clock_t pts = vp->pts;
+    const clock64_t pts = vp->pts;
     if (IsValidClock(pts)) {
       /* update current video pts */
       vstream_->SetClockAt(pts, time);
@@ -1019,11 +1023,11 @@ retry:
 
     VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
     if (nextvp) {
-      clock_t duration = CalcDurationBetweenVideoFrames(vp, nextvp, max_frame_duration_);
+      clock64_t duration = CalcDurationBetweenVideoFrames(vp, nextvp, max_frame_duration_);
       if (!step_ && (opt_.framedrop == FRAME_DROP_AUTO ||
                      (opt_.framedrop == FRAME_DROP_ON || (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)))) {
-        clock_t next_next_frame_ts = frame_timer_ + duration;
-        clock_t diff_drop = time - next_next_frame_ts;
+        clock64_t next_next_frame_ts = frame_timer_ + duration;
+        clock64_t diff_drop = time - next_next_frame_ts;
         if (diff_drop > 0) {
           stats_->frame_drops_late++;
           video_frame_queue_->MoveToNext();
@@ -1079,6 +1083,7 @@ void VideoState::TryRefreshVideo() {
     stats_->video_queue_size = vqsize;
     stats_->audio_bandwidth = audio_bandwidth;
     stats_->video_bandwidth = video_bandwidth;
+    stats_->active_hwaccel = input_st_->active_hwaccel_id;
   }
 }
 
@@ -1091,7 +1096,7 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
     return;
   }
 
-  const clock_t audio_callback_time = GetRealClockTime();
+  const clock64_t audio_callback_time = GetRealClockTime();
   while (len > 0) {
     if (audio_buf_index_ >= audio_buf_size_) {
       int audio_size = AudioDecodeFrame();
@@ -1125,12 +1130,12 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
   if (IsValidClock(audio_clock_)) {
     double clc = static_cast<double>(2 * audio_hw_buf_size_ + audio_write_buf_size_) /
                  static_cast<double>(audio_tgt_.bytes_per_sec) * 1000;
-    const clock_t pts = audio_clock_ - clc;
+    const clock64_t pts = audio_clock_ - clc;
     astream_->SetClockAt(pts, audio_callback_time);
   }
 }
 
-int VideoState::QueuePicture(AVFrame* src_frame, clock_t pts, clock_t duration, int64_t pos) {
+int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t duration, int64_t pos) {
   PacketQueue* video_packet_queue = vstream_->Queue();
   VideoFrame* vp = video_frame_queue_->GetPeekWritable();
   if (!vp) {
@@ -1184,8 +1189,8 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
 
     if (opt_.framedrop == FRAME_DROP_AUTO || (opt_.framedrop || GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)) {
       if (IsValidPts(frame->pts)) {
-        clock_t dpts = vstream_->q2d() * frame->pts;
-        clock_t diff = dpts - GetMasterClock();
+        clock64_t dpts = vstream_->q2d() * frame->pts;
+        clock64_t diff = dpts - GetMasterClock();
         PacketQueue* video_packet_queue = vstream_->Queue();
         if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC && diff - frame_last_filter_delay_ < 0 &&
             video_packet_queue->NbPackets()) {
@@ -1298,7 +1303,7 @@ int VideoState::ReadThread() {
 
   realtime_ = is_realtime(ic);
 
-  // av_dump_format(ic, 0, id_.c_str(), 0);
+  av_dump_format(ic, 0, id_.c_str(), 0);
 
   for (int i = 0; i < static_cast<int>(ic->nb_streams); i++) {
     AVStream* st = ic->streams[i];
@@ -1374,7 +1379,7 @@ int VideoState::ReadThread() {
   AVStream* const video_st = video_stream->AvStream();
   AVStream* const audio_st = audio_stream->AvStream();
   UNUSED(audio_st);
-  stats_.reset(new Stats);
+  ResetStats();
 
   while (!IsAborted()) {
     if (paused_ != last_paused_) {
@@ -1383,6 +1388,7 @@ int VideoState::ReadThread() {
         read_pause_return_ = av_read_pause(ic);
       } else {
         av_read_play(ic);
+        ResetStats();
       }
     }
 
@@ -1409,6 +1415,7 @@ int VideoState::ReadThread() {
       if (paused_) {
         StepToNextFrame();
       }
+      ResetStats();
     }
 
     /* if the queue are full, no need to read more */
@@ -1667,8 +1674,8 @@ int VideoState::VideoThread() {
       }
 #endif
       AVRational fr = {frame_rate.den, frame_rate.num};
-      clock_t duration = (frame_rate.num && frame_rate.den ? q2d_diff(fr) : 0);
-      clock_t pts = IsValidPts(frame->pts) ? frame->pts * q2d_diff(tb) : invalid_clock();
+      clock64_t duration = (frame_rate.num && frame_rate.den ? q2d_diff(fr) : 0);
+      clock64_t pts = IsValidPts(frame->pts) ? frame->pts * q2d_diff(tb) : invalid_clock();
       ret = QueuePicture(frame, pts, duration, av_frame_get_pkt_pos(frame));
       av_frame_unref(frame);
 #if CONFIG_AVFILTER

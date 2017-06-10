@@ -29,19 +29,31 @@ namespace fastotv {
 namespace client {
 namespace core {
 
+enum HWAccelID {
+  HWACCEL_NONE = 0,
+  HWACCEL_AUTO,
+  HWACCEL_VDPAU,
+  HWACCEL_DXVA2,
+  HWACCEL_VDA,
+  HWACCEL_VIDEOTOOLBOX,
+  HWACCEL_QSV,
+  HWACCEL_VAAPI,
+  HWACCEL_CUVID
+};
+
 typedef common::time64_t msec_t;
-typedef common::time64_t clock_t;
-clock_t invalid_clock();
+typedef common::time64_t clock64_t;
+clock64_t invalid_clock();
 
 bandwidth_t CalculateBandwidth(size_t total_downloaded_bytes, msec_t data_interval);
 
-bool IsValidClock(clock_t clock);
-clock_t GetRealClockTime();  // msec
+bool IsValidClock(clock64_t clock);
+clock64_t GetRealClockTime();  // msec
 
-msec_t ClockToMsec(clock_t clock);
+msec_t ClockToMsec(clock64_t clock);
 msec_t GetCurrentMsec();
 
-typedef clock_t pts_t;
+typedef clock64_t pts_t;
 pts_t invalid_pts();
 bool IsValidPts(pts_t pts);
 
@@ -55,3 +67,8 @@ int64_t get_valid_channel_layout(int64_t channel_layout, int channels);
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
+
+namespace common {
+std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value);
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out);
+}  // namespace common

@@ -18,12 +18,16 @@
 
 #include "client/core/types.h"
 
+#include <algorithm>
+
 extern "C" {
 #include <libavutil/avutil.h>          // for AV_NOPTS_VALUE
 #include <libavutil/channel_layout.h>  // for av_get_channel_layout_nb_channels
 }
 
 #include <common/time.h>  // for current_mstime
+
+#include "ffmpeg_internal.h"
 
 namespace fasto {
 namespace fastotv {
@@ -39,19 +43,19 @@ bandwidth_t CalculateBandwidth(size_t total_downloaded_bytes, msec_t data_interv
   return bytes_per_msec * 1000;
 }
 
-clock_t invalid_clock() {
+clock64_t invalid_clock() {
   return -1;
 }
 
-bool IsValidClock(clock_t clock) {
+bool IsValidClock(clock64_t clock) {
   return clock != invalid_clock();
 }
 
-clock_t GetRealClockTime() {
+clock64_t GetRealClockTime() {
   return GetCurrentMsec();
 }
 
-msec_t ClockToMsec(clock_t clock) {
+msec_t ClockToMsec(clock64_t clock) {
   return clock;
 }
 
@@ -78,3 +82,45 @@ bool IsValidPts(pts_t pts) {
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
+
+namespace common {
+std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value) {
+  if (value == fasto::fastotv::client::core::HWACCEL_AUTO) {
+    return "auto";
+  } else if (value == fasto::fastotv::client::core::HWACCEL_NONE) {
+    return "none";
+  }
+
+  for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
+    if (value == fasto::fastotv::client::core::hwaccels[i].id) {
+      return fasto::fastotv::client::core::hwaccels[i].name;
+    }
+  }
+
+  return std::string();
+}
+
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out) {
+  if (from.empty() || !out) {
+    return false;
+  }
+
+  std::string from_copy = from;
+  std::transform(from_copy.begin(), from_copy.end(), from_copy.begin(), ::tolower);
+  if (from_copy == "auto") {
+    *out = fasto::fastotv::client::core::HWACCEL_AUTO;
+    return true;
+  } else if (from_copy == "none") {
+    *out = fasto::fastotv::client::core::HWACCEL_NONE;
+    return true;
+  } else {
+    for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
+      if (strcmp(fasto::fastotv::client::core::hwaccels[i].name, from.c_str()) == 0) {
+        *out = fasto::fastotv::client::core::hwaccels[i].id;
+        return true;
+      }
+    }
+    return false;
+  }
+}
+}  // namespace common

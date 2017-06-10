@@ -30,7 +30,7 @@ extern "C" {
 #include <common/types.h>   // for time64_t
 
 #include "client/core/bandwidth_estimation.h"  // for DesireBytesPerSec
-#include "client/core/types.h"                 // for clock_t
+#include "client/core/types.h"                 // for clock64_t
 #include "client_server_types.h"               // for bandwidth_t
 
 namespace fasto {
@@ -71,13 +71,13 @@ class Stream {
   double q2d() const;
 
   // clock interface
-  clock_t GetClock() const;
+  clock64_t GetClock() const;
 
-  void SetClockAt(clock_t pts, clock_t time);
-  void SetClock(clock_t pts);
+  void SetClockAt(clock64_t pts, clock64_t time);
+  void SetClock(clock64_t pts);
   void SetPaused(bool pause);
 
-  clock_t LastUpdatedClock() const;
+  clock64_t LastUpdatedClock() const;
 
   void SyncSerialClock();
 

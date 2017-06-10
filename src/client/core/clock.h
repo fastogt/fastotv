@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "client/core/types.h"  // for clock_t
+#include "client/core/types.h"  // for clock64_t
 
 namespace fasto {
 namespace fastotv {
@@ -29,19 +29,19 @@ class Clock {
  public:
   explicit Clock();
 
-  void SetClockAt(clock_t pts, clock_t time);
-  void SetClock(clock_t pts);
-  clock_t GetClock() const;
+  void SetClockAt(clock64_t pts, clock64_t time);
+  void SetClock(clock64_t pts);
+  clock64_t GetClock() const;
 
-  clock_t LastUpdated() const;
+  clock64_t LastUpdated() const;
 
   void SetPaused(bool paused);
 
  private:
   bool paused_;
-  clock_t pts_;       /* clock base */
-  clock_t pts_drift_; /* clock base minus time at which we updated the clock */
-  clock_t last_updated_;
+  clock64_t pts_;       /* clock base */
+  clock64_t pts_drift_; /* clock base minus time at which we updated the clock */
+  clock64_t last_updated_;
   double speed_;
 };
 }  // namespace core
