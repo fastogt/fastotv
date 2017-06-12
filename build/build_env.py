@@ -144,14 +144,21 @@ class OrangePiPlus2(OrangePiDevice):  # armv7l, vdpau/cedrus
         OrangePiDevice.__init__(self, 'orange-pi-plus2')
 
 
-class OrangePiPC2(OrangePiDevice):  # armv8l, vdpau/cedrus
+class OrangePiPC2(SupportedDevice):  # armv8l
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-pc2')
+        OrangePiPC2.__init__(self, 'orange-pi-pc2')
+
+    def __init__(self, name):
+        SupportedDevice.__init__(self, name,
+                                 {'linux': ['libgles2-mesa-dev', 'liblircclient-dev']},
+                                 utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
+                                                        '--enable-video-opengles2']),
+                                 utils.CompileInfo([], []))
 
 
-class OrangePiZeroPlus2H5(OrangePiDevice):  # armv8l, vdpau/cedrus
+class OrangePiZeroPlus2H5(OrangePiPC2):  # armv8l
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-zero-plus2-h5')
+        OrangePiPC2.__init__(self, 'orange-pi-zero-plus2-h5')
 
 
 SUPPORTED_DEVICES = [PcDevice(),
