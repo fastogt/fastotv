@@ -111,7 +111,7 @@ class OrangePiDevice(SupportedDevice):  # gles2
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev', 'libgl1-mesa-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy',
-                                            'libcedrus1-dev', 'liblircclient-dev']},
+                                            'libcedrus1-dev']},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
                                                    ['--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2']),
@@ -149,7 +149,7 @@ class OrangePiPlus2(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
 class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
     def __init__(self, name='orange-pi-pc2'):
         SupportedDevice.__init__(self, name,
-                                 {'linux': ['libgles2-mesa-dev', 'liblircclient-dev']},
+                                 {'linux': ['libgles2-mesa-dev']},
                                  utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
                                                         '--enable-video-opengles2']),
                                  utils.CompileInfo([], []))
@@ -158,7 +158,7 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
         return
 
 
-class OrangePiZeroPlus2H5(OrangePiPC2):  # ARMv8-A Cortex-A53
+class OrangePiZeroPlus2H5(OrangePiPC2):  # ARMv8-A(aarch64) Cortex-A53
     def __init__(self):
         OrangePiPC2.__init__(self, 'orange-pi-zero-plus2-h5')
 
@@ -233,7 +233,7 @@ class BuildRequest(object):
                             'libasound2-dev',
                             'freetype-dev',
                             'libx11-dev',
-                            'libdrm-dev', 'libdri2-dev', 'libump-dev',
+                            'libdrm-dev', 'libdri2-dev', 'libump-dev', 'liblircclient-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
@@ -242,7 +242,7 @@ class BuildRequest(object):
                             'alsa-lib-devel',
                             'freetype-devel',
                             'libX11-devel',
-                            'libdrm-devel', 'libdri2-devel', 'libump-devel',
+                            'libdrm-devel', 'libdri2-devel', 'libump-devel', 'liblircclient-devel',
                             'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
                 # x86_64 arch
                 # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
@@ -281,7 +281,7 @@ class BuildRequest(object):
 
     def build_ffmpeg(self, version):
         ffmpeg_platform_args = ['--disable-doc',
-                                '--disable-programs',  # '--enable-openssl',
+                                '--disable-programs', '--enable-openssl',
                                 '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
@@ -310,9 +310,8 @@ class BuildRequest(object):
         self.build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_openssl(self, version):
-        compiler_flags = utils.CompileInfo([], ['no-shared'])
+        compiler_flags = utils.CompileInfo([], [])
         url = '{0}openssl-{1}.{2}'.format(OPENSSL_SRC_ROOT, version, ARCH_OPENSSL_EXT)
-        print(url)
         self.build(url, compiler_flags, './config')
 
     def build_libpng(self, version):
