@@ -155,6 +155,9 @@ class OrangePiPC2(SupportedDevice):  # armv8l
                                                         '--enable-video-opengles2']),
                                  utils.CompileInfo([], []))
 
+    def install_specific(self):
+        return
+
 
 class OrangePiZeroPlus2H5(OrangePiPC2):  # armv8l
     def __init__(self):
