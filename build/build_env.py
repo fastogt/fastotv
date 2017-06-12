@@ -68,8 +68,10 @@ class SupportedDevice(metaclass=ABCMeta):
         pass
 
 
-# PC
-class PcDevice(SupportedDevice):
+# description of ARMv6(armv6l) ARM11: ARMv6 - Architecture, armv6l - python platform.machine(), ARM11 - Holdings
+# https://en.wikipedia.org/wiki/ARM_architecture
+
+class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
     def __init__(self):
         SupportedDevice.__init__(self, 'pc', {'linux': [
             'libvdpau-devel', 'libva-devel', 'libgl1-mesa-devel',  # redhat
@@ -93,12 +95,12 @@ class RaspberryPiDevice(SupportedDevice):  # gles2
         raspberry_pi.install_raspberry_pi()
 
 
-class RaspberryPi1ModelB(RaspberryPiDevice):
+class RaspberryPi1ModelB(RaspberryPiDevice):  # ARMv6(armv6l) ARM11, omx/mmal
     def __init__(self):
         RaspberryPiDevice.__init__(self, 'raspberry-pi-model-b')
 
 
-class RaspberryPi1ModelBPlus(RaspberryPiDevice):  # armv6l
+class RaspberryPi1ModelBPlus(RaspberryPiDevice):  # ARMv6(armv6l) ARM11, omx/mmal
     def __init__(self):
         RaspberryPiDevice.__init__(self, 'raspberry-pi-model-b+')
 
@@ -119,33 +121,33 @@ class OrangePiDevice(SupportedDevice):  # gles2
         orange_pi.install_orange_pi()
 
 
-class OrangePiOne(OrangePiDevice):  # armv7l, vdpau/cedrus
+class OrangePiOne(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-one')
 
 
-class OrangePiLite(OrangePiDevice):  # armv7l, vdpau/cedrus
+class OrangePiLite(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-lite')
 
 
-class OrangePiZeroPlus2H3(OrangePiDevice):  # armv8l, vdpau/cedrus
+class OrangePiZeroPlus2H3(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-zero-plus2-h3')
 
 
-class OrangePiPC(OrangePiDevice):  # armv7l, vdpau/cedrus
+class OrangePiPC(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-pc')
 
 
-class OrangePiPlus2(OrangePiDevice):  # armv7l, vdpau/cedrus
+class OrangePiPlus2(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
         OrangePiDevice.__init__(self, 'orange-pi-plus2')
 
 
-class OrangePiPC2(SupportedDevice):  # armv8l
-    def __init__(self, name = 'orange-pi-pc2'):
+class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
+    def __init__(self, name='orange-pi-pc2'):
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev', 'liblircclient-dev']},
                                  utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
@@ -156,7 +158,7 @@ class OrangePiPC2(SupportedDevice):  # armv8l
         return
 
 
-class OrangePiZeroPlus2H5(OrangePiPC2):  # armv8l
+class OrangePiZeroPlus2H5(OrangePiPC2):  # ARMv8-A Cortex-A53
     def __init__(self):
         OrangePiPC2.__init__(self, 'orange-pi-zero-plus2-h5')
 
