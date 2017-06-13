@@ -7,7 +7,7 @@ import subprocess
 from pybuild_utils.base import utils
 
 
-def install_orange_pi():
+def install_orange_pi_h3():
     subprocess.call(['modprobe', 'mali'])
     pwd = os.getcwd()
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -49,6 +49,24 @@ def install_orange_pi():
     standart_egl_path = '/usr/lib/arm-linux-gnueabihf/mesa-egl/'
     if os.path.exists(standart_egl_path):
         shutil.move(standart_egl_path, '/usr/lib/arm-linux-gnueabihf/.mesa-egl/')
+
+    lirc_conf_path = os.path.join(script_dir, 'hardware/lirc/hardware.conf')
+    shutil.copy(lirc_conf_path, '/etc/lirc/hardware.conf')
+
+
+def install_orange_pi_h5():
+    pwd = os.getcwd()
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    
+    with open('/etc/asound.conf', 'w') as f:
+        f.write('pcm.!default {\n'
+                'type hw\n'
+                'card 1\n'
+                '}\n'
+                'ctl.!default {\n'
+                'type hw\n'
+                'card 1\n'
+                '}')
 
     lirc_conf_path = os.path.join(script_dir, 'hardware/lirc/hardware.conf')
     shutil.copy(lirc_conf_path, '/etc/lirc/hardware.conf')
