@@ -103,10 +103,11 @@ int Sdl2Application::Exec() {
 void Sdl2Application::ProcessEvent(SDL_Event* event) {
   switch (event->type) {
     case SDL_KEYDOWN: {
-      HandleKeyPressEvent(&event->key);
+      HandleKeyDownEvent(&event->key);
       break;
     }
     case SDL_KEYUP: {
+      HandleKeyUpEvent(&event->key);
       break;
     }
     case SDL_MOUSEBUTTONDOWN: {
@@ -212,18 +213,18 @@ void Sdl2Application::HandleEvent(events::Event* event) {
   }
 }
 
-void Sdl2Application::HandleKeyPressEvent(SDL_KeyboardEvent* event) {
-  if (event->type == SDL_KEYDOWN) { // && event->repeat == 0
-    Keysym ks = SDLKeySymToOur(event->keysym);
-    events::KeyPressInfo inf(event->state == SDL_PRESSED, ks);
-    events::KeyPressEvent* key_press = new events::KeyPressEvent(this, inf);
-    HandleEvent(key_press);
-  } else if (event->type == SDL_KEYUP) {
-    Keysym ks = SDLKeySymToOur(event->keysym);
-    events::KeyReleaseInfo inf(event->state == SDL_PRESSED, ks);
-    events::KeyReleaseEvent* key_release = new events::KeyReleaseEvent(this, inf);
-    HandleEvent(key_release);
-  }
+void Sdl2Application::HandleKeyDownEvent(SDL_KeyboardEvent* event) {
+  Keysym ks = SDLKeySymToOur(event->keysym); // && event->repeat == 0
+  events::KeyPressInfo inf(event->state == SDL_PRESSED, ks);
+  events::KeyPressEvent* key_press = new events::KeyPressEvent(this, inf);
+  HandleEvent(key_press);
+}
+
+void Sdl2Application::HandleKeyUpEvent(SDL_KeyboardEvent* event) {
+  Keysym ks = SDLKeySymToOur(event->keysym);
+  events::KeyReleaseInfo inf(event->state == SDL_PRESSED, ks);
+  events::KeyReleaseEvent* key_release = new events::KeyReleaseEvent(this, inf);
+  HandleEvent(key_release);
 }
 
 void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {  // SDL_WindowEventID

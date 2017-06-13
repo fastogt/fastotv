@@ -58,7 +58,8 @@ class Sdl2Application : public common::application::IApplicationImpl {
  protected:
   virtual void HandleEvent(core::events::Event* event);
 
-  virtual void HandleKeyPressEvent(SDL_KeyboardEvent* event);
+  virtual void HandleKeyDownEvent(SDL_KeyboardEvent* event);
+  virtual void HandleKeyUpEvent(SDL_KeyboardEvent* event);
   virtual void HandleWindowEvent(SDL_WindowEvent* event);
 
   virtual void HandleMouseMoveEvent(SDL_MouseMotionEvent* event);
