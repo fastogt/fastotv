@@ -74,8 +74,8 @@ class SupportedDevice(metaclass=ABCMeta):
 class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
     def __init__(self):
         SupportedDevice.__init__(self, 'pc', {'linux': [
-            'libvdpau-devel', 'libva-devel', 'libgl1-mesa-devel',  # redhat
-            'libvdpau-dev', 'libva-dev', 'libgl1-mesa-dev'  # debian
+            'libvdpau-devel', 'libva-devel',  # redhat
+            'libvdpau-dev', 'libva-dev',  # debian
         ]}, utils.CompileInfo([], []), utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -109,7 +109,7 @@ class RaspberryPi1ModelBPlus(RaspberryPiDevice):  # ARMv6(armv6l) ARM11, omx/mma
 class OrangePiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name,
-                                 {'linux': ['libgles2-mesa-dev', 'libgl1-mesa-dev',
+                                 {'linux': ['libgles2-mesa-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy',
                                             'libcedrus1-dev']},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
@@ -233,7 +233,7 @@ class BuildRequest(object):
                             'libasound2-dev',
                             'freetype-dev',
                             'libx11-dev',
-                            'libdrm-dev', 'libdri2-dev', 'libump-dev', 'liblircclient-dev',
+                            'libdrm-dev', 'libdri2-dev', 'libump-dev', 'liblircclient-dev', 'libgl1-mesa-dev',
                             'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
@@ -242,7 +242,7 @@ class BuildRequest(object):
                             'alsa-lib-devel',
                             'freetype-devel',
                             'libX11-devel',
-                            'libdrm-devel', 'libdri2-devel', 'libump-devel', 'liblircclient-devel',
+                            'libdrm-devel', 'libdri2-devel', 'libump-devel', 'liblircclient-devel', 'libgl1-mesa-devel',
                             'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
                 # x86_64 arch
                 # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
