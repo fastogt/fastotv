@@ -29,9 +29,10 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-int vaapi_decode_init(AVCodecContext* avctx);
+int vaapi_init(AVCodecContext* decoder_ctx);
+void vaapi_uninit(AVCodecContext* decoder_ctx);
 
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

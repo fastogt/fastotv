@@ -27,25 +27,25 @@ AVBufferRef* hw_device_ctx = NULL;
 
 const HWAccel hwaccels[] = {
 #if HAVE_VDPAU_X11
-    {"vdpau", vdpau_init, HWACCEL_VDPAU, AV_PIX_FMT_VDPAU},
+    {"vdpau", vdpau_init, vdpau_uninit,HWACCEL_VDPAU, AV_PIX_FMT_VDPAU},
 #endif
 #if HAVE_DXVA2_LIB
-    {"dxva2", dxva2_init, HWACCEL_DXVA2, AV_PIX_FMT_DXVA2_VLD},
+    {"dxva2", dxva2_init, dxva2_uninit, HWACCEL_DXVA2, AV_PIX_FMT_DXVA2_VLD},
 #endif
 #if CONFIG_VDA
-    {"vda", videotoolbox_init, HWACCEL_VDA, AV_PIX_FMT_VDA},
+    {"vda", videotoolbox_init, videotoolbox_uninit, HWACCEL_VDA, AV_PIX_FMT_VDA},
 #endif
 #if CONFIG_VIDEOTOOLBOX
-    {"videotoolbox", videotoolbox_init, HWACCEL_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX},
+    {"videotoolbox", videotoolbox_init, videotoolbox_uninit, HWACCEL_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX},
 #endif
 #if CONFIG_LIBMFX
-    {"qsv", qsv_init, HWACCEL_QSV, AV_PIX_FMT_QSV},
+    {"qsv", qsv_init, qsv_uninit, HWACCEL_QSV, AV_PIX_FMT_QSV},
 #endif
 #if HAVE_VAAPI_X11
-    {"vaapi", vaapi_decode_init, HWACCEL_VAAPI, AV_PIX_FMT_VAAPI},
+    {"vaapi", vaapi_init, vaapi_uninit, HWACCEL_VAAPI, AV_PIX_FMT_VAAPI},
 #endif
 #if CONFIG_CUVID
-    {"cuvid", cuvid_init, HWACCEL_CUVID, AV_PIX_FMT_CUDA},
+    {"cuvid", cuvid_init, cuvid_uninit, HWACCEL_CUVID, AV_PIX_FMT_CUDA},
 #endif
     HWAccel()};
 

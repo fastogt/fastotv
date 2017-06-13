@@ -96,6 +96,8 @@ extern "C" {
 /* TODO: We assume that a decoded and resampled frame fits into this buffer */
 #define MAX_QUEUE_SIZE (15 * 1024 * 1024)
 
+#define EXIT_LOOKUP_IF_HWACCEL_FAILED 0
+
 namespace {
 std::string ffmpeg_errno_to_string(int err) {
   char errbuf[128];
@@ -137,7 +139,11 @@ enum AVPixelFormat get_format(AVCodecContext* s, const enum AVPixelFormat* pix_f
     int ret = hwaccel->init(s);
     if (ret < 0) {
       if (ist->hwaccel_id == hwaccel->id) {
+#if EXIT_LOOKUP_IF_HWACCEL_FAILED
         return AV_PIX_FMT_NONE;
+#else
+        continue;
+#endif
       }
       continue;
     }
@@ -145,7 +151,12 @@ enum AVPixelFormat get_format(AVCodecContext* s, const enum AVPixelFormat* pix_f
     if (ist->hw_frames_ctx) {
       s->hw_frames_ctx = av_buffer_ref(ist->hw_frames_ctx);
       if (!s->hw_frames_ctx) {
+
+#if EXIT_LOOKUP_IF_HWACCEL_FAILED
         return AV_PIX_FMT_NONE;
+#else
+        continue;
+#endif
       }
     }
 

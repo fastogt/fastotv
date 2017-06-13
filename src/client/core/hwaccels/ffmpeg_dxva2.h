@@ -28,8 +28,11 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+
 int dxva2_init(AVCodecContext* s);
-}
-}
-}
-}
+void dxva2_uninit(AVCodecContext* s);
+
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

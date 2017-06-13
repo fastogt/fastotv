@@ -28,8 +28,11 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+
 int vdpau_init(AVCodecContext* decoder_ctx);
-}
-}
-}
-}
+void vdpau_uninit(AVCodecContext* decoder_ctx);
+
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

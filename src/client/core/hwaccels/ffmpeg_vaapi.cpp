@@ -104,24 +104,6 @@ static int vaapi_retrieve_data(AVCodecContext* avctx, AVFrame* input) {
   return 0;
 }
 
-static void vaapi_decode_uninit(AVCodecContext* avctx) {
-  InputStream* ist = static_cast<InputStream*>(avctx->opaque);
-  VAAPIDecoderContext* ctx = static_cast<VAAPIDecoderContext*>(ist->hwaccel_ctx);
-
-  if (ctx) {
-    av_buffer_unref(&ctx->frames_ref);
-    av_buffer_unref(&ctx->device_ref);
-    av_free(ctx);
-  }
-
-  av_buffer_unref(&ist->hw_frames_ctx);
-
-  ist->hwaccel_ctx = NULL;
-  ist->hwaccel_uninit = NULL;
-  ist->hwaccel_get_buffer = NULL;
-  ist->hwaccel_retrieve_data = NULL;
-}
-
 static int vaapi_device_init(const char* device) {
   av_buffer_unref(&hw_device_ctx);
   int err = av_hwdevice_ctx_create(&hw_device_ctx, AV_HWDEVICE_TYPE_VAAPI, device, NULL, 0);
@@ -132,10 +114,10 @@ static int vaapi_device_init(const char* device) {
   return 0;
 }
 
-int vaapi_decode_init(AVCodecContext* avctx) {
-  InputStream* ist = static_cast<InputStream*>(avctx->opaque);
+int vaapi_init(AVCodecContext* decoder_ctx) {
+  InputStream* ist = static_cast<InputStream*>(decoder_ctx->opaque);
   if (ist->hwaccel_ctx) {
-    vaapi_decode_uninit(avctx);
+    vaapi_uninit(decoder_ctx);
   }
 
   // We have -hwaccel without -vaapi_device, so just initialise here with
@@ -160,53 +142,72 @@ int vaapi_decode_init(AVCodecContext* avctx) {
   ctx->device = reinterpret_cast<AVHWDeviceContext*>(ctx->device_ref->data);
 
   ctx->output_format = ist->hwaccel_output_format;
-  avctx->pix_fmt = ctx->output_format;
+  decoder_ctx->pix_fmt = ctx->output_format;
 
   ctx->frames_ref = av_hwframe_ctx_alloc(ctx->device_ref);
   if (!ctx->frames_ref) {
     ERROR_LOG() << "Failed to create VAAPI frame context.";
-    vaapi_decode_uninit(avctx);
+    vaapi_uninit(decoder_ctx);
     return AVERROR(ENOMEM);
   }
 
   ctx->frames = reinterpret_cast<AVHWFramesContext*>(ctx->frames_ref->data);
   ctx->frames->format = AV_PIX_FMT_VAAPI;
-  ctx->frames->width = avctx->coded_width;
-  ctx->frames->height = avctx->coded_height;
+  ctx->frames->width = decoder_ctx->coded_width;
+  ctx->frames->height = decoder_ctx->coded_height;
 
   // It would be nice if we could query the available formats here,
   // but unfortunately we don't have a VAConfigID to do it with.
   // For now, just assume an NV12 format (or P010 if 10-bit).
-  ctx->frames->sw_format = (avctx->sw_pix_fmt == AV_PIX_FMT_YUV420P10 ? AV_PIX_FMT_P010 : AV_PIX_FMT_NV12);
+  ctx->frames->sw_format = (decoder_ctx->sw_pix_fmt == AV_PIX_FMT_YUV420P10 ? AV_PIX_FMT_P010 : AV_PIX_FMT_NV12);
 
   // For frame-threaded decoding, at least one additional surface
   // is needed for each thread.
   ctx->frames->initial_pool_size = DEFAULT_SURFACES;
-  if (avctx->active_thread_type & FF_THREAD_FRAME) {
-    ctx->frames->initial_pool_size += avctx->thread_count;
+  if (decoder_ctx->active_thread_type & FF_THREAD_FRAME) {
+    ctx->frames->initial_pool_size += decoder_ctx->thread_count;
   }
 
   int err = av_hwframe_ctx_init(ctx->frames_ref);
   if (err < 0) {
     ERROR_LOG() << "Failed to initialise VAAPI hw_frame context error: " << err;
-    vaapi_decode_uninit(avctx);
+    vaapi_uninit(decoder_ctx);
     return err;
   }
 
   ist->hw_frames_ctx = av_buffer_ref(ctx->frames_ref);
   if (!ist->hw_frames_ctx) {
     ERROR_LOG() << "Failed to create VAAPI hw_frame context.";
-    vaapi_decode_uninit(avctx);
+    vaapi_uninit(decoder_ctx);
     return AVERROR(ENOMEM);
   }
 
-  ist->hwaccel_uninit = &vaapi_decode_uninit;
+  ist->hwaccel_uninit = &vaapi_uninit;
   ist->hwaccel_get_buffer = &vaapi_get_buffer;
   ist->hwaccel_retrieve_data = &vaapi_retrieve_data;
 
   INFO_LOG() << "Using VAAPI to decode input stream.";
   return 0;
 }
+
+void vaapi_uninit(AVCodecContext* decoder_ctx) {
+  InputStream* ist = static_cast<InputStream*>(decoder_ctx->opaque);
+  VAAPIDecoderContext* ctx = static_cast<VAAPIDecoderContext*>(ist->hwaccel_ctx);
+
+  if (ctx) {
+    av_buffer_unref(&ctx->frames_ref);
+    av_buffer_unref(&ctx->device_ref);
+    av_free(ctx);
+  }
+
+  av_buffer_unref(&ist->hw_frames_ctx);
+
+  ist->hwaccel_ctx = NULL;
+  ist->hwaccel_uninit = NULL;
+  ist->hwaccel_get_buffer = NULL;
+  ist->hwaccel_retrieve_data = NULL;
+}
+
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

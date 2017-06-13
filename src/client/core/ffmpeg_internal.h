@@ -59,6 +59,7 @@ struct InputStream {
 struct HWAccel {
   const char* name;
   int (*init)(AVCodecContext* s);
+  void (*uninit)(AVCodecContext* s);
   HWAccelID id;
   AVPixelFormat pix_fmt;
 };

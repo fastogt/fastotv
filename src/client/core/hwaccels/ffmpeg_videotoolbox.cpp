@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ffmpeg_config.h"
+#include "client/core/hwaccels/ffmpeg_videotoolbox.h"
 
 #if HAVE_UTGETOSTYPEFROMSTRING
 #include <CoreServices/CoreServices.h>
@@ -75,8 +75,7 @@ static int videotoolbox_retrieve_data(AVCodecContext* s, AVFrame* frame) {
       break;
 #endif
     default:
-      ERROR_LOG() << av_fourcc2str(s->codec_tag)
-                  << ": Unsupported pixel format: " << videotoolbox_pixfmt;
+      ERROR_LOG() << av_fourcc2str(s->codec_tag) << ": Unsupported pixel format: " << videotoolbox_pixfmt;
       return AVERROR(ENOSYS);
   }
 
@@ -117,27 +116,6 @@ static int videotoolbox_retrieve_data(AVCodecContext* s, AVFrame* frame) {
   return 0;
 }
 
-static void videotoolbox_uninit(AVCodecContext* s) {
-  InputStream* ist = static_cast<InputStream*>(s->opaque);
-  VTContext* vt = static_cast<VTContext*>(ist->hwaccel_ctx);
-
-  ist->hwaccel_uninit = NULL;
-  ist->hwaccel_retrieve_data = NULL;
-
-  av_frame_free(&vt->tmp_frame);
-
-  if (ist->hwaccel_id == HWACCEL_VIDEOTOOLBOX) {
-#if CONFIG_VIDEOTOOLBOX
-    av_videotoolbox_default_free(s);
-#endif
-  } else {
-#if CONFIG_VDA
-    av_vda_default_free(s);
-#endif
-  }
-  av_freep(&ist->hwaccel_ctx);
-}
-
 int videotoolbox_init(AVCodecContext* s) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   int ret = 0;
@@ -162,15 +140,16 @@ int videotoolbox_init(AVCodecContext* s) {
       ret = av_videotoolbox_default_init(s);
     } else {
       AVVideotoolboxContext* vtctx = av_videotoolbox_alloc_context();
-      CFStringRef pixfmt_str = CFStringCreateWithCString(kCFAllocatorDefault, videotoolbox_pixfmt,
-                                                         kCFStringEncodingUTF8);
+      CFStringRef pixfmt_str =
+          CFStringCreateWithCString(kCFAllocatorDefault, videotoolbox_pixfmt, kCFStringEncodingUTF8);
 #if HAVE_UTGETOSTYPEFROMSTRING
       vtctx->cv_pix_fmt_type = UTGetOSTypeFromString(pixfmt_str);
 #else
       WARNING_LOG() << "UTGetOSTypeFromString() is not available "
                        "on this platform, "
-                    << videotoolbox_pixfmt << " pixel format can not be honored from "
-                                              "the command line";
+                    << videotoolbox_pixfmt
+                    << " pixel format can not be honored from "
+                       "the command line";
 #endif
       ret = av_videotoolbox_default_init2(s, vtctx);
       CFRelease(pixfmt_str);
@@ -182,15 +161,16 @@ int videotoolbox_init(AVCodecContext* s) {
       ret = av_vda_default_init(s);
     } else {
       AVVDAContext* vdactx = av_vda_alloc_context();
-      CFStringRef pixfmt_str = CFStringCreateWithCString(kCFAllocatorDefault, videotoolbox_pixfmt,
-                                                         kCFStringEncodingUTF8);
+      CFStringRef pixfmt_str =
+          CFStringCreateWithCString(kCFAllocatorDefault, videotoolbox_pixfmt, kCFStringEncodingUTF8);
 #if HAVE_UTGETOSTYPEFROMSTRING
       vdactx->cv_pix_fmt_type = UTGetOSTypeFromString(pixfmt_str);
 #else
       WARNING_LOG() << "UTGetOSTypeFromString() is not available "
                        "on this platform, "
-                    << videotoolbox_pixfmt << " pixel format can not be honored from "
-                                              "the command line";
+                    << videotoolbox_pixfmt
+                    << " pixel format can not be honored from "
+                       "the command line";
 #endif
       ret = av_vda_default_init2(s, vdactx);
       CFRelease(pixfmt_str);
@@ -208,7 +188,29 @@ fail:
   videotoolbox_uninit(s);
   return ret;
 }
+
+void videotoolbox_uninit(AVCodecContext* s) {
+  InputStream* ist = static_cast<InputStream*>(s->opaque);
+  VTContext* vt = static_cast<VTContext*>(ist->hwaccel_ctx);
+
+  ist->hwaccel_uninit = NULL;
+  ist->hwaccel_retrieve_data = NULL;
+
+  av_frame_free(&vt->tmp_frame);
+
+  if (ist->hwaccel_id == HWACCEL_VIDEOTOOLBOX) {
+#if CONFIG_VIDEOTOOLBOX
+    av_videotoolbox_default_free(s);
+#endif
+  } else {
+#if CONFIG_VDA
+    av_vda_default_free(s);
+#endif
+  }
+  av_freep(&ist->hwaccel_ctx);
 }
-}
-}
-}
+
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

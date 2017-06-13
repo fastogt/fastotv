@@ -29,9 +29,10 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-int cuvid_init(AVCodecContext* avctx);
+int cuvid_init(AVCodecContext* decoder_ctx);
+void cuvid_uninit(AVCodecContext* decoder_ctx);
 
-}
-}
-}
-}
+}  // namespace core
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

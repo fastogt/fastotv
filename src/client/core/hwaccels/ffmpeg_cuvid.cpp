@@ -16,6 +16,8 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "client/core/hwaccels/ffmpeg_cuvid.h"
+
 #include <errno.h>   // for ENOMEM
 #include <stddef.h>  // for NULL
 
@@ -36,13 +38,8 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-static void cuvid_uninit(AVCodecContext* avctx) {
-  InputStream* ist = static_cast<InputStream*>(avctx->opaque);
-  av_buffer_unref(&ist->hw_frames_ctx);
-}
-
-int cuvid_init(AVCodecContext* avctx) {
-  InputStream* ist = static_cast<InputStream*>(avctx->opaque);
+int cuvid_init(AVCodecContext* decoder_ctx) {
+  InputStream* ist = static_cast<InputStream*>(decoder_ctx->opaque);
   AVHWFramesContext* frames_ctx;
   int ret;
 
@@ -64,9 +61,9 @@ int cuvid_init(AVCodecContext* avctx) {
   frames_ctx = (AVHWFramesContext*)ist->hw_frames_ctx->data;
 
   frames_ctx->format = AV_PIX_FMT_CUDA;
-  frames_ctx->sw_format = avctx->sw_pix_fmt;
-  frames_ctx->width = avctx->width;
-  frames_ctx->height = avctx->height;
+  frames_ctx->sw_format = decoder_ctx->sw_pix_fmt;
+  frames_ctx->width = decoder_ctx->width;
+  frames_ctx->height = decoder_ctx->height;
 
   ret = av_hwframe_ctx_init(ist->hw_frames_ctx);
   if (ret < 0) {
@@ -79,6 +76,12 @@ int cuvid_init(AVCodecContext* avctx) {
   INFO_LOG() << "Using CUDA to decode input stream.";
   return 0;
 }
+
+void cuvid_uninit(AVCodecContext* decoder_ctx) {
+  InputStream* ist = static_cast<InputStream*>(decoder_ctx->opaque);
+  av_buffer_unref(&ist->hw_frames_ctx);
+}
+
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

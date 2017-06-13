@@ -51,24 +51,6 @@ typedef void vdpau_uninit_callback_t(AVCodecContext* s);
 typedef int vdpau_get_buffer_callback_t(AVCodecContext* s, AVFrame* frame, int flags);
 typedef int vdpau_retrieve_data_callback_t(AVCodecContext* s, AVFrame* frame);
 
-static void vdpau_uninit(AVCodecContext* s) {
-  InputStream* ist = static_cast<InputStream*>(s->opaque);
-  VDPAUContext* ctx = static_cast<VDPAUContext*>(ist->hwaccel_ctx);
-
-  if (ctx) {
-    av_buffer_unref(&ctx->hw_frames_ctx);
-    av_frame_free(&ctx->tmp_frame);
-    av_free(ctx);
-  }
-
-  ist->hwaccel_ctx = NULL;
-  ist->hwaccel_uninit = NULL;
-  ist->hwaccel_get_buffer = NULL;
-  ist->hwaccel_retrieve_data = NULL;
-
-  av_freep(&s->hwaccel_context);
-}
-
 static int vdpau_get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
   UNUSED(flags);
   InputStream* ist = static_cast<InputStream*>(s->opaque);
@@ -170,6 +152,25 @@ int vdpau_init(AVCodecContext* decoder_ctx) {
 
   return vdpau_alloc(decoder_ctx);
 }
+
+void vdpau_uninit(AVCodecContext* decoder_ctx) {
+  InputStream* ist = static_cast<InputStream*>(decoder_ctx->opaque);
+  VDPAUContext* ctx = static_cast<VDPAUContext*>(ist->hwaccel_ctx);
+
+  if (ctx) {
+    av_buffer_unref(&ctx->hw_frames_ctx);
+    av_frame_free(&ctx->tmp_frame);
+    av_free(ctx);
+  }
+
+  ist->hwaccel_ctx = NULL;
+  ist->hwaccel_uninit = NULL;
+  ist->hwaccel_get_buffer = NULL;
+  ist->hwaccel_retrieve_data = NULL;
+
+  av_freep(&decoder_ctx->hwaccel_context);
+}
+
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv
