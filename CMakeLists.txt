@@ -258,7 +258,7 @@ IF(CPACK_SUPPORT)
     # SET(CPACK_PACKAGE_RELEASE 1)
     SET(CPACK_RPM_PACKAGE_LICENSE "GPL v3")
     SET(CPACK_RPM_PACKAGE_AUTOREQPROV "no")
-    SET(CPACK_RPM_PACKAGE_REQUIRES "libc.so.6 >= 2.12, libstdc++.so.6 >= 6.0.13")
+    SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++, xorg-x11-xinit")
     SET(CPACK_RPM_PACKAGE_RELEASE 1)
     SET(CPACK_RPM_PACKAGE_GROUP "Development/video")
     SET(CPACK_RPM_PACKAGE_ARCHITECTURE ${PLATFORM_PACKAGE_ARCH_NAME})
@@ -272,7 +272,7 @@ IF(CPACK_SUPPORT)
     # SET(CPACK_DEBIAN_PACKAGE_DEBUG ON)
     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.11), libstdc++6 (>= 4.9),
       libva-drm1 (>= 1.1.0), libva-x11-1 (>= 1.0.3), libvdpau1 (>= 0.2),
-      libsm6, libxext6, libfreetype6 (>= 2.2.1),
+      libxext6, libfreetype6 (>= 2.2.1),
       libasound2 (>= 1.0.16), xinit"
     )
     SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
