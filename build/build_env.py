@@ -233,8 +233,9 @@ class BuildRequest(object):
                             'libasound2-dev',
                             'freetype-dev',
                             'libx11-dev',
-                            'libdrm-dev', 'libdri2-dev', 'libump-dev', 'liblircclient-dev', 'libgl1-mesa-dev',
-                            'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
+                            'libdrm-dev', 'libdri2-dev', 'libump-dev',
+                            'liblircclient-dev',
+                            'libgl1-mesa-dev', 'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
                             'make',
@@ -242,8 +243,9 @@ class BuildRequest(object):
                             'alsa-lib-devel',
                             'freetype-devel',
                             'libX11-devel',
-                            'libdrm-devel', 'libdri2-devel', 'libump-devel', 'liblircclient-devel', 'libgl1-mesa-devel',
-                            'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
+                            'libdrm-devel', 'libdri2-devel', 'libump-devel',
+                            'liblircclient-devel',
+                            'libgl1-mesa-devel', 'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
                 # x86_64 arch
                 # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
                 # Debian 8.7 no packages: libdri2-dev, libump-dev,

@@ -57,7 +57,7 @@ def install_orange_pi_h3():
 def install_orange_pi_h5():
     pwd = os.getcwd()
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    
+
     with open('/etc/asound.conf', 'w') as f:
         f.write('pcm.!default {\n'
                 'type hw\n'
