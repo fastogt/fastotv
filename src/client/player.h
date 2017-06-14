@@ -174,6 +174,7 @@ class Player : public core::VideoStateHandler {
                      bool init_texture);
 
   void InitWindow(const std::string& title, States status);
+  void StartShowFooter();
   void CalculateDispalySize();
 
   // channel evrnts
@@ -197,7 +198,6 @@ class Player : public core::VideoStateHandler {
   void DrawInitStatus();
 
   void DrawInfo();
-  void DrawChannelsInfo();
   void DrawStatistic();
   void DrawFooter();
   void DrawVolume();

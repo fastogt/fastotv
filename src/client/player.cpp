@@ -390,8 +390,9 @@ bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* fram
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                                           "to reduce the image size.";
+                << frame->width << "x" << frame->height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return false;
   }
 
@@ -600,6 +601,10 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     }
     case FASTO_KEY_F3: {
       ToggleStatistic();
+      break;
+    }
+    case FASTO_KEY_F4: {
+      StartShowFooter();
       break;
     }
     case FASTO_KEY_p:
@@ -869,7 +874,7 @@ void Player::SwitchToChannelErrorMode(common::Error err) {
   std::string url_str = GetCurrentUrlName();
   std::string error_str = common::MemSPrintf("%s (%s)", url_str, err->Description());
   RUNTIME_LOG(err->GetLevel()) << error_str;
-  InitWindow(error_str, PLAYING_STATE);
+  InitWindow(error_str, INIT_STATE);
 }
 
 void Player::SwitchToConnectMode() {
@@ -930,13 +935,10 @@ void Player::DrawInitStatus() {
 }
 
 void Player::DrawInfo() {
-  DrawChannelsInfo();
   DrawStatistic();
   DrawFooter();
   DrawVolume();
 }
-
-void Player::DrawChannelsInfo() {}
 
 Rect Player::GetStatisticRect() const {
   const Size display_size = window_size_;
@@ -1082,6 +1084,10 @@ void Player::InitWindow(const std::string& title, States status) {
 
   current_state_ = status;
   current_state_str_ = title;
+  StartShowFooter();
+}
+
+void Player::StartShowFooter() {
   show_footer_ = true;
   core::msec_t cur_time = core::GetCurrentMsec();
   footer_last_shown_ = cur_time;
