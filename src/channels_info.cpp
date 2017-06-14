@@ -28,7 +28,7 @@ namespace fastotv {
 
 ChannelsInfo::ChannelsInfo() : channels_() {}
 
-void ChannelsInfo::AddChannel(const Url& channel) {
+void ChannelsInfo::AddChannel(const ChannelInfo& channel) {
   channels_.push_back(channel);
 }
 
@@ -50,7 +50,7 @@ bool ChannelsInfo::Equals(const ChannelsInfo& chan) const {
 
 common::Error ChannelsInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object* jchannels = json_object_new_array();
-  for (Url url : channels_) {
+  for (ChannelInfo url : channels_) {
     json_object* jurl = NULL;
     common::Error err = url.Serialize(&jurl);
     if (err && err->IsError()) {
@@ -69,11 +69,11 @@ common::Error ChannelsInfo::DeSerialize(const serialize_type& serialized, value_
   }
 
   channels_t chan;
-  int len = json_object_array_length(serialized);
-  for (int i = 0; i < len; ++i) {
+  size_t len = json_object_array_length(serialized);
+  for (size_t i = 0; i < len; ++i) {
     json_object* jurl = json_object_array_get_idx(serialized, i);
-    Url url;
-    common::Error err = Url::DeSerialize(jurl, &url);
+    ChannelInfo url;
+    common::Error err = ChannelInfo::DeSerialize(jurl, &url);
     if (err && err->IsError()) {
       continue;
     }

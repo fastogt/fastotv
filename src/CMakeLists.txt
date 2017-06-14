@@ -52,13 +52,15 @@ SET(SOURCES_SDS
 )
 
 SET(CLIENT_SERVER_SOURCES
-  ping_info.h ${SOURCE_ROOT}/ping_info.cpp
-  channels_info.h ${SOURCE_ROOT}/channels_info.cpp
-  auth_info.h ${SOURCE_ROOT}/auth_info.cpp
-  server_info.h ${SOURCE_ROOT}/server_info.cpp
-  client_info.h ${SOURCE_ROOT}/client_info.cpp
-  url.h ${SOURCE_ROOT}/url.cpp
-  client_server_types.h ${SOURCE_ROOT}/client_server_types.cpp
+  ping_info.h ping_info.cpp
+  channels_info.h channels_info.cpp
+  auth_info.h auth_info.cpp
+  server_info.h server_info.cpp
+  client_info.h client_info.cpp
+  channel_info.h channel_info.cpp
+  epg_info.h epg_info.cpp
+  programme_info.h programme_info.cpp
+  client_server_types.h client_server_types.cpp
 ) # server and client common sources
 
 SET(CLIENT_SERVER_SOURCES

@@ -51,7 +51,7 @@ extern "C" {
 #include "client/ioservice.h"             // for IoService
 #include "client/sdl_utils.h"             // for IMG_LoadPNG, TextureSaver
 
-#include "url.h"  // for Url
+#include "channel_info.h"  // for Url
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
@@ -792,7 +792,7 @@ void Player::HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEve
 }
 
 std::string Player::GetCurrentUrlName() const {
-  Url url;
+  ChannelInfo url;
   if (GetCurrentUrl(&url)) {
     return url.GetName();
   }
@@ -800,7 +800,7 @@ std::string Player::GetCurrentUrlName() const {
   return "Unknown";
 }
 
-bool Player::GetCurrentUrl(Url* url) const {
+bool Player::GetCurrentUrl(ChannelInfo* url) const {
   auto channels = play_list_.GetChannels();
   if (!url || channels.empty()) {
     return false;
@@ -1195,7 +1195,7 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   curent_stream_pos_ = pos;
   auto channels = play_list_.GetChannels();
-  Url url = channels[curent_stream_pos_];
+  ChannelInfo url = channels[curent_stream_pos_];
   core::AppOptions copy = opt_;
   copy.disable_audio = !url.IsEnableAudio();
   copy.disable_video = !url.IsEnableVideo();

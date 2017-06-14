@@ -18,45 +18,48 @@
 
 #pragma once
 
+#include <string>  // for string
+
 #include <common/error.h>   // for Error
 #include <common/macros.h>  // for WARN_UNUSED_RESULT
+#include <common/url.h>     // for Uri
 
+#include "client_server_types.h"
 #include "serializer/json_serializer.h"
-#include "channel_info.h"
-
-#define CHANNELS_FIELD "channels"
+#include "epg_info.h"
 
 namespace fasto {
 namespace fastotv {
 
-class ChannelsInfo : public JsonSerializer<ChannelsInfo> {
+class ChannelInfo : public JsonSerializer<ChannelInfo> {
  public:
-  typedef std::vector<ChannelInfo> channels_t;
-  ChannelsInfo();
+  ChannelInfo();
+  ChannelInfo(const EpgInfo& epg, bool enable_audio, bool enable_video);
+
+  bool IsValid() const;
+  common::uri::Uri GetUrl() const;
+  std::string GetName() const;
+  stream_id GetId() const;
+
+  bool IsEnableAudio() const;
+  bool IsEnableVideo() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
-  void AddChannel(const ChannelInfo& channel);
-  channels_t GetChannels() const;
-
-  size_t Size() const;
-  bool IsEmpty() const;
-
-  bool Equals(const ChannelsInfo& chan) const;
+  bool Equals(const ChannelInfo& url) const;
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
+  common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
-  channels_t channels_;
+  EpgInfo epg_;
+
+  bool enable_audio_;
+  bool enable_video_;
 };
 
-inline bool operator==(const ChannelsInfo& lhs, const ChannelsInfo& rhs) {
-  return lhs.Equals(rhs);
-}
-
-inline bool operator!=(const ChannelsInfo& x, const ChannelsInfo& y) {
-  return !(x == y);
+inline bool operator==(const ChannelInfo& left, const ChannelInfo& right) {
+  return left.Equals(right);
 }
 
 }  // namespace fastotv

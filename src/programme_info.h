@@ -22,45 +22,54 @@
 
 #include <common/error.h>   // for Error
 #include <common/macros.h>  // for WARN_UNUSED_RESULT
-#include <common/url.h>     // for Uri
 
-#include "client_server_types.h"
+#include "client_server_types.h"  // for login_t
+
 #include "serializer/json_serializer.h"
 
 namespace fasto {
 namespace fastotv {
 
-class Url : public JsonSerializer<Url> {
+class ProgrammeInfo : public JsonSerializer<ProgrammeInfo> {
  public:
-  Url();
-  Url(stream_id id, const common::uri::Uri& uri, const std::string& name, bool enable_audio, bool enable_video);
+  ProgrammeInfo();
+  ProgrammeInfo(epg_channel_id id, timestamp_t start_time, timestamp_t stop_time, const std::string& title);
 
   bool IsValid() const;
-  common::uri::Uri GetUrl() const;
-  std::string GetName() const;
-  stream_id GetId() const;
 
-  bool IsEnableAudio() const;
-  bool IsEnableVideo() const;
+  void SetChannel(epg_channel_id channel);
+  epg_channel_id GetChannel() const;
+
+  void SetStart(timestamp_t start);
+  timestamp_t GetStart() const;
+
+  void SetStop(timestamp_t stop);
+  timestamp_t GetStop() const;
+
+  void SetTitle(const std::string &title);
+  epg_channel_id GetTitle() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
-  bool Equals(const Url& url) const;
+  bool Equals(const ProgrammeInfo& prog) const;
 
  protected:
   common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
-  stream_id id_;
-  common::uri::Uri uri_;
-  std::string name_;
-
-  bool enable_audio_;
-  bool enable_video_;
+  epg_channel_id channel_;
+  timestamp_t start_time_;  // utc time
+  timestamp_t stop_time_;   // utc time
+  std::string title_;
 };
 
-inline bool operator==(const Url& left, const Url& right) {
-  return left.Equals(right);
+inline bool operator==(const ProgrammeInfo& lhs, const ProgrammeInfo& rhs) {
+  return lhs.Equals(rhs);
 }
+
+inline bool operator!=(const ProgrammeInfo& x, const ProgrammeInfo& y) {
+  return !(x == y);
+}
+
 }  // namespace fastotv
 }  // namespace fasto

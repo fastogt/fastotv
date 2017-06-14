@@ -29,6 +29,9 @@ namespace fastotv {
 typedef std::string stream_id;  // must be unique
 static const stream_id invalid_stream_id = stream_id();
 
+typedef std::string epg_channel_id;
+static const epg_channel_id invalid_epg_channel_id = epg_channel_id();
+
 typedef std::string login_t;  // unique, user email now
 typedef size_t bandwidth_t;   // bytes/s
 typedef common::time64_t timestamp_t;

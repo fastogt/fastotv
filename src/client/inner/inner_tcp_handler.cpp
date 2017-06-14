@@ -43,7 +43,6 @@
 #include "channels_info.h"  // for ChannelsInfo
 #include "ping_info.h"      // for ClientPingInfo
 #include "server_info.h"    // for ServerInfo
-#include "url.h"
 
 namespace fasto {
 namespace fastotv {

@@ -52,7 +52,7 @@ extern "C" {
 
 namespace fasto {
 namespace fastotv {
-class Url;
+class ChannelInfo;
 }
 }  // namespace fasto
 namespace fasto {
@@ -160,7 +160,7 @@ class Player : public core::VideoStateHandler {
   virtual void HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event);
 
  private:
-  bool GetCurrentUrl(Url* url) const;
+  bool GetCurrentUrl(ChannelInfo *url) const;
   std::string GetCurrentUrlName() const;  // return Unknown if not found
 
   /* prepare a new audio buffer */
