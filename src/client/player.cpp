@@ -80,23 +80,6 @@ int ConvertToSDLVolume(int val) {
   return av_clip(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
-void DrawLine(SDL_Renderer* renderer, TTF_Font* font, const SDL_Rect* dst, SDL_Color color, const char* text) {
-  if (!renderer || !text || !font || !dst) {
-    return;
-  }
-
-  int font_height = TTF_FontHeight(font);
-  if (font_height > dst->h) {
-    return;
-  }
-
-  SDL_Surface* text_surf = TTF_RenderText_Solid(font, text, color);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, text_surf);
-  SDL_RenderCopy(renderer, texture, NULL, dst);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(text_surf);
-}
-
 bool CreateWindowFunc(Size window_size,
                       bool is_full_screen,
                       const std::string& title,
@@ -154,6 +137,7 @@ bool CreateWindowFunc(Size window_size,
     return false;
   }
 
+  SDL_SetRenderDrawBlendMode(lrenderer, SDL_BLENDMODE_BLEND);
   SDL_SetWindowSize(lwindow, window_size.width, window_size.height);
   SDL_SetWindowTitle(lwindow, title.c_str());
 
@@ -941,30 +925,40 @@ void Player::DrawInfo() {
 }
 
 Rect Player::GetStatisticRect() const {
-  const Size display_size = window_size_;
-  int x = 0;
-  int y = 0;
-  int w = display_size.width / 3;
-  int h = display_size.height;
+  const Rect display_rect = GetDisplayRect();
+  int x = display_rect.x;
+  int y = display_rect.y;
+  int w = display_rect.width / 3;
+  int h = display_rect.height;
   return Rect(x, y, w, h);
 }
 
 Rect Player::GetFooterRect() const {
-  const Size display_size = window_size_;
-  int x = 0;
-  int y = display_size.height - footer_height;
-  int w = display_size.width;
+  const Rect display_rect = GetDrawRect();
+  int x = display_rect.x;
+  int y = display_rect.height - footer_height - volume_height - space_height + display_rect.y;
+  int w = display_rect.width;
   int h = footer_height;
   return Rect(x, y, w, h);
 }
 
 Rect Player::GetVolumeRect() const {
-  const Size display_size = window_size_;
-  int x = 0;
-  int y = display_size.height - footer_height;
-  int w = display_size.width;
-  int h = footer_height;
+  const Rect display_rect = GetDrawRect();
+  int x = display_rect.x;
+  int y = display_rect.height - volume_height + display_rect.y;
+  int w = display_rect.width;
+  int h = volume_height;
   return Rect(x, y, w, h);
+}
+
+Rect Player::GetDrawRect() const {
+  Rect dr = GetDisplayRect();
+  return Rect(dr.x + x_start, dr.y + y_start, dr.width - x_start * 2, dr.height - y_start * 2);
+}
+
+Rect Player::GetDisplayRect() const {
+  const Size display_size = window_size_;
+  return Rect(0, 0, display_size.width, display_size.height);
 }
 
 void Player::DrawStatistic() {
@@ -1023,6 +1017,9 @@ void Player::DrawStatistic() {
   }
 
   SDL_Rect dst = {statistic_rect.x, statistic_rect.y, statistic_rect.width, h};
+  SDL_SetRenderDrawColor(renderer_, 171, 217, 98, SDL_ALPHA_OPAQUE * 0.3);
+  SDL_RenderFillRect(renderer_, &dst);
+
   SDL_Surface* text_surf = TTF_RenderText_Blended_Wrapped(font_, text_ptr, text_color, statistic_rect.width);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
@@ -1038,15 +1035,23 @@ void Player::DrawFooter() {
   std::string footer_text;
   if (current_state_ == INIT_STATE) {
     footer_text = current_state_str_;
+    SDL_SetRenderDrawColor(renderer_, 193, 66, 66, SDL_ALPHA_OPAQUE * 0.5);
   } else if (current_state_ == PLAYING_STATE) {
     footer_text = current_state_str_;
+    SDL_SetRenderDrawColor(renderer_, 98, 118, 217, SDL_ALPHA_OPAQUE * 0.3);
   } else {
     NOTREACHED();
   }
 
+  const Rect footer_rect = GetFooterRect();
+  int padding_left = footer_rect.width / 4;
+  SDL_Rect sdl_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.width - padding_left * 2,
+                              footer_rect.height};
+
+  SDL_RenderFillRect(renderer_, &sdl_footer_rect);
+
   static const SDL_Color text_color = {255, 255, 255, 0};
   SDL_Surface* text = TTF_RenderText_Solid(font_, footer_text.c_str(), text_color);
-  const Rect footer_rect = GetFooterRect();
   SDL_Rect dst = {footer_rect.width / 2 - text->w / 2, footer_rect.y + (footer_rect.height / 2 - text->h / 2), text->w,
                   text->h};
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
@@ -1063,6 +1068,11 @@ void Player::DrawVolume() {
   int vol = options_.audio_volume;
   std::string vol_str = common::MemSPrintf("VOLUME: %d", vol);
   const Rect volume_rect = GetVolumeRect();
+  int padding_left = volume_rect.width / 4;
+  SDL_Rect sdl_volume_rect = {volume_rect.x + padding_left, volume_rect.y, volume_rect.width - padding_left * 2,
+                              volume_rect.height};
+  SDL_SetRenderDrawColor(renderer_, 171, 217, 98, SDL_ALPHA_OPAQUE * 0.3);
+  SDL_RenderFillRect(renderer_, &sdl_volume_rect);
 
   static const SDL_Color text_color = {255, 255, 255, 0};
   SDL_Surface* text = TTF_RenderText_Solid(font_, vol_str.c_str(), text_color);

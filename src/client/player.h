@@ -103,7 +103,15 @@ namespace client {
 
 class Player : public core::VideoStateHandler {
  public:
-  enum { footer_height = 50, update_stats_timeout_msec = 1000 };
+  enum {
+    footer_height = 60,
+    volume_height = 30,
+    space_height = 10,
+    space_width = 10,
+    x_start = 10,
+    y_start = 10,
+    update_stats_timeout_msec = 1000
+  };
   enum States { INIT_STATE, PLAYING_STATE };
   Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt);
   void SetFullScreen(bool full_screen);
@@ -160,7 +168,7 @@ class Player : public core::VideoStateHandler {
   virtual void HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event);
 
  private:
-  bool GetCurrentUrl(ChannelInfo *url) const;
+  bool GetCurrentUrl(ChannelInfo* url) const;
   std::string GetCurrentUrlName() const;  // return Unknown if not found
 
   /* prepare a new audio buffer */
@@ -205,6 +213,8 @@ class Player : public core::VideoStateHandler {
   Rect GetStatisticRect() const;
   Rect GetFooterRect() const;
   Rect GetVolumeRect() const;
+  Rect GetDrawRect() const;  // GetDisplayRect + with margins
+  Rect GetDisplayRect() const;
 
   core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();
