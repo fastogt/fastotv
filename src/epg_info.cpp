@@ -28,7 +28,7 @@
 
 #define EPG_INFO_ID_FIELD "id"
 #define EPG_INFO_URL_FIELD "url"
-#define EPG_INFO_NAME_FIELD "display-name"
+#define EPG_INFO_NAME_FIELD "display_name"
 #define EPG_INFO_ICON_FIELD "icon"
 #define EPG_INFO_PROGRAMS_FIELD "programs"
 #define UNKNOWN_ICON_URI SERVICE_HOST_NAME "/images/unknown_channel.png"  // 256x256
