@@ -48,8 +48,6 @@ common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInf
     return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
-  INFO_LOG() << "user_json: " << user_json;
-
   json_object* obj = json_tokener_parse(user_json);
   if (!obj) {
     return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);
