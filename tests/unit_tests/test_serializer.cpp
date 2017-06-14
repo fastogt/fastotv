@@ -1,22 +1,36 @@
 #include <gtest/gtest.h>
 
-#include "url.h"
-#include "server_info.h"
-#include "ping_info.h"
-#include "client_info.h"
-#include "channels_info.h"
 #include "auth_info.h"
+#include "channel_info.h"
+#include "channels_info.h"
+#include "client_info.h"
+#include "ping_info.h"
+#include "server_info.h"
 
-typedef fasto::fastotv::Url::serialize_type serialize_t;
+typedef fasto::fastotv::AuthInfo::serialize_type serialize_t;
 
-TEST(Url, serialize_deserialize) {
+TEST(ChannelInfo, serialize_deserialize) {
   const std::string name = "alex";
   const fasto::fastotv::stream_id stream_id = "123";
   const common::uri::Uri url("http://localhost:8080/hls/69_avformat_test_alex_2/play.m3u8");
   const bool enable_video = false;
   const bool enable_audio = true;
 
-  fasto::fastotv::Url http_uri(stream_id, url, name, enable_audio, enable_video);
+  fasto::fastotv::EpgInfo epg_info(stream_id, url, name);
+  ASSERT_EQ(epg_info.GetDisplayName(), name);
+  ASSERT_EQ(epg_info.GetId(), stream_id);
+  ASSERT_EQ(epg_info.GetUrl(), url);
+
+  serialize_t user;
+  common::Error err = epg_info.Serialize(&user);
+  ASSERT_TRUE(!err);
+  fasto::fastotv::EpgInfo depg;
+  err = epg_info.DeSerialize(user, &depg);
+  ASSERT_TRUE(!err);
+
+  ASSERT_EQ(epg_info, depg);
+
+  fasto::fastotv::ChannelInfo http_uri(epg_info, enable_audio, enable_video);
   ASSERT_EQ(http_uri.GetName(), name);
   ASSERT_EQ(http_uri.GetId(), stream_id);
   ASSERT_EQ(http_uri.GetUrl(), url);
@@ -24,9 +38,9 @@ TEST(Url, serialize_deserialize) {
   ASSERT_EQ(http_uri.IsEnableVideo(), enable_video);
 
   serialize_t ser;
-  common::Error err = http_uri.Serialize(&ser);
+  err = http_uri.Serialize(&ser);
   ASSERT_TRUE(!err);
-  fasto::fastotv::Url dhttp_uri;
+  fasto::fastotv::ChannelInfo dhttp_uri;
   err = http_uri.DeSerialize(ser, &dhttp_uri);
   ASSERT_TRUE(!err);
 
@@ -112,7 +126,10 @@ TEST(channels_t, serialize_deserialize) {
   const bool enable_audio = true;
 
   fasto::fastotv::ChannelsInfo channels;
-  channels.AddChannel(fasto::fastotv::Url(stream_id, url, name, enable_audio, enable_video));
+  fasto::fastotv::EpgInfo epg_info(stream_id, url, name);
+  channels.AddChannel(fasto::fastotv::ChannelInfo(epg_info, enable_audio, enable_video));
+  ASSERT_EQ(channels.Size(), 1);
+
   serialize_t ser;
   common::Error err = channels.Serialize(&ser);
   ASSERT_TRUE(!err);

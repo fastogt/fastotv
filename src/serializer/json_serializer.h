@@ -26,6 +26,7 @@
 #include "serializer/iserializer.h"  // for ISerializer
 
 #include "third-party/json-c/json-c/json_object.h"
+#include "third-party/json-c/json-c/json_tokener.h"  // for json_tokener_parse
 
 namespace fasto {
 namespace fastotv {
@@ -46,6 +47,17 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
 
     *deserialized = json_object_get_string(des);
     json_object_put(des);
+    return common::Error();
+  }
+
+  virtual common::Error SerializeFromString(const std::string& data, serialize_type* out) const final {
+    const char* data_ptr = data.c_str();
+    serialize_type res = json_tokener_parse(data_ptr);
+    if (!res) {
+      return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    }
+
+    *out = res;
     return common::Error();
   }
 

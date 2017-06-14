@@ -4,7 +4,7 @@
 #include "server/user_info.h"
 #include "server/user_state_info.h"
 
-typedef fasto::fastotv::Url::serialize_type serialize_t;
+typedef fasto::fastotv::ChannelInfo::serialize_type serialize_t;
 
 TEST(UserInfo, serialize_deserialize) {
   const std::string login = "palecc";
@@ -17,8 +17,9 @@ TEST(UserInfo, serialize_deserialize) {
   const bool enable_video = false;
   const bool enable_audio = true;
 
+  fasto::fastotv::EpgInfo epg_info(stream_id, url, name);
   fasto::fastotv::ChannelsInfo channel_info;
-  channel_info.AddChannel(fasto::fastotv::Url(stream_id, url, name, enable_audio, enable_video));
+  channel_info.AddChannel(fasto::fastotv::ChannelInfo(epg_info, enable_audio, enable_video));
 
   fasto::fastotv::server::UserInfo uinf(auth_info, channel_info);
   ASSERT_EQ(uinf.GetAuthInfo(), auth_info);
@@ -32,6 +33,61 @@ TEST(UserInfo, serialize_deserialize) {
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(uinf, duinf);
+
+  const std::string json_channel =
+      R"(
+      {
+        "login":"atopilski@gmail.com",
+        "password":"1234",
+        "channels":
+        [
+        {
+          "epg":{
+          "id":"59106ed9457cd9f4c3c0b78f",
+          "url":"http://example.com:6969/127.ts",
+          "display_name":"Alex TV",
+          "icon":"/images/unknown_channel.png",
+          "programs":[]},
+          "video":true,
+          "audio":true
+        },
+        {
+          "epg":
+          {
+            "id":"592fa5778b385c798bd499fa",
+            "url":"fiel://C:/msys64/home/Sasha/work/fastotv/tests/big_buck_bunny_1080p_h264.mov",
+            "display_name":"Local",
+            "icon":"/images/unknown_channel.png",
+           "programs":[]
+          },
+          "video":true,
+          "audio":true
+        },
+        {
+          "epg":
+          {
+            "id":"592feb388b385c798bd499fb",
+            "url":"file:///home/sasha/work/fastotv/tests/big_buck_bunny_1080p_h264.mov",
+            "display_name":"Local2",
+            "icon":"/images/unknown_channel.png",
+            "programs":[]
+          },
+          "video":true,
+          "audio":true
+        }
+        ]
+      }
+      )";
+
+  err = uinf.SerializeFromString(json_channel, &ser);
+  ASSERT_TRUE(!err);
+
+  err = uinf.DeSerialize(ser, &duinf);
+  ASSERT_TRUE(!err);
+  fasto::fastotv::ChannelsInfo ch = duinf.GetChannelInfo();
+  const fasto::fastotv::AuthInfo auth("atopilski@gmail.com", "1234");
+  ASSERT_EQ(duinf.GetAuthInfo(), auth);
+  ASSERT_EQ(ch.Size(), 3);
 }
 
 TEST(UserStateInfo, serialize_deserialize) {

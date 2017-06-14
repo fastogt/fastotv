@@ -35,6 +35,8 @@ class ISerializer {
     return SerializeImpl(deserialized);
   }
 
+  virtual common::Error SerializeFromString(const std::string& data, serialize_type* out) const = 0;
+
   virtual common::Error SerializeToString(std::string* deserialized) const = 0;
 
  protected:
