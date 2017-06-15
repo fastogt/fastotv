@@ -30,7 +30,7 @@ namespace client {
 namespace core {
 
 int videotoolbox_init(AVCodecContext* decoder_ctx);
-int videotoolbox_uninit(AVCodecContext* decoder_ctx);
+void videotoolbox_uninit(AVCodecContext* decoder_ctx);
 
 }  // namespace core
 }  // namespace client
