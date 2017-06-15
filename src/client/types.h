@@ -44,6 +44,11 @@ struct Size {
   int height;
 };
 
+struct Rational {
+  int num;  ///< Numerator
+  int den;  ///< Denominator
+};
+
 struct Rect {
   Rect(int x, int y, int width, int height);
   int x, y;

@@ -27,10 +27,6 @@
 #include <SDL2/SDL_ttf.h>        // for TTF_Font
 #include <SDL2/SDL_video.h>      // for SDL_Window'
 
-extern "C" {
-#include <libavutil/rational.h>  // for AVRational
-}
-
 #include <common/error.h>  // for Error
 
 #include "auth_info.h"
@@ -112,6 +108,8 @@ class Player : public core::VideoStateHandler {
     y_start = 10,
     update_stats_timeout_msec = 1000
   };
+  static const SDL_Color text_color;
+
   enum States { INIT_STATE, PLAYING_STATE };
   Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt);
   void SetFullScreen(bool full_screen);
@@ -209,12 +207,14 @@ class Player : public core::VideoStateHandler {
   void DrawStatistic();
   void DrawFooter();
   void DrawVolume();
+  void DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
+  void DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
 
-  Rect GetStatisticRect() const;
-  Rect GetFooterRect() const;
-  Rect GetVolumeRect() const;
-  Rect GetDrawRect() const;  // GetDisplayRect + with margins
-  Rect GetDisplayRect() const;
+  SDL_Rect GetStatisticRect() const;
+  SDL_Rect GetFooterRect() const;
+  SDL_Rect GetVolumeRect() const;
+  SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins
+  SDL_Rect GetDisplayRect() const;
 
   core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();

@@ -40,6 +40,7 @@ class ChannelInfo : public JsonSerializer<ChannelInfo> {
   common::uri::Uri GetUrl() const;
   std::string GetName() const;
   stream_id GetId() const;
+  EpgInfo GetEpg() const;
 
   bool IsEnableAudio() const;
   bool IsEnableVideo() const;

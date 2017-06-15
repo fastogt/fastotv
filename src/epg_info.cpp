@@ -46,6 +46,22 @@ bool EpgInfo::IsValid() const {
   return id_ != invalid_epg_channel_id && uri_.IsValid() && !display_name_.empty();
 }
 
+bool EpgInfo::FindProgrammeByTime(timestamp_t time, ProgrammeInfo* inf) const {
+  if (!inf || !IsValid()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < programs_.size(); ++i) {
+    ProgrammeInfo pr = programs_[i];
+    if (time >= pr.GetStart() && time <= pr.GetStop()) {
+      *inf = pr;
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void EpgInfo::SetUrl(const common::uri::Uri& url) {
   uri_ = url;
 }

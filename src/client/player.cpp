@@ -75,6 +75,24 @@ namespace client {
 
 namespace {
 
+SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height) {
+  int calc_width = rect.w;
+  int calc_height = rect.h;
+  int calc_x = rect.x;
+  int calc_y = rect.y;
+
+  if (rect.w >= width) {
+    calc_x = rect.x + rect.w / 2 - width / 2;
+    calc_width = width;
+  }
+  if (rect.h >= height) {
+    calc_y = rect.y + rect.h / 2 - height / 2;
+    calc_height = height;
+  }
+
+  return {calc_x, calc_y, calc_width, calc_height};
+}
+
 int ConvertToSDLVolume(int val) {
   val = av_clip(val, 0, 100);
   return av_clip(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
@@ -146,6 +164,8 @@ bool CreateWindowFunc(Size window_size,
   return true;
 }
 }  // namespace
+
+const SDL_Color Player::text_color = {255, 255, 255, 0};
 
 Player::Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt)
     : options_(options),
@@ -374,9 +394,8 @@ bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* fram
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                                           "to reduce the image size.";
     return false;
   }
 
@@ -560,8 +579,7 @@ void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
       Mute();
       break;
     }
-    default:
-      break;
+    default: { break; }
   }
 }
 
@@ -924,41 +942,30 @@ void Player::DrawInfo() {
   DrawVolume();
 }
 
-Rect Player::GetStatisticRect() const {
-  const Rect display_rect = GetDisplayRect();
-  int x = display_rect.x;
-  int y = display_rect.y;
-  int w = display_rect.width / 3;
-  int h = display_rect.height;
-  return Rect(x, y, w, h);
+SDL_Rect Player::GetStatisticRect() const {
+  const SDL_Rect display_rect = GetDisplayRect();
+  return {display_rect.x, display_rect.y, display_rect.w / 3, display_rect.h};
 }
 
-Rect Player::GetFooterRect() const {
-  const Rect display_rect = GetDrawRect();
-  int x = display_rect.x;
-  int y = display_rect.height - footer_height - volume_height - space_height + display_rect.y;
-  int w = display_rect.width;
-  int h = footer_height;
-  return Rect(x, y, w, h);
+SDL_Rect Player::GetFooterRect() const {
+  const SDL_Rect display_rect = GetDrawRect();
+  return {display_rect.x, display_rect.h - footer_height - volume_height - space_height + display_rect.y,
+          display_rect.w, footer_height};
 }
 
-Rect Player::GetVolumeRect() const {
-  const Rect display_rect = GetDrawRect();
-  int x = display_rect.x;
-  int y = display_rect.height - volume_height + display_rect.y;
-  int w = display_rect.width;
-  int h = volume_height;
-  return Rect(x, y, w, h);
+SDL_Rect Player::GetVolumeRect() const {
+  const SDL_Rect display_rect = GetDrawRect();
+  return {display_rect.x, display_rect.h - volume_height + display_rect.y, display_rect.w, volume_height};
 }
 
-Rect Player::GetDrawRect() const {
-  Rect dr = GetDisplayRect();
-  return Rect(dr.x + x_start, dr.y + y_start, dr.width - x_start * 2, dr.height - y_start * 2);
+SDL_Rect Player::GetDrawRect() const {
+  const SDL_Rect dr = GetDisplayRect();
+  return {dr.x + x_start, dr.y + y_start, dr.w - x_start * 2, dr.h - y_start * 2};
 }
 
-Rect Player::GetDisplayRect() const {
+SDL_Rect Player::GetDisplayRect() const {
   const Size display_size = window_size_;
-  return Rect(0, 0, display_size.width, display_size.height);
+  return {0, 0, display_size.width, display_size.height};
 }
 
 void Player::DrawStatistic() {
@@ -971,8 +978,7 @@ void Player::DrawStatistic() {
     stats = stream_->GetStatistic();
   }
 
-  static const SDL_Color text_color = {255, 255, 255, 0};
-  const Rect statistic_rect = GetStatisticRect();
+  const SDL_Rect statistic_rect = GetStatisticRect();
   const bool is_unknown = stats->fmt == core::UNKNOWN_STREAM;
 
   std::string fmt_text = (is_unknown ? "N/A" : core::ConvertStreamFormatToString(stats->fmt));
@@ -1009,22 +1015,17 @@ void Player::DrawStatistic() {
       "AQUEUE: %s KB",
       fmt_text, hwaccel_text, diff_text, pts_text, fps_text, fd_text, vbitrate_text, abitrate_text, video_queue_text,
       audio_queue_text);
-  const char* text_ptr = result_text.c_str();
 
   int h = TTF_FontLineSkip(font_) * STATS_LINES_COUNT;
-  if (h > statistic_rect.height) {
-    h = statistic_rect.height;
+  if (h > statistic_rect.h) {
+    h = statistic_rect.h;
   }
 
-  SDL_Rect dst = {statistic_rect.x, statistic_rect.y, statistic_rect.width, h};
-  SDL_SetRenderDrawColor(renderer_, 171, 217, 98, SDL_ALPHA_OPAQUE * 0.3);
+  SDL_Rect dst = {statistic_rect.x, statistic_rect.y, statistic_rect.w, h};
+  SDL_SetRenderDrawColor(renderer_, 171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5));
   SDL_RenderFillRect(renderer_, &dst);
 
-  SDL_Surface* text_surf = TTF_RenderText_Blended_Wrapped(font_, text_ptr, text_color, statistic_rect.width);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
-  SDL_RenderCopy(renderer_, texture, NULL, &dst);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(text_surf);
+  DrawWrappedTextInRect(result_text, text_color, dst);
 }
 
 void Player::DrawFooter() {
@@ -1032,32 +1033,41 @@ void Player::DrawFooter() {
     return;
   }
 
-  std::string footer_text;
+  const SDL_Rect footer_rect = GetFooterRect();
+  int padding_left = footer_rect.w / 4;
+  SDL_Rect sdl_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.w - padding_left * 2,
+                              footer_rect.h};
   if (current_state_ == INIT_STATE) {
-    footer_text = current_state_str_;
-    SDL_SetRenderDrawColor(renderer_, 193, 66, 66, SDL_ALPHA_OPAQUE * 0.5);
+    std::string footer_text = current_state_str_;
+    SDL_SetRenderDrawColor(renderer_, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+    SDL_RenderFillRect(renderer_, &sdl_footer_rect);
+    DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
   } else if (current_state_ == PLAYING_STATE) {
-    footer_text = current_state_str_;
-    SDL_SetRenderDrawColor(renderer_, 98, 118, 217, SDL_ALPHA_OPAQUE * 0.3);
+    ChannelInfo url;
+    if (GetCurrentUrl(&url)) {
+      std::string decr = "N/A";
+      EpgInfo epg = url.GetEpg();
+      ProgrammeInfo prog;
+      if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
+        decr = prog.GetTitle();
+      }
+      std::string footer_text = common::MemSPrintf(
+          "Title: %s\n"
+          "Description: %s",
+          url.GetName(), decr);
+      SDL_SetRenderDrawColor(renderer_, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+      SDL_RenderFillRect(renderer_, &sdl_footer_rect);
+
+      int h = TTF_FontLineSkip(font_) * 2;
+      if (h > footer_rect.h) {
+        h = footer_rect.h;
+      }
+      SDL_Rect text_rect = {sdl_footer_rect.x, sdl_footer_rect.y, sdl_footer_rect.w, h};
+      DrawWrappedTextInRect(footer_text, text_color, text_rect);
+    }
   } else {
     NOTREACHED();
   }
-
-  const Rect footer_rect = GetFooterRect();
-  int padding_left = footer_rect.width / 4;
-  SDL_Rect sdl_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.width - padding_left * 2,
-                              footer_rect.height};
-
-  SDL_RenderFillRect(renderer_, &sdl_footer_rect);
-
-  static const SDL_Color text_color = {255, 255, 255, 0};
-  SDL_Surface* text = TTF_RenderText_Solid(font_, footer_text.c_str(), text_color);
-  SDL_Rect dst = {footer_rect.width / 2 - text->w / 2, footer_rect.y + (footer_rect.height / 2 - text->h / 2), text->w,
-                  text->h};
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
-  SDL_RenderCopy(renderer_, texture, NULL, &dst);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(text);
 }
 
 void Player::DrawVolume() {
@@ -1067,21 +1077,42 @@ void Player::DrawVolume() {
 
   int vol = options_.audio_volume;
   std::string vol_str = common::MemSPrintf("VOLUME: %d", vol);
-  const Rect volume_rect = GetVolumeRect();
-  int padding_left = volume_rect.width / 4;
-  SDL_Rect sdl_volume_rect = {volume_rect.x + padding_left, volume_rect.y, volume_rect.width - padding_left * 2,
-                              volume_rect.height};
-  SDL_SetRenderDrawColor(renderer_, 171, 217, 98, SDL_ALPHA_OPAQUE * 0.3);
+  const SDL_Rect volume_rect = GetVolumeRect();
+  int padding_left = volume_rect.w / 4;
+  SDL_Rect sdl_volume_rect = {volume_rect.x + padding_left, volume_rect.y, volume_rect.w - padding_left * 2,
+                              volume_rect.h};
+  SDL_SetRenderDrawColor(renderer_, 171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5));
   SDL_RenderFillRect(renderer_, &sdl_volume_rect);
 
-  static const SDL_Color text_color = {255, 255, 255, 0};
-  SDL_Surface* text = TTF_RenderText_Solid(font_, vol_str.c_str(), text_color);
-  SDL_Rect dst = {volume_rect.width / 2 - text->w / 2, volume_rect.y + (volume_rect.height / 2 - text->h / 2), text->w,
-                  text->h};
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text);
+  DrawCenterTextInRect(vol_str, text_color, sdl_volume_rect);
+}
+
+void Player::DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
+  if (!renderer_ || !font_ || text.empty()) {
+    DNOTREACHED();
+    return;
+  }
+
+  SDL_Surface* text_surf = TTF_RenderText_Blended(font_, text.c_str(), text_color);
+  SDL_Rect dst = GetCenterRect(rect, text_surf->w, text_surf->h);
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
-  SDL_FreeSurface(text);
+  SDL_FreeSurface(text_surf);
+}
+
+void Player::DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
+  if (!renderer_ || !font_ || text.empty()) {
+    DNOTREACHED();
+    return;
+  }
+
+  SDL_Surface* text_surf = TTF_RenderText_Blended_Wrapped(font_, text.c_str(), text_color, rect.w);
+  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
+  rect.w = text_surf->w;
+  SDL_RenderCopy(renderer_, texture, NULL, &rect);
+  SDL_DestroyTexture(texture);
+  SDL_FreeSurface(text_surf);
 }
 
 void Player::InitWindow(const std::string& title, States status) {

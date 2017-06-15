@@ -151,7 +151,6 @@ enum AVPixelFormat get_format(AVCodecContext* s, const enum AVPixelFormat* pix_f
     if (ist->hw_frames_ctx) {
       s->hw_frames_ctx = av_buffer_ref(ist->hw_frames_ctx);
       if (!s->hw_frames_ctx) {
-
 #if EXIT_LOOKUP_IF_HWACCEL_FAILED
         return AV_PIX_FMT_NONE;
 #else
@@ -1638,9 +1637,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

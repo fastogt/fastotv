@@ -39,6 +39,7 @@ class EpgInfo : public JsonSerializer<EpgInfo> {
   EpgInfo(epg_channel_id id, const common::uri::Uri& uri, const std::string& name);  // required args
 
   bool IsValid() const;
+  bool FindProgrammeByTime(timestamp_t time, ProgrammeInfo* inf) const;
 
   void SetUrl(const common::uri::Uri& url);
   common::uri::Uri GetUrl() const;

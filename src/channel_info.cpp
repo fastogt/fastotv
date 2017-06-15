@@ -46,6 +46,10 @@ stream_id ChannelInfo::GetId() const {
   return epg_.GetId();
 }
 
+EpgInfo ChannelInfo::GetEpg() const {
+  return epg_;
+}
+
 bool ChannelInfo::IsEnableAudio() const {
   return enable_audio_;
 }
