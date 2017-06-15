@@ -40,6 +40,7 @@ extern "C" {
 
 #include <common/logger.h>  // for COMPACT_LOG_ERROR, ERROR_LOG
 #include <common/macros.h>  // for NOTREACHED
+#include <common/utils.h>
 
 #include "client/core/audio_params.h"  // for AudioParams
 
@@ -51,6 +52,45 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+
+bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
+  if (!uri.IsValid() || !buff) {
+    return false;
+  }
+
+  AVFormatContext* ic = avformat_alloc_context();
+  if (!ic) {
+    return false;
+  }
+
+  std::string uri_str;
+  if (uri.Scheme() == common::uri::Uri::file) {
+    common::uri::Upath upath = uri.Path();
+    uri_str = upath.Path();
+  } else {
+    uri_str = uri.Url();
+  }
+  const char* in_filename = common::utils::c_strornull(uri_str);
+  int open_result = avformat_open_input(&ic, in_filename, NULL, NULL);  // autodetect format
+  if (open_result < 0) {
+    avformat_free_context(ic);
+    ic = NULL;
+    return false;
+  }
+  AVPacket pkt;
+  int ret = av_read_frame(ic, &pkt);
+  if (ret < 0) {
+    avformat_free_context(ic);
+    ic = NULL;
+    return false;
+  }
+
+  *buff = common::buffer_t(pkt.data, pkt.data + pkt.size);
+  av_packet_unref(&pkt);
+  avformat_free_context(ic);
+  ic = NULL;
+  return true;
+}
 
 double q2d_diff(AVRational a) {
   return a.num / (double)a.den * 1000.0;

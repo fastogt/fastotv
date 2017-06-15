@@ -87,7 +87,7 @@ TEST(UserInfo, serialize_deserialize) {
   fasto::fastotv::ChannelsInfo ch = duinf.GetChannelInfo();
   const fasto::fastotv::AuthInfo auth("atopilski@gmail.com", "1234");
   ASSERT_EQ(duinf.GetAuthInfo(), auth);
-  ASSERT_EQ(ch.Size(), 3);
+  ASSERT_EQ(ch.GetSize(), 3);
 }
 
 TEST(UserStateInfo, serialize_deserialize) {

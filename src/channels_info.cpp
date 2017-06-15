@@ -36,7 +36,7 @@ ChannelsInfo::channels_t ChannelsInfo::GetChannels() const {
   return channels_;
 }
 
-size_t ChannelsInfo::Size() const {
+size_t ChannelsInfo::GetSize() const {
   return channels_.size();
 }
 

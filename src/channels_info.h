@@ -39,7 +39,7 @@ class ChannelsInfo : public JsonSerializer<ChannelsInfo> {
   void AddChannel(const ChannelInfo& channel);
   channels_t GetChannels() const;
 
-  size_t Size() const;
+  size_t GetSize() const;
   bool IsEmpty() const;
 
   bool Equals(const ChannelsInfo& chan) const;

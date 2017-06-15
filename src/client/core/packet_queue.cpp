@@ -66,7 +66,7 @@ size_t PacketQueue::NbPackets() {
   return queue_.size();
 }
 
-int PacketQueue::Size() const {
+int PacketQueue::GetSize() const {
   return size_;
 }
 

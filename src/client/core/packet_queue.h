@@ -52,7 +52,7 @@ class PacketQueue {  // compressed queue data
 
   bool IsAborted();
   size_t NbPackets();
-  int Size() const;
+  int GetSize() const;
   int64_t Duration() const;
 
  private:

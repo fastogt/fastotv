@@ -1075,11 +1075,11 @@ void VideoState::TryRefreshVideo() {
     int aqsize = 0, vqsize = 0;
     bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
     if (video_st) {
-      vqsize = video_packet_queue->Size();
+      vqsize = video_packet_queue->GetSize();
       video_bandwidth = vstream_->Bandwidth();
     }
     if (audio_st) {
-      aqsize = audio_packet_queue->Size();
+      aqsize = audio_packet_queue->GetSize();
       audio_bandwidth = astream_->Bandwidth();
     }
 
@@ -1429,7 +1429,7 @@ int VideoState::ReadThread() {
     }
 
     /* if the queue are full, no need to read more */
-    if (opt_.infinite_buffer < 1 && (video_packet_queue->Size() + audio_packet_queue->Size() > MAX_QUEUE_SIZE ||
+    if (opt_.infinite_buffer < 1 && (video_packet_queue->GetSize() + audio_packet_queue->GetSize() > MAX_QUEUE_SIZE ||
                                      (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
       common::unique_lock<common::mutex> lock(read_thread_mutex_);
       std::cv_status interrupt_status = read_thread_cond_.wait_for(lock, std::chrono::milliseconds(10));
@@ -1532,8 +1532,8 @@ int VideoState::AudioThread() {
 
       if (reconfigure) {
         char buf1[1024], buf2[1024];
-        av_get_channel_layout_string(buf1, sizeof(buf1), -1, audio_filter_src_.channel_layout);
-        av_get_channel_layout_string(buf2, sizeof(buf2), -1, dec_channel_layout);
+        av_get_channel_layout_string(buf1, SIZEOFMASS(buf1), -1, audio_filter_src_.channel_layout);
+        av_get_channel_layout_string(buf2, SIZEOFMASS(buf2), -1, dec_channel_layout);
         const std::string mess = common::MemSPrintf(
             "Audio frame changed from rate:%d ch:%d fmt:%s layout:%s serial:%d to rate:%d ch:%d "
             "fmt:%s layout:%s serial:%d\n",
@@ -1637,8 +1637,9 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
-                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height,
+          static_cast<const char*>(
+              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

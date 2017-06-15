@@ -39,6 +39,9 @@ extern "C" {
 #include <libavutil/samplefmt.h>   // for AVSampleFormat
 }
 
+#include <common/url.h>
+#include <common/types.h>
+
 /* Minimum SDL audio buffer size, in samples. */
 #define AUDIO_MIN_BUFFER_SIZE 512
 
@@ -48,6 +51,8 @@ namespace client {
 namespace core {
 
 struct AudioParams;
+
+bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff);
 
 double q2d_diff(AVRational a);
 

@@ -49,7 +49,9 @@ common::Error CreateTexture(SDL_Renderer* renderer,
                             SDL_BlendMode blendmode,
                             bool init_texture,
                             SDL_Texture** texture_out);
-common::Error IMG_LoadPNG(const char* path, SDL_Surface** sur_out);
+
+SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
+
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

@@ -272,7 +272,7 @@ IF(CPACK_SUPPORT)
     # SET(CPACK_DEBIAN_PACKAGE_DEBUG ON)
     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.11), libstdc++6 (>= 4.9),
       libva-drm1 (>= 1.1.0), libva-x11-1 (>= 1.0.3), libvdpau1 (>= 0.2),
-      libxext6, libfreetype6 (>= 2.2.1),
+      libxext6, libfreetype6 (>= 2.2.1), libpng12-0 (>= 1.2),
       libasound2 (>= 1.0.16), xinit"
     )
     SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")

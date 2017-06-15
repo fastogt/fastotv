@@ -18,15 +18,13 @@ from pybuild_utils.base import system_info, utils
 # defines
 CMAKE_SRC_ROOT = "https://cmake.org/files/"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
+SDL_IMAGE_SRC_ROOT = "https://www.libsdl.org/projects/SDL_image/release/"
 SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
 FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
-PNG_SRC_ROOT = "https://sourceforge.net/projects/libpng/files/libpng16/older-releases/"
 OPENSSL_SRC_ROOT = "https://www.openssl.org/source/"
 
 ARCH_CMAKE_COMP = "gz"
 ARCH_CMAKE_EXT = "tar." + ARCH_CMAKE_COMP
-ARCH_PNG_COMP = "gz"
-ARCH_PNG_EXT = "tar." + ARCH_PNG_COMP
 ARCH_OPENSSL_COMP = "gz"
 ARCH_OPENSSL_EXT = "tar." + ARCH_OPENSSL_COMP
 ARCH_SDL_COMP = "gz"
@@ -232,7 +230,7 @@ class BuildRequest(object):
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
                             'freetype-dev',
-                            'libx11-dev',
+                            'libx11-dev', 'libpng12-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev',
                             'liblircclient-dev',
                             'libgl1-mesa-dev', 'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
@@ -242,7 +240,7 @@ class BuildRequest(object):
                             'zlib-devel', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
                             'freetype-devel',
-                            'libX11-devel',
+                            'libX11-devel', 'libpng12-devel',
                             'libdrm-devel', 'libdri2-devel', 'libump-devel',
                             'liblircclient-devel',
                             'libgl1-mesa-devel', 'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
@@ -307,6 +305,10 @@ class BuildRequest(object):
         compiler_flags = self.device_.sdl2_compile_info()
         self.build('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
+    def build_sdl2_image(self, version):
+        compiler_flags = utils.CompileInfo([], [])
+        self.build('{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
+
     def build_sdl2_ttf(self, version):
         compiler_flags = utils.CompileInfo([], [])
         self.build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
@@ -315,10 +317,6 @@ class BuildRequest(object):
         compiler_flags = utils.CompileInfo([], [])
         url = '{0}openssl-{1}.{2}'.format(OPENSSL_SRC_ROOT, version, ARCH_OPENSSL_EXT)
         self.build(url, compiler_flags, './config')
-
-    def build_libpng(self, version):
-        compiler_flags = utils.CompileInfo([], [])
-        self.build('{0}{1}/libpng-{1}.{2}'.format(PNG_SRC_ROOT, version, ARCH_PNG_EXT), compiler_flags)
 
     def build_cmake(self, version):
         stabled_version_array = version.split(".")
@@ -356,8 +354,8 @@ class BuildRequest(object):
 
 
 if __name__ == "__main__":
-    libpng_default_version = '1.6.21'
     sdl2_default_version = '2.0.5'
+    sdl2_image_default_version = '2.0.1'
     sdl2_ttf_default_version = '2.0.14'
     openssl_default_version = '1.0.2l'
     ffmpeg_default_version = '3.3'
@@ -385,13 +383,6 @@ if __name__ == "__main__":
                         action='store_false')
     parser.set_defaults(with_system=True)
 
-    parser.add_argument('--with-libpng', help='build libpng (default, version:{0})'.format(libpng_default_version),
-                        dest='with_libpng', action='store_true')
-    parser.add_argument('--without-libpng', help='build without libpng', dest='with_libpng', action='store_false')
-    parser.add_argument('--libpng-version', help='libpng version (default: {0})'.format(libpng_default_version),
-                        default=libpng_default_version)
-    parser.set_defaults(with_libpng=True)
-
     parser.add_argument('--with-sdl2', help='build sdl2 (default, version:{0})'.format(sdl2_default_version),
                         dest='with_sdl2', action='store_true')
     parser.add_argument('--without-sdl2', help='build without sdl2', dest='with_sdl2', action='store_false')
@@ -399,7 +390,15 @@ if __name__ == "__main__":
                         default=sdl2_default_version)
     parser.set_defaults(with_sdl2=True)
 
-    parser.add_argument('--with-sdl2_ttf', help='build sdl2 (default, version:{0})'.format(sdl2_ttf_default_version),
+    parser.add_argument('--with-sdl2_image',
+                        help='build sdl2_image (default, version:{0})'.format(sdl2_image_default_version),
+                        dest='with_sdl2-image', action='store_true')
+    parser.add_argument('--without-sdl2-image', help='build without sdl2 image', dest='with_sdl2_image', action='store_false')
+    parser.add_argument('--sdl2-image-version', help='sdl2 image version (default: {0})'.format(sdl2_image_default_version),
+                        default=sdl2_image_default_version)
+    parser.set_defaults(with_sdl2_ttf=True)
+
+    parser.add_argument('--with-sdl2_ttf', help='build sdl2_ttf (default, version:{0})'.format(sdl2_ttf_default_version),
                         dest='with_sdl2-ttf', action='store_true')
     parser.add_argument('--without-sdl2-ttf', help='build without sdl2 ttf', dest='with_sdl2_ttf', action='store_false')
     parser.add_argument('--sdl2-ttf-version', help='sdl2 ttf version (default: {0})'.format(sdl2_ttf_default_version),
@@ -454,9 +453,6 @@ if __name__ == "__main__":
     if argv.with_device:
         request.install_device_specific()
 
-    if argv.with_libpng:
-        request.build_libpng(argv.libpng_version)
-
     if argv.with_cmake:
         request.build_cmake(argv.cmake_version)
     if argv.with_common:
@@ -464,6 +460,8 @@ if __name__ == "__main__":
 
     if argv.with_sdl2:
         request.build_sdl2(argv.sdl2_version)
+    if argv.with_sdl2_image:
+        request.build_sdl2_image(argv.sdl2_image_version)
     if argv.with_sdl2_ttf:
         request.build_sdl2_ttf(argv.sdl2_ttf_version)
     if argv.with_openssl:

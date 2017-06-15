@@ -21,8 +21,9 @@
 #include <stdlib.h>  // for NULL, EXIT_FAILURE, EXIT...
 #include <string.h>  // for memset
 
-#include <SDL2/SDL_audio.h>    // for SDL_CloseAudio, SDL_MIX_...
-#include <SDL2/SDL_hints.h>    // for SDL_SetHint, SDL_HINT_RE...
+#include <SDL2/SDL_audio.h>  // for SDL_CloseAudio, SDL_MIX_...
+#include <SDL2/SDL_hints.h>  // for SDL_SetHint, SDL_HINT_RE...
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_pixels.h>   // for SDL_Color, ::SDL_PIXELFO...
 #include <SDL2/SDL_rect.h>     // for SDL_Rect
 #include <SDL2/SDL_surface.h>  // for SDL_Surface, SDL_FreeSur...
@@ -74,24 +75,6 @@ namespace fastotv {
 namespace client {
 
 namespace {
-
-SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height) {
-  int calc_width = rect.w;
-  int calc_height = rect.h;
-  int calc_x = rect.x;
-  int calc_y = rect.y;
-
-  if (rect.w >= width) {
-    calc_x = rect.x + rect.w / 2 - width / 2;
-    calc_width = width;
-  }
-  if (rect.h >= height) {
-    calc_y = rect.y + rect.h / 2 - height / 2;
-    calc_height = height;
-  }
-
-  return {calc_x, calc_y, calc_width, calc_height};
-}
 
 int ConvertToSDLVolume(int val) {
   val = av_clip(val, 0, 100);
@@ -394,8 +377,9 @@ bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* fram
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                                           "to reduce the image size.";
+                << frame->width << "x" << frame->height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return false;
   }
 
@@ -461,22 +445,16 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
     const std::string offline_channel_img_full_path =
         common::file_system::make_path(absolute_source_dir, IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     const char* offline_channel_img_full_path_ptr = common::utils::c_strornull(offline_channel_img_full_path);
-    SDL_Surface* surface = NULL;
-    common::Error err = IMG_LoadPNG(offline_channel_img_full_path_ptr, &surface);
-    if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
-    } else {
+    SDL_Surface* surface = IMG_Load(offline_channel_img_full_path_ptr);
+    if (surface) {
       offline_channel_texture_ = new TextureSaver(surface);
     }
 
     const std::string connection_error_img_full_path =
         common::file_system::make_path(absolute_source_dir, IMG_CONNECTION_ERROR_PATH_RELATIVE);
     const char* connection_error_img_full_path_ptr = common::utils::c_strornull(connection_error_img_full_path);
-    SDL_Surface* surface2 = NULL;
-    err = IMG_LoadPNG(connection_error_img_full_path_ptr, &surface2);
-    if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
-    } else {
+    SDL_Surface* surface2 = IMG_Load(connection_error_img_full_path_ptr);
+    if (surface2) {
       connection_error_texture_ = new TextureSaver(surface2);
     }
 
@@ -1051,6 +1029,11 @@ void Player::DrawFooter() {
       if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
         decr = prog.GetTitle();
       }
+
+      common::uri::Uri icon_uri = epg.GetIconUrl();
+      common::buffer_t icon_buff;
+      bool loaded_icon = core::DownloadFileToBuffer(icon_uri, &icon_buff);
+
       std::string footer_text = common::MemSPrintf(
           "Title: %s\n"
           "Description: %s",
@@ -1251,7 +1234,7 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
 }
 
 size_t Player::GenerateNextPosition() const {
-  if (curent_stream_pos_ + 1 == play_list_.Size()) {
+  if (curent_stream_pos_ + 1 == play_list_.GetSize()) {
     return 0;
   }
 
@@ -1260,7 +1243,7 @@ size_t Player::GenerateNextPosition() const {
 
 size_t Player::GeneratePrevPosition() const {
   if (curent_stream_pos_ == 0) {
-    return play_list_.Size() - 1;
+    return play_list_.GetSize() - 1;
   }
 
   return curent_stream_pos_ - 1;

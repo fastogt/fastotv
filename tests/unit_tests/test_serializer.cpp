@@ -128,7 +128,7 @@ TEST(channels_t, serialize_deserialize) {
   fasto::fastotv::ChannelsInfo channels;
   fasto::fastotv::EpgInfo epg_info(stream_id, url, name);
   channels.AddChannel(fasto::fastotv::ChannelInfo(epg_info, enable_audio, enable_video));
-  ASSERT_EQ(channels.Size(), 1);
+  ASSERT_EQ(channels.GetSize(), 1);
 
   serialize_t ser;
   common::Error err = channels.Serialize(&ser);
