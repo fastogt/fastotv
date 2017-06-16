@@ -33,8 +33,8 @@
 #include "channels_info.h"  // for ChannelsInfo
 
 #include "client/player_options.h"
-#include "client/types.h"  // for Size, Rect
 #include "client/playlist_entry.h"
+#include "client/types.h"  // for Size, Rect
 
 #include "client/core/app_options.h"            // for AppOptions, ComplexOp...
 #include "client/core/events/events.h"          // for PostExecEvent, PreExe...
@@ -271,6 +271,7 @@ class Player : public core::VideoStateHandler {
   bool show_statstic_;
   const std::string app_directory_absolute_path_;
 };
+
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

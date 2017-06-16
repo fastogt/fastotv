@@ -66,8 +66,8 @@ struct AppOptions {
   std::string hwaccel_output_format;
 
   bool auto_exit;  // exit from stream if eos
-  bool disable_video;
-  bool disable_audio;
+  bool enable_video;
+  bool enable_audio;
 #if CONFIG_AVFILTER
   std::string vfilters;
   std::string afilters;

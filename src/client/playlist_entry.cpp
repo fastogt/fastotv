@@ -22,6 +22,8 @@
 
 #define IMG_UNKNOWN_CHANNEL_PATH_RELATIVE "share/resources/unknown_channel.png"
 
+#define ICON_FILE_NAME "icon"
+
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -47,7 +49,7 @@ std::string PlaylistEntry::GetIconPath() const {
     return common::file_system::make_path(absolute_source_dir, IMG_UNKNOWN_CHANNEL_PATH_RELATIVE);
   }
   std::string dir = GetCacheDir();
-  return common::file_system::make_path(dir, "icon");
+  return common::file_system::make_path(dir, ICON_FILE_NAME);
 }
 
 void PlaylistEntry::SetIcon(channel_icon_t icon) {
@@ -58,9 +60,10 @@ channel_icon_t PlaylistEntry::GetIcon() const {
   return icon_;
 }
 
-ChannelInfo PlaylistEntry::GetInfo() const {
+ChannelInfo PlaylistEntry::GetChannelInfo() const {
   return info_;
 }
-}
-}
-}
+
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

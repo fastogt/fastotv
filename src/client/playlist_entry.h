@@ -41,7 +41,7 @@ class PlaylistEntry {
   PlaylistEntry();
   PlaylistEntry(const std::string& cache_root_dir, const ChannelInfo& info);
 
-  ChannelInfo GetInfo() const;
+  ChannelInfo GetChannelInfo() const;
 
   void SetIcon(channel_icon_t icon);
   channel_icon_t GetIcon() const;

@@ -789,11 +789,11 @@ void VideoState::Close() {
 }
 
 bool VideoState::IsAudioReady() const {
-  return astream_ && (astream_->IsOpened() || opt_.disable_audio);
+  return astream_ && (astream_->IsOpened() || !opt_.enable_audio);
 }
 
 bool VideoState::IsVideoReady() const {
-  return vstream_ && (vstream_->IsOpened() || opt_.disable_video);
+  return vstream_ && (vstream_->IsOpened() || !opt_.enable_video);
 }
 
 void VideoState::StreamCycleChannel(AVMediaType codec_type) {

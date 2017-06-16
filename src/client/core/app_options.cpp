@@ -43,8 +43,8 @@ AppOptions::AppOptions()
       hwaccel_device(),
       hwaccel_output_format(),
       auto_exit(true),
-      disable_video(false),
-      disable_audio(false)
+      enable_video(true),
+      enable_audio(true)
 #if CONFIG_AVFILTER
       ,
       vfilters(),

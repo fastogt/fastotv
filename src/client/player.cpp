@@ -383,8 +383,9 @@ bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* fram
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                                           "to reduce the image size.";
+                << frame->width << "x" << frame->height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return false;
   }
 
@@ -857,7 +858,8 @@ void Player::HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEve
 std::string Player::GetCurrentUrlName() const {
   PlaylistEntry url;
   if (GetCurrentUrl(&url)) {
-    return url.GetInfo().GetName();
+    ChannelInfo ch = url.GetChannelInfo();
+    return ch.GetName();
   }
 
   return "Unknown";
@@ -1101,7 +1103,7 @@ void Player::DrawFooter() {
     PlaylistEntry entry;
     if (GetCurrentUrl(&entry)) {
       std::string decr = "N/A";
-      ChannelInfo url = entry.GetInfo();
+      ChannelInfo url = entry.GetChannelInfo();
       EpgInfo epg = url.GetEpg();
       ProgrammeInfo prog;
       if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
@@ -1112,8 +1114,8 @@ void Player::DrawFooter() {
       SDL_RenderFillRect(renderer_, &sdl_footer_rect);
 
       std::string footer_text = common::MemSPrintf(
-          "Title: %s\n"
-          "Description: %s",
+          " Title: %s\n"
+          " Description: %s",
           url.GetName(), decr);
       int h = CalcHeightFontPlaceByRowCount(2);
       if (h > footer_rect.h) {
@@ -1127,7 +1129,7 @@ void Player::DrawFooter() {
         if (img) {
           SDL_Rect icon_rect = {sdl_footer_rect.x, sdl_footer_rect.y, h, h};
           SDL_RenderCopy(renderer_, img, NULL, &icon_rect);
-          shift = h + space_width;
+          shift = h;
         }
       }
 
@@ -1312,18 +1314,18 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
   curent_stream_pos_ = pos;
 
   PlaylistEntry entr = play_list_[curent_stream_pos_];
+  if (!entr.GetIcon()) {  // try to upload image
+    const std::string icon_path = entr.GetIconPath();
+    const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
+    SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
+    channel_icon_t shared_surface = common::make_shared<TextureSaver>(surface);
+    play_list_[curent_stream_pos_].SetIcon(shared_surface);
+  }
 
-  // upload image
-  const std::string icon_path = entr.GetIconPath();
-  const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
-  SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-  common::shared_ptr<TextureSaver> shared_surface = common::make_shared<TextureSaver>(surface);
-  play_list_[curent_stream_pos_].SetIcon(shared_surface);
-
-  ChannelInfo url = entr.GetInfo();
+  ChannelInfo url = entr.GetChannelInfo();
   core::AppOptions copy = opt_;
-  copy.disable_audio = !url.IsEnableAudio();
-  copy.disable_video = !url.IsEnableVideo();
+  copy.enable_audio = url.IsEnableAudio();
+  copy.enable_video = url.IsEnableVideo();
   core::VideoState* stream = new core::VideoState(url.GetId(), url.GetUrl(), copy, copt_, this);
   return stream;
 }
@@ -1351,6 +1353,7 @@ size_t Player::GeneratePrevPosition() const {
 
   return curent_stream_pos_ - 1;
 }
+
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

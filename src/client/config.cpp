@@ -230,13 +230,13 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VN_FIELD)) {
     bool disable_video;
     if (parse_bool(value, &disable_video)) {
-      pconfig->app_options.disable_video = disable_video;
+      pconfig->app_options.enable_video = !disable_video;
     }
     return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AN_FIELD)) {
     bool disable_audio;
     if (parse_bool(value, &disable_audio)) {
-      pconfig->app_options.disable_audio = disable_audio;
+      pconfig->app_options.enable_audio = !disable_audio;
     }
     return 1;
 #if CONFIG_AVFILTER
@@ -352,9 +352,9 @@ common::Error save_config_file(const std::string& config_absolute_path, TVConfig
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_INFBUF_FIELD "=%d\n", options->app_options.infinite_buffer);
 
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VN_FIELD "=%s\n",
-                                 common::ConvertToString(options->app_options.disable_video));
+                                 common::ConvertToString(!options->app_options.enable_video));
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_AN_FIELD "=%s\n",
-                                 common::ConvertToString(options->app_options.disable_audio));
+                                 common::ConvertToString(!options->app_options.enable_audio));
 #if CONFIG_AVFILTER
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VF_FIELD "=%s\n", options->app_options.vfilters);
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_AF_FIELD "=%s\n", options->app_options.afilters);
