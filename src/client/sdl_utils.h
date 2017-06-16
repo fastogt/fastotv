@@ -35,6 +35,9 @@ class TextureSaver {
   ~TextureSaver();
   SDL_Texture* GetTexture(SDL_Renderer* renderer) const;
 
+  int GetWidthSurface() const;
+  int GetHeightSurface() const;
+
  private:
   DISALLOW_COPY_AND_ASSIGN(TextureSaver);
   SDL_Surface* surface_;

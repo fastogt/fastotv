@@ -68,6 +68,8 @@ extern "C" {
 #define IMG_CONNECTION_ERROR_PATH_RELATIVE "share/resources/connection_error.png"
 #define MAIN_FONT_PATH_RELATIVE "share/fonts/FreeSans.ttf"
 
+#define CACHE_FOLDER_NAME "cache"
+
 #undef ERROR
 
 namespace fasto {
@@ -150,7 +152,10 @@ bool CreateWindowFunc(Size window_size,
 
 const SDL_Color Player::text_color = {255, 255, 255, 0};
 
-Player::Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt)
+Player::Player(const std::string& app_directory_absolute_path,
+               const PlayerOptions& options,
+               const core::AppOptions& opt,
+               const core::ComplexOptions& copt)
     : options_(options),
       opt_(opt),
       copt_(copt),
@@ -178,7 +183,8 @@ Player::Player(const PlayerOptions& options, const core::AppOptions& opt, const 
       current_state_(INIT_STATE),
       current_state_str_("Init"),
       muted_(false),
-      show_statstic_(false) {
+      show_statstic_(false),
+      app_directory_absolute_path_(app_directory_absolute_path) {
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -377,9 +383,8 @@ bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* fram
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                                           "to reduce the image size.";
     return false;
   }
 
@@ -481,6 +486,7 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
       TTF_CloseFont(font_);
       font_ = NULL;
     }
+
     destroy(&offline_channel_texture_);
     destroy(&connection_error_texture_);
 
@@ -765,7 +771,79 @@ void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent
 
 void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event) {
   ChannelsInfo chan = event->info();
-  play_list_ = chan;
+  // prepare cache folders
+  ChannelsInfo::channels_t channels = chan.GetChannels();
+  const std::string cache_dir = common::file_system::make_path(app_directory_absolute_path_, CACHE_FOLDER_NAME);
+  bool is_exist_cache_root = common::file_system::is_directory_exist(cache_dir);
+  if (!is_exist_cache_root) {
+    common::ErrnoError err = common::file_system::create_directory(cache_dir, true);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    } else {
+      is_exist_cache_root = true;
+    }
+  }
+
+  for (const ChannelInfo& ch : channels) {
+    PlaylistEntry entry = PlaylistEntry(cache_dir, ch);
+    play_list_.push_back(entry);
+
+    if (is_exist_cache_root) {  // prepare cache folders for channels
+      const std::string channel_dir = entry.GetCacheDir();
+      bool is_cache_channel_dir_exist = common::file_system::is_directory_exist(channel_dir);
+      if (!is_cache_channel_dir_exist) {
+        common::ErrnoError err = common::file_system::create_directory(channel_dir, true);
+        if (err && err->IsError()) {
+          DEBUG_MSG_ERROR(err);
+        } else {
+          is_cache_channel_dir_exist = true;
+        }
+      }
+
+      if (!is_cache_channel_dir_exist) {
+        continue;
+      }
+
+      EpgInfo epg = ch.GetEpg();
+      common::uri::Uri uri = epg.GetIconUrl();
+      bool is_unknown_icon = EpgInfo::IsUnknownIconUrl(uri);
+      if (is_unknown_icon) {
+        continue;
+      }
+
+      auto load_image_cb = [entry, uri, channel_dir]() {
+        const std::string channel_icon_path = entry.GetIconPath();
+        if (!common::file_system::is_file_exist(channel_icon_path)) {  // if not exist trying to download
+          common::buffer_t buff;
+          bool is_file_downloaded = core::DownloadFileToBuffer(uri, &buff);
+          if (!is_file_downloaded) {
+            return;
+          }
+
+          const uint32_t fl = common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE |
+                              common::file_system::File::FLAG_OPEN_BINARY;
+          common::file_system::File channel_icon_file;
+          common::ErrnoError err = channel_icon_file.Open(channel_icon_path, fl);
+          if (err && err->IsError()) {
+            DEBUG_MSG_ERROR(err);
+            return;
+          }
+
+          size_t writed;
+          err = channel_icon_file.Write(buff, &writed);
+          if (err && err->IsError()) {
+            DEBUG_MSG_ERROR(err);
+            err = channel_icon_file.Close();
+            return;
+          }
+
+          err = channel_icon_file.Close();
+        }
+      };
+      controller_->ExecInLoopThread(load_image_cb);
+    }
+  }
+
   SwitchToPlayingMode();
 }
 
@@ -777,21 +855,20 @@ void Player::HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEve
 }
 
 std::string Player::GetCurrentUrlName() const {
-  ChannelInfo url;
+  PlaylistEntry url;
   if (GetCurrentUrl(&url)) {
-    return url.GetName();
+    return url.GetInfo().GetName();
   }
 
   return "Unknown";
 }
 
-bool Player::GetCurrentUrl(ChannelInfo* url) const {
-  auto channels = play_list_.GetChannels();
-  if (!url || channels.empty()) {
+bool Player::GetCurrentUrl(PlaylistEntry* url) const {
+  if (!url || play_list_.empty()) {
     return false;
   }
 
-  *url = channels[curent_stream_pos_];
+  *url = play_list_[curent_stream_pos_];
   return true;
 }
 
@@ -1021,31 +1098,40 @@ void Player::DrawFooter() {
     SDL_RenderFillRect(renderer_, &sdl_footer_rect);
     DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
   } else if (current_state_ == PLAYING_STATE) {
-    ChannelInfo url;
-    if (GetCurrentUrl(&url)) {
+    PlaylistEntry entry;
+    if (GetCurrentUrl(&entry)) {
       std::string decr = "N/A";
+      ChannelInfo url = entry.GetInfo();
       EpgInfo epg = url.GetEpg();
       ProgrammeInfo prog;
       if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
         decr = prog.GetTitle();
       }
 
-      common::uri::Uri icon_uri = epg.GetIconUrl();
-      common::buffer_t icon_buff;
-      bool loaded_icon = core::DownloadFileToBuffer(icon_uri, &icon_buff);
+      SDL_SetRenderDrawColor(renderer_, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+      SDL_RenderFillRect(renderer_, &sdl_footer_rect);
 
       std::string footer_text = common::MemSPrintf(
           "Title: %s\n"
           "Description: %s",
           url.GetName(), decr);
-      SDL_SetRenderDrawColor(renderer_, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
-      SDL_RenderFillRect(renderer_, &sdl_footer_rect);
-
-      int h = TTF_FontLineSkip(font_) * 2;
+      int h = CalcHeightFontPlaceByRowCount(2);
       if (h > footer_rect.h) {
         h = footer_rect.h;
       }
-      SDL_Rect text_rect = {sdl_footer_rect.x, sdl_footer_rect.y, sdl_footer_rect.w, h};
+
+      auto icon = entry.GetIcon();
+      int shift = 0;
+      if (icon) {
+        SDL_Texture* img = icon->GetTexture(renderer_);
+        if (img) {
+          SDL_Rect icon_rect = {sdl_footer_rect.x, sdl_footer_rect.y, h, h};
+          SDL_RenderCopy(renderer_, img, NULL, &icon_rect);
+          shift = h + space_width;
+        }
+      }
+
+      SDL_Rect text_rect = {sdl_footer_rect.x + shift, sdl_footer_rect.y, sdl_footer_rect.w - shift, h};
       DrawWrappedTextInRect(footer_text, text_color, text_rect);
     }
   } else {
@@ -1172,7 +1258,7 @@ void Player::MoveToPreviousStream() {
 }
 
 core::VideoState* Player::CreateCurrentStream() {
-  if (play_list_.IsEmpty()) {
+  if (play_list_.empty()) {
     return nullptr;
   }
 
@@ -1189,7 +1275,7 @@ core::VideoState* Player::CreateCurrentStream() {
 
 core::VideoState* Player::CreateNextStream() {
   // check is executed in main thread?
-  if (play_list_.IsEmpty()) {
+  if (play_list_.empty()) {
     return nullptr;
   }
 
@@ -1206,7 +1292,7 @@ core::VideoState* Player::CreateNextStream() {
 
 core::VideoState* Player::CreatePrevStream() {
   // check is executed in main thread?
-  if (play_list_.IsEmpty()) {
+  if (play_list_.empty()) {
     return nullptr;
   }
 
@@ -1224,8 +1310,17 @@ core::VideoState* Player::CreatePrevStream() {
 core::VideoState* Player::CreateStreamPos(size_t pos) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   curent_stream_pos_ = pos;
-  auto channels = play_list_.GetChannels();
-  ChannelInfo url = channels[curent_stream_pos_];
+
+  PlaylistEntry entr = play_list_[curent_stream_pos_];
+
+  // upload image
+  const std::string icon_path = entr.GetIconPath();
+  const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
+  SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
+  common::shared_ptr<TextureSaver> shared_surface = common::make_shared<TextureSaver>(surface);
+  play_list_[curent_stream_pos_].SetIcon(shared_surface);
+
+  ChannelInfo url = entr.GetInfo();
   core::AppOptions copy = opt_;
   copy.disable_audio = !url.IsEnableAudio();
   copy.disable_video = !url.IsEnableVideo();
@@ -1234,16 +1329,24 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
 }
 
 size_t Player::GenerateNextPosition() const {
-  if (curent_stream_pos_ + 1 == play_list_.GetSize()) {
+  if (curent_stream_pos_ + 1 == play_list_.size()) {
     return 0;
   }
 
   return curent_stream_pos_ + 1;
 }
 
+int Player::CalcHeightFontPlaceByRowCount(int row) const {
+  if (!font_) {
+    return 0;
+  }
+
+  return 2 << av_log2(TTF_FontLineSkip(font_) * row);
+}
+
 size_t Player::GeneratePrevPosition() const {
   if (curent_stream_pos_ == 0) {
-    return play_list_.GetSize() - 1;
+    return play_list_.size() - 1;
   }
 
   return curent_stream_pos_ - 1;

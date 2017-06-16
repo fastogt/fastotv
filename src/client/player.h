@@ -34,6 +34,7 @@
 
 #include "client/player_options.h"
 #include "client/types.h"  // for Size, Rect
+#include "client/playlist_entry.h"
 
 #include "client/core/app_options.h"            // for AppOptions, ComplexOp...
 #include "client/core/events/events.h"          // for PostExecEvent, PreExe...
@@ -111,7 +112,10 @@ class Player : public core::VideoStateHandler {
   static const SDL_Color text_color;
 
   enum States { INIT_STATE, PLAYING_STATE };
-  Player(const PlayerOptions& options, const core::AppOptions& opt, const core::ComplexOptions& copt);
+  Player(const std::string& app_directory_absolute_path,
+         const PlayerOptions& options,
+         const core::AppOptions& opt,
+         const core::ComplexOptions& copt);
   void SetFullScreen(bool full_screen);
   void SetMute(bool mute);
   void Mute();
@@ -166,7 +170,7 @@ class Player : public core::VideoStateHandler {
   virtual void HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event);
 
  private:
-  bool GetCurrentUrl(ChannelInfo* url) const;
+  bool GetCurrentUrl(PlaylistEntry* url) const;
   std::string GetCurrentUrlName() const;  // return Unknown if not found
 
   /* prepare a new audio buffer */
@@ -224,10 +228,12 @@ class Player : public core::VideoStateHandler {
   size_t GenerateNextPosition() const;
   size_t GeneratePrevPosition() const;
 
+  int CalcHeightFontPlaceByRowCount(int row) const;
+
   PlayerOptions options_;
   const core::AppOptions opt_;
   const core::ComplexOptions copt_;
-  ChannelsInfo play_list_;
+  std::vector<PlaylistEntry> play_list_;
 
   core::AudioParams* audio_params_;
   int audio_buff_size_;
@@ -263,6 +269,7 @@ class Player : public core::VideoStateHandler {
 
   bool muted_;
   bool show_statstic_;
+  const std::string app_directory_absolute_path_;
 };
 }  // namespace client
 }  // namespace fastotv

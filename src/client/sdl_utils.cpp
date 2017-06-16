@@ -68,6 +68,22 @@ SDL_Texture* TextureSaver::GetTexture(SDL_Renderer* renderer) const {
   return texture_;
 }
 
+int TextureSaver::GetWidthSurface() const {
+  if (!surface_) {
+    return 0;
+  }
+
+  return surface_->w;
+}
+
+int TextureSaver::GetHeightSurface() const {
+  if (!surface_) {
+    return 0;
+  }
+
+  return surface_->h;
+}
+
 common::Error CreateTexture(SDL_Renderer* renderer,
                             Uint32 new_format,
                             int new_width,

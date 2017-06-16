@@ -479,6 +479,7 @@ ENDIF(LIRC_CLIENT_FOUND)
 
 SET(BUILD_CLIENT_SOURCES
   types.h types.cpp
+  playlist_entry.h playlist_entry.cpp
   player_options.h player_options.cpp
   player.h player.cpp
   config.h config.cpp
