@@ -243,7 +243,6 @@ void Player::Mute() {
 }
 
 Player::~Player() {
-  play_list_.clear();
   if (core::hw_device_ctx) {
     av_buffer_unref(&core::hw_device_ctx);
     core::hw_device_ctx = NULL;
@@ -489,6 +488,7 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
       font_ = NULL;
     }
 
+    play_list_.clear();
     destroy(&offline_channel_texture_);
     destroy(&connection_error_texture_);
 
