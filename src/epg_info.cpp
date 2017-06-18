@@ -183,7 +183,7 @@ common::Error EpgInfo::DeSerialize(const serialize_type& serialized, value_type*
     programs_t progs;
     size_t len = json_object_array_length(jprogs);
     for (size_t i = 0; i < len; ++i) {
-      json_object* jprog = json_object_array_get_idx(serialized, i);
+      json_object* jprog = json_object_array_get_idx(jprogs, i);
       ProgrammeInfo prog;
       common::Error err = ProgrammeInfo::DeSerialize(jprog, &prog);
       if (err && err->IsError()) {
