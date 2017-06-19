@@ -72,8 +72,8 @@ bool Stream::HasEnoughPackets() const {
     return false;
   }
 
-  return (packet_queue_->NbPackets() > minimum_frames &&
-          (!packet_queue_->Duration() || q2d() * packet_queue_->Duration() > 1000));
+  return (packet_queue_->GetNbPackets() > minimum_frames &&
+          (!packet_queue_->GetDuration() || q2d() * packet_queue_->GetDuration() > 1000));
 }
 
 Stream::~Stream() {

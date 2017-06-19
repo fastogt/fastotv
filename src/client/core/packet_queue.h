@@ -51,9 +51,9 @@ class PacketQueue {  // compressed queue data
   void Start();
 
   bool IsAborted();
-  size_t NbPackets();
+  size_t GetNbPackets();
   int GetSize() const;
-  int64_t Duration() const;
+  int64_t GetDuration() const;
 
  private:
   int PushFront(AVPacket* pkt);

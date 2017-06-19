@@ -54,7 +54,7 @@ struct VideoFrame {
   AVFrame* frame;
   clock64_t pts;      /* presentation timestamp for the frame */
   clock64_t duration; /* estimated duration of the frame */
-  int64_t pos;      /* byte position of the frame in the input file */
+  int64_t pos;        /* byte position of the frame in the input file */
   SDL_Texture* bmp;
   bool allocated;
   int width;

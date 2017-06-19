@@ -21,8 +21,8 @@
 #include <common/error.h>   // for Error
 #include <common/macros.h>  // for WARN_UNUSED_RESULT
 
-#include "serializer/json_serializer.h"
 #include "channel_info.h"
+#include "serializer/json_serializer.h"
 
 #define CHANNELS_FIELD "channels"
 

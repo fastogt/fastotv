@@ -282,7 +282,7 @@ class VideoState {
   clock64_t frame_last_returned_time_;
   clock64_t frame_last_filter_delay_;
   clock64_t max_frame_duration_;  // maximum duration of a frame - above this, we consider the jump a
-                                // timestamp discontinuity
+                                  // timestamp discontinuity
 
   bool step_;
 

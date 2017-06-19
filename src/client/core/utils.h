@@ -39,8 +39,8 @@ extern "C" {
 #include <libavutil/samplefmt.h>   // for AVSampleFormat
 }
 
-#include <common/url.h>
 #include <common/types.h>
+#include <common/url.h>
 
 /* Minimum SDL audio buffer size, in samples. */
 #define AUDIO_MIN_BUFFER_SIZE 512

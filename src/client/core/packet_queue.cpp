@@ -61,7 +61,7 @@ bool PacketQueue::IsAborted() {
   return abort_request_;
 }
 
-size_t PacketQueue::NbPackets() {
+size_t PacketQueue::GetNbPackets() {
   lock_t lock(mutex_);
   return queue_.size();
 }
@@ -70,7 +70,7 @@ int PacketQueue::GetSize() const {
   return size_;
 }
 
-int64_t PacketQueue::Duration() const {
+int64_t PacketQueue::GetDuration() const {
   return duration_;
 }
 

@@ -24,8 +24,6 @@ extern "C" {
 #include <libavutil/frame.h>
 }
 
-#include <common/macros.h>
-
 #include "client/core/types.h"
 
 namespace fasto {
@@ -40,7 +38,7 @@ struct AudioFrame {
   AVFrame* frame;
   clock64_t pts;      /* presentation timestamp for the frame */
   clock64_t duration; /* estimated duration of the frame */
-  int64_t pos;      /* byte position of the frame in the input file */
+  int64_t pos;        /* byte position of the frame in the input file */
 
   void ClearFrame();
 

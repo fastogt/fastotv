@@ -27,7 +27,7 @@ AVBufferRef* hw_device_ctx = NULL;
 
 const HWAccel hwaccels[] = {
 #if HAVE_VDPAU_X11
-    {"vdpau", vdpau_init, vdpau_uninit,HWACCEL_VDPAU, AV_PIX_FMT_VDPAU},
+    {"vdpau", vdpau_init, vdpau_uninit, HWACCEL_VDPAU, AV_PIX_FMT_VDPAU},
 #endif
 #if HAVE_DXVA2_LIB
     {"dxva2", dxva2_init, dxva2_uninit, HWACCEL_DXVA2, AV_PIX_FMT_DXVA2_VLD},

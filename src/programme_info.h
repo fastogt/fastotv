@@ -46,7 +46,7 @@ class ProgrammeInfo : public JsonSerializer<ProgrammeInfo> {
   void SetStop(timestamp_t stop);
   timestamp_t GetStop() const;
 
-  void SetTitle(const std::string &title);
+  void SetTitle(const std::string& title);
   epg_channel_id GetTitle() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;

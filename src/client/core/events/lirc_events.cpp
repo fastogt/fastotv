@@ -23,7 +23,7 @@
 namespace {
 
 const std::string g_lirc_types[] = {"LIRC_KEY_OK",   "LIRC_KEY_LEFT", "LIRC_KEY_UP",  "LIRC_KEY_RIGHT",
-                                 "LIRC_KEY_DOWN", "LIRC_KEY_EXIT", "LIRC_KEY_MUTE"};
+                                    "LIRC_KEY_DOWN", "LIRC_KEY_EXIT", "LIRC_KEY_MUTE"};
 }
 
 namespace common {

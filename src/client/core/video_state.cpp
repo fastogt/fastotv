@@ -1203,7 +1203,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
         clock64_t diff = dpts - GetMasterClock();
         PacketQueue* video_packet_queue = vstream_->Queue();
         if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC && diff - frame_last_filter_delay_ < 0 &&
-            video_packet_queue->NbPackets()) {
+            video_packet_queue->GetNbPackets()) {
           stats_->frame_drops_early++;
           av_frame_unref(frame);
           got_picture = 0;
