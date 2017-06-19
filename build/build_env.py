@@ -107,7 +107,7 @@ class RaspberryPi1ModelBPlus(RaspberryPiDevice):  # ARMv6(armv6l) ARM11, omx/mma
 class OrangePiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name,
-                                 {'linux': ['libgles2-mesa-dev',
+                                 {'linux': ['libvdpau-dev', 'libgles2-mesa-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy',
                                             'libcedrus1-dev']},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
