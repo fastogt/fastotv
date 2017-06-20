@@ -74,7 +74,7 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
         SupportedDevice.__init__(self, 'pc', {'linux': [
             'libvdpau-devel', 'libva-devel',  # redhat
             'libvdpau-dev', 'libva-dev',  # debian
-        ]}, utils.CompileInfo([], []), utils.CompileInfo([], []))
+        ]}, utils.CompileInfo(['--disable-video-mir'], []), utils.CompileInfo([], []))
 
     def install_specific(self):
         return
@@ -85,7 +85,7 @@ class RaspberryPiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': []},
                                  utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
-                                                        '--enable-video-opengles2']),
+                                                        '--disable-video-mir', '--enable-video-opengles2']),
                                  utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                                         '--enable-omx-rpi']))
 
@@ -112,7 +112,7 @@ class OrangePiDevice(SupportedDevice):  # gles2
                                             'libcedrus1-dev']},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
                                                    ['--disable-video-opengl', '--disable-video-opengles1',
-                                                    '--enable-video-opengles2']),
+                                                    '--disable-video-mir', '--enable-video-opengles2']),
                                  utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -393,12 +393,15 @@ if __name__ == "__main__":
     parser.add_argument('--with-sdl2_image',
                         help='build sdl2_image (default, version:{0})'.format(sdl2_image_default_version),
                         dest='with_sdl2-image', action='store_true')
-    parser.add_argument('--without-sdl2-image', help='build without sdl2 image', dest='with_sdl2_image', action='store_false')
-    parser.add_argument('--sdl2-image-version', help='sdl2 image version (default: {0})'.format(sdl2_image_default_version),
+    parser.add_argument('--without-sdl2-image', help='build without sdl2 image', dest='with_sdl2_image',
+                        action='store_false')
+    parser.add_argument('--sdl2-image-version',
+                        help='sdl2 image version (default: {0})'.format(sdl2_image_default_version),
                         default=sdl2_image_default_version)
     parser.set_defaults(with_sdl2_ttf=True)
 
-    parser.add_argument('--with-sdl2_ttf', help='build sdl2_ttf (default, version:{0})'.format(sdl2_ttf_default_version),
+    parser.add_argument('--with-sdl2_ttf',
+                        help='build sdl2_ttf (default, version:{0})'.format(sdl2_ttf_default_version),
                         dest='with_sdl2-ttf', action='store_true')
     parser.add_argument('--without-sdl2-ttf', help='build without sdl2 ttf', dest='with_sdl2_ttf', action='store_false')
     parser.add_argument('--sdl2-ttf-version', help='sdl2 ttf version (default: {0})'.format(sdl2_ttf_default_version),
