@@ -209,7 +209,7 @@ void Sdl2Application::HandleEvent(events::Event* event) {
 
   msec_t diff_time = finish_time - start_time;
   if (diff_time >= event_timeout_wait_msec && !is_filtered_event) {
-    WARNING_LOG() << "Long time execution(" << diff_time << " msec) of event type: " << event_type;
+    DEBUG_LOG() << "Long time execution(" << diff_time << " msec) of event type: " << event_type;
   }
 }
 
