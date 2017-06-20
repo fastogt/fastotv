@@ -84,8 +84,11 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
 class RaspberryPiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': []},
-                                 utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
-                                                        '--disable-video-mir', '--enable-video-opengles2']),
+                                 utils.CompileInfo([],
+                                                   ['--disable-pulseaudio', '--disable-esd',
+                                                    '--disable-video-opengl', '--disable-video-opengles1',
+                                                    '--disable-video-mir', '--enable-video-opengles2',
+                                                    '--disable-video-wayland']),
                                  utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                                         '--enable-omx-rpi']))
 
@@ -111,8 +114,10 @@ class OrangePiDevice(SupportedDevice):  # gles2
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy',
                                             'libcedrus1-dev']},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
-                                                   ['--disable-video-opengl', '--disable-video-opengles1',
-                                                    '--disable-video-mir', '--enable-video-opengles2']),
+                                                   ['--disable-pulseaudio', '--disable-esd',
+                                                    '--disable-video-opengl', '--disable-video-opengles1',
+                                                    '--disable-video-mir', '--enable-video-opengles2',
+                                                    '--disable-video-wayland']),
                                  utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -148,8 +153,10 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
     def __init__(self, name='orange-pi-pc2'):
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo']},
-                                 utils.CompileInfo([], ['--disable-video-opengl', '--disable-video-opengles1',
-                                                        '--enable-video-opengles2']),
+                                 utils.CompileInfo([], ['--disable-pulseaudio', '--disable-esd',
+                                                        '--disable-video-opengl', '--disable-video-opengles1',
+                                                        '--enable-video-opengles2', '--disable-video-mir',
+                                                        '--disable-video-wayland']),
                                  utils.CompileInfo([], []))
 
     def install_specific(self):
