@@ -128,7 +128,7 @@ int AudioDecoder::DecodeFrame(AVFrame* frame) {
       AVRational stb = av_codec_get_pkt_timebase(avctx_);
       frame->pts = av_rescale_q(frame->pts, stb, tb);
     } else {
-      NOTREACHED();
+      WARNING_LOG() << "Invalid audio pts: " << frame->pts;
     }
     got_frame = 1;
   } while (!got_frame && !IsFinished());

@@ -59,16 +59,12 @@ InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
       current_bandwidth_(0) {}
 
 InnerTcpHandler::~InnerTcpHandler() {
-  for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {
-    delete ban;
-  }
-  bandwidth_requests_.clear();
-  destroy(&inner_connection_);
+  CHECK(bandwidth_requests_.empty());
+  CHECK(!inner_connection_);
 }
 
 void InnerTcpHandler::PreLooped(common::libev::IoLoop* server) {
   ping_server_id_timer_ = server->CreateTimer(ping_timeout_server, ping_timeout_server);
-  CHECK(!inner_connection_);
 
   Connect(server);
 }
@@ -135,7 +131,10 @@ void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
   size_t nwread;
   common::Error err = band_client->Read(buff, bandwidth::TcpBandwidthClient::max_payload_len, &nwread);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    common::Value::ErrorsType e_type = err->GetErrorType();
+    if (e_type != common::Value::E_INTERRUPTED) {
+      DEBUG_MSG_ERROR(err);
+    }
     client->Close();
     delete client;
     return;
@@ -148,10 +147,14 @@ void InnerTcpHandler::DataReadyToWrite(common::libev::IoClient* client) {
 
 void InnerTcpHandler::PostLooped(common::libev::IoLoop* server) {
   UNUSED(server);
-  for (bandwidth::TcpBandwidthClient* ban : bandwidth_requests_) {
+  std::vector<bandwidth::TcpBandwidthClient*> copy = bandwidth_requests_;
+  for (bandwidth::TcpBandwidthClient* ban : copy) {
     ban->Close();
+    delete ban;
   }
+  CHECK(bandwidth_requests_.empty());
   DisConnect(common::Error());
+  CHECK(!inner_connection_);
 }
 
 void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) {

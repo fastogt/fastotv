@@ -1502,10 +1502,6 @@ int VideoState::ReadThread() {
 
 int VideoState::AudioThread() {
   AudioFrame* af = nullptr;
-#if CONFIG_AVFILTER
-  int64_t dec_channel_layout;
-  int reconfigure;
-#endif
   int ret = 0;
 
   AVFrame* frame = av_frame_alloc();
@@ -1523,12 +1519,12 @@ int VideoState::AudioThread() {
       AVRational tb = {1, frame->sample_rate};
 
 #if CONFIG_AVFILTER
-      dec_channel_layout = get_valid_channel_layout(frame->channel_layout, av_frame_get_channels(frame));
+      int64_t dec_channel_layout = get_valid_channel_layout(frame->channel_layout, av_frame_get_channels(frame));
 
-      reconfigure = cmp_audio_fmts(audio_filter_src_.fmt, audio_filter_src_.channels,
-                                   static_cast<AVSampleFormat>(frame->format), av_frame_get_channels(frame)) ||
-                    audio_filter_src_.channel_layout != dec_channel_layout ||
-                    audio_filter_src_.freq != frame->sample_rate;
+      int reconfigure = cmp_audio_fmts(audio_filter_src_.fmt, audio_filter_src_.channels,
+                                       static_cast<AVSampleFormat>(frame->format), av_frame_get_channels(frame)) ||
+                        audio_filter_src_.channel_layout != dec_channel_layout ||
+                        audio_filter_src_.freq != frame->sample_rate;
 
       if (reconfigure) {
         char buf1[1024], buf2[1024];
@@ -1793,7 +1789,8 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const std::string& v
     }
   }
 
-  if ((ret = configure_filtergraph(graph, vfilters, filt_src, last_filter)) < 0) {
+  ret = configure_filtergraph(graph, vfilters, filt_src, last_filter);
+  if (ret < 0) {
     WARNING_LOG() << "Failed to configure_filtergraph ret: " << ret;
     return ret;
   }
@@ -1817,8 +1814,9 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
   while ((e = av_dict_get(swr_opts, "", e, AV_DICT_IGNORE_SUFFIX))) {
     av_strlcatf(aresample_swr_opts, sizeof(aresample_swr_opts), "%s=%s:", e->key, e->value);
   }
-  if (strlen(aresample_swr_opts)) {
-    aresample_swr_opts[strlen(aresample_swr_opts) - 1] = '\0';
+  size_t len = strlen(aresample_swr_opts);
+  if (len) {
+    aresample_swr_opts[len - 1] = '\0';
   }
   av_opt_set(agraph_, "aresample_swr_opts", aresample_swr_opts, 0);
 
@@ -1845,12 +1843,13 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
     return ret;
   }
 
-  if ((ret = av_opt_set_int_list(filt_asink, "sample_fmts", sample_fmts, AV_SAMPLE_FMT_NONE, AV_OPT_SEARCH_CHILDREN)) <
-      0) {
+  ret = av_opt_set_int_list(filt_asink, "sample_fmts", sample_fmts, AV_SAMPLE_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
+  if (ret < 0) {
     avfilter_graph_free(&agraph_);
     return ret;
   }
-  if ((ret = av_opt_set_int(filt_asink, "all_channel_counts", 1, AV_OPT_SEARCH_CHILDREN)) < 0) {
+  ret = av_opt_set_int(filt_asink, "all_channel_counts", 1, AV_OPT_SEARCH_CHILDREN);
+  if (ret < 0) {
     avfilter_graph_free(&agraph_);
     return ret;
   }
@@ -1862,7 +1861,8 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
     channel_layouts[0] = audio_tgt_.channel_layout;
     channels[0] = audio_tgt_.channels;
     sample_rates[0] = audio_tgt_.freq;
-    if ((ret = av_opt_set_int(filt_asink, "all_channel_counts", 0, AV_OPT_SEARCH_CHILDREN)) < 0) {
+    ret = av_opt_set_int(filt_asink, "all_channel_counts", 0, AV_OPT_SEARCH_CHILDREN);
+    if (ret < 0) {
       avfilter_graph_free(&agraph_);
       return ret;
     }
