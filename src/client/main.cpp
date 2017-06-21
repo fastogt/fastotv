@@ -239,7 +239,6 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
-  fasto::fastotv::client::TVConfig main_options;
   const std::string config_absolute_path =
       common::file_system::make_path(app_directory_absolute_path, CONFIG_FILE_NAME);
   if (!common::file_system::is_valid_path(config_absolute_path)) {
@@ -247,6 +246,7 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
+  fasto::fastotv::client::TVConfig main_options;
   common::Error err = load_config_file(config_absolute_path, &main_options);
   if (err && err->IsError()) {
     return EXIT_FAILURE;
@@ -291,13 +291,22 @@ static int main_single_application(int argc,
     return EXIT_FAILURE;
   }
 
-  DictionaryOptions* dict = main_options.dict;
-  fasto::fastotv::client::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
-                                                    dict->codec_opts);
+  AVDictionary* sws_dict = NULL;
+  AVDictionary* swr_opts = NULL;
+  AVDictionary* format_opts = NULL;
+  AVDictionary* codec_opts = NULL;
+  av_dict_set(&sws_dict, "flags", "bicubic", 0);
+
+  fasto::fastotv::client::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
   fasto::fastotv::client::Player* player = new fasto::fastotv::client::Player(
       app_directory_absolute_path, main_options.player_options, main_options.app_options, copt);
   res = app.Exec();
   destroy(&player);
+
+  av_dict_free(&swr_opts);
+  av_dict_free(&sws_dict);
+  av_dict_free(&format_opts);
+  av_dict_free(&codec_opts);
 
   err = lock_pid_file.Unlock();
   if (err && err->IsError()) {

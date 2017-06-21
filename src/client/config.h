@@ -26,8 +26,6 @@
 
 #include "player_options.h"  // for PlayerOptions
 
-struct DictionaryOptions;
-
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -41,10 +39,6 @@ struct TVConfig {
 
   fasto::fastotv::client::core::AppOptions app_options;
   fasto::fastotv::client::PlayerOptions player_options;
-  DictionaryOptions* dict;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TVConfig);
 };
 
 common::Error load_config_file(const std::string& config_absolute_path, TVConfig* options) WARN_UNUSED_RESULT;

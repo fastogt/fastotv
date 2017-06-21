@@ -25,7 +25,7 @@
 
 #include "inih/ini.h"  // for ini_parse
 
-#include "client/cmdutils.h"              // for DictionaryOptions
+#include "client/cmdutils.h"
 #include "client/core/ffmpeg_internal.h"  // for HWAccelID
 #include "client/types.h"                 // for Size
 
@@ -289,16 +289,9 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
 }
 }  // namespace
 
-TVConfig::TVConfig()
-    : power_off_on_exit(false),
-      loglevel(common::logging::L_INFO),
-      app_options(),
-      player_options(),
-      dict(new DictionaryOptions) {}
+TVConfig::TVConfig() : power_off_on_exit(false), loglevel(common::logging::L_INFO), app_options(), player_options() {}
 
-TVConfig::~TVConfig() {
-  destroy(&dict);
-}
+TVConfig::~TVConfig() {}
 
 common::Error load_config_file(const std::string& config_absolute_path, TVConfig* options) {
   if (!options) {

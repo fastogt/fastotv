@@ -60,30 +60,10 @@ void show_sinks(const std::string& device);
 void show_sources(const std::string& device);
 #endif
 
-struct DictionaryOptions {
-  DictionaryOptions();
-  ~DictionaryOptions();
-
-  AVDictionary* sws_dict;
-  AVDictionary* swr_opts;
-  AVDictionary* format_opts;
-  AVDictionary* codec_opts;
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(DictionaryOptions);
-};
-
 /**
  * Initialize dynamic library loading
  */
 void init_dynload(void);
-
-/**
- * Set the libav* libraries log level.
- */
-int opt_loglevel(const char* opt, const char* arg, DictionaryOptions* dopt);
-
-int opt_codec_debug(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 bool parse_bool(const std::string& bool_str, bool* result);
 
@@ -109,14 +89,6 @@ bool parse_number(const std::string& number_str, T min, T max, T* result) {
   *result = lresult;
   return true;
 }
-
-/**
- * Print the version of the program to stdout. The version message
- * depends on the current versions of the repository and of the libav*
- * libraries.
- * This option processing function does not utilize the arguments.
- */
-int show_version(const char* opt, const char* arg, DictionaryOptions* dopt);
 
 #define media_type_string av_get_media_type_string
 

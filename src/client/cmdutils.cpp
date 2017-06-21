@@ -865,17 +865,6 @@ void show_help(const std::string& topic) {
   }
 }
 
-DictionaryOptions::DictionaryOptions() : sws_dict(NULL), swr_opts(NULL), format_opts(NULL), codec_opts(NULL) {
-  av_dict_set(&sws_dict, "flags", "bicubic", 0);
-}
-
-DictionaryOptions::~DictionaryOptions() {
-  av_dict_free(&swr_opts);
-  av_dict_free(&sws_dict);
-  av_dict_free(&format_opts);
-  av_dict_free(&codec_opts);
-}
-
 void init_dynload(void) {
 #ifdef _WIN32
   /* Calling SetDllDirectory with the empty string (but not NULL) removes the

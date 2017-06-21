@@ -45,8 +45,9 @@ bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
   } else {
     uri_str = uri.Url();
   }
+
   const char* in_filename = common::utils::c_strornull(uri_str);
-  int open_result = avformat_open_input(&ic, in_filename, NULL, NULL);  // autodetect format
+  int open_result = avformat_open_input(&ic, in_filename, NULL, NULL);
   if (open_result < 0) {
     avformat_free_context(ic);
     ic = NULL;
