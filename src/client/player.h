@@ -34,7 +34,6 @@
 
 #include "client/player_options.h"
 #include "client/playlist_entry.h"
-#include "client/types.h"  // for Size, Rect
 
 #include "client/core/app_options.h"            // for AppOptions, ComplexOp...
 #include "client/core/events/events.h"          // for PostExecEvent, PreExe...
@@ -138,7 +137,7 @@ class Player : public core::VideoStateHandler {
   virtual bool HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
   virtual void HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) override;
   virtual bool HandleRequestVideo(core::VideoState* stream) override;
-  virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) override;
+  virtual void HandleDefaultWindowSize(core::Size frame_size, AVRational sar) override;
 
   virtual void HandlePreExecEvent(core::events::PreExecEvent* event);
   virtual void HandlePostExecEvent(core::events::PostExecEvent* event);
@@ -259,7 +258,7 @@ class Player : public core::VideoStateHandler {
   TTF_Font* font_;
   core::VideoState* stream_;
 
-  Size window_size_;
+  core::Size window_size_;
   const int xleft_;
   const int ytop_;
 

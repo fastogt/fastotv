@@ -67,7 +67,8 @@ class Stream {
   virtual ~Stream();
 
   int Index() const;
-  AVStream* AvStream() const;
+  AVRational GetTimeBase() const;
+  AVCodecParameters* GetCodecpar() const;
   double q2d() const;
 
   // clock interface
@@ -91,13 +92,13 @@ class Stream {
   Stream();
   void SetDesireBandwith(const DesireBytesPerSec& band);
 
+  AVStream* stream_st_;
  private:
   DISALLOW_COPY_AND_ASSIGN(Stream);
 
   PacketQueue* packet_queue_;
   Clock* clock_;
   int stream_index_;
-  AVStream* stream_st_;
 
   DesireBytesPerSec bandwidth_;
   common::time64_t start_ts_;
@@ -110,8 +111,15 @@ class VideoStream : public Stream {
 
   virtual bool Open(int index, AVStream* av_stream_st, AVRational frame_rate);
 
+  AVRational GetFrameRate() const;
+  double GetRotation() const;
+  bool HaveDispositionPicture() const;
+  AVRational GetAspectRatio() const;
+  AVRational StableAspectRatio(AVFrame* frame) const;
+
  private:
   using Stream::Open;
+  AVRational frame_rate_;
 };
 
 class AudioStream : public Stream {

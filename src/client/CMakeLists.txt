@@ -267,7 +267,8 @@ SET(HEADERS_CORE_EVENTS
 SET(HEADERS_CORE
   core/types.h
   core/stream_statistic.h
-  core/utils.h
+  core/av_utils.h
+  core/sdl_utils.h
   core/clock.h
   core/packet_queue.h
   core/frame_queue.h
@@ -300,7 +301,8 @@ SET(SOURCES_CORE_EVENTS
 SET(SOURCES_CORE
   core/types.cpp
   core/stream_statistic.cpp
-  core/utils.cpp
+  core/av_utils.cpp
+  core/sdl_utils.cpp
   core/clock.cpp
   core/packet_queue.cpp
   core/frame_queue.cpp
@@ -484,6 +486,7 @@ SET(BUILD_CLIENT_SOURCES
   player.h player.cpp
   config.h config.cpp
   cmdutils.h cmdutils.cpp
+  utils.h utils.cpp
   sdl_utils.h sdl_utils.cpp
   ioservice.h ioservice.cpp
 
@@ -639,6 +642,11 @@ IF(OS_WINDOWS)
   SET(SHARED_SDL2_NAMES SDL2.dll)
   FIND_RUNTIME_LIBRARY(SHARED_SDL2_LIBRARY SHARED_SDL2_NAMES)
   INSTALL(FILES ${SHARED_SDL2_LIBRARY} DESTINATION ${LIB_INSTALL_DESTINATION} COMPONENT RUNTIME)
+
+  #find runtime sdl2 image
+  SET(SHARED_SDL2_IMAGE_NAMES SDL2_image.dll)
+  FIND_RUNTIME_LIBRARY(SHARED_SDL2_IMAGE_LIBRARY SHARED_SDL2_IMAGE_NAMES)
+  INSTALL(FILES ${SHARED_SDL2_IMAGE_LIBRARY} DESTINATION ${LIB_INSTALL_DESTINATION} COMPONENT RUNTIME)
 
   #find runtime sdl2 ttf
   SET(SHARED_SDL2_TTF_NAMES SDL2_ttf.dll)

@@ -8,7 +8,7 @@ extern "C" {
 #include "client/core/video_state.h"
 #include "client/core/video_state_handler.h"
 #include "client/core/events/events.h"
-#include "client/core/utils.h"
+#include "client/core/sdl_utils.h"
 
 using namespace fasto::fastotv;
 using namespace fasto::fastotv::client;

@@ -29,14 +29,6 @@ Point::Point() : x(0), y(0) {}
 
 Point::Point(int x, int y) : x(x), y(y) {}
 
-Size::Size() : width(0), height(0) {}
-
-Size::Size(int width, int height) : width(width), height(height) {}
-
-bool Size::IsValid() const {
-  return width != 0 && height != 0;
-}
-
 Rect::Rect(int x, int y, int width, int height) : x(x), y(y), width(width), height(height) {}
 
 }  // namespace client
@@ -68,35 +60,6 @@ bool ConvertFromString(const std::string& from, fasto::fastotv::client::Point* o
       return false;
     }
     res.y = ly;
-  }
-
-  *out = res;
-  return true;
-}
-
-std::string ConvertToString(const fasto::fastotv::client::Size& value) {
-  return MemSPrintf("%dx%d", value.width, value.height);
-}
-
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::Size* out) {
-  if (!out) {
-    return false;
-  }
-
-  fasto::fastotv::client::Size res;
-  size_t del = from.find_first_of('x');
-  if (del != std::string::npos) {
-    int lwidth;
-    if (!ConvertFromString(from.substr(0, del), &lwidth)) {
-      return false;
-    }
-    res.width = lwidth;
-
-    int lheight;
-    if (!ConvertFromString(from.substr(del + 1), &lheight)) {
-      return false;
-    }
-    res.height = lheight;
   }
 
   *out = res;

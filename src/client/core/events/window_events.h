@@ -20,7 +20,7 @@
 
 #include "client/core/events/events_base.h"
 
-#include "client/types.h"
+#include "client/core/types.h"
 
 namespace fasto {
 namespace fastotv {

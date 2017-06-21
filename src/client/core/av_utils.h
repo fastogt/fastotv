@@ -18,43 +18,47 @@
 
 #pragma once
 
-#include <SDL2/SDL_audio.h>   // for SDL_AudioCallback
-#include <SDL2/SDL_rect.h>    // for SDL_Rect
-#include <SDL2/SDL_render.h>  // for SDL_Renderer, SDL_Texture
-
-#include <sys/types.h>  // for int64_t
-#include <string>       // for string
-
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 
 extern "C" {
-#include <libavcodec/avcodec.h>  // for AVCodec, AVCodecID
 #if CONFIG_AVFILTER
 #include <libavfilter/avfilter.h>
 #endif
 #include <libavformat/avformat.h>  // for AVFormatContext, AVStream
-#include <libavutil/dict.h>        // for AVDictionary
 #include <libavutil/frame.h>       // for AVFrame
 #include <libavutil/rational.h>    // for AVRational
-#include <libavutil/samplefmt.h>   // for AVSampleFormat
 }
-
-#include <common/types.h>
-#include <common/url.h>
-
-/* Minimum SDL audio buffer size, in samples. */
-#define AUDIO_MIN_BUFFER_SIZE 512
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
 
-struct AudioParams;
-
-bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff);
-
 double q2d_diff(AVRational a);
+
+AVRational guess_sample_aspect_ratio(AVStream* stream, AVFrame* frame);
+
+double get_rotation(AVStream* st);
+
+bool is_realtime(AVFormatContext* s);
+
+#if CONFIG_AVFILTER
+int configure_filtergraph(AVFilterGraph* graph,
+                          const char* filtergraph,
+                          AVFilterContext* source_ctx,
+                          AVFilterContext* sink_ctx);
+#endif
+
+/**
+ * Check if the given stream matches a stream specifier.
+ *
+ * @param s  Corresponding format context.
+ * @param st Stream from s to be checked.
+ * @param spec A stream specifier of the [v|a|s|d]:[\<stream index\>] form.
+ *
+ * @return 1 if the stream matches, 0 if it doesn't, <0 on error
+ */
+int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec);
 
 /**
  * Filter out options for given codec.
@@ -88,49 +92,6 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
  * cannot be created
  */
 AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* codec_opts);
-
-/**
- * Check if the given stream matches a stream specifier.
- *
- * @param s  Corresponding format context.
- * @param st Stream from s to be checked.
- * @param spec A stream specifier of the [v|a|s|d]:[\<stream index\>] form.
- *
- * @return 1 if the stream matches, 0 if it doesn't, <0 on error
- */
-int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec);
-
-double get_rotation(AVStream* st);
-
-#if CONFIG_AVFILTER
-int configure_filtergraph(AVFilterGraph* graph,
-                          const std::string& filtergraph,
-                          AVFilterContext* source_ctx,
-                          AVFilterContext* sink_ctx);
-#endif
-
-void calculate_display_rect(SDL_Rect* rect,
-                            int scr_xleft,
-                            int scr_ytop,
-                            int scr_width,
-                            int scr_height,
-                            int pic_width,
-                            int pic_height,
-                            AVRational pic_sar);
-
-int upload_texture(SDL_Texture* tex, const AVFrame* frame);
-int audio_open(void* opaque,
-               int64_t wanted_channel_layout,
-               int wanted_nb_channels,
-               int wanted_sample_rate,
-               AudioParams* audio_hw_params,
-               SDL_AudioCallback cb);
-
-bool init_audio_params(int64_t wanted_channel_layout, int freq, int channels, AudioParams* audio_hw_params);
-
-bool is_realtime(AVFormatContext* s);
-
-int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1, enum AVSampleFormat fmt2, int64_t channel_count2);
 
 }  // namespace core
 }  // namespace client

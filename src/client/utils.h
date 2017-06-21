@@ -18,25 +18,14 @@
 
 #pragma once
 
-#include "client/core/types.h"
+#include <common/types.h>
+#include <common/url.h>
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 
-struct PlayerOptions {
-  enum { width = 640, height = 480, volume = 100 };
-  PlayerOptions();
-
-  bool exit_on_keydown;
-  bool exit_on_mousedown;
-  bool is_full_screen;
-
-  core::Size default_size;
-  core::Size screen_size;
-
-  int audio_volume;  // Range: 0 - 100
-};
+bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff);
 
 }  // namespace client
 }  // namespace fastotv
