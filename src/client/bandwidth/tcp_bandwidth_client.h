@@ -56,9 +56,9 @@ class TcpBandwidthClient : public common::libev::tcp::TcpClient {
 
   virtual common::Error Read(char* out, size_t size, size_t* nread) override;
 
-  size_t TotalDownloadedBytes() const;
-  bandwidth_t DownloadBytesPerSecond() const;
-  BandwidthHostType HostType() const;
+  size_t GetTotalDownloadedBytes() const;
+  bandwidth_t GetDownloadBytesPerSecond() const;
+  BandwidthHostType GetHostType() const;
 
  private:
   common::time64_t duration_;

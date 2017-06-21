@@ -99,8 +99,8 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   bandwidth_requests_.erase(it);
   common::net::socket_info info = band_client->Info();
   const common::net::HostAndPort host(info.host(), info.port());
-  const BandwidthHostType hs = band_client->HostType();
-  const bandwidth_t band = band_client->DownloadBytesPerSecond();
+  const BandwidthHostType hs = band_client->GetHostType();
+  const bandwidth_t band = band_client->GetDownloadBytesPerSecond();
   if (hs == MAIN_SERVER) {
     current_bandwidth_ = band;
   }

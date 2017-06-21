@@ -71,10 +71,10 @@ extern "C" {
 #include "client/core/packet_queue.h"          // for PacketQueue
 #include "client/core/stream.h"                // for AudioStream, VideoStream
 #include "client/core/types.h"                 // for clock64_t, IsValidClock
-#include "client/core/utils.h"                 // for q2d_diff, configure_fi...
-#include "client/core/video_frame.h"           // for VideoFrame
+#include "client/core/av_utils.h"
+#include "client/core/sdl_utils.h"
+#include "client/core/video_frame.h"  // for VideoFrame
 #include "client/core/video_state_handler.h"
-#include "client/types.h"  // for Size
 
 #undef ERROR
 
@@ -105,6 +105,35 @@ std::string ffmpeg_errno_to_string(int err) {
     return strerror(AVUNERROR(err));
   }
   return errbuf;
+}
+
+int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
+  if (frame->format == AV_PIX_FMT_YUV420P) {
+    if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
+      ERROR_LOG() << "Negative linesize is not supported for YUV.";
+      return -1;
+    }
+    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1], frame->linesize[1],
+                                frame->data[2], frame->linesize[2]);
+  } else if (frame->format == AV_PIX_FMT_BGRA) {
+    if (frame->linesize[0] < 0) {
+      return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
+                               -frame->linesize[0]);
+    }
+    return SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
+  }
+
+  NOTREACHED();
+  return -1;
+}
+
+int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1, enum AVSampleFormat fmt2, int64_t channel_count2) {
+  /* If channel count == 1, planar and non-planar formats are the same */
+  if (channel_count1 == 1 && channel_count2 == 1) {
+    return av_get_packed_sample_fmt(fmt1) != av_get_packed_sample_fmt(fmt2);
+  }
+
+  return channel_count1 != channel_count2 || fmt1 != fmt2;
 }
 }  // namespace
 
@@ -1062,23 +1091,23 @@ display:
 
 void VideoState::TryRefreshVideo() {
   if (!paused_ || force_refresh_) {
-    AVStream* video_st = vstream_->IsOpened() ? vstream_->AvStream() : NULL;
-    AVStream* audio_st = astream_->IsOpened() ? astream_->AvStream() : NULL;
+    const bool is_video_open = vstream_->IsOpened();
+    const bool is_audio_open = astream_->IsOpened();
     PacketQueue* video_packet_queue = vstream_->Queue();
     PacketQueue* audio_packet_queue = astream_->Queue();
 
-    if (video_st && video_frame_queue_) {
+    if (is_video_open && video_frame_queue_) {
       RefreshVideo();
     }
     force_refresh_ = false;
 
     int aqsize = 0, vqsize = 0;
     bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
-    if (video_st) {
+    if (is_video_open) {
       vqsize = video_packet_queue->GetSize();
       video_bandwidth = vstream_->Bandwidth();
     }
-    if (audio_st) {
+    if (is_audio_open) {
       aqsize = audio_packet_queue->GetSize();
       audio_bandwidth = astream_->Bandwidth();
     }
@@ -1086,9 +1115,9 @@ void VideoState::TryRefreshVideo() {
     stats_->master_clock = GetMasterClock();
     stats_->video_clock = vstream_->GetClock();
     stats_->audio_clock = astream_->GetClock();
-    stats_->fmt = (audio_st && video_st)
+    stats_->fmt = (is_audio_open && is_video_open)
                       ? (HAVE_VIDEO_STREAM | HAVE_AUDIO_STREAM)
-                      : (video_st ? HAVE_VIDEO_STREAM : (audio_st ? HAVE_AUDIO_STREAM : UNKNOWN_STREAM));
+                      : (is_video_open ? HAVE_VIDEO_STREAM : (is_audio_open ? HAVE_AUDIO_STREAM : UNKNOWN_STREAM));
     stats_->audio_queue_size = aqsize;
     stats_->video_queue_size = vqsize;
     stats_->audio_bandwidth = audio_bandwidth;
@@ -1195,7 +1224,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
   }
 
   if (got_picture) {
-    frame->sample_aspect_ratio = av_guess_sample_aspect_ratio(ic_, vstream_->AvStream(), frame);
+    frame->sample_aspect_ratio = vstream_->StableAspectRatio(frame);
 
     if (opt_.framedrop == FRAME_DROP_AUTO || (opt_.framedrop || GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)) {
       if (IsValidPts(frame->pts)) {
@@ -1386,11 +1415,7 @@ int VideoState::ReadThread() {
     opt_.infinite_buffer = 1;
   }
 
-  AVStream* const video_st = video_stream->AvStream();
-  AVStream* const audio_st = audio_stream->AvStream();
-  UNUSED(audio_st);
   ResetStats();
-
   while (!IsAborted()) {
     if (paused_ != last_paused_) {
       last_paused_ = paused_;
@@ -1484,7 +1509,7 @@ int VideoState::ReadThread() {
       audio_stream->RegisterPacket(pkt);
       audio_packet_queue->Put(pkt);
     } else if (pkt->stream_index == video_stream->Index()) {
-      if (video_st->disposition & AV_DISPOSITION_ATTACHED_PIC) {
+      if (video_stream->HaveDispositionPicture()) {
         av_packet_unref(pkt);
       } else {
         video_stream->RegisterPacket(pkt);
@@ -1607,9 +1632,8 @@ int VideoState::VideoThread() {
   }
 #endif
 
-  AVStream* video_st = vstream_->AvStream();
-  AVRational tb = video_st->time_base;
-  AVRational frame_rate = av_guess_frame_rate(ic_, video_st, NULL);
+  AVRational tb = vstream_->GetTimeBase();
+  AVRational frame_rate = vstream_->GetFrameRate();
   while (true) {
     int ret = GetVideoFrame(frame);
     if (ret < 0) {
@@ -1633,9 +1657,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);
@@ -1718,20 +1741,20 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const std::string& v
     sws_flags_str[len_sws_flags - 1] = 0;
   }
 
-  AVStream* video_st = vstream_->AvStream();
-  if (!video_st) {
+  AVCodecParameters* codecpar = vstream_->GetCodecpar();
+  if (!codecpar) {
     DNOTREACHED();
     return ERROR_RESULT_VALUE;
   }
-  AVCodecParameters* codecpar = video_st->codecpar;
 
+  AVRational tb = vstream_->GetTimeBase();
   char buffersrc_args[256];
   AVFilterContext *filt_src = NULL, *filt_out = NULL, *last_filter = NULL;
   graph->scale_sws_opts = av_strdup(sws_flags_str);
   snprintf(buffersrc_args, sizeof(buffersrc_args), "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
-           frame->width, frame->height, frame->format, video_st->time_base.num, video_st->time_base.den,
-           codecpar->sample_aspect_ratio.num, FFMAX(codecpar->sample_aspect_ratio.den, 1));
-  AVRational fr = av_guess_frame_rate(ic_, video_st, NULL);
+           frame->width, frame->height, frame->format, tb.num, tb.den, codecpar->sample_aspect_ratio.num,
+           FFMAX(codecpar->sample_aspect_ratio.den, 1));
+  AVRational fr = vstream_->GetFrameRate();
   if (fr.num && fr.den) {
     av_strlcatf(buffersrc_args, sizeof(buffersrc_args), ":frame_rate=%d/%d", fr.num, fr.den);
   }
@@ -1773,7 +1796,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const std::string& v
   } while (0)
 
   if (opt_.autorotate) {
-    double theta = get_rotation(video_st);
+    double theta = vstream_->GetRotation();
 
     if (fabs(theta - 90) < 1.0) {
       INSERT_FILT("transpose", "clock");
@@ -1789,7 +1812,8 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const std::string& v
     }
   }
 
-  ret = configure_filtergraph(graph, vfilters, filt_src, last_filter);
+  const char* vfilters_ptr = common::utils::c_strornull(vfilters);
+  ret = configure_filtergraph(graph, vfilters_ptr, filt_src, last_filter);
   if (ret < 0) {
     WARNING_LOG() << "Failed to configure_filtergraph ret: " << ret;
     return ret;
@@ -1883,7 +1907,8 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
     }
   }
 
-  ret = configure_filtergraph(agraph_, afilters, filt_asrc, filt_asink);
+  const char* afilters_ptr = common::utils::c_strornull(afilters);
+  ret = configure_filtergraph(agraph_, afilters_ptr, filt_asrc, filt_asink);
   if (ret < 0) {
     avfilter_graph_free(&agraph_);
     return ret;

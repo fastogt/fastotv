@@ -1,6 +1,6 @@
 #pragma once
 
-#include "client/types.h"
+#include "client/core/types.h"
 #include "client_server_types.h"  // for bandwidth_t
 
 namespace fasto {

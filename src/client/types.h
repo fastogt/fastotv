@@ -34,16 +34,6 @@ struct Point {
   int y;
 };
 
-struct Size {
-  Size();
-  Size(int width, int height);
-
-  bool IsValid() const;
-
-  int width;
-  int height;
-};
-
 struct Rational {
   int num;  ///< Numerator
   int den;  ///< Denominator
@@ -61,7 +51,4 @@ struct Rect {
 namespace common {
 std::string ConvertToString(const fasto::fastotv::client::Point& value);
 bool ConvertFromString(const std::string& from, fasto::fastotv::client::Point* out);
-
-std::string ConvertToString(const fasto::fastotv::client::Size& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::Size* out);
 }  // namespace common

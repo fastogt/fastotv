@@ -63,6 +63,16 @@ enum AvSyncType {
 };
 
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels);
+
+struct Size {
+  Size();
+  Size(int width, int height);
+
+  bool IsValid() const;
+
+  int width;
+  int height;
+};
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv
@@ -71,4 +81,7 @@ int64_t get_valid_channel_layout(int64_t channel_layout, int channels);
 namespace common {
 std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value);
 bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out);
+
+std::string ConvertToString(const fasto::fastotv::client::core::Size& value);
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::Size* out);
 }  // namespace common

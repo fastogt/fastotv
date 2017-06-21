@@ -26,6 +26,7 @@ extern "C" {
 
 #include <common/error.h>  // for Error
 
+#include "client/core/types.h"
 #include "client/core/events/events_base.h"
 
 namespace fasto {
@@ -53,13 +54,6 @@ namespace core {
 struct VideoFrame;
 }
 }  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-struct Size;
-}
 }  // namespace fastotv
 }  // namespace fasto
 

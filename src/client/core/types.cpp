@@ -26,6 +26,8 @@ extern "C" {
 }
 
 #include <common/time.h>  // for current_mstime
+#include <common/sprintf.h>
+#include <common/convert2string.h>
 
 #include "ffmpeg_internal.h"
 
@@ -33,6 +35,14 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+
+Size::Size() : width(0), height(0) {}
+
+Size::Size(int width, int height) : width(width), height(height) {}
+
+bool Size::IsValid() const {
+  return width != 0 && height != 0;
+}
 
 bandwidth_t CalculateBandwidth(size_t total_downloaded_bytes, msec_t data_interval) {
   if (data_interval == 0) {
@@ -123,4 +133,34 @@ bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HW
     return false;
   }
 }
+
+std::string ConvertToString(const fasto::fastotv::client::core::Size& value) {
+  return MemSPrintf("%dx%d", value.width, value.height);
+}
+
+bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::Size* out) {
+  if (!out) {
+    return false;
+  }
+
+  fasto::fastotv::client::core::Size res;
+  size_t del = from.find_first_of('x');
+  if (del != std::string::npos) {
+    int lwidth;
+    if (!ConvertFromString(from.substr(0, del), &lwidth)) {
+      return false;
+    }
+    res.width = lwidth;
+
+    int lheight;
+    if (!ConvertFromString(from.substr(del + 1), &lheight)) {
+      return false;
+    }
+    res.height = lheight;
+  }
+
+  *out = res;
+  return true;
+}
+
 }  // namespace common

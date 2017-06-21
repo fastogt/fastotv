@@ -66,15 +66,15 @@ common::Error TcpBandwidthClient::StartSession(uint16_t ms_betwen_send, common::
   return common::Error();
 }
 
-size_t TcpBandwidthClient::TotalDownloadedBytes() const {
+size_t TcpBandwidthClient::GetTotalDownloadedBytes() const {
   return total_downloaded_bytes_;
 }
 
-bandwidth_t TcpBandwidthClient::DownloadBytesPerSecond() const {
+bandwidth_t TcpBandwidthClient::GetDownloadBytesPerSecond() const {
   return downloaded_bytes_per_sec_;
 }
 
-BandwidthHostType TcpBandwidthClient::HostType() const {
+BandwidthHostType TcpBandwidthClient::GetHostType() const {
   return host_type_;
 }
 

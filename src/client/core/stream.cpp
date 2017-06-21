@@ -25,7 +25,7 @@
 
 #include "client/core/clock.h"         // for Clock
 #include "client/core/packet_queue.h"  // for PacketQueue
-#include "client/core/utils.h"         // for q2d_diff
+#include "client/core/av_utils.h"
 
 #include "client/types.h"  // for Size
 
@@ -35,10 +35,10 @@ namespace client {
 namespace core {
 
 Stream::Stream()
-    : packet_queue_(new PacketQueue),
+    : stream_st_(NULL),
+      packet_queue_(new PacketQueue),
       clock_(new Clock),
       stream_index_(-1),
-      stream_st_(NULL),
       bandwidth_(),
       start_ts_(0),
       total_downloaded_bytes_(0) {}
@@ -87,8 +87,12 @@ int Stream::Index() const {
   return stream_index_;
 }
 
-AVStream* Stream::AvStream() const {
-  return stream_st_;
+AVRational Stream::GetTimeBase() const {
+  return stream_st_ ? stream_st_->time_base : AVRational();
+}
+
+AVCodecParameters* Stream::GetCodecpar() const {
+  return stream_st_ ? stream_st_->codecpar : NULL;
 }
 
 double Stream::q2d() const {
@@ -157,7 +161,7 @@ void Stream::SetDesireBandwith(const DesireBytesPerSec& band) {
   bandwidth_ = band;
 }
 
-VideoStream::VideoStream() : Stream() {}
+VideoStream::VideoStream() : Stream(), frame_rate_() {}
 
 bool VideoStream::Open(int index, AVStream* av_stream_st, AVRational frame_rate) {
   AVCodecParameters* codecpar = av_stream_st->codecpar;
@@ -177,7 +181,29 @@ bool VideoStream::Open(int index, AVStream* av_stream_st, AVRational frame_rate)
   }
 
   SetDesireBandwith(band);
+  frame_rate_ = frame_rate;
   return Stream::Open(index, av_stream_st);
+}
+
+AVRational VideoStream::GetFrameRate() const {
+  return frame_rate_;
+}
+
+double VideoStream::GetRotation() const {
+  return get_rotation(stream_st_);
+}
+
+bool VideoStream::HaveDispositionPicture() const {
+  return stream_st_->disposition & AV_DISPOSITION_ATTACHED_PIC;
+}
+
+AVRational VideoStream::GetAspectRatio() const {
+  AVRational undef = {0, 1};
+  return stream_st_ ? stream_st_->sample_aspect_ratio : undef;
+}
+
+AVRational VideoStream::StableAspectRatio(AVFrame* frame) const {
+  return guess_sample_aspect_ratio(stream_st_, frame);
 }
 
 AudioStream::AudioStream() : Stream() {}

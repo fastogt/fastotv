@@ -46,11 +46,13 @@ extern "C" {
 #include "client/core/app_options.h"      // for AppOptions, ComplexOptio...
 #include "client/core/audio_params.h"     // for AudioParams
 #include "client/core/ffmpeg_internal.h"  // for hw_device_ctx
-#include "client/core/utils.h"            // for audio_open, calculate_di...
+#include "client/core/sdl_utils.h"
 #include "client/core/video_frame.h"      // for VideoFrame
 #include "client/core/video_state.h"      // for VideoState
-#include "client/ioservice.h"             // for IoService
-#include "client/sdl_utils.h"             // for IMG_LoadPNG, TextureSaver
+
+#include "client/utils.h"
+#include "client/ioservice.h"  // for IoService
+#include "client/sdl_utils.h"  // for IMG_LoadPNG, TextureSaver
 
 #include "channel_info.h"  // for Url
 
@@ -83,7 +85,7 @@ int ConvertToSDLVolume(int val) {
   return av_clip(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
-bool CreateWindowFunc(Size window_size,
+bool CreateWindowFunc(core::Size window_size,
                       bool is_full_screen,
                       const std::string& title,
                       SDL_Renderer** renderer,
@@ -383,9 +385,8 @@ bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* fram
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                                           "to reduce the image size.";
     return false;
   }
 
@@ -415,7 +416,7 @@ bool Player::HandleRequestVideo(core::VideoState* stream) {
   return true;
 }
 
-void Player::HandleDefaultWindowSize(Size frame_size, AVRational sar) {
+void Player::HandleDefaultWindowSize(core::Size frame_size, AVRational sar) {
   SDL_Rect rect;
   core::calculate_display_rect(&rect, 0, 0, INT_MAX, frame_size.height, frame_size.width, frame_size.height, sar);
   options_.default_size.width = rect.w;
@@ -817,7 +818,7 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
         const std::string channel_icon_path = entry.GetIconPath();
         if (!common::file_system::is_file_exist(channel_icon_path)) {  // if not exist trying to download
           common::buffer_t buff;
-          bool is_file_downloaded = core::DownloadFileToBuffer(uri, &buff);
+          bool is_file_downloaded = DownloadFileToBuffer(uri, &buff);
           if (!is_file_downloaded) {
             return;
           }
@@ -1022,7 +1023,7 @@ SDL_Rect Player::GetDrawRect() const {
 }
 
 SDL_Rect Player::GetDisplayRect() const {
-  const Size display_size = window_size_;
+  const core::Size display_size = window_size_;
   return {0, 0, display_size.width, display_size.height};
 }
 
