@@ -292,7 +292,7 @@ class BuildRequest(object):
                                 '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
-                                '--disable-debug', '--disable-jni',
+                                '--disable-debug', '--disable-jni', '--enable-postproc', '--enable-filter=yadif',
                                 '--enable-avfilter', '--enable-avcodec', '--enable-avdevice', '--enable-avformat',
                                 '--enable-swscale', '--enable-swresample',
                                 '--extra-version=static']  # '--extra-cflags=--static'

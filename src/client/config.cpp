@@ -67,6 +67,7 @@
 // vaapi args: -hwaccel vaapi -hwaccel_device /dev/dri/card0
 // vdpau args: -hwaccel vdpau
 // scale output: -vf scale=1920x1080
+// deinterlace output: -vf yadif
 
 /*
   [main_options]
@@ -241,15 +242,19 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     return 1;
 #if CONFIG_AVFILTER
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_VF_FIELD)) {
-    const std::string arg_copy(value);
-    size_t del = arg_copy.find_first_of('=');
-    if (del != std::string::npos) {
-      std::string key = arg_copy.substr(0, del);
-      std::string value = arg_copy.substr(del + 1);
-      if (key == "scale") {
-        core::Size sz;
-        if (common::ConvertFromString(value, &sz)) {
-          pconfig->player_options.screen_size = sz;
+    std::vector<std::string> tokens;
+    size_t vf_count = common::Tokenize(value, ",", &tokens);
+    for (size_t i = 0; i < vf_count; ++i) {
+      std::string arg_copy = tokens[i];
+      size_t del = arg_copy.find_first_of('=');
+      if (del != std::string::npos) {
+        std::string key = arg_copy.substr(0, del);
+        std::string value = arg_copy.substr(del + 1);
+        if (key == "scale") {
+          core::Size sz;
+          if (common::ConvertFromString(value, &sz)) {
+            pconfig->player_options.screen_size = sz;
+          }
         }
       }
     }
