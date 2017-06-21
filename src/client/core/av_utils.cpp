@@ -40,7 +40,8 @@ int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {
 }
 
 double q2d_diff(AVRational a) {
-  return a.num / static_cast<double>(a.den * 1000.0);
+  double div = a.num / static_cast<double>(a.den);
+  return div * 1000.0;
 }
 
 AVRational guess_sample_aspect_ratio(AVStream* stream, AVFrame* frame) {
