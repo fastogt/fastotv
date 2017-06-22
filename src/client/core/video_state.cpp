@@ -1289,17 +1289,6 @@ int VideoState::ReadThread() {
     av_dict_set(&copt_.format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
   }
 
-  /*AVDictionaryEntry* t = av_dict_get(copt_->format_opts, "", NULL, AV_DICT_IGNORE_SUFFIX);
-  if (t) {
-    ERROR_LOG() << "Option " << t->key << " not found.";
-    avformat_close_input(&ic);
-    SDL_Event event;
-    event.type = FF_QUIT_EVENT;
-    event.user.data1 = this;
-    event.user.code = AVERROR_OPTION_NOT_FOUND;
-    SDL_PushEvent(&event);
-    return AVERROR_OPTION_NOT_FOUND;
-  }*/
   ic_ = ic;
 
   VideoStream* video_stream = vstream_;
@@ -1373,15 +1362,6 @@ int VideoState::ReadThread() {
   st_index[AVMEDIA_TYPE_AUDIO] =
       av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
 
-  /*if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
-    AVStream* st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
-    AVCodecParameters* codecpar = st->codecpar;
-    AVRational sar = av_guess_sample_aspect_ratio(ic, st, NULL);
-    if (codecpar->width && codecpar->height) {
-      handler_->HandleDefaultWindowSize(Size(codecpar->width, codecpar->height), sar);
-    }
-  }*/
-
   /* open the streams */
   if (st_index[AVMEDIA_TYPE_AUDIO] >= 0) {
     int res_audio = StreamComponentOpen(st_index[AVMEDIA_TYPE_AUDIO]);
@@ -1396,15 +1376,6 @@ int VideoState::ReadThread() {
       WARNING_LOG() << "Failed to open video stream";
     }
   }
-
-  /*if (!IsStreamReady()) {
-    common::Error err = common::make_error_value("Failed to open stream, or configure filtergraph.",
-                                                 common::Value::E_ERROR);
-    events::QuitStreamEvent* qevent =
-        new events::QuitStreamEvent(this, events::QuitStreamInfo(this, -1, err));
-    fApp->PostEvent(qevent);
-    return ERROR_RESULT_VALUE;
-  }*/
 
   DesireBytesPerSec video_bandwidth_calc = video_stream->DesireBandwith();
   DCHECK(video_bandwidth_calc.IsValid());

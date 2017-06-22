@@ -19,8 +19,8 @@
 #include "client/core/sdl_utils.h"
 
 extern "C" {
-#include <libavutil/common.h>
 #include <libavutil/channel_layout.h>
+#include <libavutil/common.h>
 }
 
 #include <common/macros.h>

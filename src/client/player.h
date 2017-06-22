@@ -115,11 +115,12 @@ class Player : public StreamHandler, public core::events::EventListener {
          const PlayerOptions& options,
          const core::AppOptions& opt,
          const core::ComplexOptions& copt);
+
   void SetFullScreen(bool full_screen);
   void SetMute(bool mute);
-  void Mute();
   void UpdateVolume(int step);
   void Quit();
+
   ~Player();
 
  protected:
@@ -187,6 +188,7 @@ class Player : public StreamHandler, public core::events::EventListener {
   void CalculateDispalySize();
 
   // channel evrnts
+  void ToggleMute();
   void PauseStream();
   void MoveToNextStream();
   void MoveToPreviousStream();

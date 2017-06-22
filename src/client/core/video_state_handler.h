@@ -32,34 +32,10 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
-class VideoState;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-struct AudioParams;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-struct VideoFrame;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
 
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
+class VideoState;
+struct AudioParams;
+struct VideoFrame;
 
 class VideoStateHandler {
  public:
@@ -83,6 +59,7 @@ class VideoStateHandler {
   virtual void HandleAllocFrame(VideoState* stream, VideoFrame* frame) = 0;
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) = 0;
 };
+
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

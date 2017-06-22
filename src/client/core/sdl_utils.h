@@ -37,7 +37,6 @@ struct AudioParams;
 
 bool init_audio_params(int64_t wanted_channel_layout, int freq, int channels, AudioParams* audio_hw_params);
 
-struct AudioParams;
 void calculate_display_rect(SDL_Rect* rect,
                             int scr_xleft,
                             int scr_ytop,
@@ -52,7 +51,8 @@ int audio_open(void* opaque,
                int wanted_sample_rate,
                AudioParams* audio_hw_params,
                SDL_AudioCallback cb);
-}
+
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

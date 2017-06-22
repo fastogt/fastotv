@@ -10,7 +10,7 @@ TEST(commands, parse_commands) {
   cmd_id_t cmd_id;
   cmd_seq_t seq_id;
   std::string command_str;
-  common::Error err = ParseCommand(req.cmd(), &cmd_id, &seq_id, &command_str);
+  common::Error err = ParseCommand(req.GetCmd(), &cmd_id, &seq_id, &command_str);
 
   ASSERT_TRUE(!err);
   ASSERT_EQ(cmd_id, REQUEST_COMMAND);

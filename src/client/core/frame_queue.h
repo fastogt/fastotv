@@ -26,25 +26,9 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
-struct AudioFrame;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-struct VideoFrame;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
 
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
+struct AudioFrame;
+struct VideoFrame;
 
 template <size_t buffer_size>
 class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {

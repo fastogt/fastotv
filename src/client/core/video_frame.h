@@ -59,8 +59,8 @@ struct VideoFrame {
   bool allocated;
   int width;
   int height;
-  int format;
-  AVRational sar;
+  int format;      // pixel format in mostly AV_PIX_FMT_YUV420P
+  AVRational sar;  // aspect ratio
   bool uploaded;
   bool flip_v;
 

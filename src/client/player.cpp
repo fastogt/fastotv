@@ -240,11 +240,6 @@ void Player::SetMute(bool mute) {
   muted_ = mute;
 }
 
-void Player::Mute() {
-  bool muted = !muted_;
-  SetMute(muted);
-}
-
 Player::~Player() {
   if (core::hw_device_ctx) {
     av_buffer_unref(&core::hw_device_ctx);
@@ -553,7 +548,7 @@ void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
       break;
     }
     case LIRC_KEY_MUTE: {
-      Mute();
+      ToggleMute();
       break;
     }
     default: { break; }
@@ -591,7 +586,7 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       PauseStream();
       break;
     case FASTO_KEY_m: {
-      Mute();
+      ToggleMute();
       break;
     }
     case FASTO_KEY_KP_MULTIPLY:
@@ -1232,6 +1227,11 @@ void Player::CalculateDispalySize() {
 
 void Player::ToggleStatistic() {
   show_statstic_ = !show_statstic_;
+}
+
+void Player::ToggleMute() {
+  bool muted = !muted_;
+  SetMute(muted);
 }
 
 void Player::PauseStream() {
