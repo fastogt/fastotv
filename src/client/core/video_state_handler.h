@@ -53,10 +53,10 @@ class VideoStateHandler {
 
   // video
   virtual bool HandleRequestVideo(VideoState* stream) WARN_UNUSED_RESULT = 0;  // init video
-  virtual bool HandleReallocFrame(VideoState* stream, VideoFrame* frame) WARN_UNUSED_RESULT = 0;
+  virtual bool HandleReallocFrame(VideoState* stream, int width, int height, int format, AVRational sar) WARN_UNUSED_RESULT = 0;
   virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) = 0;
 
-  virtual void HandleAllocFrame(VideoState* stream, VideoFrame* frame) = 0;
+  virtual void HandleAllocFrame(VideoState* stream, int width, int height, int format, AVRational sar) = 0;
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) = 0;
 };
 

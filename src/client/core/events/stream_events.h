@@ -18,6 +18,10 @@
 
 #pragma once
 
+extern "C" {
+#include <libavutil/rational.h>    // for AVRational
+}
+
 #include <common/error.h>
 
 #include "client/core/events/events_base.h"
@@ -26,7 +30,6 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
-struct VideoFrame;
 class VideoState;
 namespace events {
 
@@ -37,8 +40,11 @@ struct StreamInfo {
 };
 
 struct FrameInfo : public StreamInfo {
-  FrameInfo(VideoState* stream, core::VideoFrame* frame);
-  core::VideoFrame* frame;
+  FrameInfo(VideoState* stream, int width, int height, int format, AVRational sar);
+  int width;
+  int height;
+  int format;
+  AVRational sar;
 };
 
 struct QuitStreamInfo : public StreamInfo {

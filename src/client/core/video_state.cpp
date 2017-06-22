@@ -61,17 +61,17 @@ extern "C" {
 
 #include "ffmpeg_internal.h"
 
-#include "client/core/app_options.h"           // for ComplexOptions, AppOpt...
-#include "client/core/audio_frame.h"           // for AudioFrame
+#include "client/core/app_options.h"  // for ComplexOptions, AppOpt...
+#include "client/core/audio_frame.h"  // for AudioFrame
+#include "client/core/av_utils.h"
 #include "client/core/bandwidth_estimation.h"  // for DesireBytesPerSec
 #include "client/core/decoder.h"               // for VideoDecoder, AudioDec...
 #include "client/core/events/stream_events.h"  // for QuitStreamEvent, Alloc...
 #include "client/core/frame_queue.h"           // for VideoDecoder, AudioDec...
 #include "client/core/packet_queue.h"          // for PacketQueue
-#include "client/core/stream.h"                // for AudioStream, VideoStream
-#include "client/core/types.h"                 // for clock64_t, IsValidClock
-#include "client/core/av_utils.h"
 #include "client/core/sdl_utils.h"
+#include "client/core/stream.h"       // for AudioStream, VideoStream
+#include "client/core/types.h"        // for clock64_t, IsValidClock
 #include "client/core/video_frame.h"  // for VideoFrame
 #include "client/core/video_state_handler.h"
 
@@ -104,26 +104,6 @@ std::string ffmpeg_errno_to_string(int err) {
     return strerror(AVUNERROR(err));
   }
   return errbuf;
-}
-
-int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
-  if (frame->format == AV_PIX_FMT_YUV420P) {
-    if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
-      ERROR_LOG() << "Negative linesize is not supported for YUV.";
-      return -1;
-    }
-    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1], frame->linesize[1],
-                                frame->data[2], frame->linesize[2]);
-  } else if (frame->format == AV_PIX_FMT_BGRA) {
-    if (frame->linesize[0] < 0) {
-      return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
-                               -frame->linesize[0]);
-    }
-    return SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
-  }
-
-  NOTREACHED();
-  return -1;
 }
 
 int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1, enum AVSampleFormat fmt2, int64_t channel_count2) {
@@ -676,9 +656,9 @@ clock64_t VideoState::GetMasterClock() const {
   return astream_->GetClock();
 }
 
-int VideoState::VideoOpen(VideoFrame* vp) {
-  if (vp && vp->width && vp->height) {
-    handler_->HandleDefaultWindowSize(Size(vp->width, vp->height), vp->sar);
+int VideoState::VideoOpen(int width, int height, AVRational sar) {
+  if (width && height) {
+    handler_->HandleDefaultWindowSize(Size(width, height), sar);
   }
 
   bool res = handler_->HandleRequestVideo(this);
@@ -687,22 +667,6 @@ int VideoState::VideoOpen(VideoFrame* vp) {
   }
 
   return 0;
-}
-
-int VideoState::AllocPicture() {
-  VideoFrame* vp = video_frame_queue_->Windex();
-
-  int res = VideoOpen(vp);
-  if (res == ERROR_RESULT_VALUE) {
-    return ERROR_RESULT_VALUE;
-  }
-
-  if (!handler_->HandleReallocFrame(this, vp)) {
-    return ERROR_RESULT_VALUE;
-  }
-
-  video_frame_queue_->ChangeSafeAndNotify([](VideoFrame* fr) { fr->allocated = true; }, vp);
-  return SUCCESS_RESULT_VALUE;
 }
 
 /* display the current picture, if any */
@@ -716,15 +680,7 @@ VideoFrame* VideoState::GetVideoFrameForDisplay() const {
   }
 
   VideoFrame* vp = video_frame_queue_->PeekLast();
-  if (vp->bmp) {
-    if (!vp->uploaded) {
-      if (upload_texture(vp->bmp, vp->frame) < 0) {
-        return nullptr;
-      }
-      vp->uploaded = true;
-      vp->flip_v = vp->frame->linesize[0] < 0;
-    }
-
+  if (vp) {
     stats_->frame_processed++;
     return vp;
   }
@@ -889,8 +845,17 @@ the_end:
   StreamComponentOpen(stream_index);
 }
 
-int VideoState::HandleAllocPictureEvent() {
-  return AllocPicture();
+int VideoState::HandleAllocPictureEvent(int width, int height, int format, AVRational sar) {
+  int res = VideoOpen(width, height, sar);
+  if (res == ERROR_RESULT_VALUE) {
+    return ERROR_RESULT_VALUE;
+  }
+
+  if (!handler_->HandleReallocFrame(this, width, height, format, sar)) {
+    return ERROR_RESULT_VALUE;
+  }
+
+  return SUCCESS_RESULT_VALUE;
 }
 
 int VideoState::SynchronizeAudio(int nb_samples) {
@@ -1190,22 +1155,16 @@ int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t durati
   }
 
   vp->sar = src_frame->sample_aspect_ratio;
-  vp->uploaded = false;
 
   /* alloc or resize hardware picture buffer */
-  if (!vp->bmp || !vp->allocated || vp->width != src_frame->width || vp->height != src_frame->height ||
-      vp->format != src_frame->format) {
-    vp->allocated = false;
+  if (vp->width != src_frame->width || vp->height != src_frame->height || vp->format != src_frame->format) {
     vp->width = src_frame->width;
     vp->height = src_frame->height;
     vp->format = src_frame->format;
 
     /* the allocation must be done in the main thread to avoid
        locking problems. */
-    handler_->HandleAllocFrame(this, vp);
-
-    video_frame_queue_->WaitSafeAndNotify(
-        [video_packet_queue, vp]() -> bool { return !vp->allocated && !video_packet_queue->IsAborted(); });
+    handler_->HandleAllocFrame(this, vp->width, vp->height, vp->format, vp->sar);
 
     if (video_packet_queue->IsAborted()) {
       return ERROR_RESULT_VALUE;
@@ -1213,14 +1172,12 @@ int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t durati
   }
 
   /* if the frame is not skipped, then display it */
-  if (vp->bmp) {
-    vp->pts = pts;
-    vp->duration = duration;
-    vp->pos = pos;
+  vp->pts = pts;
+  vp->duration = duration;
+  vp->pos = pos;
 
-    av_frame_move_ref(vp->frame, src_frame);
-    video_frame_queue_->Push();
-  }
+  av_frame_move_ref(vp->frame, src_frame);
+  video_frame_queue_->Push();
   return SUCCESS_RESULT_VALUE;
 }
 
@@ -1630,8 +1587,9 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
-                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height,
+          static_cast<const char*>(
+              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

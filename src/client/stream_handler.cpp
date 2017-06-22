@@ -18,8 +18,8 @@
 
 #include "client/stream_handler.h"
 
-#include "client/core/events/events.h"
 #include "client/core/application/sdl2_application.h"
+#include "client/core/events/events.h"
 
 namespace fasto {
 namespace fastotv {
@@ -27,9 +27,9 @@ namespace client {
 
 StreamHandler::~StreamHandler() {}
 
-void StreamHandler::HandleAllocFrame(core::VideoState* stream, core::VideoFrame* frame) {
+void StreamHandler::HandleAllocFrame(core::VideoState* stream, int width, int height, int format, AVRational sar) {
   core::events::AllocFrameEvent* event =
-      new core::events::AllocFrameEvent(stream, core::events::FrameInfo(stream, frame));
+      new core::events::AllocFrameEvent(stream, core::events::FrameInfo(stream, width, height, format, sar));
   fApp->PostEvent(event);
 }
 

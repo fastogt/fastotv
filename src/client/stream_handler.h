@@ -36,12 +36,16 @@ class StreamHandler : public core::VideoStateHandler {
                                   int* audio_buff_size) override = 0;
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override = 0;
 
-  virtual bool HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) override = 0;
+  virtual bool HandleReallocFrame(core::VideoState* stream,
+                                  int width,
+                                  int height,
+                                  int format,
+                                  AVRational sar) override = 0;
   virtual bool HandleRequestVideo(core::VideoState* stream) override = 0;
   virtual void HandleDefaultWindowSize(core::Size frame_size, AVRational sar) override = 0;
 
  private:
-  virtual void HandleAllocFrame(core::VideoState* stream, core::VideoFrame* frame) override final;
+  virtual void HandleAllocFrame(core::VideoState* stream, int width, int height, int format, AVRational sar) override final;
   virtual void HandleQuitStream(core::VideoState* stream, int exit_code, common::Error err) override final;
 };
 

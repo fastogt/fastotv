@@ -50,9 +50,9 @@ extern "C" {
 #include "client/core/video_frame.h"  // for VideoFrame
 #include "client/core/video_state.h"  // for VideoState
 
-#include "client/utils.h"
 #include "client/ioservice.h"  // for IoService
 #include "client/sdl_utils.h"  // for IMG_LoadPNG, TextureSaver
+#include "client/utils.h"
 
 #include "channel_info.h"  // for Url
 
@@ -73,6 +73,28 @@ extern "C" {
 #define CACHE_FOLDER_NAME "cache"
 
 #undef ERROR
+
+namespace {
+int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
+  if (frame->format == AV_PIX_FMT_YUV420P) {
+    if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
+      ERROR_LOG() << "Negative linesize is not supported for YUV.";
+      return -1;
+    }
+    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1], frame->linesize[1],
+                                frame->data[2], frame->linesize[2]);
+  } else if (frame->format == AV_PIX_FMT_BGRA) {
+    if (frame->linesize[0] < 0) {
+      return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
+                               -frame->linesize[0]);
+    }
+    return SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
+  }
+
+  NOTREACHED();
+  return -1;
+}
+}  // namespace
 
 namespace fasto {
 namespace fastotv {
@@ -187,7 +209,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       current_state_str_("Init"),
       muted_(false),
       show_statstic_(false),
-      app_directory_absolute_path_(app_directory_absolute_path) {
+      app_directory_absolute_path_(app_directory_absolute_path),
+      render_texture_(NULL) {
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -365,25 +388,26 @@ void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 
-bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) {
+bool Player::HandleReallocFrame(core::VideoState* stream, int width, int height, int format, AVRational sar) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   UNUSED(stream);
 
   Uint32 sdl_format;
-  if (frame->format == AV_PIX_FMT_YUV420P) {
+  if (format == AV_PIX_FMT_YUV420P) {
     sdl_format = SDL_PIXELFORMAT_YV12;
   } else {
     sdl_format = SDL_PIXELFORMAT_ARGB8888;
   }
 
-  if (ReallocTexture(&frame->bmp, sdl_format, frame->width, frame->height, SDL_BLENDMODE_NONE, false) < 0) {
+  if (ReallocTexture(&render_texture_, sdl_format, width, height, SDL_BLENDMODE_NONE, false) < 0) {
     /* SDL allocates a buffer smaller than requested if the video
      * overlay hardware is unable to support the requested size. */
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << frame->width << "x" << frame->height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                                           "to reduce the image size.";
+                << width << "x" << height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return false;
   }
 
@@ -409,7 +433,9 @@ void Player::HandleDefaultWindowSize(core::Size frame_size, AVRational sar) {
 }
 
 void Player::HandleAllocFrameEvent(core::events::AllocFrameEvent* event) {
-  int res = event->info().stream_->HandleAllocPictureEvent();
+  core::events::AllocFrameEvent* avent = static_cast<core::events::AllocFrameEvent*>(event);
+  core::events::FrameInfo fr = avent->info();
+  int res = fr.stream_->HandleAllocPictureEvent(fr.width, fr.height, fr.format, fr.sar);
   if (res == ERROR_RESULT_VALUE) {
     if (stream_) {
       stream_->Abort();
@@ -480,6 +506,11 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
 
     SDL_CloseAudio();
     destroy(&audio_params_);
+
+    if (render_texture_) {
+      SDL_DestroyTexture(render_texture_);
+      render_texture_ = NULL;
+    }
 
     if (renderer_) {
       SDL_DestroyRenderer(renderer_);
@@ -965,19 +996,25 @@ void Player::DrawFailedStatus() {
 }
 
 void Player::DrawPlayingStatus() {
+  CHECK(THREAD_MANAGER()->IsMainThread());
   core::VideoFrame* frame = stream_->TryToGetVideoFrame();
   if (!frame) {
     return;
   }
 
-  CHECK(THREAD_MANAGER()->IsMainThread());
+  if (upload_texture(render_texture_, frame->frame) < 0) {
+    return;
+  }
+
+  bool flip_v = frame->frame->linesize[0] < 0;
+
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect;
   core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
                                frame->height, frame->sar);
-  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL, frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
+  SDL_RenderCopyEx(renderer_, render_texture_, NULL, &rect, 0, NULL, flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   DrawInfo();
   SDL_RenderPresent(renderer_);

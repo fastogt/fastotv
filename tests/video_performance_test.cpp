@@ -5,10 +5,10 @@ extern "C" {
 #include <libavdevice/avdevice.h>  // for avdevice_register_all
 }
 
-#include "client/core/video_state.h"
-#include "client/core/video_state_handler.h"
 #include "client/core/events/events.h"
 #include "client/core/sdl_utils.h"
+#include "client/core/video_state.h"
+#include "client/core/video_state_handler.h"
 
 using namespace fasto::fastotv;
 using namespace fasto::fastotv::client;
@@ -34,7 +34,7 @@ struct DictionaryOptions {
  private:
   DISALLOW_COPY_AND_ASSIGN(DictionaryOptions);
 };
-}
+}  // namespace
 
 class FakeHandler : public VideoStateHandler {
   virtual ~FakeHandler() {}
@@ -72,9 +72,12 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(stream);
     return true;
   }
-  virtual bool HandleReallocFrame(VideoState* stream, VideoFrame* frame) override {
+  virtual bool HandleReallocFrame(VideoState* stream, int width, int height, int format, AVRational sar) override {
     UNUSED(stream);
-    UNUSED(frame);
+    UNUSED(width);
+    UNUSED(height);
+    UNUSED(format);
+    UNUSED(sar);
     return true;
   }
 
@@ -83,9 +86,12 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(sar);
   }
 
-  virtual void HandleAllocFrame(VideoState* stream, VideoFrame* frame) override {
+  virtual void HandleAllocFrame(VideoState* stream, int width, int height, int format, AVRational sar) override {
     UNUSED(stream);
-    UNUSED(frame);
+    UNUSED(width);
+    UNUSED(height);
+    UNUSED(format);
+    UNUSED(sar);
   }
 
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) override {
@@ -155,7 +161,8 @@ class FakeApplication : public common::application::IApplicationImpl {
     events::Event* fevent = static_cast<events::Event*>(event);
     if (fevent->GetEventType() == core::events::AllocFrameEvent::EventType) {
       core::events::AllocFrameEvent* avent = static_cast<core::events::AllocFrameEvent*>(event);
-      int res = avent->info().stream_->HandleAllocPictureEvent();
+      core::events::FrameInfo fr = avent->info();
+      int res = fr.stream_->HandleAllocPictureEvent(fr.width, fr.height, fr.format, fr.sar);
       if (res == ERROR_RESULT_VALUE) {
         fApp->Exit(EXIT_FAILURE);
       }

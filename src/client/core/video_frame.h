@@ -55,14 +55,11 @@ struct VideoFrame {
   clock64_t pts;      /* presentation timestamp for the frame */
   clock64_t duration; /* estimated duration of the frame */
   int64_t pos;        /* byte position of the frame in the input file */
-  SDL_Texture* bmp;
-  bool allocated;
+
   int width;
   int height;
   int format;      // pixel format in mostly AV_PIX_FMT_YUV420P
   AVRational sar;  // aspect ratio
-  bool uploaded;
-  bool flip_v;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoFrame);

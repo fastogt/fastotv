@@ -136,7 +136,7 @@ class Player : public StreamHandler, public core::events::EventListener {
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override;
 
   // should executed in gui thread
-  virtual bool HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
+  virtual bool HandleReallocFrame(core::VideoState* stream, int width, int height, int format, AVRational sar) override;
   virtual bool HandleRequestVideo(core::VideoState* stream) override;
   virtual void HandleDefaultWindowSize(core::Size frame_size, AVRational sar) override;
 
@@ -272,6 +272,8 @@ class Player : public StreamHandler, public core::events::EventListener {
   bool muted_;
   bool show_statstic_;
   const std::string app_directory_absolute_path_;
+
+  SDL_Texture* render_texture_;
 };
 
 }  // namespace client
