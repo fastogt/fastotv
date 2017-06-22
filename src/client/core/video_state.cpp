@@ -52,7 +52,6 @@ extern "C" {
 #endif
 }
 
-#include <common/application/application.h>  // for fApp
 #include <common/error.h>                    // for Error, make_error_valu...
 #include <common/logger.h>                   // for COMPACT_LOG_WARNING
 #include <common/macros.h>                   // for ERROR_RESULT_VALUE
@@ -1194,8 +1193,7 @@ int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t durati
 
     /* the allocation must be done in the main thread to avoid
        locking problems. */
-    events::AllocFrameEvent* event = new events::AllocFrameEvent(this, events::FrameInfo(this, vp));
-    fApp->PostEvent(event);
+    handler_->HandleAllocFrame(this, vp);
 
     video_frame_queue_->WaitSafeAndNotify(
         [video_packet_queue, vp]() -> bool { return !vp->allocated && !video_packet_queue->IsAborted(); });
@@ -1250,8 +1248,7 @@ int VideoState::ReadThread() {
   if (!ic) {
     const int av_errno = AVERROR(ENOMEM);
     common::Error err = common::make_error_value_errno(av_errno, common::Value::E_ERROR);
-    events::QuitStreamEvent* qevent = new events::QuitStreamEvent(this, events::QuitStreamInfo(this, av_errno, err));
-    fApp->PostEvent(qevent);
+    handler_->HandleQuitStream(this, av_errno, err);
     return ERROR_RESULT_VALUE;
   }
 
@@ -1276,8 +1273,7 @@ int VideoState::ReadThread() {
     std::string err_str = ffmpeg_errno_to_string(open_result);
     common::Error err = common::make_error_value(err_str, common::Value::E_ERROR);
     avformat_close_input(&ic);
-    events::QuitStreamEvent* qevent = new events::QuitStreamEvent(this, events::QuitStreamInfo(this, open_result, err));
-    fApp->PostEvent(qevent);
+    handler_->HandleQuitStream(this, open_result, err);
     return ERROR_RESULT_VALUE;
   }
   if (scan_all_pmts_set) {
@@ -1324,8 +1320,7 @@ int VideoState::ReadThread() {
   if (find_stream_info_result < 0) {
     std::string err_str = ffmpeg_errno_to_string(find_stream_info_result);
     common::Error err = common::make_error_value(err_str, common::Value::E_ERROR);
-    events::QuitStreamEvent* qevent = new events::QuitStreamEvent(this, events::QuitStreamInfo(this, -1, err));
-    fApp->PostEvent(qevent);
+    handler_->HandleQuitStream(this, -1, err);
     return ERROR_RESULT_VALUE;
   }
 
@@ -1369,14 +1364,14 @@ int VideoState::ReadThread() {
   st_index[AVMEDIA_TYPE_AUDIO] =
       av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
 
-  if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
+  /*if (st_index[AVMEDIA_TYPE_VIDEO] >= 0) {
     AVStream* st = ic->streams[st_index[AVMEDIA_TYPE_VIDEO]];
     AVCodecParameters* codecpar = st->codecpar;
     AVRational sar = av_guess_sample_aspect_ratio(ic, st, NULL);
     if (codecpar->width && codecpar->height) {
       handler_->HandleDefaultWindowSize(Size(codecpar->width, codecpar->height), sar);
     }
-  }
+  }*/
 
   /* open the streams */
   if (st_index[AVMEDIA_TYPE_AUDIO] >= 0) {
@@ -1478,8 +1473,7 @@ int VideoState::ReadThread() {
         int errn = AVERROR_EOF;
         std::string err_str = ffmpeg_errno_to_string(errn);
         common::Error err = common::make_error_value(err_str, common::Value::E_ERROR);
-        events::QuitStreamEvent* qevent = new events::QuitStreamEvent(this, events::QuitStreamInfo(this, errn, err));
-        fApp->PostEvent(qevent);
+        handler_->HandleQuitStream(this, errn, err);
         return ERROR_RESULT_VALUE;
       }
     }
@@ -1520,8 +1514,7 @@ int VideoState::ReadThread() {
     }
   }
 
-  events::QuitStreamEvent* qevent = new events::QuitStreamEvent(this, events::QuitStreamInfo(this, 0, common::Error()));
-  fApp->PostEvent(qevent);
+  handler_->HandleQuitStream(this, 0, common::Error());
   return SUCCESS_RESULT_VALUE;
 }
 

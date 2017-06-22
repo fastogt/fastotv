@@ -44,7 +44,7 @@
 #include "client/core/events/stream_events.h"   // for AllocFrameEvent, Quit...
 #include "client/core/events/window_events.h"   // for WindowCloseEvent, Win...
 #include "client/core/types.h"                  // for msec_t
-#include "client/core/video_state_handler.h"    // for VideoStateHandler
+#include "client/stream_handler.h"
 
 namespace fasto {
 namespace fastotv {
@@ -97,7 +97,7 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
-class Player : public core::VideoStateHandler {
+class Player : public StreamHandler, public core::events::EventListener {
  public:
   enum {
     footer_height = 60,
@@ -110,7 +110,7 @@ class Player : public core::VideoStateHandler {
   };
   static const SDL_Color text_color;
 
-  enum States { INIT_STATE, PLAYING_STATE };
+  enum States { INIT_STATE, PLAYING_STATE, FAILED_STATE };
   Player(const std::string& app_directory_absolute_path,
          const PlayerOptions& options,
          const core::AppOptions& opt,
@@ -134,6 +134,7 @@ class Player : public core::VideoStateHandler {
                                   int* audio_buff_size) override;
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override;
 
+  // should executed in gui thread
   virtual bool HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
   virtual void HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) override;
   virtual bool HandleRequestVideo(core::VideoState* stream) override;
@@ -204,6 +205,7 @@ class Player : public core::VideoStateHandler {
 
   void DrawDisplay();
   void DrawPlayingStatus();
+  void DrawFailedStatus();
   void DrawInitStatus();
 
   void DrawInfo();

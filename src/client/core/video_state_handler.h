@@ -27,7 +27,6 @@ extern "C" {
 #include <common/error.h>  // for Error
 
 #include "client/core/types.h"
-#include "client/core/events/events_base.h"
 
 namespace fasto {
 namespace fastotv {
@@ -62,12 +61,9 @@ namespace fastotv {
 namespace client {
 namespace core {
 
-class VideoStateHandler : public core::events::EventListener {
+class VideoStateHandler {
  public:
   VideoStateHandler();
-  virtual void HandleEvent(event_t* event) override = 0;
-  virtual void HandleExceptionEvent(event_t* event, common::Error err) override = 0;
-
   virtual ~VideoStateHandler();
 
   // audio
@@ -84,6 +80,9 @@ class VideoStateHandler : public core::events::EventListener {
   virtual bool HandleReallocFrame(VideoState* stream, VideoFrame* frame) WARN_UNUSED_RESULT = 0;
   virtual void HanleDisplayFrame(VideoState* stream, const VideoFrame* frame) = 0;
   virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) = 0;
+
+  virtual void HandleAllocFrame(VideoState* stream, VideoFrame* frame) = 0;
+  virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) = 0;
 };
 }  // namespace core
 }  // namespace client

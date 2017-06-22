@@ -484,6 +484,7 @@ SET(BUILD_CLIENT_SOURCES
   playlist_entry.h playlist_entry.cpp
   player_options.h player_options.cpp
   player.h player.cpp
+  stream_handler.h stream_handler.cpp
   config.h config.cpp
   cmdutils.h cmdutils.cpp
   utils.h utils.cpp

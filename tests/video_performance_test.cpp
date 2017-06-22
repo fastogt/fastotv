@@ -37,12 +37,6 @@ struct DictionaryOptions {
 }
 
 class FakeHandler : public VideoStateHandler {
-  virtual void HandleEvent(event_t* event) override { UNUSED(event); }
-  virtual void HandleExceptionEvent(event_t* event, common::Error err) override {
-    UNUSED(event);
-    UNUSED(err);
-  }
-
   virtual ~FakeHandler() {}
 
   // audio
@@ -66,10 +60,7 @@ class FakeHandler : public VideoStateHandler {
     *audio_hw_params = laudio_hw_params;
     return true;
   }
-  virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
-                             const uint8_t* src,
-                             uint32_t len,
-                             int volume) override {
+  virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override {
     UNUSED(audio_stream_ptr);
     UNUSED(src);
     UNUSED(len);
@@ -94,12 +85,22 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(frame_size);
     UNUSED(sar);
   }
+
+  virtual void HandleAllocFrame(VideoState* stream, VideoFrame* frame) override {
+    UNUSED(stream);
+    UNUSED(frame);
+  }
+
+  virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) override {
+    UNUSED(stream);
+    UNUSED(exit_code);
+    UNUSED(err);
+  }
 };
 
 class FakeApplication : public common::application::IApplicationImpl {
  public:
-  FakeApplication(int argc, char** argv)
-      : common::application::IApplicationImpl(argc, argv), stop_(false) {}
+  FakeApplication(int argc, char** argv) : common::application::IApplicationImpl(argc, argv), stop_(false) {}
 
   virtual int PreExec() override { /* register all codecs, demux and protocols */
 #if CONFIG_AVDEVICE
@@ -114,12 +115,10 @@ class FakeApplication : public common::application::IApplicationImpl {
   virtual int Exec() override {
     const stream_id id = "unique";
     // wget http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
-    const common::uri::Uri uri =
-        common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
+    const common::uri::Uri uri = common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
     core::AppOptions opt;
     DictionaryOptions* dict = new DictionaryOptions;
-    const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts,
-                                    dict->codec_opts);
+    const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
     VideoStateHandler* handler = new FakeHandler;
     VideoState* vs = new VideoState(id, uri, opt, copt, handler);
     int res = vs->Exec();

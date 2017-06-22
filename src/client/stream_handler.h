@@ -1,0 +1,51 @@
+/*  Copyright (C) 2014-2017 FastoGT. All right reserved.
+
+    This file is part of FastoTV.
+
+    FastoTV is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    FastoTV is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#pragma once
+
+#include "client/core/video_state_handler.h"
+
+namespace fasto {
+namespace fastotv {
+namespace client {
+
+class StreamHandler : public core::VideoStateHandler {
+ public:
+  virtual ~StreamHandler();
+
+  virtual bool HandleRequestAudio(core::VideoState* stream,
+                                  int64_t wanted_channel_layout,
+                                  int wanted_nb_channels,
+                                  int wanted_sample_rate,
+                                  core::AudioParams* audio_hw_params,
+                                  int* audio_buff_size) override = 0;
+  virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override = 0;
+
+  virtual bool HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) override = 0;
+  virtual void HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) override = 0;
+  virtual bool HandleRequestVideo(core::VideoState* stream) override = 0;
+  virtual void HandleDefaultWindowSize(core::Size frame_size, AVRational sar) override = 0;
+
+ private:
+  virtual void HandleAllocFrame(core::VideoState* stream, core::VideoFrame* frame) override final;
+  virtual void HandleQuitStream(core::VideoState* stream, int exit_code, common::Error err) override final;
+};
+
+}  // namespace client
+}  // namespace fastotv
+}  // namespace fasto

@@ -47,8 +47,8 @@ extern "C" {
 #include "client/core/audio_params.h"     // for AudioParams
 #include "client/core/ffmpeg_internal.h"  // for hw_device_ctx
 #include "client/core/sdl_utils.h"
-#include "client/core/video_frame.h"      // for VideoFrame
-#include "client/core/video_state.h"      // for VideoState
+#include "client/core/video_frame.h"  // for VideoFrame
+#include "client/core/video_state.h"  // for VideoState
 
 #include "client/utils.h"
 #include "client/ioservice.h"  // for IoService
@@ -158,7 +158,8 @@ Player::Player(const std::string& app_directory_absolute_path,
                const PlayerOptions& options,
                const core::AppOptions& opt,
                const core::ComplexOptions& copt)
-    : options_(options),
+    : StreamHandler(),
+      options_(options),
       opt_(opt),
       copt_(copt),
       play_list_(),
@@ -370,6 +371,7 @@ void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32
 }
 
 bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) {
+  CHECK(THREAD_MANAGER()->IsMainThread());
   UNUSED(stream);
 
   Uint32 sdl_format;
@@ -394,6 +396,7 @@ bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* fram
 }
 
 void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) {
+  CHECK(THREAD_MANAGER()->IsMainThread());
   UNUSED(stream);
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
@@ -408,6 +411,7 @@ void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame*
 }
 
 bool Player::HandleRequestVideo(core::VideoState* stream) {
+  CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
     return false;
   }
@@ -417,6 +421,7 @@ bool Player::HandleRequestVideo(core::VideoState* stream) {
 }
 
 void Player::HandleDefaultWindowSize(core::Size frame_size, AVRational sar) {
+  CHECK(THREAD_MANAGER()->IsMainThread());
   SDL_Rect rect;
   core::calculate_display_rect(&rect, 0, 0, INT_MAX, frame_size.height, frame_size.width, frame_size.height, sar);
   options_.default_size.width = rect.w;
@@ -935,7 +940,7 @@ void Player::SwitchToChannelErrorMode(common::Error err) {
   std::string url_str = GetCurrentUrlName();
   std::string error_str = common::MemSPrintf("%s (%s)", url_str, err->Description());
   RUNTIME_LOG(err->GetLevel()) << error_str;
-  InitWindow(error_str, INIT_STATE);
+  InitWindow(error_str, FAILED_STATE);
 }
 
 void Player::SwitchToConnectMode() {
@@ -959,17 +964,14 @@ void Player::DrawDisplay() {
     DrawPlayingStatus();
   } else if (current_state_ == INIT_STATE) {
     DrawInitStatus();
+  } else if (current_state_ == FAILED_STATE) {
+    DrawFailedStatus();
   } else {
     NOTREACHED();
   };
 }
 
-void Player::DrawPlayingStatus() {
-  if (stream_) {
-    stream_->TryRefreshVideo();
-    return;
-  }
-
+void Player::DrawFailedStatus() {
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
   if (offline_channel_texture_) {
@@ -980,6 +982,10 @@ void Player::DrawPlayingStatus() {
   }
   DrawInfo();
   SDL_RenderPresent(renderer_);
+}
+
+void Player::DrawPlayingStatus() {
+  stream_->TryRefreshVideo();  // can be called HanleDisplayFrame
 }
 
 void Player::DrawInitStatus() {
@@ -1097,6 +1103,11 @@ void Player::DrawFooter() {
   SDL_Rect sdl_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.w - padding_left * 2,
                               footer_rect.h};
   if (current_state_ == INIT_STATE) {
+    std::string footer_text = current_state_str_;
+    SDL_SetRenderDrawColor(renderer_, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+    SDL_RenderFillRect(renderer_, &sdl_footer_rect);
+    DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
+  } else if (current_state_ == FAILED_STATE) {
     std::string footer_text = current_state_str_;
     SDL_SetRenderDrawColor(renderer_, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
     SDL_RenderFillRect(renderer_, &sdl_footer_rect);
