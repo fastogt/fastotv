@@ -68,11 +68,7 @@ class FakeHandler : public VideoStateHandler {
   }
 
   // video
-  virtual bool HandleRequestVideo(VideoState* stream) override {
-    UNUSED(stream);
-    return true;
-  }
-  virtual bool HandleReallocFrame(VideoState* stream, int width, int height, int format, AVRational sar) override {
+  virtual bool HandleRequestVideo(VideoState* stream, int width, int height, int format, AVRational sar) override {
     UNUSED(stream);
     UNUSED(width);
     UNUSED(height);
@@ -81,12 +77,7 @@ class FakeHandler : public VideoStateHandler {
     return true;
   }
 
-  virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) override {
-    UNUSED(frame_size);
-    UNUSED(sar);
-  }
-
-  virtual void HandleAllocFrame(VideoState* stream, int width, int height, int format, AVRational sar) override {
+  virtual void HandleFrameResize(VideoState* stream, int width, int height, int format, AVRational sar) override {
     UNUSED(stream);
     UNUSED(width);
     UNUSED(height);
@@ -159,11 +150,11 @@ class FakeApplication : public common::application::IApplicationImpl {
 
   virtual void PostEvent(event_t* event) override {
     events::Event* fevent = static_cast<events::Event*>(event);
-    if (fevent->GetEventType() == core::events::AllocFrameEvent::EventType) {
-      core::events::AllocFrameEvent* avent = static_cast<core::events::AllocFrameEvent*>(event);
+    if (fevent->GetEventType() == core::events::RequestVideoEvent::EventType) {
+      core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
       core::events::FrameInfo fr = avent->info();
-      int res = fr.stream_->HandleAllocPictureEvent(fr.width, fr.height, fr.format, fr.sar);
-      if (res == ERROR_RESULT_VALUE) {
+      bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.format, fr.sar);
+      if (!res) {
         fApp->Exit(EXIT_FAILURE);
       }
     } else if (fevent->GetEventType() == core::events::QuitStreamEvent::EventType) {

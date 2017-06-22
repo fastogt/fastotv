@@ -656,19 +656,6 @@ clock64_t VideoState::GetMasterClock() const {
   return astream_->GetClock();
 }
 
-int VideoState::VideoOpen(int width, int height, AVRational sar) {
-  if (width && height) {
-    handler_->HandleDefaultWindowSize(Size(width, height), sar);
-  }
-
-  bool res = handler_->HandleRequestVideo(this);
-  if (!res) {
-    return ERROR_RESULT_VALUE;
-  }
-
-  return 0;
-}
-
 /* display the current picture, if any */
 VideoFrame* VideoState::GetVideoFrameForDisplay() const {
   if (!vstream_->IsOpened()) {
@@ -845,17 +832,8 @@ the_end:
   StreamComponentOpen(stream_index);
 }
 
-int VideoState::HandleAllocPictureEvent(int width, int height, int format, AVRational sar) {
-  int res = VideoOpen(width, height, sar);
-  if (res == ERROR_RESULT_VALUE) {
-    return ERROR_RESULT_VALUE;
-  }
-
-  if (!handler_->HandleReallocFrame(this, width, height, format, sar)) {
-    return ERROR_RESULT_VALUE;
-  }
-
-  return SUCCESS_RESULT_VALUE;
+bool VideoState::RequestVideo(int width, int height, int format, AVRational sar) {
+  return handler_->HandleRequestVideo(this, width, height, format, sar);
 }
 
 int VideoState::SynchronizeAudio(int nb_samples) {
@@ -1148,7 +1126,6 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
 }
 
 int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t duration, int64_t pos) {
-  PacketQueue* video_packet_queue = vstream_->Queue();
   VideoFrame* vp = video_frame_queue_->GetPeekWritable();
   if (!vp) {
     return ERROR_RESULT_VALUE;
@@ -1161,14 +1138,7 @@ int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t durati
     vp->width = src_frame->width;
     vp->height = src_frame->height;
     vp->format = src_frame->format;
-
-    /* the allocation must be done in the main thread to avoid
-       locking problems. */
-    handler_->HandleAllocFrame(this, vp->width, vp->height, vp->format, vp->sar);
-
-    if (video_packet_queue->IsAborted()) {
-      return ERROR_RESULT_VALUE;
-    }
+    handler_->HandleFrameResize(this, vp->width, vp->height, vp->format, vp->sar);
   }
 
   /* if the frame is not skipped, then display it */

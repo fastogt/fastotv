@@ -53,7 +53,7 @@ struct QuitStreamInfo : public StreamInfo {
   common::Error error;
 };
 
-typedef EventBase<ALLOC_FRAME_EVENT, FrameInfo> AllocFrameEvent;
+typedef EventBase<REQUEST_VIDEO_EVENT, FrameInfo> RequestVideoEvent;
 typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
 
 }  // namespace events

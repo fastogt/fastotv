@@ -27,10 +27,10 @@ namespace client {
 
 StreamHandler::~StreamHandler() {}
 
-void StreamHandler::HandleAllocFrame(core::VideoState* stream, int width, int height, int format, AVRational sar) {
-  core::events::AllocFrameEvent* event =
-      new core::events::AllocFrameEvent(stream, core::events::FrameInfo(stream, width, height, format, sar));
-  fApp->PostEvent(event);
+void StreamHandler::HandleFrameResize(core::VideoState* stream, int width, int height, int format, AVRational sar) {
+  core::events::RequestVideoEvent* qevent =
+      new core::events::RequestVideoEvent(stream, core::events::FrameInfo(stream, width, height, format, sar));
+  fApp->PostEvent(qevent);
 }
 
 void StreamHandler::HandleQuitStream(core::VideoState* stream, int exit_code, common::Error err) {

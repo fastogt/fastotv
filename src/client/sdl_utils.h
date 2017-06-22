@@ -45,6 +45,22 @@ class TextureSaver {
   mutable SDL_Renderer* renderer_;
 };
 
+class FrameSaver {
+ public:
+  explicit FrameSaver();
+  ~FrameSaver();
+
+  SDL_Texture* GetTexture(SDL_Renderer* renderer, int width, int height, Uint32 format) const;
+
+  int GetWidth() const;
+  int GetHeight() const;
+  Uint32 GetFormat() const;
+
+ private:
+  mutable SDL_Texture* texture_;
+  mutable SDL_Renderer* renderer_;
+};
+
 common::Error CreateTexture(SDL_Renderer* renderer,
                             Uint32 new_format,
                             int new_width,

@@ -182,7 +182,7 @@ class VideoState {
   void SeekMsec(clock64_t msec);
   void StreamCycleChannel(AVMediaType codec_type);
 
-  virtual int HandleAllocPictureEvent(int width, int height, int format, AVRational sar) WARN_UNUSED_RESULT;
+  bool RequestVideo(int width, int height, int format, AVRational sar) WARN_UNUSED_RESULT;
 
   VideoFrame* TryToGetVideoFrame();
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
@@ -214,9 +214,6 @@ class VideoState {
   int ConfigureAudioFilters(const std::string& afilters, int force_output_format);
 #endif
 
-  int VideoOpen(int width, int height, AVRational sar);
-  /* allocate a picture (needs to do that in main thread to avoid
-     potential locking problems */
   VideoFrame* GetVideoFrameForDisplay() const;
 
   /* return the wanted number of samples to get better sync if sync_type is video

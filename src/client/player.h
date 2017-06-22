@@ -41,7 +41,7 @@
 #include "client/core/events/lirc_events.h"     // for LircPressEvent
 #include "client/core/events/mouse_events.h"    // for MouseMoveEvent, Mouse...
 #include "client/core/events/network_events.h"  // for BandwidthEstimationEvent
-#include "client/core/events/stream_events.h"   // for AllocFrameEvent, Quit...
+#include "client/core/events/stream_events.h"   // for RequestVideoEvent, Quit...
 #include "client/core/events/window_events.h"   // for WindowCloseEvent, Win...
 #include "client/core/types.h"                  // for msec_t
 #include "client/stream_handler.h"
@@ -62,6 +62,13 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 class TextureSaver;
+}
+}  // namespace fastotv
+}  // namespace fasto
+namespace fasto {
+namespace fastotv {
+namespace client {
+class FrameSaver;
 }
 }  // namespace fastotv
 }  // namespace fasto
@@ -136,16 +143,14 @@ class Player : public StreamHandler, public core::events::EventListener {
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override;
 
   // should executed in gui thread
-  virtual bool HandleReallocFrame(core::VideoState* stream, int width, int height, int format, AVRational sar) override;
-  virtual bool HandleRequestVideo(core::VideoState* stream) override;
-  virtual void HandleDefaultWindowSize(core::Size frame_size, AVRational sar) override;
+  virtual bool HandleRequestVideo(core::VideoState* stream, int width, int height, int format, AVRational sar) override;
 
   virtual void HandlePreExecEvent(core::events::PreExecEvent* event);
   virtual void HandlePostExecEvent(core::events::PostExecEvent* event);
 
   virtual void HandleTimerEvent(core::events::TimerEvent* event);
 
-  virtual void HandleAllocFrameEvent(core::events::AllocFrameEvent* event);
+  virtual void HandleRequestVideoEvent(core::events::RequestVideoEvent* event);
   virtual void HandleQuitStreamEvent(core::events::QuitStreamEvent* event);
 
   virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event);
@@ -175,13 +180,6 @@ class Player : public StreamHandler, public core::events::EventListener {
 
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
-
-  int ReallocTexture(SDL_Texture** texture,
-                     Uint32 new_format,
-                     int new_width,
-                     int new_height,
-                     SDL_BlendMode blendmode,
-                     bool init_texture);
 
   void InitWindow(const std::string& title, States status);
   void StartShowFooter();
@@ -273,7 +271,7 @@ class Player : public StreamHandler, public core::events::EventListener {
   bool show_statstic_;
   const std::string app_directory_absolute_path_;
 
-  SDL_Texture* render_texture_;
+  FrameSaver* render_texture_;
 };
 
 }  // namespace client
