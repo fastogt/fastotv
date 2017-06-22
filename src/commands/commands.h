@@ -24,7 +24,7 @@
 #include <common/error.h>
 #include <common/sprintf.h>
 
-#define END_OF_COMMAND "\n"
+#define END_OF_COMMAND "\r\n"
 
 #define FAIL_COMMAND "fail"
 #define SUCCESS_COMMAND "ok"
