@@ -38,15 +38,15 @@ const char* InnerClient::ClassName() const {
 }
 
 common::Error InnerClient::Write(const cmd_request_t& request) {
-  return WriteInner(request.cmd());
+  return WriteInner(request.GetCmd());
 }
 
 common::Error InnerClient::Write(const cmd_responce_t& responce) {
-  return WriteInner(responce.cmd());
+  return WriteInner(responce.GetCmd());
 }
 
 common::Error InnerClient::Write(const cmd_approve_t& approve) {
-  return WriteInner(approve.cmd());
+  return WriteInner(approve.GetCmd());
 }
 
 common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
@@ -55,7 +55,7 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
   }
 
   protocoled_size_t lsz = 0;
-  size_t nread;
+  size_t nread = 0;
   common::Error err = Read(reinterpret_cast<char*>(&lsz), sizeof(protocoled_size_t), &nread);
   if (err && err->IsError()) {
     return err;

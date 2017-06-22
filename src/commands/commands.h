@@ -24,7 +24,7 @@
 #include <common/error.h>
 #include <common/sprintf.h>
 
-#define END_OF_COMMAND "\r\n"
+#define END_OF_COMMAND "\n"
 
 #define FAIL_COMMAND "fail"
 #define SUCCESS_COMMAND "ok"
@@ -77,11 +77,11 @@ class InnerCmd {
  public:
   InnerCmd(cmd_seq_t id, const std::string& cmd) : id_(id), cmd_(cmd) {}
 
-  static cmd_id_t type() { return cmd_id; }
+  static cmd_id_t GetType() { return cmd_id; }
 
-  cmd_seq_t id() const { return id_; }
+  cmd_seq_t GetId() const { return id_; }
 
-  const std::string& cmd() const { return cmd_; }
+  const std::string& GetCmd() const { return cmd_; }
 
  private:
   const cmd_seq_t id_;

@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include <stdint.h>    // for uintmax_t
+#include <stdint.h>  // for uintmax_t
+
 #include <functional>  // for function
 #include <string>      // for string
 
@@ -35,8 +36,6 @@ class InnerClient;
 namespace fasto {
 namespace fastotv {
 namespace inner {
-
-class InnerClient;
 
 class RequestCallback {
  public:

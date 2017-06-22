@@ -45,7 +45,7 @@ class UserStateInfo : public JsonSerializer<UserStateInfo> {
   bool Equals(const UserStateInfo& state) const;
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const WARN_UNUSED_RESULT;
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override WARN_UNUSED_RESULT;
 
  private:
   user_id_t user_id_;

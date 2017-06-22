@@ -19,11 +19,10 @@
 #include "inner/inner_server_command_seq_parser.h"
 
 #include <stddef.h>  // for NULL
-#include <string>    // for string
+
+#include <string>  // for string
 
 #include <common/convert2string.h>
-#include <common/error.h>   // for Error
-#include <common/logger.h>  // for COMPACT_LOG_WARNING, WARNING_LOG
 #include <common/macros.h>  // for betoh_memcpy, DNOTREACHED
 
 #include "inner/inner_client.h"  // for InnerClient

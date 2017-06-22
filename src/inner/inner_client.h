@@ -19,11 +19,12 @@
 #pragma once
 
 #include <stdint.h>  // for uint32_t
-#include <string>    // for string
+
+#include <string>  // for string
 
 #include <common/error.h>                 // for Error
-#include <common/libev/tcp/tcp_client.h>  // for TcpClient
 #include <common/macros.h>                // for WARN_UNUSED_RESULT
+#include <common/libev/tcp/tcp_client.h>  // for TcpClient
 
 #include "commands/commands.h"  // for cmd_approve_t, cmd_request_t
 
