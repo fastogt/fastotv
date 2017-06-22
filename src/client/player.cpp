@@ -395,21 +395,6 @@ bool Player::HandleReallocFrame(core::VideoState* stream, core::VideoFrame* fram
   return true;
 }
 
-void Player::HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) {
-  CHECK(THREAD_MANAGER()->IsMainThread());
-  UNUSED(stream);
-  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-  SDL_RenderClear(renderer_);
-
-  SDL_Rect rect;
-  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
-                               frame->height, frame->sar);
-  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL, frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
-
-  DrawInfo();
-  SDL_RenderPresent(renderer_);
-}
-
 bool Player::HandleRequestVideo(core::VideoState* stream) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
@@ -985,7 +970,22 @@ void Player::DrawFailedStatus() {
 }
 
 void Player::DrawPlayingStatus() {
-  stream_->TryRefreshVideo();  // can be called HanleDisplayFrame
+  core::VideoFrame* frame = stream_->TryToGetVideoFrame();
+  if (!frame) {
+    return;
+  }
+
+  CHECK(THREAD_MANAGER()->IsMainThread());
+  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+  SDL_RenderClear(renderer_);
+
+  SDL_Rect rect;
+  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
+                               frame->height, frame->sar);
+  SDL_RenderCopyEx(renderer_, frame->bmp, NULL, &rect, 0, NULL, frame->flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
+
+  DrawInfo();
+  SDL_RenderPresent(renderer_);
 }
 
 void Player::DrawInitStatus() {

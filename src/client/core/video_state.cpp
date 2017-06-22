@@ -52,12 +52,12 @@ extern "C" {
 #endif
 }
 
-#include <common/error.h>                    // for Error, make_error_valu...
-#include <common/logger.h>                   // for COMPACT_LOG_WARNING
-#include <common/macros.h>                   // for ERROR_RESULT_VALUE
-#include <common/threads/thread_manager.h>   // for THREAD_MANAGER
-#include <common/utils.h>                    // for freeifnotnull
-#include <common/value.h>                    // for Value, Value::ErrorsTy...
+#include <common/error.h>                   // for Error, make_error_valu...
+#include <common/logger.h>                  // for COMPACT_LOG_WARNING
+#include <common/macros.h>                  // for ERROR_RESULT_VALUE
+#include <common/threads/thread_manager.h>  // for THREAD_MANAGER
+#include <common/utils.h>                   // for freeifnotnull
+#include <common/value.h>                   // for Value, Value::ErrorsTy...
 
 #include "ffmpeg_internal.h"
 
@@ -706,28 +706,30 @@ int VideoState::AllocPicture() {
 }
 
 /* display the current picture, if any */
-void VideoState::VideoDisplay() {
+VideoFrame* VideoState::GetVideoFrameForDisplay() const {
   if (!vstream_->IsOpened()) {
-    return;
+    return nullptr;
   }
 
   if (!video_frame_queue_) {
-    return;
+    return nullptr;
   }
 
   VideoFrame* vp = video_frame_queue_->PeekLast();
   if (vp->bmp) {
     if (!vp->uploaded) {
       if (upload_texture(vp->bmp, vp->frame) < 0) {
-        return;
+        return nullptr;
       }
       vp->uploaded = true;
       vp->flip_v = vp->frame->linesize[0] < 0;
     }
 
-    handler_->HanleDisplayFrame(this, vp);
     stats_->frame_processed++;
+    return vp;
   }
+
+  return nullptr;
 }
 
 int VideoState::Exec() {
@@ -1020,7 +1022,7 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-void VideoState::RefreshVideo() {
+VideoFrame* VideoState::RefreshVideo() {
 retry:
   if (video_frame_queue_->IsEmpty()) {
     // nothing to do, no picture to display in the queue
@@ -1084,45 +1086,52 @@ retry:
 display:
   /* display picture */
   if (force_refresh_ && video_frame_queue_->RindexShown()) {
-    VideoDisplay();
+    return GetVideoFrameForDisplay();
   }
+
+  return nullptr;
 }
 
-void VideoState::TryRefreshVideo() {
-  if (!paused_ || force_refresh_) {
-    const bool is_video_open = vstream_->IsOpened();
-    const bool is_audio_open = astream_->IsOpened();
-    PacketQueue* video_packet_queue = vstream_->Queue();
-    PacketQueue* audio_packet_queue = astream_->Queue();
-
-    if (is_video_open && video_frame_queue_) {
-      RefreshVideo();
-    }
-    force_refresh_ = false;
-
-    int aqsize = 0, vqsize = 0;
-    bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
-    if (is_video_open) {
-      vqsize = video_packet_queue->GetSize();
-      video_bandwidth = vstream_->Bandwidth();
-    }
-    if (is_audio_open) {
-      aqsize = audio_packet_queue->GetSize();
-      audio_bandwidth = astream_->Bandwidth();
-    }
-
-    stats_->master_clock = GetMasterClock();
-    stats_->video_clock = vstream_->GetClock();
-    stats_->audio_clock = astream_->GetClock();
-    stats_->fmt = (is_audio_open && is_video_open)
-                      ? (HAVE_VIDEO_STREAM | HAVE_AUDIO_STREAM)
-                      : (is_video_open ? HAVE_VIDEO_STREAM : (is_audio_open ? HAVE_AUDIO_STREAM : UNKNOWN_STREAM));
-    stats_->audio_queue_size = aqsize;
-    stats_->video_queue_size = vqsize;
-    stats_->audio_bandwidth = audio_bandwidth;
-    stats_->video_bandwidth = video_bandwidth;
-    stats_->active_hwaccel = input_st_->active_hwaccel_id;
+VideoFrame* VideoState::TryToGetVideoFrame() {
+  if (paused_ && !force_refresh_) {
+    return nullptr;
   }
+
+  const bool is_video_open = vstream_->IsOpened();
+  const bool is_audio_open = astream_->IsOpened();
+  PacketQueue* video_packet_queue = vstream_->Queue();
+  PacketQueue* audio_packet_queue = astream_->Queue();
+
+  force_refresh_ = false;
+
+  int aqsize = 0, vqsize = 0;
+  bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
+  if (is_video_open) {
+    vqsize = video_packet_queue->GetSize();
+    video_bandwidth = vstream_->Bandwidth();
+  }
+  if (is_audio_open) {
+    aqsize = audio_packet_queue->GetSize();
+    audio_bandwidth = astream_->Bandwidth();
+  }
+
+  stats_->master_clock = GetMasterClock();
+  stats_->video_clock = vstream_->GetClock();
+  stats_->audio_clock = astream_->GetClock();
+  stats_->fmt = (is_audio_open && is_video_open)
+                    ? (HAVE_VIDEO_STREAM | HAVE_AUDIO_STREAM)
+                    : (is_video_open ? HAVE_VIDEO_STREAM : (is_audio_open ? HAVE_AUDIO_STREAM : UNKNOWN_STREAM));
+  stats_->audio_queue_size = aqsize;
+  stats_->video_queue_size = vqsize;
+  stats_->audio_bandwidth = audio_bandwidth;
+  stats_->video_bandwidth = video_bandwidth;
+  stats_->active_hwaccel = input_st_->active_hwaccel_id;
+
+  if (is_video_open && video_frame_queue_) {
+    return RefreshVideo();
+  }
+
+  return nullptr;
 }
 
 VideoState::stats_t VideoState::GetStatistic() const {

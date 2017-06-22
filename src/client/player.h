@@ -136,7 +136,6 @@ class Player : public StreamHandler, public core::events::EventListener {
 
   // should executed in gui thread
   virtual bool HandleReallocFrame(core::VideoState* stream, core::VideoFrame* frame) override;
-  virtual void HanleDisplayFrame(core::VideoState* stream, const core::VideoFrame* frame) override;
   virtual bool HandleRequestVideo(core::VideoState* stream) override;
   virtual void HandleDefaultWindowSize(core::Size frame_size, AVRational sar) override;
 

@@ -184,14 +184,14 @@ class VideoState {
 
   virtual int HandleAllocPictureEvent() WARN_UNUSED_RESULT;
 
-  void TryRefreshVideo();
+  VideoFrame* TryToGetVideoFrame();
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
   stats_t GetStatistic() const;
 
  private:
   void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);
-  void RefreshVideo();
+  VideoFrame* RefreshVideo();
 
   void ResetStats();
   void Close();
@@ -218,7 +218,7 @@ class VideoState {
   /* allocate a picture (needs to do that in main thread to avoid
      potential locking problems */
   int AllocPicture();
-  void VideoDisplay();
+  VideoFrame* GetVideoFrameForDisplay() const;
 
   /* return the wanted number of samples to get better sync if sync_type is video
    * or external master clock */

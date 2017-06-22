@@ -77,10 +77,7 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(frame);
     return true;
   }
-  virtual void HanleDisplayFrame(VideoState* stream, const VideoFrame* frame) override {
-    UNUSED(stream);
-    UNUSED(frame);
-  }
+
   virtual void HandleDefaultWindowSize(Size frame_size, AVRational sar) override {
     UNUSED(frame_size);
     UNUSED(sar);
@@ -141,7 +138,7 @@ class FakeApplication : public common::application::IApplicationImpl {
       std::cv_status interrupt_status = stop_cond_.wait_for(lock, std::chrono::milliseconds(20));
       if (interrupt_status == std::cv_status::no_timeout) {  // if notify
       } else {
-        vs->TryRefreshVideo();
+        vs->TryToGetVideoFrame();
       }
     }
 
