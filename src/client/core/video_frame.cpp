@@ -28,14 +28,7 @@ namespace client {
 namespace core {
 
 VideoFrame::VideoFrame()
-    : frame(av_frame_alloc()),
-      pts(0),
-      duration(0),
-      pos(0),
-      width(0),
-      height(0),
-      format(0),
-      sar{0, 0} {}
+    : frame(av_frame_alloc()), pts(0), duration(0), pos(0), width(0), height(0), format(AV_PIX_FMT_NONE), sar{0, 0} {}
 
 VideoFrame::~VideoFrame() {
   ClearFrame();

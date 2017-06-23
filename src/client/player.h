@@ -61,14 +61,14 @@ class IoService;
 namespace fasto {
 namespace fastotv {
 namespace client {
-class TextureSaver;
+class SurfaceSaver;
 }
 }  // namespace fastotv
 }  // namespace fasto
 namespace fasto {
 namespace fastotv {
 namespace client {
-class FrameSaver;
+class TextureSaver;
 }
 }  // namespace fastotv
 }  // namespace fasto
@@ -253,8 +253,8 @@ class Player : public StreamHandler, public core::events::EventListener {
   core::msec_t last_mouse_left_click_;
   size_t curent_stream_pos_;
 
-  TextureSaver* offline_channel_texture_;
-  TextureSaver* connection_error_texture_;
+  SurfaceSaver* offline_channel_texture_;
+  SurfaceSaver* connection_error_texture_;
 
   TTF_Font* font_;
   core::VideoState* stream_;
@@ -271,7 +271,7 @@ class Player : public StreamHandler, public core::events::EventListener {
   bool show_statstic_;
   const std::string app_directory_absolute_path_;
 
-  FrameSaver* render_texture_;
+  TextureSaver* render_texture_;
 };
 
 }  // namespace client

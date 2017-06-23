@@ -19,7 +19,7 @@
 #pragma once
 
 extern "C" {
-#include <libavutil/rational.h>    // for AVRational
+#include <libavutil/rational.h>  // for AVRational
 }
 
 #include <common/error.h>
@@ -40,10 +40,10 @@ struct StreamInfo {
 };
 
 struct FrameInfo : public StreamInfo {
-  FrameInfo(VideoState* stream, int width, int height, int format, AVRational sar);
+  FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational sar);
   int width;
   int height;
-  int format;
+  int av_pixel_format;
   AVRational sar;
 };
 

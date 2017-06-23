@@ -51,7 +51,7 @@ extern "C" {
 #include "client/core/video_state.h"  // for VideoState
 
 #include "client/ioservice.h"  // for IoService
-#include "client/sdl_utils.h"  // for IMG_LoadPNG, TextureSaver
+#include "client/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
 #include "client/utils.h"
 
 #include "channel_info.h"  // for Url
@@ -389,6 +389,7 @@ void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32
 }
 
 bool Player::HandleRequestVideo(core::VideoState* stream, int width, int height, int format, AVRational sar) {
+  UNUSED(format);
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
     return false;
@@ -407,7 +408,7 @@ bool Player::HandleRequestVideo(core::VideoState* stream, int width, int height,
 void Player::HandleRequestVideoEvent(core::events::RequestVideoEvent* event) {
   core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
   core::events::FrameInfo fr = avent->info();
-  bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.format, fr.sar);
+  bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.sar);
   if (!res) {
     if (stream_) {
       stream_->Abort();
@@ -437,7 +438,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
     const char* offline_channel_img_full_path_ptr = common::utils::c_strornull(offline_channel_img_full_path);
     SDL_Surface* surface = IMG_Load(offline_channel_img_full_path_ptr);
     if (surface) {
-      offline_channel_texture_ = new TextureSaver(surface);
+      offline_channel_texture_ = new SurfaceSaver(surface);
     }
 
     const std::string connection_error_img_full_path =
@@ -445,10 +446,10 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
     const char* connection_error_img_full_path_ptr = common::utils::c_strornull(connection_error_img_full_path);
     SDL_Surface* surface2 = IMG_Load(connection_error_img_full_path_ptr);
     if (surface2) {
-      connection_error_texture_ = new TextureSaver(surface2);
+      connection_error_texture_ = new SurfaceSaver(surface2);
     }
 
-    render_texture_ = new FrameSaver;
+    render_texture_ = new TextureSaver;
 
     const std::string font_path = common::file_system::make_path(absolute_source_dir, MAIN_FONT_PATH_RELATIVE);
     const char* font_path_ptr = common::utils::c_strornull(font_path);
@@ -1339,7 +1340,7 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
     const std::string icon_path = entr.GetIconPath();
     const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
     SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-    channel_icon_t shared_surface = common::make_shared<TextureSaver>(surface);
+    channel_icon_t shared_surface = common::make_shared<SurfaceSaver>(surface);
     play_list_[curent_stream_pos_].SetIcon(shared_surface);
   }
 

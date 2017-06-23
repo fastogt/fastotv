@@ -27,9 +27,13 @@ namespace client {
 
 StreamHandler::~StreamHandler() {}
 
-void StreamHandler::HandleFrameResize(core::VideoState* stream, int width, int height, int format, AVRational sar) {
+void StreamHandler::HandleFrameResize(core::VideoState* stream,
+                                      int width,
+                                      int height,
+                                      int av_pixel_format,
+                                      AVRational sar) {
   core::events::RequestVideoEvent* qevent =
-      new core::events::RequestVideoEvent(stream, core::events::FrameInfo(stream, width, height, format, sar));
+      new core::events::RequestVideoEvent(stream, core::events::FrameInfo(stream, width, height, av_pixel_format, sar));
   fApp->PostEvent(qevent);
 }
 

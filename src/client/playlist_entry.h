@@ -25,7 +25,7 @@
 namespace fasto {
 namespace fastotv {
 namespace client {
-class TextureSaver;
+class SurfaceSaver;
 }
 }  // namespace fastotv
 }  // namespace fasto
@@ -34,7 +34,7 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
-typedef common::shared_ptr<TextureSaver> channel_icon_t;
+typedef common::shared_ptr<SurfaceSaver> channel_icon_t;
 
 class PlaylistEntry {
  public:

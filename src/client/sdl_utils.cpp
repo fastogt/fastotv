@@ -31,36 +31,9 @@
 namespace fasto {
 namespace fastotv {
 namespace client {
-namespace {
-common::Error ReallocTexture(SDL_Texture** texture,
-                             SDL_Renderer* renderer,
-                             Uint32 new_format,
-                             int new_width,
-                             int new_height,
-                             SDL_BlendMode blendmode,
-                             bool init_texture) {
-  Uint32 format;
-  int access, w, h;
-  if (SDL_QueryTexture(*texture, &format, &access, &w, &h) < 0 || new_width != w || new_height != h ||
-      new_format != format) {
-    SDL_DestroyTexture(*texture);
-    *texture = NULL;
+SurfaceSaver::SurfaceSaver(SDL_Surface* surface) : surface_(surface), texture_(NULL), renderer_(NULL) {}
 
-    SDL_Texture* ltexture = NULL;
-    common::Error err = CreateTexture(renderer, new_format, new_width, new_height, blendmode, init_texture, &ltexture);
-    if (err && err->IsError()) {
-      DNOTREACHED();
-      return err;
-    }
-    *texture = ltexture;
-  }
-  return common::Error();
-}
-}  // namespace
-
-TextureSaver::TextureSaver(SDL_Surface* surface) : surface_(surface), texture_(NULL), renderer_(NULL) {}
-
-TextureSaver::~TextureSaver() {
+SurfaceSaver::~SurfaceSaver() {
   if (renderer_) {
     renderer_ = NULL;
   }
@@ -76,7 +49,7 @@ TextureSaver::~TextureSaver() {
   }
 }
 
-SDL_Texture* TextureSaver::GetTexture(SDL_Renderer* renderer) const {
+SDL_Texture* SurfaceSaver::GetTexture(SDL_Renderer* renderer) const {
   if (!renderer || !surface_) {
     return NULL;
   }
@@ -94,7 +67,7 @@ SDL_Texture* TextureSaver::GetTexture(SDL_Renderer* renderer) const {
   return texture_;
 }
 
-int TextureSaver::GetWidthSurface() const {
+int SurfaceSaver::GetWidthSurface() const {
   if (!surface_) {
     return 0;
   }
@@ -102,7 +75,7 @@ int TextureSaver::GetWidthSurface() const {
   return surface_->w;
 }
 
-int TextureSaver::GetHeightSurface() const {
+int SurfaceSaver::GetHeightSurface() const {
   if (!surface_) {
     return 0;
   }
@@ -110,9 +83,9 @@ int TextureSaver::GetHeightSurface() const {
   return surface_->h;
 }
 
-FrameSaver::FrameSaver() : texture_(NULL), renderer_(NULL) {}
+TextureSaver::TextureSaver() : texture_(NULL), renderer_(NULL) {}
 
-int FrameSaver::GetWidth() const {
+int TextureSaver::GetWidth() const {
   Uint32 format;
   int access, w, h;
   if (SDL_QueryTexture(texture_, &format, &access, &w, &h) < 0) {
@@ -122,7 +95,7 @@ int FrameSaver::GetWidth() const {
   return w;
 }
 
-int FrameSaver::GetHeight() const {
+int TextureSaver::GetHeight() const {
   Uint32 format;
   int access, w, h;
   if (SDL_QueryTexture(texture_, &format, &access, &w, &h) < 0) {
@@ -132,42 +105,32 @@ int FrameSaver::GetHeight() const {
   return h;
 }
 
-Uint32 FrameSaver::GetFormat() const {
-  Uint32 format;
-  int access, w, h;
-  if (SDL_QueryTexture(texture_, &format, &access, &w, &h) < 0) {
-    return 0;
-  }
-
-  return format;
-}
-
-SDL_Texture* FrameSaver::GetTexture(SDL_Renderer* renderer, int width, int height, Uint32 format) const {
+SDL_Texture* TextureSaver::GetTexture(SDL_Renderer* renderer, int width, int height, Uint32 format) const {
   if (!renderer) {
     return NULL;
   }
 
-  if (renderer_ != renderer) {
-    if (texture_) {
-      SDL_DestroyTexture(texture_);
-      texture_ = NULL;
-    }
+  Uint32 cur_format;
+  int access, w, h;
+  if (renderer_ != renderer || SDL_QueryTexture(texture_, &cur_format, &access, &w, &h) < 0 || width != w ||
+      height != h || format != cur_format) {
+    SDL_DestroyTexture(texture_);
+    texture_ = NULL;
 
-    SDL_Texture* texture = NULL;
-    common::Error err = ReallocTexture(&texture, renderer, format, width, height, SDL_BLENDMODE_NONE, false);
+    SDL_Texture* ltexture = NULL;
+    common::Error err = CreateTexture(renderer, format, width, height, SDL_BLENDMODE_NONE, false, &ltexture);
     if (err && err->IsError()) {
-      texture_ = NULL;
-    } else {
-      texture_ = texture;
+      DNOTREACHED() << err->Description();
+      return NULL;
     }
-
+    texture_ = ltexture;
     renderer_ = renderer;
   }
 
   return texture_;
 }
 
-FrameSaver::~FrameSaver() {
+TextureSaver::~TextureSaver() {
   if (texture_) {
     SDL_DestroyTexture(texture_);
     texture_ = NULL;

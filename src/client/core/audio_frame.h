@@ -39,6 +39,7 @@ struct AudioFrame {
   clock64_t pts;      /* presentation timestamp for the frame */
   clock64_t duration; /* estimated duration of the frame */
   int64_t pos;        /* byte position of the frame in the input file */
+  AVSampleFormat format;
 
   void ClearFrame();
 

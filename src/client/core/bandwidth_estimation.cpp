@@ -98,7 +98,8 @@ DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_siz
   // https://support.google.com/youtube/answer/2853702?hl=en
   // https://support.ustream.tv/hc/en-us/articles/207852117-Internet-connection-and-recommended-encoding-settings
   // https://support.google.com/youtube/answer/1722171?hl=en
-  if (profile < PROFILE_H264_MAIN) {
+  int stabled_profile = std::min(PROFILE_H264_HIGH, profile);
+  if (stabled_profile < PROFILE_H264_MAIN) {
     if (framerate <= 30.0) {
       if (encoded_frame_size.width >= 3840 && encoded_frame_size.height >= 2160) {  // 2160p (4k) 40000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(13000), KBITS_TO_BYTES(40000));
@@ -132,7 +133,7 @@ DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_siz
         return DesireBytesPerSec(KBITS_TO_BYTES(400), KBITS_TO_BYTES(900));
       }
     }
-  } else if (profile <= PROFILE_H264_HIGH) {
+  } else if (stabled_profile <= PROFILE_H264_HIGH) {
     if (framerate <= 30.0) {
       if (encoded_frame_size.width >= 3840 && encoded_frame_size.height >= 2160) {  // 2160p (4k) 40000 Kbps
         return DesireBytesPerSec(KBITS_TO_BYTES(13000) * KOEF_BASE_TO_HIGHT,
@@ -170,7 +171,8 @@ DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_siz
     }
   }
 
-  DNOTREACHED();
+  DNOTREACHED() << "Size: " << encoded_frame_size.width << "x" << encoded_frame_size.height
+                << ", framerate: " << framerate << ", profile: " << profile;
   return DesireBytesPerSec(KBITS_TO_BYTES(0), KBITS_TO_BYTES(0));
 }
 
@@ -187,7 +189,7 @@ DesireBytesPerSec CalculateDesireMPEGBandwidthBytesPerSec(Size encoded_frame_siz
     return DesireBytesPerSec(KBITS_TO_BYTES(40000), KBITS_TO_BYTES(80000));
   }
 
-  DNOTREACHED();
+  DNOTREACHED() << "Size: " << encoded_frame_size.width << "x" << encoded_frame_size.height;
   return DesireBytesPerSec(KBITS_TO_BYTES(0), KBITS_TO_BYTES(0));
 }
 

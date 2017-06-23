@@ -1137,7 +1137,7 @@ int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t durati
   if (vp->width != src_frame->width || vp->height != src_frame->height || vp->format != src_frame->format) {
     vp->width = src_frame->width;
     vp->height = src_frame->height;
-    vp->format = src_frame->format;
+    vp->format = static_cast<AVPixelFormat>(src_frame->format);
     handler_->HandleFrameResize(this, vp->width, vp->height, vp->format, vp->sar);
   }
 
@@ -1492,6 +1492,7 @@ int VideoState::AudioThread() {
 
         af->pts = IsValidPts(frame->pts) ? frame->pts * q2d_diff(tb) : invalid_clock();
         af->pos = av_frame_get_pkt_pos(frame);
+        af->format = static_cast<AVSampleFormat>(frame->format);
         AVRational tmp = {frame->nb_samples, frame->sample_rate};
         af->duration = q2d_diff(tmp);
 
@@ -1557,9 +1558,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

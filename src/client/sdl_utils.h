@@ -29,32 +29,32 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
-class TextureSaver {
+class SurfaceSaver {
  public:
-  explicit TextureSaver(SDL_Surface* surface);
-  ~TextureSaver();
+  explicit SurfaceSaver(SDL_Surface* surface);
+  ~SurfaceSaver();
+
   SDL_Texture* GetTexture(SDL_Renderer* renderer) const;
 
   int GetWidthSurface() const;
   int GetHeightSurface() const;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(TextureSaver);
+  DISALLOW_COPY_AND_ASSIGN(SurfaceSaver);
   SDL_Surface* surface_;
   mutable SDL_Texture* texture_;
   mutable SDL_Renderer* renderer_;
 };
 
-class FrameSaver {
+class TextureSaver {
  public:
-  explicit FrameSaver();
-  ~FrameSaver();
+  explicit TextureSaver();
+  ~TextureSaver();
 
   SDL_Texture* GetTexture(SDL_Renderer* renderer, int width, int height, Uint32 format) const;
 
   int GetWidth() const;
   int GetHeight() const;
-  Uint32 GetFormat() const;
 
  private:
   mutable SDL_Texture* texture_;

@@ -77,11 +77,15 @@ class FakeHandler : public VideoStateHandler {
     return true;
   }
 
-  virtual void HandleFrameResize(VideoState* stream, int width, int height, int format, AVRational sar) override {
+  virtual void HandleFrameResize(VideoState* stream,
+                                 int width,
+                                 int height,
+                                 int av_pixel_format,
+                                 AVRational sar) override {
     UNUSED(stream);
     UNUSED(width);
     UNUSED(height);
-    UNUSED(format);
+    UNUSED(av_pixel_format);
     UNUSED(sar);
   }
 
@@ -153,7 +157,7 @@ class FakeApplication : public common::application::IApplicationImpl {
     if (fevent->GetEventType() == core::events::RequestVideoEvent::EventType) {
       core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
       core::events::FrameInfo fr = avent->info();
-      bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.format, fr.sar);
+      bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.sar);
       if (!res) {
         fApp->Exit(EXIT_FAILURE);
       }

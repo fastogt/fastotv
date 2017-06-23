@@ -46,7 +46,7 @@ class StreamHandler : public core::VideoStateHandler {
   virtual void HandleFrameResize(core::VideoState* stream,
                                  int width,
                                  int height,
-                                 int format,
+                                 int av_pixel_format,
                                  AVRational sar) override final;
   virtual void HandleQuitStream(core::VideoState* stream, int exit_code, common::Error err) override final;
 };

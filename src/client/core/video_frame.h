@@ -58,8 +58,8 @@ struct VideoFrame {
 
   int width;
   int height;
-  int format;      // pixel format in mostly AV_PIX_FMT_YUV420P
-  AVRational sar;  // aspect ratio
+  AVPixelFormat format;  // pixel format in mostly AV_PIX_FMT_YUV420P
+  AVRational sar;        // aspect ratio
 
  private:
   DISALLOW_COPY_AND_ASSIGN(VideoFrame);
