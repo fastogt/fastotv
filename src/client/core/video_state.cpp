@@ -1033,6 +1033,8 @@ frames::VideoFrame* VideoState::TryToGetVideoFrame() {
   PacketQueue* video_packet_queue = vstream_->Queue();
   PacketQueue* audio_packet_queue = astream_->Queue();
 
+  force_refresh_ = false;
+
   int aqsize = 0, vqsize = 0;
   bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
   if (is_video_open) {
