@@ -25,7 +25,8 @@ namespace core {
 namespace frames {
 
 AudioFrame::AudioFrame() : BaseFrame(), format(AV_SAMPLE_FMT_NONE) {}
-}
+
+}  // namespace frames
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

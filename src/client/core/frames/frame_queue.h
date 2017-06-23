@@ -77,7 +77,7 @@ class AudioFrameQueue : public BaseFrameQueue<frames::AudioFrame, buffer_size> {
   explicit AudioFrameQueue(bool keep_last) : base_class(keep_last) {}
 };
 
-}
+}  // namespace frames
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

@@ -72,9 +72,9 @@ extern "C" {
 #include "client/core/types.h"   // for clock64_t, IsValidClock
 #include "client/core/video_state_handler.h"
 
+#include "client/core/frames/audio_frame.h"  // for AudioFrame
 #include "client/core/frames/frame_queue.h"  // for VideoDecoder, AudioDec...
 #include "client/core/frames/video_frame.h"  // for VideoFrame
-#include "client/core/frames/audio_frame.h"  // for AudioFrame
 
 #undef ERROR
 
@@ -657,25 +657,6 @@ clock64_t VideoState::GetMasterClock() const {
   return astream_->GetClock();
 }
 
-/* display the current picture, if any */
-frames::VideoFrame* VideoState::GetVideoFrameForDisplay() const {
-  if (!vstream_->IsOpened()) {
-    return nullptr;
-  }
-
-  if (!video_frame_queue_) {
-    return nullptr;
-  }
-
-  frames::VideoFrame* vp = video_frame_queue_->PeekLast();
-  if (vp) {
-    stats_->frame_processed++;
-    return vp;
-  }
-
-  return nullptr;
-}
-
 int VideoState::Exec() {
   bool started = read_tid_->Start();
   if (!started) {
@@ -966,7 +947,7 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-frames::VideoFrame* VideoState::RefreshVideo() {
+frames::VideoFrame* VideoState::GetVideoFrame() {
 retry:
   if (video_frame_queue_->IsEmpty()) {
     // nothing to do, no picture to display in the queue
@@ -1030,14 +1011,20 @@ retry:
 display:
   /* display picture */
   if (force_refresh_ && video_frame_queue_->RindexShown()) {
-    return GetVideoFrameForDisplay();
+    frames::VideoFrame* vp = video_frame_queue_->PeekLast();
+    if (vp) {
+      stats_->frame_processed++;
+      return vp;
+    }
+
+    return nullptr;
   }
 
   return nullptr;
 }
 
 frames::VideoFrame* VideoState::TryToGetVideoFrame() {
-  if (paused_ && !force_refresh_) {
+  if (paused_ && !force_refresh_) {  // if in pause and not force update
     return nullptr;
   }
 
@@ -1045,8 +1032,6 @@ frames::VideoFrame* VideoState::TryToGetVideoFrame() {
   const bool is_audio_open = astream_->IsOpened();
   PacketQueue* video_packet_queue = vstream_->Queue();
   PacketQueue* audio_packet_queue = astream_->Queue();
-
-  force_refresh_ = false;
 
   int aqsize = 0, vqsize = 0;
   bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
@@ -1072,7 +1057,7 @@ frames::VideoFrame* VideoState::TryToGetVideoFrame() {
   stats_->active_hwaccel = input_st_->active_hwaccel_id;
 
   if (is_video_open && video_frame_queue_) {
-    return RefreshVideo();
+    return GetVideoFrame();
   }
 
   return nullptr;
@@ -1559,8 +1544,9 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
-                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height,
+          static_cast<const char*>(
+              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

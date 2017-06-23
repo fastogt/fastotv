@@ -33,7 +33,8 @@ clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clo
   }
   return duration;
 }
-}
+
+}  // namespace frames
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

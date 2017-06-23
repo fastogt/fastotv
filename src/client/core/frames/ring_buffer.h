@@ -183,7 +183,7 @@ class RingBuffer {
   bool stoped_;
 };
 
-}
+}  // namespace frames
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

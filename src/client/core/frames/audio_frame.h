@@ -34,7 +34,8 @@ struct AudioFrame : public BaseFrame {
  private:
   DISALLOW_COPY_AND_ASSIGN(AudioFrame);
 };
-}
+
+}  // namespace frames
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

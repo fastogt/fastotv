@@ -48,7 +48,8 @@ struct BaseFrame {
  private:
   DISALLOW_COPY_AND_ASSIGN(BaseFrame);
 };
-}
+
+}  // namespace frames
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

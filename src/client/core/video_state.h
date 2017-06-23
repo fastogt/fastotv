@@ -75,7 +75,7 @@ template <size_t buffer_size>
 class AudioFrameQueue;
 template <size_t buffer_size>
 class VideoFrameQueue;
-}
+}  // namespace frames
 
 class VideoState {
  public:
@@ -123,7 +123,7 @@ class VideoState {
 
  private:
   void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);
-  frames::VideoFrame* RefreshVideo();
+  frames::VideoFrame* GetVideoFrame();
 
   void ResetStats();
   void Close();
@@ -145,8 +145,6 @@ class VideoState {
   int ConfigureVideoFilters(AVFilterGraph* graph, const std::string& vfilters, AVFrame* frame);
   int ConfigureAudioFilters(const std::string& afilters, int force_output_format);
 #endif
-
-  frames::VideoFrame* GetVideoFrameForDisplay() const;
 
   /* return the wanted number of samples to get better sync if sync_type is video
    * or external master clock */

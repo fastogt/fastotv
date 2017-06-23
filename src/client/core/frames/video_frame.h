@@ -40,7 +40,8 @@ struct VideoFrame : public BaseFrame {
 };
 
 clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock64_t max_frame_duration);
-}
+
+}  // namespace frames
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

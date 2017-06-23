@@ -34,7 +34,8 @@ BaseFrame::~BaseFrame() {
 void BaseFrame::ClearFrame() {
   av_frame_unref(frame);
 }
-}
+
+}  // namespace frames
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv
