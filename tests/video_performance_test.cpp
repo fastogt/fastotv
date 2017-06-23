@@ -68,11 +68,15 @@ class FakeHandler : public VideoStateHandler {
   }
 
   // video
-  virtual bool HandleRequestVideo(VideoState* stream, int width, int height, int format, AVRational sar) override {
+  virtual bool HandleRequestVideo(VideoState* stream,
+                                  int width,
+                                  int height,
+                                  int av_pixel_format,
+                                  AVRational sar) override {
     UNUSED(stream);
     UNUSED(width);
     UNUSED(height);
-    UNUSED(format);
+    UNUSED(av_pixel_format);
     UNUSED(sar);
     return true;
   }

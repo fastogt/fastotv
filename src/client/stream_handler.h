@@ -39,7 +39,7 @@ class StreamHandler : public core::VideoStateHandler {
   virtual bool HandleRequestVideo(core::VideoState* stream,
                                   int width,
                                   int height,
-                                  int format,
+                                  int av_pixel_format,
                                   AVRational sar) override = 0;
 
  private:

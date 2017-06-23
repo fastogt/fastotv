@@ -143,7 +143,11 @@ class Player : public StreamHandler, public core::events::EventListener {
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override;
 
   // should executed in gui thread
-  virtual bool HandleRequestVideo(core::VideoState* stream, int width, int height, int format, AVRational sar) override;
+  virtual bool HandleRequestVideo(core::VideoState* stream,
+                                  int width,
+                                  int height,
+                                  int av_pixel_format,
+                                  AVRational sar) override;
 
   virtual void HandlePreExecEvent(core::events::PreExecEvent* event);
   virtual void HandlePostExecEvent(core::events::PostExecEvent* event);

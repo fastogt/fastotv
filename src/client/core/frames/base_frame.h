@@ -16,24 +16,39 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/audio_frame.h"
+#pragma once
+
+#include <stdint.h>  // for int64_t
+
+extern "C" {
+#include <libavutil/frame.h>
+}
+
+#include "client/core/types.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+namespace frames {
 
-AudioFrame::AudioFrame() : frame(av_frame_alloc()), pts(0), duration(0), pos(0), format(AV_SAMPLE_FMT_NONE) {}
+struct BaseFrame {
+  BaseFrame();
 
-AudioFrame::~AudioFrame() {
-  ClearFrame();
-  av_frame_free(&frame);
+  AVFrame* frame;
+  clock64_t pts;      /* presentation timestamp for the frame */
+  clock64_t duration; /* estimated duration of the frame */
+  int64_t pos;        /* byte position of the frame in the input file */
+
+  void ClearFrame();
+
+ protected:
+  ~BaseFrame();
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(BaseFrame);
+};
 }
-
-void AudioFrame::ClearFrame() {
-  av_frame_unref(frame);
-}
-
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

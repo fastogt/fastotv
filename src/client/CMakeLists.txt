@@ -264,6 +264,14 @@ SET(HEADERS_CORE_EVENTS
   core/events/lirc_events.h
 )
 
+SET(HEADERS_CORE_FRAMES
+  core/frames/base_frame.h
+  core/frames/audio_frame.h
+  core/frames/video_frame.h
+  core/frames/ring_buffer.h
+  core/frames/frame_queue.h
+)
+
 SET(HEADERS_CORE
   core/types.h
   core/stream_statistic.h
@@ -271,20 +279,17 @@ SET(HEADERS_CORE
   core/sdl_utils.h
   core/clock.h
   core/packet_queue.h
-  core/frame_queue.h
   core/decoder.h
   core/app_options.h
   core/audio_params.h
   core/stream.h
-  core/ring_buffer.h
-  core/audio_frame.h
-  core/video_frame.h
   core/application/sdl2_application.h
   core/video_state.h
   core/video_state_handler.h
   core/bandwidth_estimation.h
 
   ${HEADERS_CORE_EVENTS}
+  ${HEADERS_CORE_FRAMES}
 )
 
 SET(SOURCES_CORE_EVENTS
@@ -298,6 +303,14 @@ SET(SOURCES_CORE_EVENTS
   core/events/lirc_events.cpp
 )
 
+SET(SOURCES_CORE_FRAMES
+  core/frames/base_frame.cpp
+  core/frames/audio_frame.cpp
+  core/frames/video_frame.cpp
+  core/frames/frame_queue.cpp
+  core/frames/ring_buffer.cpp
+)
+
 SET(SOURCES_CORE
   core/types.cpp
   core/stream_statistic.cpp
@@ -305,20 +318,17 @@ SET(SOURCES_CORE
   core/sdl_utils.cpp
   core/clock.cpp
   core/packet_queue.cpp
-  core/frame_queue.cpp
   core/decoder.cpp
   core/app_options.cpp
   core/audio_params.cpp
   core/stream.cpp
-  core/ring_buffer.cpp
-  core/audio_frame.cpp
-  core/video_frame.cpp
   core/application/sdl2_application.cpp
   core/video_state.cpp
   core/video_state_handler.cpp
   core/bandwidth_estimation.cpp
 
   ${SOURCES_CORE_EVENTS}
+  ${SOURCES_CORE_FRAMES}
 )
 
 FIND_PACKAGE(SDL2 REQUIRED)

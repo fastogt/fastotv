@@ -16,37 +16,25 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/video_frame.h"
-
-#include <stddef.h>  // for NULL
-
-#include <SDL2/SDL_render.h>  // for SDL_DestroyTexture
+#include "client/core/frames/base_frame.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+namespace frames {
 
-VideoFrame::VideoFrame()
-    : frame(av_frame_alloc()), pts(0), duration(0), pos(0), width(0), height(0), format(AV_PIX_FMT_NONE), sar{0, 0} {}
+BaseFrame::BaseFrame() : frame(av_frame_alloc()), pts(0), duration(0), pos(0) {}
 
-VideoFrame::~VideoFrame() {
+BaseFrame::~BaseFrame() {
   ClearFrame();
   av_frame_free(&frame);
 }
 
-void VideoFrame::ClearFrame() {
+void BaseFrame::ClearFrame() {
   av_frame_unref(frame);
 }
-
-clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock64_t max_frame_duration) {
-  clock64_t duration = nextvp->pts - vp->pts;
-  if (!IsValidClock(duration) || duration <= 0 || duration > max_frame_duration) {
-    return vp->duration;
-  }
-  return duration;
 }
-
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

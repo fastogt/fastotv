@@ -18,35 +18,29 @@
 
 #pragma once
 
-#include <stdint.h>  // for int64_t
-
-extern "C" {
-#include <libavutil/frame.h>
-}
-
-#include "client/core/types.h"
+#include "client/core/frames/base_frame.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+namespace frames {
 
-struct AudioFrame {
-  AudioFrame();
-  ~AudioFrame();
+/* Common struct for handling all types of decoded data and allocated render buffers. */
+struct VideoFrame : public BaseFrame {
+  VideoFrame();
 
-  AVFrame* frame;
-  clock64_t pts;      /* presentation timestamp for the frame */
-  clock64_t duration; /* estimated duration of the frame */
-  int64_t pos;        /* byte position of the frame in the input file */
-  AVSampleFormat format;
-
-  void ClearFrame();
+  int width;
+  int height;
+  AVPixelFormat format;  // pixel format in mostly AV_PIX_FMT_YUV420P
+  AVRational sar;        // aspect ratio
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(AudioFrame);
+  DISALLOW_COPY_AND_ASSIGN(VideoFrame);
 };
 
+clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock64_t max_frame_duration);
+}
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

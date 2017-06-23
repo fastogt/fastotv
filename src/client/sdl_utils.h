@@ -48,7 +48,7 @@ class SurfaceSaver {
 
 class TextureSaver {
  public:
-  explicit TextureSaver();
+  TextureSaver();
   ~TextureSaver();
 
   SDL_Texture* GetTexture(SDL_Renderer* renderer, int width, int height, Uint32 format) const;

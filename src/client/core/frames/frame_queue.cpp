@@ -16,12 +16,12 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/ring_buffer.h"
+#include "client/core/frames/frame_queue.h"
 
 namespace fasto {
 namespace fastotv {
-namespace core {
-namespace client {}
-}  // namespace core
+namespace client {
+namespace core {}
+}  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

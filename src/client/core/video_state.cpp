@@ -62,18 +62,19 @@ extern "C" {
 #include "ffmpeg_internal.h"
 
 #include "client/core/app_options.h"  // for ComplexOptions, AppOpt...
-#include "client/core/audio_frame.h"  // for AudioFrame
 #include "client/core/av_utils.h"
 #include "client/core/bandwidth_estimation.h"  // for DesireBytesPerSec
 #include "client/core/decoder.h"               // for VideoDecoder, AudioDec...
 #include "client/core/events/stream_events.h"  // for QuitStreamEvent, Alloc...
-#include "client/core/frame_queue.h"           // for VideoDecoder, AudioDec...
 #include "client/core/packet_queue.h"          // for PacketQueue
 #include "client/core/sdl_utils.h"
-#include "client/core/stream.h"       // for AudioStream, VideoStream
-#include "client/core/types.h"        // for clock64_t, IsValidClock
-#include "client/core/video_frame.h"  // for VideoFrame
+#include "client/core/stream.h"  // for AudioStream, VideoStream
+#include "client/core/types.h"   // for clock64_t, IsValidClock
 #include "client/core/video_state_handler.h"
+
+#include "client/core/frames/frame_queue.h"  // for VideoDecoder, AudioDec...
+#include "client/core/frames/video_frame.h"  // for VideoFrame
+#include "client/core/frames/audio_frame.h"  // for AudioFrame
 
 #undef ERROR
 
@@ -386,7 +387,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     bool opened = vstream_->Open(stream_index, stream, frame_rate);
     UNUSED(opened);
     PacketQueue* packet_queue = vstream_->Queue();
-    video_frame_queue_ = new VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>(true);
+    video_frame_queue_ = new video_frame_queue_t(true);
     viddec_ = new VideoDecoder(avctx, packet_queue);
     viddec_->Start();
     if (!vdecoder_tid_->Start()) {
@@ -442,7 +443,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     bool opened = astream_->Open(stream_index, stream);
     UNUSED(opened);
     PacketQueue* packet_queue = astream_->Queue();
-    audio_frame_queue_ = new AudioFrameQueue<SAMPLE_QUEUE_SIZE>(true);
+    audio_frame_queue_ = new audio_frame_queue_t(true);
     auddec_ = new AudioDecoder(avctx, packet_queue);
     if ((ic_->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
         !ic_->iformat->read_seek) {
@@ -657,7 +658,7 @@ clock64_t VideoState::GetMasterClock() const {
 }
 
 /* display the current picture, if any */
-VideoFrame* VideoState::GetVideoFrameForDisplay() const {
+frames::VideoFrame* VideoState::GetVideoFrameForDisplay() const {
   if (!vstream_->IsOpened()) {
     return nullptr;
   }
@@ -666,7 +667,7 @@ VideoFrame* VideoState::GetVideoFrameForDisplay() const {
     return nullptr;
   }
 
-  VideoFrame* vp = video_frame_queue_->PeekLast();
+  frames::VideoFrame* vp = video_frame_queue_->PeekLast();
   if (vp) {
     stats_->frame_processed++;
     return vp;
@@ -832,8 +833,8 @@ the_end:
   StreamComponentOpen(stream_index);
 }
 
-bool VideoState::RequestVideo(int width, int height, int format, AVRational sar) {
-  return handler_->HandleRequestVideo(this, width, height, format, sar);
+bool VideoState::RequestVideo(int width, int height, int av_pixel_format, AVRational sar) {
+  return handler_->HandleRequestVideo(this, width, height, av_pixel_format, sar);
 }
 
 int VideoState::SynchronizeAudio(int nb_samples) {
@@ -879,7 +880,7 @@ int VideoState::AudioDecodeFrame() {
     return ERROR_RESULT_VALUE;
   }
 
-  AudioFrame* af = audio_frame_queue_->GetPeekReadable();
+  frames::AudioFrame* af = audio_frame_queue_->GetPeekReadable();
   if (!af) {
     return ERROR_RESULT_VALUE;
   }
@@ -965,14 +966,14 @@ int VideoState::AudioDecodeFrame() {
   return resampled_data_size;
 }
 
-VideoFrame* VideoState::RefreshVideo() {
+frames::VideoFrame* VideoState::RefreshVideo() {
 retry:
   if (video_frame_queue_->IsEmpty()) {
     // nothing to do, no picture to display in the queue
   } else {
     /* dequeue the picture */
-    VideoFrame* lastvp = video_frame_queue_->PeekLast();
-    VideoFrame* vp = video_frame_queue_->Peek();
+    frames::VideoFrame* lastvp = video_frame_queue_->PeekLast();
+    frames::VideoFrame* vp = video_frame_queue_->Peek();
 
     if (frame_timer_ == 0) {
       frame_timer_ = GetRealClockTime();
@@ -1004,7 +1005,7 @@ retry:
       vstream_->SetClockAt(pts, time);
     }
 
-    VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
+    frames::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
     if (nextvp) {
       clock64_t duration = CalcDurationBetweenVideoFrames(vp, nextvp, max_frame_duration_);
       if (!step_ && (opt_.framedrop == FRAME_DROP_AUTO ||
@@ -1035,7 +1036,7 @@ display:
   return nullptr;
 }
 
-VideoFrame* VideoState::TryToGetVideoFrame() {
+frames::VideoFrame* VideoState::TryToGetVideoFrame() {
   if (paused_ && !force_refresh_) {
     return nullptr;
   }
@@ -1126,7 +1127,7 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
 }
 
 int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t duration, int64_t pos) {
-  VideoFrame* vp = video_frame_queue_->GetPeekWritable();
+  frames::VideoFrame* vp = video_frame_queue_->GetPeekWritable();
   if (!vp) {
     return ERROR_RESULT_VALUE;
   }
@@ -1426,7 +1427,7 @@ int VideoState::ReadThread() {
 }
 
 int VideoState::AudioThread() {
-  AudioFrame* af = nullptr;
+  frames::AudioFrame* af = nullptr;
   int ret = 0;
 
   AVFrame* frame = av_frame_alloc();

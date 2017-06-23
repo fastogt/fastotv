@@ -47,8 +47,10 @@ extern "C" {
 #include "client/core/audio_params.h"     // for AudioParams
 #include "client/core/ffmpeg_internal.h"  // for hw_device_ctx
 #include "client/core/sdl_utils.h"
-#include "client/core/video_frame.h"  // for VideoFrame
 #include "client/core/video_state.h"  // for VideoState
+
+#include "client/core/frames/video_frame.h"  // for VideoFrame
+#include "client/core/frames/audio_frame.h"  // for AudioFrame
 
 #include "client/ioservice.h"  // for IoService
 #include "client/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
@@ -388,8 +390,8 @@ void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 
-bool Player::HandleRequestVideo(core::VideoState* stream, int width, int height, int format, AVRational sar) {
-  UNUSED(format);
+bool Player::HandleRequestVideo(core::VideoState* stream, int width, int height, int av_pixel_format, AVRational sar) {
+  UNUSED(av_pixel_format);
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
     return false;
@@ -945,7 +947,7 @@ void Player::DrawFailedStatus() {
 
 void Player::DrawPlayingStatus() {
   CHECK(THREAD_MANAGER()->IsMainThread());
-  core::VideoFrame* frame = stream_->TryToGetVideoFrame();
+  core::frames::VideoFrame* frame = stream_->TryToGetVideoFrame();
   if (!frame || !render_texture_) {
     return;
   }
@@ -968,9 +970,8 @@ void Player::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                             "to reduce the image size.";
     return;
   }
 

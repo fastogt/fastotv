@@ -27,6 +27,7 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+namespace frames {
 
 template <typename T, size_t buffer_size>
 class RingBuffer {
@@ -51,27 +52,6 @@ class RingBuffer {
   ~RingBuffer() {
     for (size_t i = 0; i < buffer_size; i++) {
       delete queue_[i];
-    }
-  }
-
-  template <typename F>
-  void ChangeSafeAndNotify(F f, pointer_type el) {
-    lock_t lock(queue_mutex_);
-    f(el);
-    queue_cond_.notify_one();
-  }
-
-  template <typename F>
-  void ChangeSafe(F f, pointer_type el) {
-    lock_t lock(queue_mutex_);
-    f(el);
-  }
-
-  template <typename F>
-  void WaitSafeAndNotify(F f) {
-    lock_t lock(queue_mutex_);
-    while (f()) {
-      queue_cond_.wait(lock);
     }
   }
 
@@ -203,6 +183,7 @@ class RingBuffer {
   bool stoped_;
 };
 
+}
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv

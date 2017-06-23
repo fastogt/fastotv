@@ -42,70 +42,6 @@ extern "C" {
 #include "client/core/stream_statistic.h"
 #include "client/core/types.h"  // for clock64_t, AvSyncType
 
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-class AudioDecoder;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-class AudioStream;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-class VideoDecoder;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-class VideoStateHandler;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-class VideoStream;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-struct InputStream;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-struct VideoFrame;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-
 struct SwrContext;
 struct InputStream;
 
@@ -124,33 +60,29 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+
+class VideoStateHandler;
+
 class AudioDecoder;
-}
-namespace core {
 class AudioStream;
-}
-namespace core {
 class VideoDecoder;
-}
-namespace core {
 class VideoStream;
-}
-namespace core {
+
+namespace frames {
+struct AudioFrame;
 struct VideoFrame;
-}
-namespace core {
 template <size_t buffer_size>
 class AudioFrameQueue;
-}
-namespace core {
 template <size_t buffer_size>
 class VideoFrameQueue;
 }
-namespace core {
 
 class VideoState {
  public:
   typedef common::shared_ptr<Stats> stats_t;
+  typedef frames::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE> video_frame_queue_t;
+  typedef frames::AudioFrameQueue<SAMPLE_QUEUE_SIZE> audio_frame_queue_t;
+
   enum { invalid_stream_index = -1 };
   VideoState(stream_id id,
              const common::uri::Uri& uri,
@@ -182,16 +114,16 @@ class VideoState {
   void SeekMsec(clock64_t msec);
   void StreamCycleChannel(AVMediaType codec_type);
 
-  bool RequestVideo(int width, int height, int format, AVRational sar) WARN_UNUSED_RESULT;
+  bool RequestVideo(int width, int height, int av_pixel_format, AVRational sar) WARN_UNUSED_RESULT;
 
-  VideoFrame* TryToGetVideoFrame();
+  frames::VideoFrame* TryToGetVideoFrame();
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
   stats_t GetStatistic() const;
 
  private:
   void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);
-  VideoFrame* RefreshVideo();
+  frames::VideoFrame* RefreshVideo();
 
   void ResetStats();
   void Close();
@@ -214,7 +146,7 @@ class VideoState {
   int ConfigureAudioFilters(const std::string& afilters, int force_output_format);
 #endif
 
-  VideoFrame* GetVideoFrameForDisplay() const;
+  frames::VideoFrame* GetVideoFrameForDisplay() const;
 
   /* return the wanted number of samples to get better sync if sync_type is video
    * or external master clock */
@@ -252,8 +184,8 @@ class VideoState {
   VideoDecoder* viddec_;
   AudioDecoder* auddec_;
 
-  VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE>* video_frame_queue_;
-  AudioFrameQueue<SAMPLE_QUEUE_SIZE>* audio_frame_queue_;
+  video_frame_queue_t* video_frame_queue_;
+  audio_frame_queue_t* audio_frame_queue_;
 
   clock64_t audio_clock_;
   clock64_t audio_diff_cum_; /* used for AV difference average computation */

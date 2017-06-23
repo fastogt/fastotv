@@ -20,72 +20,64 @@
 
 #include <stdint.h>  // for int64_t
 
-#include "client/core/ring_buffer.h"  // for RingBuffer
+#include "client/core/frames/ring_buffer.h"  // for RingBuffer
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
+namespace frames {
 
 struct AudioFrame;
 struct VideoFrame;
 
-template <size_t buffer_size>
-class VideoFrameQueue : public RingBuffer<VideoFrame, buffer_size> {
+template <typename T, size_t buffer_size>
+class BaseFrameQueue : public RingBuffer<T, buffer_size> {
  public:
-  typedef RingBuffer<VideoFrame, buffer_size> base_class;
+  typedef RingBuffer<T, buffer_size> base_class;
+  typedef typename base_class::pointer_type pointer_type;
+
+  explicit BaseFrameQueue(bool keep_last) : base_class(keep_last) {}
+
+  void MoveToNext() {
+    pointer_type fp = base_class::MoveToNextInner();
+    if (!fp) {
+      return;
+    }
+    fp->ClearFrame();
+    base_class::RindexUpInner();
+    base_class::Signal();
+  }
+
+  int64_t GetLastPos() const {
+    pointer_type fp = base_class::RindexElementInner();
+    if (base_class::RindexShown()) {
+      return fp->pos;
+    }
+
+    return 0;
+  }
+};
+
+template <size_t buffer_size>
+class VideoFrameQueue : public BaseFrameQueue<frames::VideoFrame, buffer_size> {
+ public:
+  typedef BaseFrameQueue<frames::VideoFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
   explicit VideoFrameQueue(bool keep_last) : base_class(keep_last) {}
-
-  void MoveToNext() {
-    pointer_type fp = base_class::MoveToNextInner();
-    if (!fp) {
-      return;
-    }
-    fp->ClearFrame();
-    base_class::RindexUpInner();
-    base_class::Signal();
-  }
-
-  int64_t GetLastPos() const {
-    pointer_type fp = base_class::RindexElementInner();
-    if (base_class::RindexShown()) {
-      return fp->pos;
-    }
-
-    return -1;
-  }
 };
 
 template <size_t buffer_size>
-class AudioFrameQueue : public RingBuffer<AudioFrame, buffer_size> {
+class AudioFrameQueue : public BaseFrameQueue<frames::AudioFrame, buffer_size> {
  public:
-  typedef RingBuffer<AudioFrame, buffer_size> base_class;
+  typedef BaseFrameQueue<frames::AudioFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
   explicit AudioFrameQueue(bool keep_last) : base_class(keep_last) {}
-
-  void MoveToNext() {
-    pointer_type fp = base_class::MoveToNextInner();
-    if (!fp) {
-      return;
-    }
-    fp->ClearFrame();
-    base_class::RindexUpInner();
-    base_class::Signal();
-  }
-
-  int64_t GetLastPos() const {
-    pointer_type fp = base_class::RindexElementInner();
-    if (base_class::RindexShown()) {
-      return fp->pos;
-    }
-
-    return -1;
-  }
 };
 
+}
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv
