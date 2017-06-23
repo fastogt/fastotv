@@ -96,7 +96,10 @@ int Sdl2Application::Exec() {
     ProcessEvent(&event);
   }
 
-  SDL_RemoveTimer(my_timer_id);
+  bool is_removed = SDL_RemoveTimer(my_timer_id);
+  if (!is_removed) {
+    WARNING_LOG() << "Remove timer failed!";
+  }
   return EXIT_SUCCESS;
 }
 
