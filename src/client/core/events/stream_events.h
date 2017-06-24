@@ -40,11 +40,11 @@ struct StreamInfo {
 };
 
 struct FrameInfo : public StreamInfo {
-  FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational sar);
+  FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio);
   int width;
   int height;
   int av_pixel_format;
-  AVRational sar;
+  AVRational aspect_ratio;
 };
 
 struct QuitStreamInfo : public StreamInfo {
@@ -53,6 +53,9 @@ struct QuitStreamInfo : public StreamInfo {
   common::Error error;
 };
 
+struct UpdateVideoInfo {};
+
+typedef EventBase<UPDATE_VIDEO_EVENT, UpdateVideoInfo> UpdateVideoEvent;
 typedef EventBase<REQUEST_VIDEO_EVENT, FrameInfo> RequestVideoEvent;
 typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
 

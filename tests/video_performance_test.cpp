@@ -72,12 +72,12 @@ class FakeHandler : public VideoStateHandler {
                                   int width,
                                   int height,
                                   int av_pixel_format,
-                                  AVRational sar) override {
+                                  AVRational aspect_ratio) override {
     UNUSED(stream);
     UNUSED(width);
     UNUSED(height);
     UNUSED(av_pixel_format);
-    UNUSED(sar);
+    UNUSED(aspect_ratio);
     return true;
   }
 
@@ -161,7 +161,7 @@ class FakeApplication : public common::application::IApplicationImpl {
     if (fevent->GetEventType() == core::events::RequestVideoEvent::EventType) {
       core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
       core::events::FrameInfo fr = avent->info();
-      bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.sar);
+      bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
       if (!res) {
         fApp->Exit(EXIT_FAILURE);
       }
@@ -195,6 +195,20 @@ class FakeApplication : public common::application::IApplicationImpl {
     lock_t lock(stop_mutex_);
     stop_ = true;
     stop_cond_.notify_one();
+  }
+
+  virtual common::application::timer_id_t AddTimer(uint32_t interval,
+                                                   common::application::timer_callback_t cb,
+                                                   void* user_data) override {
+    UNUSED(interval);
+    UNUSED(cb);
+    UNUSED(user_data);
+    return 1;
+  }
+
+  virtual bool RemoveTimer(common::application::timer_id_t id) override {
+    UNUSED(id);
+    return true;
   }
 
  private:

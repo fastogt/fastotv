@@ -27,6 +27,7 @@ enum EventsType : common::IEvent::event_id_t {
   TIMER_EVENT,
 
   REQUEST_VIDEO_EVENT,
+  UPDATE_VIDEO_EVENT,
   QUIT_STREAM_EVENT,
 
   KEY_PRESS_EVENT,

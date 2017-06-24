@@ -85,8 +85,6 @@ int Sdl2Application::PreExec() {
 }
 
 int Sdl2Application::Exec() {
-  SDL_TimerID my_timer_id = SDL_AddTimer(event_timeout_wait_msec, timer_callback, this);
-
   SDL_Event event;
   while (SDL_WaitEvent(&event)) {
     bool is_stop_event = event.type == FASTO_EVENT && event.user.data1 == NULL;
@@ -96,10 +94,6 @@ int Sdl2Application::Exec() {
     ProcessEvent(&event);
   }
 
-  bool is_removed = SDL_RemoveTimer(my_timer_id);
-  if (!is_removed) {
-    WARNING_LOG() << "Remove timer failed!";
-  }
   return EXIT_SUCCESS;
 }
 
@@ -203,17 +197,19 @@ void Sdl2Application::HideCursor() {
   SDL_ShowCursor(0);
 }
 
-void Sdl2Application::HandleEvent(events::Event* event) {
-  msec_t start_time = GetCurrentMsec();
-  EventsType event_type = event->GetEventType();
-  bool is_filtered_event = event_type == PRE_EXEC_EVENT || event_type == POST_EXEC_EVENT;
-  dispatcher_.ProcessEvent(event);
-  msec_t finish_time = GetCurrentMsec();
+common::application::timer_id_t Sdl2Application::AddTimer(uint32_t interval,
+                                                          common::application::timer_callback_t cb,
+                                                          void* user_data) {
+  return SDL_AddTimer(interval, cb, user_data);
+}
 
-  msec_t diff_time = finish_time - start_time;
-  if (diff_time >= event_timeout_wait_msec && !is_filtered_event) {
-    DEBUG_LOG() << "Long time execution(" << diff_time << " msec) of event type: " << event_type;
-  }
+bool Sdl2Application::RemoveTimer(common::application::timer_id_t id) {
+  return SDL_RemoveTimer(id);
+}
+
+void Sdl2Application::HandleEvent(events::Event* event) {
+  // bool is_filtered_event = event_type == PRE_EXEC_EVENT || event_type == POST_EXEC_EVENT;
+  dispatcher_.ProcessEvent(event);
 }
 
 void Sdl2Application::HandleKeyDownEvent(SDL_KeyboardEvent* event) {
@@ -282,6 +278,7 @@ Uint32 Sdl2Application::timer_callback(Uint32 interval, void* user_data) {
   app->PostEvent(timer_event);
   return interval;
 }
+
 }  // namespace application
 }  // namespace core
 }  // namespace client

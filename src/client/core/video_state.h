@@ -114,12 +114,13 @@ class VideoState {
   void SeekMsec(clock64_t msec);
   void StreamCycleChannel(AVMediaType codec_type);
 
-  bool RequestVideo(int width, int height, int av_pixel_format, AVRational sar) WARN_UNUSED_RESULT;
+  bool RequestVideo(int width, int height, int av_pixel_format, AVRational aspect_ratio) WARN_UNUSED_RESULT;
 
   frames::VideoFrame* TryToGetVideoFrame();
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
 
   stats_t GetStatistic() const;
+  AVRational GetFrameRate() const;
 
  private:
   void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);

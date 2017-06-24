@@ -26,8 +26,8 @@ namespace events {
 
 StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {}
 
-FrameInfo::FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational sar)
-    : StreamInfo(stream), width(width), height(height), av_pixel_format(av_pixel_format), sar(sar) {}
+FrameInfo::FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio)
+    : StreamInfo(stream), width(width), height(height), av_pixel_format(av_pixel_format), aspect_ratio(aspect_ratio) {}
 
 QuitStreamInfo::QuitStreamInfo(VideoState* stream, int exit_code, common::Error err)
     : StreamInfo(stream), exit_code(exit_code), error(err) {}

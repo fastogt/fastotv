@@ -35,7 +35,6 @@ namespace application {
 
 class Sdl2Application : public common::application::IApplicationImpl {
  public:
-  enum { event_timeout_wait_msec = 1000 / 50 };  // 50 fps
   Sdl2Application(int argc, char** argv);
   ~Sdl2Application();
 
@@ -54,6 +53,11 @@ class Sdl2Application : public common::application::IApplicationImpl {
 
   virtual void ShowCursor() override;
   virtual void HideCursor() override;
+
+  virtual common::application::timer_id_t AddTimer(uint32_t interval,
+                                                   common::application::timer_callback_t cb,
+                                                   void* user_data) override;
+  virtual bool RemoveTimer(common::application::timer_id_t id) override;
 
  protected:
   virtual void HandleEvent(core::events::Event* event);

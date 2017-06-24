@@ -212,7 +212,9 @@ Player::Player(const std::string& app_directory_absolute_path,
       muted_(false),
       show_statstic_(false),
       app_directory_absolute_path_(app_directory_absolute_path),
-      render_texture_(NULL) {
+      render_texture_(NULL),
+      update_video_timer_id_(0),
+      update_video_timer_interval_msec_(min_update_video_msec) {
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -225,6 +227,7 @@ Player::Player(const std::string& app_directory_absolute_path,
   fApp->Subscribe(this, core::events::PostExecEvent::EventType);
   fApp->Subscribe(this, core::events::PreExecEvent::EventType);
   fApp->Subscribe(this, core::events::TimerEvent::EventType);
+  fApp->Subscribe(this, core::events::UpdateVideoEvent::EventType);
 
   fApp->Subscribe(this, core::events::RequestVideoEvent::EventType);
   fApp->Subscribe(this, core::events::QuitStreamEvent::EventType);
@@ -290,6 +293,9 @@ void Player::HandleEvent(event_t* event) {
   } else if (event->GetEventType() == core::events::TimerEvent::EventType) {
     core::events::TimerEvent* tevent = static_cast<core::events::TimerEvent*>(event);
     HandleTimerEvent(tevent);
+  } else if (event->GetEventType() == core::events::UpdateVideoEvent::EventType) {
+    core::events::UpdateVideoEvent* uvevent = static_cast<core::events::UpdateVideoEvent*>(event);
+    HandleUpdateVideoEvent(uvevent);
   } else if (event->GetEventType() == core::events::KeyPressEvent::EventType) {
     core::events::KeyPressEvent* key_press_event = static_cast<core::events::KeyPressEvent*>(event);
     HandleKeyPressEvent(key_press_event);
@@ -390,7 +396,11 @@ void Player::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 
-bool Player::HandleRequestVideo(core::VideoState* stream, int width, int height, int av_pixel_format, AVRational sar) {
+bool Player::HandleRequestVideo(core::VideoState* stream,
+                                int width,
+                                int height,
+                                int av_pixel_format,
+                                AVRational aspect_ratio) {
   UNUSED(av_pixel_format);
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
@@ -398,19 +408,23 @@ bool Player::HandleRequestVideo(core::VideoState* stream, int width, int height,
   }
 
   SDL_Rect rect;
-  core::calculate_display_rect(&rect, 0, 0, INT_MAX, height, width, height, sar);
+  core::calculate_display_rect(&rect, 0, 0, INT_MAX, height, width, height, aspect_ratio);
   options_.default_size.width = rect.w;
   options_.default_size.height = rect.h;
 
   InitWindow(GetCurrentUrlName(), PLAYING_STATE);
 
+  AVRational frame_rate = stream->GetFrameRate();
+  double frames_per_sec = frame_rate.num ? frame_rate.den / static_cast<double>(frame_rate.num) : 0;
+  update_video_timer_interval_msec_ =
+      std::max(static_cast<uint32_t>(frames_per_sec * 1000), static_cast<uint32_t>(min_update_video_msec));
   return true;
 }
 
 void Player::HandleRequestVideoEvent(core::events::RequestVideoEvent* event) {
   core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
   core::events::FrameInfo fr = avent->info();
-  bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.sar);
+  bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
   if (!res) {
     if (stream_) {
       stream_->Abort();
@@ -434,6 +448,8 @@ void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
 void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
+    update_video_timer_id_ = fApp->AddTimer(update_video_timer_interval_msec_, update_video_callback, this);
+
     const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
     const std::string offline_channel_img_full_path =
         common::file_system::make_path(absolute_source_dir, IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
@@ -467,6 +483,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
 void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
   core::events::PostExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
+    fApp->RemoveTimer(update_video_timer_id_);
     controller_->Stop();
     if (stream_) {
       stream_->Abort();
@@ -499,7 +516,7 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
   }
 }
 
-void Player::HandleTimerEvent(core::events::TimerEvent* event) {
+void Player::HandleUpdateVideoEvent(core::events::UpdateVideoEvent* event) {
   UNUSED(event);
   const core::msec_t cur_time = core::GetCurrentMsec();
   core::msec_t diff_currsor = cur_time - cursor_last_shown_;
@@ -518,6 +535,10 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
     show_volume_ = false;
   }
   DrawDisplay();
+}
+
+void Player::HandleTimerEvent(core::events::TimerEvent* event) {
+  UNUSED(event);
 }
 
 void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
@@ -866,14 +887,24 @@ bool Player::GetCurrentUrl(PlaylistEntry* url) const {
   return true;
 }
 
-void Player::sdl_audio_callback(void* opaque, uint8_t* stream, int len) {
-  Player* player = static_cast<Player*>(opaque);
+void Player::sdl_audio_callback(void* user_data, uint8_t* stream, int len) {
+  Player* player = static_cast<Player*>(user_data);
   core::VideoState* st = player->stream_;
   if (!player->muted_ && st && st->IsStreamReady()) {
     st->UpdateAudioBuffer(stream, len, player->options_.audio_volume);
   } else {
     memset(stream, 0, len);
   }
+}
+
+uint32_t Player::update_video_callback(uint32_t interval, void* user_data) {
+  UNUSED(interval);
+
+  Player* player = static_cast<Player*>(user_data);
+  core::events::UpdateVideoInfo inf;
+  core::events::UpdateVideoEvent* timer_event = new core::events::UpdateVideoEvent(player, inf);
+  fApp->PostEvent(timer_event);
+  return player->update_video_timer_interval_msec_;
 }
 
 void Player::UpdateVolume(int step) {

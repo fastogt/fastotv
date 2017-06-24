@@ -814,8 +814,8 @@ the_end:
   StreamComponentOpen(stream_index);
 }
 
-bool VideoState::RequestVideo(int width, int height, int av_pixel_format, AVRational sar) {
-  return handler_->HandleRequestVideo(this, width, height, av_pixel_format, sar);
+bool VideoState::RequestVideo(int width, int height, int av_pixel_format, AVRational aspect_ratio) {
+  return handler_->HandleRequestVideo(this, width, height, av_pixel_format, aspect_ratio);
 }
 
 int VideoState::SynchronizeAudio(int nb_samples) {
@@ -1068,6 +1068,10 @@ frames::VideoFrame* VideoState::TryToGetVideoFrame() {
 
 VideoState::stats_t VideoState::GetStatistic() const {
   return stats_;
+}
+
+AVRational VideoState::GetFrameRate() const {
+  return vstream_->GetFrameRate();
 }
 
 void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {

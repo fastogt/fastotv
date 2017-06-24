@@ -113,7 +113,8 @@ class Player : public StreamHandler, public core::events::EventListener {
     space_width = 10,
     x_start = 10,
     y_start = 10,
-    update_stats_timeout_msec = 1000
+    update_stats_timeout_msec = 1000,
+    min_update_video_msec = 1000 / 25
   };
   static const SDL_Color text_color;
 
@@ -147,12 +148,13 @@ class Player : public StreamHandler, public core::events::EventListener {
                                   int width,
                                   int height,
                                   int av_pixel_format,
-                                  AVRational sar) override;
+                                  AVRational aspect_ratio) override;
 
   virtual void HandlePreExecEvent(core::events::PreExecEvent* event);
   virtual void HandlePostExecEvent(core::events::PostExecEvent* event);
 
   virtual void HandleTimerEvent(core::events::TimerEvent* event);
+  virtual void HandleUpdateVideoEvent(core::events::UpdateVideoEvent* event);
 
   virtual void HandleRequestVideoEvent(core::events::RequestVideoEvent* event);
   virtual void HandleQuitStreamEvent(core::events::QuitStreamEvent* event);
@@ -183,7 +185,9 @@ class Player : public StreamHandler, public core::events::EventListener {
   std::string GetCurrentUrlName() const;  // return Unknown if not found
 
   /* prepare a new audio buffer */
-  static void sdl_audio_callback(void* opaque, uint8_t* stream, int len);
+  static void sdl_audio_callback(void* user_data, uint8_t* stream, int len);
+
+  static uint32_t update_video_callback(uint32_t interval, void* user_data);
 
   void InitWindow(const std::string& title, States status);
   void StartShowFooter();
@@ -276,6 +280,9 @@ class Player : public StreamHandler, public core::events::EventListener {
   const std::string app_directory_absolute_path_;
 
   TextureSaver* render_texture_;
+
+  int update_video_timer_id_;
+  uint32_t update_video_timer_interval_msec_;
 };
 
 }  // namespace client

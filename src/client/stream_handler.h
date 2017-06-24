@@ -40,14 +40,14 @@ class StreamHandler : public core::VideoStateHandler {
                                   int width,
                                   int height,
                                   int av_pixel_format,
-                                  AVRational sar) override = 0;
+                                  AVRational aspect_ratio) override = 0;
 
  private:
   virtual void HandleFrameResize(core::VideoState* stream,
                                  int width,
                                  int height,
                                  int av_pixel_format,
-                                 AVRational sar) override final;
+                                 AVRational aspect_ratio) override final;
   virtual void HandleQuitStream(core::VideoState* stream, int exit_code, common::Error err) override final;
 };
 

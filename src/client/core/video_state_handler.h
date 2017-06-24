@@ -53,8 +53,11 @@ class VideoStateHandler {
                              int volume) = 0;  // change volume
 
   // video
-  virtual bool HandleRequestVideo(VideoState* stream, int width, int height, int av_pixel_format, AVRational sar)
-      WARN_UNUSED_RESULT = 0;  // init video
+  virtual bool HandleRequestVideo(VideoState* stream,
+                                  int width,
+                                  int height,
+                                  int av_pixel_format,
+                                  AVRational aspect_ratio) WARN_UNUSED_RESULT = 0;  // init video
 
   virtual void HandleFrameResize(VideoState* stream, int width, int height, int av_pixel_format, AVRational sar) = 0;
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) = 0;
