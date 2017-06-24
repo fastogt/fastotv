@@ -37,10 +37,8 @@ class BaseFrameQueue : public RingBuffer<T, buffer_size> {
   typedef RingBuffer<T, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
 
-  explicit BaseFrameQueue(bool keep_last) : base_class(keep_last) {}
-
-  void MoveToNext() {
-    pointer_type fp = base_class::MoveToNextInner();
+  void Pop() {
+    pointer_type fp = base_class::MoveToNext();
     if (!fp) {
       return;
     }
@@ -50,7 +48,7 @@ class BaseFrameQueue : public RingBuffer<T, buffer_size> {
   }
 
   int64_t GetLastPos() const {
-    pointer_type fp = base_class::RindexElementInner();
+    pointer_type fp = base_class::PeekLast();
     if (base_class::RindexShown()) {
       return fp->pos;
     }
@@ -64,8 +62,6 @@ class VideoFrameQueue : public BaseFrameQueue<frames::VideoFrame, buffer_size> {
  public:
   typedef BaseFrameQueue<frames::VideoFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
-
-  explicit VideoFrameQueue(bool keep_last) : base_class(keep_last) {}
 };
 
 template <size_t buffer_size>
@@ -73,8 +69,6 @@ class AudioFrameQueue : public BaseFrameQueue<frames::AudioFrame, buffer_size> {
  public:
   typedef BaseFrameQueue<frames::AudioFrame, buffer_size> base_class;
   typedef typename base_class::pointer_type pointer_type;
-
-  explicit AudioFrameQueue(bool keep_last) : base_class(keep_last) {}
 };
 
 }  // namespace frames

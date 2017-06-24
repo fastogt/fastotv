@@ -387,7 +387,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     bool opened = vstream_->Open(stream_index, stream, frame_rate);
     UNUSED(opened);
     PacketQueue* packet_queue = vstream_->Queue();
-    video_frame_queue_ = new video_frame_queue_t(true);
+    video_frame_queue_ = new video_frame_queue_t;
     viddec_ = new VideoDecoder(avctx, packet_queue);
     viddec_->Start();
     if (!vdecoder_tid_->Start()) {
@@ -443,7 +443,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     bool opened = astream_->Open(stream_index, stream);
     UNUSED(opened);
     PacketQueue* packet_queue = astream_->Queue();
-    audio_frame_queue_ = new audio_frame_queue_t(true);
+    audio_frame_queue_ = new audio_frame_queue_t;
     auddec_ = new AudioDecoder(avctx, packet_queue);
     if ((ic_->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
         !ic_->iformat->read_seek) {
@@ -865,7 +865,7 @@ int VideoState::AudioDecodeFrame() {
   if (!af) {
     return ERROR_RESULT_VALUE;
   }
-  audio_frame_queue_->MoveToNext();
+  audio_frame_queue_->Pop();
 
   const AVSampleFormat sample_fmt = static_cast<AVSampleFormat>(af->frame->format);
   int data_size =
@@ -950,66 +950,67 @@ int VideoState::AudioDecodeFrame() {
 frames::VideoFrame* VideoState::GetVideoFrame() {
 retry:
   if (video_frame_queue_->IsEmpty()) {
-    // nothing to do, no picture to display in the queue
-  } else {
-    /* dequeue the picture */
-    frames::VideoFrame* lastvp = video_frame_queue_->PeekLast();
-    frames::VideoFrame* vp = video_frame_queue_->Peek();
+    return nullptr;
+  }
 
-    if (frame_timer_ == 0) {
-      frame_timer_ = GetRealClockTime();
-    }
+  /* dequeue the picture */
+  frames::VideoFrame* lastvp = video_frame_queue_->PeekLast();
+  frames::VideoFrame* firstvp = video_frame_queue_->Peek();
 
-    if (paused_) {
-      goto display;
-    }
+  if (frame_timer_ == 0) {
+    frame_timer_ = GetRealClockTime();
+  }
 
-    /* compute nominal last_duration */
-    clock64_t last_duration = CalcDurationBetweenVideoFrames(lastvp, vp, max_frame_duration_);
-    clock64_t delay = ComputeTargetDelay(last_duration);
-    clock64_t time = GetRealClockTime();
-    clock64_t next_frame_ts = frame_timer_ + delay;
-    if (time < next_frame_ts) {
-      goto display;
-    }
+  if (paused_) {
+    return SelectVideoFrame();
+  }
 
-    frame_timer_ = next_frame_ts;
-    if (delay > 0) {
-      if (time - frame_timer_ > AV_SYNC_THRESHOLD_MAX_MSEC) {
-        frame_timer_ = time;
-      }
-    }
+  /* compute nominal last_duration */
+  clock64_t last_duration = CalcDurationBetweenVideoFrames(lastvp, firstvp, max_frame_duration_);
+  clock64_t delay = ComputeTargetDelay(last_duration);
+  clock64_t time = GetRealClockTime();
+  clock64_t next_frame_ts = frame_timer_ + delay;
+  if (time < next_frame_ts) {
+    return SelectVideoFrame();
+  }
 
-    const clock64_t pts = vp->pts;
-    if (IsValidClock(pts)) {
-      /* update current video pts */
-      vstream_->SetClockAt(pts, time);
-    }
-
-    frames::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
-    if (nextvp) {
-      clock64_t duration = CalcDurationBetweenVideoFrames(vp, nextvp, max_frame_duration_);
-      if (!step_ && (opt_.framedrop == FRAME_DROP_AUTO ||
-                     (opt_.framedrop == FRAME_DROP_ON || (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)))) {
-        clock64_t next_next_frame_ts = frame_timer_ + duration;
-        clock64_t diff_drop = time - next_next_frame_ts;
-        if (diff_drop > 0) {
-          stats_->frame_drops_late++;
-          video_frame_queue_->MoveToNext();
-          goto retry;
-        }
-      }
-    }
-
-    video_frame_queue_->MoveToNext();
-    force_refresh_ = true;
-
-    if (step_ && !paused_) {
-      StreamTogglePause();
+  frame_timer_ = next_frame_ts;
+  if (delay > 0) {
+    if (time - frame_timer_ > AV_SYNC_THRESHOLD_MAX_MSEC) {
+      frame_timer_ = time;
     }
   }
-display:
-  /* display picture */
+
+  const clock64_t pts = firstvp->pts;
+  if (IsValidClock(pts)) {
+    /* update current video pts */
+    vstream_->SetClockAt(pts, time);
+  }
+
+  frames::VideoFrame* nextvp = video_frame_queue_->PeekNextOrNull();
+  if (nextvp) {
+    clock64_t duration = CalcDurationBetweenVideoFrames(firstvp, nextvp, max_frame_duration_);
+    if ((opt_.framedrop == FRAME_DROP_AUTO ||
+         (opt_.framedrop == FRAME_DROP_ON || (GetMasterSyncType() != AV_SYNC_VIDEO_MASTER)))) {
+      clock64_t next_next_frame_ts = frame_timer_ + duration;
+      clock64_t diff_drop = time - next_next_frame_ts;
+      if (diff_drop > 0) {
+        stats_->frame_drops_late++;
+        video_frame_queue_->Pop();
+        goto retry;
+      }
+    }
+  }
+
+  video_frame_queue_->Pop();
+  force_refresh_ = true;
+  if (step_ && !paused_) {
+    StreamTogglePause();
+  }
+  return SelectVideoFrame();
+}
+
+frames::VideoFrame* VideoState::SelectVideoFrame() const {
   if (force_refresh_ && video_frame_queue_->RindexShown()) {
     frames::VideoFrame* vp = video_frame_queue_->PeekLast();
     if (vp) {
@@ -1032,8 +1033,6 @@ frames::VideoFrame* VideoState::TryToGetVideoFrame() {
   const bool is_audio_open = astream_->IsOpened();
   PacketQueue* video_packet_queue = vstream_->Queue();
   PacketQueue* audio_packet_queue = astream_->Queue();
-
-  force_refresh_ = false;
 
   int aqsize = 0, vqsize = 0;
   bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
@@ -1059,7 +1058,9 @@ frames::VideoFrame* VideoState::TryToGetVideoFrame() {
   stats_->active_hwaccel = input_st_->active_hwaccel_id;
 
   if (is_video_open && video_frame_queue_) {
-    return GetVideoFrame();
+    frames::VideoFrame* fr = GetVideoFrame();
+    force_refresh_ = false;
+    return fr;
   }
 
   return nullptr;
@@ -1546,9 +1547,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);
