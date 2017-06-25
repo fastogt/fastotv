@@ -31,6 +31,7 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
+
 class RedisStorage {
  public:
   RedisStorage();
@@ -44,6 +45,7 @@ class RedisStorage {
  private:
   RedisConfig config_;
 };
+
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv

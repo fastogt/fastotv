@@ -28,23 +28,9 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 class ResponceInfo;
-}
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace server {
 namespace inner {
-class InnerTcpHandlerHost;
-}
-}  // namespace server
-}  // namespace fastotv
-}  // namespace fasto
 
-namespace fasto {
-namespace fastotv {
-namespace server {
-namespace inner {
+class InnerTcpHandlerHost;
 
 class InnerSubHandler : public redis::RedisSubHandler {
  public:

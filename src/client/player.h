@@ -19,7 +19,8 @@
 #pragma once
 
 #include <stdint.h>  // for uint8_t, uint32_t
-#include <string>    // for string
+
+#include <string>  // for string
 
 #include <SDL2/SDL_blendmode.h>  // for SDL_BlendMode
 #include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Tex...
@@ -35,7 +36,6 @@
 #include "client/player_options.h"
 #include "client/playlist_entry.h"
 
-#include "client/core/app_options.h"            // for AppOptions, ComplexOp...
 #include "client/core/events/events.h"          // for PostExecEvent, PreExe...
 #include "client/core/events/key_events.h"      // for KeyPressEvent
 #include "client/core/events/lirc_events.h"     // for LircPressEvent
@@ -43,66 +43,25 @@
 #include "client/core/events/network_events.h"  // for BandwidthEstimationEvent
 #include "client/core/events/stream_events.h"   // for RequestVideoEvent, Quit...
 #include "client/core/events/window_events.h"   // for WindowCloseEvent, Win...
-#include "client/core/types.h"                  // for msec_t
+
+#include "client/core/app_options.h"  // for AppOptions, ComplexOp...
+#include "client/core/types.h"        // for msec_t
+
 #include "client/stream_handler.h"
 
 namespace fasto {
 namespace fastotv {
 class ChannelInfo;
-}
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
 namespace client {
+
 class IoService;
-}
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
 class SurfaceSaver;
-}
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
 class TextureSaver;
-}
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
 namespace core {
 class VideoState;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
 struct AudioParams;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
 struct VideoFrame;
 }
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-
-namespace fasto {
-namespace fastotv {
-namespace client {
 
 class Player : public StreamHandler, public core::events::EventListener {
  public:

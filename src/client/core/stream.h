@@ -37,25 +37,9 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
-class Clock;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
-class PacketQueue;
-}
-}  // namespace client
-}  // namespace fastotv
-}  // namespace fasto
 
-namespace fasto {
-namespace fastotv {
-namespace client {
-namespace core {
+class Clock;
+class PacketQueue;
 
 class Stream {
  public:
@@ -93,6 +77,7 @@ class Stream {
   void SetDesireBandwith(const DesireBytesPerSec& band);
 
   AVStream* stream_st_;
+
  private:
   DISALLOW_COPY_AND_ASSIGN(Stream);
 

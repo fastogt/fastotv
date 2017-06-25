@@ -51,11 +51,6 @@ namespace fastotv {
 namespace inner {
 class InnerClient;
 }
-}  // namespace fastotv
-}  // namespace fasto
-
-namespace fasto {
-namespace fastotv {
 namespace client {
 namespace bandwidth {
 class TcpBandwidthClient;

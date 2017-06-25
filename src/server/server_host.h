@@ -32,42 +32,16 @@ namespace libev {
 class IoClient;
 }
 }  // namespace common
-namespace fasto {
-namespace fastotv {
-class AuthInfo;
-}
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace server {
-namespace inner {
-class InnerTcpClient;
-}
-}  // namespace server
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace server {
-namespace inner {
-class InnerTcpHandlerHost;
-}
-}  // namespace server
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace server {
-namespace inner {
-class InnerTcpServer;
-}
-}  // namespace server
-}  // namespace fastotv
-}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {
+class AuthInfo;
 namespace server {
+namespace inner {
+class InnerTcpClient;
+class InnerTcpHandlerHost;
+class InnerTcpServer;
+}
 
 class ServerHost {
  public:

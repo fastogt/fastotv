@@ -50,59 +50,22 @@ template <typename RT>
 class Thread;
 }
 }  // namespace common
+
 namespace fasto {
 namespace fastotv {
 namespace inner {
 class InnerClient;
 }
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
 namespace server {
+class UserStateInfo;
+class ServerHost;
 namespace redis {
 class RedisPubSub;
 }
-}  // namespace server
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace server {
-class ServerHost;
-}
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace server {
-class UserStateInfo;
-}
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace server {
 namespace inner {
-class InnerSubHandler;
-}
-}  // namespace server
-}  // namespace fastotv
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-namespace server {
-namespace inner {
-class InnerTcpClient;
-}
-}  // namespace server
-}  // namespace fastotv
-}  // namespace fasto
 
-namespace fasto {
-namespace fastotv {
-namespace server {
-namespace inner {
+class InnerSubHandler;
+class InnerTcpClient;
 
 class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqParser,
                             public common::libev::IoLoopObserver {

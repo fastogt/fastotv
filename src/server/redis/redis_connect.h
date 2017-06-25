@@ -28,10 +28,12 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
+
 common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisContext** conn);
 common::Error redis_unix_connect(const std::string& unix_path, redisContext** conn);
 
 common::Error redis_connect(const RedisConfig& config, redisContext** conn);
+
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv

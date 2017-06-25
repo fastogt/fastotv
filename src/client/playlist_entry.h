@@ -25,15 +25,8 @@
 namespace fasto {
 namespace fastotv {
 namespace client {
+
 class SurfaceSaver;
-}
-}  // namespace fastotv
-}  // namespace fasto
-
-namespace fasto {
-namespace fastotv {
-namespace client {
-
 typedef common::shared_ptr<SurfaceSaver> channel_icon_t;
 
 class PlaylistEntry {

@@ -19,7 +19,8 @@
 #pragma once
 
 #include <stdint.h>  // for int64_t, uint8_t
-#include <string>    // for string
+
+#include <string>  // for string
 
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 

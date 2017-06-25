@@ -29,6 +29,7 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
+
 common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisContext** conn) {
   if (!conn || !host.IsValid()) {
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
@@ -113,6 +114,7 @@ common::Error redis_connect(const RedisConfig& config, redisContext** conn) {
   *conn = redis;
   return common::Error();
 }
+
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv

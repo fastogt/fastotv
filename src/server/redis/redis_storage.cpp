@@ -128,6 +128,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
   redisFree(redis);
   return common::Error();
 }
+
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
