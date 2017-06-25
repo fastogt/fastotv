@@ -177,6 +177,7 @@ bool CreateWindowFunc(core::Size window_size,
 }  // namespace
 
 const SDL_Color Player::text_color = {255, 255, 255, 0};
+const AVRational Player::min_fps = {1, 25};
 
 Player::Player(const std::string& app_directory_absolute_path,
                const PlayerOptions& options,
@@ -214,7 +215,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       app_directory_absolute_path_(app_directory_absolute_path),
       render_texture_(NULL),
       update_video_timer_id_(0),
-      update_video_timer_interval_msec_(min_update_video_msec) {
+      update_video_timer_interval_msec_(0) {
+  UpdateDisplayInterval(min_fps);
   // stable options
   if (options_.audio_volume < 0) {
     WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
@@ -415,9 +417,7 @@ bool Player::HandleRequestVideo(core::VideoState* stream,
   InitWindow(GetCurrentUrlName(), PLAYING_STATE);
 
   AVRational frame_rate = stream->GetFrameRate();
-  double frames_per_sec = frame_rate.num ? frame_rate.den / static_cast<double>(frame_rate.num) : 0;
-  update_video_timer_interval_msec_ =
-      std::max(static_cast<uint32_t>(frames_per_sec * 1000), static_cast<uint32_t>(min_update_video_msec));
+  UpdateDisplayInterval(frame_rate);
   return true;
 }
 
@@ -425,13 +425,15 @@ void Player::HandleRequestVideoEvent(core::events::RequestVideoEvent* event) {
   core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
   core::events::FrameInfo fr = avent->info();
   bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
-  if (!res) {
-    if (stream_) {
-      stream_->Abort();
-      destroy(&stream_);
-    }
-    Quit();
+  if (res) {
+    return;
   }
+
+  if (stream_) {
+    stream_->Abort();
+    destroy(&stream_);
+  }
+  Quit();
 }
 
 void Player::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
@@ -876,6 +878,15 @@ std::string Player::GetCurrentUrlName() const {
   }
 
   return "Unknown";
+}
+
+void Player::UpdateDisplayInterval(AVRational fps) {
+  if (fps.num == 0) {
+    fps = min_fps;
+  }
+
+  double frames_per_sec = fps.den / static_cast<double>(fps.num);
+  update_video_timer_interval_msec_ = static_cast<uint32_t>(frames_per_sec * 1000 / 2);
 }
 
 bool Player::GetCurrentUrl(PlaylistEntry* url) const {

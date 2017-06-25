@@ -72,10 +72,10 @@ class Player : public StreamHandler, public core::events::EventListener {
     space_width = 10,
     x_start = 10,
     y_start = 10,
-    update_stats_timeout_msec = 1000,
-    min_update_video_msec = 1000 / 25
+    update_stats_timeout_msec = 1000
   };
   static const SDL_Color text_color;
+  static const AVRational min_fps;
 
   enum States { INIT_STATE, PLAYING_STATE, FAILED_STATE };
   Player(const std::string& app_directory_absolute_path,
@@ -142,6 +142,7 @@ class Player : public StreamHandler, public core::events::EventListener {
  private:
   bool GetCurrentUrl(PlaylistEntry* url) const;
   std::string GetCurrentUrlName() const;  // return Unknown if not found
+  void UpdateDisplayInterval(AVRational fps);
 
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* user_data, uint8_t* stream, int len);
