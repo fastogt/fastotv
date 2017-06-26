@@ -77,7 +77,8 @@ extern "C" {
 #undef ERROR
 
 namespace {
-int upload_texture(SDL_Texture* tex, const AVFrame* frame) {
+//  return 0 on success, or -1 if the texture is not valid.
+int UploadTexture(SDL_Texture* tex, const AVFrame* frame) {
   if (frame->format == AV_PIX_FMT_YUV420P) {
     if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
       ERROR_LOG() << "Negative linesize is not supported for YUV.";
@@ -177,7 +178,7 @@ bool CreateWindowFunc(core::Size window_size,
 }  // namespace
 
 const SDL_Color Player::text_color = {255, 255, 255, 0};
-const AVRational Player::min_fps = {1, 25};
+const AVRational Player::min_fps = {25, 1};
 
 Player::Player(const std::string& app_directory_absolute_path,
                const PlayerOptions& options,
@@ -1017,7 +1018,7 @@ void Player::DrawPlayingStatus() {
     return;
   }
 
-  if (upload_texture(texture, frame->frame) < 0) {
+  if (UploadTexture(texture, frame->frame) < 0) {
     return;
   }
 
@@ -1408,7 +1409,8 @@ int Player::CalcHeightFontPlaceByRowCount(int row) const {
     return 0;
   }
 
-  return 2 << av_log2(TTF_FontLineSkip(font_) * row);
+  int font_height = TTF_FontLineSkip(font_);
+  return 2 << av_log2(font_height * row);
 }
 
 size_t Player::GeneratePrevPosition() const {
