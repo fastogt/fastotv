@@ -200,7 +200,7 @@ Player::Player(const std::string& app_directory_absolute_path,
       show_volume_(false),
       volume_last_shown_(0),
       last_mouse_left_click_(0),
-      curent_stream_pos_(0),
+      current_stream_pos_(0),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
       font_(NULL),
@@ -278,6 +278,10 @@ Player::~Player() {
   }
   destroy(&controller_);
   fApp->UnSubscribe(this);
+}
+
+PlayerOptions Player::GetOptions() const {
+  return options_;
 }
 
 void Player::HandleEvent(event_t* event) {
@@ -895,7 +899,7 @@ bool Player::GetCurrentUrl(PlaylistEntry* url) const {
     return false;
   }
 
-  *url = play_list_[curent_stream_pos_];
+  *url = play_list_[current_stream_pos_];
   return true;
 }
 
@@ -931,7 +935,16 @@ void Player::Quit() {
 }
 
 void Player::SwitchToPlayingMode() {
-  stream_ = CreateCurrentStream();
+  size_t pos = current_stream_pos_;
+  for (size_t i = 0; i < play_list_.size() && options_.last_showed_channel_id != invalid_stream_id; ++i) {
+    PlaylistEntry ent = play_list_[i];
+    ChannelInfo ch = ent.GetChannelInfo();
+    if (ch.GetId() == options_.last_showed_channel_id) {
+      pos = i;
+      break;
+    }
+  }
+  stream_ = CreateStreamPos(pos);
   if (stream_) {
     return;
   }
@@ -1325,22 +1338,6 @@ void Player::MoveToPreviousStream() {
   }
 }
 
-core::VideoState* Player::CreateCurrentStream() {
-  if (play_list_.empty()) {
-    return nullptr;
-  }
-
-  size_t pos = curent_stream_pos_;
-  core::VideoState* stream = CreateStreamPos(pos);
-  int res = stream->Exec();
-  if (res == EXIT_FAILURE) {
-    delete stream;
-    return nullptr;
-  }
-
-  return stream;
-}
-
 core::VideoState* Player::CreateNextStream() {
   // check is executed in main thread?
   if (play_list_.empty()) {
@@ -1349,12 +1346,6 @@ core::VideoState* Player::CreateNextStream() {
 
   size_t pos = GenerateNextPosition();
   core::VideoState* stream = CreateStreamPos(pos);
-  int res = stream->Exec();
-  if (res == EXIT_FAILURE) {
-    delete stream;
-    return nullptr;
-  }
-
   return stream;
 }
 
@@ -1366,6 +1357,30 @@ core::VideoState* Player::CreatePrevStream() {
 
   size_t pos = GeneratePrevPosition();
   core::VideoState* stream = CreateStreamPos(pos);
+  return stream;
+}
+
+core::VideoState* Player::CreateStreamPos(size_t pos) {
+  CHECK(THREAD_MANAGER()->IsMainThread());
+  current_stream_pos_ = pos;
+
+  PlaylistEntry entr = play_list_[current_stream_pos_];
+  if (!entr.GetIcon()) {  // try to upload image
+    const std::string icon_path = entr.GetIconPath();
+    const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
+    SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
+    channel_icon_t shared_surface = common::make_shared<SurfaceSaver>(surface);
+    play_list_[current_stream_pos_].SetIcon(shared_surface);
+  }
+
+  ChannelInfo url = entr.GetChannelInfo();
+  stream_id sid = url.GetId();
+  core::AppOptions copy = opt_;
+  copy.enable_audio = url.IsEnableAudio();
+  copy.enable_video = url.IsEnableVideo();
+  core::VideoState* stream = new core::VideoState(sid, url.GetUrl(), copy, copt_, this);
+  options_.last_showed_channel_id = sid;
+
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
     delete stream;
@@ -1375,33 +1390,12 @@ core::VideoState* Player::CreatePrevStream() {
   return stream;
 }
 
-core::VideoState* Player::CreateStreamPos(size_t pos) {
-  CHECK(THREAD_MANAGER()->IsMainThread());
-  curent_stream_pos_ = pos;
-
-  PlaylistEntry entr = play_list_[curent_stream_pos_];
-  if (!entr.GetIcon()) {  // try to upload image
-    const std::string icon_path = entr.GetIconPath();
-    const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
-    SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-    channel_icon_t shared_surface = common::make_shared<SurfaceSaver>(surface);
-    play_list_[curent_stream_pos_].SetIcon(shared_surface);
-  }
-
-  ChannelInfo url = entr.GetChannelInfo();
-  core::AppOptions copy = opt_;
-  copy.enable_audio = url.IsEnableAudio();
-  copy.enable_video = url.IsEnableVideo();
-  core::VideoState* stream = new core::VideoState(url.GetId(), url.GetUrl(), copy, copt_, this);
-  return stream;
-}
-
 size_t Player::GenerateNextPosition() const {
-  if (curent_stream_pos_ + 1 == play_list_.size()) {
+  if (current_stream_pos_ + 1 == play_list_.size()) {
     return 0;
   }
 
-  return curent_stream_pos_ + 1;
+  return current_stream_pos_ + 1;
 }
 
 int Player::CalcHeightFontPlaceByRowCount(int row) const {
@@ -1414,11 +1408,11 @@ int Player::CalcHeightFontPlaceByRowCount(int row) const {
 }
 
 size_t Player::GeneratePrevPosition() const {
-  if (curent_stream_pos_ == 0) {
+  if (current_stream_pos_ == 0) {
     return play_list_.size() - 1;
   }
 
-  return curent_stream_pos_ - 1;
+  return current_stream_pos_ - 1;
 }
 
 }  // namespace client

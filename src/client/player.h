@@ -90,6 +90,8 @@ class Player : public StreamHandler, public core::events::EventListener {
 
   ~Player();
 
+  PlayerOptions GetOptions() const;
+
  protected:
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
@@ -142,6 +144,7 @@ class Player : public StreamHandler, public core::events::EventListener {
  private:
   bool GetCurrentUrl(PlaylistEntry* url) const;
   std::string GetCurrentUrlName() const;  // return Unknown if not found
+
   void UpdateDisplayInterval(AVRational fps);
 
   /* prepare a new audio buffer */
@@ -188,7 +191,6 @@ class Player : public StreamHandler, public core::events::EventListener {
   SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins
   SDL_Rect GetDisplayRect() const;
 
-  core::VideoState* CreateCurrentStream();
   core::VideoState* CreateNextStream();
   core::VideoState* CreatePrevStream();
   core::VideoState* CreateStreamPos(size_t pos);
@@ -219,7 +221,7 @@ class Player : public StreamHandler, public core::events::EventListener {
   core::msec_t volume_last_shown_;
 
   core::msec_t last_mouse_left_click_;
-  size_t curent_stream_pos_;
+  size_t current_stream_pos_;
 
   SurfaceSaver* offline_channel_texture_;
   SurfaceSaver* connection_error_texture_;

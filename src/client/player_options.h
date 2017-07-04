@@ -36,6 +36,7 @@ struct PlayerOptions {
   core::Size screen_size;
 
   int audio_volume;  // Range: 0 - 100
+  stream_id last_showed_channel_id;
 };
 
 }  // namespace client

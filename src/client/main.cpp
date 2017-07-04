@@ -301,6 +301,7 @@ static int main_single_application(int argc,
   fasto::fastotv::client::Player* player = new fasto::fastotv::client::Player(
       app_directory_absolute_path, main_options.player_options, main_options.app_options, copt);
   res = app.Exec();
+  main_options.player_options = player->GetOptions();
   destroy(&player);
 
   av_dict_free(&swr_opts);

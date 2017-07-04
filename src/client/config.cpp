@@ -40,6 +40,7 @@
 #define CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD "height"
 #define CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD "fullscreen"
 #define CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "volume"
+#define CONFIG_PLAYER_OPTIONS_LAST_SHOWED_CHANNEL_ID_FIELD "last_showed_channel_id"
 #define CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD "exitonkeydown"
 #define CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "exitonmousedown"
 
@@ -164,6 +165,9 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     if (parse_bool(value, &exit)) {
       pconfig->player_options.exit_on_mousedown = exit;
     }
+    return 1;
+  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_LAST_SHOWED_CHANNEL_ID_FIELD)) {
+    pconfig->player_options.last_showed_channel_id = value;
     return 1;
   } else if (MATCH(CONFIG_APP_OPTIONS, CONFIG_APP_OPTIONS_AST_FIELD)) {
     pconfig->app_options.wanted_stream_spec[AVMEDIA_TYPE_AUDIO] = value;
@@ -378,6 +382,8 @@ common::Error save_config_file(const std::string& config_absolute_path, TVConfig
                                  common::ConvertToString(options->player_options.exit_on_keydown));
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "=%s\n",
                                  common::ConvertToString(options->player_options.exit_on_mousedown));
+  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_LAST_SHOWED_CHANNEL_ID_FIELD "=%s\n",
+                                 options->player_options.last_showed_channel_id);
 
   config_save_file.Close();
   return common::Error();
