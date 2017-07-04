@@ -1,5 +1,11 @@
-0.4.0
+0.4.0 / Jule 5, 2017
 [Alexandr Topilski]
+- Save dynamic options
+- Raspberry PI support
+- SDL image linkage
+- Bug fixes
+- Video info
+- EPG basic support
 
 0.3.0 / June 7, 2017
 [Alexandr Topilski]
