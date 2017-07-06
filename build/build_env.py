@@ -106,6 +106,11 @@ class RaspberryPi1ModelBPlus(RaspberryPiDevice):  # ARMv6(armv6l) ARM11, omx/mma
         RaspberryPiDevice.__init__(self, 'raspberry-pi-model-b+')
 
 
+class RaspberryPi3ModelB(RaspberryPiDevice):  # ARMv8-A(aarch64) Cortex-A53, omx/mmal
+    def __init__(self):
+        RaspberryPiDevice.__init__(self, 'raspberry-pi3-model-b')
+
+
 # Orange Pi
 class OrangePiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
