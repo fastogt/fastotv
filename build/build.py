@@ -75,13 +75,13 @@ class ProgressSaver(object):
 
 
 class BuildRequest(object):
-    def __init__(self, platform, arch_bit):
+    def __init__(self, platform, arch_name):
         platform_or_none = system_info.get_supported_platform_by_name(platform)
 
         if not platform_or_none:
             raise utils.BuildError('invalid platform')
 
-        arch = platform_or_none.architecture_by_arch_name(arch_bit)
+        arch = platform_or_none.architecture_by_arch_name(arch_name)
         if not arch:
             raise utils.BuildError('invalid arch')
 

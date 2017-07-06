@@ -9,24 +9,30 @@ import pika
 from pybuild_utils.base import system_info, utils
 
 
+def gen_routing_key(device, platform, arch) -> str:
+    return device + '_' + platform + '_' + arch
+
+
 def print_usage():
     print("Usage:\n"
-          "[optional] argv[1] platform\n"
-          "[optional] argv[2] architecture\n")
+          "[optional] argv[1] device\n"
+          "[optional] argv[2] platform\n"
+          "[optional] argv[3] architecture\n")
 
 
 class BuildRpcServer(object):
     EXCHANGE = 'build_servers_exchange'
     EXCHANGE_TYPE = 'direct'
 
-    def __init__(self, platform, arch_bit):
+    def __init__(self, device, platform, arch):
         self.connection_ = None
         self.channel_ = None
         self.closing_ = False
         self.consumer_tag_ = None
+        self.device_ = device
         self.platform_ = platform
-        self.arch_bit_ = arch_bit
-        routing_key = system_info.gen_routing_key(platform, arch_bit)
+        self.arch_ = arch
+        routing_key = gen_routing_key(device, platform, arch)
         self.routing_key_ = routing_key
         print("Build server for {0} inited, routing_key: {1}!".format(platform, routing_key))
 
@@ -103,9 +109,9 @@ class BuildRpcServer(object):
         self.connection_ = self.connect()
         self.connection_.ioloop.start()
 
-    def build_package(self, platform, arch_bit, op_id, branding_options, package_types, destination, routing_key):
-        buid_request = build.BuildRequest(platform, arch_bit)
-        platform = buid_request.platform()
+    def build_package(self, op_id, branding_options, package_types, destination, routing_key):
+        build_request = build.BuildRequest(self.platform_, self.arch_)
+        platform = build_request.platform()
         arch = platform.arch()
 
         platform_and_arch_str = '{0}_{1}'.format(platform.name(), arch.name())
@@ -127,7 +133,7 @@ class BuildRpcServer(object):
         store = store(21.0, 79.0, routing_key, op_id)
 
         saver = build.ProgressSaver(store)
-        file_paths = buid_request.build('..', branding_options, dir_name, bs, package_types, saver)
+        file_paths = build_request.build('..', branding_options, dir_name, bs, package_types, saver)
         file_path = file_paths[0]
         self.send_status(routing_key, op_id, 80.0, 'Loading package to server')
         try:
@@ -160,7 +166,7 @@ class BuildRpcServer(object):
                                         body=body)
 
     def on_request(self, ch, method, props, body):
-        platform_and_arch = '{0}_{1}'.format(self.platform_, self.arch_bit_)
+        platform_and_arch = '{0}_{1}'.format(self.platform_, self.arch_)
         if isinstance(body, bytes):
             body = body.decode("utf-8")
 
@@ -177,8 +183,8 @@ class BuildRpcServer(object):
         self.send_status(props.reply_to, op_id, 0.0, 'Prepare to build package')
         print('Build started for: {0}, platform: {1}'.format(op_id, platform_and_arch))
         try:
-            response = self.build_package(self.platform_, self.arch_bit_, op_id, shlex.split(branding_variables),
-                                          package_types, destination, props.reply_to)
+            response = self.build_package(op_id, shlex.split(branding_variables), package_types, destination,
+                                          props.reply_to)
             print('Build finished for: {0}, platform: {1}, responce: {2}'.format(op_id, platform_and_arch, response))
             json_to_send = {'body': response}
         except utils.BuildError as ex:
@@ -201,14 +207,19 @@ if __name__ == "__main__":
     argc = len(sys.argv)
 
     if argc > 1:
-        platform_str = sys.argv[1]
+        device_str = sys.argv[1]
+    else:
+        device_str = 'pc'
+
+    if argc > 2:
+        platform_str = sys.argv[2]
     else:
         platform_str = system_info.get_os()
 
-    if argc > 2:
-        arch_str = sys.argv[2]
+    if argc > 3:
+        arch_str = sys.argv[3]
     else:
         arch_str = system_info.get_arch_name()
 
-    server = BuildRpcServer(platform_str, arch_str)
+    server = BuildRpcServer(device_str, platform_str, arch_str)
     server.run()
