@@ -174,7 +174,7 @@ class OrangePiZeroPlus2H5(OrangePiPC2):  # ARMv8-A(aarch64) Cortex-A53
 
 
 SUPPORTED_DEVICES = [PcDevice(),
-                     RaspberryPi1ModelB(), RaspberryPi1ModelBPlus(),
+                     RaspberryPi1ModelB(), RaspberryPi1ModelBPlus(), RaspberryPi3ModelB(),
                      OrangePiOne(), OrangePiLite(), OrangePiZeroPlus2H3(), OrangePiPC(), OrangePiPlus2(), OrangePiPC2(),
                      OrangePiZeroPlus2H5()]
 
