@@ -102,7 +102,10 @@ namespace {
 bool warned_cfg = false;
 
 bool compare_codec_desc(const AVCodecDescriptor* da, const AVCodecDescriptor* db) {
-  return (da)->type != (db)->type ? FFDIFFSIGN((da)->type, (db)->type) : strcmp((da)->name, (db)->name);
+  if ((da)->type != (db)->type) {
+    return FFDIFFSIGN((da)->type, (db)->type);
+  }
+  return strcmp((da)->name, (db)->name);
 }
 
 bool is_device(const AVClass* avclass) {
@@ -138,7 +141,7 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
   while ((desc = avcodec_descriptor_next(desc))) {
     lcodecs.push_back(desc);
   }
-  std::sort(lcodecs.begin(), lcodecs.end(), &compare_codec_desc);
+  // std::sort(lcodecs.begin(), lcodecs.end(), &compare_codec_desc);
   *rcodecs = lcodecs;
   return true;
 }
@@ -239,17 +242,16 @@ void print_codecs_for_id(enum AVCodecID id, int encoder) {
 }
 
 void print_codecs(bool encoder) {
-  std::cout << (encoder ? "Encoders" : "Decoders")
-            << ":\n"
-               " V..... = Video\n"
-               " A..... = Audio\n"
-               " S..... = Subtitle\n"
-               " .F.... = Frame-level multithreading\n"
-               " ..S... = Slice-level multithreading\n"
-               " ...X.. = Codec is experimental\n"
-               " ....B. = Supports draw_horiz_band\n"
-               " .....D = Supports direct rendering method 1\n"
-               " ------"
+  std::cout << (encoder ? "Encoders" : "Decoders") << ":\n"
+                                                      " V..... = Video\n"
+                                                      " A..... = Audio\n"
+                                                      " S..... = Subtitle\n"
+                                                      " .F.... = Frame-level multithreading\n"
+                                                      " ..S... = Slice-level multithreading\n"
+                                                      " ...X.. = Codec is experimental\n"
+                                                      " ....B. = Supports draw_horiz_band\n"
+                                                      " .....D = Supports direct rendering method 1\n"
+                                                      " ------"
             << std::endl;
 
   std::vector<const AVCodecDescriptor*> codecs;
@@ -260,31 +262,47 @@ void print_codecs(bool encoder) {
   for (const AVCodecDescriptor* desc : codecs) {
     const AVCodec* codec = NULL;
 
-    while ((codec = next_codec_for_id(desc->id, codec, encoder))) {
-      printf(" %c", get_media_type_char(desc->type));
-      printf((codec->capabilities & AV_CODEC_CAP_FRAME_THREADS) ? "F" : ".");
-      printf((codec->capabilities & AV_CODEC_CAP_SLICE_THREADS) ? "S" : ".");
-      printf((codec->capabilities & AV_CODEC_CAP_EXPERIMENTAL) ? "X" : ".");
-      printf((codec->capabilities & AV_CODEC_CAP_DRAW_HORIZ_BAND) ? "B" : ".");
-      printf((codec->capabilities & AV_CODEC_CAP_DR1) ? "D" : ".");
+    if (strstr(desc->name, "_deprecated"))
+      continue;
 
-      printf(" %-20s %s", codec->name, codec->long_name ? codec->long_name : "");
-      if (strcmp(codec->name, desc->name))
-        printf(" (codec %s)", desc->name);
+    printf(" ");
+    printf(avcodec_find_decoder(desc->id) ? "D" : ".");
+    printf(avcodec_find_encoder(desc->id) ? "E" : ".");
 
-      printf("\n");
+    printf("%c", get_media_type_char(desc->type));
+    printf((desc->props & AV_CODEC_PROP_INTRA_ONLY) ? "I" : ".");
+    printf((desc->props & AV_CODEC_PROP_LOSSY) ? "L" : ".");
+    printf((desc->props & AV_CODEC_PROP_LOSSLESS) ? "S" : ".");
+
+    printf(" %-20s %s", desc->name, desc->long_name ? desc->long_name : "");
+
+    /* print decoders/encoders when there's more than one or their
+     * names are different from codec name */
+    while ((codec = next_codec_for_id(desc->id, codec, 0))) {
+      if (strcmp(codec->name, desc->name)) {
+        print_codecs_for_id(desc->id, 0);
+        break;
+      }
     }
+    codec = NULL;
+    while ((codec = next_codec_for_id(desc->id, codec, 1))) {
+      if (strcmp(codec->name, desc->name)) {
+        print_codecs_for_id(desc->id, 1);
+        break;
+      }
+    }
+
+    printf("\n");
   }
 }
 
 void show_formats_devices(bool device_only) {
   AVInputFormat* ifmt = NULL;
   AVOutputFormat* ofmt = NULL;
-  std::cout << (device_only ? "Devices:" : "File formats:")
-            << "\n"
-               " D. = Demuxing supported\n"
-               " .E = Muxing supported\n"
-               " --"
+  std::cout << (device_only ? "Devices:" : "File formats:") << "\n"
+                                                               " D. = Demuxing supported\n"
+                                                               " .E = Muxing supported\n"
+                                                               " --"
             << std::endl;
 
   const char* last_name = "000";
