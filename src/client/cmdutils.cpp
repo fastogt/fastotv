@@ -102,10 +102,10 @@ namespace {
 bool warned_cfg = false;
 
 bool compare_codec_desc(const AVCodecDescriptor* da, const AVCodecDescriptor* db) {
-  if ((da)->type != (db)->type) {
-    return FFDIFFSIGN((da)->type, (db)->type);
+  if ((da)->type == (db)->type) {
+    return strcmp((da)->name, (db)->name) < 0;
   }
-  return strcmp((da)->name, (db)->name);
+  return (da)->type < (db)->type;
 }
 
 bool is_device(const AVClass* avclass) {
@@ -141,7 +141,8 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
   while ((desc = avcodec_descriptor_next(desc))) {
     lcodecs.push_back(desc);
   }
-  // std::sort(lcodecs.begin(), lcodecs.end(), &compare_codec_desc);
+
+  std::sort(lcodecs.begin(), lcodecs.end(), compare_codec_desc);
   *rcodecs = lcodecs;
   return true;
 }
@@ -220,7 +221,7 @@ void print_buildconf(int flags) {
   }
 }
 
-const AVCodec* next_codec_for_id(enum AVCodecID id, const AVCodec* prev, int encoder) {
+const AVCodec* next_codec_for_id(enum AVCodecID id, const AVCodec* prev, bool encoder) {
   while ((prev = av_codec_next(prev))) {
     if (prev->id == id && (encoder ? av_codec_is_encoder(prev) : av_codec_is_decoder(prev))) {
       return prev;
@@ -229,7 +230,7 @@ const AVCodec* next_codec_for_id(enum AVCodecID id, const AVCodec* prev, int enc
   return NULL;
 }
 
-void print_codecs_for_id(enum AVCodecID id, int encoder) {
+void print_codecs_for_id(enum AVCodecID id, bool encoder) {
   const AVCodec* codec = NULL;
 
   printf(" (%s: ", encoder ? "encoders" : "decoders");
@@ -262,37 +263,21 @@ void print_codecs(bool encoder) {
   for (const AVCodecDescriptor* desc : codecs) {
     const AVCodec* codec = NULL;
 
-    if (strstr(desc->name, "_deprecated"))
-      continue;
+    while ((codec = next_codec_for_id(desc->id, codec, encoder))) {
+      printf(" %c", get_media_type_char(desc->type));
+      printf((codec->capabilities & AV_CODEC_CAP_FRAME_THREADS) ? "F" : ".");
+      printf((codec->capabilities & AV_CODEC_CAP_SLICE_THREADS) ? "S" : ".");
+      printf((codec->capabilities & AV_CODEC_CAP_EXPERIMENTAL) ? "X" : ".");
+      printf((codec->capabilities & AV_CODEC_CAP_DRAW_HORIZ_BAND) ? "B" : ".");
+      printf((codec->capabilities & AV_CODEC_CAP_DR1) ? "D" : ".");
 
-    printf(" ");
-    printf(avcodec_find_decoder(desc->id) ? "D" : ".");
-    printf(avcodec_find_encoder(desc->id) ? "E" : ".");
-
-    printf("%c", get_media_type_char(desc->type));
-    printf((desc->props & AV_CODEC_PROP_INTRA_ONLY) ? "I" : ".");
-    printf((desc->props & AV_CODEC_PROP_LOSSY) ? "L" : ".");
-    printf((desc->props & AV_CODEC_PROP_LOSSLESS) ? "S" : ".");
-
-    printf(" %-20s %s", desc->name, desc->long_name ? desc->long_name : "");
-
-    /* print decoders/encoders when there's more than one or their
-     * names are different from codec name */
-    while ((codec = next_codec_for_id(desc->id, codec, 0))) {
+      printf(" %-20s %s", codec->name, codec->long_name ? codec->long_name : "");
       if (strcmp(codec->name, desc->name)) {
-        print_codecs_for_id(desc->id, 0);
-        break;
+        printf(" (codec %s)", desc->name);
       }
-    }
-    codec = NULL;
-    while ((codec = next_codec_for_id(desc->id, codec, 1))) {
-      if (strcmp(codec->name, desc->name)) {
-        print_codecs_for_id(desc->id, 1);
-        break;
-      }
-    }
 
-    printf("\n");
+      printf("\n");
+    }
   }
 }
 
@@ -1005,10 +990,12 @@ void show_sources(const std::string& device) {
   do {
     fmt = av_input_audio_device_next(fmt);
     if (fmt) {
-      if (!strcmp(fmt->name, "lavfi"))
+      if (!strcmp(fmt->name, "lavfi")) {
         continue;  // it's pointless to probe lavfi
-      if (dev && !av_match_name(dev, fmt->name))
+      }
+      if (dev && !av_match_name(dev, fmt->name)) {
         continue;
+      }
       print_device_sources(fmt, opts);
     }
   } while (fmt);

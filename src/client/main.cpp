@@ -108,6 +108,21 @@ void avlog_cb(void*, int level, const char* sz_fmt, va_list varg) {
   info_stream << ret;
   free(ret);
 }
+
+void init_ffmpeg() {
+  init_dynload();
+
+/* register all codecs, demux and protocols */
+#if CONFIG_AVDEVICE
+  avdevice_register_all();
+#endif
+#if CONFIG_AVFILTER
+  avfilter_register_all();
+#endif
+  av_register_all();
+  avformat_network_init();
+}
+
 }  // namespace
 
 template <typename B>
@@ -115,18 +130,6 @@ class FFmpegApplication : public B {
  public:
   typedef B base_class_t;
   FFmpegApplication(int argc, char** argv) : base_class_t(argc, argv) {
-    init_dynload();
-
-/* register all codecs, demux and protocols */
-#if CONFIG_AVDEVICE
-    avdevice_register_all();
-#endif
-#if CONFIG_AVFILTER
-    avfilter_register_all();
-#endif
-    av_register_all();
-    avformat_network_init();
-
     signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
     signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
 
@@ -337,6 +340,8 @@ static int main_single_application(int argc,
 
 /* Called from the main */
 int main(int argc, char** argv) {
+  init_ffmpeg();
+
   for (int i = 1; i < argc; ++i) {
     const bool lastarg = i == argc - 1;
     if (strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0) {
