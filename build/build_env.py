@@ -85,8 +85,9 @@ class RaspberryPiDevice(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': []},
                                  utils.CompileInfo([],
-                                                   ['--disable-pulseaudio', '--disable-esd',
-                                                    '--disable-video-opengl', '--disable-video-opengles1',
+                                                   ['--host=arm-raspberry-linux-gnueabihf',
+                                                    '--disable-pulseaudio', '--disable-esd',
+                                                    '--disable-video-opengl', '--enable-video-opengles1',
                                                     '--disable-video-mir', '--enable-video-opengles2',
                                                     '--disable-video-wayland']),
                                  utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',

@@ -116,6 +116,7 @@ SDL_Texture* TextureSaver::GetTexture(SDL_Renderer* renderer, int width, int hei
       height != h || format != cur_format) {
     SDL_DestroyTexture(texture_);
     texture_ = NULL;
+    renderer_ = NULL;
 
     SDL_Texture* ltexture = NULL;
     common::Error err = CreateTexture(renderer, format, width, height, SDL_BLENDMODE_NONE, false, &ltexture);
@@ -135,6 +136,7 @@ TextureSaver::~TextureSaver() {
     SDL_DestroyTexture(texture_);
     texture_ = NULL;
   }
+  renderer_ = NULL;
 }
 
 common::Error CreateTexture(SDL_Renderer* renderer,

@@ -138,8 +138,8 @@ bool CreateWindowFunc(core::Size window_size,
             common::MemSPrintf(" maximum texture size can be %dx%d.",
                                renderer_info.max_texture_width == 0 ? INT_MAX : renderer_info.max_texture_width,
                                renderer_info.max_texture_height == 0 ? INT_MAX : renderer_info.max_texture_height);
-        DEBUG_LOG() << "Avalible " << renderer_info.name
-                    << (is_hardware_renderer ? " hardware renderer," : " software renderer,") << screen_size;
+        DEBUG_LOG() << "Available " << renderer_info.name
+                    << (is_hardware_renderer ? "(hardware renderer)" : "(software renderer)") << screen_size;
       }
     }
     lrenderer = SDL_CreateRenderer(lwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -989,6 +989,10 @@ void Player::DrawDisplay() {
 }
 
 void Player::DrawFailedStatus() {
+  if (!renderer_) {
+    return;
+  }
+
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
   if (offline_channel_texture_) {
@@ -1004,7 +1008,7 @@ void Player::DrawFailedStatus() {
 void Player::DrawPlayingStatus() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   core::frames::VideoFrame* frame = stream_->TryToGetVideoFrame();
-  if (!frame || !render_texture_) {
+  if (!frame || !render_texture_ || !renderer_) {
     return;
   }
 
@@ -1050,6 +1054,10 @@ void Player::DrawPlayingStatus() {
 }  // namespace client
 
 void Player::DrawInitStatus() {
+  if (!renderer_) {
+    return;
+  }
+
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
   if (connection_error_texture_) {
@@ -1095,7 +1103,7 @@ SDL_Rect Player::GetDisplayRect() const {
 }
 
 void Player::DrawStatistic() {
-  if (!show_statstic_ || !font_) {
+  if (!show_statstic_ || !font_ || !renderer_) {
     return;
   }
 
@@ -1155,7 +1163,7 @@ void Player::DrawStatistic() {
 }
 
 void Player::DrawFooter() {
-  if (!show_footer_ || !font_) {
+  if (!show_footer_ || !font_ || !renderer_) {
     return;
   }
 
@@ -1216,7 +1224,7 @@ void Player::DrawFooter() {
 }
 
 void Player::DrawVolume() {
-  if (!show_volume_ || !font_) {
+  if (!show_volume_ || !font_ || !renderer_) {
     return;
   }
 
