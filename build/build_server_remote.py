@@ -153,11 +153,11 @@ class BuildRpcServer(object):
                                         properties=properties,
                                         body=json.dumps(json_to_send))
 
-    def send_responce(self, routing_key, op_id, body):
+    def send_response(self, routing_key, op_id, body):
         properties = pika.BasicProperties(
             content_type='application/json',
             correlation_id=op_id,
-            headers={'type': 'responce'}
+            headers={'type': 'response'}
         )
         if self.channel_:
             self.channel_.basic_publish(exchange='',
@@ -185,7 +185,7 @@ class BuildRpcServer(object):
         try:
             response = self.build_package(op_id, shlex.split(branding_variables), package_types, destination,
                                           props.reply_to)
-            print('Build finished for: {0}, platform: {1}, responce: {2}'.format(op_id, platform_and_arch, response))
+            print('Build finished for: {0}, platform: {1}, response: {2}'.format(op_id, platform_and_arch, response))
             json_to_send = {'body': response}
         except utils.BuildError as ex:
             print('Build finished for: {0}, platform: {1}, exception: {2}'.format(op_id, platform_and_arch, str(ex)))
@@ -195,7 +195,7 @@ class BuildRpcServer(object):
             json_to_send = {'error': str(ex)}
 
         self.send_status(props.reply_to, op_id, 100.0, 'Completed')
-        self.send_responce(props.reply_to, op_id, json.dumps(json_to_send))
+        self.send_response(props.reply_to, op_id, json.dumps(json_to_send))
         self.acknowledge_message(method.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):

@@ -935,6 +935,10 @@ void Player::Quit() {
 }
 
 void Player::SwitchToPlayingMode() {
+  if (play_list_.empty()) {
+    return;
+  }
+
   size_t pos = current_stream_pos_;
   for (size_t i = 0; i < play_list_.size() && options_.last_showed_channel_id != invalid_stream_id; ++i) {
     PlaylistEntry ent = play_list_[i];
@@ -944,6 +948,7 @@ void Player::SwitchToPlayingMode() {
       break;
     }
   }
+
   stream_ = CreateStreamPos(pos);
   if (stream_) {
     return;
