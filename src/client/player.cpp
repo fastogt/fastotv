@@ -221,9 +221,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       render_texture_(NULL),
       update_video_timer_id_(0),
       update_video_timer_interval_msec_(0),
-      check_stream_alive_timer_id_(0),
-      packet_received_(0),
-      packet_received_checkpoint_(0) {
+      last_pts_checkpoint_(core::invalid_clock()),
+      video_frames_handled_(0) {
   UpdateDisplayInterval(min_fps);
   // stable options
   if (options_.audio_volume < 0) {
@@ -375,14 +374,6 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
   }
 }
 
-void Player::HandleReadedInputData(core::VideoState* stream, uint8_t* data, int size) {
-  UNUSED(stream);
-  UNUSED(data);
-  UNUSED(size);
-
-  packet_received_++;
-}
-
 bool Player::HandleRequestAudio(core::VideoState* stream,
                                 int64_t wanted_channel_layout,
                                 int wanted_nb_channels,
@@ -471,7 +462,6 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
     update_video_timer_id_ = fApp->AddTimer(update_video_timer_interval_msec_, update_video_callback, this);
-    check_stream_alive_timer_id_ = fApp->AddTimer(check_stream_alive_timeout_msec, check_stream_alive_callback, this);
 
     const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
     const std::string offline_channel_img_full_path =
@@ -506,7 +496,6 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
 void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
   core::events::PostExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
-    fApp->RemoveTimer(check_stream_alive_timer_id_);
     fApp->RemoveTimer(update_video_timer_id_);
     controller_->Stop();
     if (stream_) {
@@ -562,15 +551,7 @@ void Player::HandleUpdateVideoEvent(core::events::UpdateVideoEvent* event) {
 }
 
 void Player::HandleTimerEvent(core::events::TimerEvent* event) {
-  if (this == event->Sender()) {
-    if (stream_ && !stream_->IsPaused() && packet_received_checkpoint_ == packet_received_) {
-      common::Error err = common::make_error_value("Timeout input data!", common::Value::E_ERROR);
-      stream_->Abort();
-      destroy(&stream_);
-      SwitchToChannelErrorMode(err);
-    }
-    packet_received_checkpoint_ = packet_received_;
-  }
+  UNUSED(event);
 }
 
 void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
@@ -1023,6 +1004,7 @@ void Player::DrawDisplay() {
   } else {
     NOTREACHED();
   };
+  video_frames_handled_++;
 }
 
 void Player::DrawFailedStatus() {
@@ -1045,6 +1027,20 @@ void Player::DrawFailedStatus() {
 void Player::DrawPlayingStatus() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   core::frames::VideoFrame* frame = stream_->TryToGetVideoFrame();
+  bool need_to_check_is_alive = video_frames_handled_ % (1000 / update_video_timer_interval_msec_ * 30) == 0;
+  if (need_to_check_is_alive) {
+    core::VideoState::stats_t stats = stream_->GetStatistic();
+    core::clock64_t cl = stats->master_clock;
+    if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != core::invalid_clock())) {
+      common::Error err = common::make_error_value("Timeout input data!", common::Value::E_ERROR);
+      stream_->Abort();
+      destroy(&stream_);
+      SwitchToChannelErrorMode(err);
+      return;
+    }
+    last_pts_checkpoint_ = cl;
+  }
+
   if (!frame || !render_texture_ || !renderer_) {
     return;
   }

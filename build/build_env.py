@@ -81,9 +81,9 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
 
 
 # Raspberry Pi
-class RaspberryPiDevice(SupportedDevice):  # gles2
+class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
     def __init__(self, name):
-        SupportedDevice.__init__(self, name, {'linux': []},
+        SupportedDevice.__init__(self, name, {'linux': ['libgl1-mesa-dev']},
                                  utils.CompileInfo([],
                                                    ['--host=arm-raspberry-linux-gnueabihf',
                                                     '--disable-pulseaudio', '--disable-esd',

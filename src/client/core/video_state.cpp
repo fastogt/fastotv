@@ -1377,7 +1377,6 @@ int VideoState::ReadThread() {
       }
     }
     int ret = av_read_frame(ic, pkt);
-    handler_->HandleReadedInputData(this, pkt->data, pkt->size);
     if (ret < 0) {
       WARNING_LOG() << "Read input stream error: " << ffmpeg_errno_to_string(ret);
       bool is_eof = ret == AVERROR_EOF;

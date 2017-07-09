@@ -72,8 +72,7 @@ class Player : public StreamHandler, public core::events::EventListener {
     space_width = 10,
     x_start = 10,
     y_start = 10,
-    update_stats_timeout_msec = 1000,
-    check_stream_alive_timeout_msec = 30000
+    update_stats_timeout_msec = 1000
   };
   static const SDL_Color text_color;
   static const AVRational min_fps;
@@ -96,8 +95,6 @@ class Player : public StreamHandler, public core::events::EventListener {
  protected:
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
-
-  virtual void HandleReadedInputData(core::VideoState* stream, uint8_t* data, int size) override;
 
   virtual bool HandleRequestAudio(core::VideoState* stream,
                                   int64_t wanted_channel_layout,
@@ -250,9 +247,8 @@ class Player : public StreamHandler, public core::events::EventListener {
   int update_video_timer_id_;
   uint32_t update_video_timer_interval_msec_;
 
-  int check_stream_alive_timer_id_;
-  common::atomic_size packet_received_;
-  size_t packet_received_checkpoint_;
+  core::clock64_t last_pts_checkpoint_;
+  size_t video_frames_handled_;
 };
 
 }  // namespace client
