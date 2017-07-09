@@ -58,7 +58,7 @@ class SupportedDevice(metaclass=ABCMeta):
     def ffmpeg_compile_info(self):
         return self.ffmpeg_compile_info_
 
-    def system_libs(self, platform: system_info.Platform) -> list:
+    def system_libs(self, platform: system_info.Platform) -> list:  # additional system libs
         return self.system_platform_libs_.get(platform.name(), [])
 
     @abstractmethod
@@ -72,9 +72,9 @@ class SupportedDevice(metaclass=ABCMeta):
 class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
     def __init__(self):
         SupportedDevice.__init__(self, 'pc', {'linux': [
-            'libvdpau-devel', 'libva-devel',  # redhat
-            'libvdpau-dev', 'libva-dev',  # debian
-        ]}, utils.CompileInfo(['--disable-video-mir'], []), utils.CompileInfo([], []))
+            'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
+            'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
+        ]}, utils.CompileInfo(['--disable-video-mir', '--disable-video-wayland'], []), utils.CompileInfo([], []))
 
     def install_specific(self):
         return
@@ -87,9 +87,10 @@ class RaspberryPiDevice(SupportedDevice):  # gles2
                                  utils.CompileInfo([],
                                                    ['--host=arm-raspberry-linux-gnueabihf',
                                                     '--disable-pulseaudio', '--disable-esd',
-                                                    '--disable-video-opengl', '--enable-video-opengles1',
-                                                    '--disable-video-mir', '--enable-video-opengles2',
-                                                    '--disable-video-wayland']),
+                                                    '--disable-video-opengl', '--disable-video-opengles1',
+                                                    '--enable-video-opengles2',
+                                                    '--disable-video-mir', '--disable-video-wayland',
+                                                    '--disable-video-x11']),
                                  utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                                         '--enable-omx-rpi']))
 
@@ -113,46 +114,46 @@ class RaspberryPi3ModelB(RaspberryPiDevice):  # ARMv8-A(aarch64) Cortex-A53, omx
 
 
 # Orange Pi
-class OrangePiDevice(SupportedDevice):  # gles2
+class OrangePiH3Device(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name,
-                                 {'linux': ['libvdpau-dev', 'libgles2-mesa-dev',
-                                            'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy',
-                                            'libcedrus1-dev']},
+                                 {'linux': ['libgles2-mesa-dev', 'libcedrus1-dev',
+                                            'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy'
+                                            ]},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
                                                    ['--disable-pulseaudio', '--disable-esd',
                                                     '--disable-video-opengl', '--disable-video-opengles1',
-                                                    '--disable-video-mir', '--enable-video-opengles2',
-                                                    '--disable-video-wayland']),
+                                                    '--enable-video-opengles2',
+                                                    '--disable-video-mir', '--disable-video-wayland']),
                                  utils.CompileInfo([], []))
 
     def install_specific(self):
         orange_pi.install_orange_pi_h3()
 
 
-class OrangePiOne(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
+class OrangePiOne(OrangePiH3Device):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-one')
+        OrangePiH3Device.__init__(self, 'orange-pi-one')
 
 
-class OrangePiLite(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
+class OrangePiLite(OrangePiH3Device):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-lite')
+        OrangePiH3Device.__init__(self, 'orange-pi-lite')
 
 
-class OrangePiZeroPlus2H3(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
+class OrangePiZeroPlus2H3(OrangePiH3Device):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-zero-plus2-h3')
+        OrangePiH3Device.__init__(self, 'orange-pi-zero-plus2-h3')
 
 
-class OrangePiPC(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
+class OrangePiPC(OrangePiH3Device):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-pc')
+        OrangePiH3Device.__init__(self, 'orange-pi-pc')
 
 
-class OrangePiPlus2(OrangePiDevice):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
+class OrangePiPlus2(OrangePiH3Device):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedrus
     def __init__(self):
-        OrangePiDevice.__init__(self, 'orange-pi-plus2')
+        OrangePiH3Device.__init__(self, 'orange-pi-plus2')
 
 
 class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
@@ -161,8 +162,8 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
                                  {'linux': ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo']},
                                  utils.CompileInfo([], ['--disable-pulseaudio', '--disable-esd',
                                                         '--disable-video-opengl', '--disable-video-opengles1',
-                                                        '--enable-video-opengles2', '--disable-video-mir',
-                                                        '--disable-video-wayland']),
+                                                        '--enable-video-opengles2',
+                                                        '--disable-video-mir', '--disable-video-wayland']),
                                  utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -193,6 +194,18 @@ def get_available_devices() -> list:
     for dev in SUPPORTED_DEVICES:
         result.extend([dev.name()])
     return result
+
+
+def get_x11_libs(platform: system_info.Platform) -> list:
+    platform_name = platform.name()
+    dep_libs = []
+    if platform_name == 'linux':
+        distribution = system_info.linux_get_dist()
+        if distribution == 'DEBIAN':
+            dep_libs = ['libx11-dev', 'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
+        elif distribution == 'RHEL':
+            dep_libs = ['libX11-devel', 'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
+    return dep_libs
 
 
 class BuildRequest(object):
@@ -243,20 +256,18 @@ class BuildRequest(object):
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
                             'freetype-dev',
-                            'libx11-dev', 'libpng12-dev',
-                            'libdrm-dev', 'libdri2-dev', 'libump-dev',
-                            'liblircclient-dev',
-                            'libgl1-mesa-dev', 'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
+                            'libpng12-dev',
+                            'libdrm-dev', 'libdri2-dev', 'libump-dev', 'libudev-dev',
+                            'liblircclient-dev']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
                             'make',
                             'zlib-devel', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
                             'freetype-devel',
-                            'libX11-devel', 'libpng12-devel',
-                            'libdrm-devel', 'libdri2-devel', 'libump-devel',
-                            'liblircclient-devel',
-                            'libgl1-mesa-devel', 'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
+                            'libpng12-devel',
+                            'libdrm-devel', 'libdri2-devel', 'libump-devel', 'libudev-devel',
+                            'liblircclient-devel']
                 # x86_64 arch
                 # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
                 # Debian 8.7 no packages: libdri2-dev, libump-dev,
