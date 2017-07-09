@@ -40,6 +40,9 @@ class VideoStateHandler {
   VideoStateHandler();
   virtual ~VideoStateHandler();
 
+  // input
+  virtual void HandleReadedInputData(VideoState* stream, uint8_t* data, int size) = 0;
+
   // audio
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,

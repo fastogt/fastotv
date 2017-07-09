@@ -106,6 +106,7 @@ class VideoState {
   void RefreshRequest();
   /* pause or resume the video */
   void TogglePause();
+  bool IsPaused() const;
 
   void StepToNextFrame();
   void SeekNextChunk();
@@ -124,6 +125,8 @@ class VideoState {
   AVRational GetFrameRate() const;
 
  private:
+  static int decode_interrupt_callback(void* user_data);
+
   void StreamSeek(int64_t pos, int64_t rel, bool seek_by_bytes);
   frames::VideoFrame* GetVideoFrame();
   frames::VideoFrame* SelectVideoFrame() const;

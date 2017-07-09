@@ -124,11 +124,6 @@ namespace core {
 
 namespace {
 
-int decode_interrupt_callback(void* user_data) {
-  VideoState* is = static_cast<VideoState*>(user_data);
-  return is->IsAborted();
-}
-
 enum AVPixelFormat get_format(AVCodecContext* s, const enum AVPixelFormat* pix_fmts) {
   InputStream* ist = static_cast<InputStream*>(s->opaque);
   const enum AVPixelFormat* p;
@@ -725,6 +720,10 @@ void VideoState::RefreshRequest() {
 void VideoState::TogglePause() {
   StreamTogglePause();
   step_ = false;
+}
+
+bool VideoState::IsPaused() const {
+  return paused_;
 }
 
 void VideoState::ResetStats() {
@@ -1378,6 +1377,7 @@ int VideoState::ReadThread() {
       }
     }
     int ret = av_read_frame(ic, pkt);
+    handler_->HandleReadedInputData(this, pkt->data, pkt->size);
     if (ret < 0) {
       WARNING_LOG() << "Read input stream error: " << ffmpeg_errno_to_string(ret);
       bool is_eof = ret == AVERROR_EOF;
@@ -1416,6 +1416,15 @@ int VideoState::ReadThread() {
 
   handler_->HandleQuitStream(this, 0, common::Error());
   return SUCCESS_RESULT_VALUE;
+}
+
+int VideoState::decode_interrupt_callback(void* user_data) {
+  VideoState* is = static_cast<VideoState*>(user_data);
+  if (is->IsAborted()) {
+    return 1;
+  }
+
+  return 0;
 }
 
 int VideoState::AudioThread() {

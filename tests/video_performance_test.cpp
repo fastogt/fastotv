@@ -39,6 +39,12 @@ struct DictionaryOptions {
 class FakeHandler : public VideoStateHandler {
   virtual ~FakeHandler() {}
 
+  virtual void HandleReadedInputData(VideoState* stream, uint8_t* data, int size) override {
+    UNUSED(stream);
+    UNUSED(data);
+    UNUSED(size);
+  }
+
   // audio
   virtual bool HandleRequestAudio(VideoState* stream,
                                   int64_t wanted_channel_layout,

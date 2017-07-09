@@ -123,11 +123,16 @@ bool CreateWindowFunc(core::Size window_size,
   if (is_full_screen) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
+  int num_video_drivers = SDL_GetNumVideoDrivers();
+  for (int i = 0; i < num_video_drivers; ++i) {
+    DEBUG_LOG() << "Available video driver: " << SDL_GetVideoDriver(i);
+  }
   SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_size.width,
                                          window_size.height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
+    DEBUG_LOG() << "Initialized video driver: " << SDL_GetCurrentVideoDriver();
     int n = SDL_GetNumRenderDrivers();
     for (int i = 0; i < n; ++i) {
       SDL_RendererInfo renderer_info;
@@ -138,8 +143,8 @@ bool CreateWindowFunc(core::Size window_size,
             common::MemSPrintf(" maximum texture size can be %dx%d.",
                                renderer_info.max_texture_width == 0 ? INT_MAX : renderer_info.max_texture_width,
                                renderer_info.max_texture_height == 0 ? INT_MAX : renderer_info.max_texture_height);
-        DEBUG_LOG() << "Available " << renderer_info.name
-                    << (is_hardware_renderer ? "(hardware renderer)" : "(software renderer)") << screen_size;
+        DEBUG_LOG() << "Available renderer: " << renderer_info.name
+                    << (is_hardware_renderer ? "(hardware)" : "(software)") << screen_size;
       }
     }
     lrenderer = SDL_CreateRenderer(lwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -147,8 +152,7 @@ bool CreateWindowFunc(core::Size window_size,
       SDL_RendererInfo info;
       if (SDL_GetRendererInfo(lrenderer, &info) == 0) {
         bool is_hardware_renderer = info.flags & SDL_RENDERER_ACCELERATED;
-        DEBUG_LOG() << "Initialized " << info.name
-                    << (is_hardware_renderer ? " hardware renderer." : " software renderer.");
+        DEBUG_LOG() << "Initialized renderer: " << info.name << (is_hardware_renderer ? " (hardware)." : "(software).");
       }
     } else {
       WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
@@ -216,7 +220,10 @@ Player::Player(const std::string& app_directory_absolute_path,
       app_directory_absolute_path_(app_directory_absolute_path),
       render_texture_(NULL),
       update_video_timer_id_(0),
-      update_video_timer_interval_msec_(0) {
+      update_video_timer_interval_msec_(0),
+      check_stream_alive_timer_id_(0),
+      packet_received_(0),
+      packet_received_checkpoint_(0) {
   UpdateDisplayInterval(min_fps);
   // stable options
   if (options_.audio_volume < 0) {
@@ -368,6 +375,14 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
   }
 }
 
+void Player::HandleReadedInputData(core::VideoState* stream, uint8_t* data, int size) {
+  UNUSED(stream);
+  UNUSED(data);
+  UNUSED(size);
+
+  packet_received_++;
+}
+
 bool Player::HandleRequestAudio(core::VideoState* stream,
                                 int64_t wanted_channel_layout,
                                 int wanted_nb_channels,
@@ -456,6 +471,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
     update_video_timer_id_ = fApp->AddTimer(update_video_timer_interval_msec_, update_video_callback, this);
+    check_stream_alive_timer_id_ = fApp->AddTimer(check_stream_alive_timeout_msec, check_stream_alive_callback, this);
 
     const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
     const std::string offline_channel_img_full_path =
@@ -490,6 +506,7 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
 void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
   core::events::PostExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
+    fApp->RemoveTimer(check_stream_alive_timer_id_);
     fApp->RemoveTimer(update_video_timer_id_);
     controller_->Stop();
     if (stream_) {
@@ -545,7 +562,15 @@ void Player::HandleUpdateVideoEvent(core::events::UpdateVideoEvent* event) {
 }
 
 void Player::HandleTimerEvent(core::events::TimerEvent* event) {
-  UNUSED(event);
+  if (this == event->Sender()) {
+    if (stream_ && !stream_->IsPaused() && packet_received_checkpoint_ == packet_received_) {
+      common::Error err = common::make_error_value("Timeout input data!", common::Value::E_ERROR);
+      stream_->Abort();
+      destroy(&stream_);
+      SwitchToChannelErrorMode(err);
+    }
+    packet_received_checkpoint_ = packet_received_;
+  }
 }
 
 void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
@@ -921,6 +946,13 @@ uint32_t Player::update_video_callback(uint32_t interval, void* user_data) {
   core::events::UpdateVideoEvent* timer_event = new core::events::UpdateVideoEvent(player, inf);
   fApp->PostEvent(timer_event);
   return player->update_video_timer_interval_msec_;
+}
+
+uint32_t Player::check_stream_alive_callback(uint32_t interval, void* user_data) {
+  core::events::TimeInfo inf;
+  core::events::TimerEvent* timer_event = new core::events::TimerEvent(user_data, inf);
+  fApp->PostEvent(timer_event);
+  return interval;
 }
 
 void Player::UpdateVolume(int step) {
