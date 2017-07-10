@@ -15,7 +15,7 @@ def install_raspberry_pi(gpu_mem_size: int):
     utils.symlink_force('/opt/vc/lib/libGLESv2.so', '/usr/lib/arm-linux-gnueabihf/libGLESv2.so')
     utils.symlink_force('/opt/vc/lib/libGLESv2.so', '/usr/lib/arm-linux-gnueabihf/libGLESv2.so.2')
 
-    with open("file.txt", "r+") as f:
+    with open("/boot/config.txt", "r+") as f:
         line_found = any("gpu_mem" in line for line in f)
         if not line_found:
             f.seek(0, os.SEEK_END)
