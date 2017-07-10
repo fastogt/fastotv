@@ -1027,15 +1027,17 @@ void Player::DrawFailedStatus() {
 void Player::DrawPlayingStatus() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   core::frames::VideoFrame* frame = stream_->TryToGetVideoFrame();
-  bool need_to_check_is_alive = video_frames_handled_ % (1000 / update_video_timer_interval_msec_ * 30) == 0;
+  uint32_t frames_per_sec = 1000 / update_video_timer_interval_msec_;
+  bool need_to_check_is_alive = video_frames_handled_ % (frames_per_sec * no_data_panic_sec) == 0;
   if (need_to_check_is_alive) {
     core::VideoState::stats_t stats = stream_->GetStatistic();
-    core::clock64_t cl = stats->master_clock;
+    core::clock64_t cl = stats->master_pts;
     if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != core::invalid_clock())) {
-      common::Error err = common::make_error_value("Timeout input data!", common::Value::E_ERROR);
+      common::Error err = common::make_error_value("No input data!", common::Value::E_ERROR);
       stream_->Abort();
       destroy(&stream_);
       SwitchToChannelErrorMode(err);
+      last_pts_checkpoint_ = core::invalid_clock();
       return;
     }
     last_pts_checkpoint_ = cl;

@@ -94,23 +94,37 @@ class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
                                  utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                                         '--enable-omx-rpi']))
 
-    def install_specific(self):
-        raspberry_pi.install_raspberry_pi()
-
 
 class RaspberryPi1ModelB(RaspberryPiDevice):  # ARMv6(armv6l) ARM11, omx/mmal
     def __init__(self):
         RaspberryPiDevice.__init__(self, 'raspberry-pi-model-b')
+
+    def install_specific(self):
+        raspberry_pi.install_raspberry_pi(256)
 
 
 class RaspberryPi1ModelBPlus(RaspberryPiDevice):  # ARMv6(armv6l) ARM11, omx/mmal
     def __init__(self):
         RaspberryPiDevice.__init__(self, 'raspberry-pi-model-b+')
 
+    def install_specific(self):
+        raspberry_pi.install_raspberry_pi(256)
+
+
+class RaspberryPi2ModelB(RaspberryPiDevice):  # ARMv8-A(aarch64) Cortex-A53, omx/mmal
+    def __init__(self):
+        RaspberryPiDevice.__init__(self, 'raspberry-pi2-model-b')
+
+    def install_specific(self):
+        raspberry_pi.install_raspberry_pi(512)
+
 
 class RaspberryPi3ModelB(RaspberryPiDevice):  # ARMv8-A(aarch64) Cortex-A53, omx/mmal
     def __init__(self):
         RaspberryPiDevice.__init__(self, 'raspberry-pi3-model-b')
+
+    def install_specific(self):
+        raspberry_pi.install_raspberry_pi(512)
 
 
 # Orange Pi
@@ -176,7 +190,7 @@ class OrangePiZeroPlus2H5(OrangePiPC2):  # ARMv8-A(aarch64) Cortex-A53
 
 
 SUPPORTED_DEVICES = [PcDevice(),
-                     RaspberryPi1ModelB(), RaspberryPi1ModelBPlus(), RaspberryPi3ModelB(),
+                     RaspberryPi1ModelB(), RaspberryPi1ModelBPlus(), RaspberryPi2ModelB(), RaspberryPi3ModelB(),
                      OrangePiOne(), OrangePiLite(), OrangePiZeroPlus2H3(), OrangePiPC(), OrangePiPlus2(), OrangePiPC2(),
                      OrangePiZeroPlus2H5()]
 

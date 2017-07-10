@@ -55,6 +55,8 @@ class Stream {
   AVCodecParameters* GetCodecpar() const;
   double q2d() const;
 
+  clock64_t GetPts() const;
+
   // clock interface
   clock64_t GetClock() const;
 

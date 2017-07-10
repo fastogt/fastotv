@@ -146,6 +146,7 @@ class VideoState {
 
   AvSyncType GetMasterSyncType() const;
   clock64_t ComputeTargetDelay(clock64_t delay) const;
+  clock64_t GetMasterPts() const;
   clock64_t GetMasterClock() const;
 #if CONFIG_AVFILTER
   int ConfigureVideoFilters(AVFilterGraph* graph, const std::string& vfilters, AVFrame* frame);

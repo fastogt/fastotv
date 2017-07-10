@@ -32,6 +32,7 @@ Stats::Stats()
     : frame_drops_early(0),
       frame_drops_late(0),
       frame_processed(0),
+      master_pts(core::invalid_clock()),
       master_clock(core::invalid_clock()),
       audio_clock(core::invalid_clock()),
       video_clock(core::invalid_clock()),

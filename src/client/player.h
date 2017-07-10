@@ -72,7 +72,8 @@ class Player : public StreamHandler, public core::events::EventListener {
     space_width = 10,
     x_start = 10,
     y_start = 10,
-    update_stats_timeout_msec = 1000
+    update_stats_timeout_msec = 1000,
+    no_data_panic_sec = 60
   };
   static const SDL_Color text_color;
   static const AVRational min_fps;

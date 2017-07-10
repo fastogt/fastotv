@@ -38,6 +38,7 @@ struct Stats {  // stream realtime statistic
   size_t frame_drops_late;
   size_t frame_processed;
 
+  clock64_t master_pts;
   clock64_t master_clock;  // msec
   clock64_t audio_clock;   // msec
   clock64_t video_clock;   // msec

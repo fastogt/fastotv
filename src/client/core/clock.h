@@ -27,7 +27,9 @@ namespace core {
 
 class Clock {
  public:
-  explicit Clock();
+  Clock();
+
+  clock64_t GetPts() const;
 
   void SetClockAt(clock64_t pts, clock64_t time);
   void SetClock(clock64_t pts);

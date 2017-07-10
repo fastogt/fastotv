@@ -38,6 +38,10 @@ void Clock::SetClock(clock64_t pts) {
   SetClockAt(pts, time);
 }
 
+clock64_t Clock::GetPts() const {
+  return pts_;
+}
+
 clock64_t Clock::GetClock() const {
   if (paused_) {
     return pts_;

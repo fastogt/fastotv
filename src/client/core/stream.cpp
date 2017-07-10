@@ -99,6 +99,10 @@ double Stream::q2d() const {
   return q2d_diff(stream_st_->time_base);
 }
 
+clock64_t Stream::GetPts() const {
+  return clock_->GetPts();
+}
+
 clock64_t Stream::GetClock() const {
   return clock_->GetClock();
 }

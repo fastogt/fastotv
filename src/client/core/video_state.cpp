@@ -643,6 +643,14 @@ clock64_t VideoState::ComputeTargetDelay(clock64_t delay) const {
   return delay;
 }
 
+clock64_t VideoState::GetMasterPts() const {
+  if (GetMasterSyncType() == AV_SYNC_VIDEO_MASTER) {
+    return vstream_->GetPts();
+  }
+
+  return astream_->GetPts();
+}
+
 /* get the current master clock value */
 clock64_t VideoState::GetMasterClock() const {
   if (GetMasterSyncType() == AV_SYNC_VIDEO_MASTER) {
@@ -1044,6 +1052,7 @@ frames::VideoFrame* VideoState::TryToGetVideoFrame() {
     audio_bandwidth = astream_->Bandwidth();
   }
 
+  stats_->master_pts = GetMasterPts();
   stats_->master_clock = GetMasterClock();
   stats_->video_clock = vstream_->GetClock();
   stats_->audio_clock = astream_->GetClock();
