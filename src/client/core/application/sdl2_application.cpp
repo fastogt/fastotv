@@ -85,12 +85,32 @@ int Sdl2Application::PreExec() {
 }
 
 int Sdl2Application::Exec() {
-  SDL_Event event;
-  while (SDL_WaitEvent(&event)) {
+  Uint32 diff = event_timeout_wait_msec;
+  while (true) {
+    SDL_Event event;
+    SDL_PumpEvents();
+    Uint32 start_wait_ts = SDL_GetTicks();
+    Uint32 wait_time = std::min<Uint32>(diff, event_timeout_wait_msec);
+    int res = SDL_WaitEventTimeout(&event, wait_time);
+    Uint32 finish_time_ts = SDL_GetTicks();
+    if (res == 0) {  // timeout
+      events::TimeInfo inf;
+      events::TimerEvent* timer_event = new events::TimerEvent(this, inf);
+      HandleEvent(timer_event);
+      diff = event_timeout_wait_msec;
+      continue;
+    }
+    diff = event_timeout_wait_msec - finish_time_ts - start_wait_ts;
+    if (diff >= event_timeout_wait_msec) {
+      diff = 0;
+    }
+    DCHECK(res == 1);
+
     bool is_stop_event = event.type == FASTO_EVENT && event.user.data1 == NULL;
     if (is_stop_event) {
       break;
     }
+
     ProcessEvent(&event);
   }
 

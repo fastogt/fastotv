@@ -53,9 +53,6 @@ struct QuitStreamInfo : public StreamInfo {
   common::Error error;
 };
 
-struct UpdateVideoInfo {};
-
-typedef EventBase<UPDATE_VIDEO_EVENT, UpdateVideoInfo> UpdateVideoEvent;
 typedef EventBase<REQUEST_VIDEO_EVENT, FrameInfo> RequestVideoEvent;
 typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
 

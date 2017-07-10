@@ -116,7 +116,6 @@ class Player : public StreamHandler, public core::events::EventListener {
   virtual void HandlePostExecEvent(core::events::PostExecEvent* event);
 
   virtual void HandleTimerEvent(core::events::TimerEvent* event);
-  virtual void HandleUpdateVideoEvent(core::events::UpdateVideoEvent* event);
 
   virtual void HandleRequestVideoEvent(core::events::RequestVideoEvent* event);
   virtual void HandleQuitStreamEvent(core::events::QuitStreamEvent* event);
@@ -150,9 +149,6 @@ class Player : public StreamHandler, public core::events::EventListener {
 
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* user_data, uint8_t* stream, int len);
-
-  static uint32_t update_video_callback(uint32_t interval, void* user_data);
-  static uint32_t check_stream_alive_callback(uint32_t interval, void* user_data);
 
   void InitWindow(const std::string& title, States status);
   void StartShowFooter();
@@ -245,7 +241,6 @@ class Player : public StreamHandler, public core::events::EventListener {
 
   TextureSaver* render_texture_;
 
-  int update_video_timer_id_;
   uint32_t update_video_timer_interval_msec_;
 
   core::clock64_t last_pts_checkpoint_;
