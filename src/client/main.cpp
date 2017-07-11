@@ -54,8 +54,6 @@ extern "C" {
 
 #include "client/config.h"  // for TVConfig, load_config_file
 
-#undef ERROR
-
 namespace {
 
 void sigterm_handler(int sig) {
@@ -66,7 +64,7 @@ void sigterm_handler(int sig) {
 int fasto_log_to_ffmpeg(common::logging::LEVEL_LOG level) {
   if (level <= common::logging::L_CRIT) {
     return AV_LOG_FATAL;
-  } else if (level <= common::logging::L_ERROR) {
+  } else if (level <= common::logging::L_ERR) {
     return AV_LOG_ERROR;
   } else if (level <= common::logging::L_WARNING) {
     return AV_LOG_WARNING;
@@ -81,7 +79,7 @@ common::logging::LEVEL_LOG ffmpeg_log_to_fasto(int level) {
   if (level <= AV_LOG_FATAL) {
     return common::logging::L_CRIT;
   } else if (level <= AV_LOG_ERROR) {
-    return common::logging::L_ERROR;
+    return common::logging::L_ERR;
   } else if (level <= AV_LOG_WARNING) {
     return common::logging::L_WARNING;
   } else if (level <= AV_LOG_INFO) {

@@ -196,8 +196,6 @@ class Player : public StreamHandler, public core::events::EventListener {
   size_t GenerateNextPosition() const;
   size_t GeneratePrevPosition() const;
 
-  int CalcHeightFontPlaceByRowCount(int row) const;
-
   PlayerOptions options_;
   const core::AppOptions opt_;
   const core::ComplexOptions copt_;

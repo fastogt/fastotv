@@ -67,9 +67,11 @@ common::Error CreateTexture(SDL_Renderer* renderer,
                             int new_height,
                             SDL_BlendMode blendmode,
                             bool init_texture,
-                            SDL_Texture** texture_out);
+                            SDL_Texture** texture_out) WARN_UNUSED_RESULT;
 
 SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
+
+int ConvertToSDLVolume(int val);
 
 }  // namespace client
 }  // namespace fastotv

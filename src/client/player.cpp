@@ -54,6 +54,7 @@ extern "C" {
 
 #include "client/ioservice.h"  // for IoService
 #include "client/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
+#include "client/av_sdl_utils.h"
 #include "client/utils.h"
 
 #include "channel_info.h"  // for Url
@@ -74,112 +75,20 @@ extern "C" {
 
 #define CACHE_FOLDER_NAME "cache"
 
-#undef ERROR
-
 namespace {
-//  return 0 on success, or -1 if the texture is not valid.
-int UploadTexture(SDL_Texture* tex, const AVFrame* frame) {
-  if (frame->format == AV_PIX_FMT_YUV420P) {
-    if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {
-      ERROR_LOG() << "Negative linesize is not supported for YUV.";
-      return -1;
-    }
-    return SDL_UpdateYUVTexture(tex, NULL, frame->data[0], frame->linesize[0], frame->data[1], frame->linesize[1],
-                                frame->data[2], frame->linesize[2]);
-  } else if (frame->format == AV_PIX_FMT_BGRA) {
-    if (frame->linesize[0] < 0) {
-      return SDL_UpdateTexture(tex, NULL, frame->data[0] + frame->linesize[0] * (frame->height - 1),
-                               -frame->linesize[0]);
-    }
-    return SDL_UpdateTexture(tex, NULL, frame->data[0], frame->linesize[0]);
+int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row) {
+  if (!font) {
+    return 0;
   }
 
-  NOTREACHED();
-  return -1;
+  int font_height = TTF_FontLineSkip(font);
+  return 2 << av_log2(font_height * row);
 }
 }  // namespace
 
 namespace fasto {
 namespace fastotv {
 namespace client {
-
-namespace {
-
-int ConvertToSDLVolume(int val) {
-  val = av_clip(val, 0, 100);
-  return av_clip(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
-}
-
-bool CreateWindowFunc(core::Size window_size,
-                      bool is_full_screen,
-                      const std::string& title,
-                      SDL_Renderer** renderer,
-                      SDL_Window** window) {
-  if (!renderer || !window || !window_size.IsValid()) {  // invalid input
-    return false;
-  }
-
-  Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
-  if (is_full_screen) {
-    flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-  }
-  int num_video_drivers = SDL_GetNumVideoDrivers();
-  for (int i = 0; i < num_video_drivers; ++i) {
-    DEBUG_LOG() << "Available video driver: " << SDL_GetVideoDriver(i);
-  }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_size.width,
-                                         window_size.height, flags);
-  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-  SDL_Renderer* lrenderer = NULL;
-  if (lwindow) {
-    DEBUG_LOG() << "Initialized video driver: " << SDL_GetCurrentVideoDriver();
-    int n = SDL_GetNumRenderDrivers();
-    for (int i = 0; i < n; ++i) {
-      SDL_RendererInfo renderer_info;
-      int res = SDL_GetRenderDriverInfo(i, &renderer_info);
-      if (res == 0) {
-        bool is_hardware_renderer = renderer_info.flags & SDL_RENDERER_ACCELERATED;
-        std::string screen_size =
-            common::MemSPrintf(" maximum texture size can be %dx%d.",
-                               renderer_info.max_texture_width == 0 ? INT_MAX : renderer_info.max_texture_width,
-                               renderer_info.max_texture_height == 0 ? INT_MAX : renderer_info.max_texture_height);
-        DEBUG_LOG() << "Available renderer: " << renderer_info.name
-                    << (is_hardware_renderer ? "(hardware)" : "(software)") << screen_size;
-      }
-    }
-    lrenderer = SDL_CreateRenderer(lwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (lrenderer) {
-      SDL_RendererInfo info;
-      if (SDL_GetRendererInfo(lrenderer, &info) == 0) {
-        bool is_hardware_renderer = info.flags & SDL_RENDERER_ACCELERATED;
-        DEBUG_LOG() << "Initialized renderer: " << info.name << (is_hardware_renderer ? " (hardware)." : "(software).");
-      }
-    } else {
-      WARNING_LOG() << "Failed to initialize a hardware accelerated renderer: " << SDL_GetError();
-      lrenderer = SDL_CreateRenderer(lwindow, -1, 0);
-    }
-  }
-
-  if (!lwindow || !lrenderer) {
-    ERROR_LOG() << "SDL: could not set video mode - exiting";
-    if (lrenderer) {
-      SDL_DestroyRenderer(lrenderer);
-    }
-    if (lwindow) {
-      SDL_DestroyWindow(lwindow);
-    }
-    return false;
-  }
-
-  SDL_SetRenderDrawBlendMode(lrenderer, SDL_BLENDMODE_BLEND);
-  SDL_SetWindowSize(lwindow, window_size.width, window_size.height);
-  SDL_SetWindowTitle(lwindow, title.c_str());
-
-  *window = lwindow;
-  *renderer = lrenderer;
-  return true;
-}
-}  // namespace
 
 const SDL_Color Player::text_color = {255, 255, 255, 0};
 const AVRational Player::min_fps = {25, 1};
@@ -223,14 +132,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       last_pts_checkpoint_(core::invalid_clock()),
       video_frames_handled_(0) {
   UpdateDisplayInterval(min_fps);
-  // stable options
-  if (options_.audio_volume < 0) {
-    WARNING_LOG() << "-volume=" << options_.audio_volume << " < 0, setting to 0";
-  }
-  if (options_.audio_volume > 100) {
-    WARNING_LOG() << "-volume=" << options_.audio_volume << " > 100, setting to 100";
-  }
-  options_.audio_volume = av_clip(options_.audio_volume, 0, 100);
+  // stable audio option
+  options_.audio_volume = stable_value_in_range(options_.audio_volume, 0, 100);
 
   fApp->Subscribe(this, core::events::PostExecEvent::EventType);
   fApp->Subscribe(this, core::events::PreExecEvent::EventType);
@@ -385,15 +288,15 @@ bool Player::HandleRequestAudio(core::VideoState* stream,
 
   /* prepare audio output */
   core::AudioParams laudio_hw_params;
-  int ret = core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, &laudio_hw_params,
-                             sdl_audio_callback);
-  if (ret < 0) {
+  int laudio_buff_size;
+  if (!core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, sdl_audio_callback,
+                        &laudio_hw_params, &laudio_buff_size)) {
     return false;
   }
 
   SDL_PauseAudio(0);
   audio_params_ = new core::AudioParams(laudio_hw_params);
-  audio_buff_size_ = ret;
+  audio_buff_size_ = laudio_buff_size;
 
   *audio_hw_params = *audio_params_;
   *audio_buff_size = audio_buff_size_;
@@ -415,8 +318,7 @@ bool Player::HandleRequestVideo(core::VideoState* stream,
     return false;
   }
 
-  SDL_Rect rect;
-  core::calculate_display_rect(&rect, 0, 0, INT_MAX, height, width, height, aspect_ratio);
+  SDL_Rect rect = core::calculate_display_rect(0, 0, INT_MAX, height, width, height, aspect_ratio);
   options_.default_size.width = rect.w;
   options_.default_size.height = rect.h;
 
@@ -908,7 +810,7 @@ void Player::sdl_audio_callback(void* user_data, uint8_t* stream, int len) {
 }
 
 void Player::UpdateVolume(int step) {
-  options_.audio_volume = av_clip(options_.audio_volume + step, 0, 100);
+  options_.audio_volume = stable_value_in_range(options_.audio_volume + step, 0, 100);
   show_volume_ = true;
   core::msec_t cur_time = core::GetCurrentMsec();
   volume_last_shown_ = cur_time;
@@ -1036,13 +938,14 @@ void Player::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                             "to reduce the image size.";
     return;
   }
 
-  if (UploadTexture(texture, frame->frame) < 0) {
+  common::Error err = UploadTexture(texture, frame->frame);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
     return;
   }
 
@@ -1051,9 +954,8 @@ void Player::DrawPlayingStatus() {
   SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
   SDL_RenderClear(renderer_);
 
-  SDL_Rect rect;
-  core::calculate_display_rect(&rect, xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
-                               frame->height, frame->sar);
+  SDL_Rect rect = core::calculate_display_rect(xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
+                                               frame->height, frame->sar);
   SDL_RenderCopyEx(renderer_, texture, NULL, &rect, 0, NULL, flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   DrawInfo();
@@ -1206,7 +1108,7 @@ void Player::DrawFooter() {
           " Title: %s\n"
           " Description: %s",
           url.GetName(), decr);
-      int h = CalcHeightFontPlaceByRowCount(2);
+      int h = CalcHeightFontPlaceByRowCount(font_, 2);
       if (h > footer_rect.h) {
         h = footer_rect.h;
       }
@@ -1278,11 +1180,12 @@ void Player::DrawWrappedTextInRect(const std::string& text, SDL_Color text_color
 void Player::InitWindow(const std::string& title, States status) {
   CalculateDispalySize();
   if (!window_) {
-    CreateWindowFunc(window_size_, options_.is_full_screen, title, &renderer_, &window_);
-  } else {
-    SDL_SetWindowTitle(window_, title.c_str());
+    if (!core::create_window(window_size_, options_.is_full_screen, title, &renderer_, &window_)) {
+      return;
+    }
   }
 
+  SDL_SetWindowTitle(window_, title.c_str());
   current_state_ = status;
   current_state_str_ = title;
   StartShowFooter();
@@ -1354,7 +1257,7 @@ void Player::MoveToPreviousStream() {
 }
 
 core::VideoState* Player::CreateNextStream() {
-  // check is executed in main thread?
+  CHECK(THREAD_MANAGER()->IsMainThread());
   if (play_list_.empty()) {
     return nullptr;
   }
@@ -1365,7 +1268,7 @@ core::VideoState* Player::CreateNextStream() {
 }
 
 core::VideoState* Player::CreatePrevStream() {
-  // check is executed in main thread?
+  CHECK(THREAD_MANAGER()->IsMainThread());
   if (play_list_.empty()) {
     return nullptr;
   }
@@ -1411,15 +1314,6 @@ size_t Player::GenerateNextPosition() const {
   }
 
   return current_stream_pos_ + 1;
-}
-
-int Player::CalcHeightFontPlaceByRowCount(int row) const {
-  if (!font_) {
-    return 0;
-  }
-
-  int font_height = TTF_FontLineSkip(font_);
-  return 2 << av_log2(font_height * row);
 }
 
 size_t Player::GeneratePrevPosition() const {

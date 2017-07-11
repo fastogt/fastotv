@@ -76,8 +76,6 @@ extern "C" {
 #include "client/core/frames/frame_queue.h"  // for VideoDecoder, AudioDec...
 #include "client/core/frames/video_frame.h"  // for VideoFrame
 
-#undef ERROR
-
 /* no AV sync correction is done if below the minimum AV sync threshold */
 #define AV_SYNC_THRESHOLD_MIN_MSEC 40
 /* AV sync correction is done if above the maximum AV sync threshold */
@@ -843,7 +841,7 @@ int VideoState::SynchronizeAudio(int nb_samples) {
           wanted_nb_samples = nb_samples + static_cast<int>(diff * audio_src_.freq);
           int min_nb_samples = ((nb_samples * (100 - SAMPLE_CORRECTION_PERCENT_MAX) / 100));
           int max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100));
-          wanted_nb_samples = av_clip(wanted_nb_samples, min_nb_samples, max_nb_samples);
+          wanted_nb_samples = stable_value_in_range(wanted_nb_samples, min_nb_samples, max_nb_samples);
         }
         DEBUG_LOG() << "diff=" << diff << " adiff=" << avg_diff << " sample_diff=" << wanted_nb_samples - nb_samples
                     << " apts=" << audio_clock_ << " " << audio_diff_threshold_;
@@ -1571,9 +1569,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

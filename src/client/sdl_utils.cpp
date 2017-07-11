@@ -18,19 +18,12 @@
 
 #include "client/sdl_utils.h"
 
-#include <setjmp.h>  // for longjmp, jmp_buf, setjmp
-#include <stdio.h>   // for NULL, fclose, fopen, FILE
-#include <string>    // for string
-
-#include <SDL2/SDL_endian.h>  // for SDL_BYTEORDER, SDL_LIL_ENDIAN
-#include <SDL2/SDL_pixels.h>  // for SDL_Color, SDL_Palette, SDL_PixelFormat
-
-#include <common/macros.h>  // for SIZEOFMASS, PROJECT_VERSION_CHECK, PROJ...
-#include <common/value.h>   // for Value, Value::ErrorsType::E_ERROR
+#include <SDL2/SDL_audio.h>
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+
 SurfaceSaver::SurfaceSaver(SDL_Surface* surface) : surface_(surface), texture_(NULL), renderer_(NULL) {}
 
 SurfaceSaver::~SurfaceSaver() {
@@ -186,6 +179,11 @@ SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height) {
   }
 
   return {calc_x, calc_y, calc_width, calc_height};
+}
+
+int ConvertToSDLVolume(int val) {
+  val = stable_value_in_range(val, 0, 100);
+  return stable_value_in_range(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
 }  // namespace client

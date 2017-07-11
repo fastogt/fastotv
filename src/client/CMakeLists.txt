@@ -499,6 +499,7 @@ SET(BUILD_CLIENT_SOURCES
   cmdutils.h cmdutils.cpp
   utils.h utils.cpp
   sdl_utils.h sdl_utils.cpp
+  av_sdl_utils.h av_sdl_utils.cpp
   ioservice.h ioservice.cpp
 
   ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}

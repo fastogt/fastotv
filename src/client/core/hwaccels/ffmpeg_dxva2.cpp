@@ -19,7 +19,6 @@
 #include "client/core/hwaccels/ffmpeg_dxva2.h"
 
 #include <windows.h>
-#undef ERROR
 
 #define DXVA2API_USE_BITFIELDS
 #define COBJMACROS
