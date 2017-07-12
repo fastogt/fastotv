@@ -493,6 +493,7 @@ SET(BUILD_CLIENT_SOURCES
   types.h types.cpp
   playlist_entry.h playlist_entry.cpp
   player_options.h player_options.cpp
+  simple_player.h simple_player.cpp
   player.h player.cpp
   stream_handler.h stream_handler.cpp
   config.h config.cpp
