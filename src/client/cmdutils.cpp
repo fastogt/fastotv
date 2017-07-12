@@ -70,33 +70,45 @@ extern "C" {
 #include "client/core/ffmpeg_internal.h"
 
 #if CONFIG_AVDEVICE
-#define HELP_AVDEVICE                                          \
-  "    --sources [device]  list sources of the input device\n" \
-  "    --sinks [device]  list sinks of the output device\n"
+#define HELP_AVDEVICE                                         \
+  "    -sources [device]  list sources of the input device\n" \
+  "    -sinks [device]  list sinks of the output device\n"
 #else
 #define HELP_AVDEVICE
 #endif
 
-#define HELP_TEXT                                            \
-  "Usage: " PROJECT_NAME                                     \
-  " [options]\n"                                             \
-  "    --version  show version\n"                            \
-  "    --help [topic]  show help\n"                          \
-  "    --license  show license\n"                            \
-  "    --buildconf  show build configuration\n"              \
-  "    --formats  show available formats\n"                  \
-  "    --devices  show available devices\n"                  \
-  "    --codecs  show available codecs\n"                    \
-  "    --hwaccels  show available hwaccels\n"                \
-  "    --decoders  show available decoders\n"                \
-  "    --encoders  show available encoders\n"                \
-  "    --bsfs  show available bit stream filters\n"          \
-  "    --protocols  show available protocols\n"              \
-  "    --filters  show available filters\n"                  \
-  "    --pix_fmts  show available pixel formats\n"           \
-  "    --layouts  show standard channel layouts\n"           \
-  "    --sample_fmts  show available audio sample formats\n" \
-  "    --colors  show available color names\n" HELP_AVDEVICE
+#define HELP_TEXT                                                                       \
+  "Usage: " PROJECT_NAME                                                                \
+  " [options]\n"                                                                        \
+  "    -version  show version\n"                                                        \
+  "    -help [topic]  show help\n"                                                      \
+  "    -license  show license\n"                                                        \
+  "    -buildconf  show build configuration\n"                                          \
+  "    -formats  show available formats\n"                                              \
+  "    -devices  show available devices\n"                                              \
+  "    -codecs  show available codecs\n"                                                \
+  "    -hwaccels  show available hwaccels\n"                                            \
+  "    -decoders  show available decoders\n"                                            \
+  "    -encoders  show available encoders\n"                                            \
+  "    -bsfs  show available bit stream filters\n"                                      \
+  "    -protocols  show available protocols\n"                                          \
+  "    -filters  show available filters\n"                                              \
+  "    -pix_fmts  show available pixel formats\n"                                       \
+  "    -layouts  show standard channel layouts\n"                                       \
+  "    -sample_fmts  show available audio sample formats\n"                             \
+  "    -colors  show available color names\n" HELP_AVDEVICE                             \
+  "\nWhile playing:\n"                                                                  \
+  "q, ESC              quit\n"                                                          \
+  "f                   toggle full screen\n"                                            \
+  "p, SPC              pause\n"                                                         \
+  "m                   toggle mute\n"                                                   \
+  "9, 0                decrease and increase volume respectively\n"                     \
+  "/, *                decrease and increase volume respectively\n"                     \
+  "s                   activate frame-step mode\n"                                      \
+  "left/right          seek backward/forward 10 seconds\n"                              \
+  "down/up             seek backward/forward 1 minute\n"                                \
+  "page down/page up   seek backward/forward 10 minutes\n"                              \
+  "left double-click   toggle full screen\n"
 
 namespace {
 bool warned_cfg = false;
@@ -243,16 +255,17 @@ void print_codecs_for_id(enum AVCodecID id, bool encoder) {
 }
 
 void print_codecs(bool encoder) {
-  std::cout << (encoder ? "Encoders" : "Decoders") << ":\n"
-                                                      " V..... = Video\n"
-                                                      " A..... = Audio\n"
-                                                      " S..... = Subtitle\n"
-                                                      " .F.... = Frame-level multithreading\n"
-                                                      " ..S... = Slice-level multithreading\n"
-                                                      " ...X.. = Codec is experimental\n"
-                                                      " ....B. = Supports draw_horiz_band\n"
-                                                      " .....D = Supports direct rendering method 1\n"
-                                                      " ------"
+  std::cout << (encoder ? "Encoders" : "Decoders")
+            << ":\n"
+               " V..... = Video\n"
+               " A..... = Audio\n"
+               " S..... = Subtitle\n"
+               " .F.... = Frame-level multithreading\n"
+               " ..S... = Slice-level multithreading\n"
+               " ...X.. = Codec is experimental\n"
+               " ....B. = Supports draw_horiz_band\n"
+               " .....D = Supports direct rendering method 1\n"
+               " ------"
             << std::endl;
 
   std::vector<const AVCodecDescriptor*> codecs;
@@ -284,10 +297,11 @@ void print_codecs(bool encoder) {
 void show_formats_devices(bool device_only) {
   AVInputFormat* ifmt = NULL;
   AVOutputFormat* ofmt = NULL;
-  std::cout << (device_only ? "Devices:" : "File formats:") << "\n"
-                                                               " D. = Demuxing supported\n"
-                                                               " .E = Muxing supported\n"
-                                                               " --"
+  std::cout << (device_only ? "Devices:" : "File formats:")
+            << "\n"
+               " D. = Demuxing supported\n"
+               " .E = Muxing supported\n"
+               " --"
             << std::endl;
 
   const char* last_name = "000";

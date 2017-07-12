@@ -89,9 +89,9 @@ int Sdl2Application::PreExec() {
 }
 
 int Sdl2Application::Exec() {
+  SDL_PumpEvents();
   while (true) {
     SDL_Event event;
-    SDL_PumpEvents();
     Uint32 start_wait_ts = SDL_GetTicks();
     int res = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
     if (res == -1) {        // error
@@ -101,7 +101,7 @@ int Sdl2Application::Exec() {
       HandleEvent(timer_event);
       int work_time = SDL_GetTicks() - start_wait_ts;
       int sleep_timeout = event_timeout_wait_msec - work_time;
-      if (InRange<int>(sleep_timeout, 0, event_timeout_wait_msec)) {
+      if (sleep_timeout && InRange<int>(sleep_timeout, 0, event_timeout_wait_msec)) {
         SDL_Delay(sleep_timeout);
       }
     } else {  // some events
@@ -112,6 +112,7 @@ int Sdl2Application::Exec() {
 
       ProcessEvent(&event);
     }
+    SDL_PumpEvents();
   }
 
   return EXIT_SUCCESS;

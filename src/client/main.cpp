@@ -399,59 +399,59 @@ int main(int argc, char** argv) {
 
   for (int i = 1; i < argc; ++i) {
     const bool lastarg = i == argc - 1;
-    if (strcmp(argv[i], "--version") == 0 || strcmp(argv[i], "-v") == 0) {
+    if (strcmp(argv[i], "-version") == 0 || strcmp(argv[i], "-v") == 0) {
       show_version();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+    } else if (strcmp(argv[i], "-help") == 0 || strcmp(argv[i], "-h") == 0) {
       std::string topic;
       if (!lastarg) {
         topic = argv[++i];
       }
       show_help(topic);
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--license") == 0 || strcmp(argv[i], "-l") == 0) {
+    } else if (strcmp(argv[i], "-license") == 0 || strcmp(argv[i], "-l") == 0) {
       show_license();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--buildconf") == 0) {
+    } else if (strcmp(argv[i], "-buildconf") == 0) {
       show_buildconf();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--formats") == 0) {
+    } else if (strcmp(argv[i], "-formats") == 0) {
       show_formats();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--devices") == 0) {
+    } else if (strcmp(argv[i], "-devices") == 0) {
       show_devices();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--codecs") == 0) {
+    } else if (strcmp(argv[i], "-codecs") == 0) {
       show_codecs();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--hwaccels") == 0) {
+    } else if (strcmp(argv[i], "-hwaccels") == 0) {
       show_hwaccels();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--decoders") == 0) {
+    } else if (strcmp(argv[i], "-decoders") == 0) {
       show_decoders();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--encoders") == 0) {
+    } else if (strcmp(argv[i], "-encoders") == 0) {
       show_encoders();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--bsfs") == 0) {
+    } else if (strcmp(argv[i], "-bsfs") == 0) {
       show_bsfs();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--protocols") == 0) {
+    } else if (strcmp(argv[i], "-protocols") == 0) {
       show_protocols();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--filters") == 0) {
+    } else if (strcmp(argv[i], "-filters") == 0) {
       show_filters();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--pix_fmts") == 0) {
+    } else if (strcmp(argv[i], "-pix_fmts") == 0) {
       show_pix_fmts();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--layouts") == 0) {
+    } else if (strcmp(argv[i], "-layouts") == 0) {
       show_layouts();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--sample_fmts") == 0) {
+    } else if (strcmp(argv[i], "-sample_fmts") == 0) {
       show_sample_fmts();
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--colors") == 0) {
+    } else if (strcmp(argv[i], "-colors") == 0) {
       show_colors();
       return EXIT_SUCCESS;
     } else if (strcmp(argv[i], "-i") == 0 && !lastarg) {
@@ -459,14 +459,14 @@ int main(int argc, char** argv) {
       url = common::uri::Uri(argv[++i]);
     }
 #if CONFIG_AVDEVICE
-    else if (strcmp(argv[i], "--sources") == 0) {
+    else if (strcmp(argv[i], "-sources") == 0) {
       std::string device;
       if (!lastarg) {
         device = argv[++i];
       }
       show_sources(device);
       return EXIT_SUCCESS;
-    } else if (strcmp(argv[i], "--sinks") == 0) {
+    } else if (strcmp(argv[i], "-sinks") == 0) {
       std::string device;
       if (!lastarg) {
         device = argv[++i];
