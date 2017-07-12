@@ -20,6 +20,8 @@
 
 #include "client/simple_player.h"
 
+#include "client/core/events/network_events.h"  // for BandwidthEstimationEvent
+
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -36,12 +38,16 @@ class Player : public SimplePlayer {
 
   ~Player();
 
+  virtual std::string GetCurrentUrlName() const override;  // return Unknown if not found
+
  protected:
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
   virtual void HandlePreExecEvent(core::events::PreExecEvent* event) override;
   virtual void HandlePostExecEvent(core::events::PostExecEvent* event) override;
+
+  virtual void HandleTimerEvent(core::events::TimerEvent* event) override;
 
   virtual void HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event);
   virtual void HandleClientConnectedEvent(core::events::ClientConnectedEvent* event);
@@ -51,20 +57,50 @@ class Player : public SimplePlayer {
   virtual void HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event);
   virtual void HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event);
 
+  virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event) override;
+  virtual void HandleLircPressEvent(core::events::LircPressEvent* event) override;
+
+  virtual void DrawInfo() override;
   virtual void DrawFailedStatus() override;
   virtual void DrawInitStatus() override;
 
+  virtual void InitWindow(const std::string& title, States status) override;
+
  private:
+  void DrawFooter();
+
+  void StartShowFooter();
+  SDL_Rect GetFooterRect() const;
+
+  bool GetCurrentUrl(PlaylistEntry* url) const;
+
+  void SwitchToPlayingMode();
   void SwitchToConnectMode();
   void SwitchToDisconnectMode();
-
   void SwitchToAuthorizeMode();
   void SwitchToUnAuthorizeMode();
+
+  core::VideoState* CreateNextStream();
+  core::VideoState* CreatePrevStream();
+  core::VideoState* CreateStreamPos(size_t pos);
+
+  size_t GenerateNextPosition() const;
+  size_t GeneratePrevPosition() const;
+
+  void MoveToNextStream();
+  void MoveToPreviousStream();
 
   SurfaceSaver* offline_channel_texture_;
   SurfaceSaver* connection_error_texture_;
 
   IoService* controller_;
+
+  size_t current_stream_pos_;
+  std::vector<PlaylistEntry> play_list_;
+
+  bool show_footer_;
+  core::msec_t footer_last_shown_;
+  std::string current_state_str_;
 };
 
 }  // namespace client

@@ -18,51 +18,25 @@
 
 #include "client/simple_player.h"
 
-#include <stdlib.h>  // for NULL, EXIT_FAILURE, EXIT...
-#include <string.h>  // for memset
-
-#include <SDL2/SDL_audio.h>  // for SDL_CloseAudio, SDL_MIX_...
-#include <SDL2/SDL_hints.h>  // for SDL_SetHint, SDL_HINT_RE...
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_pixels.h>   // for SDL_Color, ::SDL_PIXELFO...
-#include <SDL2/SDL_rect.h>     // for SDL_Rect
-#include <SDL2/SDL_surface.h>  // for SDL_Surface, SDL_FreeSur...
-
 #include <common/application/application.h>  // for fApp, Application
-#include <common/convert2string.h>
+#include <common/threads/thread_manager.h>
+
 #include <common/file_system.h>
-#include <common/logger.h>                  // for COMPACT_LOG_FILE_CRIT
-#include <common/macros.h>                  // for UNUSED, NOTREACHED, ERRO...
-#include <common/threads/thread_manager.h>  // for THREAD_MANAGER
-#include <common/threads/types.h>           // for thread
 #include <common/utils.h>
+#include <common/convert2string.h>
 
-extern "C" {
-#include <libavutil/avutil.h>  // for AVMediaType::AVMEDIA_TYP...
-#include <libavutil/buffer.h>  // for av_buffer_unref
-#include <libavutil/pixfmt.h>  // for AVPixelFormat::AV_PIX_FM...
-}
+#include "client/sdl_utils.h"
+#include "client/av_sdl_utils.h"
 
-#include "client/core/app_options.h"      // for AppOptions, ComplexOptio...
-#include "client/core/audio_params.h"     // for AudioParams
-#include "client/core/ffmpeg_internal.h"  // for hw_device_ctx
-#include "client/core/sdl_utils.h"
-#include "client/core/video_state.h"  // for VideoState
-
+#include "client/core/video_state.h"         // for VideoState
 #include "client/core/frames/audio_frame.h"  // for AudioFrame
 #include "client/core/frames/video_frame.h"  // for VideoFrame
-
-#include "client/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
-#include "client/av_sdl_utils.h"
-#include "client/utils.h"
-
-#include "channel_info.h"  // for Url
+#include "client/core/sdl_utils.h"
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
 
 #define CURSOR_HIDE_DELAY_MSEC 1000  // 1 sec
-#define FOOTER_HIDE_DELAY_MSEC 2000  // 1 sec
 #define VOLUME_HIDE_DELAY_MSEC 2000  // 2 sec
 
 #define USER_FIELD "user"
@@ -70,7 +44,10 @@ extern "C" {
 
 #define MAIN_FONT_PATH_RELATIVE "share/fonts/FreeSans.ttf"
 
-namespace {
+namespace fasto {
+namespace fastotv {
+namespace client {
+
 int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row) {
   if (!font) {
     return 0;
@@ -79,11 +56,6 @@ int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row) {
   int font_height = TTF_FontLineSkip(font);
   return 2 << av_log2(font_height * row);
 }
-}  // namespace
-
-namespace fasto {
-namespace fastotv {
-namespace client {
 
 const SDL_Color SimplePlayer::text_color = {255, 255, 255, 0};
 const AVRational SimplePlayer::min_fps = {25, 1};
@@ -93,32 +65,27 @@ SimplePlayer::SimplePlayer(const std::string& app_directory_absolute_path,
                            const core::AppOptions& opt,
                            const core::ComplexOptions& copt)
     : StreamHandler(),
+      renderer_(NULL),
+      font_(NULL),
       options_(options),
       opt_(opt),
       copt_(copt),
-      play_list_(),
+      app_directory_absolute_path_(app_directory_absolute_path),
       audio_params_(nullptr),
       audio_buff_size_(0),
-      renderer_(NULL),
       window_(NULL),
       show_cursor_(false),
       cursor_last_shown_(0),
-      show_footer_(false),
-      footer_last_shown_(0),
       show_volume_(false),
       volume_last_shown_(0),
       last_mouse_left_click_(0),
-      current_stream_pos_(0),
-      font_(NULL),
       stream_(nullptr),
       window_size_(),
       xleft_(0),
       ytop_(0),
       current_state_(INIT_STATE),
-      current_state_str_("Init"),
       muted_(false),
       show_statstic_(false),
-      app_directory_absolute_path_(app_directory_absolute_path),
       render_texture_(NULL),
       update_video_timer_interval_msec_(0),
       last_pts_checkpoint_(core::invalid_clock()),
@@ -170,6 +137,10 @@ SimplePlayer::~SimplePlayer() {
 
 PlayerOptions SimplePlayer::GetOptions() const {
   return options_;
+}
+
+core::AppOptions SimplePlayer::GetStreamOptions() const {
+  return opt_;
 }
 
 const std::string& SimplePlayer::GetAppDirectoryAbsolutePath() const {
@@ -293,10 +264,7 @@ void SimplePlayer::HandleRequestVideoEvent(core::events::RequestVideoEvent* even
     return;
   }
 
-  if (stream_) {
-    stream_->Abort();
-    destroy(&stream_);
-  }
+  FreeStreamSafe();
   Quit();
 }
 
@@ -306,8 +274,7 @@ void SimplePlayer::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
     return;
   }
 
-  stream_->Abort();
-  destroy(&stream_);
+  FreeStreamSafe();
   SwitchToChannelErrorMode(inf.error);
 }
 
@@ -329,16 +296,12 @@ void SimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
 void SimplePlayer::HandlePostExecEvent(core::events::PostExecEvent* event) {
   core::events::PostExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
-    if (stream_) {
-      stream_->Abort();
-      destroy(&stream_);
-    }
+    FreeStreamSafe();
     if (font_) {
       TTF_CloseFont(font_);
       font_ = NULL;
     }
 
-    play_list_.clear();
     SDL_CloseAudio();
     destroy(&audio_params_);
 
@@ -366,11 +329,6 @@ void SimplePlayer::HandleTimerEvent(core::events::TimerEvent* event) {
     show_cursor_ = false;
   }
 
-  core::msec_t diff_footer = cur_time - footer_last_shown_;
-  if (show_footer_ && diff_footer > FOOTER_HIDE_DELAY_MSEC) {
-    show_footer_ = false;
-  }
-
   core::msec_t diff_volume = cur_time - volume_last_shown_;
   if (show_volume_ && diff_volume > VOLUME_HIDE_DELAY_MSEC) {
     show_volume_ = false;
@@ -390,16 +348,8 @@ void SimplePlayer::HandleLircPressEvent(core::events::LircPressEvent* event) {
       PauseStream();
       break;
     }
-    case LIRC_KEY_LEFT: {
-      MoveToPreviousStream();
-      break;
-    }
     case LIRC_KEY_UP: {
       UpdateVolume(VOLUME_STEP);
-      break;
-    }
-    case LIRC_KEY_RIGHT: {
-      MoveToNextStream();
       break;
     }
     case LIRC_KEY_DOWN: {
@@ -438,10 +388,6 @@ void SimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     }
     case FASTO_KEY_F3: {
       ToggleStatistic();
-      break;
-    }
-    case FASTO_KEY_F4: {
-      StartShowFooter();
       break;
     }
     case FASTO_KEY_p:
@@ -518,14 +464,6 @@ void SimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
         stream_->Seek(-60000);  // msec
       }
       break;
-    case FASTO_KEY_LEFTBRACKET: {
-      MoveToPreviousStream();
-      break;
-    }
-    case FASTO_KEY_RIGHTBRACKET: {
-      MoveToNextStream();
-      break;
-    }
     default:
       break;
   }
@@ -591,14 +529,12 @@ void SimplePlayer::HandleQuitEvent(core::events::QuitEvent* event) {
   Quit();
 }
 
-std::string SimplePlayer::GetCurrentUrlName() const {
-  PlaylistEntry url;
-  if (GetCurrentUrl(&url)) {
-    ChannelInfo ch = url.GetChannelInfo();
-    return ch.GetName();
+void SimplePlayer::FreeStreamSafe() {
+  CHECK(THREAD_MANAGER()->IsMainThread());
+  if (stream_) {
+    stream_->Abort();
+    destroy(&stream_);
   }
-
-  return "Unknown";
 }
 
 void SimplePlayer::UpdateDisplayInterval(AVRational fps) {
@@ -608,15 +544,6 @@ void SimplePlayer::UpdateDisplayInterval(AVRational fps) {
 
   double frames_per_sec = fps.den / static_cast<double>(fps.num);
   update_video_timer_interval_msec_ = static_cast<uint32_t>(frames_per_sec * 1000 * 0.5);
-}
-
-bool SimplePlayer::GetCurrentUrl(PlaylistEntry* url) const {
-  if (!url || play_list_.empty()) {
-    return false;
-  }
-
-  *url = play_list_[current_stream_pos_];
-  return true;
 }
 
 void SimplePlayer::sdl_audio_callback(void* user_data, uint8_t* stream, int len) {
@@ -638,30 +565,6 @@ void SimplePlayer::UpdateVolume(int step) {
 
 void SimplePlayer::Quit() {
   fApp->Exit(EXIT_SUCCESS);
-}
-
-void SimplePlayer::SwitchToPlayingMode() {
-  if (play_list_.empty()) {
-    return;
-  }
-
-  size_t pos = current_stream_pos_;
-  for (size_t i = 0; i < play_list_.size() && options_.last_showed_channel_id != invalid_stream_id; ++i) {
-    PlaylistEntry ent = play_list_[i];
-    ChannelInfo ch = ent.GetChannelInfo();
-    if (ch.GetId() == options_.last_showed_channel_id) {
-      pos = i;
-      break;
-    }
-  }
-
-  stream_ = CreateStreamPos(pos);
-  if (stream_) {
-    return;
-  }
-
-  common::Error err = common::make_error_value("Failed to create stream", common::Value::E_ERROR);
-  SwitchToChannelErrorMode(err);
 }
 
 void SimplePlayer::SwitchToChannelErrorMode(common::Error err) {
@@ -705,8 +608,7 @@ void SimplePlayer::DrawPlayingStatus() {
     core::clock64_t cl = stats->master_pts;
     if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != core::invalid_clock())) {
       common::Error err = common::make_error_value("No input data!", common::Value::E_ERROR);
-      stream_->Abort();
-      destroy(&stream_);
+      FreeStreamSafe();
       SwitchToChannelErrorMode(err);
       last_pts_checkpoint_ = core::invalid_clock();
       return;
@@ -773,19 +675,12 @@ void SimplePlayer::DrawInitStatus() {
 
 void SimplePlayer::DrawInfo() {
   DrawStatistic();
-  DrawFooter();
   DrawVolume();
 }
 
 SDL_Rect SimplePlayer::GetStatisticRect() const {
   const SDL_Rect display_rect = GetDisplayRect();
   return {display_rect.x, display_rect.y, display_rect.w / 3, display_rect.h};
-}
-
-SDL_Rect SimplePlayer::GetFooterRect() const {
-  const SDL_Rect display_rect = GetDrawRect();
-  return {display_rect.x, display_rect.h - footer_height - volume_height - space_height + display_rect.y,
-          display_rect.w, footer_height};
 }
 
 SDL_Rect SimplePlayer::GetVolumeRect() const {
@@ -863,67 +758,6 @@ void SimplePlayer::DrawStatistic() {
   DrawWrappedTextInRect(result_text, text_color, dst);
 }
 
-void SimplePlayer::DrawFooter() {
-  if (!show_footer_ || !font_ || !renderer_) {
-    return;
-  }
-
-  const SDL_Rect footer_rect = GetFooterRect();
-  int padding_left = footer_rect.w / 4;
-  SDL_Rect sdl_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.w - padding_left * 2,
-                              footer_rect.h};
-  if (current_state_ == INIT_STATE) {
-    std::string footer_text = current_state_str_;
-    SDL_SetRenderDrawColor(renderer_, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
-    SDL_RenderFillRect(renderer_, &sdl_footer_rect);
-    DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
-  } else if (current_state_ == FAILED_STATE) {
-    std::string footer_text = current_state_str_;
-    SDL_SetRenderDrawColor(renderer_, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
-    SDL_RenderFillRect(renderer_, &sdl_footer_rect);
-    DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
-  } else if (current_state_ == PLAYING_STATE) {
-    PlaylistEntry entry;
-    if (GetCurrentUrl(&entry)) {
-      std::string decr = "N/A";
-      ChannelInfo url = entry.GetChannelInfo();
-      EpgInfo epg = url.GetEpg();
-      ProgrammeInfo prog;
-      if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
-        decr = prog.GetTitle();
-      }
-
-      SDL_SetRenderDrawColor(renderer_, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
-      SDL_RenderFillRect(renderer_, &sdl_footer_rect);
-
-      std::string footer_text = common::MemSPrintf(
-          " Title: %s\n"
-          " Description: %s",
-          url.GetName(), decr);
-      int h = CalcHeightFontPlaceByRowCount(font_, 2);
-      if (h > footer_rect.h) {
-        h = footer_rect.h;
-      }
-
-      auto icon = entry.GetIcon();
-      int shift = 0;
-      if (icon) {
-        SDL_Texture* img = icon->GetTexture(renderer_);
-        if (img) {
-          SDL_Rect icon_rect = {sdl_footer_rect.x, sdl_footer_rect.y, h, h};
-          SDL_RenderCopy(renderer_, img, NULL, &icon_rect);
-          shift = h;
-        }
-      }
-
-      SDL_Rect text_rect = {sdl_footer_rect.x + shift, sdl_footer_rect.y, sdl_footer_rect.w - shift, h};
-      DrawWrappedTextInRect(footer_text, text_color, text_rect);
-    }
-  } else {
-    NOTREACHED();
-  }
-}
-
 void SimplePlayer::DrawVolume() {
   if (!show_volume_ || !font_ || !renderer_) {
     return;
@@ -979,14 +813,6 @@ void SimplePlayer::InitWindow(const std::string& title, States status) {
 
   SDL_SetWindowTitle(window_, title.c_str());
   current_state_ = status;
-  current_state_str_ = title;
-  StartShowFooter();
-}
-
-void SimplePlayer::StartShowFooter() {
-  show_footer_ = true;
-  core::msec_t cur_time = core::GetCurrentMsec();
-  footer_last_shown_ = cur_time;
 }
 
 void SimplePlayer::CalculateDispalySize() {
@@ -1016,81 +842,18 @@ void SimplePlayer::PauseStream() {
   }
 }
 
-void SimplePlayer::MoveToNextStream() {
-  core::VideoState* st = stream_;
-  if (st) {
-    common::thread th([st]() {
-      st->Abort();
-      delete st;
-    });
-    th.detach();
-  }
-  stream_ = CreateNextStream();
+void SimplePlayer::SetStream(core::VideoState* stream) {
+  FreeStreamSafe();
+  stream_ = stream;
   if (!stream_) {
     common::Error err = common::make_error_value("Failed to create stream", common::Value::E_ERROR);
     SwitchToChannelErrorMode(err);
   }
 }
 
-void SimplePlayer::MoveToPreviousStream() {
-  core::VideoState* st = stream_;
-  if (st) {
-    common::thread th([st]() {
-      st->Abort();
-      delete st;
-    });
-    th.detach();
-  }
-  stream_ = CreatePrevStream();
-  if (!stream_) {
-    common::Error err = common::make_error_value("Failed to create stream", common::Value::E_ERROR);
-    SwitchToChannelErrorMode(err);
-  }
-}
-
-core::VideoState* SimplePlayer::CreateNextStream() {
-  CHECK(THREAD_MANAGER()->IsMainThread());
-  if (play_list_.empty()) {
-    return nullptr;
-  }
-
-  size_t pos = GenerateNextPosition();
-  core::VideoState* stream = CreateStreamPos(pos);
-  return stream;
-}
-
-core::VideoState* SimplePlayer::CreatePrevStream() {
-  CHECK(THREAD_MANAGER()->IsMainThread());
-  if (play_list_.empty()) {
-    return nullptr;
-  }
-
-  size_t pos = GeneratePrevPosition();
-  core::VideoState* stream = CreateStreamPos(pos);
-  return stream;
-}
-
-core::VideoState* SimplePlayer::CreateStreamPos(size_t pos) {
-  CHECK(THREAD_MANAGER()->IsMainThread());
-  current_stream_pos_ = pos;
-
-  PlaylistEntry entr = play_list_[current_stream_pos_];
-  if (!entr.GetIcon()) {  // try to upload image
-    const std::string icon_path = entr.GetIconPath();
-    const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
-    SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-    channel_icon_t shared_surface = common::make_shared<SurfaceSaver>(surface);
-    play_list_[current_stream_pos_].SetIcon(shared_surface);
-  }
-
-  ChannelInfo url = entr.GetChannelInfo();
-  stream_id sid = url.GetId();
-  core::AppOptions copy = opt_;
-  copy.enable_audio = url.IsEnableAudio();
-  copy.enable_video = url.IsEnableVideo();
-  core::VideoState* stream = new core::VideoState(sid, url.GetUrl(), copy, copt_, this);
+core::VideoState* SimplePlayer::CreateStream(stream_id sid, const common::uri::Uri& uri, core::AppOptions opt) {
+  core::VideoState* stream = new core::VideoState(sid, uri, opt, copt_, this);
   options_.last_showed_channel_id = sid;
-
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
     delete stream;
@@ -1098,22 +861,6 @@ core::VideoState* SimplePlayer::CreateStreamPos(size_t pos) {
   }
 
   return stream;
-}
-
-size_t SimplePlayer::GenerateNextPosition() const {
-  if (current_stream_pos_ + 1 == play_list_.size()) {
-    return 0;
-  }
-
-  return current_stream_pos_ + 1;
-}
-
-size_t SimplePlayer::GeneratePrevPosition() const {
-  if (current_stream_pos_ == 0) {
-    return play_list_.size() - 1;
-  }
-
-  return current_stream_pos_ - 1;
 }
 
 }  // namespace client

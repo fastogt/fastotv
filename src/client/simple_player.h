@@ -40,7 +40,6 @@
 #include "client/core/events/key_events.h"      // for KeyPressEvent
 #include "client/core/events/lirc_events.h"     // for LircPressEvent
 #include "client/core/events/mouse_events.h"    // for MouseMoveEvent, Mouse...
-#include "client/core/events/network_events.h"  // for BandwidthEstimationEvent
 #include "client/core/events/stream_events.h"   // for RequestVideoEvent, Quit...
 #include "client/core/events/window_events.h"   // for WindowCloseEvent, Win...
 
@@ -61,6 +60,8 @@ class VideoState;
 struct AudioParams;
 struct VideoFrame;
 }
+
+int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row);
 
 class SimplePlayer : public StreamHandler, public core::events::EventListener {
  public:
@@ -91,9 +92,12 @@ class SimplePlayer : public StreamHandler, public core::events::EventListener {
   virtual ~SimplePlayer();
 
   PlayerOptions GetOptions() const;
+  core::AppOptions GetStreamOptions() const;
 
   const std::string& GetAppDirectoryAbsolutePath() const;
   States GetCurrentState() const;
+
+  virtual std::string GetCurrentUrlName() const = 0;
 
  protected:
   virtual void HandleEvent(event_t* event) override;
@@ -135,93 +139,78 @@ class SimplePlayer : public StreamHandler, public core::events::EventListener {
 
   virtual void HandleQuitEvent(core::events::QuitEvent* event);
 
-  void InitWindow(const std::string& title, States status);
+  virtual void InitWindow(const std::string& title, States status);
 
-  void DrawDisplay();
-  void DrawPlayingStatus();
+  virtual void DrawDisplay();
+  virtual void DrawPlayingStatus();
   virtual void DrawFailedStatus();
   virtual void DrawInitStatus();
 
-  void DrawInfo();
-  void DrawStatistic();
-  void DrawFooter();
-  void DrawVolume();
+  virtual void DrawInfo();  // statistic + volume
 
-  void SwitchToPlayingMode();
+  virtual void DrawStatistic();
+  virtual void DrawVolume();
+
   void SwitchToChannelErrorMode(common::Error err);
 
   SDL_Renderer* renderer_;
-  SDL_Window* window_;
+  TTF_Font* font_;
 
-  std::vector<PlaylistEntry> play_list_;
+  core::VideoState* CreateStream(stream_id sid, const common::uri::Uri& uri, core::AppOptions opt);
+  void SetStream(core::VideoState* stream);  // if stream == NULL => SwitchToChannelErrorMode
+
+  SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins
+
+  void DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
+  void DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
 
  private:
-  bool GetCurrentUrl(PlaylistEntry* url) const;
-  std::string GetCurrentUrlName() const;  // return Unknown if not found
+  void FreeStreamSafe();
 
   void UpdateDisplayInterval(AVRational fps);
 
   /* prepare a new audio buffer */
   static void sdl_audio_callback(void* user_data, uint8_t* stream, int len);
 
-  void StartShowFooter();
   void CalculateDispalySize();
 
-  // channel evrnts
+  // channel events
   void ToggleMute();
   void PauseStream();
-  void MoveToNextStream();
-  void MoveToPreviousStream();
 
   // player modes
   void ToggleStatistic();
 
-  void DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
-  void DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
-
   SDL_Rect GetStatisticRect() const;
-  SDL_Rect GetFooterRect() const;
   SDL_Rect GetVolumeRect() const;
-  SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins
   SDL_Rect GetDisplayRect() const;
-
-  core::VideoState* CreateNextStream();
-  core::VideoState* CreatePrevStream();
-  core::VideoState* CreateStreamPos(size_t pos);
-
-  size_t GenerateNextPosition() const;
-  size_t GeneratePrevPosition() const;
 
   PlayerOptions options_;
   const core::AppOptions opt_;
   const core::ComplexOptions copt_;
 
+  const std::string app_directory_absolute_path_;
+
   core::AudioParams* audio_params_;
   int audio_buff_size_;
 
+  SDL_Window* window_;
+
   bool show_cursor_;
   core::msec_t cursor_last_shown_;
-
-  bool show_footer_;
-  core::msec_t footer_last_shown_;
 
   bool show_volume_;
   core::msec_t volume_last_shown_;
 
   core::msec_t last_mouse_left_click_;
-  size_t current_stream_pos_;
 
-  TTF_Font* font_;
   core::VideoState* stream_;
 
   core::Size window_size_;
   const int xleft_;
   const int ytop_;
 
-  std::string current_state_str_;
   States current_state_;
-
-  const std::string app_directory_absolute_path_;
 
   bool muted_;
   bool show_statstic_;
