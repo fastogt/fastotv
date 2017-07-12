@@ -543,7 +543,7 @@ void SimplePlayer::UpdateDisplayInterval(AVRational fps) {
   }
 
   double frames_per_sec = fps.den / static_cast<double>(fps.num);
-  update_video_timer_interval_msec_ = static_cast<uint32_t>(frames_per_sec * 1000 * 0.5);
+  update_video_timer_interval_msec_ = static_cast<uint32_t>(frames_per_sec * 1000);
 }
 
 void SimplePlayer::sdl_audio_callback(void* user_data, uint8_t* stream, int len) {
@@ -602,8 +602,10 @@ void SimplePlayer::DrawPlayingStatus() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   core::frames::VideoFrame* frame = stream_->TryToGetVideoFrame();
   uint32_t frames_per_sec = 1000 / update_video_timer_interval_msec_;
-  bool need_to_check_is_alive = video_frames_handled_ % (frames_per_sec * no_data_panic_sec) == 0;
+  uint32_t mod = frames_per_sec * no_data_panic_sec;
+  bool need_to_check_is_alive = video_frames_handled_ % mod == 0;
   if (need_to_check_is_alive) {
+    INFO_LOG() << "No data checkpoint.";
     core::VideoState::stats_t stats = stream_->GetStatistic();
     core::clock64_t cl = stats->master_pts;
     if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != core::invalid_clock())) {
