@@ -473,11 +473,12 @@ int main(int argc, char** argv) {
       }
       show_sinks(device);
       return EXIT_SUCCESS;
-    } else {
+    }
+#endif
+    else {
       show_help(std::string());
       return EXIT_SUCCESS;
     }
-#endif
   }
 
   const std::string runtime_directory_path = RUNTIME_DIR;

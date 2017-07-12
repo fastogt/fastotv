@@ -21,17 +21,17 @@
 #include <common/application/application.h>  // for fApp, Application
 #include <common/threads/thread_manager.h>
 
+#include <common/convert2string.h>
 #include <common/file_system.h>
 #include <common/utils.h>
-#include <common/convert2string.h>
 
-#include "client/sdl_utils.h"
 #include "client/av_sdl_utils.h"
+#include "client/sdl_utils.h"
 
-#include "client/core/video_state.h"         // for VideoState
 #include "client/core/frames/audio_frame.h"  // for AudioFrame
 #include "client/core/frames/video_frame.h"  // for VideoFrame
 #include "client/core/sdl_utils.h"
+#include "client/core/video_state.h"  // for VideoState
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
@@ -61,9 +61,9 @@ const SDL_Color ISimplePlayer::text_color = {255, 255, 255, 0};
 const AVRational ISimplePlayer::min_fps = {25, 1};
 
 ISimplePlayer::ISimplePlayer(const std::string& app_directory_absolute_path,
-                           const PlayerOptions& options,
-                           const core::AppOptions& opt,
-                           const core::ComplexOptions& copt)
+                             const PlayerOptions& options,
+                             const core::AppOptions& opt,
+                             const core::ComplexOptions& copt)
     : StreamHandler(),
       renderer_(NULL),
       font_(NULL),
@@ -200,11 +200,11 @@ void ISimplePlayer::HandleExceptionEvent(event_t* event, common::Error err) {
 }
 
 bool ISimplePlayer::HandleRequestAudio(core::VideoState* stream,
-                                      int64_t wanted_channel_layout,
-                                      int wanted_nb_channels,
-                                      int wanted_sample_rate,
-                                      core::AudioParams* audio_hw_params,
-                                      int* audio_buff_size) {
+                                       int64_t wanted_channel_layout,
+                                       int wanted_nb_channels,
+                                       int wanted_sample_rate,
+                                       core::AudioParams* audio_hw_params,
+                                       int* audio_buff_size) {
   UNUSED(stream);
 
   if (audio_params_) {
@@ -235,10 +235,10 @@ void ISimplePlayer::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src,
 }
 
 bool ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
-                                      int width,
-                                      int height,
-                                      int av_pixel_format,
-                                      AVRational aspect_ratio) {
+                                       int width,
+                                       int height,
+                                       int av_pixel_format,
+                                       AVRational aspect_ratio) {
   UNUSED(av_pixel_format);
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
@@ -640,8 +640,9 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                             "to reduce the image size.";
+                << width << "x" << height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return;
   }
 

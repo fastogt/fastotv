@@ -21,8 +21,8 @@
 #include <SDL2/SDL_image.h>
 
 #include <common/file_system.h>
-#include <common/utils.h>
 #include <common/threads/thread_manager.h>
+#include <common/utils.h>
 
 #include "client/ioservice.h"  // for IoService
 

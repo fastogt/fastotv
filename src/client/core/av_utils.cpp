@@ -20,8 +20,8 @@
 
 extern "C" {
 #include <libavutil/display.h>
-#include <libavutil/opt.h>
 #include <libavutil/eval.h>
+#include <libavutil/opt.h>
 }
 
 #include <common/macros.h>

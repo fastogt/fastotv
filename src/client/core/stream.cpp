@@ -23,9 +23,9 @@
 #include <common/logger.h>  // for COMPACT_LOG_FILE_CRIT
 #include <common/time.h>    // for current_mstime
 
+#include "client/core/av_utils.h"
 #include "client/core/clock.h"         // for Clock
 #include "client/core/packet_queue.h"  // for PacketQueue
-#include "client/core/av_utils.h"
 
 #include "client/types.h"  // for Size
 

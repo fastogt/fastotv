@@ -77,37 +77,40 @@ extern "C" {
 #define HELP_AVDEVICE
 #endif
 
-#define HELP_TEXT                                                                       \
-  "Usage: " PROJECT_NAME                                                                \
-  " [options]\n"                                                                        \
-  "    -version  show version\n"                                                        \
-  "    -help [topic]  show help\n"                                                      \
-  "    -license  show license\n"                                                        \
-  "    -buildconf  show build configuration\n"                                          \
-  "    -formats  show available formats\n"                                              \
-  "    -devices  show available devices\n"                                              \
-  "    -codecs  show available codecs\n"                                                \
-  "    -hwaccels  show available hwaccels\n"                                            \
-  "    -decoders  show available decoders\n"                                            \
-  "    -encoders  show available encoders\n"                                            \
-  "    -bsfs  show available bit stream filters\n"                                      \
-  "    -protocols  show available protocols\n"                                          \
-  "    -filters  show available filters\n"                                              \
-  "    -pix_fmts  show available pixel formats\n"                                       \
-  "    -layouts  show standard channel layouts\n"                                       \
-  "    -sample_fmts  show available audio sample formats\n"                             \
-  "    -colors  show available color names\n" HELP_AVDEVICE                             \
-  "\nWhile playing:\n"                                                                  \
-  "q, ESC              quit\n"                                                          \
-  "f                   toggle full screen\n"                                            \
-  "p, SPC              pause\n"                                                         \
-  "m                   toggle mute\n"                                                   \
-  "9, 0                decrease and increase volume respectively\n"                     \
-  "/, *                decrease and increase volume respectively\n"                     \
-  "s                   activate frame-step mode\n"                                      \
-  "left/right          seek backward/forward 10 seconds\n"                              \
-  "down/up             seek backward/forward 1 minute\n"                                \
-  "page down/page up   seek backward/forward 10 minutes\n"                              \
+#define HELP_TEXT                                                   \
+  "Usage: " PROJECT_NAME                                            \
+  " [options]\n"                                                    \
+  "    -version  show version\n"                                    \
+  "    -help [topic]  show help\n"                                  \
+  "    -license  show license\n"                                    \
+  "    -i [input_file] read specified file\n"                       \
+  "    -buildconf  show build configuration\n"                      \
+  "    -formats  show available formats\n"                          \
+  "    -devices  show available devices\n"                          \
+  "    -codecs  show available codecs\n"                            \
+  "    -hwaccels  show available hwaccels\n"                        \
+  "    -decoders  show available decoders\n"                        \
+  "    -encoders  show available encoders\n"                        \
+  "    -bsfs  show available bit stream filters\n"                  \
+  "    -protocols  show available protocols\n"                      \
+  "    -filters  show available filters\n"                          \
+  "    -pix_fmts  show available pixel formats\n"                   \
+  "    -layouts  show standard channel layouts\n"                   \
+  "    -sample_fmts  show available audio sample formats\n"         \
+  "    -colors  show available color names\n" HELP_AVDEVICE         \
+  "\nWhile playing:\n"                                              \
+  "q, ESC              quit\n"                                      \
+  "f                   toggle full screen\n"                        \
+  "p, SPC              pause\n"                                     \
+  "m                   toggle mute\n"                               \
+  "9, 0                decrease and increase volume respectively\n" \
+  "/, *                decrease and increase volume respectively\n" \
+  "s                   activate frame-step mode\n"                  \
+  "left/right          seek backward/forward 10 seconds\n"          \
+  "down/up             seek backward/forward 1 minute\n"            \
+  "page down/page up   seek backward/forward 10 minutes\n"          \
+  "F3                  stream statistic\n"                          \
+  "F4                  stream description\n"                        \
   "left double-click   toggle full screen\n"
 
 namespace {

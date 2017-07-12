@@ -25,9 +25,9 @@ extern "C" {
 #include <libavutil/channel_layout.h>  // for av_get_channel_layout_nb_channels
 }
 
-#include <common/time.h>  // for current_mstime
-#include <common/sprintf.h>
 #include <common/convert2string.h>
+#include <common/sprintf.h>
+#include <common/time.h>  // for current_mstime
 
 #include "ffmpeg_internal.h"
 
