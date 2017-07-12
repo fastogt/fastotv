@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "client/simple_player.h"
+#include "client/isimple_player.h"
 
 #include "client/core/events/network_events.h"  // for BandwidthEstimationEvent
 
@@ -28,9 +28,9 @@ namespace client {
 
 class IoService;
 
-class Player : public SimplePlayer {
+class Player : public ISimplePlayer {
  public:
-  typedef SimplePlayer base_class;
+  typedef ISimplePlayer base_class;
   Player(const std::string& app_directory_absolute_path,
          const PlayerOptions& options,
          const core::AppOptions& opt,

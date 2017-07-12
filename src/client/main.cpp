@@ -47,6 +47,7 @@ extern "C" {
 
 #include "client/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/player.h"    // for Player
+#include "client/simple_player.h"
 
 #include "client/core/app_options.h"  // for ComplexOptions
 #include "client/core/application/sdl2_application.h"
@@ -231,6 +232,59 @@ static int prepare_to_start(const std::string& app_directory_absolute_path,
 }
 
 // runtime_directory_absolute_path can be not equal pwd (used for pid file location)
+static int main_simple_player_application(int argc,
+                                          char** argv,
+                                          const common::uri::Uri& stream_url,
+                                          const std::string& app_directory_absolute_path,
+                                          const std::string& runtime_directory_absolute_path) {
+  int res = prepare_to_start(app_directory_absolute_path, runtime_directory_absolute_path);
+  if (res == EXIT_FAILURE) {
+    return EXIT_FAILURE;
+  }
+
+  const std::string config_absolute_path =
+      common::file_system::make_path(app_directory_absolute_path, CONFIG_FILE_NAME);
+  if (!common::file_system::is_valid_path(config_absolute_path)) {
+    std::cout << "Can't config file path: " << config_absolute_path << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  fasto::fastotv::client::TVConfig main_options;
+  common::Error err = load_config_file(config_absolute_path, &main_options);
+  if (err && err->IsError()) {
+    return EXIT_FAILURE;
+  }
+
+#if defined(LOG_TO_FILE)
+  const std::string log_path = common::file_system::make_path(app_directory_absolute_path, std::string(LOG_FILE_NAME));
+  INIT_LOGGER(PROJECT_NAME_TITLE, log_path, main_options.loglevel);
+#else
+  INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
+#endif
+
+  common::application::Application app(argc, argv, &CreateApplicationImpl);
+
+  AVDictionary* sws_dict = NULL;
+  AVDictionary* swr_opts = NULL;
+  AVDictionary* format_opts = NULL;
+  AVDictionary* codec_opts = NULL;
+  av_dict_set(&sws_dict, "flags", "bicubic", 0);
+
+  fasto::fastotv::client::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
+  fasto::fastotv::client::ISimplePlayer* player = new fasto::fastotv::client::SimplePlayer(
+      stream_url, app_directory_absolute_path, main_options.player_options, main_options.app_options, copt);
+  res = app.Exec();
+  main_options.player_options = player->GetOptions();
+  destroy(&player);
+
+  av_dict_free(&swr_opts);
+  av_dict_free(&sws_dict);
+  av_dict_free(&format_opts);
+  av_dict_free(&codec_opts);
+  return res;
+}
+
+// runtime_directory_absolute_path can be not equal pwd (used for pid file location)
 static int main_single_application(int argc,
                                    char** argv,
                                    const std::string& app_directory_absolute_path,
@@ -299,7 +353,7 @@ static int main_single_application(int argc,
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
   fasto::fastotv::client::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
-  fasto::fastotv::client::Player* player = new fasto::fastotv::client::Player(
+  fasto::fastotv::client::ISimplePlayer* player = new fasto::fastotv::client::Player(
       app_directory_absolute_path, main_options.player_options, main_options.app_options, copt);
   res = app.Exec();
   main_options.player_options = player->GetOptions();
@@ -339,6 +393,9 @@ static int main_single_application(int argc,
 /* Called from the main */
 int main(int argc, char** argv) {
   init_ffmpeg();
+
+  bool is_simple_player_mode = false;
+  common::uri::Uri url;
 
   for (int i = 1; i < argc; ++i) {
     const bool lastarg = i == argc - 1;
@@ -397,6 +454,9 @@ int main(int argc, char** argv) {
     } else if (strcmp(argv[i], "--colors") == 0) {
       show_colors();
       return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "-i") == 0 && !lastarg) {
+      is_simple_player_mode = true;
+      url = common::uri::Uri(argv[++i]);
     }
 #if CONFIG_AVDEVICE
     else if (strcmp(argv[i], "--sources") == 0) {
@@ -432,5 +492,9 @@ int main(int argc, char** argv) {
       common::file_system::is_absolute_path(app_directory_path)
           ? app_directory_path
           : common::file_system::absolute_path_from_relative(app_directory_path);
+  if (is_simple_player_mode) {
+    return main_simple_player_application(argc, argv, url, app_directory_absolute_path,
+                                          runtime_directory_absolute_path);
+  }
   return main_single_application(argc, argv, app_directory_absolute_path, runtime_directory_absolute_path);
 }

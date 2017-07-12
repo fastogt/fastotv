@@ -46,7 +46,7 @@ Player::Player(const std::string& app_directory_absolute_path,
                const PlayerOptions& options,
                const core::AppOptions& opt,
                const core::ComplexOptions& copt)
-    : SimplePlayer(app_directory_absolute_path, options, opt, copt),
+    : ISimplePlayer(app_directory_absolute_path, options, opt, copt),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
       controller_(new IoService),
@@ -335,7 +335,7 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
 void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
-    return SimplePlayer::HandleKeyPressEvent(event);
+    return ISimplePlayer::HandleKeyPressEvent(event);
   }
 
   core::events::KeyPressInfo inf = event->info();
@@ -355,13 +355,13 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     default: { break; }
   }
 
-  SimplePlayer::HandleKeyPressEvent(event);
+  ISimplePlayer::HandleKeyPressEvent(event);
 }
 
 void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
   PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
-    return SimplePlayer::HandleLircPressEvent(event);
+    return ISimplePlayer::HandleLircPressEvent(event);
   }
 
   core::events::LircPressInfo inf = event->info();
@@ -377,7 +377,7 @@ void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
     default: { break; }
   }
 
-  SimplePlayer::HandleLircPressEvent(event);
+  ISimplePlayer::HandleLircPressEvent(event);
 }
 
 void Player::DrawInfo() {
