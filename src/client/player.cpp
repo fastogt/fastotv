@@ -46,7 +46,7 @@ Player::Player(const std::string& app_directory_absolute_path,
                const PlayerOptions& options,
                const core::AppOptions& opt,
                const core::ComplexOptions& copt)
-    : ISimplePlayer(app_directory_absolute_path, options, opt, copt),
+    : ISimplePlayer(options),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
       controller_(new IoService),
@@ -54,7 +54,10 @@ Player::Player(const std::string& app_directory_absolute_path,
       play_list_(),
       show_footer_(false),
       footer_last_shown_(0),
-      current_state_str_("Init") {
+      current_state_str_("Init"),
+      opt_(opt),
+      copt_(copt),
+      app_directory_absolute_path_(app_directory_absolute_path) {
   fApp->Subscribe(this, core::events::BandwidthEstimationEvent::EventType);
 
   fApp->Subscribe(this, core::events::ClientDisconnectedEvent::EventType);
@@ -172,6 +175,14 @@ std::string Player::GetCurrentUrlName() const {
   return "Unknown";
 }
 
+core::AppOptions Player::GetStreamOptions() const {
+  return opt_;
+}
+
+const std::string& Player::GetAppDirectoryAbsolutePath() const {
+  return app_directory_absolute_path_;
+}
+
 bool Player::GetCurrentUrl(PlaylistEntry* url) const {
   if (!url || play_list_.empty()) {
     return false;
@@ -258,7 +269,7 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
   ChannelsInfo chan = event->info();
   // prepare cache folders
   ChannelsInfo::channels_t channels = chan.GetChannels();
-  const std::string cache_dir = common::file_system::make_path(GetAppDirectoryAbsolutePath(), CACHE_FOLDER_NAME);
+  const std::string cache_dir = common::file_system::make_path(app_directory_absolute_path_, CACHE_FOLDER_NAME);
   bool is_exist_cache_root = common::file_system::is_directory_exist(cache_dir);
   if (!is_exist_cache_root) {
     common::ErrnoError err = common::file_system::create_directory(cache_dir, true);
@@ -393,7 +404,9 @@ SDL_Rect Player::GetFooterRect() const {
 }
 
 void Player::DrawFooter() {
-  if (!show_footer_ || !font_ || !renderer_) {
+  SDL_Renderer* render = GetRenderer();
+  TTF_Font* font = GetFont();
+  if (!show_footer_ || !font || !render) {
     return;
   }
 
@@ -401,16 +414,16 @@ void Player::DrawFooter() {
   int padding_left = footer_rect.w / 4;
   SDL_Rect sdl_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.w - padding_left * 2,
                               footer_rect.h};
-  States current_state = base_class::GetCurrentState();
+  States current_state = GetCurrentState();
   if (current_state == INIT_STATE) {
     std::string footer_text = current_state_str_;
-    SDL_SetRenderDrawColor(renderer_, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
-    SDL_RenderFillRect(renderer_, &sdl_footer_rect);
+    SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+    SDL_RenderFillRect(render, &sdl_footer_rect);
     DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
   } else if (current_state == FAILED_STATE) {
     std::string footer_text = current_state_str_;
-    SDL_SetRenderDrawColor(renderer_, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
-    SDL_RenderFillRect(renderer_, &sdl_footer_rect);
+    SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+    SDL_RenderFillRect(render, &sdl_footer_rect);
     DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
   } else if (current_state == PLAYING_STATE) {
     PlaylistEntry entry;
@@ -423,14 +436,14 @@ void Player::DrawFooter() {
         decr = prog.GetTitle();
       }
 
-      SDL_SetRenderDrawColor(renderer_, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
-      SDL_RenderFillRect(renderer_, &sdl_footer_rect);
+      SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+      SDL_RenderFillRect(render, &sdl_footer_rect);
 
       std::string footer_text = common::MemSPrintf(
           " Title: %s\n"
           " Description: %s",
           url.GetName(), decr);
-      int h = CalcHeightFontPlaceByRowCount(font_, 2);
+      int h = CalcHeightFontPlaceByRowCount(font, 2);
       if (h > footer_rect.h) {
         h = footer_rect.h;
       }
@@ -438,10 +451,10 @@ void Player::DrawFooter() {
       auto icon = entry.GetIcon();
       int shift = 0;
       if (icon) {
-        SDL_Texture* img = icon->GetTexture(renderer_);
+        SDL_Texture* img = icon->GetTexture(render);
         if (img) {
           SDL_Rect icon_rect = {sdl_footer_rect.x, sdl_footer_rect.y, h, h};
-          SDL_RenderCopy(renderer_, img, NULL, &icon_rect);
+          SDL_RenderCopy(render, img, NULL, &icon_rect);
           shift = h;
         }
       }
@@ -455,20 +468,21 @@ void Player::DrawFooter() {
 }
 
 void Player::DrawFailedStatus() {
-  if (!renderer_) {
+  SDL_Renderer* render = GetRenderer();
+  if (!render) {
     return;
   }
 
-  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-  SDL_RenderClear(renderer_);
+  SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
+  SDL_RenderClear(render);
   if (offline_channel_texture_) {
-    SDL_Texture* img = offline_channel_texture_->GetTexture(renderer_);
+    SDL_Texture* img = offline_channel_texture_->GetTexture(render);
     if (img) {
-      SDL_RenderCopy(renderer_, img, NULL, NULL);
+      SDL_RenderCopy(render, img, NULL, NULL);
     }
   }
   DrawInfo();
-  SDL_RenderPresent(renderer_);
+  SDL_RenderPresent(render);
 }
 
 void Player::InitWindow(const std::string& title, States status) {
@@ -479,20 +493,21 @@ void Player::InitWindow(const std::string& title, States status) {
 }
 
 void Player::DrawInitStatus() {
-  if (!renderer_) {
+  SDL_Renderer* render = GetRenderer();
+  if (!render) {
     return;
   }
 
-  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-  SDL_RenderClear(renderer_);
+  SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
+  SDL_RenderClear(render);
   if (connection_error_texture_) {
-    SDL_Texture* img = connection_error_texture_->GetTexture(renderer_);
+    SDL_Texture* img = connection_error_texture_->GetTexture(render);
     if (img) {
-      SDL_RenderCopy(renderer_, img, NULL, NULL);
+      SDL_RenderCopy(render, img, NULL, NULL);
     }
   }
   DrawInfo();
-  SDL_RenderPresent(renderer_);
+  SDL_RenderPresent(render);
 }
 
 void Player::MoveToNextStream() {
@@ -546,7 +561,7 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
   copy.enable_audio = url.IsEnableVideo();
   copy.enable_video = url.IsEnableAudio();
 
-  core::VideoState* stream = CreateStream(sid, url.GetUrl(), copy);
+  core::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
   return stream;
 }
 

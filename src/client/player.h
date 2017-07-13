@@ -18,7 +18,10 @@
 
 #pragma once
 
+#include "auth_info.h"
+
 #include "client/isimple_player.h"
+#include "client/playlist_entry.h"
 
 #include "client/core/events/network_events.h"  // for BandwidthEstimationEvent
 
@@ -39,6 +42,9 @@ class Player : public ISimplePlayer {
   ~Player();
 
   virtual std::string GetCurrentUrlName() const override;  // return Unknown if not found
+
+  const std::string& GetAppDirectoryAbsolutePath() const;
+  core::AppOptions GetStreamOptions() const;
 
  protected:
   virtual void HandleEvent(event_t* event) override;
@@ -101,6 +107,11 @@ class Player : public ISimplePlayer {
   bool show_footer_;
   core::msec_t footer_last_shown_;
   std::string current_state_str_;
+
+  const core::AppOptions opt_;
+  const core::ComplexOptions copt_;
+
+  const std::string app_directory_absolute_path_;
 };
 
 }  // namespace client

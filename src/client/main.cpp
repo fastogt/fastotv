@@ -57,7 +57,7 @@ extern "C" {
 
 namespace {
 
-void sigterm_handler(int sig) {
+void __attribute__((noreturn)) sigterm_handler(int sig) {
   UNUSED(sig);
   exit(EXIT_FAILURE);
 }
@@ -271,10 +271,9 @@ static int main_simple_player_application(int argc,
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
   fasto::fastotv::client::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
-  fasto::fastotv::client::ISimplePlayer* player = new fasto::fastotv::client::SimplePlayer(
-      stream_url, app_directory_absolute_path, main_options.player_options, main_options.app_options, copt);
+  fasto::fastotv::client::ISimplePlayer* player = new fasto::fastotv::client::SimplePlayer(main_options.player_options);
+  player->SetUrlLocation("0", stream_url, main_options.app_options, copt);
   res = app.Exec();
-  main_options.player_options = player->GetOptions();
   destroy(&player);
 
   av_dict_free(&swr_opts);

@@ -18,47 +18,23 @@
 
 #pragma once
 
-#include <stdint.h>  // for uint8_t, uint32_t
+#include <SDL2/SDL_ttf.h>  // for TTF_Font
 
-#include <string>  // for string
-
-#include <SDL2/SDL_blendmode.h>  // for SDL_BlendMode
-#include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Tex...
-#include <SDL2/SDL_stdinc.h>     // for Uint32
-#include <SDL2/SDL_ttf.h>        // for TTF_Font
-#include <SDL2/SDL_video.h>      // for SDL_Window'
-
-#include <common/error.h>  // for Error
-
-#include "auth_info.h"
-#include "channels_info.h"  // for ChannelsInfo
+#include <common/url.h>  // for Error
 
 #include "client/player_options.h"
-#include "client/playlist_entry.h"
-
-#include "client/core/events/events.h"         // for PostExecEvent, PreExe...
-#include "client/core/events/key_events.h"     // for KeyPressEvent
-#include "client/core/events/lirc_events.h"    // for LircPressEvent
-#include "client/core/events/mouse_events.h"   // for MouseMoveEvent, Mouse...
-#include "client/core/events/stream_events.h"  // for RequestVideoEvent, Quit...
-#include "client/core/events/window_events.h"  // for WindowCloseEvent, Win...
-
-#include "client/core/app_options.h"  // for AppOptions, ComplexOp...
-#include "client/core/types.h"        // for msec_t
-
 #include "client/stream_handler.h"
+
+#include "client/core/events/events.h"  // for PostExecEvent, PreExe...
+#include "client/core/app_options.h"    // for AppOptions, ComplexOp...
 
 namespace fasto {
 namespace fastotv {
-class ChannelInfo;
 namespace client {
 
-class SurfaceSaver;
 class TextureSaver;
 namespace core {
-class VideoState;
 struct AudioParams;
-struct VideoFrame;
 }  // namespace core
 
 int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row);
@@ -79,10 +55,6 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   static const AVRational min_fps;
 
   enum States { INIT_STATE, PLAYING_STATE, FAILED_STATE };
-  ISimplePlayer(const std::string& app_directory_absolute_path,
-                const PlayerOptions& options,
-                const core::AppOptions& opt,
-                const core::ComplexOptions& copt);
 
   void SetFullScreen(bool full_screen);
   void SetMute(bool mute);
@@ -91,15 +63,17 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   virtual ~ISimplePlayer();
 
-  PlayerOptions GetOptions() const;
-  core::AppOptions GetStreamOptions() const;
-
-  const std::string& GetAppDirectoryAbsolutePath() const;
   States GetCurrentState() const;
 
   virtual std::string GetCurrentUrlName() const = 0;
 
+  PlayerOptions GetOptions() const;
+
+  void SetUrlLocation(stream_id sid, const common::uri::Uri& uri, core::AppOptions opt, core::ComplexOptions copt);
+
  protected:
+  explicit ISimplePlayer(const PlayerOptions& options);
+
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
@@ -151,16 +125,19 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   virtual void DrawStatistic();
   virtual void DrawVolume();
 
-  SDL_Renderer* renderer_;
-  TTF_Font* font_;
-
-  core::VideoState* CreateStream(stream_id sid, const common::uri::Uri& uri, core::AppOptions opt);
+  core::VideoState* CreateStream(stream_id sid,
+                                 const common::uri::Uri& uri,
+                                 core::AppOptions opt,
+                                 core::ComplexOptions copt);
   void SetStream(core::VideoState* stream);  // if stream == NULL => SwitchToChannelErrorMode
 
   SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins
 
   void DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
   void DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
+
+  SDL_Renderer* GetRenderer() const;
+  TTF_Font* GetFont() const;
 
  private:
   void SwitchToChannelErrorMode(common::Error err);
@@ -185,11 +162,10 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   SDL_Rect GetVolumeRect() const;
   SDL_Rect GetDisplayRect() const;
 
-  PlayerOptions options_;
-  const core::AppOptions opt_;
-  const core::ComplexOptions copt_;
+  SDL_Renderer* renderer_;
+  TTF_Font* font_;
 
-  const std::string app_directory_absolute_path_;
+  PlayerOptions options_;
 
   core::AudioParams* audio_params_;
   int audio_buff_size_;

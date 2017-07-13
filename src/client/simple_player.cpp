@@ -22,25 +22,10 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
-SimplePlayer::SimplePlayer(const common::uri::Uri& stream_url,
-                           const std::string& app_directory_absolute_path,
-                           const PlayerOptions& options,
-                           const core::AppOptions& opt,
-                           const core::ComplexOptions& copt)
-    : ISimplePlayer(app_directory_absolute_path, options, opt, copt), stream_url_(stream_url) {}
+SimplePlayer::SimplePlayer(const PlayerOptions& options) : ISimplePlayer(options), stream_url_() {}
 
 std::string SimplePlayer::GetCurrentUrlName() const {
   return stream_url_.Url();
-}
-
-void SimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
-  ISimplePlayer::HandlePreExecEvent(event);
-  core::VideoState* stream = CreateStream("0", stream_url_, GetStreamOptions());
-  SetStream(stream);
-}
-
-void SimplePlayer::HandlePostExecEvent(core::events::PostExecEvent* event) {
-  ISimplePlayer::HandlePostExecEvent(event);
 }
 
 }  // namespace client

@@ -26,17 +26,9 @@ namespace client {
 
 class SimplePlayer : public ISimplePlayer {
  public:
-  SimplePlayer(const common::uri::Uri& stream_url,
-               const std::string& app_directory_absolute_path,
-               const PlayerOptions& options,
-               const core::AppOptions& opt,
-               const core::ComplexOptions& copt);
+  SimplePlayer(const PlayerOptions& options);
 
   virtual std::string GetCurrentUrlName() const override;
-
- protected:
-  virtual void HandlePreExecEvent(core::events::PreExecEvent* event) override;
-  virtual void HandlePostExecEvent(core::events::PostExecEvent* event) override;
 
  private:
   const common::uri::Uri stream_url_;

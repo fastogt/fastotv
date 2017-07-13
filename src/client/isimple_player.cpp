@@ -60,17 +60,11 @@ int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row) {
 const SDL_Color ISimplePlayer::text_color = {255, 255, 255, 0};
 const AVRational ISimplePlayer::min_fps = {25, 1};
 
-ISimplePlayer::ISimplePlayer(const std::string& app_directory_absolute_path,
-                             const PlayerOptions& options,
-                             const core::AppOptions& opt,
-                             const core::ComplexOptions& copt)
+ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
     : StreamHandler(),
       renderer_(NULL),
       font_(NULL),
       options_(options),
-      opt_(opt),
-      copt_(copt),
-      app_directory_absolute_path_(app_directory_absolute_path),
       audio_params_(nullptr),
       audio_buff_size_(0),
       window_(NULL),
@@ -135,20 +129,20 @@ ISimplePlayer::~ISimplePlayer() {
   fApp->UnSubscribe(this);
 }
 
+ISimplePlayer::States ISimplePlayer::GetCurrentState() const {
+  return current_state_;
+}
+
 PlayerOptions ISimplePlayer::GetOptions() const {
   return options_;
 }
 
-core::AppOptions ISimplePlayer::GetStreamOptions() const {
-  return opt_;
-}
-
-const std::string& ISimplePlayer::GetAppDirectoryAbsolutePath() const {
-  return app_directory_absolute_path_;
-}
-
-ISimplePlayer::States ISimplePlayer::GetCurrentState() const {
-  return current_state_;
+void ISimplePlayer::SetUrlLocation(stream_id sid,
+                                   const common::uri::Uri& uri,
+                                   core::AppOptions opt,
+                                   core::ComplexOptions copt) {
+  core::VideoState* stream = CreateStream(sid, uri, opt, copt);
+  SetStream(stream);
 }
 
 void ISimplePlayer::HandleEvent(event_t* event) {
@@ -640,9 +634,8 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                             "to reduce the image size.";
     return;
   }
 
@@ -779,12 +772,13 @@ void ISimplePlayer::DrawVolume() {
 }
 
 void ISimplePlayer::DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
-  if (!renderer_ || !font_ || text.empty()) {
+  const char* text_ptr = common::utils::c_strornull(text);
+  if (!renderer_ || !font_ || !text_ptr) {
     DNOTREACHED();
     return;
   }
 
-  SDL_Surface* text_surf = TTF_RenderText_Blended(font_, text.c_str(), text_color);
+  SDL_Surface* text_surf = TTF_RenderText_Blended(font_, text_ptr, text_color);
   SDL_Rect dst = GetCenterRect(rect, text_surf->w, text_surf->h);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
@@ -793,17 +787,26 @@ void ISimplePlayer::DrawCenterTextInRect(const std::string& text, SDL_Color text
 }
 
 void ISimplePlayer::DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
-  if (!renderer_ || !font_ || text.empty()) {
+  const char* text_ptr = common::utils::c_strornull(text);
+  if (!renderer_ || !font_ || !text_ptr) {
     DNOTREACHED();
     return;
   }
 
-  SDL_Surface* text_surf = TTF_RenderText_Blended_Wrapped(font_, text.c_str(), text_color, rect.w);
+  SDL_Surface* text_surf = TTF_RenderText_Blended_Wrapped(font_, text_ptr, text_color, rect.w);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
   rect.w = text_surf->w;
   SDL_RenderCopy(renderer_, texture, NULL, &rect);
   SDL_DestroyTexture(texture);
   SDL_FreeSurface(text_surf);
+}
+
+SDL_Renderer* ISimplePlayer::GetRenderer() const {
+  return renderer_;
+}
+
+TTF_Font* ISimplePlayer::GetFont() const {
+  return font_;
 }
 
 void ISimplePlayer::InitWindow(const std::string& title, States status) {
@@ -854,8 +857,11 @@ void ISimplePlayer::SetStream(core::VideoState* stream) {
   }
 }
 
-core::VideoState* ISimplePlayer::CreateStream(stream_id sid, const common::uri::Uri& uri, core::AppOptions opt) {
-  core::VideoState* stream = new core::VideoState(sid, uri, opt, copt_, this);
+core::VideoState* ISimplePlayer::CreateStream(stream_id sid,
+                                              const common::uri::Uri& uri,
+                                              core::AppOptions opt,
+                                              core::ComplexOptions copt) {
+  core::VideoState* stream = new core::VideoState(sid, uri, opt, copt, this);
   options_.last_showed_channel_id = sid;
   int res = stream->Exec();
   if (res == EXIT_FAILURE) {
