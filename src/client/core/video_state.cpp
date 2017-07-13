@@ -379,7 +379,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
     AVRational frame_rate = av_guess_frame_rate(ic_, stream, NULL);
     bool opened = vstream_->Open(stream_index, stream, frame_rate);
     UNUSED(opened);
-    PacketQueue* packet_queue = vstream_->Queue();
+    PacketQueue* packet_queue = vstream_->GetQueue();
     video_frame_queue_ = new video_frame_queue_t;
     viddec_ = new VideoDecoder(avctx, packet_queue);
     viddec_->Start();
@@ -435,7 +435,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
         static_cast<double>(audio_hw_buf_size_) / static_cast<double>(audio_tgt_.bytes_per_sec) * 1000;
     bool opened = astream_->Open(stream_index, stream);
     UNUSED(opened);
-    PacketQueue* packet_queue = astream_->Queue();
+    PacketQueue* packet_queue = astream_->GetQueue();
     audio_frame_queue_ = new audio_frame_queue_t;
     auddec_ = new AudioDecoder(avctx, packet_queue);
     if ((ic_->iformat->flags & (AVFMT_NOBINSEARCH | AVFMT_NOGENSEARCH | AVFMT_NO_BYTE_SEEK)) &&
@@ -1036,8 +1036,8 @@ frames::VideoFrame* VideoState::TryToGetVideoFrame() {
 
   const bool is_video_open = vstream_->IsOpened();
   const bool is_audio_open = astream_->IsOpened();
-  PacketQueue* video_packet_queue = vstream_->Queue();
-  PacketQueue* audio_packet_queue = astream_->Queue();
+  PacketQueue* video_packet_queue = vstream_->GetQueue();
+  PacketQueue* audio_packet_queue = astream_->GetQueue();
 
   int aqsize = 0, vqsize = 0;
   bandwidth_t video_bandwidth = 0, audio_bandwidth = 0;
@@ -1163,7 +1163,7 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
       if (IsValidPts(frame->pts)) {
         clock64_t dpts = vstream_->q2d() * frame->pts;
         clock64_t diff = dpts - GetMasterClock();
-        PacketQueue* video_packet_queue = vstream_->Queue();
+        PacketQueue* video_packet_queue = vstream_->GetQueue();
         if (IsValidClock(diff) && std::abs(diff) < AV_NOSYNC_THRESHOLD_MSEC && diff - frame_last_filter_delay_ < 0 &&
             video_packet_queue->GetNbPackets()) {
           stats_->frame_drops_early++;
@@ -1219,8 +1219,8 @@ int VideoState::ReadThread() {
 
   VideoStream* video_stream = vstream_;
   AudioStream* audio_stream = astream_;
-  PacketQueue* video_packet_queue = video_stream->Queue();
-  PacketQueue* audio_packet_queue = audio_stream->Queue();
+  PacketQueue* video_packet_queue = video_stream->GetQueue();
+  PacketQueue* audio_packet_queue = audio_stream->GetQueue();
   int st_index[AVMEDIA_TYPE_NB];
   memset(st_index, -1, sizeof(st_index));
 

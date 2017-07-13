@@ -25,7 +25,16 @@ namespace client {
 SimplePlayer::SimplePlayer(const PlayerOptions& options) : ISimplePlayer(options), stream_url_() {}
 
 std::string SimplePlayer::GetCurrentUrlName() const {
-  return stream_url_.Url();
+  std::string url_str = stream_url_.Url();
+  return url_str;
+}
+
+void SimplePlayer::SetUrlLocation(stream_id sid,
+                                  const common::uri::Uri& uri,
+                                  core::AppOptions opt,
+                                  core::ComplexOptions copt) {
+  stream_url_ = uri;
+  ISimplePlayer::SetUrlLocation(sid, uri, opt, copt);
 }
 
 }  // namespace client

@@ -634,8 +634,9 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                             "to reduce the image size.";
+                << width << "x" << height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return;
   }
 

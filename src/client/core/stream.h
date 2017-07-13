@@ -68,7 +68,7 @@ class Stream {
 
   void SyncSerialClock();
 
-  PacketQueue* Queue() const;
+  PacketQueue* GetQueue() const;
   bandwidth_t Bandwidth() const;
   DesireBytesPerSec DesireBandwith() const;
   size_t TotalDownloadedBytes() const;

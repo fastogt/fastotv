@@ -25,8 +25,8 @@
 #include "client/player_options.h"
 #include "client/stream_handler.h"
 
-#include "client/core/events/events.h"  // for PostExecEvent, PreExe...
 #include "client/core/app_options.h"    // for AppOptions, ComplexOp...
+#include "client/core/events/events.h"  // for PostExecEvent, PreExe...
 
 namespace fasto {
 namespace fastotv {
@@ -69,7 +69,10 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   PlayerOptions GetOptions() const;
 
-  void SetUrlLocation(stream_id sid, const common::uri::Uri& uri, core::AppOptions opt, core::ComplexOptions copt);
+  virtual void SetUrlLocation(stream_id sid,
+                              const common::uri::Uri& uri,
+                              core::AppOptions opt,
+                              core::ComplexOptions copt);
 
  protected:
   explicit ISimplePlayer(const PlayerOptions& options);

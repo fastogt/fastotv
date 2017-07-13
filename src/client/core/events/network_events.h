@@ -20,20 +20,12 @@
 
 #include <common/net/types.h>  // for HostAndPort
 
+#include "auth_info.h"
+#include "channels_info.h"
+
 #include "client/core/events/events_base.h"  // for EventBase, EventsType::C...
 #include "client/types.h"                    // for BandwidthHostType
 #include "client_server_types.h"             // for bandwidth_t
-
-namespace fasto {
-namespace fastotv {
-class AuthInfo;
-}
-}  // namespace fasto
-namespace fasto {
-namespace fastotv {
-class ChannelsInfo;
-}
-}  // namespace fasto
 
 namespace fasto {
 namespace fastotv {

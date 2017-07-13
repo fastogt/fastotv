@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include "auth_info.h"
-
 #include "client/isimple_player.h"
 #include "client/playlist_entry.h"
 

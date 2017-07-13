@@ -503,6 +503,7 @@ SET(BUILD_CLIENT_SOURCES
   sdl_utils.h sdl_utils.cpp
   av_sdl_utils.h av_sdl_utils.cpp
   ioservice.h ioservice.cpp
+  main_wrapper.h main_wrapper.cpp
 
   ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}
   ${HEADERS_BANDWIDTH_CLIENT} ${SOURCES_BANDWIDTH_CLIENT}

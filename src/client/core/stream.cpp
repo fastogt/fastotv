@@ -130,7 +130,7 @@ void Stream::SyncSerialClock() {
   SetClock(clock_->GetClock());
 }
 
-PacketQueue* Stream::Queue() const {
+PacketQueue* Stream::GetQueue() const {
   return packet_queue_;
 }
 
