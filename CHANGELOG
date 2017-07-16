@@ -1,3 +1,9 @@
+0.5.0 /
+[Alexandr Topilski]
+- Raspberry3 PI support
+- Optimize evenl loop
+- Player mode
+
 0.4.0 / Jule 5, 2017
 [Alexandr Topilski]
 - Save dynamic options

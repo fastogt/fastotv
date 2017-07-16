@@ -28,6 +28,9 @@ class ISerializer {
  public:
   typedef T value_type;
   typedef S serialize_type;
+
+  virtual ~ISerializer() {}
+
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT {
     if (!deserialized) {
       return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
