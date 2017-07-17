@@ -23,6 +23,7 @@
 #include <common/file_system.h>
 #include <common/threads/thread_manager.h>
 #include <common/utils.h>
+#include <common/convert2string.h>
 
 #include "client/ioservice.h"  // for IoService
 
@@ -37,6 +38,7 @@
 #define CACHE_FOLDER_NAME "cache"
 
 #define FOOTER_HIDE_DELAY_MSEC 2000  // 2 sec
+#define KEYPAD_HIDE_DELAY_MSEC 3000  // 3 sec
 
 namespace fasto {
 namespace fastotv {
@@ -57,7 +59,10 @@ Player::Player(const std::string& app_directory_absolute_path,
       current_state_str_("Init"),
       opt_(opt),
       copt_(copt),
-      app_directory_absolute_path_(app_directory_absolute_path) {
+      app_directory_absolute_path_(app_directory_absolute_path),
+      show_keypad_(false),
+      keypad_last_shown_(0),
+      keypad_sym_(0) {
   fApp->Subscribe(this, core::events::BandwidthEstimationEvent::EventType);
 
   fApp->Subscribe(this, core::events::ClientDisconnectedEvent::EventType);
@@ -149,6 +154,11 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
   core::msec_t diff_footer = cur_time - footer_last_shown_;
   if (show_footer_ && diff_footer > FOOTER_HIDE_DELAY_MSEC) {
     show_footer_ = false;
+  }
+
+  core::msec_t diff_keypad = cur_time - keypad_last_shown_;
+  if (show_keypad_ && diff_keypad > KEYPAD_HIDE_DELAY_MSEC) {
+    ResetKeyPad();
   }
 
   base_class::HandleTimerEvent(event);
@@ -351,6 +361,39 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
 
   core::events::KeyPressInfo inf = event->info();
   switch (inf.ks.sym) {
+    case FASTO_KEY_KP_0:
+      HandleKeyPad(0);
+      break;
+    case FASTO_KEY_KP_1:
+      HandleKeyPad(1);
+      break;
+    case FASTO_KEY_KP_2:
+      HandleKeyPad(2);
+      break;
+    case FASTO_KEY_KP_3:
+      HandleKeyPad(3);
+      break;
+    case FASTO_KEY_KP_4:
+      HandleKeyPad(4);
+      break;
+    case FASTO_KEY_KP_5:
+      HandleKeyPad(5);
+      break;
+    case FASTO_KEY_KP_6:
+      HandleKeyPad(6);
+      break;
+    case FASTO_KEY_KP_7:
+      HandleKeyPad(7);
+      break;
+    case FASTO_KEY_KP_8:
+      HandleKeyPad(8);
+      break;
+    case FASTO_KEY_KP_9:
+      HandleKeyPad(9);
+      break;
+    case FASTO_KEY_KP_ENTER:
+      FinishKeyPadInput();
+      break;
     case FASTO_KEY_LEFTBRACKET: {
       MoveToPreviousStream();
       break;
@@ -395,12 +438,66 @@ void Player::DrawInfo() {
   DrawStatistic();
   DrawFooter();
   DrawVolume();
+  DrawKeyPad();
 }
 
 SDL_Rect Player::GetFooterRect() const {
   const SDL_Rect display_rect = GetDrawRect();
   return {display_rect.x, display_rect.h - footer_height - volume_height - space_height + display_rect.y,
           display_rect.w, footer_height};
+}
+
+void Player::HandleKeyPad(uint8_t key) {
+  if (play_list_.empty()) {
+    return;
+  }
+
+  show_keypad_ = true;
+  core::msec_t cur_time = core::GetCurrentMsec();
+  keypad_last_shown_ = cur_time;
+  keypad_sym_t nex_keypad_sym = keypad_sym_ * 10 + key;
+  if (nex_keypad_sym <= max_keypad_size) {
+    keypad_sym_ = nex_keypad_sym;
+  }
+}
+
+void Player::FinishKeyPadInput() {
+  CHECK(THREAD_MANAGER()->IsMainThread());
+  size_t pos = keypad_sym_;
+  ResetKeyPad();
+
+  if (pos >= play_list_.size()) {
+    // error
+    return;
+  }
+
+  core::VideoState* stream = CreateStreamPos(pos);
+  SetStream(stream);
+}
+
+void Player::ResetKeyPad() {
+  show_keypad_ = false;
+  keypad_sym_ = 0;
+}
+
+SDL_Rect Player::GetKeyPadRect() const {
+  const SDL_Rect display_rect = GetDrawRect();
+
+  return {display_rect.w + space_width - keypad_width, display_rect.y, keypad_width, keypad_height};
+}
+
+void Player::DrawKeyPad() {
+  SDL_Renderer* render = GetRenderer();
+  TTF_Font* font = GetFont();
+  if (!show_keypad_ || !font || !render) {
+    return;
+  }
+
+  const SDL_Rect keypad_rect = GetKeyPadRect();
+  std::string keypad_text = common::ConvertToString(keypad_sym_);
+  SDL_SetRenderDrawColor(render, 171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+  SDL_RenderFillRect(render, &keypad_rect);
+  DrawCenterTextInRect(keypad_text, text_color, keypad_rect);
 }
 
 void Player::DrawFooter() {

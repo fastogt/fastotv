@@ -42,7 +42,6 @@ int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row);
 class ISimplePlayer : public StreamHandler, public core::events::EventListener {
  public:
   enum {
-    footer_height = 60,
     volume_height = 30,
     space_height = 10,
     space_width = 10,

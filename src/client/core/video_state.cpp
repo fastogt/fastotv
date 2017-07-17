@@ -1304,9 +1304,13 @@ int VideoState::ReadThread() {
   }
 
   DesireBytesPerSec video_bandwidth_calc = video_stream->DesireBandwith();
-  DCHECK(video_bandwidth_calc.IsValid());
+  if (video_stream->IsOpened()) {
+    DCHECK(video_bandwidth_calc.IsValid());
+  }
   DesireBytesPerSec audio_bandwidth_calc = audio_stream->DesireBandwith();
-  DCHECK(audio_bandwidth_calc.IsValid());
+  if (audio_stream->IsOpened()) {
+    DCHECK(audio_bandwidth_calc.IsValid());
+  }
   const DesireBytesPerSec band = video_bandwidth_calc + audio_bandwidth_calc;
   if (ic_->bit_rate) {
     bandwidth_t byte_per_sec = ic_->bit_rate / 8;
@@ -1569,9 +1573,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);
