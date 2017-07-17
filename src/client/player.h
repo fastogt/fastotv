@@ -70,6 +70,9 @@ class Player : public ISimplePlayer {
   virtual void HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event);
   virtual void HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event);
 
+  virtual void HandleWindowResizeEvent(core::events::WindowResizeEvent* event) override;
+  virtual void HandleWindowExposeEvent(core::events::WindowExposeEvent* event) override;
+
   virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event) override;
   virtual void HandleLircPressEvent(core::events::LircPressEvent* event) override;
 
@@ -80,6 +83,7 @@ class Player : public ISimplePlayer {
   virtual void InitWindow(const std::string& title, States status) override;
 
  private:
+  int GetMaxProgrammsLines() const;
   bool GetChannelDescription(size_t pos, ChannelDescription* descr) const;
 
   void HandleKeyPad(uint8_t key);
@@ -97,6 +101,9 @@ class Player : public ISimplePlayer {
 
   void ToggleShowProgramsList();
   SDL_Rect GetProgramsListRect() const;
+
+  void MoveToNextProgrammsPage();
+  void MoveToPreviousProgrammsPage();
 
   bool GetCurrentUrl(PlaylistEntry* url) const;
 
@@ -138,6 +145,7 @@ class Player : public ISimplePlayer {
   keypad_sym_t keypad_sym_;
 
   bool show_programms_list_;
+  int last_programms_line_;
 };
 
 }  // namespace client

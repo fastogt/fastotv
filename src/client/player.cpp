@@ -63,7 +63,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       show_keypad_(false),
       keypad_last_shown_(0),
       keypad_sym_(),
-      show_programms_list_(false) {
+      show_programms_list_(false),
+      last_programms_line_(0) {
   fApp->Subscribe(this, core::events::BandwidthEstimationEvent::EventType);
 
   fApp->Subscribe(this, core::events::ClientDisconnectedEvent::EventType);
@@ -359,6 +360,16 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
   SwitchToPlayingMode();
 }
 
+void Player::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {
+  last_programms_line_ = 0;
+  base_class::HandleWindowResizeEvent(event);
+}
+
+void Player::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
+  last_programms_line_ = 0;
+  base_class::HandleWindowExposeEvent(event);
+}
+
 void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
@@ -431,6 +442,14 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       ToggleShowProgramsList();
       break;
     }
+    case FASTO_KEY_PAGEUP: {
+      MoveToNextProgrammsPage();
+      break;
+    }
+    case FASTO_KEY_PAGEDOWN: {
+      MoveToPreviousProgrammsPage();
+      break;
+    }
     default: { break; }
   }
 
@@ -482,8 +501,32 @@ SDL_Rect Player::GetProgramsListRect() const {
   return {display_rect.x + display_rect.w * 3 / 4, display_rect.y, display_rect.w / 4, display_rect.h};
 }
 
+void Player::MoveToNextProgrammsPage() {
+  int lines = GetMaxProgrammsLines();
+  int last_pos = play_list_.size() - 1;
+  int max_size_on_page = last_pos - lines;
+  if (max_size_on_page < 0) {
+    last_programms_line_ = 0;
+    return;
+  }
+
+  last_programms_line_ += lines;
+  if (last_programms_line_ > last_pos) {
+    last_programms_line_ = last_pos;
+  }
+}
+
+void Player::MoveToPreviousProgrammsPage() {
+  int lines = GetMaxProgrammsLines();
+  last_programms_line_ -= lines;
+  if (last_programms_line_ < 0) {
+    last_programms_line_ = 0;
+  }
+}
+
 bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const {
   if (!descr || pos >= play_list_.size()) {
+    DNOTREACHED();
     return false;
   }
 
@@ -542,12 +585,13 @@ void Player::FinishKeyPadInput() {
   }
   ResetKeyPad();
 
-  if (pos >= play_list_.size()) {
+  size_t stabled_pos = pos - 1;  // because start displaying channels from 1 in programms list
+  if (stabled_pos >= play_list_.size()) {
     // error
     return;
   }
 
-  core::VideoState* stream = CreateStreamPos(pos);
+  core::VideoState* stream = CreateStreamPos(stabled_pos);
   SetStream(stream);
 }
 
@@ -558,8 +602,18 @@ void Player::ResetKeyPad() {
 
 SDL_Rect Player::GetKeyPadRect() const {
   const SDL_Rect display_rect = GetDrawRect();
-
   return {display_rect.w + space_width - keypad_width, display_rect.y, keypad_width, keypad_height};
+}
+
+int Player::GetMaxProgrammsLines() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return 0;
+  }
+
+  const SDL_Rect programms_list_rect = GetProgramsListRect();
+  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  return programms_list_rect.h / font_height_2line;
 }
 
 void Player::DrawProgramsList() {
@@ -576,12 +630,16 @@ void Player::DrawProgramsList() {
     return;
   }
 
+  int max_line_count = GetMaxProgrammsLines();
+  if (max_line_count == 0) {
+    return;
+  }
+
   SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
   SDL_RenderFillRect(render, &programms_list_rect);
 
-  size_t max_line_count = programms_list_rect.h / font_height_2line;
-  size_t drawed = 0;
-  for (size_t i = 0; i < play_list_.size() && drawed < max_line_count; ++i) {
+  int drawed = 0;
+  for (size_t i = last_programms_line_; i < play_list_.size() && drawed < max_line_count; ++i) {
     ChannelDescription descr;
     if (GetChannelDescription(i, &descr)) {
       int shift = 0;
@@ -589,7 +647,7 @@ void Player::DrawProgramsList() {
                             programms_list_rect.w, font_height_2line};
       SDL_Rect number_rect = {programms_list_rect.x, programms_list_rect.y + font_height_2line * drawed, keypad_width,
                               keypad_height};
-      std::string number_str = common::ConvertToString(drawed + 1);
+      std::string number_str = common::ConvertToString(i + 1);
       DrawCenterTextInRect(number_str, text_color, number_rect);
 
       channel_icon_t icon = descr.icon;
@@ -616,7 +674,7 @@ void Player::DrawProgramsList() {
       SDL_Rect text_rect = {programms_list_rect.x + shift, programms_list_rect.y + font_height_2line * drawed,
                             text_width, font_height_2line};
       DrawWrappedTextInRect(line_text, text_color, text_rect);
-      if (current_stream_pos_ == i) {
+      if (current_stream_pos_ == i) {  // seleceted item
         SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
         SDL_RenderFillRect(render, &cell_rect);
       }
@@ -777,8 +835,8 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   current_stream_pos_ = pos;
 
-  PlaylistEntry entr = play_list_[current_stream_pos_];
-  ChannelInfo url = entr.GetChannelInfo();
+  PlaylistEntry entry = play_list_[current_stream_pos_];
+  ChannelInfo url = entry.GetChannelInfo();
   stream_id sid = url.GetId();
   core::AppOptions copy = GetStreamOptions();
   copy.enable_audio = url.IsEnableVideo();
