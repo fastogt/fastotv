@@ -381,7 +381,7 @@ void ISimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
       break;
     }
     case FASTO_KEY_F3: {
-      ToggleStatistic();
+      ToggleShowStatistic();
       break;
     }
     case FASTO_KEY_p:
@@ -834,7 +834,7 @@ void ISimplePlayer::CalculateDispalySize() {
   }
 }
 
-void ISimplePlayer::ToggleStatistic() {
+void ISimplePlayer::ToggleShowStatistic() {
   show_statstic_ = !show_statstic_;
 }
 

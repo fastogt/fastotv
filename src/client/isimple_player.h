@@ -134,6 +134,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   void SetStream(core::VideoState* stream);  // if stream == NULL => SwitchToChannelErrorMode
 
   SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins
+  SDL_Rect GetDisplayRect() const;
 
   void DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
   void DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
@@ -158,11 +159,10 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   void PauseStream();
 
   // player modes
-  void ToggleStatistic();
+  void ToggleShowStatistic();
 
   SDL_Rect GetStatisticRect() const;
   SDL_Rect GetVolumeRect() const;
-  SDL_Rect GetDisplayRect() const;
 
   SDL_Renderer* renderer_;
   TTF_Font* font_;

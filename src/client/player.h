@@ -29,10 +29,17 @@ namespace client {
 
 class IoService;
 
+struct ChannelDescription {
+  size_t pos;
+  std::string title;
+  std::string description;
+  channel_icon_t icon;
+};
+
 class Player : public ISimplePlayer {
  public:
   typedef ISimplePlayer base_class;
-  typedef uint16_t keypad_sym_t;
+  typedef std::string keypad_sym_t;
   enum { footer_height = 60, keypad_height = 30, keypad_width = 60, min_key_pad_size = 0, max_keypad_size = 999 };
   Player(const std::string& app_directory_absolute_path,
          const PlayerOptions& options,
@@ -73,16 +80,23 @@ class Player : public ISimplePlayer {
   virtual void InitWindow(const std::string& title, States status) override;
 
  private:
+  bool GetChannelDescription(size_t pos, ChannelDescription* descr) const;
+
   void HandleKeyPad(uint8_t key);
   void FinishKeyPadInput();
+  void RemoveLastSymbolInKeypad();
   void ResetKeyPad();
   SDL_Rect GetKeyPadRect() const;
 
   void DrawFooter();
   void DrawKeyPad();
+  void DrawProgramsList();
 
   void StartShowFooter();
   SDL_Rect GetFooterRect() const;
+
+  void ToggleShowProgramsList();
+  SDL_Rect GetProgramsListRect() const;
 
   bool GetCurrentUrl(PlaylistEntry* url) const;
 
@@ -122,6 +136,8 @@ class Player : public ISimplePlayer {
   bool show_keypad_;
   core::msec_t keypad_last_shown_;
   keypad_sym_t keypad_sym_;
+
+  bool show_programms_list_;
 };
 
 }  // namespace client

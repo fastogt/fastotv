@@ -20,10 +20,10 @@
 
 #include <SDL2/SDL_image.h>
 
+#include <common/convert2string.h>
 #include <common/file_system.h>
 #include <common/threads/thread_manager.h>
 #include <common/utils.h>
-#include <common/convert2string.h>
 
 #include "client/ioservice.h"  // for IoService
 
@@ -62,7 +62,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       app_directory_absolute_path_(app_directory_absolute_path),
       show_keypad_(false),
       keypad_last_shown_(0),
-      keypad_sym_(0) {
+      keypad_sym_(),
+      show_programms_list_(false) {
   fApp->Subscribe(this, core::events::BandwidthEstimationEvent::EventType);
 
   fApp->Subscribe(this, core::events::ClientDisconnectedEvent::EventType);
@@ -292,6 +293,11 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
 
   for (const ChannelInfo& ch : channels) {
     PlaylistEntry entry = PlaylistEntry(cache_dir, ch);
+    const std::string icon_path = entry.GetIconPath();
+    const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
+    SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
+    channel_icon_t shared_surface = common::make_shared<SurfaceSaver>(surface);
+    entry.SetIcon(shared_surface);
     play_list_.push_back(entry);
 
     if (is_exist_cache_root) {  // prepare cache folders for channels
@@ -361,39 +367,54 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
 
   core::events::KeyPressInfo inf = event->info();
   switch (inf.ks.sym) {
-    case FASTO_KEY_KP_0:
+    case FASTO_KEY_KP_0: {
       HandleKeyPad(0);
       break;
-    case FASTO_KEY_KP_1:
+    }
+    case FASTO_KEY_KP_1: {
       HandleKeyPad(1);
       break;
-    case FASTO_KEY_KP_2:
+    }
+    case FASTO_KEY_KP_2: {
       HandleKeyPad(2);
       break;
-    case FASTO_KEY_KP_3:
+    }
+    case FASTO_KEY_KP_3: {
       HandleKeyPad(3);
       break;
-    case FASTO_KEY_KP_4:
+    }
+    case FASTO_KEY_KP_4: {
       HandleKeyPad(4);
       break;
-    case FASTO_KEY_KP_5:
+    }
+    case FASTO_KEY_KP_5: {
       HandleKeyPad(5);
       break;
-    case FASTO_KEY_KP_6:
+    }
+    case FASTO_KEY_KP_6: {
       HandleKeyPad(6);
       break;
-    case FASTO_KEY_KP_7:
+    }
+    case FASTO_KEY_KP_7: {
       HandleKeyPad(7);
       break;
-    case FASTO_KEY_KP_8:
+    }
+    case FASTO_KEY_KP_8: {
       HandleKeyPad(8);
       break;
-    case FASTO_KEY_KP_9:
+    }
+    case FASTO_KEY_KP_9: {
       HandleKeyPad(9);
       break;
-    case FASTO_KEY_KP_ENTER:
+    }
+    case FASTO_KEY_BACKSPACE: {
+      RemoveLastSymbolInKeypad();
+      break;
+    }
+    case FASTO_KEY_KP_ENTER: {
       FinishKeyPadInput();
       break;
+    }
     case FASTO_KEY_LEFTBRACKET: {
       MoveToPreviousStream();
       break;
@@ -404,6 +425,10 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     }
     case FASTO_KEY_F4: {
       StartShowFooter();
+      break;
+    }
+    case FASTO_KEY_F5: {
+      ToggleShowProgramsList();
       break;
     }
     default: { break; }
@@ -439,6 +464,7 @@ void Player::DrawInfo() {
   DrawFooter();
   DrawVolume();
   DrawKeyPad();
+  DrawProgramsList();
 }
 
 SDL_Rect Player::GetFooterRect() const {
@@ -447,23 +473,73 @@ SDL_Rect Player::GetFooterRect() const {
           display_rect.w, footer_height};
 }
 
+void Player::ToggleShowProgramsList() {
+  show_programms_list_ = !show_programms_list_;
+}
+
+SDL_Rect Player::GetProgramsListRect() const {
+  const SDL_Rect display_rect = GetDisplayRect();
+  return {display_rect.x + display_rect.w * 3 / 4, display_rect.y, display_rect.w / 4, display_rect.h};
+}
+
+bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const {
+  if (!descr || pos >= play_list_.size()) {
+    return false;
+  }
+
+  PlaylistEntry entry = play_list_[pos];
+  std::string decr = "N/A";
+  ChannelInfo url = entry.GetChannelInfo();
+  EpgInfo epg = url.GetEpg();
+  ProgrammeInfo prog;
+  if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
+    decr = prog.GetTitle();
+  }
+
+  *descr = {pos, url.GetName(), decr, entry.GetIcon()};
+  return true;
+}
+
 void Player::HandleKeyPad(uint8_t key) {
   if (play_list_.empty()) {
     return;
   }
 
+  size_t cur_number;
+  if (!common::ConvertFromString(keypad_sym_, &cur_number)) {
+    cur_number = 0;
+  }
+
   show_keypad_ = true;
   core::msec_t cur_time = core::GetCurrentMsec();
   keypad_last_shown_ = cur_time;
-  keypad_sym_t nex_keypad_sym = keypad_sym_ * 10 + key;
+  size_t nex_keypad_sym = cur_number * 10 + key;
   if (nex_keypad_sym <= max_keypad_size) {
-    keypad_sym_ = nex_keypad_sym;
+    keypad_sym_ = common::ConvertToString(nex_keypad_sym);
   }
+}
+
+void Player::RemoveLastSymbolInKeypad() {
+  size_t cur_number;
+  if (!common::ConvertFromString(keypad_sym_, &cur_number)) {
+    return;
+  }
+
+  size_t nex_keypad_sym = cur_number / 10;
+  if (nex_keypad_sym == 0) {
+    ResetKeyPad();
+    return;
+  }
+
+  keypad_sym_ = common::ConvertToString(nex_keypad_sym);
 }
 
 void Player::FinishKeyPadInput() {
   CHECK(THREAD_MANAGER()->IsMainThread());
-  size_t pos = keypad_sym_;
+  size_t pos;
+  if (!common::ConvertFromString(keypad_sym_, &pos)) {
+    return;
+  }
   ResetKeyPad();
 
   if (pos >= play_list_.size()) {
@@ -477,13 +553,65 @@ void Player::FinishKeyPadInput() {
 
 void Player::ResetKeyPad() {
   show_keypad_ = false;
-  keypad_sym_ = 0;
+  keypad_sym_.clear();
 }
 
 SDL_Rect Player::GetKeyPadRect() const {
   const SDL_Rect display_rect = GetDrawRect();
 
   return {display_rect.w + space_width - keypad_width, display_rect.y, keypad_width, keypad_height};
+}
+
+void Player::DrawProgramsList() {
+  SDL_Renderer* render = GetRenderer();
+  TTF_Font* font = GetFont();
+  if (!show_programms_list_ || !font || !render || play_list_.empty()) {
+    return;
+  }
+
+  const SDL_Rect programms_list_rect = GetProgramsListRect();
+  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  int min_size = keypad_width + font_height_2line + font_height_2line;  // number + icon + text
+  if (programms_list_rect.w < min_size) {
+    return;
+  }
+
+  SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+  SDL_RenderFillRect(render, &programms_list_rect);
+
+  size_t max_line_count = programms_list_rect.h / font_height_2line;
+  size_t drawed = 0;
+  for (size_t i = 0; i < play_list_.size() && drawed < max_line_count; ++i) {
+    ChannelDescription descr;
+    if (GetChannelDescription(i, &descr)) {
+      int shift = 0;
+      SDL_Rect number_rect = {programms_list_rect.x, programms_list_rect.y + font_height_2line * drawed, keypad_width,
+                              keypad_height};
+      std::string number_str = common::ConvertToString(drawed + 1);
+      DrawCenterTextInRect(number_str, text_color, number_rect);
+
+      channel_icon_t icon = descr.icon;
+      shift = keypad_width;  // in any case shift should be
+      if (icon) {
+        SDL_Texture* img = icon->GetTexture(render);
+        if (img) {
+          SDL_Rect icon_rect = {programms_list_rect.x + shift, programms_list_rect.y + font_height_2line * drawed,
+                                font_height_2line, font_height_2line};
+          SDL_RenderCopy(render, img, NULL, &icon_rect);
+        }
+      }
+      shift += font_height_2line;  // in any case shift should be
+
+      std::string line_text = common::MemSPrintf(
+          " Title: %s\n"
+          " Description: %s",
+          descr.title, descr.description);
+      SDL_Rect text_rect = {programms_list_rect.x + shift, programms_list_rect.y + font_height_2line * drawed,
+                            programms_list_rect.w - shift, font_height_2line};
+      DrawWrappedTextInRect(line_text, text_color, text_rect);
+      drawed++;
+    }
+  }
 }
 
 void Player::DrawKeyPad() {
@@ -493,11 +621,14 @@ void Player::DrawKeyPad() {
     return;
   }
 
+  const char* keypad_sym_ptr = common::utils::c_strornull(keypad_sym_);
+  if (!keypad_sym_ptr) {
+    return;
+  }
   const SDL_Rect keypad_rect = GetKeyPadRect();
-  std::string keypad_text = common::ConvertToString(keypad_sym_);
   SDL_SetRenderDrawColor(render, 171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5));
   SDL_RenderFillRect(render, &keypad_rect);
-  DrawCenterTextInRect(keypad_text, text_color, keypad_rect);
+  DrawCenterTextInRect(keypad_sym_ptr, text_color, keypad_rect);
 }
 
 void Player::DrawFooter() {
@@ -523,29 +654,21 @@ void Player::DrawFooter() {
     SDL_RenderFillRect(render, &sdl_footer_rect);
     DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
   } else if (current_state == PLAYING_STATE) {
-    PlaylistEntry entry;
-    if (GetCurrentUrl(&entry)) {
-      std::string decr = "N/A";
-      ChannelInfo url = entry.GetChannelInfo();
-      EpgInfo epg = url.GetEpg();
-      ProgrammeInfo prog;
-      if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
-        decr = prog.GetTitle();
-      }
-
+    ChannelDescription descr;
+    if (GetChannelDescription(current_stream_pos_, &descr)) {
       SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
       SDL_RenderFillRect(render, &sdl_footer_rect);
 
       std::string footer_text = common::MemSPrintf(
           " Title: %s\n"
           " Description: %s",
-          url.GetName(), decr);
+          descr.title, descr.description);
       int h = CalcHeightFontPlaceByRowCount(font, 2);
       if (h > footer_rect.h) {
         h = footer_rect.h;
       }
 
-      auto icon = entry.GetIcon();
+      channel_icon_t icon = descr.icon;
       int shift = 0;
       if (icon) {
         SDL_Texture* img = icon->GetTexture(render);
@@ -644,14 +767,6 @@ core::VideoState* Player::CreateStreamPos(size_t pos) {
   current_stream_pos_ = pos;
 
   PlaylistEntry entr = play_list_[current_stream_pos_];
-  if (!entr.GetIcon()) {  // try to upload image
-    const std::string icon_path = entr.GetIconPath();
-    const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
-    SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-    channel_icon_t shared_surface = common::make_shared<SurfaceSaver>(surface);
-    play_list_[current_stream_pos_].SetIcon(shared_surface);
-  }
-
   ChannelInfo url = entr.GetChannelInfo();
   stream_id sid = url.GetId();
   core::AppOptions copy = GetStreamOptions();
