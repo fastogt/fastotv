@@ -38,6 +38,8 @@ struct AudioParams;
 }  // namespace core
 
 int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row);
+bool CaclTextSize(const std::string& text, TTF_Font* font, int* width, int* height);
+std::string DotText(std::string text, TTF_Font* font, int max_width);
 
 class ISimplePlayer : public StreamHandler, public core::events::EventListener {
  public:

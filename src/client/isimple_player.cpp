@@ -57,6 +57,29 @@ int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row) {
   return 2 << av_log2(font_height * row);
 }
 
+bool CaclTextSize(const std::string& text, TTF_Font* font, int* width, int* height) {
+  const char* text_ptr = common::utils::c_strornull(text);
+  if (!text_ptr || !font || !width || !height) {
+    return false;
+  }
+
+  int res = TTF_SizeText(font, text_ptr, width, height);
+  return res == 0;
+}
+
+std::string DotText(std::string text, TTF_Font* font, int max_width) {
+  int needed_width, needed_height;
+  if (CaclTextSize(text, font, &needed_width, &needed_height) && needed_width > max_width) {
+    int char_width = needed_width / text.size();
+    int diff = max_width / char_width;
+    if (diff - 3 > 0) {
+      text = text.substr(0, diff - 3) + "...";
+    }
+  }
+
+  return text;
+}
+
 const SDL_Color ISimplePlayer::text_color = {255, 255, 255, 0};
 const AVRational ISimplePlayer::min_fps = {25, 1};
 

@@ -585,6 +585,8 @@ void Player::DrawProgramsList() {
     ChannelDescription descr;
     if (GetChannelDescription(i, &descr)) {
       int shift = 0;
+      SDL_Rect cell_rect = {programms_list_rect.x, programms_list_rect.y + font_height_2line * drawed,
+                            programms_list_rect.w, font_height_2line};
       SDL_Rect number_rect = {programms_list_rect.x, programms_list_rect.y + font_height_2line * drawed, keypad_width,
                               keypad_height};
       std::string number_str = common::ConvertToString(drawed + 1);
@@ -602,13 +604,22 @@ void Player::DrawProgramsList() {
       }
       shift += font_height_2line;  // in any case shift should be
 
+      int text_width = programms_list_rect.w - shift;
+      std::string title_line = DotText(common::MemSPrintf(" Title: %s", descr.title), font, text_width);
+      std::string description_line =
+          DotText(common::MemSPrintf(" Description: %s", descr.description), font, text_width);
+
       std::string line_text = common::MemSPrintf(
-          " Title: %s\n"
-          " Description: %s",
-          descr.title, descr.description);
+          "%s\n"
+          "%s",
+          title_line, description_line);
       SDL_Rect text_rect = {programms_list_rect.x + shift, programms_list_rect.y + font_height_2line * drawed,
-                            programms_list_rect.w - shift, font_height_2line};
+                            text_width, font_height_2line};
       DrawWrappedTextInRect(line_text, text_color, text_rect);
+      if (current_stream_pos_ == i) {
+        SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+        SDL_RenderFillRect(render, &cell_rect);
+      }
       drawed++;
     }
   }
