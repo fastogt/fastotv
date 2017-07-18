@@ -31,12 +31,13 @@ namespace fasto {
 namespace fastotv {
 namespace server {
 
-UserInfo::UserInfo() : auth_(), ch_() {}
+UserInfo::UserInfo() : login_(), password_(), ch_() {}
 
-UserInfo::UserInfo(const AuthInfo& auth, const ChannelsInfo& ch) : auth_(auth), ch_(ch) {}
+UserInfo::UserInfo(const login_t& login, const std::string& password, const ChannelsInfo& ch)
+    : login_(login), password_(password), ch_(ch) {}
 
 bool UserInfo::IsValid() const {
-  return auth_.IsValid();
+  return !login_.empty() && !password_.empty();
 }
 
 common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
@@ -46,10 +47,8 @@ common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
 
   json_object* obj = json_object_new_object();
 
-  const std::string login = auth_.GetLogin();
-  const std::string password = auth_.GetPassword();
-  json_object_object_add(obj, USER_INFO_LOGIN_FIELD, json_object_new_string(login.c_str()));
-  json_object_object_add(obj, USER_INFO_PASSWORD_FIELD, json_object_new_string(password.c_str()));
+  json_object_object_add(obj, USER_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
+  json_object_object_add(obj, USER_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
 
   json_object* jchannels = NULL;
   common::Error err = ch_.Serialize(&jchannels);
@@ -93,12 +92,16 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
   }
   password = json_object_get_string(jpassword);
 
-  *obj = UserInfo(AuthInfo(login, password), chan);
+  *obj = UserInfo(login, password, chan);
   return common::Error();
 }
 
-AuthInfo UserInfo::GetAuthInfo() const {
-  return auth_;
+login_t UserInfo::GetLogin() const {
+  return login_;
+}
+
+std::string UserInfo::GetPassword() const {
+  return password_;
 }
 
 ChannelsInfo UserInfo::GetChannelInfo() const {
@@ -106,7 +109,7 @@ ChannelsInfo UserInfo::GetChannelInfo() const {
 }
 
 bool UserInfo::Equals(const UserInfo& uinf) const {
-  return auth_ == uinf.auth_ && ch_ == uinf.ch_;
+  return login_ == uinf.login_ && password_ == uinf.password_ && ch_ == uinf.ch_;
 }
 }  // namespace server
 }  // namespace fastotv

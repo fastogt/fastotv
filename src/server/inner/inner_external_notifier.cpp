@@ -57,7 +57,7 @@ void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id, int argc, char* ar
 }
 
 void InnerSubHandler::HandleMessage(const std::string& channel, const std::string& msg) {
-  // [std::string]login [cmd_id_t]seq [std::string]command args ...
+  // [user_id_t]login [device_id_t]device_id [cmd_id_t]seq [std::string]command args ...
   // [cmd_id_t]seq OK/FAIL [std::string]command args ..
   INFO_LOG() << "InnerSubHandler channel: " << channel << ", msg: " << msg;
   size_t space_pos = msg.find_first_of(' ');
@@ -68,7 +68,16 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
   }
 
   const user_id_t uid = msg.substr(0, space_pos);
-  const std::string cmd = msg.substr(space_pos + 1);
+  const std::string device_and_cmd = msg.substr(space_pos + 1);
+  size_t next_space_pos = device_and_cmd.find_first_of(' ');
+  if (next_space_pos == std::string::npos) {
+    const std::string resp = common::MemSPrintf("UNKNOWN COMMAND: %s", msg);
+    WARNING_LOG() << resp;
+    return;
+  }
+
+  const device_id_t dev = device_and_cmd.substr(0, next_space_pos);
+  const std::string cmd = device_and_cmd.substr(next_space_pos + 1);
   const std::string input_command = common::MemSPrintf(STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND, cmd);
   cmd_id_t seq;
   cmd_seq_t id;
@@ -80,7 +89,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  InnerTcpClient* fclient = parent_->FindInnerConnectionByID(uid);
+  InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(uid, dev);
   if (!fclient) {
     int argc;
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);

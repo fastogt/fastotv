@@ -41,12 +41,12 @@ namespace inner {
 class InnerTcpClient;
 class InnerTcpHandlerHost;
 class InnerTcpServer;
-}
+}  // namespace inner
 
 class ServerHost {
  public:
   enum { timeout_seconds = 1 };
-  typedef std::unordered_map<user_id_t, inner::InnerTcpClient*> inner_connections_type;
+  typedef std::unordered_map<user_id_t, std::vector<inner::InnerTcpClient*>> inner_connections_type;
 
   explicit ServerHost(const Config& config);
   ~ServerHost();
@@ -61,7 +61,7 @@ class ServerHost {
   common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;
   common::Error FindUser(const AuthInfo& auth, user_id_t* uid, UserInfo* uinf) const WARN_UNUSED_RESULT;
 
-  inner::InnerTcpClient* FindInnerConnectionByID(user_id_t user_id) const;
+  inner::InnerTcpClient* FindInnerConnectionByUserIDAndDeviceID(user_id_t user_id, device_id_t dev) const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ServerHost);

@@ -23,7 +23,6 @@
 #include <common/error.h>   // for Error
 #include <common/macros.h>  // for WARN_UNUSED_RESULT
 
-#include "auth_info.h"      // for AuthInfo
 #include "channels_info.h"  // for ChannelsInfo
 
 #include "serializer/json_serializer.h"
@@ -37,13 +36,14 @@ typedef std::string user_id_t;  // mongodb/redis id
 class UserInfo : public JsonSerializer<UserInfo> {
  public:
   UserInfo();
-  explicit UserInfo(const AuthInfo& auth, const ChannelsInfo& ch);
+  explicit UserInfo(const login_t& login, const std::string& password, const ChannelsInfo& ch);
 
   bool IsValid() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
-  AuthInfo GetAuthInfo() const;
+  login_t GetLogin() const;
+  std::string GetPassword() const;
   ChannelsInfo GetChannelInfo() const;
 
   bool Equals(const UserInfo& inf) const;
@@ -52,7 +52,8 @@ class UserInfo : public JsonSerializer<UserInfo> {
   virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
-  AuthInfo auth_;
+  login_t login_;  // unique
+  std::string password_;
   ChannelsInfo ch_;
 };
 

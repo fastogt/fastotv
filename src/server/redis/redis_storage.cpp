@@ -115,8 +115,8 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
     return err;
   }
 
-  AuthInfo lauth = linfo.GetAuthInfo();
-  if (user.GetPassword() != lauth.GetPassword()) {
+  std::string pass = linfo.GetPassword();
+  if (user.GetPassword() != pass) {
     freeReplyObject(reply);
     redisFree(redis);
     return common::make_error_value("Password missmatch", common::ErrorValue::E_ERROR);

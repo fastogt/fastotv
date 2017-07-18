@@ -31,6 +31,7 @@
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
 #include "server/config.h"  // for Config
+#include "server/user_info.h"
 
 #include "third-party/json-c/json-c/json_object.h"  // for json_object
 
@@ -90,7 +91,7 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
   virtual ~InnerTcpHandlerHost();
 
   common::Error PublishToChannelOut(const std::string& msg);
-  inner::InnerTcpClient* FindInnerConnectionByID(const std::string& login) const;
+  inner::InnerTcpClient* FindInnerConnectionByUserIDAndDeviceID(user_id_t user, device_id_t dev) const;
 
  private:
   void PublishUserStateInfo(const UserStateInfo& state);

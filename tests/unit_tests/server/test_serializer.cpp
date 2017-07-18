@@ -9,7 +9,6 @@ typedef fasto::fastotv::ChannelInfo::serialize_type serialize_t;
 TEST(UserInfo, serialize_deserialize) {
   const std::string login = "palecc";
   const std::string password = "faf";
-  fasto::fastotv::AuthInfo auth_info(login, password);
 
   const std::string name = "alex";
   const fasto::fastotv::stream_id stream_id = "123";
@@ -21,8 +20,9 @@ TEST(UserInfo, serialize_deserialize) {
   fasto::fastotv::ChannelsInfo channel_info;
   channel_info.AddChannel(fasto::fastotv::ChannelInfo(epg_info, enable_audio, enable_video));
 
-  fasto::fastotv::server::UserInfo uinf(auth_info, channel_info);
-  ASSERT_EQ(uinf.GetAuthInfo(), auth_info);
+  fasto::fastotv::server::UserInfo uinf(login, password, channel_info);
+  ASSERT_EQ(uinf.GetLogin(), login);
+  ASSERT_EQ(uinf.GetPassword(), password);
   ASSERT_EQ(uinf.GetChannelInfo(), channel_info);
 
   serialize_t ser;
@@ -85,8 +85,8 @@ TEST(UserInfo, serialize_deserialize) {
   err = uinf.DeSerialize(ser, &duinf);
   ASSERT_TRUE(!err);
   fasto::fastotv::ChannelsInfo ch = duinf.GetChannelInfo();
-  const fasto::fastotv::AuthInfo auth("atopilski@gmail.com", "1234");
-  ASSERT_EQ(duinf.GetAuthInfo(), auth);
+  ASSERT_EQ(duinf.GetLogin(), "atopilski@gmail.com");
+  ASSERT_EQ(duinf.GetPassword(), "1234");
   ASSERT_EQ(ch.GetSize(), 3);
 }
 

@@ -175,8 +175,9 @@ void InnerTcpHandlerHost::PublishUserStateInfo(const UserStateInfo& state) {
   }
 }
 
-inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByID(const std::string& login) const {
-  return parent_->FindInnerConnectionByID(login);
+inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByUserIDAndDeviceID(user_id_t user,
+                                                                                   device_id_t dev) const {
+  return parent_->FindInnerConnectionByUserIDAndDeviceID(user, dev);
 }
 
 void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
@@ -380,8 +381,9 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
       return err;
     }
 
-    std::string login = uauth.GetLogin();
-    InnerTcpClient* fclient = parent_->FindInnerConnectionByID(login);
+    login_t login = uauth.GetLogin();
+    device_id_t dev = uauth.GetDeviceID();
+    InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(login, dev);
     if (fclient) {
       const std::string error_str = "Double connection reject";
       cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);

@@ -33,12 +33,13 @@ namespace fastotv {
 class AuthInfo : public JsonSerializer<AuthInfo> {
  public:
   AuthInfo();
-  AuthInfo(const std::string& login, const std::string& password);
+  AuthInfo(const login_t& login, const std::string& password, device_id_t dev);
 
   bool IsValid() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
+  device_id_t GetDeviceID() const;
   login_t GetLogin() const;
   std::string GetPassword() const;
   bool Equals(const AuthInfo& auth) const;
@@ -49,6 +50,7 @@ class AuthInfo : public JsonSerializer<AuthInfo> {
  private:
   login_t login_;  // unique
   std::string password_;
+  device_id_t device_id_;
 };
 
 inline bool operator==(const AuthInfo& lhs, const AuthInfo& rhs) {

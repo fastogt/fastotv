@@ -26,16 +26,18 @@
 
 #define AUTH_INFO_LOGIN_FIELD "login"
 #define AUTH_INFO_PASSWORD_FIELD "password"
+#define AUTH_INFO_DEVICE_ID_FIELD "device_id"
 
 namespace fasto {
 namespace fastotv {
 
 AuthInfo::AuthInfo() : login_(), password_() {}
 
-AuthInfo::AuthInfo(const std::string& login, const std::string& password) : login_(login), password_(password) {}
+AuthInfo::AuthInfo(const login_t& login, const std::string& password, device_id_t dev)
+    : login_(login), password_(password), device_id_(dev) {}
 
 bool AuthInfo::IsValid() const {
-  return !login_.empty() || password_.empty();
+  return !login_.empty() && !password_.empty() && !device_id_.empty();
 }
 
 common::Error AuthInfo::SerializeImpl(serialize_type* deserialized) const {
@@ -46,6 +48,7 @@ common::Error AuthInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object* obj = json_object_new_object();
   json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
+  json_object_object_add(obj, AUTH_INFO_DEVICE_ID_FIELD, json_object_new_string(device_id_.c_str()));
 
   *deserialized = obj;
   return common::Error();
@@ -68,9 +71,20 @@ common::Error AuthInfo::DeSerialize(const serialize_type& serialized, value_type
     return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
   }
 
-  fasto::fastotv::AuthInfo ainf(json_object_get_string(jlogin), json_object_get_string(jpass));
+  json_object* jdevid = NULL;
+  json_bool jdevid_exists = json_object_object_get_ex(serialized, AUTH_INFO_DEVICE_ID_FIELD, &jdevid);
+  if (!jdevid_exists) {
+    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+  }
+
+  fasto::fastotv::AuthInfo ainf(json_object_get_string(jlogin), json_object_get_string(jpass),
+                                json_object_get_string(jdevid));
   *obj = ainf;
   return common::Error();
+}
+
+device_id_t AuthInfo::GetDeviceID() const {
+  return device_id_;
 }
 
 login_t AuthInfo::GetLogin() const {

@@ -131,7 +131,7 @@ common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
   iconnection->SetUid(user_id);
 
   std::string login = user.GetLogin();
-  connections_[user_id] = iconnection;
+  connections_[user_id].push_back(iconnection);
   connection->SetName(login);
   return common::Error();
 }
@@ -144,13 +144,20 @@ common::Error ServerHost::FindUser(const AuthInfo& auth, user_id_t* uid, UserInf
   return rstorage_.FindUser(auth, uid, uinf);
 }
 
-inner::InnerTcpClient* ServerHost::FindInnerConnectionByID(user_id_t user_id) const {
+inner::InnerTcpClient* ServerHost::FindInnerConnectionByUserIDAndDeviceID(user_id_t user_id, device_id_t dev) const {
   inner_connections_type::const_iterator hs = connections_.find(user_id);
   if (hs == connections_.end()) {
     return nullptr;
   }
 
-  return (*hs).second;
+  auto devices = (*hs).second;
+  for (inner::InnerTcpClient* connected_device : devices) {
+    AuthInfo uinf = connected_device->ServerHostInfo();
+    if (uinf.GetDeviceID() == dev) {
+      return connected_device;
+    }
+  }
+  return nullptr;
 }
 
 }  // namespace server

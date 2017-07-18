@@ -143,9 +143,11 @@ TEST(channels_t, serialize_deserialize) {
 TEST(AuthInfo, serialize_deserialize) {
   const std::string login = "palec";
   const std::string password = "ff";
-  fasto::fastotv::AuthInfo auth_info(login, password);
+  const std::string device = "dev";
+  fasto::fastotv::AuthInfo auth_info(login, password, device);
   ASSERT_EQ(auth_info.GetLogin(), login);
   ASSERT_EQ(auth_info.GetPassword(), password);
+  ASSERT_EQ(auth_info.GetDeviceID(), device);
   serialize_t ser;
   common::Error err = auth_info.Serialize(&ser);
   ASSERT_TRUE(!err);

@@ -172,7 +172,7 @@ void IoService::RequestChannels() const {
 common::libev::IoLoopObserver* IoService::CreateHandler() {
   inner::StartConfig conf;
   conf.inner_host = common::net::HostAndPort(SERVICE_HOST_NAME, SERVICE_HOST_PORT);
-  conf.ainf = AuthInfo(USER_LOGIN, USER_PASSWORD);
+  conf.ainf = AuthInfo(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
   PrivateHandler* handler = new PrivateHandler(conf);
   return handler;
 }
