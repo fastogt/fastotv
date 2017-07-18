@@ -40,13 +40,6 @@
 #define FASTO_EVENT (SDL_USEREVENT)
 
 namespace {
-Keysym SDLKeySymToOur(SDL_Keysym sks) {
-  Keysym ks;
-  ks.mod = sks.mod;
-  ks.scancode = static_cast<Scancode>(sks.scancode);
-  ks.sym = sks.sym;
-  return ks;
-}
 
 template <typename T>
 bool InRange(T a, T amin, T amax) {
@@ -234,14 +227,14 @@ void Sdl2Application::HandleEvent(events::Event* event) {
 }
 
 void Sdl2Application::HandleKeyDownEvent(SDL_KeyboardEvent* event) {
-  Keysym ks = SDLKeySymToOur(event->keysym);  // && event->repeat == 0
+  auto ks = event->keysym;  // && event->repeat == 0
   events::KeyPressInfo inf(event->state == SDL_PRESSED, ks);
   events::KeyPressEvent* key_press = new events::KeyPressEvent(this, inf);
   HandleEvent(key_press);
 }
 
 void Sdl2Application::HandleKeyUpEvent(SDL_KeyboardEvent* event) {
-  Keysym ks = SDLKeySymToOur(event->keysym);
+  auto ks = event->keysym;
   events::KeyReleaseInfo inf(event->state == SDL_PRESSED, ks);
   events::KeyReleaseEvent* key_release = new events::KeyReleaseEvent(this, inf);
   HandleEvent(key_release);

@@ -392,91 +392,92 @@ void ISimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   }
 
   core::events::KeyPressInfo inf = event->info();
-  switch (inf.ks.sym) {
-    case FASTO_KEY_ESCAPE:
-    case FASTO_KEY_q: {
+  SDL_Keycode key_code = inf.ks.sym;
+  switch (key_code) {
+    case SDLK_ESCAPE:
+    case SDLK_q: {
       Quit();
       return;
     }
-    case FASTO_KEY_f: {
+    case SDLK_f: {
       bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);
       break;
     }
-    case FASTO_KEY_F3: {
+    case SDLK_F3: {
       ToggleShowStatistic();
       break;
     }
-    case FASTO_KEY_p:
-    case FASTO_KEY_SPACE:
+    case SDLK_p:
+    case SDLK_SPACE:
       PauseStream();
       break;
-    case FASTO_KEY_m: {
+    case SDLK_m: {
       ToggleMute();
       break;
     }
-    case FASTO_KEY_KP_MULTIPLY:
-    case FASTO_KEY_0:
+    case SDLK_KP_MULTIPLY:
+    case SDLK_0:
       UpdateVolume(VOLUME_STEP);
       break;
-    case FASTO_KEY_KP_DIVIDE:
-    case FASTO_KEY_9:
+    case SDLK_KP_DIVIDE:
+    case SDLK_9:
       UpdateVolume(-VOLUME_STEP);
       break;
-    case FASTO_KEY_s:  // S: Step to next frame
+    case SDLK_s:  // S: Step to next frame
       if (stream_) {
         stream_->StepToNextFrame();
       }
       break;
-    case FASTO_KEY_a:
+    case SDLK_a:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
       }
       break;
-    case FASTO_KEY_v:
+    case SDLK_v:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
       }
       break;
-    case FASTO_KEY_c:
+    case SDLK_c:
       if (stream_) {
         stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
         stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
       }
       break;
-    case FASTO_KEY_t:
+    case SDLK_t:
       // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
       break;
-    case FASTO_KEY_w: {
+    case SDLK_w: {
       break;
     }
     //
-    case FASTO_KEY_PAGEUP:
+    case SDLK_PAGEUP:
       if (stream_) {
         stream_->SeekNextChunk();
       }
       break;
-    case FASTO_KEY_PAGEDOWN:
+    case SDLK_PAGEDOWN:
       if (stream_) {
         stream_->SeekPrevChunk();
       }
       break;
-    case FASTO_KEY_LEFT:
+    case SDLK_LEFT:
       if (stream_) {
         stream_->Seek(-10000);  // msec
       }
       break;
-    case FASTO_KEY_RIGHT:
+    case SDLK_RIGHT:
       if (stream_) {
         stream_->Seek(10000);  // msec
       }
       break;
-    case FASTO_KEY_UP:
+    case SDLK_UP:
       if (stream_) {
         stream_->Seek(60000);  // msec
       }
       break;
-    case FASTO_KEY_DOWN:
+    case SDLK_DOWN:
       if (stream_) {
         stream_->Seek(-60000);  // msec
       }

@@ -377,76 +377,77 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   }
 
   core::events::KeyPressInfo inf = event->info();
-  switch (inf.ks.sym) {
-    case FASTO_KEY_KP_0: {
+  SDL_Keycode key_code = inf.ks.sym;
+  switch (key_code) {
+    case SDLK_KP_0: {
       HandleKeyPad(0);
       break;
     }
-    case FASTO_KEY_KP_1: {
+    case SDLK_KP_1: {
       HandleKeyPad(1);
       break;
     }
-    case FASTO_KEY_KP_2: {
+    case SDLK_KP_2: {
       HandleKeyPad(2);
       break;
     }
-    case FASTO_KEY_KP_3: {
+    case SDLK_KP_3: {
       HandleKeyPad(3);
       break;
     }
-    case FASTO_KEY_KP_4: {
+    case SDLK_KP_4: {
       HandleKeyPad(4);
       break;
     }
-    case FASTO_KEY_KP_5: {
+    case SDLK_KP_5: {
       HandleKeyPad(5);
       break;
     }
-    case FASTO_KEY_KP_6: {
+    case SDLK_KP_6: {
       HandleKeyPad(6);
       break;
     }
-    case FASTO_KEY_KP_7: {
+    case SDLK_KP_7: {
       HandleKeyPad(7);
       break;
     }
-    case FASTO_KEY_KP_8: {
+    case SDLK_KP_8: {
       HandleKeyPad(8);
       break;
     }
-    case FASTO_KEY_KP_9: {
+    case SDLK_KP_9: {
       HandleKeyPad(9);
       break;
     }
-    case FASTO_KEY_BACKSPACE: {
+    case SDLK_BACKSPACE: {
       RemoveLastSymbolInKeypad();
       break;
     }
-    case FASTO_KEY_KP_ENTER: {
+    case SDLK_KP_ENTER: {
       FinishKeyPadInput();
       break;
     }
-    case FASTO_KEY_LEFTBRACKET: {
+    case SDLK_LEFTBRACKET: {
       MoveToPreviousStream();
       break;
     }
-    case FASTO_KEY_RIGHTBRACKET: {
+    case SDLK_RIGHTBRACKET: {
       MoveToNextStream();
       break;
     }
-    case FASTO_KEY_F4: {
+    case SDLK_F4: {
       StartShowFooter();
       break;
     }
-    case FASTO_KEY_F5: {
+    case SDLK_F5: {
       ToggleShowProgramsList();
       break;
     }
-    case FASTO_KEY_PAGEUP: {
+    case SDLK_PERIOD: {
       MoveToNextProgrammsPage();
       break;
     }
-    case FASTO_KEY_PAGEDOWN: {
+    case SDLK_COMMA: {
       MoveToPreviousProgrammsPage();
       break;
     }
@@ -502,6 +503,11 @@ SDL_Rect Player::GetProgramsListRect() const {
 }
 
 void Player::MoveToNextProgrammsPage() {
+  if (play_list_.empty()) {
+    last_programms_line_ = 0;
+    return;
+  }
+
   int lines = GetMaxProgrammsLines();
   int last_pos = play_list_.size() - 1;
   int max_size_on_page = last_pos - lines;
@@ -517,6 +523,11 @@ void Player::MoveToNextProgrammsPage() {
 }
 
 void Player::MoveToPreviousProgrammsPage() {
+  if (play_list_.empty()) {
+    last_programms_line_ = 0;
+    return;
+  }
+
   int lines = GetMaxProgrammsLines();
   last_programms_line_ -= lines;
   if (last_programms_line_ < 0) {
