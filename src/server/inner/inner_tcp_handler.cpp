@@ -373,7 +373,8 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
 
     user_id_t uid;
-    err = parent_->FindUserAuth(uauth, &uid);
+    UserInfo registered_user;
+    err = parent_->FindUser(uauth, &uid, &registered_user);
     if (err && err->IsError()) {
       cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->Description());
       common::Error write_err = connection->Write(resp);
@@ -381,8 +382,16 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
       return err;
     }
 
-    login_t login = uauth.GetLogin();
     device_id_t dev = uauth.GetDeviceID();
+    if (!registered_user.HaveDevice(dev)) {
+      const std::string error_str = "Unknown device reject";
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return err;
+    }
+
+    login_t login = uauth.GetLogin();
     InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(login, dev);
     if (fclient) {
       const std::string error_str = "Double connection reject";

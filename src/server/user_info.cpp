@@ -23,7 +23,8 @@
 
 #include "third-party/json-c/json-c/json_object.h"  // for json_object, json...
 
-#define CHANNELS_FIELD "channels"
+#define USER_INFO_DEVICES_FIELD "devices"
+#define USER_INFO_CHANNELS_FIELD "channels"
 #define USER_INFO_LOGIN_FIELD "login"
 #define USER_INFO_PASSWORD_FIELD "password"
 
@@ -33,8 +34,8 @@ namespace server {
 
 UserInfo::UserInfo() : login_(), password_(), ch_() {}
 
-UserInfo::UserInfo(const login_t& login, const std::string& password, const ChannelsInfo& ch)
-    : login_(login), password_(password), ch_(ch) {}
+UserInfo::UserInfo(const login_t& login, const std::string& password, const ChannelsInfo& ch, const devices_t& devices)
+    : login_(login), password_(password), ch_(ch), devices_(devices) {}
 
 bool UserInfo::IsValid() const {
   return !login_.empty() && !password_.empty();
@@ -55,7 +56,14 @@ common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
   if (err && err->IsError()) {
     return err;
   }
-  json_object_object_add(obj, CHANNELS_FIELD, jchannels);
+  json_object_object_add(obj, USER_INFO_CHANNELS_FIELD, jchannels);
+
+  json_object* jdevices = json_object_new_array();
+  for (size_t i = 0; i < devices_.size(); ++i) {
+    json_object* jdevice = json_object_new_string(devices_[i].c_str());
+    json_object_array_add(jdevices, jdevice);
+  }
+  json_object_object_add(obj, USER_INFO_DEVICES_FIELD, jdevices);
 
   *deserialized = obj;
   return common::Error();
@@ -68,7 +76,7 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
 
   ChannelsInfo chan;
   json_object* jchan = NULL;
-  json_bool jchan_exists = json_object_object_get_ex(serialized, CHANNELS_FIELD, &jchan);
+  json_bool jchan_exists = json_object_object_get_ex(serialized, USER_INFO_CHANNELS_FIELD, &jchan);
   if (jchan_exists) {
     common::Error err = ChannelsInfo::DeSerialize(jchan, &chan);
     if (err && err->IsError()) {
@@ -92,8 +100,32 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
   }
   password = json_object_get_string(jpassword);
 
-  *obj = UserInfo(login, password, chan);
+  devices_t devices;
+  json_object* jdevices = NULL;
+  json_bool jdevices_exists = json_object_object_get_ex(serialized, USER_INFO_DEVICES_FIELD, &jdevices);
+  if (jdevices_exists) {
+    size_t len = json_object_array_length(jdevices);
+    for (size_t i = 0; i < len; ++i) {
+      json_object* jdevice = json_object_array_get_idx(jdevices, i);
+      devices.push_back(json_object_get_string(jdevice));
+    }
+  }
+  *obj = UserInfo(login, password, chan, devices);
   return common::Error();
+}
+
+bool UserInfo::HaveDevice(device_id_t dev) const {
+  for (size_t i = 0; i < devices_.size(); ++i) {
+    if (dev == devices_[i]) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+UserInfo::devices_t UserInfo::GetDevices() const {
+  return devices_;
 }
 
 login_t UserInfo::GetLogin() const {

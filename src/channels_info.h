@@ -24,8 +24,6 @@
 #include "channel_info.h"
 #include "serializer/json_serializer.h"
 
-#define CHANNELS_FIELD "channels"
-
 namespace fasto {
 namespace fastotv {
 
