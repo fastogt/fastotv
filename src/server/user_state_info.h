@@ -25,7 +25,8 @@
 
 #include "server/user_info.h"  // for user_id_t
 
-#define USER_STATE_INFO_ID_FIELD "user_id"
+#define USER_STATE_INFO_USER_ID_FIELD "user_id"
+#define USER_STATE_INFO_DEVICE_ID_FIELD "device_id"
 #define USER_STATE_INFO_CONNECTED_FIELD "connected"
 
 namespace fasto {
@@ -35,7 +36,7 @@ namespace server {
 class UserStateInfo : public JsonSerializer<UserStateInfo> {
  public:
   UserStateInfo();
-  UserStateInfo(const user_id_t& uid, bool connected);
+  UserStateInfo(const user_id_t& uid, const device_id_t& device_id, bool connected);
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
@@ -49,6 +50,7 @@ class UserStateInfo : public JsonSerializer<UserStateInfo> {
 
  private:
   user_id_t user_id_;
+  device_id_t device_id_;
   bool connected_;
 };
 

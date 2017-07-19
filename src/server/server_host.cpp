@@ -152,7 +152,7 @@ inner::InnerTcpClient* ServerHost::FindInnerConnectionByUserIDAndDeviceID(user_i
 
   auto devices = (*hs).second;
   for (inner::InnerTcpClient* connected_device : devices) {
-    AuthInfo uinf = connected_device->ServerHostInfo();
+    AuthInfo uinf = connected_device->GetServerHostInfo();
     if (uinf.GetDeviceID() == dev) {
       return connected_device;
     }

@@ -20,7 +20,7 @@ TEST(UserInfo, serialize_deserialize) {
   fasto::fastotv::ChannelsInfo channel_info;
   channel_info.AddChannel(fasto::fastotv::ChannelInfo(epg_info, enable_audio, enable_video));
 
-  fasto::fastotv::server::UserInfo uinf(login, password, channel_info);
+  fasto::fastotv::server::UserInfo uinf(login, password, channel_info, fasto::fastotv::server::UserInfo::devices_t());
   ASSERT_EQ(uinf.GetLogin(), login);
   ASSERT_EQ(uinf.GetPassword(), password);
   ASSERT_EQ(uinf.GetChannelInfo(), channel_info);
@@ -94,7 +94,7 @@ TEST(UserStateInfo, serialize_deserialize) {
   const fasto::fastotv::server::user_id_t user_id = "123fe";
   const bool connected = false;
 
-  fasto::fastotv::server::UserStateInfo ust(user_id, connected);
+  fasto::fastotv::server::UserStateInfo ust(user_id, "", connected);
   ASSERT_EQ(ust.GetUserId(), user_id);
   ASSERT_EQ(ust.IsConnected(), connected);
 

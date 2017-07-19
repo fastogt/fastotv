@@ -38,7 +38,7 @@ void InnerTcpClient::SetServerHostInfo(const AuthInfo& info) {
   hinfo_ = info;
 }
 
-AuthInfo InnerTcpClient::ServerHostInfo() const {
+AuthInfo InnerTcpClient::GetServerHostInfo() const {
   return hinfo_;
 }
 

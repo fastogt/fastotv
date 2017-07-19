@@ -133,7 +133,8 @@ void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
   InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
   if (iconnection) {
     user_id_t uid = iconnection->GetUid();
-    PublishUserStateInfo(UserStateInfo(uid, false));
+    AuthInfo auth = iconnection->GetServerHostInfo();
+    PublishUserStateInfo(UserStateInfo(uid, auth.GetDeviceID(), false));
   }
 }
 
@@ -212,7 +213,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     return;
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_SERVER_INFO)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
-    AuthInfo hinf = client->ServerHostInfo();
+    AuthInfo hinf = client->GetServerHostInfo();
     UserInfo user;
     user_id_t uid;
     common::Error err = parent_->FindUser(hinf, &uid, &user);
@@ -246,7 +247,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     return;
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
-    AuthInfo hinf = client->ServerHostInfo();
+    AuthInfo hinf = client->GetServerHostInfo();
     UserInfo user;
     user_id_t uid;
     common::Error err = parent_->FindUser(hinf, &uid, &user);
@@ -382,7 +383,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
       return err;
     }
 
-    device_id_t dev = uauth.GetDeviceID();
+    const device_id_t dev = uauth.GetDeviceID();
     if (!registered_user.HaveDevice(dev)) {
       const std::string error_str = "Unknown device reject";
       cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
@@ -412,7 +413,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
       return err;
     }
 
-    PublishUserStateInfo(UserStateInfo(uid, true));
+    PublishUserStateInfo(UserStateInfo(uid, dev, true));
     return common::Error();
   } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {  // encoded
     json_object* obj = NULL;
