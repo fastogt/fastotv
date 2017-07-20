@@ -269,7 +269,7 @@ class BuildRequest(object):
                 dep_libs = ['git', 'gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
-                            'freetype-dev',
+                            'freetype-dev', 'libfreetype6-dev',
                             'libpng12-dev',
                             'libdrm-dev', 'libdri2-dev', 'libump-dev', 'libudev-dev',
                             'liblircclient-dev']
@@ -278,7 +278,7 @@ class BuildRequest(object):
                             'make',
                             'zlib-devel', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
-                            'freetype-devel',
+                            'freetype-devel', 'libfreetype6-devel',
                             'libpng12-devel',
                             'libdrm-devel', 'libdri2-devel', 'libump-devel', 'libudev-devel',
                             'liblircclient-devel']
