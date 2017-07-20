@@ -35,6 +35,17 @@ ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 g_script_path = os.path.realpath(sys.argv[0])
 
 
+def get_x11_libs(platform_name: str) -> list:
+    dep_libs = []
+    if platform_name == 'linux':
+        distribution = system_info.linux_get_dist()
+        if distribution == 'DEBIAN':
+            dep_libs = ['libx11-dev', 'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
+        elif distribution == 'RHEL':
+            dep_libs = ['libX11-devel', 'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
+    return dep_libs
+
+
 def splitext(path):
     for ext in ['.tar.gz', '.tar.bz2', '.tar.xz']:
         if path.endswith(ext):
@@ -140,6 +151,8 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                                     '--enable-video-opengles2',
                                                     '--disable-video-mir', '--disable-video-wayland']),
                                  utils.CompileInfo([], []))
+        linux_libs = self.system_platform_libs_.get('linux')
+        linux_libs.extend(get_x11_libs('linux'))
 
     def install_specific(self):
         orange_pi.install_orange_pi_h3()
@@ -173,11 +186,12 @@ class OrangePiPlus2(OrangePiH3Device):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedru
 class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
     def __init__(self, name='orange-pi-pc2'):
         SupportedDevice.__init__(self, name,
-                                 {'linux': ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libpixman-1-dev']},
+                                 {'linux': ['libgles2-mesa-dev']},
                                  utils.CompileInfo([], ['--disable-pulseaudio', '--disable-esd',
                                                         '--disable-video-opengl', '--disable-video-opengles1',
                                                         '--enable-video-opengles2',
-                                                        '--disable-video-mir', '--disable-video-wayland']),
+                                                        '--disable-video-mir', '--disable-video-wayland',
+                                                        '--disable-video-x11']),
                                  utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -208,18 +222,6 @@ def get_available_devices() -> list:
     for dev in SUPPORTED_DEVICES:
         result.extend([dev.name()])
     return result
-
-
-def get_x11_libs(platform: system_info.Platform) -> list:
-    platform_name = platform.name()
-    dep_libs = []
-    if platform_name == 'linux':
-        distribution = system_info.linux_get_dist()
-        if distribution == 'DEBIAN':
-            dep_libs = ['libx11-dev', 'xorg-dev', 'xutils-dev', 'xserver-xorg', 'xinit']
-        elif distribution == 'RHEL':
-            dep_libs = ['libX11-devel', 'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
-    return dep_libs
 
 
 class BuildRequest(object):
