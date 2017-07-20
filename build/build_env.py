@@ -131,7 +131,7 @@ class RaspberryPi3ModelB(RaspberryPiDevice):  # ARMv8-A(aarch64) Cortex-A53, omx
 class OrangePiH3Device(SupportedDevice):  # gles2
     def __init__(self, name):
         SupportedDevice.__init__(self, name,
-                                 {'linux': ['libgles2-mesa-dev', 'libcedrus1-dev',
+                                 {'linux': ['libgles2-mesa-dev', 'libcedrus1-dev', 'libpixman-1-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy'
                                             ]},
                                  utils.CompileInfo(['patch/orange-pi/sdl2'],
@@ -173,7 +173,7 @@ class OrangePiPlus2(OrangePiH3Device):  # ARMv7-A(armv7l) Cortex-A7, vdpau/cedru
 class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
     def __init__(self, name='orange-pi-pc2'):
         SupportedDevice.__init__(self, name,
-                                 {'linux': ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo']},
+                                 {'linux': ['libgles2-mesa-dev', 'xserver-xorg-video-fbturbo', 'libpixman-1-dev']},
                                  utils.CompileInfo([], ['--disable-pulseaudio', '--disable-esd',
                                                         '--disable-video-opengl', '--disable-video-opengles1',
                                                         '--enable-video-opengles2',
