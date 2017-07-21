@@ -125,7 +125,9 @@ void InnerTcpHandlerHost::Accepted(common::libev::IoClient* client) {
 
 void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
   InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
+  AuthInfo auth = iconnection->GetServerHostInfo();
   if (iconnection->IsAnonimUser()) {  // anonim user
+    INFO_LOG() << "Byu anonim user: " << auth.GetLogin();
     return;
   }
 
@@ -135,11 +137,9 @@ void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
     return;
   }
 
-  if (iconnection) {
-    user_id_t uid = iconnection->GetUid();
-    AuthInfo auth = iconnection->GetServerHostInfo();
-    PublishUserStateInfo(UserStateInfo(uid, auth.GetDeviceID(), false));
-  }
+  user_id_t uid = iconnection->GetUid();
+  PublishUserStateInfo(UserStateInfo(uid, auth.GetDeviceID(), false));
+  INFO_LOG() << "Byu registered user: " << auth.GetLogin();
 }
 
 void InnerTcpHandlerHost::DataReceived(common::libev::IoClient* client) {
@@ -399,6 +399,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     if (uauth == InnerTcpClient::anonim_user) {  // anonim user
       InnerTcpClient* inner_conn = static_cast<InnerTcpClient*>(connection);
       inner_conn->SetServerHostInfo(uauth);
+      INFO_LOG() << "Welcome anonim user: " << uauth.GetLogin();
       return common::Error();
     }
 
@@ -425,6 +426,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
 
     PublishUserStateInfo(UserStateInfo(uid, dev, true));
+    INFO_LOG() << "Welcome registered user: " << uauth.GetLogin();
     return common::Error();
   } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {  // encoded
     json_object* obj = NULL;
