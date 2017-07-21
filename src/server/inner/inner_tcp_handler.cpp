@@ -124,13 +124,17 @@ void InnerTcpHandlerHost::Accepted(common::libev::IoClient* client) {
 }
 
 void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
+  InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
+  if (iconnection->IsAnonimUser()) {  // anonim user
+    return;
+  }
+
   common::Error unreg_err = parent_->UnRegisterInnerConnectionByHost(client);
   if (unreg_err && unreg_err->IsError()) {
     DNOTREACHED();
     return;
   }
 
-  InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
   if (iconnection) {
     user_id_t uid = iconnection->GetUid();
     AuthInfo auth = iconnection->GetServerHostInfo();
@@ -392,6 +396,13 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
       return err;
     }
 
+    if (uauth == InnerTcpClient::anonim_user) {  // anonim user
+      InnerTcpClient* inner_conn = static_cast<InnerTcpClient*>(connection);
+      inner_conn->SetServerHostInfo(uauth);
+      return common::Error();
+    }
+
+    // registered user
     login_t login = uauth.GetLogin();
     InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(login, dev);
     if (fclient) {

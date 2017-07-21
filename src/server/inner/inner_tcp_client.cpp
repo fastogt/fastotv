@@ -25,8 +25,14 @@ namespace fastotv {
 namespace server {
 namespace inner {
 
+const AuthInfo InnerTcpClient::anonim_user(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
+
 InnerTcpClient::InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info)
     : InnerClient(server, info), hinfo_(), uid_() {}
+
+bool InnerTcpClient::IsAnonimUser() const {
+  return anonim_user == hinfo_;
+}
 
 const char* InnerTcpClient::ClassName() const {
   return "InnerTcpClient";

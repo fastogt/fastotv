@@ -44,6 +44,8 @@ namespace inner {
 
 class InnerTcpClient : public fastotv::inner::InnerClient {
  public:
+  static const AuthInfo anonim_user;
+
   InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info);
   ~InnerTcpClient();
 
@@ -54,6 +56,8 @@ class InnerTcpClient : public fastotv::inner::InnerClient {
 
   void SetUid(user_id_t id);
   user_id_t GetUid() const;
+
+  bool IsAnonimUser() const;
 
  private:
   AuthInfo hinfo_;
