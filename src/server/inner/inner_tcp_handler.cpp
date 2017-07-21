@@ -397,6 +397,12 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
 
     if (uauth == InnerTcpClient::anonim_user) {  // anonim user
+      cmd_approve_t resp = WhoAreYouApproveResponceSuccsess(id);
+      err = connection->Write(resp);
+      if (err && err->IsError()) {
+        return err;
+      }
+
       InnerTcpClient* inner_conn = static_cast<InnerTcpClient*>(connection);
       inner_conn->SetServerHostInfo(uauth);
       INFO_LOG() << "Welcome anonim user: " << uauth.GetLogin();
