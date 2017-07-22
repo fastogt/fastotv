@@ -152,7 +152,8 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                                     '--disable-video-mir', '--disable-video-wayland']),
                                  utils.CompileInfo([], []))
         linux_libs = self.system_platform_libs_.get('linux')
-        linux_libs.extend(get_x11_libs('linux'))
+        platform_name = system_info.get_os()
+        linux_libs.extend(get_x11_libs(platform_name))
 
     def install_specific(self):
         orange_pi.install_orange_pi_h3()
