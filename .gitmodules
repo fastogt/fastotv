@@ -10,9 +10,6 @@
 [submodule "src/third-party/libev/src"]
 	path = src/third-party/libev/src
 	url = https://github.com/fastogt/libev.git
-[submodule "tests/googletest"]
-	path = tests/googletest
-	url = https://github.com/google/googletest.git
 [submodule "src/third-party/json-c"]
 	path = src/third-party/json-c
 	url = https://github.com/fastogt/json-c
