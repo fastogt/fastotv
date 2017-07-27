@@ -114,7 +114,7 @@ SDL_Texture* TextureSaver::GetTexture(SDL_Renderer* renderer, int width, int hei
     SDL_Texture* ltexture = NULL;
     common::Error err = CreateTexture(renderer, format, width, height, SDL_BLENDMODE_NONE, false, &ltexture);
     if (err && err->IsError()) {
-      DNOTREACHED() << err->Description();
+      DNOTREACHED() << err->GetDescription();
       return NULL;
     }
     texture_ = ltexture;

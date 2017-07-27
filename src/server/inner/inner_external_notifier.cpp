@@ -84,7 +84,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
   std::string cmd_str;
   common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
   if (err && err->IsError()) {
-    std::string resp = err->Description();
+    std::string resp = err->GetDescription();
     WARNING_LOG() << resp;
     return;
   }

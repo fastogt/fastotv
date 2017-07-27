@@ -587,7 +587,7 @@ void ISimplePlayer::Quit() {
 
 void ISimplePlayer::SwitchToChannelErrorMode(common::Error err) {
   std::string url_str = GetCurrentUrlName();
-  std::string error_str = common::MemSPrintf("%s (%s)", url_str, err->Description());
+  std::string error_str = common::MemSPrintf("%s (%s)", url_str, err->GetDescription());
   RUNTIME_LOG(err->GetLevel()) << error_str;
   InitWindow(error_str, FAILED_STATE);
 }

@@ -254,78 +254,78 @@ ELSEIF(OS_FREEBSD)
 ENDIF(OS_WINDOWS)
 
 SET(HEADERS_CORE_EVENTS
-  core/events/events_base.h
-  core/events/key_events.h
-  core/events/mouse_events.h
-  core/events/window_events.h
-  core/events/stream_events.h
-  core/events/events.h
-  core/events/network_events.h
-  core/events/lirc_events.h
+  ${SOURCE_ROOT}/client/core/events/events_base.h
+  ${SOURCE_ROOT}/client/core/events/key_events.h
+  ${SOURCE_ROOT}/client/core/events/mouse_events.h
+  ${SOURCE_ROOT}/client/core/events/window_events.h
+  ${SOURCE_ROOT}/client/core/events/stream_events.h
+  ${SOURCE_ROOT}/client/core/events/events.h
+  ${SOURCE_ROOT}/client/core/events/network_events.h
+  ${SOURCE_ROOT}/client/core/events/lirc_events.h
 )
 
 SET(HEADERS_CORE_FRAMES
-  core/frames/base_frame.h
-  core/frames/audio_frame.h
-  core/frames/video_frame.h
-  core/frames/ring_buffer.h
-  core/frames/frame_queue.h
+  ${SOURCE_ROOT}/client/core/frames/base_frame.h
+  ${SOURCE_ROOT}/client/core/frames/audio_frame.h
+  ${SOURCE_ROOT}/client/core/frames/video_frame.h
+  ${SOURCE_ROOT}/client/core/frames/ring_buffer.h
+  ${SOURCE_ROOT}/client/core/frames/frame_queue.h
 )
 
 SET(HEADERS_CORE
-  core/types.h
-  core/stream_statistic.h
-  core/av_utils.h
-  core/sdl_utils.h
-  core/clock.h
-  core/packet_queue.h
-  core/decoder.h
-  core/app_options.h
-  core/audio_params.h
-  core/stream.h
-  core/application/sdl2_application.h
-  core/video_state.h
-  core/video_state_handler.h
-  core/bandwidth_estimation.h
+  ${SOURCE_ROOT}/client/core/types.h
+  ${SOURCE_ROOT}/client/core/stream_statistic.h
+  ${SOURCE_ROOT}/client/core/av_utils.h
+  ${SOURCE_ROOT}/client/core/sdl_utils.h
+  ${SOURCE_ROOT}/client/core/clock.h
+  ${SOURCE_ROOT}/client/core/packet_queue.h
+  ${SOURCE_ROOT}/client/core/decoder.h
+  ${SOURCE_ROOT}/client/core/app_options.h
+  ${SOURCE_ROOT}/client/core/audio_params.h
+  ${SOURCE_ROOT}/client/core/stream.h
+  ${SOURCE_ROOT}/client/core/application/sdl2_application.h
+  ${SOURCE_ROOT}/client/core/video_state.h
+  ${SOURCE_ROOT}/client/core/video_state_handler.h
+  ${SOURCE_ROOT}/client/core/bandwidth_estimation.h
 
   ${HEADERS_CORE_EVENTS}
   ${HEADERS_CORE_FRAMES}
 )
 
 SET(SOURCES_CORE_EVENTS
-  core/events/events_base.cpp
-  core/events/key_events.cpp
-  core/events/mouse_events.cpp
-  core/events/window_events.cpp
-  core/events/stream_events.cpp
-  core/events/events.cpp
-  core/events/network_events.cpp
-  core/events/lirc_events.cpp
+  ${SOURCE_ROOT}/client/core/events/events_base.cpp
+  ${SOURCE_ROOT}/client/core/events/key_events.cpp
+  ${SOURCE_ROOT}/client/core/events/mouse_events.cpp
+  ${SOURCE_ROOT}/client/core/events/window_events.cpp
+  ${SOURCE_ROOT}/client/core/events/stream_events.cpp
+  ${SOURCE_ROOT}/client/core/events/events.cpp
+  ${SOURCE_ROOT}/client/core/events/network_events.cpp
+  ${SOURCE_ROOT}/client/core/events/lirc_events.cpp
 )
 
 SET(SOURCES_CORE_FRAMES
-  core/frames/base_frame.cpp
-  core/frames/audio_frame.cpp
-  core/frames/video_frame.cpp
-  core/frames/frame_queue.cpp
-  core/frames/ring_buffer.cpp
+  ${SOURCE_ROOT}/client/core/frames/base_frame.cpp
+  ${SOURCE_ROOT}/client/core/frames/audio_frame.cpp
+  ${SOURCE_ROOT}/client/core/frames/video_frame.cpp
+  ${SOURCE_ROOT}/client/core/frames/frame_queue.cpp
+  ${SOURCE_ROOT}/client/core/frames/ring_buffer.cpp
 )
 
 SET(SOURCES_CORE
-  core/types.cpp
-  core/stream_statistic.cpp
-  core/av_utils.cpp
-  core/sdl_utils.cpp
-  core/clock.cpp
-  core/packet_queue.cpp
-  core/decoder.cpp
-  core/app_options.cpp
-  core/audio_params.cpp
-  core/stream.cpp
-  core/application/sdl2_application.cpp
-  core/video_state.cpp
-  core/video_state_handler.cpp
-  core/bandwidth_estimation.cpp
+  ${SOURCE_ROOT}/client/core/types.cpp
+  ${SOURCE_ROOT}/client/core/stream_statistic.cpp
+  ${SOURCE_ROOT}/client/core/av_utils.cpp
+  ${SOURCE_ROOT}/client/core/sdl_utils.cpp
+  ${SOURCE_ROOT}/client/core/clock.cpp
+  ${SOURCE_ROOT}/client/core/packet_queue.cpp
+  ${SOURCE_ROOT}/client/core/decoder.cpp
+  ${SOURCE_ROOT}/client/core/app_options.cpp
+  ${SOURCE_ROOT}/client/core/audio_params.cpp
+  ${SOURCE_ROOT}/client/core/stream.cpp
+  ${SOURCE_ROOT}/client/core/application/sdl2_application.cpp
+  ${SOURCE_ROOT}/client/core/video_state.cpp
+  ${SOURCE_ROOT}/client/core/video_state_handler.cpp
+  ${SOURCE_ROOT}/client/core/bandwidth_estimation.cpp
 
   ${SOURCES_CORE_EVENTS}
   ${SOURCES_CORE_FRAMES}
@@ -416,22 +416,22 @@ SET_DESKTOP_TARGET()
 
 #project
 SET(HEADERS_BANDWIDTH_CLIENT
-  bandwidth/tcp_bandwidth_client.h
+  ${SOURCE_ROOT}/client/bandwidth/tcp_bandwidth_client.h
 )
 SET(SOURCES_BANDWIDTH_CLIENT
-  bandwidth/tcp_bandwidth_client.cpp
+  ${SOURCE_ROOT}/client/bandwidth/tcp_bandwidth_client.cpp
 )
 
 SET(HEADERS_INNER_CLIENT
-  inner/inner_tcp_server.h
-  inner/inner_tcp_handler.h
-  commands.h
+  ${SOURCE_ROOT}/client/inner/inner_tcp_server.h
+  ${SOURCE_ROOT}/client/inner/inner_tcp_handler.h
+  ${SOURCE_ROOT}/client/commands.h
 )
 
 SET(SOURCES_INNER_CLIENT
-  inner/inner_tcp_server.cpp
-  inner/inner_tcp_handler.cpp
-  commands.cpp
+  ${SOURCE_ROOT}/client/inner/inner_tcp_server.cpp
+  ${SOURCE_ROOT}/client/inner/inner_tcp_handler.cpp
+  ${SOURCE_ROOT}/client/commands.cpp
 )
 
 # Config
@@ -484,26 +484,40 @@ IF(LIRC_CLIENT_FOUND)
 ENDIF(LIRC_CLIENT_FOUND)
 
 SET(BUILD_CLIENT_SOURCES
-  types.h types.cpp
-  playlist_entry.h playlist_entry.cpp
-  player_options.h player_options.cpp
-  isimple_player.h isimple_player.cpp
-  simple_player.h simple_player.cpp
-  player.h player.cpp
-  stream_handler.h stream_handler.cpp
-  config.h config.cpp
-  cmdutils.h cmdutils.cpp
-  utils.h utils.cpp
-  sdl_utils.h sdl_utils.cpp
-  av_sdl_utils.h av_sdl_utils.cpp
-  ioservice.h ioservice.cpp
-  main_wrapper.h main_wrapper.cpp
+  ${SOURCE_ROOT}/client/types.h
+  ${SOURCE_ROOT}/client/types.cpp
+  ${SOURCE_ROOT}/client/playlist_entry.h
+  ${SOURCE_ROOT}/client/playlist_entry.cpp
+  ${SOURCE_ROOT}/client/player_options.h
+  ${SOURCE_ROOT}/client/player_options.cpp
+  ${SOURCE_ROOT}/client/isimple_player.h
+  ${SOURCE_ROOT}/client/isimple_player.cpp
+  ${SOURCE_ROOT}/client/simple_player.h
+  ${SOURCE_ROOT}/client/simple_player.cpp
+  ${SOURCE_ROOT}/client/player.h
+  ${SOURCE_ROOT}/client/player.cpp
+  ${SOURCE_ROOT}/client/stream_handler.h
+  ${SOURCE_ROOT}/client/stream_handler.cpp
+  ${SOURCE_ROOT}/client/config.h
+  ${SOURCE_ROOT}/client/config.cpp
+  ${SOURCE_ROOT}/client/cmdutils.h
+  ${SOURCE_ROOT}/client/cmdutils.cpp
+  ${SOURCE_ROOT}/client/utils.h
+  ${SOURCE_ROOT}/client/utils.cpp
+  ${SOURCE_ROOT}/client/sdl_utils.h
+  ${SOURCE_ROOT}/client/sdl_utils.cpp
+  ${SOURCE_ROOT}/client/av_sdl_utils.h
+  ${SOURCE_ROOT}/client/av_sdl_utils.cpp
+  ${SOURCE_ROOT}/client/ioservice.h
+  ${SOURCE_ROOT}/client/ioservice.cpp
+  ${SOURCE_ROOT}/client/main_wrapper.h
+  ${SOURCE_ROOT}/client/main_wrapper.cpp
 
   ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}
   ${HEADERS_BANDWIDTH_CLIENT} ${SOURCES_BANDWIDTH_CLIENT}
   ${DEPENDENS_CLIENT_SOURCES} ${DEPENDENS_CLIENT_HEADERS}
 )
-SET(EXE_SOURCES main.cpp ${BUILD_CLIENT_SOURCES})
+SET(EXE_SOURCES ${SOURCE_ROOT}/client/main.cpp ${BUILD_CLIENT_SOURCES})
 SET(OTHER_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/ffmpeg_config.h ${ICON_FILE} ${RESOURCE_OS})
 
 IF(NOT TARGET inih)
@@ -720,8 +734,8 @@ INSTALL_RUNTIME_LIBRARIES()
 
 IF(DEVELOPER_CHECK_STYLE)
   SET(CHECK_SOURCES_CLIENT
-    ${BUILD_CLIENT_CORE_SOURCES} core/ffmpeg_internal.h core/ffmpeg_internal.cpp
-    ${BUILD_CLIENT_SOURCES} main.cpp
+    ${BUILD_CLIENT_CORE_SOURCES} ${SOURCE_ROOT}/client/core/ffmpeg_internal.h core/ffmpeg_internal.cpp
+    ${BUILD_CLIENT_SOURCES} ${SOURCE_ROOT}/client/main.cpp
   )
   REGISTER_CHECK_STYLE_TARGET(check_style_client "${CHECK_SOURCES_CLIENT}")
   REGISTER_CHECK_INCLUDES_TARGET(${PROJECT_NAME})
@@ -737,7 +751,7 @@ IF(DEVELOPER_ENABLE_TESTS)
     SET(PROJECT_UNIT_TEST_CLIENT unit_tests_client)
     ADD_EXECUTABLE(${PROJECT_UNIT_TEST_CLIENT}
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/client/test_parse_commands.cpp
-      commands.cpp
+      ${SOURCE_ROOT}/client/commands.cpp
     )
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_UNIT_TEST_CLIENT} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_CLIENT_TEST})
     TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST_CLIENT} gtest gtest_main

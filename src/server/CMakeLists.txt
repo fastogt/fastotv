@@ -25,47 +25,52 @@ IF(USE_PTHREAD)
 ENDIF(USE_PTHREAD)
 
 SET(HEADERS_REDIS
-  redis/redis_connect.h
-  redis/redis_storage.h
-  redis/redis_config.h
+  ${SOURCE_ROOT}/server/redis/redis_connect.h
+  ${SOURCE_ROOT}/server/redis/redis_storage.h
+  ${SOURCE_ROOT}/server/redis/redis_config.h
 
-  redis/redis_sub_config.h
-  redis/redis_pub_sub.h
-  redis/redis_pub_sub_handler.h
+  ${SOURCE_ROOT}/server/redis/redis_sub_config.h
+  ${SOURCE_ROOT}/server/redis/redis_pub_sub.h
+  ${SOURCE_ROOT}/server/redis/redis_pub_sub_handler.h
 )
 
 SET(SOURCES_REDIS
-  redis/redis_connect.cpp
-  redis/redis_storage.cpp
-  redis/redis_config.cpp
+  ${SOURCE_ROOT}/server/redis/redis_connect.cpp
+  ${SOURCE_ROOT}/server/redis/redis_storage.cpp
+  ${SOURCE_ROOT}/server/redis/redis_config.cpp
 
-  redis/redis_pub_sub.cpp
-  redis/redis_pub_sub_handler.cpp
-  redis/redis_sub_config.cpp
+  ${SOURCE_ROOT}/server/redis/redis_pub_sub.cpp
+  ${SOURCE_ROOT}/server/redis/redis_pub_sub_handler.cpp
+  ${SOURCE_ROOT}/server/redis/redis_sub_config.cpp
 )
 
 SET(HEADERS_INNER_SERVER
-  commands.h
-  inner/inner_tcp_server.h
-  inner/inner_tcp_client.h
-  inner/inner_tcp_handler.h
-  inner/inner_external_notifier.h
+  ${SOURCE_ROOT}/server/commands.h
+  ${SOURCE_ROOT}/server/inner/inner_tcp_server.h
+  ${SOURCE_ROOT}/server/inner/inner_tcp_client.h
+  ${SOURCE_ROOT}/server/inner/inner_tcp_handler.h
+  ${SOURCE_ROOT}/server/inner/inner_external_notifier.h
 )
 
 SET(SOURCES_INNER_SERVER
-  inner/inner_tcp_server.cpp
-  inner/inner_tcp_client.cpp
-  inner/inner_tcp_handler.cpp
-  inner/inner_external_notifier.cpp
-  commands.cpp
+  ${SOURCE_ROOT}/server/inner/inner_tcp_server.cpp
+  ${SOURCE_ROOT}/server/inner/inner_tcp_client.cpp
+  ${SOURCE_ROOT}/server/inner/inner_tcp_handler.cpp
+  ${SOURCE_ROOT}/server/inner/inner_external_notifier.cpp
+  ${SOURCE_ROOT}/server/commands.cpp
 )
 
 SET(BUILD_SERVER_SOURCES
-  server_host.cpp server_host.h
-  user_info.h user_info.cpp
-  user_state_info.h user_state_info.cpp
-  responce_info.h responce_info.cpp
-  config.h config.cpp
+  ${SOURCE_ROOT}/server/server_host.cpp
+  ${SOURCE_ROOT}/server/server_host.h
+  ${SOURCE_ROOT}/server/user_info.h
+  ${SOURCE_ROOT}/server/user_info.cpp
+  ${SOURCE_ROOT}/server/user_state_info.h
+  ${SOURCE_ROOT}/server/user_state_info.cpp
+  ${SOURCE_ROOT}/server/responce_info.h
+  ${SOURCE_ROOT}/server/responce_info.cpp
+  ${SOURCE_ROOT}/server/config.h
+  ${SOURCE_ROOT}/server/config.cpp
   ${HEADERS_REDIS} ${SOURCES_REDIS}
 
   ${HEADERS_INNER_SERVER} ${SOURCES_INNER_SERVER}
@@ -99,7 +104,7 @@ SET(PRIVATE_INCLUDE_DIRECTORIES_SERVER
 )
 
 ADD_EXECUTABLE(${PROJECT_SERVER_NAME}
-  main.cpp
+  ${SOURCE_ROOT}/server/main.cpp
   ${BUILD_SERVER_SOURCES}
 )
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_SERVER_NAME} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_SERVER})
@@ -121,7 +126,7 @@ ENDIF(NOT EXISTS ${SERVER_CONFIG_FILE_PATH})
 
 IF (DEVELOPER_CHECK_STYLE)
   SET(CHECK_SOURCES_SERVER
-    main.cpp ${BUILD_SERVER_SOURCES}
+    ${SOURCE_ROOT}/server/main.cpp ${BUILD_SERVER_SOURCES}
   )
   REGISTER_CHECK_STYLE_TARGET(check_style_server "${CHECK_SOURCES_SERVER}")
   REGISTER_CHECK_INCLUDES_TARGET(${PROJECT_SERVER_NAME})
@@ -138,7 +143,9 @@ IF(DEVELOPER_ENABLE_TESTS)
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/server/test_parse_commands.cpp commands.cpp
       ${CMAKE_SOURCE_DIR}/tests/unit_tests/server/test_serializer.cpp
 
-      user_info.cpp user_state_info.cpp responce_info.cpp
+      ${SOURCE_ROOT}/server/user_info.cpp
+      ${SOURCE_ROOT}/server/user_state_info.cpp
+      ${SOURCE_ROOT}/server/responce_info.cpp
     )
     TARGET_INCLUDE_DIRECTORIES(${PROJECT_UNIT_TEST_CLIENT} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_SERVER_TEST})
     TARGET_LINK_LIBRARIES(${PROJECT_UNIT_TEST_CLIENT} gtest gtest_main

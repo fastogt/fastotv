@@ -96,7 +96,7 @@ int prepare_to_start(const std::string& app_directory_absolute_path,
   if (!common::file_system::is_directory_exist(app_directory_absolute_path)) {
     common::ErrnoError err = common::file_system::create_directory(app_directory_absolute_path, true);
     if (err && err->IsError()) {
-      std::cout << "Can't create app directory error:(" << err->Description()
+      std::cout << "Can't create app directory error:(" << err->GetDescription()
                 << "), path: " << app_directory_absolute_path << std::endl;
       return EXIT_FAILURE;
     }
@@ -111,7 +111,7 @@ int prepare_to_start(const std::string& app_directory_absolute_path,
   if (!common::file_system::is_directory_exist(runtime_directory_absolute_path)) {
     common::ErrnoError err = common::file_system::create_directory(runtime_directory_absolute_path, true);
     if (err && err->IsError()) {
-      std::cout << "Can't create runtime directory error:(" << err->Description()
+      std::cout << "Can't create runtime directory error:(" << err->GetDescription()
                 << "), path: " << runtime_directory_absolute_path << std::endl;
       return EXIT_FAILURE;
     }
@@ -338,12 +338,12 @@ int main_single_application(int argc,
 
   err = lock_pid_file.Close();
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't close pid file path: " << pid_absolute_path << ", error: " << err->Description();
+    WARNING_LOG() << "Can't close pid file path: " << pid_absolute_path << ", error: " << err->GetDescription();
   }
 
   err = common::file_system::remove_file(pid_absolute_path);
   if (err && err->IsError()) {
-    WARNING_LOG() << "Can't remove file: " << pid_absolute_path << ", error: " << err->Description();
+    WARNING_LOG() << "Can't remove file: " << pid_absolute_path << ", error: " << err->GetDescription();
   }
 
   // save config file
@@ -351,7 +351,7 @@ int main_single_application(int argc,
   if (main_options.power_off_on_exit) {
     common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);
     if (err_shut && err_shut->IsError()) {
-      WARNING_LOG() << "Can't shutdown error: " << err_shut->Description();
+      WARNING_LOG() << "Can't shutdown error: " << err_shut->GetDescription();
     }
   }
   return res;

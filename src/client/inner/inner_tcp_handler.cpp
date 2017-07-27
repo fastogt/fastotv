@@ -399,7 +399,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
-      cmd_approve_t resp = PingApproveResponceFail(id, parse_err->Description());
+      cmd_approve_t resp = PingApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return parse_err;
@@ -418,7 +418,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
-      cmd_approve_t resp = GetServerInfoApproveResponceFail(id, parse_err->Description());
+      cmd_approve_t resp = GetServerInfoApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return parse_err;
@@ -453,7 +453,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
-      cmd_approve_t resp = GetChannelsApproveResponceFail(id, parse_err->Description());
+      cmd_approve_t resp = GetChannelsApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return parse_err;

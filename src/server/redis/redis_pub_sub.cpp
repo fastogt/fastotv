@@ -42,7 +42,7 @@ void RedisPubSub::Listen() {
   redisContext* redis_sub = NULL;
   common::Error err = redis_connect(config_, &redis_sub);
   if (err && err->IsError()) {
-    WARNING_LOG() << "REDIS PUB/SUB CONNECTION ERROR: " << err->Description();
+    WARNING_LOG() << "REDIS PUB/SUB CONNECTION ERROR: " << err->GetDescription();
     return;
   }
 

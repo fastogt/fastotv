@@ -41,7 +41,7 @@ bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
   std::string uri_str;
   if (uri.Scheme() == common::uri::Uri::file) {
     common::uri::Upath upath = uri.Path();
-    uri_str = upath.Path();
+    uri_str = upath.GetPath();
   } else {
     uri_str = uri.Url();
   }

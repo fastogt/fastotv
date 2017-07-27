@@ -28,47 +28,56 @@ ENDIF(DEVELOPER_ENABLE_TESTS)
 SET(PROJECT_CLIENT_SERVER_LIBRARY ${PROJECT_NAME_LOWERCASE}_client_server)
 
 SET(HEADERS_COMMANDS
-  commands/commands.h
+  ${SOURCE_ROOT}/commands/commands.h
 )
 
 SET(SOURCES_COMMANDS
-  commands/commands.cpp
+  ${SOURCE_ROOT}/commands/commands.cpp
 )
 
 SET(HEADERS_INNER
-  inner/inner_server_command_seq_parser.h
-  inner/inner_client.h
+  ${SOURCE_ROOT}/inner/inner_server_command_seq_parser.h
+  ${SOURCE_ROOT}/inner/inner_client.h
 )
 
 SET(SOURCES_INNER
-  inner/inner_server_command_seq_parser.cpp
-  inner/inner_client.cpp
+  ${SOURCE_ROOT}/inner/inner_server_command_seq_parser.cpp
+  ${SOURCE_ROOT}/inner/inner_client.cpp
 )
 
 SET(HEADERS_SERIALIZER
-  serializer/iserializer.h
-  serializer/json_serializer.h
+  ${SOURCE_ROOT}/serializer/iserializer.h
+  ${SOURCE_ROOT}/serializer/json_serializer.h
 )
 
 SET(SOURCES_SERIALIZER
-  serializer/iserializer.cpp
-  serializer/json_serializer.cpp
+  ${SOURCE_ROOT}/serializer/iserializer.cpp
+  ${SOURCE_ROOT}/serializer/json_serializer.cpp
 )
 
 SET(SOURCES_SDS
-  third-party/sds/sds.c
+  ${SOURCE_ROOT}/third-party/sds/sds.c
 )
 
 SET(CLIENT_SERVER_SOURCES
-  ping_info.h ping_info.cpp
-  channels_info.h channels_info.cpp
-  auth_info.h auth_info.cpp
-  server_info.h server_info.cpp
-  client_info.h client_info.cpp
-  channel_info.h channel_info.cpp
-  epg_info.h epg_info.cpp
-  programme_info.h programme_info.cpp
-  client_server_types.h client_server_types.cpp
+  ${SOURCE_ROOT}/ping_info.h
+  ${SOURCE_ROOT}/ping_info.cpp
+  ${SOURCE_ROOT}/channels_info.h
+  ${SOURCE_ROOT}/channels_info.cpp
+  ${SOURCE_ROOT}/auth_info.h
+  ${SOURCE_ROOT}/auth_info.cpp
+  ${SOURCE_ROOT}/server_info.h
+  ${SOURCE_ROOT}/server_info.cpp
+  ${SOURCE_ROOT}/client_info.h
+  ${SOURCE_ROOT}/client_info.cpp
+  ${SOURCE_ROOT}/channel_info.h
+  ${SOURCE_ROOT}/channel_info.cpp
+  ${SOURCE_ROOT}/epg_info.h
+  ${SOURCE_ROOT}/epg_info.cpp
+  ${SOURCE_ROOT}/programme_info.h
+  ${SOURCE_ROOT}/programme_info.cpp
+  ${SOURCE_ROOT}/client_server_types.h
+  ${SOURCE_ROOT}/client_server_types.cpp
 ) # server and client common sources
 
 SET(CLIENT_SERVER_SOURCES

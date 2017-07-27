@@ -1191,7 +1191,7 @@ int VideoState::ReadThread() {
   std::string uri_str;
   if (uri_.Scheme() == common::uri::Uri::file) {
     common::uri::Upath upath = uri_.Path();
-    uri_str = upath.Path();
+    uri_str = upath.GetPath();
   } else {
     uri_str = uri_.Url();
   }
