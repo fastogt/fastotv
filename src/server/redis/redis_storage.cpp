@@ -28,8 +28,8 @@
 
 #include "auth_info.h"  // for AuthInfo
 
-#include "third-party/json-c/json-c/json_object.h"   // for json_object_put
-#include "third-party/json-c/json-c/json_tokener.h"  // for json_tokener_parse
+#include <json-c/json_object.h>   // for json_object_put
+#include <json-c/json_tokener.h>  // for json_tokener_parse
 
 #include "server/redis/redis_connect.h"
 

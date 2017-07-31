@@ -21,6 +21,8 @@
 #include <stddef.h>  // for NULL
 #include <string>    // for string
 
+#include <json-c/json_object.h>  // for json_object
+
 #include <common/libev/io_client.h>         // for IoClient
 #include <common/libev/io_loop.h>           // for IoLoop
 #include <common/logger.h>                  // for COMPACT_LOG_WARNING
@@ -45,8 +47,6 @@
 #include "server/user_info.h"        // for user_id_t, UserInfo
 #include "server/user_state_info.h"  // for UserStateInfo
 #include "server_info.h"             // for ServerInfo
-
-#include "third-party/json-c/json-c/json.h"  // for json_object
 
 namespace fasto {
 namespace fastotv {

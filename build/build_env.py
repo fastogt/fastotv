@@ -393,6 +393,32 @@ class BuildRequest(object):
             os.chdir(self.build_dir_path_)
             raise ex
 
+    def build_jsonc(self):
+        pwd = os.getcwd()
+        cmake_project_root_abs_path = '..'
+        if not os.path.exists(cmake_project_root_abs_path):
+            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
+
+        # project static options
+        prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
+
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
+                      prefix_args]
+        try:
+            cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git', pwd)
+            os.chdir(cloned_dir)
+
+            os.mkdir('build_cmake_release')
+            os.chdir('build_cmake_release')
+            jsonc_cmake_line = list(cmake_line)
+            subprocess.call(jsonc_cmake_line)
+            subprocess.call(['make', 'install'])
+            os.chdir(self.build_dir_path_)
+            shutil.rmtree(cloned_dir)
+        except Exception as ex:
+            os.chdir(self.build_dir_path_)
+            raise ex
+
 
 if __name__ == "__main__":
     sdl2_default_version = '2.0.5'
@@ -400,7 +426,7 @@ if __name__ == "__main__":
     sdl2_ttf_default_version = '2.0.14'
     openssl_default_version = '1.0.2l'
     ffmpeg_default_version = '3.3'
-    cmake_default_version = '3.8.1'
+    cmake_default_version = '3.9.0'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
@@ -475,6 +501,11 @@ if __name__ == "__main__":
     parser.add_argument('--without-common', help='build without common', dest='with_common', action='store_false')
     parser.set_defaults(with_common=True)
 
+    parser.add_argument('--with-json-c', help='build json-c (default, version: git master)', dest='with_jsonc',
+                        action='store_true')
+    parser.add_argument('--without-json-c', help='build without json-c', dest='with_jsonc', action='store_false')
+    parser.set_defaults(with_jsonc=True)
+
     parser.add_argument('--platform', help='build for platform (default: {0})'.format(host_os), default=host_os)
     parser.add_argument('--architecture', help='architecture (default: {0})'.format(arch_host_os),
                         default=arch_host_os)
@@ -501,6 +532,8 @@ if __name__ == "__main__":
         request.build_cmake(argv.cmake_version)
     if argv.with_common:
         request.build_common()
+    if argv.with_jsonc:
+        request.build_jsonc()
 
     if argv.with_sdl2:
         request.build_sdl2(argv.sdl2_version)

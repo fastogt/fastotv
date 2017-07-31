@@ -22,7 +22,7 @@
 
 #include "server/user_info.h"  // for user_id_t
 
-#include "third-party/json-c/json-c/json_object.h"  // for json_object, json...
+#include <json-c/json_object.h>  // for json_object, json...
 
 namespace fasto {
 namespace fastotv {

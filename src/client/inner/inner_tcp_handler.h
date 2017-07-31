@@ -33,7 +33,7 @@
 
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
-#include "third-party/json-c/json-c/json_object.h"  // for json_object
+#include <json-c/json_object.h>  // for json_object
 
 namespace common {
 namespace libev {

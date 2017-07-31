@@ -21,7 +21,7 @@
 #include <stddef.h>  // for NULL
 #include <string>    // for string
 
-#include "third-party/json-c/json-c/json_object.h"  // for json_object, json...
+#include <json-c/json_object.h>  // for json_object, json...
 
 namespace fasto {
 namespace fastotv {

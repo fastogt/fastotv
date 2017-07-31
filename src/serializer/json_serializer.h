@@ -21,12 +21,12 @@
 #include <stddef.h>  // for NULL
 #include <string>    // for string
 
+#include <json-c/json_object.h>
+#include <json-c/json_tokener.h>  // for json_tokener_parse
+
 #include <common/error.h>  // for Error
 
 #include "serializer/iserializer.h"  // for ISerializer
-
-#include "third-party/json-c/json-c/json_object.h"
-#include "third-party/json-c/json-c/json_tokener.h"  // for json_tokener_parse
 
 namespace fasto {
 namespace fastotv {

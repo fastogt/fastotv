@@ -22,6 +22,8 @@
 #include <stdint.h>  // for int64_t
 #include <string>    // for string
 
+#include <json-c/json.h>
+
 #include <common/application/application.h>  // for fApp
 #include <common/error.h>                    // for DEBUG_MSG_ERROR
 #include <common/libev/io_client.h>          // for IoClient
@@ -35,8 +37,6 @@
 #include "client/commands.h"
 #include "client/core/events/network_events.h"  // for BandwidtInfo, Con...
 #include "client_info.h"                        // for ClientInfo
-
-#include "third-party/json-c/json-c/json.h"
 
 #include "inner/inner_client.h"  // for InnerClient
 
