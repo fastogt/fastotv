@@ -60,7 +60,7 @@ cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
   id_t next_id = id_++;
   char bytes[sizeof(id_t)];
   betoh_memcpy(&bytes, &next_id, sizeof(id_t));
-  cmd_seq_t hexed = common::HexEncode(&bytes, sizeof(id_t), true);
+  cmd_seq_t hexed = common::utils::hex::encode(bytes, true);
   return hexed;
 }
 

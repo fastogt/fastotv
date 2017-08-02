@@ -24,13 +24,13 @@ namespace fasto {
 namespace fastotv {
 
 std::string Encode(const std::string& data) {
-  std::string enc_data = common::HexEncode(data, false);
+  std::string enc_data = common::utils::hex::encode(data, false);
   return enc_data;
 }
 
 std::string Decode(const std::string& data) {
-  common::buffer_t dec = common::HexDecode(data);
-  return common::ConvertToString(dec);
+  std::string dec = common::utils::hex::decode(data);
+  return dec;
 }
 }  // namespace fastotv
 }  // namespace fasto
