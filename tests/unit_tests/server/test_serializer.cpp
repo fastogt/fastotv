@@ -105,6 +105,8 @@ TEST(UserStateInfo, serialize_deserialize) {
   err = ust.DeSerialize(ser, &dust);
   ASSERT_TRUE(!err);
 
+  ASSERT_EQ(ust.GetUserId(), dust.GetUserId());
+  ASSERT_EQ(ust.GetDeviceId(), dust.GetDeviceId());
   ASSERT_EQ(ust, dust);
 }
 

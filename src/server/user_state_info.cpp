@@ -33,6 +33,10 @@ UserStateInfo::UserStateInfo() : user_id_(), device_id_(), connected_(false) {}
 UserStateInfo::UserStateInfo(const user_id_t& uid, const device_id_t& device_id, bool connected)
     : user_id_(uid), device_id_(device_id), connected_(connected) {}
 
+device_id_t UserStateInfo::GetDeviceId() const {
+  return device_id_;
+}
+
 user_id_t UserStateInfo::GetUserId() const {
   return user_id_;
 }
@@ -74,7 +78,7 @@ common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, value
   }
 
   json_object* jdevice = NULL;
-  json_bool jdevice_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_CONNECTED_FIELD, &jdevice);
+  json_bool jdevice_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_DEVICE_ID_FIELD, &jdevice);
   if (jdevice_exists) {
     inf.device_id_ = json_object_get_string(jdevice);
   }

@@ -1,4 +1,7 @@
-0.5.0 /
+0.5.1 /
+[Alexandr Topilski]
+
+0.5.0 / August 2, 2017
 [Alexandr Topilski]
 - Raspberry3 PI support
 - Optimize evenl loop

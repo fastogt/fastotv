@@ -40,6 +40,7 @@ class UserStateInfo : public JsonSerializer<UserStateInfo> {
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
+  device_id_t GetDeviceId() const;
   user_id_t GetUserId() const;
   bool IsConnected() const;
 

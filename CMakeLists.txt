@@ -16,7 +16,7 @@ SET(BRANDING_PROJECT_MAINTAINER_NAME "Alexandr Topilski" CACHE STRING "Name of m
 SET(BRANDING_PROJECT_GITHUB_FORK "https://www.github.com/fastogt/fastotv" CACHE STRING "Branding fork url for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_GITHUB_ISSUES "https://www.github.com/fastogt/fastotv/issues" CACHE STRING "Branding issues url for ${BRANDING_PROJECT_NAME}") #default
 
-SET(BRANDING_PROJECT_HOMEPAGE_LINK "http://www.fastotv.com" CACHE STRING "Home page link for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_HOMEPAGE_LINK "https://www.fastotv.com" CACHE STRING "Home page link for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_FACEBOOK_LINK "https://www.facebook.com/profile.php?id=100016809641223" CACHE STRING "Facebook link for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_TWITTER_LINK "https://twitter.com/FastoTv" CACHE STRING "Twitter link for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_GITHUB_LINK "https://www.github.com/fastogt/fastotv" CACHE STRING "Github link for ${BRANDING_PROJECT_NAME}") #default

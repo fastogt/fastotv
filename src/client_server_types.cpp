@@ -18,19 +18,28 @@
 
 #include "client_server_types.h"
 
-#include <common/convert2string.h>
+#include <common/compress/snappy_compress.h>
 
 namespace fasto {
 namespace fastotv {
 
 std::string Encode(const std::string& data) {
-  std::string enc_data = common::utils::hex::encode(data, false);
+  std::string enc_data;
+  common::Error err = common::compress::EncodeSnappy(data, &enc_data);
+  if (err && err->IsError()) {
+    return std::string();
+  }
   return enc_data;
 }
 
 std::string Decode(const std::string& data) {
-  std::string dec = common::utils::hex::decode(data);
-  return dec;
+  std::string enc_data;
+  common::Error err = common::compress::DecodeSnappy(data, &enc_data);
+  if (err && err->IsError()) {
+    return std::string();
+  }
+  return enc_data;
 }
+
 }  // namespace fastotv
 }  // namespace fasto
