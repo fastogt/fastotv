@@ -18,29 +18,58 @@
 
 #include "client_server_types.h"
 
+#define HEX_ALGO 0
+#define SNAPPY_ALGO 1
+
+#define COMPRESS_ALGO SNAPPY_ALGO
+
+#if COMPRESS_ALGO == HEX_ALGO
 #include <common/compress/hex.h>
+#else
+#include <common/compress/snappy_compress.h>
+#endif
 
 namespace fasto {
 namespace fastotv {
 
 std::string Encode(const std::string& data) {
   std::string enc_data;
+#if COMPRESS_ALGO == HEX_ALGO
   common::Error err = common::compress::EncodeHex(data, false, &enc_data);
   if (err && err->IsError()) {
-    DNOTREACHED();
+    NOTREACHED();
     return std::string();
   }
+#else
+  common::Error err = common::compress::EncodeSnappy(data, &enc_data);
+  if (err && err->IsError()) {
+    NOTREACHED();
+    return std::string();
+  }
+#endif
 
+  CHECK(data == Decode(enc_data));
   return enc_data;
 }
 
 std::string Decode(const std::string& data) {
-  std::string enc_data;
-  common::Error err = common::compress::DecodeHex(data, &enc_data);
+  std::string dec_data;
+#if COMPRESS_ALGO == HEX_ALGO
+  common::Error err = common::compress::DecodeHex(data, &dec_data);
   if (err && err->IsError()) {
+    NOTREACHED();
     return std::string();
   }
-  return enc_data;
+#else
+  common::Error err = common::compress::DecodeSnappy(data, &dec_data);
+  if (err && err->IsError()) {
+    NOTREACHED();
+    return std::string();
+  }
+#endif
+
+  //CHECK(data == Encode(dec_data));
+  return dec_data;
 }
 
 }  // namespace fastotv
