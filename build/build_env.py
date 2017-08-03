@@ -561,10 +561,12 @@ if __name__ == "__main__":
 
     if argv.with_cmake:
         request.build_cmake(argv.cmake_version)
-    if argv.with_common:
-        request.build_common()
+    if argv.with_snappy:
+        request.build_snappy()
     if argv.with_jsonc:
         request.build_jsonc()
+    if argv.with_common:
+        request.build_common()
 
     if argv.with_sdl2:
         request.build_sdl2(argv.sdl2_version)
