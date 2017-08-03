@@ -419,6 +419,32 @@ class BuildRequest(object):
             os.chdir(self.build_dir_path_)
             raise ex
 
+    def build_snappy(self):
+        pwd = os.getcwd()
+        cmake_project_root_abs_path = '..'
+        if not os.path.exists(cmake_project_root_abs_path):
+            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
+
+        # project static options
+        prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
+
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
+                      prefix_args]
+        try:
+            cloned_dir = utils.git_clone('https://github.com/fastogt/snappy.git', pwd)
+            os.chdir(cloned_dir)
+
+            os.mkdir('build_cmake_release')
+            os.chdir('build_cmake_release')
+            snappy_cmake_line = list(cmake_line)
+            subprocess.call(snappy_cmake_line)
+            subprocess.call(['make', 'install'])
+            os.chdir(self.build_dir_path_)
+            shutil.rmtree(cloned_dir)
+        except Exception as ex:
+            os.chdir(self.build_dir_path_)
+            raise ex
+
 
 if __name__ == "__main__":
     sdl2_default_version = '2.0.5'
@@ -505,6 +531,11 @@ if __name__ == "__main__":
                         action='store_true')
     parser.add_argument('--without-json-c', help='build without json-c', dest='with_jsonc', action='store_false')
     parser.set_defaults(with_jsonc=True)
+
+    parser.add_argument('--with-snappy', help='build snappy (default, version: git master)', dest='with_snappy',
+                        action='store_true')
+    parser.add_argument('--without-snappy', help='build without snappy', dest='with_snappy', action='store_false')
+    parser.set_defaults(with_snappy=True)
 
     parser.add_argument('--platform', help='build for platform (default: {0})'.format(host_os), default=host_os)
     parser.add_argument('--architecture', help='architecture (default: {0})'.format(arch_host_os),
