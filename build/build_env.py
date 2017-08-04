@@ -20,7 +20,6 @@ CMAKE_SRC_ROOT = "https://cmake.org/files/"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 SDL_IMAGE_SRC_ROOT = "https://www.libsdl.org/projects/SDL_image/release/"
 SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
-FFMPEG_SRC_ROOT = "http://ffmpeg.org/releases/"
 OPENSSL_SRC_ROOT = "https://www.openssl.org/source/"
 
 ARCH_CMAKE_COMP = "gz"
@@ -29,8 +28,6 @@ ARCH_OPENSSL_COMP = "gz"
 ARCH_OPENSSL_EXT = "tar." + ARCH_OPENSSL_COMP
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
-ARCH_FFMPEG_COMP = "bz2"
-ARCH_FFMPEG_EXT = "tar." + ARCH_FFMPEG_COMP
 
 g_script_path = os.path.realpath(sys.argv[0])
 
@@ -104,6 +101,10 @@ class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
                                                     '--disable-video-x11']),
                                  utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                                         '--enable-omx-rpi']))
+
+    @abstractmethod
+    def install_specific(self):
+        pass
 
 
 class RaspberryPi1ModelB(RaspberryPiDevice):  # ARMv6(armv6l) ARM11, omx/mmal
@@ -320,7 +321,7 @@ class BuildRequest(object):
     def build(self, url, compiler_flags: utils.CompileInfo, executable='./configure'):
         utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_, executable)
 
-    def build_ffmpeg(self, version):
+    def build_ffmpeg(self):
         ffmpeg_platform_args = ['--disable-doc',
                                 '--disable-programs', '--enable-openssl',
                                 '--disable-opencl', '--disable-encoders',
@@ -338,9 +339,14 @@ class BuildRequest(object):
         elif platform_name == 'macosx':
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
 
+        pwd = os.getcwd()
         compiler_flags = self.device_.ffmpeg_compile_info()
         compiler_flags.extend_flags(ffmpeg_platform_args)
-        self.build('{0}ffmpeg-{1}.{2}'.format(FFMPEG_SRC_ROOT, version, ARCH_FFMPEG_EXT), compiler_flags)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/ffmpeg.git', pwd)
+        os.chdir(cloned_dir)
+        utils.build_command_configure(compiler_flags, g_script_path, self.prefix_path_)
+        os.chdir(pwd)
+        shutil.rmtree(cloned_dir)
 
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
@@ -451,7 +457,6 @@ if __name__ == "__main__":
     sdl2_image_default_version = '2.0.1'
     sdl2_ttf_default_version = '2.0.14'
     openssl_default_version = '1.0.2l'
-    ffmpeg_default_version = '3.3'
     cmake_default_version = '3.9.0'
 
     host_os = system_info.get_os()
@@ -508,11 +513,9 @@ if __name__ == "__main__":
                         default=openssl_default_version)
     parser.set_defaults(with_openssl=True)
 
-    parser.add_argument('--with-ffmpeg', help='build ffmpeg (default, version:{0})'.format(ffmpeg_default_version),
-                        dest='with_ffmpeg', action='store_true')
+    parser.add_argument('--with-ffmpeg', help='build ffmpeg (default, version: git master)', dest='with_ffmpeg',
+                        action='store_true')
     parser.add_argument('--without-ffmpeg', help='build without ffmpeg', dest='with_ffmpeg', action='store_false')
-    parser.add_argument('--ffmpeg-version', help='ffmpeg version (default: {0})'.format(ffmpeg_default_version),
-                        default=ffmpeg_default_version)
     parser.set_defaults(with_ffmpeg=True)
 
     parser.add_argument('--with-cmake', help='build cmake (default, version:{0})'.format(cmake_default_version),
@@ -577,4 +580,4 @@ if __name__ == "__main__":
     if argv.with_openssl:
         request.build_openssl(argv.openssl_version)
     if argv.with_ffmpeg:
-        request.build_ffmpeg(argv.ffmpeg_version)
+        request.build_ffmpeg()
