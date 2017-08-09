@@ -92,7 +92,7 @@ void InnerTcpHandlerHost::PostLooped(common::libev::IoLoop* server) {
 
 void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) {
   if (ping_client_id_timer_ == id) {
-    std::vector<common::libev::IoClient*> online_clients = server->Clients();
+    std::vector<common::libev::IoClient*> online_clients = server->GetClients();
     for (size_t i = 0; i < online_clients.size(); ++i) {
       common::libev::IoClient* client = online_clients[i];
       InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);

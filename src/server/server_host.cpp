@@ -40,7 +40,7 @@ namespace fasto {
 namespace fastotv {
 namespace {
 int exec_server(common::libev::tcp::TcpServer* server) {
-  common::Error err = server->Bind();
+  common::Error err = server->Bind(true);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
     return EXIT_FAILURE;

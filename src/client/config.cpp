@@ -349,8 +349,10 @@ common::Error save_config_file(const std::string& config_absolute_path, TVConfig
   config_save_file.WriteFormated(
       CONFIG_APP_OPTIONS_SYNC_FIELD "=%s\n",
       options->app_options.av_sync_type == fasto::fastotv::client::core::AV_SYNC_AUDIO_MASTER ? "audio" : "video");
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_FRAMEDROP_FIELD "=%d\n", options->app_options.framedrop);
-  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_BYTES_FIELD "=%d\n", options->app_options.seek_by_bytes);
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_FRAMEDROP_FIELD "=%d\n",
+                                 static_cast<int>(options->app_options.framedrop));
+  config_save_file.WriteFormated(CONFIG_APP_OPTIONS_BYTES_FIELD "=%d\n",
+                                 static_cast<int>(options->app_options.seek_by_bytes));
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_INFBUF_FIELD "=%d\n", options->app_options.infinite_buffer);
 
   config_save_file.WriteFormated(CONFIG_APP_OPTIONS_VN_FIELD "=%s\n",
