@@ -1,3 +1,5 @@
+#include <thread>
+
 #include <common/application/application.h>
 #include <common/threads/types.h>  // for condition_variable, mutex
 
@@ -212,9 +214,9 @@ class FakeApplication : public common::application::IApplicationImpl {
   }
 
  private:
-  typedef common::unique_lock<common::mutex> lock_t;
-  common::condition_variable stop_cond_;
-  common::mutex stop_mutex_;
+  typedef std::unique_lock<std::mutex> lock_t;
+  std::condition_variable stop_cond_;
+  std::mutex stop_mutex_;
   bool stop_;
 };
 

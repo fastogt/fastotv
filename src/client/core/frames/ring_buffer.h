@@ -18,9 +18,12 @@
 
 #pragma once
 
-#include <common/logger.h>         // for COMPACT_LOG_FILE_CRIT
-#include <common/macros.h>         // for DCHECK
-#include <common/threads/types.h>  // for condition_variable, mutex
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+
+#include <common/logger.h>  // for COMPACT_LOG_FILE_CRIT
+#include <common/macros.h>  // for DCHECK
 #include <common/types.h>
 
 namespace fasto {
@@ -141,15 +144,15 @@ class RingBuffer {
   }
 
  private:
-  typedef common::unique_lock<common::mutex> lock_t;
-  common::condition_variable queue_cond_;
-  common::mutex queue_mutex_;
+  typedef std::unique_lock<std::mutex> lock_t;
+  std::condition_variable queue_cond_;
+  std::mutex queue_mutex_;
 
   pointer_type queue_[buffer_size];
   mutable size_t rindex_shown_;  // in mostly const
   size_t rindex_;
-  common::atomic<size_t> windex_;
-  common::atomic<size_t> size_;
+  std::atomic<size_t> windex_;
+  std::atomic<size_t> size_;
   bool stoped_;
 };
 

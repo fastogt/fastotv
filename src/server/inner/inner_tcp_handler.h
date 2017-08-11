@@ -27,7 +27,6 @@
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/libev/types.h>             // for timer_id_t
 #include <common/macros.h>                  // for WARN_UNUSED_RESULT
-#include <common/smart_ptr.h>
 
 #include "commands/commands.h"                      // for cmd_seq_t
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...

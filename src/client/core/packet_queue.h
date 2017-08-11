@@ -20,6 +20,9 @@
 
 #include <stdint.h>  // for int64_t
 
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
 #include <queue>
 
 #include "ffmpeg_config.h"
@@ -28,8 +31,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>  // for AVPacket
 }
 
-#include <common/macros.h>         // for DISALLOW_COPY_AND_ASSIGN
-#include <common/threads/types.h>  // for condition_variable, mutex
+#include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN
 #include <common/types.h>
 
 namespace fasto {
@@ -61,12 +63,12 @@ class PacketQueue {  // compressed queue data
   DISALLOW_COPY_AND_ASSIGN(PacketQueue);
 
   std::deque<AVPacket> queue_;
-  common::atomic<int> size_;
-  common::atomic<int64_t> duration_;
+  std::atomic<int> size_;
+  std::atomic<int64_t> duration_;
   bool abort_request_;
-  typedef common::unique_lock<common::mutex> lock_t;
-  common::condition_variable cond_;
-  common::mutex mutex_;
+  typedef std::unique_lock<std::mutex> lock_t;
+  std::condition_variable cond_;
+  std::mutex mutex_;
 };
 
 }  // namespace core

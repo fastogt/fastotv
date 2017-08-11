@@ -22,6 +22,7 @@
 
 #include <functional>  // for function
 #include <string>      // for string
+#include <atomic>
 
 #include "commands/commands.h"  // for cmd_seq_t
 
@@ -80,7 +81,7 @@ class InnerServerCommandSeqParser {
                                          int argc,
                                          char* argv[]) = 0;  // called when argv not NULL and argc > 0
 
-  common::atomic<id_t> id_;
+  std::atomic<id_t> id_;
   std::vector<RequestCallback> subscribed_requests_;
 };
 

@@ -18,9 +18,11 @@
 
 #pragma once
 
-#include <common/error.h>          // for Error
-#include <common/macros.h>         // for WARN_UNUSED_RESULT, DISALLOW_COPY_...
-#include <common/threads/types.h>  // for condition_variable, mutex
+#include <condition_variable>
+#include <mutex>
+
+#include <common/error.h>   // for Error
+#include <common/macros.h>  // for WARN_UNUSED_RESULT, DISALLOW_COPY_...
 
 #include "redis/redis_storage.h"
 
@@ -65,8 +67,8 @@ class ServerHost {
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ServerHost);
-  common::mutex stop_mutex_;
-  common::condition_variable stop_cond_;
+  std::mutex stop_mutex_;
+  std::condition_variable stop_cond_;
   bool stop_;
 
   inner::InnerTcpHandlerHost* handler_;

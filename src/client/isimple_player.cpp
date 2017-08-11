@@ -724,7 +724,7 @@ void ISimplePlayer::DrawStatistic() {
     return;
   }
 
-  core::VideoState::stats_t stats = common::make_shared<core::Stats>();
+  core::VideoState::stats_t stats = std::make_shared<core::Stats>();
   if (stream_) {
     stats = stream_->GetStatistic();
   }

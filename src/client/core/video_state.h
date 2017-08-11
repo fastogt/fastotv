@@ -20,6 +20,8 @@
 
 #include <stdint.h>  // for int64_t, uint8_t
 
+#include <condition_variable>
+#include <mutex>
 #include <string>  // for string
 
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
@@ -31,8 +33,7 @@ extern "C" {
 #include <libavutil/frame.h>       // for AVFrame
 }
 
-#include <common/macros.h>  // for WARN_UNUSED_RESULT, DISALLOW_C...
-#include <common/smart_ptr.h>
+#include <common/macros.h>         // for WARN_UNUSED_RESULT, DISALLOW_C...
 #include <common/threads/types.h>  // for condition_variable, mutex
 #include <common/url.h>            // for Uri
 
@@ -80,7 +81,7 @@ class VideoFrameQueue;
 
 class VideoState {
  public:
-  typedef common::shared_ptr<Stats> stats_t;
+  typedef std::shared_ptr<Stats> stats_t;
   typedef frames::VideoFrameQueue<VIDEO_PICTURE_QUEUE_SIZE> video_frame_queue_t;
   typedef frames::AudioFrameQueue<SAMPLE_QUEUE_SIZE> audio_frame_queue_t;
 
@@ -177,7 +178,7 @@ class VideoState {
   AppOptions opt_;
   ComplexOptions copt_;
 
-  common::shared_ptr<common::threads::Thread<int> > read_tid_;
+  std::shared_ptr<common::threads::Thread<int> > read_tid_;
   bool force_refresh_;
   int read_pause_return_;
   AVFormatContext* ic_;
@@ -230,8 +231,8 @@ class VideoState {
   int last_video_stream_;
   int last_audio_stream_;
 
-  common::shared_ptr<common::threads::Thread<int> > vdecoder_tid_;
-  common::shared_ptr<common::threads::Thread<int> > adecoder_tid_;
+  std::shared_ptr<common::threads::Thread<int> > vdecoder_tid_;
+  std::shared_ptr<common::threads::Thread<int> > adecoder_tid_;
 
   bool paused_;
   bool last_paused_;
@@ -247,8 +248,8 @@ class VideoState {
   int64_t seek_rel_;
   int seek_flags_;
 
-  common::condition_variable read_thread_cond_;
-  common::mutex read_thread_mutex_;
+  std::condition_variable read_thread_cond_;
+  std::mutex read_thread_mutex_;
 };
 
 }  // namespace core

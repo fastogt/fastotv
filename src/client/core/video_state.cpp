@@ -1364,7 +1364,7 @@ int VideoState::ReadThread() {
     /* if the queue are full, no need to read more */
     if (opt_.infinite_buffer < 1 && (video_packet_queue->GetSize() + audio_packet_queue->GetSize() > MAX_QUEUE_SIZE ||
                                      (astream_->HasEnoughPackets() && vstream_->HasEnoughPackets()))) {
-      common::unique_lock<common::mutex> lock(read_thread_mutex_);
+      std::unique_lock<std::mutex> lock(read_thread_mutex_);
       std::cv_status interrupt_status = read_thread_cond_.wait_for(lock, std::chrono::milliseconds(10));
       if (interrupt_status == std::cv_status::no_timeout) {  // if notify
       }

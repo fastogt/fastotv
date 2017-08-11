@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <common/smart_ptr.h>
+#include <memory>
 
 #include "channels_info.h"
 
@@ -27,7 +27,7 @@ namespace fastotv {
 namespace client {
 
 class SurfaceSaver;
-typedef common::shared_ptr<SurfaceSaver> channel_icon_t;
+typedef std::shared_ptr<SurfaceSaver> channel_icon_t;
 
 class PlaylistEntry {
  public:

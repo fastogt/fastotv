@@ -297,7 +297,7 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
     const std::string icon_path = entry.GetIconPath();
     const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
     SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-    channel_icon_t shared_surface = common::make_shared<SurfaceSaver>(surface);
+    channel_icon_t shared_surface = std::make_shared<SurfaceSaver>(surface);
     entry.SetIcon(shared_surface);
     play_list_.push_back(entry);
 

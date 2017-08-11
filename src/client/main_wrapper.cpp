@@ -169,10 +169,10 @@ class FFmpegApplication : public B {
 
  private:
   static int lockmgr(void** mtx, enum AVLockOp op) {
-    common::mutex* lmtx = static_cast<common::mutex*>(*mtx);
+    std::mutex* lmtx = static_cast<std::mutex*>(*mtx);
     switch (op) {
       case AV_LOCK_CREATE: {
-        *mtx = new common::mutex;
+        *mtx = new std::mutex;
         if (!*mtx) {
           return 1;
         }

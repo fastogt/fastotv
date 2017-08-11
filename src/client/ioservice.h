@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <common/smart_ptr.h>
+#include <memory>
 
 #include <common/libev/io_loop.h>           // for IoLoop
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
@@ -57,7 +57,7 @@ class IoService : public common::libev::ILoopController {
   virtual void HandleStarted() override;
   virtual void HandleStoped() override;
 
-  common::shared_ptr<common::threads::Thread<int> > loop_thread_;
+  std::shared_ptr<common::threads::Thread<int> > loop_thread_;
 };
 
 }  // namespace client

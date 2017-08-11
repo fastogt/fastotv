@@ -79,7 +79,7 @@ void ServerHost::Stop() {
 }
 
 int ServerHost::Exec() {
-  common::shared_ptr<common::threads::Thread<int> > connection_thread =
+  std::shared_ptr<common::threads::Thread<int> > connection_thread =
       THREAD_MANAGER()->CreateThread(&exec_server, server_);
   bool result = connection_thread->Start();
   if (!result) {
@@ -88,7 +88,7 @@ int ServerHost::Exec() {
   }
 
   while (!stop_) {
-    common::unique_lock<common::mutex> lock(stop_mutex_);
+    std::unique_lock<std::mutex> lock(stop_mutex_);
     std::cv_status interrupt_status = stop_cond_.wait_for(lock, std::chrono::seconds(timeout_seconds));
     if (interrupt_status == std::cv_status::no_timeout) {  // if notify
       if (stop_) {
