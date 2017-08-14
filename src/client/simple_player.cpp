@@ -25,8 +25,7 @@ namespace client {
 SimplePlayer::SimplePlayer(const PlayerOptions& options) : ISimplePlayer(options), stream_url_() {}
 
 std::string SimplePlayer::GetCurrentUrlName() const {
-  std::string url_str = stream_url_.Url();
-  return url_str;
+  return stream_url_.GetUrl();
 }
 
 void SimplePlayer::SetUrlLocation(stream_id sid,

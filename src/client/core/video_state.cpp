@@ -1189,11 +1189,11 @@ int VideoState::ReadThread() {
 
   bool scan_all_pmts_set = false;
   std::string uri_str;
-  if (uri_.Scheme() == common::uri::Uri::file) {
-    common::uri::Upath upath = uri_.Path();
+  if (uri_.GetScheme() == common::uri::Uri::file) {
+    common::uri::Upath upath = uri_.GetPath();
     uri_str = upath.GetPath();
   } else {
-    uri_str = uri_.Url();
+    uri_str = uri_.GetUrl();
   }
   const char* in_filename = common::utils::c_strornull(uri_str);
   ic->interrupt_callback.callback = decode_interrupt_callback;

@@ -108,10 +108,10 @@ common::Error EpgInfo::SerializeImpl(serialize_type* deserialized) const {
 
   json_object* obj = json_object_new_object();
   json_object_object_add(obj, EPG_INFO_ID_FIELD, json_object_new_string(id_.c_str()));
-  const std::string url_str = uri_.Url();
+  const std::string url_str = uri_.GetUrl();
   json_object_object_add(obj, EPG_INFO_URL_FIELD, json_object_new_string(url_str.c_str()));
   json_object_object_add(obj, EPG_INFO_NAME_FIELD, json_object_new_string(display_name_.c_str()));
-  const std::string icon_url_str = icon_src_.Url();
+  const std::string icon_url_str = icon_src_.GetUrl();
   json_object_object_add(obj, EPG_INFO_ICON_FIELD, json_object_new_string(icon_url_str.c_str()));
 
   json_object* jprograms = json_object_new_array();
