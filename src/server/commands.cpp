@@ -37,15 +37,15 @@
 // responces
 // get_server_info
 #define SERVER_GET_SERVER_INFO_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_SERVER_INFO, "'%s'")
-#define SERVER_GET_SERVER_INFO_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_SERVER_INFO, "'%s'")
+#define SERVER_GET_SERVER_INFO_COMMAND_RESP_SUCCSESS_1S GENEATATE_SUCCESS_FMT(CLIENT_GET_SERVER_INFO, "%s")
 
 // get_channels
 #define SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_CHANNELS, "'%s'")
-#define SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "'%s'")
+#define SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1S GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "%s")
 
 // ping
 #define SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING_COMMAND, "'%s'")
-#define SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "'%s'")
+#define SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1S GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "%s")
 
 namespace fasto {
 namespace fastotv {
@@ -81,23 +81,23 @@ cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_tex
   return MakeApproveResponce(id, SERVER_PING_COMMAND_APPROVE_FAIL_1E, error_text);
 }
 
-cmd_responce_t GetServerInfoResponceSuccsess(cmd_seq_t id, const std::string& server_info) {
-  return MakeResponce(id, SERVER_GET_SERVER_INFO_COMMAND_RESP_SUCCSESS_1E, server_info);
+cmd_responce_t GetServerInfoResponceSuccsess(cmd_seq_t id, const serializet_t &server_info) {
+  return MakeResponce(id, SERVER_GET_SERVER_INFO_COMMAND_RESP_SUCCSESS_1S, server_info);
 }
 
 cmd_responce_t GetServerInfoResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_GET_SERVER_INFO_COMMAND_RESP_FAIL_1E, error_text);
 }
 
-cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const std::string& channels_info) {
-  return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E, channels_info);
+cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const serializet_t& channels_info) {
+  return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1S, channels_info);
 }
 cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E, error_text);
 }
 
-cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const std::string& ping_info) {
-  return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info);
+cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t &ping_info) {
+  return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1S, ping_info);
 }
 cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E, error_text);

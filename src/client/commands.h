@@ -44,11 +44,11 @@ cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& er
 
 // responces
 // who are you
-cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const std::string& auth);  // escaped
+cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const serializet_t& auth_serialized);
 // system info
-cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info);  // escaped
+cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const serializet_t& system_info);
 // ping
-cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const std::string& ping_info);  // escaped
+cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info_serialized);
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

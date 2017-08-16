@@ -50,7 +50,7 @@ InnerSubHandler::~InnerSubHandler() {}
 void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {  // incoming responce
   const char* state_command = argc > 0 ? argv[0] : FAIL_COMMAND;                         // [OK|FAIL]
   const char* command = argc > 1 ? argv[1] : "null";                                     // command
-  const std::string json = argc > 2 ? Decode(argv[2]) : "{}";                            // encoded args
+  const std::string json = argc > 2 ? argv[2] : "{}";                                    // encoded args
 
   ResponceInfo resp(request_id, state_command, command, json);
   PublishResponce(resp);

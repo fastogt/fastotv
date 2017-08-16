@@ -274,9 +274,8 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
       NOTREACHED();
     }
     std::string ping_str = json_object_get_string(jping);
-    std::string enc_ping = Encode(ping_str);
     json_object_put(jping);
-    const cmd_responce_t pong = PingResponceSuccsess(id, enc_ping);
+    const cmd_responce_t pong = PingResponceSuccsess(id, ping_str);
     err = connection->Write(pong);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
@@ -292,8 +291,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
 
     std::string auth_str = json_object_get_string(jauth);
     json_object_put(jauth);
-    std::string enc_auth = Encode(auth_str);
-    cmd_responce_t iAm = WhoAreYouResponceSuccsess(id, enc_auth);
+    cmd_responce_t iAm = WhoAreYouResponceSuccsess(id, auth_str);
     err = connection->Write(iAm);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
@@ -313,15 +311,14 @@ void InnerTcpHandler::HandleInnerRequestCommand(fasto::fastotv::inner::InnerClie
     std::string os = common::MemSPrintf("%s %s(%s)", os_name, os_version, os_arch);
 
     ClientInfo info(config_.ainf.GetLogin(), os, brand, ram_total, ram_free, current_bandwidth_);
-    std::string info_json_string;
+    serializet_t info_json_string;
     common::Error err = info.SerializeToString(&info_json_string);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
       return;
     }
 
-    std::string enc_info = Encode(info_json_string);
-    cmd_responce_t resp = SystemInfoResponceSuccsess(id, enc_info);
+    cmd_responce_t resp = SystemInfoResponceSuccsess(id, info_json_string);
     err = connection->Write(resp);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
@@ -500,8 +497,7 @@ common::Error InnerTcpHandler::ParserResponceResponceCommand(int argc, char* arg
     return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
-  std::string raw = Decode(arg_2_str);
-  json_object* obj = json_tokener_parse(raw.c_str());
+  json_object* obj = json_tokener_parse(arg_2_str);
   if (!obj) {
     return common::make_inval_error_value( common::Value::E_ERROR);
   }
