@@ -52,7 +52,7 @@ class RequestCallback {
 
 class InnerServerCommandSeqParser {
  public:
-  typedef uintmax_t id_t;
+  typedef uint64_t id_t;
 
   InnerServerCommandSeqParser();
   virtual ~InnerServerCommandSeqParser();

@@ -18,13 +18,7 @@
 
 #include "inner/inner_client.h"
 
-#if defined(OS_POSIX)
-#include <netinet/in.h>  // for ntohl
-#else
-#include <winsock2.h>  // for ntohl
-#endif
-#include <stdlib.h>  // for free, malloc
-#include <string.h>  // for memcpy
+#include <common/sys_byteorder.h>
 
 namespace fasto {
 namespace fastotv {
@@ -108,7 +102,7 @@ common::Error InnerClient::ReadCommand(std::string* out) {
     return err;
   }
 
-  message_size = ntohl(message_size);  // stable
+  message_size = common::NetToHost32(message_size);  // stable
   char* msg = static_cast<char*>(malloc(message_size));
   err = ReadMessage(msg, message_size);
   if (err && err->IsError()) {
@@ -129,10 +123,11 @@ common::Error InnerClient::WriteInner(const std::string& data) {
   const size_t size = data.size();
 
   const protocoled_size_t data_size = size;
+  const protocoled_size_t message_size = common::HostToNet32(data_size);  // stabled
   const size_t protocoled_data_len = size + sizeof(protocoled_size_t);
 
   char* protocoled_data = static_cast<char*>(malloc(protocoled_data_len));
-  betoh_memcpy(protocoled_data, &data_size, sizeof(protocoled_size_t));
+  memcpy(protocoled_data, &message_size, sizeof(protocoled_size_t));
   memcpy(protocoled_data + sizeof(protocoled_size_t), data_ptr, data_size);
   size_t nwrite = 0;
   common::Error err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);

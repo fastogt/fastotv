@@ -23,7 +23,7 @@
 #include <string>  // for string
 
 #include <common/convert2string.h>
-#include <common/macros.h>  // for betoh_memcpy, DNOTREACHED
+#include <common/sys_byteorder.h>
 
 #include "inner/inner_client.h"  // for InnerClient
 
@@ -57,9 +57,10 @@ InnerServerCommandSeqParser::InnerServerCommandSeqParser() : id_() {}
 InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
 
 cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
-  id_t next_id = id_++;
+  const id_t next_id = id_++;
   char bytes[sizeof(id_t)];
-  betoh_memcpy(&bytes, &next_id, sizeof(id_t));
+  const id_t stabled = common::NetToHost64(next_id); // for human readable hex
+  memcpy(&bytes, &stabled, sizeof(id_t));
   cmd_seq_t hexed = common::utils::hex::encode(bytes, true);
   return hexed;
 }
