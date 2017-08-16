@@ -87,16 +87,16 @@ cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& er
   return MakeApproveResponce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1E, error_text);
 }
 
-cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const std::string& auth) {
-  return MakeResponce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1E, auth);
+cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const serializet_t& auth_serialized) {
+  return MakeResponce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1E, auth_serialized);
 }
 
-cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const std::string& system_info) {
+cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const serializet_t &system_info) {
   return MakeResponce(id, CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1E, system_info);
 }
 
-cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const std::string& ping_info) {
-  return MakeResponce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info);
+cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info_serialized) {
+  return MakeResponce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info_serialized);
 }
 }  // namespace client
 }  // namespace fastotv

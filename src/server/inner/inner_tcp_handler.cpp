@@ -205,11 +205,10 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       delete connection;
       return;
     }
-    std::string ping_info_str = json_object_get_string(jping_info);
+    serializet_t ping_info_str = json_object_get_string(jping_info);
     json_object_put(jping_info);
-    std::string ping_info = Encode(ping_info_str);
 
-    cmd_responce_t pong = PingResponceSuccsess(id, ping_info);
+    cmd_responce_t pong = PingResponceSuccsess(id, ping_info_str);
     err = connection->Write(pong);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
@@ -239,11 +238,10 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       NOTREACHED();
     }
 
-    std::string server_info_str = json_object_get_string(jserver_info);
+    serializet_t server_info_str = json_object_get_string(jserver_info);
     json_object_put(jserver_info);
-    std::string hex_server_info = Encode(server_info_str);
 
-    cmd_responce_t server_info_responce = GetServerInfoResponceSuccsess(id, hex_server_info);
+    cmd_responce_t server_info_responce = GetServerInfoResponceSuccsess(id, server_info_str);
     err = connection->Write(server_info_responce);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
@@ -266,7 +264,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
 
-    std::string channels_str;
+    serializet_t channels_str;
     ChannelsInfo chan = user.GetChannelInfo();
     err = chan.SerializeToString(&channels_str);
     if (err && err->IsError()) {
@@ -274,8 +272,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
 
-    std::string enc_channels = Encode(channels_str);
-    cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, enc_channels);
+    cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, channels_str);
     err = connection->Write(channels_responce);
     if (err && err->IsError()) {
       DEBUG_MSG_ERROR(err);
@@ -530,8 +527,7 @@ common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc, char*
     return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
-  std::string raw = Decode(arg_2_str);
-  json_object* obj = json_tokener_parse(raw.c_str());
+  json_object* obj = json_tokener_parse(arg_2_str);
   if (!obj) {
     return common::make_inval_error_value( common::Value::E_ERROR);
   }

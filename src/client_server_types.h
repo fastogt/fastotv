@@ -37,9 +37,7 @@ typedef std::string device_id_t;  // unique, mongodb id, registered by user
 typedef size_t bandwidth_t;       // bytes/s
 typedef common::time64_t timestamp_t;
 
-// simple encode/decode algorithm
-std::string Encode(const std::string& data);
-std::string Decode(const std::string& data);
+typedef std::string serializet_t;
 
 }  // namespace fastotv
 }  // namespace fasto

@@ -20,12 +20,18 @@
 
 #include <common/sys_byteorder.h>
 
+#include <common/text_decoders/compress_snappy_edcoder.h>
+
 namespace fasto {
 namespace fastotv {
 namespace inner {
 
 InnerClient::InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info)
-    : common::libev::tcp::TcpClient(server, info) {}
+    : common::libev::tcp::TcpClient(server, info), compressor_(new common::CompressSnappyEDcoder) {}
+
+InnerClient::~InnerClient() {
+  destroy(&compressor_);
+}
 
 const char* InnerClient::GetClassName() const {
   return "InnerClient";
@@ -110,8 +116,16 @@ common::Error InnerClient::ReadCommand(std::string* out) {
     return err;
   }
 
-  *out = std::string(msg, message_size);
+  const std::string compressed = std::string(msg, message_size);
   free(msg);
+
+  std::string un_compressed;
+  err = compressor_->Decode(compressed, &un_compressed);
+  if (err && err->IsError()) {
+    return err;
+  }
+
+  *out = un_compressed;
   return common::Error();
 }
 
@@ -120,8 +134,14 @@ common::Error InnerClient::WriteMessage(const std::string& message) {
     return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
-  const char* data_ptr = message.data();
-  const size_t size = message.size();
+  std::string compressed;
+  common::Error err = compressor_->Encode(message, &compressed);
+  if (err && err->IsError()) {
+    return err;
+  }
+
+  const char* data_ptr = compressed.data();
+  const size_t size = compressed.size();
 
   const protocoled_size_t data_size = size;
   const protocoled_size_t message_size = common::HostToNet32(data_size);  // stabled
@@ -131,7 +151,7 @@ common::Error InnerClient::WriteMessage(const std::string& message) {
   memcpy(protocoled_data, &message_size, sizeof(protocoled_size_t));
   memcpy(protocoled_data + sizeof(protocoled_size_t), data_ptr, data_size);
   size_t nwrite = 0;
-  common::Error err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);
+  err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);
   if (nwrite != protocoled_data_len) {  // connection closed
     free(protocoled_data);
     return common::make_error_value(
