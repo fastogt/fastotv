@@ -36,16 +36,16 @@
 
 // responces
 // who are you
-#define CLIENT_WHO_ARE_YOU_COMMAND_RESP_FAIL_1S GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU_COMMAND, "%s")
-#define CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1S GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU_COMMAND, "%s")
+#define CLIENT_WHO_ARE_YOU_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
+#define CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
 
 // system info
-#define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_FAIL_1S GENEATATE_FAIL_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "%s")
-#define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1S GENEATATE_SUCCESS_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "%s")
+#define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "'%s'")
+#define CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "'%s'")
 
 // ping
-#define CLIENT_PING_COMMAND_COMMAND_RESP_FAIL_1S GENEATATE_FAIL_FMT(SERVER_PING_COMMAND, "%s")
-#define CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1S GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "%s")
+#define CLIENT_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING_COMMAND, "'%s'")
+#define CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "'%s'")
 
 namespace fasto {
 namespace fastotv {
@@ -88,15 +88,15 @@ cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& er
 }
 
 cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const serializet_t& auth_serialized) {
-  return MakeResponce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1S, auth_serialized);
+  return MakeResponce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1E, auth_serialized);
 }
 
 cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const serializet_t &system_info) {
-  return MakeResponce(id, CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1S, system_info);
+  return MakeResponce(id, CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1E, system_info);
 }
 
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info_serialized) {
-  return MakeResponce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1S, ping_info_serialized);
+  return MakeResponce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info_serialized);
 }
 }  // namespace client
 }  // namespace fastotv

@@ -59,9 +59,9 @@ InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
 cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
   const id_t next_id = id_++;
   char bytes[sizeof(id_t)];
-  const id_t stabled = common::NetToHost64(next_id); // for human readable hex
+  const id_t stabled = common::NetToHost64(next_id);  // for human readable hex
   memcpy(&bytes, &stabled, sizeof(id_t));
-  cmd_seq_t hexed = common::utils::hex::encode(bytes, true);
+  cmd_seq_t hexed = common::utils::hex::encode(std::string(bytes, sizeof(id_t)), true);
   return hexed;
 }
 
