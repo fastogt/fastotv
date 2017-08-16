@@ -40,5 +40,6 @@ typedef common::time64_t timestamp_t;
 // simple encode/decode algorithm
 std::string Encode(const std::string& data);
 std::string Decode(const std::string& data);
+
 }  // namespace fastotv
 }  // namespace fasto

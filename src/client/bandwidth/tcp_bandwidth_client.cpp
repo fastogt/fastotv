@@ -47,7 +47,7 @@ TcpBandwidthClient::TcpBandwidthClient(common::libev::IoLoop* server,
       downloaded_bytes_per_sec_(0),
       host_type_(hs) {}
 
-const char* TcpBandwidthClient::ClassName() const {
+const char* TcpBandwidthClient::GetClassName() const {
   return "TcpBandwidthClient";
 }
 

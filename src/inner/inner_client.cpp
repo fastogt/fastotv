@@ -27,20 +27,20 @@ namespace inner {
 InnerClient::InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info)
     : common::libev::tcp::TcpClient(server, info) {}
 
-const char* InnerClient::ClassName() const {
+const char* InnerClient::GetClassName() const {
   return "InnerClient";
 }
 
 common::Error InnerClient::Write(const cmd_request_t& request) {
-  return WriteInner(request.GetCmd());
+  return WriteMessage(request.GetCmd());
 }
 
 common::Error InnerClient::Write(const cmd_responce_t& responce) {
-  return WriteInner(responce.GetCmd());
+  return WriteMessage(responce.GetCmd());
 }
 
 common::Error InnerClient::Write(const cmd_approve_t& approve) {
-  return WriteInner(approve.GetCmd());
+  return WriteMessage(approve.GetCmd());
 }
 
 common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
@@ -115,12 +115,13 @@ common::Error InnerClient::ReadCommand(std::string* out) {
   return common::Error();
 }
 
-common::Error InnerClient::WriteInner(const std::string& data) {
-  if (data.empty()) {
+common::Error InnerClient::WriteMessage(const std::string& message) {
+  if (message.empty()) {
     return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
-  const char* data_ptr = data.data();
-  const size_t size = data.size();
+
+  const char* data_ptr = message.data();
+  const size_t size = message.size();
 
   const protocoled_size_t data_size = size;
   const protocoled_size_t message_size = common::HostToNet32(data_size);  // stabled
@@ -137,6 +138,7 @@ common::Error InnerClient::WriteInner(const std::string& data) {
         common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu", protocoled_data_len, nwrite),
         common::ErrorValue::E_ERROR);
   }
+
   free(protocoled_data);
   return err;
 }

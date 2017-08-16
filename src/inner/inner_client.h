@@ -47,18 +47,19 @@ class InnerClient : public common::libev::tcp::TcpClient {
  public:
   typedef uint32_t protocoled_size_t;  // sizeof 4 byte
   InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info);
-  const char* ClassName() const override;
+  const char* GetClassName() const override;
 
   common::Error Write(const cmd_request_t& request) WARN_UNUSED_RESULT;
   common::Error Write(const cmd_responce_t& responce) WARN_UNUSED_RESULT;
   common::Error Write(const cmd_approve_t& approve) WARN_UNUSED_RESULT;
 
-  common::Error ReadDataSize(protocoled_size_t* sz) WARN_UNUSED_RESULT;
-  common::Error ReadMessage(char* out, protocoled_size_t size) WARN_UNUSED_RESULT;
   common::Error ReadCommand(std::string* out) WARN_UNUSED_RESULT;
 
  private:
-  common::Error WriteInner(const std::string& data) WARN_UNUSED_RESULT;
+  common::Error ReadDataSize(protocoled_size_t* sz) WARN_UNUSED_RESULT;
+  common::Error ReadMessage(char* out, protocoled_size_t size) WARN_UNUSED_RESULT;
+
+  common::Error WriteMessage(const std::string& message) WARN_UNUSED_RESULT;
   using common::libev::tcp::TcpClient::Write;
   using common::libev::tcp::TcpClient::Read;
 };

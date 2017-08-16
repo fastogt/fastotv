@@ -60,7 +60,7 @@ bool ChannelInfo::IsEnableVideo() const {
 
 common::Error ChannelInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   json_object* obj = json_object_new_object();
@@ -79,13 +79,13 @@ common::Error ChannelInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error ChannelInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   json_object* jepg = NULL;
   json_bool jepg_exists = json_object_object_get_ex(serialized, CHANNEL_INFO_EPG_FIELD, &jepg);
   if (!jepg_exists) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   EpgInfo epg;
@@ -112,7 +112,7 @@ common::Error ChannelInfo::DeSerialize(const serialize_type& serialized, value_t
 
   fasto::fastotv::ChannelInfo url(epg, enable_audio, enable_video);
   if (!url.IsValid()) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   *obj = url;

@@ -33,7 +33,7 @@ class ISerializer {
 
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT {
     if (!deserialized) {
-      return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+      return common::make_inval_error_value( common::Value::E_ERROR);
     }
     return SerializeImpl(deserialized);
   }

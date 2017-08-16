@@ -23,6 +23,7 @@
 
 namespace fasto {
 namespace fastotv {
+
 std::string CmdIdToString(cmd_id_t id) {
   static const std::string seq_names[] = {"REQUEST", "RESPONCE", "APPROVE"};
   if (id < SIZEOFMASS(seq_names)) {
@@ -77,5 +78,6 @@ common::Error ParseCommand(const std::string& command, cmd_id_t* cmd_id, cmd_seq
   *cmd_str = id_ptr + 1;
   return common::Error();
 }
+
 }  // namespace fastotv
 }  // namespace fasto

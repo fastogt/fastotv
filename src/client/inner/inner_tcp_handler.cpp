@@ -81,7 +81,7 @@ void InnerTcpHandler::Moved(common::libev::IoLoop* server, common::libev::IoClie
 void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   if (client == inner_connection_) {
     fasto::fastotv::inner::InnerClient* iclient = static_cast<fasto::fastotv::inner::InnerClient*>(client);
-    common::net::socket_info info = iclient->Info();
+    common::net::socket_info info = iclient->GetInfo();
     common::net::HostAndPort host(info.host(), info.port());
     core::events::ConnectInfo cinf(host);
     fApp->PostEvent(new core::events::ClientDisconnectedEvent(this, cinf));
@@ -97,7 +97,7 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   }
 
   bandwidth_requests_.erase(it);
-  common::net::socket_info info = band_client->Info();
+  common::net::socket_info info = band_client->GetInfo();
   const common::net::HostAndPort host(info.host(), info.port());
   const BandwidthHostType hs = band_client->GetHostType();
   const bandwidth_t band = band_client->GetDownloadBytesPerSecond();
@@ -238,7 +238,7 @@ common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(common::libev:
                                                                   BandwidthHostType hs,
                                                                   bandwidth::TcpBandwidthClient** out_band) {
   if (!server || !out_band) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   common::net::socket_info client_info;
@@ -434,7 +434,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
 
     common::net::HostAndPort host = sinf.GetBandwidthHost();
     bandwidth::TcpBandwidthClient* band_connection = NULL;
-    common::libev::IoLoop* server = connection->Server();
+    common::libev::IoLoop* server = connection->GetServer();
     const BandwidthHostType hs = MAIN_SERVER;
     err = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
     if (err && err->IsError()) {
@@ -492,18 +492,18 @@ common::Error InnerTcpHandler::HandleInnerFailedResponceCommand(fastotv::inner::
 
 common::Error InnerTcpHandler::ParserResponceResponceCommand(int argc, char* argv[], json_object** out) {
   if (argc < 2) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   const char* arg_2_str = argv[2];
   if (!arg_2_str) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   std::string raw = Decode(arg_2_str);
   json_object* obj = json_tokener_parse(raw.c_str());
   if (!obj) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   *out = obj;

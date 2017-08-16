@@ -304,7 +304,7 @@ TVConfig::~TVConfig() {}
 
 common::Error load_config_file(const std::string& config_absolute_path, TVConfig* options) {
   if (!options) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   std::string copy_config_absolute_path = config_absolute_path;
@@ -320,7 +320,7 @@ common::Error load_config_file(const std::string& config_absolute_path, TVConfig
 
 common::Error save_config_file(const std::string& config_absolute_path, TVConfig* options) {
   if (!options || config_absolute_path.empty()) {
-    return common::make_error_value("Invalid input argument(s)", common::Value::E_ERROR);
+    return common::make_inval_error_value( common::Value::E_ERROR);
   }
 
   common::file_system::ascii_string_path config_path(config_absolute_path);

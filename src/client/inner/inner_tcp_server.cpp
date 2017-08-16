@@ -27,7 +27,7 @@ namespace inner {
 
 InnerTcpServer::InnerTcpServer(common::libev::IoLoopObserver* observer) : IoLoop(observer) {}
 
-const char* InnerTcpServer::ClassName() const {
+const char* InnerTcpServer::GetClassName() const {
   return "InnerTcpServer";
 }
 
