@@ -18,22 +18,16 @@
 
 #pragma once
 
-#include <stdint.h>  // for uint32_t
-
-#include <string>  // for string
-
-#include <common/error.h>                 // for Error
 #include <common/libev/tcp/tcp_client.h>  // for TcpClient
-#include <common/macros.h>                // for WARN_UNUSED_RESULT
 
 #include "commands/commands.h"  // for cmd_approve_t, cmd_request_t
 
 namespace common {
+class IEDcoder;
 namespace libev {
 class IoLoop;
 }
-}  // namespace common
-namespace common {
+
 namespace net {
 class socket_info;
 }
@@ -47,6 +41,8 @@ class InnerClient : public common::libev::tcp::TcpClient {
  public:
   typedef uint32_t protocoled_size_t;  // sizeof 4 byte
   InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info);
+  virtual ~InnerClient();
+
   const char* GetClassName() const override;
 
   common::Error Write(const cmd_request_t& request) WARN_UNUSED_RESULT;
@@ -62,6 +58,9 @@ class InnerClient : public common::libev::tcp::TcpClient {
   common::Error WriteMessage(const std::string& message) WARN_UNUSED_RESULT;
   using common::libev::tcp::TcpClient::Write;
   using common::libev::tcp::TcpClient::Read;
+
+ private:
+  common::IEDcoder* compressor_;
 };
 
 }  // namespace inner

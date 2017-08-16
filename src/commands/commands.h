@@ -24,6 +24,8 @@
 #include <common/error.h>
 #include <common/sprintf.h>
 
+#include "client_server_types.h"
+
 #define END_OF_COMMAND "\r\n"
 
 #define FAIL_COMMAND "fail"
@@ -66,7 +68,6 @@ namespace fastotv {
 
 typedef std::string cmd_seq_t;
 typedef uint8_t cmd_id_t;
-typedef std::string serializet_t;
 
 std::string CmdIdToString(cmd_id_t id);
 
