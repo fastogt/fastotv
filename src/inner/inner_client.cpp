@@ -116,11 +116,10 @@ common::Error InnerClient::ReadCommand(std::string* out) {
     return err;
   }
 
-  const std::string compressed = std::string(msg, message_size);
-  free(msg);
-
+  const common::StringPiece compressed(msg, message_size);
   std::string un_compressed;
   err = compressor_->Decode(compressed, &un_compressed);
+  free(msg);
   if (err && err->IsError()) {
     return err;
   }
