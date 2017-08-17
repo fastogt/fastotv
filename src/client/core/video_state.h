@@ -23,6 +23,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <string>  // for string
+#include <memory>
 
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 
