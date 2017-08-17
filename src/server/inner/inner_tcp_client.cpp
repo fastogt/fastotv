@@ -34,7 +34,7 @@ bool InnerTcpClient::IsAnonimUser() const {
   return anonim_user == hinfo_;
 }
 
-const char* InnerTcpClient::GetClassName() const {
+const char* InnerTcpClient::ClassName() const {
   return "InnerTcpClient";
 }
 

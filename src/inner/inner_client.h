@@ -43,7 +43,7 @@ class InnerClient : public common::libev::tcp::TcpClient {
   InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info);
   virtual ~InnerClient();
 
-  const char* GetClassName() const override;
+  const char* ClassName() const override;
 
   common::Error Write(const cmd_request_t& request) WARN_UNUSED_RESULT;
   common::Error Write(const cmd_responce_t& responce) WARN_UNUSED_RESULT;

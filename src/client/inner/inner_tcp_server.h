@@ -40,7 +40,7 @@ namespace inner {
 class InnerTcpServer : public common::libev::IoLoop {
  public:
   explicit InnerTcpServer(common::libev::IoLoopObserver* observer);
-  virtual const char* GetClassName() const override;
+  virtual const char* ClassName() const override;
 
  protected:
   virtual common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;

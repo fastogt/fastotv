@@ -33,7 +33,7 @@ InnerClient::~InnerClient() {
   destroy(&compressor_);
 }
 
-const char* InnerClient::GetClassName() const {
+const char* InnerClient::ClassName() const {
   return "InnerClient";
 }
 
