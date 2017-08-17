@@ -18,6 +18,8 @@
 
 #include "client/isimple_player.h"
 
+#include <thread>
+
 #include <common/application/application.h>  // for fApp, Application
 #include <common/threads/thread_manager.h>
 
@@ -276,8 +278,8 @@ bool ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
 void ISimplePlayer::HandleRequestVideoEvent(core::events::RequestVideoEvent* event) {
   core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
   core::events::FrameInfo fr = avent->info();
-  bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
-  if (res) {
+  bool is_ok = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
+  if (is_ok) {
     return;
   }
 
@@ -287,12 +289,10 @@ void ISimplePlayer::HandleRequestVideoEvent(core::events::RequestVideoEvent* eve
 
 void ISimplePlayer::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
   core::events::QuitStreamInfo inf = event->info();
-  if (inf.stream_ && inf.stream_->IsAborted()) {
-    return;
+  if (inf.error && inf.error->IsError()) {
+    FreeStreamSafe();
+    SwitchToChannelErrorMode(inf.error);
   }
-
-  FreeStreamSafe();
-  SwitchToChannelErrorMode(inf.error);
 }
 
 void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
@@ -586,8 +586,11 @@ void ISimplePlayer::Quit() {
 }
 
 void ISimplePlayer::SwitchToChannelErrorMode(common::Error err) {
+  CHECK(err);
+
   std::string url_str = GetCurrentUrlName();
-  std::string error_str = common::MemSPrintf("%s (%s)", url_str, err->GetDescription());
+  std::string err_descr = err->GetDescription();
+  std::string error_str = common::MemSPrintf("%s (%s)", url_str, err_descr);
   RUNTIME_LOG(err->GetLevel()) << error_str;
   InitWindow(error_str, FAILED_STATE);
 }
@@ -876,7 +879,9 @@ void ISimplePlayer::PauseStream() {
 void ISimplePlayer::SetStream(core::VideoState* stream) {
   FreeStreamSafe();
   stream_ = stream;
-  if (!stream_) {
+  if (stream_) {
+    stream_->Exec();
+  } else {
     common::Error err = common::make_error_value("Failed to create stream", common::Value::E_ERROR);
     SwitchToChannelErrorMode(err);
   }
@@ -888,12 +893,6 @@ core::VideoState* ISimplePlayer::CreateStream(stream_id sid,
                                               core::ComplexOptions copt) {
   core::VideoState* stream = new core::VideoState(sid, uri, opt, copt, this);
   options_.last_showed_channel_id = sid;
-  int res = stream->Exec();
-  if (res == EXIT_FAILURE) {
-    delete stream;
-    return nullptr;
-  }
-
   return stream;
 }
 
