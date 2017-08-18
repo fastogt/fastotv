@@ -34,7 +34,7 @@ namespace inputs {
 
 common::Error LircInit(int* fd, struct lirc_config** cfg) {
   if (!fd || !cfg) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   char* copy = common::strdup(PROJECT_NAME_LOWERCASE);  // copy for removing warning
@@ -114,7 +114,7 @@ common::Error LircInputClient::Write(const char* data, size_t size, size_t* nwri
 
 common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
   if (!out || !nread) {
-    return common::make_error_value("Invalid input argument(s)", common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
   return sock_.Read(out, max_size, nread);

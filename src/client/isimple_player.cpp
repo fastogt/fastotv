@@ -35,6 +35,8 @@
 #include "client/core/sdl_utils.h"
 #include "client/core/video_state.h"  // for VideoState
 
+#include "client/core/application/sdl2_application.h"
+
 /* Step size for volume control */
 #define VOLUME_STEP 1
 
@@ -583,6 +585,8 @@ void ISimplePlayer::UpdateDisplayInterval(AVRational fps) {
 
   double frames_per_sec = fps.den / static_cast<double>(fps.num);
   update_video_timer_interval_msec_ = static_cast<uint32_t>(frames_per_sec * 1000);
+  core::application::Sdl2Application* app = static_cast<core::application::Sdl2Application*>(fApp);
+  app->SetDisplayUpdateTimeout(update_video_timer_interval_msec_);
 }
 
 void ISimplePlayer::sdl_audio_callback(void* user_data, uint8_t* stream, int len) {

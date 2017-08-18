@@ -20,6 +20,10 @@
 
 #include "client/core/types.h"  // for clock64_t
 
+extern "C" {
+#include <libavutil/rational.h>    // for AVRational
+}
+
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -33,6 +37,7 @@ struct Stats {  // stream realtime statistic
 
   clock64_t GetDiffStreams() const;  // msec
   double GetFps() const;
+  double GetSreamFps() const;
 
   size_t frame_drops_early;
   size_t frame_drops_late;
@@ -50,6 +55,8 @@ struct Stats {  // stream realtime statistic
   bandwidth_t video_bandwidth;  // bytes/s
   bandwidth_t audio_bandwidth;  // bytes/s
   HWAccelID active_hwaccel;
+
+  AVRational frame_rate;
 
  private:
   const common::time64_t start_ts_;

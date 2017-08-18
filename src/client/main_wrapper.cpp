@@ -126,10 +126,9 @@ int prepare_to_start(const std::string& app_directory_absolute_path,
   return EXIT_SUCCESS;
 }
 
-template <typename B>
-class FFmpegApplication : public B {
+class FFmpegApplication : public fasto::fastotv::client::core::application::Sdl2Application {
  public:
-  typedef B base_class_t;
+  typedef fasto::fastotv::client::core::application::Sdl2Application base_class_t;
   FFmpegApplication(int argc, char** argv) : base_class_t(argc, argv) {
     avformat_network_init();
     signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
@@ -140,13 +139,19 @@ class FFmpegApplication : public B {
     av_log_set_level(ffmpeg_log_level);
   }
 
-  virtual int PreExec() override {
+  ~FFmpegApplication() {
+    av_lockmgr_register(NULL);
+    avformat_network_deinit();
+  }
+
+ private:
+  virtual int PreExecImpl() override {
     if (av_lockmgr_register(lockmgr)) {
       ERROR_LOG() << "Could not initialize lock manager!";
       return EXIT_FAILURE;
     }
 
-    int pre_exec = base_class_t::PreExec();
+    int pre_exec = base_class_t::PreExecImpl();
     fasto::fastotv::client::core::events::PreExecInfo inf(pre_exec);
     fasto::fastotv::client::core::events::PreExecEvent* pre_event =
         new fasto::fastotv::client::core::events::PreExecEvent(this, inf);
@@ -154,20 +159,14 @@ class FFmpegApplication : public B {
     return pre_exec;
   }
 
-  virtual int PostExec() override {
+  virtual int PostExecImpl() override {
     fasto::fastotv::client::core::events::PostExecInfo inf(EXIT_SUCCESS);
     fasto::fastotv::client::core::events::PostExecEvent* post_event =
         new fasto::fastotv::client::core::events::PostExecEvent(this, inf);
     base_class_t::SendEvent(post_event);
-    return base_class_t::PostExec();
+    return base_class_t::PostExecImpl();
   }
 
-  ~FFmpegApplication() {
-    av_lockmgr_register(NULL);
-    avformat_network_deinit();
-  }
-
- private:
   static int lockmgr(void** mtx, enum AVLockOp op) {
     std::mutex* lmtx = static_cast<std::mutex*>(*mtx);
     switch (op) {
@@ -194,10 +193,6 @@ class FFmpegApplication : public B {
     return 1;
   }
 };
-
-common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** argv) {
-  return new FFmpegApplication<fasto::fastotv::client::core::application::Sdl2Application>(argc, argv);
-}
 
 }  // namespace
 
@@ -231,7 +226,7 @@ int main_simple_player_application(int argc,
   INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
 #endif
 
-  common::application::Application app(argc, argv, &CreateApplicationImpl);
+  FFmpegApplication app(argc, argv);
 
   AVDictionary* sws_dict = NULL;
   AVDictionary* swr_opts = NULL;
@@ -281,7 +276,7 @@ int main_single_application(int argc,
   INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
 #endif
 
-  common::application::Application app(argc, argv, &CreateApplicationImpl);
+  FFmpegApplication app(argc, argv);
 
   const std::string pid_absolute_path = common::file_system::make_path(runtime_directory_absolute_path, PID_FILE_NAME);
   if (!common::file_system::is_valid_path(pid_absolute_path)) {

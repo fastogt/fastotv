@@ -367,11 +367,11 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
 
     if (!uauth.IsValid()) {
-      const std::string error_str = "Invalid input argument(s)";
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::Error lerr = common::make_inval_error_value(common::Value::E_ERROR);
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, lerr->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
-      return common::make_error_value(error_str, common::Value::E_ERROR);
+      return lerr;
     }
 
     user_id_t uid;
@@ -453,11 +453,11 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
 
     if (!cinf.IsValid()) {
-      const std::string error_str = "Invalid input argument(s)";
-      cmd_approve_t resp = SystemInfoApproveResponceFail(id, error_str);
+      common::Error lerr = common::make_inval_error_value(common::Value::E_ERROR);
+      cmd_approve_t resp = SystemInfoApproveResponceFail(id, lerr->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
-      return common::make_error_value(error_str, common::Value::E_ERROR);
+      return lerr;
     }
 
     cmd_approve_t resp = SystemInfoApproveResponceSuccsess(id);

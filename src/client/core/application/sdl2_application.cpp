@@ -55,13 +55,15 @@ namespace core {
 namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
-    : common::application::IApplicationImpl(argc, argv), dispatcher_() {}
+    : common::application::IApplication(argc, argv),
+      dispatcher_(),
+      update_display_timeout_msec_(event_timeout_wait_msec) {}
 
 Sdl2Application::~Sdl2Application() {
   THREAD_MANAGER()->FreeInstance();
 }
 
-int Sdl2Application::PreExec() {
+int Sdl2Application::PreExecImpl() {
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
   int res = SDL_Init(flags);
   if (res != 0) {
@@ -81,7 +83,7 @@ int Sdl2Application::PreExec() {
   return EXIT_SUCCESS;
 }
 
-int Sdl2Application::Exec() {
+int Sdl2Application::ExecImpl() {
   SDL_PumpEvents();
   while (true) {
     SDL_Event event;
@@ -92,9 +94,9 @@ int Sdl2Application::Exec() {
       events::TimeInfo inf;
       events::TimerEvent* timer_event = new events::TimerEvent(this, inf);
       HandleEvent(timer_event);
-      int work_time = SDL_GetTicks() - start_wait_ts;
-      int sleep_timeout = event_timeout_wait_msec - work_time;
-      if (sleep_timeout && InRange<int>(sleep_timeout, 0, event_timeout_wait_msec)) {
+      Uint32 work_time = SDL_GetTicks() - start_wait_ts;
+      int sleep_timeout = update_display_timeout_msec_ - work_time;
+      if (sleep_timeout && InRange<int>(sleep_timeout, 0, update_display_timeout_msec_)) {
         SDL_Delay(sleep_timeout);
       }
     } else {  // some events
@@ -151,7 +153,7 @@ void Sdl2Application::ProcessEvent(SDL_Event* event) {
   }
 }
 
-int Sdl2Application::PostExec() {
+int Sdl2Application::PostExecImpl() {
   TTF_Quit();
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
@@ -162,6 +164,14 @@ int Sdl2Application::PostExec() {
   }
   SDL_Quit();
   return EXIT_SUCCESS;
+}
+
+Sdl2Application::update_display_timeout_t Sdl2Application::GetDisplayUpdateTimeout() const {
+  return update_display_timeout_msec_;
+}
+
+void Sdl2Application::SetDisplayUpdateTimeout(update_display_timeout_t msec) {
+  update_display_timeout_msec_ = msec;
 }
 
 void Sdl2Application::Subscribe(common::IListener* listener, common::events_size_t id) {
@@ -198,7 +208,7 @@ void Sdl2Application::PostEvent(common::IEvent* event) {
   }
 }
 
-void Sdl2Application::Exit(int result) {
+void Sdl2Application::ExitImpl(int result) {
   UNUSED(result);
   PostEvent(NULL);  // FIX ME
 }
@@ -283,14 +293,6 @@ void Sdl2Application::HandleQuitEvent(SDL_QuitEvent* event) {
   events::QuitInfo inf;
   events::QuitEvent* quit_event = new events::QuitEvent(this, inf);
   HandleEvent(quit_event);
-}
-
-Uint32 Sdl2Application::timer_callback(Uint32 interval, void* user_data) {
-  Sdl2Application* app = static_cast<Sdl2Application*>(user_data);
-  events::TimeInfo inf;
-  events::TimerEvent* timer_event = new events::TimerEvent(app, inf);
-  app->PostEvent(timer_event);
-  return interval;
 }
 
 }  // namespace application

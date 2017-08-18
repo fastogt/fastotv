@@ -24,6 +24,8 @@
 
 #include "client_server_types.h"  // for bandwidth_t
 
+#define DEFAULT_FRAME_PER_SEC 25
+
 namespace fasto {
 namespace fastotv {
 namespace client {

@@ -232,7 +232,6 @@ VideoState::VideoState(stream_id id, const common::uri::Uri& uri, const AppOptio
       paused_(false),
       last_paused_(false),
       eof_(false),
-      abort_mutex_(),
       abort_request_(false),
       stats_(new Stats),
       handler_(nullptr),
@@ -671,7 +670,6 @@ int VideoState::Exec() {
 }
 
 void VideoState::Abort() {
-  lock_t lock(abort_mutex_);
   abort_request_ = true;
 }
 
@@ -683,12 +681,11 @@ bool VideoState::IsAudioThread() const {
   return common::threads::IsCurrentThread(adecoder_tid_.get());
 }
 
-bool VideoState::IsAborted() {
-  lock_t lock(abort_mutex_);
+bool VideoState::IsAborted() const {
   return abort_request_;
 }
 
-bool VideoState::IsStreamReady() {
+bool VideoState::IsStreamReady() const {
   if (!astream_ && !vstream_) {
     return false;
   }
@@ -1317,7 +1314,9 @@ int VideoState::ReadRoutine() {
 
   DesireBytesPerSec video_bandwidth_calc = video_stream->DesireBandwith();
   if (video_stream->IsOpened()) {
-    DCHECK(video_bandwidth_calc.IsValid());
+    if (video_bandwidth_calc.IsValid()) {
+      WARNING_LOG() << "Can't calculate bandwidth.";
+    }
   }
   DesireBytesPerSec audio_bandwidth_calc = audio_stream->DesireBandwith();
   if (audio_stream->IsOpened()) {
@@ -1589,8 +1588,9 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
-                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height,
+          static_cast<const char*>(
+              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

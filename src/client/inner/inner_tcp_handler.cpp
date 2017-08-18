@@ -406,7 +406,6 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     common::Error err = ClientPingInfo::DeSerialize(obj, &ping_info);
     json_object_put(obj);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
       return err;
     }
     cmd_approve_t resp = PingApproveResponceSuccsess(id);
@@ -425,7 +424,6 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     common::Error err = ServerInfo::DeSerialize(obj, &sinf);
     json_object_put(obj);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
       return err;
     }
 
@@ -435,7 +433,6 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     const BandwidthHostType hs = MAIN_SERVER;
     err = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
       core::events::BandwidtInfo cinf(host, 0, hs);
       current_bandwidth_ = 0;
       auto ex_event = make_exception_event(new core::events::BandwidthEstimationEvent(this, cinf), err);
@@ -460,7 +457,6 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     common::Error err = ChannelsInfo::DeSerialize(obj, &chan);
     json_object_put(obj);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
       return err;
     }
 

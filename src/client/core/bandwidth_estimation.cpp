@@ -171,7 +171,7 @@ DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_siz
     }
   }
 
-  DNOTREACHED() << "Size: " << encoded_frame_size.width << "x" << encoded_frame_size.height
+  WARNING_LOG() << "Size: " << encoded_frame_size.width << "x" << encoded_frame_size.height
                 << ", framerate: " << framerate << ", profile: " << profile;
   return DesireBytesPerSec(KBITS_TO_BYTES(0), KBITS_TO_BYTES(0));
 }

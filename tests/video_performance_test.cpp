@@ -102,11 +102,11 @@ class FakeHandler : public VideoStateHandler {
   }
 };
 
-class FakeApplication : public common::application::IApplicationImpl {
+class FakeApplication : public common::application::IApplication {
  public:
-  FakeApplication(int argc, char** argv) : common::application::IApplicationImpl(argc, argv), stop_(false) {}
+  FakeApplication(int argc, char** argv) : common::application::IApplication(argc, argv), stop_(false) {}
 
-  virtual int PreExec() override { /* register all codecs, demux and protocols */
+  virtual int PreExecImpl() override { /* register all codecs, demux and protocols */
 #if CONFIG_AVDEVICE
     avdevice_register_all();
 #endif
@@ -116,7 +116,8 @@ class FakeApplication : public common::application::IApplicationImpl {
     av_register_all();
     return EXIT_SUCCESS;
   }
-  virtual int Exec() override {
+
+  virtual int ExecImpl() override {
     const stream_id id = "unique";
     // wget http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
     const common::uri::Uri uri = common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
@@ -153,7 +154,8 @@ class FakeApplication : public common::application::IApplicationImpl {
     delete dict;
     return EXIT_SUCCESS;
   }
-  virtual int PostExec() override { return EXIT_SUCCESS; }
+
+  virtual int PostExecImpl() override { return EXIT_SUCCESS; }
 
   virtual void PostEvent(event_t* event) override {
     events::Event* fevent = static_cast<events::Event*>(event);
@@ -189,7 +191,7 @@ class FakeApplication : public common::application::IApplicationImpl {
   virtual void ShowCursor() override {}
   virtual void HideCursor() override {}
 
-  virtual void Exit(int result) override {
+  virtual void ExitImpl(int result) override {
     UNUSED(result);
     lock_t lock(stop_mutex_);
     stop_ = true;
@@ -217,10 +219,6 @@ class FakeApplication : public common::application::IApplicationImpl {
   bool stop_;
 };
 
-common::application::IApplicationImpl* CreateApplicationImpl(int argc, char** argv) {
-  return new FakeApplication(argc, argv);
-}
-
 int main(int argc, char** argv) {
 #if defined(NDEBUG)
   common::logging::LEVEL_LOG level = common::logging::L_INFO;
@@ -233,6 +231,6 @@ int main(int argc, char** argv) {
 #else
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
-  common::application::Application app(argc, argv, &CreateApplicationImpl);
+  FakeApplication app(argc, argv);
   return app.Exec();
 }

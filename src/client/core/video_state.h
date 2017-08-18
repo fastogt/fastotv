@@ -96,8 +96,8 @@ class VideoState {
   bool IsVideoThread() const;
   bool IsAudioThread() const;
 
-  bool IsAborted();
-  bool IsStreamReady();
+  bool IsAborted() const;
+  bool IsStreamReady() const;
   stream_id GetId() const;
   const common::uri::Uri& GetUri() const;
   virtual ~VideoState();
@@ -236,8 +236,7 @@ class VideoState {
   bool eof_;
 
   typedef std::unique_lock<std::mutex> lock_t;
-  std::mutex abort_mutex_;
-  bool abort_request_;
+  volatile bool abort_request_;
 
   stats_t stats_;
   VideoStateHandler* handler_;

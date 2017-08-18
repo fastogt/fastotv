@@ -42,7 +42,8 @@ Stats::Stats()
       video_bandwidth(0),
       audio_bandwidth(0),
       active_hwaccel(HWACCEL_NONE),
-      start_ts_(common::time::current_mstime()) {}
+      start_ts_(common::time::current_mstime()),
+      frame_rate({1, DEFAULT_FRAME_PER_SEC}) {}
 
 clock64_t Stats::GetDiffStreams() const {
   if (fmt == (HAVE_VIDEO_STREAM | HAVE_AUDIO_STREAM)) {
@@ -65,6 +66,8 @@ double Stats::GetFps() const {
   double fps_per_msec = static_cast<double>(frame_processed) / diff;
   return fps_per_msec * 1000;
 }
+
+double Stats::GetSreamFps() const {}
 
 std::string ConvertStreamFormatToString(stream_format_t fmt) {
   if (fmt == (fasto::fastotv::client::core::HAVE_VIDEO_STREAM | fasto::fastotv::client::core::HAVE_AUDIO_STREAM)) {

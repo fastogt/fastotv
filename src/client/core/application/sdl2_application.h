@@ -27,21 +27,20 @@
 
 #include "client/core/events/events_base.h"  // for Event, EventsType
 
+#include "client/core/types.h"
+
 namespace fasto {
 namespace fastotv {
 namespace client {
 namespace core {
 namespace application {
 
-class Sdl2Application : public common::application::IApplicationImpl {
+class Sdl2Application : public common::application::IApplication {
  public:
-  enum { event_timeout_wait_msec = 1000 / 25 };
+  typedef Uint32 update_display_timeout_t;
+  enum { event_timeout_wait_msec = 1000 / DEFAULT_FRAME_PER_SEC };
   Sdl2Application(int argc, char** argv);
   ~Sdl2Application();
-
-  virtual int PreExec() override;   // EXIT_FAILURE, EXIT_SUCCESS
-  virtual int Exec() override;      // EXIT_FAILURE, EXIT_SUCCESS
-  virtual int PostExec() override;  // EXIT_FAILURE, EXIT_SUCCESS
 
   virtual void Subscribe(common::IListener* listener, common::events_size_t id) override;
   virtual void UnSubscribe(common::IListener* listener, common::events_size_t id) override;
@@ -50,8 +49,6 @@ class Sdl2Application : public common::application::IApplicationImpl {
   virtual void SendEvent(common::IEvent* event) override;
   virtual void PostEvent(common::IEvent* event) override;
 
-  virtual void Exit(int result) override;
-
   virtual void ShowCursor() override;
   virtual void HideCursor() override;
 
@@ -59,6 +56,9 @@ class Sdl2Application : public common::application::IApplicationImpl {
                                                    common::application::timer_callback_t cb,
                                                    void* user_data) override;
   virtual bool RemoveTimer(common::application::timer_id_t id) override;
+
+  update_display_timeout_t GetDisplayUpdateTimeout() const;
+  void SetDisplayUpdateTimeout(update_display_timeout_t msec);
 
  protected:
   virtual void HandleEvent(core::events::Event* event);
@@ -74,11 +74,16 @@ class Sdl2Application : public common::application::IApplicationImpl {
 
   virtual void HandleQuitEvent(SDL_QuitEvent* event);
 
+  virtual int PreExecImpl() override;   // EXIT_FAILURE, EXIT_SUCCESS
+  virtual int ExecImpl() override;      // EXIT_FAILURE, EXIT_SUCCESS
+  virtual int PostExecImpl() override;  // EXIT_FAILURE, EXIT_SUCCESS
+  virtual void ExitImpl(int result) override;
+
  private:
   void ProcessEvent(SDL_Event* event);
 
-  static Uint32 timer_callback(Uint32 interval, void* user_data);
   common::threads::EventDispatcher<EventsType> dispatcher_;
+  update_display_timeout_t update_display_timeout_msec_;
 };
 }  // namespace application
 }  // namespace core
