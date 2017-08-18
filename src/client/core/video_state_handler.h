@@ -41,23 +41,23 @@ class VideoStateHandler {
   virtual ~VideoStateHandler();
 
   // audio
-  virtual bool HandleRequestAudio(VideoState* stream,
-                                  int64_t wanted_channel_layout,
-                                  int wanted_nb_channels,
-                                  int wanted_sample_rate,
-                                  AudioParams* audio_hw_params,
-                                  int* audio_buff_size) WARN_UNUSED_RESULT = 0;  // init audio
+  virtual common::Error HandleRequestAudio(VideoState* stream,
+                                           int64_t wanted_channel_layout,
+                                           int wanted_nb_channels,
+                                           int wanted_sample_rate,
+                                           AudioParams* audio_hw_params,
+                                           int* audio_buff_size) WARN_UNUSED_RESULT = 0;  // init audio
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr,
                              const uint8_t* src,
                              uint32_t len,
                              int volume) = 0;  // change volume
 
   // video
-  virtual bool HandleRequestVideo(VideoState* stream,
-                                  int width,
-                                  int height,
-                                  int av_pixel_format,
-                                  AVRational aspect_ratio) WARN_UNUSED_RESULT = 0;  // init video
+  virtual common::Error HandleRequestVideo(VideoState* stream,
+                                           int width,
+                                           int height,
+                                           int av_pixel_format,
+                                           AVRational aspect_ratio) WARN_UNUSED_RESULT = 0;  // init video
 
   virtual void HandleFrameResize(VideoState* stream, int width, int height, int av_pixel_format, AVRational sar) = 0;
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) = 0;

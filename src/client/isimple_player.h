@@ -28,6 +28,13 @@
 #include "client/core/app_options.h"    // for AppOptions, ComplexOp...
 #include "client/core/events/events.h"  // for PostExecEvent, PreExe...
 
+namespace common {
+namespace threads {
+template <typename RT>
+class Thread;
+}
+}  // namespace common
+
 namespace fasto {
 namespace fastotv {
 namespace client {
@@ -81,20 +88,20 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
-  virtual bool HandleRequestAudio(core::VideoState* stream,
-                                  int64_t wanted_channel_layout,
-                                  int wanted_nb_channels,
-                                  int wanted_sample_rate,
-                                  core::AudioParams* audio_hw_params,
-                                  int* audio_buff_size) override;
+  virtual common::Error HandleRequestAudio(core::VideoState* stream,
+                                           int64_t wanted_channel_layout,
+                                           int wanted_nb_channels,
+                                           int wanted_sample_rate,
+                                           core::AudioParams* audio_hw_params,
+                                           int* audio_buff_size) override;
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override;
 
   // should executed in gui thread
-  virtual bool HandleRequestVideo(core::VideoState* stream,
-                                  int width,
-                                  int height,
-                                  int av_pixel_format,
-                                  AVRational aspect_ratio) override;
+  virtual common::Error HandleRequestVideo(core::VideoState* stream,
+                                           int width,
+                                           int height,
+                                           int av_pixel_format,
+                                           AVRational aspect_ratio) override;
 
   virtual void HandlePreExecEvent(core::events::PreExecEvent* event);
   virtual void HandlePostExecEvent(core::events::PostExecEvent* event);
@@ -147,7 +154,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
  private:
   void SwitchToChannelErrorMode(common::Error err);
 
-  void FreeStreamSafe();
+  void FreeStreamSafe(bool fast_cleanup);
 
   void UpdateDisplayInterval(AVRational fps);
 
@@ -184,6 +191,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   core::msec_t last_mouse_left_click_;
 
+  std::shared_ptr<common::threads::Thread<int> > exec_tid_;
   core::VideoState* stream_;
 
   core::Size window_size_;

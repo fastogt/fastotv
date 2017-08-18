@@ -42,12 +42,12 @@ class FakeHandler : public VideoStateHandler {
   virtual ~FakeHandler() {}
 
   // audio
-  virtual bool HandleRequestAudio(VideoState* stream,
-                                  int64_t wanted_channel_layout,
-                                  int wanted_nb_channels,
-                                  int wanted_sample_rate,
-                                  core::AudioParams* audio_hw_params,
-                                  int* audio_buff_size) override {
+  virtual common::Error HandleRequestAudio(VideoState* stream,
+                                           int64_t wanted_channel_layout,
+                                           int wanted_nb_channels,
+                                           int wanted_sample_rate,
+                                           core::AudioParams* audio_hw_params,
+                                           int* audio_buff_size) override {
     UNUSED(stream);
     UNUSED(wanted_channel_layout);
     UNUSED(wanted_nb_channels);
@@ -56,11 +56,11 @@ class FakeHandler : public VideoStateHandler {
 
     core::AudioParams laudio_hw_params;
     if (!core::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
-      return false;
+      return common::make_error_value("Failed to init audio.", common::Value::E_ERROR);
     }
 
     *audio_hw_params = laudio_hw_params;
-    return true;
+    return common::Error();
   }
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override {
     UNUSED(audio_stream_ptr);
@@ -70,17 +70,17 @@ class FakeHandler : public VideoStateHandler {
   }
 
   // video
-  virtual bool HandleRequestVideo(VideoState* stream,
-                                  int width,
-                                  int height,
-                                  int av_pixel_format,
-                                  AVRational aspect_ratio) override {
+  virtual common::Error HandleRequestVideo(VideoState* stream,
+                                           int width,
+                                           int height,
+                                           int av_pixel_format,
+                                           AVRational aspect_ratio) override {
     UNUSED(stream);
     UNUSED(width);
     UNUSED(height);
     UNUSED(av_pixel_format);
     UNUSED(aspect_ratio);
-    return true;
+    return common::Error();
   }
 
   virtual void HandleFrameResize(VideoState* stream,
@@ -96,9 +96,9 @@ class FakeHandler : public VideoStateHandler {
   }
 
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) override {
-    UNUSED(stream);
-    UNUSED(exit_code);
-    UNUSED(err);
+    core::events::QuitStreamEvent* qevent =
+        new core::events::QuitStreamEvent(stream, core::events::QuitStreamInfo(stream, exit_code, err));
+    fApp->PostEvent(qevent);
   }
 };
 
@@ -124,13 +124,9 @@ class FakeApplication : public common::application::IApplicationImpl {
     DictionaryOptions* dict = new DictionaryOptions;
     const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
     VideoStateHandler* handler = new FakeHandler;
-    VideoState* vs = new VideoState(id, uri, opt, copt, handler);
-    int res = vs->Exec();
-    if (res != EXIT_SUCCESS) {
-      delete handler;
-      delete dict;
-      return res;
-    }
+    VideoState* vs = new VideoState(id, uri, opt, copt);
+    vs->SetHandler(handler);
+    std::thread exec([vs]() { vs->Exec(); });
 
     std::thread audio([this, vs]() {
       while (!stop_) {
@@ -151,6 +147,7 @@ class FakeApplication : public common::application::IApplicationImpl {
 
     vs->Abort();
     audio.join();
+    exec.join();
     delete vs;
     delete handler;
     delete dict;
@@ -163,8 +160,8 @@ class FakeApplication : public common::application::IApplicationImpl {
     if (fevent->GetEventType() == core::events::RequestVideoEvent::EventType) {
       core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
       core::events::FrameInfo fr = avent->info();
-      bool res = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
-      if (!res) {
+      common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
+      if (err && err->IsError()) {
         fApp->Exit(EXIT_FAILURE);
       }
     } else if (fevent->GetEventType() == core::events::QuitStreamEvent::EventType) {

@@ -98,6 +98,7 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
       show_volume_(false),
       volume_last_shown_(0),
       last_mouse_left_click_(0),
+      exec_tid_(),
       stream_(nullptr),
       window_size_(),
       xleft_(0),
@@ -218,18 +219,18 @@ void ISimplePlayer::HandleExceptionEvent(event_t* event, common::Error err) {
   UNUSED(err);
 }
 
-bool ISimplePlayer::HandleRequestAudio(core::VideoState* stream,
-                                       int64_t wanted_channel_layout,
-                                       int wanted_nb_channels,
-                                       int wanted_sample_rate,
-                                       core::AudioParams* audio_hw_params,
-                                       int* audio_buff_size) {
+common::Error ISimplePlayer::HandleRequestAudio(core::VideoState* stream,
+                                                int64_t wanted_channel_layout,
+                                                int wanted_nb_channels,
+                                                int wanted_sample_rate,
+                                                core::AudioParams* audio_hw_params,
+                                                int* audio_buff_size) {
   UNUSED(stream);
 
   if (audio_params_) {
     *audio_hw_params = *audio_params_;
     *audio_buff_size = audio_buff_size_;
-    return true;
+    return common::Error();
   }
 
   /* prepare audio output */
@@ -237,7 +238,7 @@ bool ISimplePlayer::HandleRequestAudio(core::VideoState* stream,
   int laudio_buff_size;
   if (!core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, sdl_audio_callback,
                         &laudio_hw_params, &laudio_buff_size)) {
-    return false;
+    return common::make_error_value("Can't init audio system.", common::Value::E_ERROR);
   }
 
   SDL_PauseAudio(0);
@@ -246,22 +247,22 @@ bool ISimplePlayer::HandleRequestAudio(core::VideoState* stream,
 
   *audio_hw_params = *audio_params_;
   *audio_buff_size = audio_buff_size_;
-  return true;
+  return common::Error();
 }
 
 void ISimplePlayer::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) {
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 
-bool ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
-                                       int width,
-                                       int height,
-                                       int av_pixel_format,
-                                       AVRational aspect_ratio) {
+common::Error ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
+                                                int width,
+                                                int height,
+                                                int av_pixel_format,
+                                                AVRational aspect_ratio) {
   UNUSED(av_pixel_format);
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
-    return false;
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   SDL_Rect rect = core::calculate_display_rect(0, 0, INT_MAX, height, width, height, aspect_ratio);
@@ -272,25 +273,22 @@ bool ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
 
   AVRational frame_rate = stream->GetFrameRate();
   UpdateDisplayInterval(frame_rate);
-  return true;
+  return common::Error();
 }
 
 void ISimplePlayer::HandleRequestVideoEvent(core::events::RequestVideoEvent* event) {
   core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
   core::events::FrameInfo fr = avent->info();
-  bool is_ok = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
-  if (is_ok) {
-    return;
+  common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
+  if (err && err->IsError()) {
+    SwitchToChannelErrorMode(err);
+    Quit();
   }
-
-  FreeStreamSafe();
-  Quit();
 }
 
 void ISimplePlayer::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
   core::events::QuitStreamInfo inf = event->info();
   if (inf.error && inf.error->IsError()) {
-    FreeStreamSafe();
     SwitchToChannelErrorMode(inf.error);
   }
 }
@@ -313,7 +311,7 @@ void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
 void ISimplePlayer::HandlePostExecEvent(core::events::PostExecEvent* event) {
   core::events::PostExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
-    FreeStreamSafe();
+    FreeStreamSafe(false);
     if (font_) {
       TTF_CloseFont(font_);
       font_ = NULL;
@@ -547,12 +545,35 @@ void ISimplePlayer::HandleQuitEvent(core::events::QuitEvent* event) {
   Quit();
 }
 
-void ISimplePlayer::FreeStreamSafe() {
+void ISimplePlayer::FreeStreamSafe(bool fast_cleanup) {
   CHECK(THREAD_MANAGER()->IsMainThread());
-  if (stream_) {
+  if (!stream_) {
+    return;
+  }
+
+  if (fast_cleanup) {
+    core::VideoState* vs = stream_;
+    auto tid = exec_tid_;
+
+    exec_tid_.reset();
+    stream_ = nullptr;
+
+    vs->SetHandler(nullptr);
+    std::thread out_cleanup([vs, tid]() {
+      vs->Abort();
+      tid->Join();
+      delete vs;
+    });
+    out_cleanup.detach();
+  } else {
     stream_->Abort();
+    exec_tid_->Join();
+    exec_tid_.reset();
     destroy(&stream_);
   }
+
+  CHECK(!stream_);
+  CHECK(!exec_tid_);
 }
 
 void ISimplePlayer::UpdateDisplayInterval(AVRational fps) {
@@ -586,8 +607,12 @@ void ISimplePlayer::Quit() {
 }
 
 void ISimplePlayer::SwitchToChannelErrorMode(common::Error err) {
-  CHECK(err);
+  if (!err) {
+    DNOTREACHED();
+    return;
+  }
 
+  FreeStreamSafe(true);
   std::string url_str = GetCurrentUrlName();
   std::string err_descr = err->GetDescription();
   std::string error_str = common::MemSPrintf("%s (%s)", url_str, err_descr);
@@ -631,7 +656,6 @@ void ISimplePlayer::DrawPlayingStatus() {
     core::clock64_t cl = stats->master_pts;
     if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != core::invalid_clock())) {
       common::Error err = common::make_error_value("No input data!", common::Value::E_ERROR);
-      FreeStreamSafe();
       SwitchToChannelErrorMode(err);
       last_pts_checkpoint_ = core::invalid_clock();
       return;
@@ -661,9 +685,8 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                             "to reduce the image size.";
     return;
   }
 
@@ -877,12 +900,20 @@ void ISimplePlayer::PauseStream() {
 }
 
 void ISimplePlayer::SetStream(core::VideoState* stream) {
-  FreeStreamSafe();
+  FreeStreamSafe(true);
   stream_ = stream;
-  if (stream_) {
-    stream_->Exec();
-  } else {
+
+  if (!stream_) {
     common::Error err = common::make_error_value("Failed to create stream", common::Value::E_ERROR);
+    SwitchToChannelErrorMode(err);
+    return;
+  }
+
+  stream_->SetHandler(this);
+  exec_tid_ = THREAD_MANAGER()->CreateThread(&core::VideoState::Exec, stream_);
+  bool is_started = exec_tid_->Start();
+  if (!is_started) {
+    common::Error err = common::make_error_value("Failed to start stream", common::Value::E_ERROR);
     SwitchToChannelErrorMode(err);
   }
 }
@@ -891,7 +922,7 @@ core::VideoState* ISimplePlayer::CreateStream(stream_id sid,
                                               const common::uri::Uri& uri,
                                               core::AppOptions opt,
                                               core::ComplexOptions copt) {
-  core::VideoState* stream = new core::VideoState(sid, uri, opt, copt, this);
+  core::VideoState* stream = new core::VideoState(sid, uri, opt, copt);
   options_.last_showed_channel_id = sid;
   return stream;
 }

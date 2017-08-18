@@ -180,16 +180,11 @@ int get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
 }
 }  // namespace
 
-VideoState::VideoState(stream_id id,
-                       const common::uri::Uri& uri,
-                       const AppOptions& opt,
-                       const ComplexOptions& copt,
-                       VideoStateHandler* handler)
+VideoState::VideoState(stream_id id, const common::uri::Uri& uri, const AppOptions& opt, const ComplexOptions& copt)
     : id_(id),
       uri_(uri),
       opt_(opt),
       copt_(copt),
-      read_tid_(THREAD_MANAGER()->CreateThread(&VideoState::ReadThread, this)),
       force_refresh_(false),
       read_pause_return_(0),
       ic_(NULL),
@@ -237,9 +232,10 @@ VideoState::VideoState(stream_id id,
       paused_(false),
       last_paused_(false),
       eof_(false),
+      abort_mutex_(),
       abort_request_(false),
       stats_(new Stats),
-      handler_(handler),
+      handler_(nullptr),
       input_st_(static_cast<InputStream*>(calloc(1, sizeof(InputStream)))),
       seek_req_(false),
       seek_pos_(0),
@@ -247,7 +243,6 @@ VideoState::VideoState(stream_id id,
       seek_flags_(0),
       read_thread_cond_(),
       read_thread_mutex_() {
-  CHECK(handler_);
   CHECK(id_ != invalid_stream_id);
 
   input_st_->hwaccel_id = opt_.hwaccel_id;
@@ -270,6 +265,10 @@ VideoState::~VideoState() {
   common::utils::freeifnotnull(input_st_->hwaccel_device);
   free(input_st_);
   input_st_ = NULL;
+}
+
+void VideoState::SetHandler(VideoStateHandler* handler) {
+  handler_ = handler;
 }
 
 int VideoState::StreamComponentOpen(int stream_index) {
@@ -412,9 +411,15 @@ int VideoState::StreamComponentOpen(int stream_index) {
 #endif
 
     int audio_buff_size = 0;
-    bool audio_opened =
+    if (!handler_) {
+      avcodec_free_context(&avctx);
+      av_dict_free(&opts);
+      return -1;
+    }
+
+    common::Error err =
         handler_->HandleRequestAudio(this, channel_layout, nb_channels, sample_rate, &audio_tgt_, &audio_buff_size);
-    if (!audio_opened) {
+    if (err && err->IsError()) {
       avcodec_free_context(&avctx);
       av_dict_free(&opts);
       return ret;
@@ -659,23 +664,15 @@ clock64_t VideoState::GetMasterClock() const {
 }
 
 int VideoState::Exec() {
-  bool started = read_tid_->Start();
-  if (!started) {
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
+  int res = ReadRoutine();
+  Close();
+  avformat_close_input(&ic_);
+  return res;
 }
 
 void VideoState::Abort() {
+  lock_t lock(abort_mutex_);
   abort_request_ = true;
-  read_tid_->Join();
-  Close();
-  avformat_close_input(&ic_);
-}
-
-bool VideoState::IsReadThread() const {
-  return common::threads::IsCurrentThread(read_tid_.get());
 }
 
 bool VideoState::IsVideoThread() const {
@@ -686,11 +683,12 @@ bool VideoState::IsAudioThread() const {
   return common::threads::IsCurrentThread(adecoder_tid_.get());
 }
 
-bool VideoState::IsAborted() const {
+bool VideoState::IsAborted() {
+  lock_t lock(abort_mutex_);
   return abort_request_;
 }
 
-bool VideoState::IsStreamReady() const {
+bool VideoState::IsStreamReady() {
   if (!astream_ && !vstream_) {
     return false;
   }
@@ -819,7 +817,11 @@ the_end:
   StreamComponentOpen(stream_index);
 }
 
-bool VideoState::RequestVideo(int width, int height, int av_pixel_format, AVRational aspect_ratio) {
+common::Error VideoState::RequestVideo(int width, int height, int av_pixel_format, AVRational aspect_ratio) {
+  if (!handler_) {
+    return common::Error();
+  }
+
   return handler_->HandleRequestVideo(this, width, height, av_pixel_format, aspect_ratio);
 }
 
@@ -1107,7 +1109,9 @@ void VideoState::UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume) {
     } else {
       memset(stream, 0, len1);
       if (audio_buf_) {
-        handler_->HanleAudioMix(stream, audio_buf_ + audio_buf_index_, len1, audio_volume);
+        if (handler_) {
+          handler_->HanleAudioMix(stream, audio_buf_ + audio_buf_index_, len1, audio_volume);
+        }
       }
     }
     len -= len1;
@@ -1137,7 +1141,9 @@ int VideoState::QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t durati
     vp->width = src_frame->width;
     vp->height = src_frame->height;
     vp->format = static_cast<AVPixelFormat>(src_frame->format);
-    handler_->HandleFrameResize(this, vp->width, vp->height, vp->format, vp->sar);
+    if (handler_) {
+      handler_->HandleFrameResize(this, vp->width, vp->height, vp->format, vp->sar);
+    }
   }
 
   /* if the frame is not skipped, then display it */
@@ -1178,12 +1184,14 @@ int VideoState::GetVideoFrame(AVFrame* frame) {
 }
 
 /* this thread gets the stream from the disk or the network */
-int VideoState::ReadThread() {
+int VideoState::ReadRoutine() {
   AVFormatContext* ic = avformat_alloc_context();
   if (!ic) {
     const int av_errno = AVERROR(ENOMEM);
     common::Error err = common::make_error_value_errno(av_errno, common::Value::E_ERROR);
-    handler_->HandleQuitStream(this, av_errno, err);
+    if (handler_) {
+      handler_->HandleQuitStream(this, av_errno, err);
+    }
     return ERROR_RESULT_VALUE;
   }
 
@@ -1208,7 +1216,9 @@ int VideoState::ReadThread() {
     std::string err_str = ffmpeg_errno_to_string(open_result);
     common::Error err = common::make_error_value(err_str, common::Value::E_ERROR);
     avformat_close_input(&ic);
-    handler_->HandleQuitStream(this, open_result, err);
+    if (handler_) {
+      handler_->HandleQuitStream(this, open_result, err);
+    }
     return ERROR_RESULT_VALUE;
   }
   if (scan_all_pmts_set) {
@@ -1244,7 +1254,9 @@ int VideoState::ReadThread() {
   if (find_stream_info_result < 0) {
     std::string err_str = ffmpeg_errno_to_string(find_stream_info_result);
     common::Error err = common::make_error_value(err_str, common::Value::E_ERROR);
-    handler_->HandleQuitStream(this, -1, err);
+    if (handler_) {
+      handler_->HandleQuitStream(this, -1, err);
+    }
     return ERROR_RESULT_VALUE;
   }
 
@@ -1386,7 +1398,9 @@ int VideoState::ReadThread() {
         int errn = AVERROR_EOF;
         std::string err_str = ffmpeg_errno_to_string(errn);
         common::Error err = common::make_error_value(err_str, common::Value::E_ERROR);
-        handler_->HandleQuitStream(this, errn, err);
+        if (handler_) {
+          handler_->HandleQuitStream(this, errn, err);
+        }
         return ERROR_RESULT_VALUE;
       }
     }
@@ -1427,7 +1441,9 @@ int VideoState::ReadThread() {
     }
   }
 
-  handler_->HandleQuitStream(this, 0, common::Error());
+  if (handler_) {
+    handler_->HandleQuitStream(this, 0, common::Error());
+  }
   return SUCCESS_RESULT_VALUE;
 }
 
@@ -1573,9 +1589,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

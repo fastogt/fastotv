@@ -34,7 +34,7 @@ extern "C" {
 #include <libavutil/frame.h>       // for AVFrame
 }
 
-#include <common/macros.h>         // for WARN_UNUSED_RESULT, DISALLOW_C...
+#include <common/error.h>
 #include <common/threads/types.h>  // for condition_variable, mutex
 #include <common/url.h>            // for Uri
 
@@ -87,20 +87,17 @@ class VideoState {
   typedef frames::AudioFrameQueue<SAMPLE_QUEUE_SIZE> audio_frame_queue_t;
 
   enum { invalid_stream_index = -1 };
-  VideoState(stream_id id,
-             const common::uri::Uri& uri,
-             const AppOptions& opt,
-             const ComplexOptions& copt,
-             VideoStateHandler* handler);
+  VideoState(stream_id id, const common::uri::Uri& uri, const AppOptions& opt, const ComplexOptions& copt);
+  void SetHandler(VideoStateHandler* handler);
+
   int Exec() WARN_UNUSED_RESULT;
   void Abort();
 
-  bool IsReadThread() const;
   bool IsVideoThread() const;
   bool IsAudioThread() const;
 
-  bool IsAborted() const;
-  bool IsStreamReady() const;
+  bool IsAborted();
+  bool IsStreamReady();
   stream_id GetId() const;
   const common::uri::Uri& GetUri() const;
   virtual ~VideoState();
@@ -118,7 +115,7 @@ class VideoState {
   void SeekMsec(clock64_t msec);
   void StreamCycleChannel(AVMediaType codec_type);
 
-  bool RequestVideo(int width, int height, int av_pixel_format, AVRational aspect_ratio) WARN_UNUSED_RESULT;
+  common::Error RequestVideo(int width, int height, int av_pixel_format, AVRational aspect_ratio) WARN_UNUSED_RESULT;
 
   frames::VideoFrame* TryToGetVideoFrame();
   void UpdateAudioBuffer(uint8_t* stream, int len, int audio_volume);
@@ -169,7 +166,7 @@ class VideoState {
   int GetVideoFrame(AVFrame* frame);
   int QueuePicture(AVFrame* src_frame, clock64_t pts, clock64_t duration, int64_t pos);
 
-  int ReadThread();
+  int ReadRoutine();
   int VideoThread();
   int AudioThread();
 
@@ -179,7 +176,6 @@ class VideoState {
   AppOptions opt_;
   ComplexOptions copt_;
 
-  std::shared_ptr<common::threads::Thread<int> > read_tid_;
   bool force_refresh_;
   int read_pause_return_;
   AVFormatContext* ic_;
@@ -238,6 +234,9 @@ class VideoState {
   bool paused_;
   bool last_paused_;
   bool eof_;
+
+  typedef std::unique_lock<std::mutex> lock_t;
+  std::mutex abort_mutex_;
   bool abort_request_;
 
   stats_t stats_;
