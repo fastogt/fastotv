@@ -467,80 +467,104 @@ if __name__ == "__main__":
     availible_devices = get_available_devices()
 
     parser = argparse.ArgumentParser(prog='build_env', usage='%(prog)s [options]')
-    parser.add_argument('--with-device',
-                        help='build dependencies for device (default, device:{0})'.format(default_device),
-                        dest='with_device', action='store_true')
-    parser.add_argument('--without-device', help='build without device dependencies', dest='with_device',
-                        action='store_false')
+
+    # system
+    system_grp = parser.add_mutually_exclusive_group()
+    system_grp.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',
+                            action='store_true', default=True)
+    system_grp.add_argument('--without-system', help='build without system dependencies', dest='with_system',
+                            action='store_false', default=False)
+
+    # device
+    device_grp = parser.add_mutually_exclusive_group()
+    device_grp.add_argument('--with-device',
+                            help='build dependencies for device (default, device:{0})'.format(default_device),
+                            dest='with_device', action='store_true', default=True)
+    device_grp.add_argument('--without-device', help='build without device dependencies', dest='with_device',
+                            action='store_false', default=False)
     parser.add_argument('--device',
                         help='device (default: {0}, available: {1})'.format(default_device, availible_devices),
                         default=default_device)
-    parser.set_defaults(with_device=True)
 
-    parser.add_argument('--with-system', help='build with system dependencies (default)', dest='with_system',
-                        action='store_true')
-    parser.add_argument('--without-system', help='build without system dependencies', dest='with_system',
-                        action='store_false')
-    parser.set_defaults(with_system=True)
+    # cmake
+    cmake_grp = parser.add_mutually_exclusive_group()
+    cmake_grp.add_argument('--with-cmake', help='build cmake (default, version:{0})'.format(cmake_default_version),
+                           dest='with_cmake', action='store_true', default=True)
+    cmake_grp.add_argument('--without-cmake', help='build without cmake', dest='with_cmake', action='store_false',
+                           default=False)
+    parser.add_argument('--cmake-version', help='cmake version (default: {0})'.format(cmake_default_version),
+                        default=cmake_default_version)
 
-    parser.add_argument('--with-sdl2', help='build sdl2 (default, version:{0})'.format(sdl2_default_version),
-                        dest='with_sdl2', action='store_true')
-    parser.add_argument('--without-sdl2', help='build without sdl2', dest='with_sdl2', action='store_false')
+    # snappy
+    snappy_grp = parser.add_mutually_exclusive_group()
+    snappy_grp.add_argument('--with-snappy', help='build snappy (default, version: git master)', dest='with_snappy',
+                            action='store_true', default=True)
+    snappy_grp.add_argument('--without-snappy', help='build without snappy', dest='with_snappy', action='store_false',
+                            default=False)
+
+    # json-c
+    jsonc_grp = parser.add_mutually_exclusive_group()
+    jsonc_grp.add_argument('--with-json-c', help='build json-c (default, version: git master)', dest='with_jsonc',
+                           action='store_true', default=True)
+    jsonc_grp.add_argument('--without-json-c', help='build without json-c', dest='with_jsonc', action='store_false',
+                           default=False)
+
+    # common
+    common_grp = parser.add_mutually_exclusive_group()
+    common_grp.add_argument('--with-common', help='build common (default, version: git master)', dest='with_common',
+                            action='store_true', default=True)
+    common_grp.add_argument('--without-common', help='build without common', dest='with_common', action='store_false',
+                            default=False)
+
+    # sdl2
+    sdl2_grp = parser.add_mutually_exclusive_group()
+    sdl2_grp.add_argument('--with-sdl2', help='build sdl2 (default, version:{0})'.format(sdl2_default_version),
+                          dest='with_sdl2', action='store_true', default=True)
+    sdl2_grp.add_argument('--without-sdl2', help='build without sdl2', dest='with_sdl2', action='store_false',
+                          default=False)
     parser.add_argument('--sdl2-version', help='sdl2 version (default: {0})'.format(sdl2_default_version),
                         default=sdl2_default_version)
-    parser.set_defaults(with_sdl2=True)
 
-    parser.add_argument('--with-sdl2_image',
-                        help='build sdl2_image (default, version:{0})'.format(sdl2_image_default_version),
-                        dest='with_sdl2-image', action='store_true')
-    parser.add_argument('--without-sdl2-image', help='build without sdl2 image', dest='with_sdl2_image',
-                        action='store_false')
+    # sdl2_image
+    sdl2_image_grp = parser.add_mutually_exclusive_group()
+    sdl2_image_grp.add_argument('--with-sdl2_image',
+                                help='build sdl2_image (default, version:{0})'.format(sdl2_image_default_version),
+                                dest='with_sdl2_image', action='store_true', default=True)
+    sdl2_image_grp.add_argument('--without-sdl2-image', help='build without sdl2 image', dest='with_sdl2_image',
+                                action='store_false',
+                                default=False)
     parser.add_argument('--sdl2-image-version',
                         help='sdl2 image version (default: {0})'.format(sdl2_image_default_version),
                         default=sdl2_image_default_version)
-    parser.set_defaults(with_sdl2_ttf=True)
 
-    parser.add_argument('--with-sdl2_ttf',
-                        help='build sdl2_ttf (default, version:{0})'.format(sdl2_ttf_default_version),
-                        dest='with_sdl2-ttf', action='store_true')
-    parser.add_argument('--without-sdl2-ttf', help='build without sdl2 ttf', dest='with_sdl2_ttf', action='store_false')
+    # sdl2_ttf
+    sdl2_ttf_grp = parser.add_mutually_exclusive_group()
+    sdl2_ttf_grp.add_argument('--with-sdl2_ttf',
+                              help='build sdl2_ttf (default, version:{0})'.format(sdl2_ttf_default_version),
+                              dest='with_sdl2_ttf', default=True)
+    sdl2_ttf_grp.add_argument('--without-sdl2-ttf', help='build without sdl2 ttf', dest='with_sdl2_ttf',
+                              action='store_false',
+                              default=False)
     parser.add_argument('--sdl2-ttf-version', help='sdl2 ttf version (default: {0})'.format(sdl2_ttf_default_version),
                         default=sdl2_ttf_default_version)
-    parser.set_defaults(with_sdl2_ttf=True)
 
-    parser.add_argument('--with-openssl', help='build openssl (default, version:{0})'.format(openssl_default_version),
-                        dest='with_openssl', action='store_true')
-    parser.add_argument('--without-openssl', help='build without openssl', dest='with_openssl', action='store_false')
+    # openssl
+    openssl_grp = parser.add_mutually_exclusive_group()
+    openssl_grp.add_argument('--with-openssl',
+                             help='build openssl (default, version:{0})'.format(openssl_default_version),
+                             dest='with_openssl', action='store_true', default=True)
+    openssl_grp.add_argument('--without-openssl', help='build without openssl', dest='with_openssl',
+                             action='store_false',
+                             default=False)
     parser.add_argument('--openssl-version', help='openssl version (default: {0})'.format(openssl_default_version),
                         default=openssl_default_version)
-    parser.set_defaults(with_openssl=True)
 
-    parser.add_argument('--with-ffmpeg', help='build ffmpeg (default, version: git master)', dest='with_ffmpeg',
-                        action='store_true')
-    parser.add_argument('--without-ffmpeg', help='build without ffmpeg', dest='with_ffmpeg', action='store_false')
-    parser.set_defaults(with_ffmpeg=True)
-
-    parser.add_argument('--with-cmake', help='build cmake (default, version:{0})'.format(cmake_default_version),
-                        dest='with_cmake', action='store_true')
-    parser.add_argument('--without-cmake', help='build without cmake', dest='with_cmake', action='store_false')
-    parser.add_argument('--cmake-version', help='cmake version (default: {0})'.format(cmake_default_version),
-                        default=cmake_default_version)
-    parser.set_defaults(with_cmake=True)
-
-    parser.add_argument('--with-common', help='build common (default, version: git master)', dest='with_common',
-                        action='store_true')
-    parser.add_argument('--without-common', help='build without common', dest='with_common', action='store_false')
-    parser.set_defaults(with_common=True)
-
-    parser.add_argument('--with-json-c', help='build json-c (default, version: git master)', dest='with_jsonc',
-                        action='store_true')
-    parser.add_argument('--without-json-c', help='build without json-c', dest='with_jsonc', action='store_false')
-    parser.set_defaults(with_jsonc=True)
-
-    parser.add_argument('--with-snappy', help='build snappy (default, version: git master)', dest='with_snappy',
-                        action='store_true')
-    parser.add_argument('--without-snappy', help='build without snappy', dest='with_snappy', action='store_false')
-    parser.set_defaults(with_snappy=True)
+    # ffmpeg
+    ffmpeg_grp = parser.add_mutually_exclusive_group()
+    ffmpeg_grp.add_argument('--with-ffmpeg', help='build ffmpeg (default, version: git master)', dest='with_ffmpeg',
+                            action='store_true', default=True)
+    ffmpeg_grp.add_argument('--without-ffmpeg', help='build without ffmpeg', dest='with_ffmpeg', action='store_false',
+                            default=False)
 
     parser.add_argument('--platform', help='build for platform (default: {0})'.format(host_os), default=host_os)
     parser.add_argument('--architecture', help='architecture (default: {0})'.format(arch_host_os),
@@ -579,7 +603,9 @@ if __name__ == "__main__":
         request.build_sdl2_image(argv.sdl2_image_version)
     if argv.with_sdl2_ttf:
         request.build_sdl2_ttf(argv.sdl2_ttf_version)
+
     if argv.with_openssl:
         request.build_openssl(argv.openssl_version)
+        
     if argv.with_ffmpeg:
         request.build_ffmpeg()
