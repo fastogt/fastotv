@@ -148,5 +148,5 @@ int main(int argc, char** argv) {
     return main_simple_player_application(argc, argv, url, app_directory_absolute_path,
                                           runtime_directory_absolute_path);
   }
-  return main_single_application(argc, argv, app_directory_absolute_path, runtime_directory_absolute_path);
+  return main_application(argc, argv, app_directory_absolute_path, runtime_directory_absolute_path, false);
 }

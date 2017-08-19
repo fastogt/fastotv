@@ -247,10 +247,11 @@ int main_simple_player_application(int argc,
   return res;
 }
 
-int main_single_application(int argc,
-                            char** argv,
-                            const std::string& app_directory_absolute_path,
-                            const std::string& runtime_directory_absolute_path) {
+int main_application(int argc,
+                     char** argv,
+                     const std::string& app_directory_absolute_path,
+                     const std::string& runtime_directory_absolute_path,
+                     bool single_instance) {
   int res = prepare_to_start(app_directory_absolute_path, runtime_directory_absolute_path);
   if (res == EXIT_FAILURE) {
     return EXIT_FAILURE;
@@ -286,26 +287,28 @@ int main_single_application(int argc,
 
   const uint32_t fl = common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE;
   common::file_system::File lock_pid_file;
-  err = lock_pid_file.Open(pid_absolute_path, fl);
-  if (err && err->IsError()) {
-    ERROR_LOG() << "Can't open pid file path: " << pid_absolute_path;
-    return EXIT_FAILURE;
-  }
+  if (single_instance) {
+    err = lock_pid_file.Open(pid_absolute_path, fl);
+    if (err && err->IsError()) {
+      ERROR_LOG() << "Can't open pid file path: " << pid_absolute_path;
+      return EXIT_FAILURE;
+    }
 
-  err = lock_pid_file.Lock();
-  if (err && err->IsError()) {
-    ERROR_LOG() << "Can't lock pid file path: " << pid_absolute_path;
-    err = lock_pid_file.Close();
-    return EXIT_FAILURE;
-  }
+    err = lock_pid_file.Lock();
+    if (err && err->IsError()) {
+      ERROR_LOG() << "Can't lock pid file path: " << pid_absolute_path;
+      err = lock_pid_file.Close();
+      return EXIT_FAILURE;
+    }
 
-  std::string pid_str = common::MemSPrintf("%ld\n", common::get_current_process_pid());
-  size_t writed;
-  err = lock_pid_file.Write(pid_str, &writed);
-  if (err && err->IsError()) {
-    ERROR_LOG() << "Can't write pid to file path: " << pid_absolute_path;
-    err = lock_pid_file.Close();
-    return EXIT_FAILURE;
+    std::string pid_str = common::MemSPrintf("%ld\n", common::get_current_process_pid());
+    size_t writed;
+    err = lock_pid_file.Write(pid_str, &writed);
+    if (err && err->IsError()) {
+      ERROR_LOG() << "Can't write pid to file path: " << pid_absolute_path;
+      err = lock_pid_file.Close();
+      return EXIT_FAILURE;
+    }
   }
 
   AVDictionary* sws_dict = NULL;
@@ -326,19 +329,21 @@ int main_single_application(int argc,
   av_dict_free(&format_opts);
   av_dict_free(&codec_opts);
 
-  err = lock_pid_file.Unlock();
-  if (err && err->IsError()) {
-    WARNING_LOG() << "Can't unlock pid file path: " << pid_absolute_path;
-  }
+  if (single_instance) {
+    err = lock_pid_file.Unlock();
+    if (err && err->IsError()) {
+      WARNING_LOG() << "Can't unlock pid file path: " << pid_absolute_path;
+    }
 
-  err = lock_pid_file.Close();
-  if (err && err->IsError()) {
-    WARNING_LOG() << "Can't close pid file path: " << pid_absolute_path << ", error: " << err->GetDescription();
-  }
+    err = lock_pid_file.Close();
+    if (err && err->IsError()) {
+      WARNING_LOG() << "Can't close pid file path: " << pid_absolute_path << ", error: " << err->GetDescription();
+    }
 
-  err = common::file_system::remove_file(pid_absolute_path);
-  if (err && err->IsError()) {
-    WARNING_LOG() << "Can't remove file: " << pid_absolute_path << ", error: " << err->GetDescription();
+    err = common::file_system::remove_file(pid_absolute_path);
+    if (err && err->IsError()) {
+      WARNING_LOG() << "Can't remove file: " << pid_absolute_path << ", error: " << err->GetDescription();
+    }
   }
 
   // save config file

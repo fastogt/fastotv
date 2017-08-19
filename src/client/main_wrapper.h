@@ -26,7 +26,8 @@ int main_simple_player_application(int argc,
                                    const std::string& runtime_directory_absolute_path);
 
 // runtime_directory_absolute_path can be not equal pwd (used for pid file location)
-int main_single_application(int argc,
-                            char** argv,
-                            const std::string& app_directory_absolute_path,
-                            const std::string& runtime_directory_absolute_path);
+int main_application(int argc,
+                     char** argv,
+                     const std::string& app_directory_absolute_path,
+                     const std::string& runtime_directory_absolute_path,
+                     bool single_instance);
