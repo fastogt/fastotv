@@ -833,7 +833,7 @@ void ISimplePlayer::DrawCenterTextInRect(const std::string& text, SDL_Color text
     return;
   }
 
-  SDL_Surface* text_surf = TTF_RenderText_Blended(font_, text_ptr, text_color);
+  SDL_Surface* text_surf = TTF_RenderUTF8_Blended(font_, text_ptr, text_color);
   SDL_Rect dst = GetCenterRect(rect, text_surf->w, text_surf->h);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
@@ -848,7 +848,7 @@ void ISimplePlayer::DrawWrappedTextInRect(const std::string& text, SDL_Color tex
     return;
   }
 
-  SDL_Surface* text_surf = TTF_RenderText_Blended_Wrapped(font_, text_ptr, text_color, rect.w);
+  SDL_Surface* text_surf = TTF_RenderUTF8_Blended_Wrapped(font_, text_ptr, text_color, rect.w);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
   rect.w = text_surf->w;
   SDL_RenderCopy(renderer_, texture, NULL, &rect);
