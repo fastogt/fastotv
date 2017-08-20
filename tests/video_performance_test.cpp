@@ -127,7 +127,7 @@ class FakeApplication : public common::application::IApplication {
     VideoStateHandler* handler = new FakeHandler;
     VideoState* vs = new VideoState(id, uri, opt, copt);
     vs->SetHandler(handler);
-    std::thread exec([vs]() { vs->Exec(); });
+    std::thread exec([vs]() { return vs->Exec(); });
 
     std::thread audio([this, vs]() {
       while (!stop_) {

@@ -35,7 +35,7 @@ struct PlayerOptions {
   core::Size default_size;
   core::Size screen_size;
 
-  int audio_volume;  // Range: 0 - 100
+  audio_volume_t audio_volume;  // Range: 0 - 100
   stream_id last_showed_channel_id;
 };
 

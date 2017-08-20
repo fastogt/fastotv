@@ -113,8 +113,6 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
       last_pts_checkpoint_(core::invalid_clock()),
       video_frames_handled_(0) {
   UpdateDisplayInterval(min_fps);
-  // stable audio option
-  options_.audio_volume = stable_value_in_range(options_.audio_volume, 0, 100);
 
   fApp->Subscribe(this, core::events::PostExecEvent::EventType);
   fApp->Subscribe(this, core::events::PreExecEvent::EventType);
@@ -599,8 +597,8 @@ void ISimplePlayer::sdl_audio_callback(void* user_data, uint8_t* stream, int len
   }
 }
 
-void ISimplePlayer::UpdateVolume(int step) {
-  options_.audio_volume = stable_value_in_range(options_.audio_volume + step, 0, 100);
+void ISimplePlayer::UpdateVolume(int8_t step) {
+  options_.audio_volume = options_.audio_volume + step;
   show_volume_ = true;
   core::msec_t cur_time = core::GetCurrentMsec();
   volume_last_shown_ = cur_time;

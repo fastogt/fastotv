@@ -18,37 +18,12 @@
 
 #pragma once
 
-#include <string>
-
 namespace fasto {
 namespace fastotv {
 namespace client {
 
 enum BandwidthHostType { UNKNOWN_SERVER, MAIN_SERVER, CHANNEL_SERVER };
 
-struct Point {
-  Point();
-  Point(int x, int y);
-
-  int x;
-  int y;
-};
-
-struct Rational {
-  int num;  ///< Numerator
-  int den;  ///< Denominator
-};
-
-struct Rect {
-  Rect(int x, int y, int width, int height);
-  int x, y;
-  int width, height;
-};
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
-
-namespace common {
-std::string ConvertToString(const fasto::fastotv::client::Point& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::Point* out);
-}  // namespace common

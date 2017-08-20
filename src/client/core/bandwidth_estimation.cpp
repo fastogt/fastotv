@@ -98,7 +98,7 @@ DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_siz
   // https://support.google.com/youtube/answer/2853702?hl=en
   // https://support.ustream.tv/hc/en-us/articles/207852117-Internet-connection-and-recommended-encoding-settings
   // https://support.google.com/youtube/answer/1722171?hl=en
-  int stabled_profile = std::max(PROFILE_H264_BASELINE, std::min(PROFILE_H264_HIGH, profile));
+  const int stabled_profile = stable_value_in_range(profile, PROFILE_H264_BASELINE, PROFILE_H264_HIGH);
   if (stabled_profile < PROFILE_H264_MAIN) {
     if (framerate <= 30.0) {
       if (encoded_frame_size.width >= 3840 && encoded_frame_size.height >= 2160) {  // 2160p (4k) 40000 Kbps

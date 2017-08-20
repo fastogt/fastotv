@@ -66,7 +66,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   void SetFullScreen(bool full_screen);
   void SetMute(bool mute);
-  void UpdateVolume(int step);
+  void UpdateVolume(int8_t step);
   void Quit();
 
   virtual ~ISimplePlayer();
