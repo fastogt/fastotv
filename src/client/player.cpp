@@ -370,10 +370,70 @@ void Player::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
   base_class::HandleWindowExposeEvent(event);
 }
 
+void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
+  PlayerOptions opt = GetOptions();
+  if (opt.exit_on_mousedown) {
+    return base_class::HandleMousePressEvent(event);
+  }
+
+  core::events::MousePressInfo inf = event->info();
+  SDL_MouseButtonEvent sinfo = inf.mevent;
+  if (sinfo.button == SDL_BUTTON_LEFT) {
+    SDL_Point point{sinfo.x, sinfo.y};
+    size_t pos;
+    if (FindStreamByPoint(point, &pos)) {  // pos in playlist
+      core::VideoState* stream = CreateStreamPos(pos);
+      SetStream(stream);
+    }
+  }
+  base_class::HandleMousePressEvent(event);
+}
+
+bool Player::FindStreamByPoint(SDL_Point point, size_t* pos) const {
+  if (!pos) {
+    return false;
+  }
+
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return false;
+  }
+
+  const SDL_Rect programms_list_rect = GetProgramsListRect();
+  if (!SDL_PointInRect(&point, &programms_list_rect)) {
+    return false;
+  }
+
+  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  int max_line_count = programms_list_rect.h / font_height_2line;
+  if (max_line_count == 0) {
+    return false;
+  }
+
+  int drawed = 0;
+  for (size_t i = last_programms_line_; i < play_list_.size() && drawed < max_line_count; ++i) {
+    ChannelDescription descr;
+    if (GetChannelDescription(i, &descr)) {
+      SDL_Rect cell_rect = {programms_list_rect.x, programms_list_rect.y + font_height_2line * drawed,
+                            programms_list_rect.w, font_height_2line};
+      if (SDL_PointInRect(&point, &cell_rect)) {
+        if (current_stream_pos_ == i) {  // seleceted item
+          return false;
+        }
+
+        *pos = i;
+        return true;
+      }
+      drawed++;
+    }
+  }
+  return false;
+}
+
 void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
-    return ISimplePlayer::HandleKeyPressEvent(event);
+    return base_class::HandleKeyPressEvent(event);
   }
 
   const core::events::KeyPressInfo inf = event->info();
@@ -418,13 +478,13 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     MoveToNextStream();
   }
 
-  ISimplePlayer::HandleKeyPressEvent(event);
+  base_class::HandleKeyPressEvent(event);
 }
 
 void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
   PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
-    return ISimplePlayer::HandleLircPressEvent(event);
+    return base_class::HandleLircPressEvent(event);
   }
 
   core::events::LircPressInfo inf = event->info();
@@ -440,7 +500,7 @@ void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
     default: { break; }
   }
 
-  ISimplePlayer::HandleLircPressEvent(event);
+  base_class::HandleLircPressEvent(event);
 }
 
 void Player::DrawInfo() {
@@ -560,6 +620,10 @@ void Player::FinishKeyPadInput() {
   }
   ResetKeyPad();
 
+  CreateStreamPosAfterKeypad(pos);
+}
+
+void Player::CreateStreamPosAfterKeypad(size_t pos) {
   size_t stabled_pos = pos - 1;  // because start displaying channels from 1 in programms list
   if (stabled_pos >= play_list_.size()) {
     // error

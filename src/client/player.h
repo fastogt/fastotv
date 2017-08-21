@@ -73,6 +73,8 @@ class Player : public ISimplePlayer {
   virtual void HandleWindowResizeEvent(core::events::WindowResizeEvent* event) override;
   virtual void HandleWindowExposeEvent(core::events::WindowExposeEvent* event) override;
 
+  virtual void HandleMousePressEvent(core::events::MousePressEvent* event) override;
+
   virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event) override;
   virtual void HandleLircPressEvent(core::events::LircPressEvent* event) override;
 
@@ -89,6 +91,7 @@ class Player : public ISimplePlayer {
   void HandleKeyPad(uint8_t key);
   void FinishKeyPadInput();
   void RemoveLastSymbolInKeypad();
+  void CreateStreamPosAfterKeypad(size_t pos);
   void ResetKeyPad();
   SDL_Rect GetKeyPadRect() const;
 
@@ -122,6 +125,8 @@ class Player : public ISimplePlayer {
 
   void MoveToNextStream();
   void MoveToPreviousStream();
+
+  bool FindStreamByPoint(SDL_Point point, size_t* pos) const;
 
   SurfaceSaver* offline_channel_texture_;
   SurfaceSaver* connection_error_texture_;

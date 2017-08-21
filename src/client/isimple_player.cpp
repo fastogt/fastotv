@@ -470,7 +470,7 @@ void ISimplePlayer::HandleMousePressEvent(core::events::MousePressEvent* event) 
 
   core::msec_t cur_time = core::GetCurrentMsec();
   core::events::MousePressInfo inf = event->info();
-  if (inf.button == FASTO_BUTTON_LEFT) {
+  if (inf.mevent.button == SDL_BUTTON_LEFT) {
     if (cur_time - last_mouse_left_click_ <= 500) {  // double click 0.5 sec
       bool full_screen = !options_.is_full_screen;
       SetFullScreen(full_screen);

@@ -268,13 +268,13 @@ void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {  // SDL_Window
 }
 
 void Sdl2Application::HandleMousePressEvent(SDL_MouseButtonEvent* event) {
-  events::MousePressInfo inf(event->button, event->state);
+  events::MousePressInfo inf(*event);
   events::MousePressEvent* mouse_press_event = new events::MousePressEvent(this, inf);
   HandleEvent(mouse_press_event);
 }
 
 void Sdl2Application::HandleMouseReleaseEvent(SDL_MouseButtonEvent* event) {
-  events::MouseReleaseInfo inf(event->button, event->state);
+  events::MouseReleaseInfo inf(*event);
   events::MouseReleaseEvent* mouse_release_event = new events::MouseReleaseEvent(this, inf);
   HandleEvent(mouse_release_event);
 }

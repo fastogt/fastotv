@@ -20,25 +20,9 @@
 
 #include <stdint.h>  // for uint8_t
 
-#include "client/core/events/events_base.h"  // for EventBase, EventsType::M...
+#include <SDL2/SDL_events.h>
 
-/**
- *  Used as a mask when testing buttons in buttonstate.
- *   - Button 1:  Left mouse button
- *   - Button 2:  Middle mouse button
- *   - Button 3:  Right mouse button
- */
-#define FASTO_BUTTON(X) (1 << ((X)-1))
-#define FASTO_BUTTON_LEFT 1
-#define FASTO_BUTTON_MIDDLE 2
-#define FASTO_BUTTON_RIGHT 3
-#define FASTO_BUTTON_X1 4
-#define FASTO_BUTTON_X2 5
-#define FASTO_BUTTON_LMASK FASTO_BUTTON(FASTO_BUTTON_LEFT)
-#define FASTO_BUTTON_MMASK FASTO_BUTTON(FASTO_BUTTON_MIDDLE)
-#define FASTO_BUTTON_RMASK FASTO_BUTTON(FASTO_BUTTON_RIGHT)
-#define FASTO_BUTTON_X1MASK FASTO_BUTTON(FASTO_BUTTON_X1)
-#define FASTO_BUTTON_X2MASK FASTO_BUTTON(FASTO_BUTTON_X2)
+#include "client/core/events/events_base.h"  // for EventBase, EventsType::M...
 
 namespace fasto {
 namespace fastotv {
@@ -49,16 +33,14 @@ namespace events {
 struct MouseMoveInfo {};
 
 struct MousePressInfo {
-  MousePressInfo(uint8_t button, uint8_t state);
+  MousePressInfo(const SDL_MouseButtonEvent& event);
 
-  uint8_t button; /**< The mouse button index */
-  uint8_t state;
+  SDL_MouseButtonEvent mevent;
 };
 struct MouseReleaseInfo {
-  MouseReleaseInfo(uint8_t button, uint8_t state);
+  MouseReleaseInfo(const SDL_MouseButtonEvent& event);
 
-  uint8_t button; /**< The mouse button index */
-  uint8_t state;
+  SDL_MouseButtonEvent mevent;
 };
 
 typedef EventBase<MOUSE_MOVE_EVENT, MouseMoveInfo> MouseMoveEvent;
