@@ -63,7 +63,7 @@ Player::Player(const std::string& app_directory_absolute_path,
       show_keypad_(false),
       keypad_last_shown_(0),
       keypad_sym_(),
-      show_programms_list_(false),
+      show_programms_list_(true),
       last_programms_line_(0) {
   fApp->Subscribe(this, core::events::BandwidthEstimationEvent::EventType);
 
@@ -376,82 +376,46 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     return ISimplePlayer::HandleKeyPressEvent(event);
   }
 
-  core::events::KeyPressInfo inf = event->info();
-  SDL_Keycode key_code = inf.ks.sym;
-  switch (key_code) {
-    case SDLK_KP_0: {
-      HandleKeyPad(0);
-      break;
-    }
-    case SDLK_KP_1: {
-      HandleKeyPad(1);
-      break;
-    }
-    case SDLK_KP_2: {
-      HandleKeyPad(2);
-      break;
-    }
-    case SDLK_KP_3: {
-      HandleKeyPad(3);
-      break;
-    }
-    case SDLK_KP_4: {
-      HandleKeyPad(4);
-      break;
-    }
-    case SDLK_KP_5: {
-      HandleKeyPad(5);
-      break;
-    }
-    case SDLK_KP_6: {
-      HandleKeyPad(6);
-      break;
-    }
-    case SDLK_KP_7: {
-      HandleKeyPad(7);
-      break;
-    }
-    case SDLK_KP_8: {
-      HandleKeyPad(8);
-      break;
-    }
-    case SDLK_KP_9: {
-      HandleKeyPad(9);
-      break;
-    }
-    case SDLK_BACKSPACE: {
-      RemoveLastSymbolInKeypad();
-      break;
-    }
-    case SDLK_KP_ENTER: {
-      FinishKeyPadInput();
-      break;
-    }
-    case SDLK_LEFTBRACKET: {
-      MoveToPreviousStream();
-      break;
-    }
-    case SDLK_RIGHTBRACKET: {
-      MoveToNextStream();
-      break;
-    }
-    case SDLK_F4: {
-      StartShowFooter();
-      break;
-    }
-    case SDLK_F5: {
-      ToggleShowProgramsList();
-      break;
-    }
-    case SDLK_PERIOD: {
-      MoveToNextProgrammsPage();
-      break;
-    }
-    case SDLK_COMMA: {
-      MoveToPreviousProgrammsPage();
-      break;
-    }
-    default: { break; }
+  const core::events::KeyPressInfo inf = event->info();
+  const SDL_Scancode scan_code = inf.ks.scancode;
+  const Uint32 modifier = inf.ks.mod;
+  if (scan_code == SDL_SCANCODE_KP_0) {
+  } else if (scan_code == SDL_SCANCODE_KP_0) {
+    HandleKeyPad(0);
+  } else if (scan_code == SDL_SCANCODE_KP_1) {
+    HandleKeyPad(1);
+  } else if (scan_code == SDL_SCANCODE_KP_2) {
+    HandleKeyPad(2);
+  } else if (scan_code == SDL_SCANCODE_KP_3) {
+    HandleKeyPad(3);
+  } else if (scan_code == SDL_SCANCODE_KP_4) {
+    HandleKeyPad(4);
+  } else if (scan_code == SDL_SCANCODE_KP_5) {
+    HandleKeyPad(5);
+  } else if (scan_code == SDL_SCANCODE_KP_6) {
+    HandleKeyPad(6);
+  } else if (scan_code == SDL_SCANCODE_KP_7) {
+    HandleKeyPad(7);
+  } else if (scan_code == SDL_SCANCODE_KP_8) {
+    HandleKeyPad(8);
+  } else if (scan_code == SDL_SCANCODE_KP_9) {
+    HandleKeyPad(9);
+  } else if (scan_code == SDL_SCANCODE_BACKSPACE) {
+    RemoveLastSymbolInKeypad();
+  } else if (scan_code == SDL_SCANCODE_KP_ENTER) {
+    FinishKeyPadInput();
+  } else if (scan_code == SDL_SCANCODE_F4) {
+    StartShowFooter();
+  } else if (scan_code == SDL_SCANCODE_F5) {
+    ToggleShowProgramsList();
+  } else if (scan_code == SDL_SCANCODE_RIGHT) {
+    MoveToPreviousProgrammsPage();
+  } else if (scan_code == SDL_SCANCODE_LEFT) {
+    MoveToNextProgrammsPage();
+  } else if (scan_code == SDL_SCANCODE_UP) {
+    MoveToPreviousStream();
+  } else if (scan_code == SDL_SCANCODE_DOWN) {
+    MoveToNextStream();
   }
 
   ISimplePlayer::HandleKeyPressEvent(event);

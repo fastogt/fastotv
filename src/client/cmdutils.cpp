@@ -77,45 +77,47 @@ extern "C" {
 #define HELP_AVDEVICE
 #endif
 
-#define HELP_TEXT                                                   \
-  "Usage: " PROJECT_NAME                                            \
-  " [options]\n"                                                    \
-  "    -version  show version\n"                                    \
-  "    -help [topic]  show help\n"                                  \
-  "    -license  show license\n"                                    \
-  "    -i [input_file] read specified file\n"                       \
-  "    -buildconf  show build configuration\n"                      \
-  "    -formats  show available formats\n"                          \
-  "    -devices  show available devices\n"                          \
-  "    -codecs  show available codecs\n"                            \
-  "    -hwaccels  show available hwaccels\n"                        \
-  "    -decoders  show available decoders\n"                        \
-  "    -encoders  show available encoders\n"                        \
-  "    -bsfs  show available bit stream filters\n"                  \
-  "    -protocols  show available protocols\n"                      \
-  "    -filters  show available filters\n"                          \
-  "    -pix_fmts  show available pixel formats\n"                   \
-  "    -layouts  show standard channel layouts\n"                   \
-  "    -sample_fmts  show available audio sample formats\n"         \
-  "    -colors  show available color names\n" HELP_AVDEVICE         \
-  "\nWhile playing:\n"                                              \
-  "q, esc              quit\n"                                      \
-  "f                   toggle full screen\n"                        \
-  "p, space            pause\n"                                     \
-  "m                   toggle mute\n"                               \
-  "9, 0                decrease and increase volume respectively\n" \
-  "/, *                decrease and increase volume respectively\n" \
-  "s                   activate frame-step mode\n"                  \
-  "[, ]                previous channel/next channel\n"             \
-  "left, right         seek backward/forward 10 seconds\n"          \
-  "down, up            seek backward/forward 1 minute\n"            \
-  "page down, page up  seek backward/forward 10 minutes\n"          \
-  "F3                  stream statistic\n"                          \
-  "F4                  stream description\n"                        \
-  "F5                  show playlist\n"                             \
-  ",                   previous playlist page\n"                    \
-  ".                   next playlist page\n"                        \
-  "left double-click   toggle full screen\n"
+#define HELP_TEXT                                                             \
+  "Usage: " PROJECT_NAME                                                      \
+  " [options]\n"                                                              \
+  "    -version  show version\n"                                              \
+  "    -help [topic]  show help\n"                                            \
+  "    -license  show license\n"                                              \
+  "    -i [input_file] read specified file\n"                                 \
+  "    -buildconf  show build configuration\n"                                \
+  "    -formats  show available formats\n"                                    \
+  "    -devices  show available devices\n"                                    \
+  "    -codecs  show available codecs\n"                                      \
+  "    -hwaccels  show available hwaccels\n"                                  \
+  "    -decoders  show available decoders\n"                                  \
+  "    -encoders  show available encoders\n"                                  \
+  "    -bsfs  show available bit stream filters\n"                            \
+  "    -protocols  show available protocols\n"                                \
+  "    -filters  show available filters\n"                                    \
+  "    -pix_fmts  show available pixel formats\n"                             \
+  "    -layouts  show standard channel layouts\n"                             \
+  "    -sample_fmts  show available audio sample formats\n"                   \
+  "    -colors  show available color names\n" HELP_AVDEVICE                   \
+  "\nWhile playing:\n"                                                        \
+  "q, esc                        quit\n"                                      \
+  "f                             toggle full screen\n"                        \
+  "p, space                      pause\n"                                     \
+  "m                             toggle mute\n"                               \
+  "CTRL + down, CTRL + up        decrease and increase volume respectively\n" \
+  "s                             activate frame-step mode\n"                  \
+  "up, down                      previous channel/next channel\n"             \
+  "left, right                   previous /next programs page\n"              \
+  "keypad [0-9]                  fast move to channel number\n"               \
+  "keypad enter                  apply keypad enter\n"                        \
+  "SHIFT + left, SHIFT + right   seek backward/forward 10 seconds\n"          \
+  "ALT + left, ALT + right       seek backward/forward 1 minute\n"            \
+  "CTRL + left, CTRL + right     seek backward/forward 10 minutes\n"          \
+  "F3                            stream statistic\n"                          \
+  "F4                            stream description\n"                        \
+  "F5                            show playlist\n"                             \
+  ",                             previous playlist page\n"                    \
+  ".                             next playlist page\n"                        \
+  "left double-click             toggle full screen\n"
 
 namespace {
 bool warned_cfg = false;
@@ -262,17 +264,16 @@ void print_codecs_for_id(enum AVCodecID id, bool encoder) {
 }
 
 void print_codecs(bool encoder) {
-  std::cout << (encoder ? "Encoders" : "Decoders")
-            << ":\n"
-               " V..... = Video\n"
-               " A..... = Audio\n"
-               " S..... = Subtitle\n"
-               " .F.... = Frame-level multithreading\n"
-               " ..S... = Slice-level multithreading\n"
-               " ...X.. = Codec is experimental\n"
-               " ....B. = Supports draw_horiz_band\n"
-               " .....D = Supports direct rendering method 1\n"
-               " ------"
+  std::cout << (encoder ? "Encoders" : "Decoders") << ":\n"
+                                                      " V..... = Video\n"
+                                                      " A..... = Audio\n"
+                                                      " S..... = Subtitle\n"
+                                                      " .F.... = Frame-level multithreading\n"
+                                                      " ..S... = Slice-level multithreading\n"
+                                                      " ...X.. = Codec is experimental\n"
+                                                      " ....B. = Supports draw_horiz_band\n"
+                                                      " .....D = Supports direct rendering method 1\n"
+                                                      " ------"
             << std::endl;
 
   std::vector<const AVCodecDescriptor*> codecs;
@@ -304,11 +305,10 @@ void print_codecs(bool encoder) {
 void show_formats_devices(bool device_only) {
   AVInputFormat* ifmt = NULL;
   AVOutputFormat* ofmt = NULL;
-  std::cout << (device_only ? "Devices:" : "File formats:")
-            << "\n"
-               " D. = Demuxing supported\n"
-               " .E = Muxing supported\n"
-               " --"
+  std::cout << (device_only ? "Devices:" : "File formats:") << "\n"
+                                                               " D. = Demuxing supported\n"
+                                                               " .E = Muxing supported\n"
+                                                               " --"
             << std::endl;
 
   const char* last_name = "000";

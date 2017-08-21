@@ -389,99 +389,76 @@ void ISimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     return;
   }
 
-  core::events::KeyPressInfo inf = event->info();
-  SDL_Keycode key_code = inf.ks.sym;
-  switch (key_code) {
-    case SDLK_ESCAPE:
-    case SDLK_q: {
-      Quit();
-      return;
-    }
-    case SDLK_f: {
-      bool full_screen = !options_.is_full_screen;
-      SetFullScreen(full_screen);
-      break;
-    }
-    case SDLK_F3: {
-      ToggleShowStatistic();
-      break;
-    }
-    case SDLK_p:
-    case SDLK_SPACE:
-      PauseStream();
-      break;
-    case SDLK_m: {
-      ToggleMute();
-      break;
-    }
-    case SDLK_KP_MULTIPLY:
-    case SDLK_0:
+  const core::events::KeyPressInfo inf = event->info();
+  const SDL_Scancode scan_code = inf.ks.scancode;
+  const Uint32 modifier = inf.ks.mod;
+  if (scan_code == SDL_SCANCODE_ESCAPE || scan_code == SDL_SCANCODE_Q) {  // Quit
+    Quit();
+  } else if (scan_code == SDL_SCANCODE_F) {
+    bool full_screen = !options_.is_full_screen;
+    SetFullScreen(full_screen);
+  } else if (scan_code == SDL_SCANCODE_F3) {
+    ToggleShowStatistic();
+  } else if (scan_code == SDL_SCANCODE_SPACE || scan_code == SDL_SCANCODE_PAUSE) {
+    PauseStream();
+  } else if (scan_code == SDL_SCANCODE_M) {
+    ToggleMute();
+  } else if (scan_code == SDL_SCANCODE_UP) {
+    if (modifier & SDL_SCANCODE_LCTRL) {
       UpdateVolume(VOLUME_STEP);
-      break;
-    case SDLK_KP_DIVIDE:
-    case SDLK_9:
-      UpdateVolume(-VOLUME_STEP);
-      break;
-    case SDLK_s:  // S: Step to next frame
-      if (stream_) {
-        stream_->StepToNextFrame();
-      }
-      break;
-    case SDLK_a:
-      if (stream_) {
-        stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
-      }
-      break;
-    case SDLK_v:
-      if (stream_) {
-        stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-      }
-      break;
-    case SDLK_c:
-      if (stream_) {
-        stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-        stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
-      }
-      break;
-    case SDLK_t:
-      // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
-      break;
-    case SDLK_w: {
-      break;
     }
-    //
-    case SDLK_PAGEUP:
-      if (stream_) {
-        stream_->SeekNextChunk();
-      }
-      break;
-    case SDLK_PAGEDOWN:
-      if (stream_) {
-        stream_->SeekPrevChunk();
-      }
-      break;
-    case SDLK_LEFT:
+  } else if (scan_code == SDL_SCANCODE_DOWN) {
+    if (modifier & SDL_SCANCODE_LCTRL) {
+      UpdateVolume(-VOLUME_STEP);
+    }
+  } else if (scan_code == SDL_SCANCODE_S) {  // Step to next frame
+    if (stream_) {
+      stream_->StepToNextFrame();
+    }
+  } else if (scan_code == SDL_SCANCODE_A) {
+    if (stream_) {
+      stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+    }
+  } else if (scan_code == SDL_SCANCODE_V) {
+    if (stream_) {
+      stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
+    }
+  } else if (scan_code == SDL_SCANCODE_C) {
+    if (stream_) {
+      stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
+      stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+    }
+  } else if (scan_code == SDL_SCANCODE_T) {
+    // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
+  } else if (scan_code == SDL_SCANCODE_W) {
+  } else if (scan_code == SDL_SCANCODE_LEFT) {
+    if (modifier & SDL_SCANCODE_LSHIFT) {
       if (stream_) {
         stream_->Seek(-10000);  // msec
       }
-      break;
-    case SDLK_RIGHT:
-      if (stream_) {
-        stream_->Seek(10000);  // msec
-      }
-      break;
-    case SDLK_UP:
-      if (stream_) {
-        stream_->Seek(60000);  // msec
-      }
-      break;
-    case SDLK_DOWN:
+    } else if (modifier & SDL_SCANCODE_LALT) {
       if (stream_) {
         stream_->Seek(-60000);  // msec
       }
-      break;
-    default:
-      break;
+    } else if (modifier & SDL_SCANCODE_LCTRL) {
+      if (stream_) {
+        stream_->SeekPrevChunk();
+      }
+    }
+  } else if (scan_code == SDL_SCANCODE_RIGHT) {
+    if (modifier & SDL_SCANCODE_LSHIFT) {
+      if (stream_) {
+        stream_->Seek(10000);  // msec
+      }
+    } else if (modifier & SDL_SCANCODE_LALT) {
+      if (stream_) {
+        stream_->Seek(60000);  // msec
+      }
+    } else if (modifier & SDL_SCANCODE_LCTRL) {
+      if (stream_) {
+        stream_->SeekNextChunk();
+      }
+    }
   }
 }
 
