@@ -105,6 +105,9 @@ class Player : public ISimplePlayer {
   void ToggleShowProgramsList();
   SDL_Rect GetProgramsListRect() const;
 
+  SDL_Rect GetHideButtonProgramsListRect() const;
+  SDL_Rect GetShowButtonProgramsListRect() const;
+
   void MoveToNextProgrammsPage();
   void MoveToPreviousProgrammsPage();
 
@@ -127,9 +130,14 @@ class Player : public ISimplePlayer {
   void MoveToPreviousStream();
 
   bool FindStreamByPoint(SDL_Point point, size_t* pos) const;
+  bool IsHideButtonProgramsListRect(SDL_Point point) const;
+  bool IsShowButtonProgramsListRect(SDL_Point point) const;
 
   SurfaceSaver* offline_channel_texture_;
   SurfaceSaver* connection_error_texture_;
+
+  SurfaceSaver* hide_button_texture_;
+  SurfaceSaver* show_button_texture_;
 
   IoService* controller_;
 

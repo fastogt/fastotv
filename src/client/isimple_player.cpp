@@ -664,8 +664,9 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                             "to reduce the image size.";
+                << width << "x" << height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return;
   }
 
@@ -799,6 +800,10 @@ void ISimplePlayer::DrawVolume() {
   SDL_RenderFillRect(renderer_, &sdl_volume_rect);
 
   DrawCenterTextInRect(vol_str, text_color, sdl_volume_rect);
+}
+
+bool ISimplePlayer::IsMouseVisible() const {
+  return show_cursor_;
 }
 
 void ISimplePlayer::DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {

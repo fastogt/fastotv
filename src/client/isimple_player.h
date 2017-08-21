@@ -136,6 +136,8 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   virtual void DrawStatistic();
   virtual void DrawVolume();
 
+  bool IsMouseVisible() const;
+
   core::VideoState* CreateStream(stream_id sid,
                                  const common::uri::Uri& uri,
                                  core::AppOptions opt,

@@ -35,6 +35,9 @@
 #define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "share/resources/offline_channel.png"
 #define IMG_CONNECTION_ERROR_PATH_RELATIVE "share/resources/connection_error.png"
 
+#define IMG_HIDE_BUTTON_PATH_RELATIVE "share/resources/right_arrow.png"
+#define IMG_SHOW_BUTTON_PATH_RELATIVE "share/resources/left_arrow.png"
+
 #define CACHE_FOLDER_NAME "cache"
 
 #define FOOTER_HIDE_DELAY_MSEC 2000  // 2 sec
@@ -44,6 +47,22 @@ namespace fasto {
 namespace fastotv {
 namespace client {
 
+namespace {
+
+SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
+  const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+  const std::string img_full_path = common::file_system::make_path(absolute_source_dir, relative_path);
+  const char* img_full_path_ptr = common::utils::c_strornull(img_full_path);
+  SDL_Surface* img_surface = IMG_Load(img_full_path_ptr);
+  if (!img_surface) {
+    return nullptr;
+  }
+
+  return new SurfaceSaver(img_surface);
+}
+
+}  // namespace
+
 Player::Player(const std::string& app_directory_absolute_path,
                const PlayerOptions& options,
                const core::AppOptions& opt,
@@ -51,6 +70,8 @@ Player::Player(const std::string& app_directory_absolute_path,
     : ISimplePlayer(options),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
+      hide_button_texture_(nullptr),
+      show_button_texture_(nullptr),
       controller_(new IoService),
       current_stream_pos_(0),
       play_list_(),
@@ -129,22 +150,11 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
 void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
-    const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
-    const std::string offline_channel_img_full_path =
-        common::file_system::make_path(absolute_source_dir, IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
-    const char* offline_channel_img_full_path_ptr = common::utils::c_strornull(offline_channel_img_full_path);
-    SDL_Surface* surface = IMG_Load(offline_channel_img_full_path_ptr);
-    if (surface) {
-      offline_channel_texture_ = new SurfaceSaver(surface);
-    }
+    offline_channel_texture_ = MakeSurfaceFromImageRelativePath(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
+    connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
+    hide_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_HIDE_BUTTON_PATH_RELATIVE);
+    show_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_SHOW_BUTTON_PATH_RELATIVE);
 
-    const std::string connection_error_img_full_path =
-        common::file_system::make_path(absolute_source_dir, IMG_CONNECTION_ERROR_PATH_RELATIVE);
-    const char* connection_error_img_full_path_ptr = common::utils::c_strornull(connection_error_img_full_path);
-    SDL_Surface* surface2 = IMG_Load(connection_error_img_full_path_ptr);
-    if (surface2) {
-      connection_error_texture_ = new SurfaceSaver(surface2);
-    }
     controller_->Start();
     SwitchToConnectMode();
   }
@@ -172,6 +182,8 @@ void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
     controller_->Stop();
     destroy(&offline_channel_texture_);
     destroy(&connection_error_texture_);
+    destroy(&hide_button_texture_);
+    destroy(&show_button_texture_);
     play_list_.clear();
   }
   base_class::HandlePostExecEvent(event);
@@ -380,10 +392,20 @@ void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
   SDL_MouseButtonEvent sinfo = inf.mevent;
   if (sinfo.button == SDL_BUTTON_LEFT) {
     SDL_Point point{sinfo.x, sinfo.y};
-    size_t pos;
-    if (FindStreamByPoint(point, &pos)) {  // pos in playlist
-      core::VideoState* stream = CreateStreamPos(pos);
-      SetStream(stream);
+    if (show_programms_list_) {
+      size_t pos;
+      if (FindStreamByPoint(point, &pos)) {  // pos in playlist
+        core::VideoState* stream = CreateStreamPos(pos);
+        SetStream(stream);
+      } else {
+        if (IsHideButtonProgramsListRect(point)) {
+          show_programms_list_ = false;
+        }
+      }
+    } else {
+      if (IsShowButtonProgramsListRect(point)) {
+        show_programms_list_ = true;
+      }
     }
   }
   base_class::HandleMousePressEvent(event);
@@ -428,6 +450,16 @@ bool Player::FindStreamByPoint(SDL_Point point, size_t* pos) const {
     }
   }
   return false;
+}
+
+bool Player::IsHideButtonProgramsListRect(SDL_Point point) const {
+  const SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
+  return SDL_PointInRect(&point, &hide_button_rect);
+}
+
+bool Player::IsShowButtonProgramsListRect(SDL_Point point) const {
+  const SDL_Rect show_button_rect = GetShowButtonProgramsListRect();
+  return SDL_PointInRect(&point, &show_button_rect);
 }
 
 void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
@@ -524,6 +556,32 @@ void Player::ToggleShowProgramsList() {
 SDL_Rect Player::GetProgramsListRect() const {
   const SDL_Rect display_rect = GetDisplayRect();
   return {display_rect.x + display_rect.w * 3 / 4, display_rect.y, display_rect.w / 4, display_rect.h};
+}
+
+SDL_Rect Player::GetHideButtonProgramsListRect() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return SDL_Rect();
+  }
+
+  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  SDL_Rect prog_rect = GetProgramsListRect();
+  SDL_Rect hide_button_rect = {prog_rect.x - font_height_2line, prog_rect.h / 2 - font_height_2line, font_height_2line,
+                               font_height_2line};
+  return hide_button_rect;
+}
+
+SDL_Rect Player::GetShowButtonProgramsListRect() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return SDL_Rect();
+  }
+
+  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  SDL_Rect prog_rect = GetProgramsListRect();
+  SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2 - font_height_2line,
+                               font_height_2line, font_height_2line};
+  return show_button_rect;
 }
 
 void Player::MoveToNextProgrammsPage() {
@@ -658,7 +716,19 @@ int Player::GetMaxProgrammsLines() const {
 void Player::DrawProgramsList() {
   SDL_Renderer* render = GetRenderer();
   TTF_Font* font = GetFont();
-  if (!show_programms_list_ || !font || !render || play_list_.empty()) {
+  if (!font || !render || play_list_.empty()) {
+    return;
+  }
+
+  if (!show_programms_list_) {
+    if (show_button_texture_ && IsMouseVisible()) {
+      SDL_Texture* img = show_button_texture_->GetTexture(render);
+      if (img) {
+        SDL_Rect hide_button_rect = GetShowButtonProgramsListRect();
+        SDL_RenderCopy(render, img, NULL, &hide_button_rect);
+      }
+    }
+
     return;
   }
 
@@ -674,7 +744,13 @@ void Player::DrawProgramsList() {
     return;
   }
 
-  SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+  SDL_Point mouse_point;
+  bool is_mouse_visible = IsMouseVisible();
+  if (is_mouse_visible) {
+    SDL_GetMouseState(&mouse_point.x, &mouse_point.y);
+  }
+
+  SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));  // blue
   SDL_RenderFillRect(render, &programms_list_rect);
 
   int drawed = 0;
@@ -713,11 +789,27 @@ void Player::DrawProgramsList() {
       SDL_Rect text_rect = {programms_list_rect.x + shift, programms_list_rect.y + font_height_2line * drawed,
                             text_width, font_height_2line};
       DrawWrappedTextInRect(line_text, text_color, text_rect);
-      if (current_stream_pos_ == i) {  // seleceted item
-        SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+      if (current_stream_pos_ == i) {                                                // seleceted item
+        SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));  // red
         SDL_RenderFillRect(render, &cell_rect);
       }
+
+      if (is_mouse_visible && SDL_PointInRect(&mouse_point, &cell_rect)) {           // pre selection
+        SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.1));  // red
+        SDL_RenderFillRect(render, &cell_rect);
+      }
+
+      SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));  // blue
+      SDL_RenderDrawRect(render, &cell_rect);
       drawed++;
+    }
+  }
+
+  if (hide_button_texture_) {
+    SDL_Texture* img = hide_button_texture_->GetTexture(render);
+    if (img) {
+      SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
+      SDL_RenderCopy(render, img, NULL, &hide_button_rect);
     }
   }
 }
@@ -734,7 +826,7 @@ void Player::DrawKeyPad() {
     return;
   }
   const SDL_Rect keypad_rect = GetKeyPadRect();
-  SDL_SetRenderDrawColor(render, 171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+  SDL_SetRenderDrawColor(render, 171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5));  // green
   SDL_RenderFillRect(render, &keypad_rect);
   DrawCenterTextInRect(keypad_sym_ptr, text_color, keypad_rect);
 }
@@ -753,18 +845,18 @@ void Player::DrawFooter() {
   States current_state = GetCurrentState();
   if (current_state == INIT_STATE) {
     std::string footer_text = current_state_str_;
-    SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+    SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));  // red
     SDL_RenderFillRect(render, &sdl_footer_rect);
     DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
   } else if (current_state == FAILED_STATE) {
     std::string footer_text = current_state_str_;
-    SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+    SDL_SetRenderDrawColor(render, 193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5));  // red
     SDL_RenderFillRect(render, &sdl_footer_rect);
     DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
   } else if (current_state == PLAYING_STATE) {
     ChannelDescription descr;
     if (GetChannelDescription(current_stream_pos_, &descr)) {
-      SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+      SDL_SetRenderDrawColor(render, 98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5));  // blue
       SDL_RenderFillRect(render, &sdl_footer_rect);
 
       std::string footer_text = common::MemSPrintf(
