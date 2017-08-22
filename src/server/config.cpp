@@ -114,7 +114,7 @@ Config::Config() : server() {}
 
 common::Error load_config_file(const std::string& config_absolute_path, Config* options) {
   if (!options || config_absolute_path.empty()) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   ini_parse(config_absolute_path.c_str(), ini_handler_fasto, options);
@@ -123,7 +123,7 @@ common::Error load_config_file(const std::string& config_absolute_path, Config* 
 
 common::Error save_config_file(const std::string& config_absolute_path, Config* options) {
   if (!options || config_absolute_path.empty()) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   return common::Error();

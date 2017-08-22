@@ -48,7 +48,7 @@ cmd_responce_t GetServerInfoResponceSuccsess(cmd_seq_t id, const serializet_t& s
 cmd_responce_t GetServerInfoResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 
 // get_channels
-cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const serializet_t &channels_info);
+cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const serializet_t& channels_info);
 cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 
 // ping

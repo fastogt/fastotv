@@ -238,7 +238,7 @@ common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(common::libev:
                                                                   BandwidthHostType hs,
                                                                   bandwidth::TcpBandwidthClient** out_band) {
   if (!server || !out_band) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   common::net::socket_info client_info;
@@ -485,17 +485,17 @@ common::Error InnerTcpHandler::HandleInnerFailedResponceCommand(fastotv::inner::
 
 common::Error InnerTcpHandler::ParserResponceResponceCommand(int argc, char* argv[], json_object** out) {
   if (argc < 2) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   const char* arg_2_str = argv[2];
   if (!arg_2_str) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   json_object* obj = json_tokener_parse(arg_2_str);
   if (!obj) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   *out = obj;

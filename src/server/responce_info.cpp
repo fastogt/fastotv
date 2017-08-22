@@ -49,7 +49,7 @@ common::Error ResponceInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error ResponceInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   ResponceInfo inf;

@@ -32,7 +32,7 @@ namespace redis {
 
 common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisContext** conn) {
   if (!conn || !host.IsValid()) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   struct redisContext* redis = redisConnect(host.host.c_str(), host.port);
@@ -55,7 +55,7 @@ common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisConte
 
 common::Error redis_unix_connect(const std::string& unix_path, redisContext** conn) {
   if (!conn || unix_path.empty()) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   struct redisContext* redis = redisConnectUnix(unix_path.c_str());
@@ -77,14 +77,14 @@ common::Error redis_unix_connect(const std::string& unix_path, redisContext** co
 
 common::Error redis_connect(const RedisConfig& config, redisContext** conn) {
   if (!conn) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   const common::net::HostAndPort redis_host = config.redis_host;
   const std::string unix_path = config.redis_unix_socket;
 
   if (!redis_host.IsValid() && unix_path.empty()) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   if (unix_path.empty()) {

@@ -91,7 +91,7 @@ cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const serializet_t& auth_
   return MakeResponce(id, CLIENT_WHO_ARE_YOU_COMMAND_RESP_SUCCSESS_1E, auth_serialized);
 }
 
-cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const serializet_t &system_info) {
+cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const serializet_t& system_info) {
   return MakeResponce(id, CLIENT_PLEASE_SYSTEM_INFO_COMMAND_RESP_SUCCSESS_1E, system_info);
 }
 

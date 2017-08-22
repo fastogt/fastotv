@@ -519,17 +519,17 @@ void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient*
 
 common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc, char* argv[], json_object** out) {
   if (argc < 2) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   const char* arg_2_str = argv[2];
   if (!arg_2_str) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   json_object* obj = json_tokener_parse(arg_2_str);
   if (!obj) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   *out = obj;

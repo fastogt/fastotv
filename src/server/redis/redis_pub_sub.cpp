@@ -103,7 +103,7 @@ common::Error RedisPubSub::PublishToChannelOut(const std::string& msg) {
 
 common::Error RedisPubSub::Publish(const std::string& channel, const std::string& msg) {
   if (channel.empty() || msg.empty()) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   redisContext* redis_sub = NULL;

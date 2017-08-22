@@ -21,7 +21,7 @@
 #include "client/core/types.h"  // for clock64_t
 
 extern "C" {
-#include <libavutil/rational.h>    // for AVRational
+#include <libavutil/rational.h>  // for AVRational
 }
 
 namespace fasto {

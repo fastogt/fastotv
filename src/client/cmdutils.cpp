@@ -99,24 +99,22 @@ extern "C" {
   "    -sample_fmts  show available audio sample formats\n"                   \
   "    -colors  show available color names\n" HELP_AVDEVICE                   \
   "\nWhile playing:\n"                                                        \
-  "q, esc                        quit\n"                                      \
+  "esc                           quit\n"                                      \
   "f                             toggle full screen\n"                        \
-  "p, space                      pause\n"                                     \
+  "space                         pause\n"                                     \
   "m                             toggle mute\n"                               \
   "CTRL + down, CTRL + up        decrease and increase volume respectively\n" \
   "s                             activate frame-step mode\n"                  \
   "up, down                      previous channel/next channel\n"             \
   "left, right                   previous /next programs page\n"              \
   "keypad [0-9]                  fast move to channel number\n"               \
-  "keypad enter                  apply keypad enter\n"                        \
+  "keypad enter                  apply keypad channel number\n"               \
   "SHIFT + left, SHIFT + right   seek backward/forward 10 seconds\n"          \
   "ALT + left, ALT + right       seek backward/forward 1 minute\n"            \
   "CTRL + left, CTRL + right     seek backward/forward 10 minutes\n"          \
   "F3                            stream statistic\n"                          \
   "F4                            stream description\n"                        \
   "F5                            show playlist\n"                             \
-  ",                             previous playlist page\n"                    \
-  ".                             next playlist page\n"                        \
   "left double-click             toggle full screen\n"
 
 namespace {
@@ -264,16 +262,17 @@ void print_codecs_for_id(enum AVCodecID id, bool encoder) {
 }
 
 void print_codecs(bool encoder) {
-  std::cout << (encoder ? "Encoders" : "Decoders") << ":\n"
-                                                      " V..... = Video\n"
-                                                      " A..... = Audio\n"
-                                                      " S..... = Subtitle\n"
-                                                      " .F.... = Frame-level multithreading\n"
-                                                      " ..S... = Slice-level multithreading\n"
-                                                      " ...X.. = Codec is experimental\n"
-                                                      " ....B. = Supports draw_horiz_band\n"
-                                                      " .....D = Supports direct rendering method 1\n"
-                                                      " ------"
+  std::cout << (encoder ? "Encoders" : "Decoders")
+            << ":\n"
+               " V..... = Video\n"
+               " A..... = Audio\n"
+               " S..... = Subtitle\n"
+               " .F.... = Frame-level multithreading\n"
+               " ..S... = Slice-level multithreading\n"
+               " ...X.. = Codec is experimental\n"
+               " ....B. = Supports draw_horiz_band\n"
+               " .....D = Supports direct rendering method 1\n"
+               " ------"
             << std::endl;
 
   std::vector<const AVCodecDescriptor*> codecs;
@@ -305,10 +304,11 @@ void print_codecs(bool encoder) {
 void show_formats_devices(bool device_only) {
   AVInputFormat* ifmt = NULL;
   AVOutputFormat* ofmt = NULL;
-  std::cout << (device_only ? "Devices:" : "File formats:") << "\n"
-                                                               " D. = Demuxing supported\n"
-                                                               " .E = Muxing supported\n"
-                                                               " --"
+  std::cout << (device_only ? "Devices:" : "File formats:")
+            << "\n"
+               " D. = Demuxing supported\n"
+               " .E = Muxing supported\n"
+               " --"
             << std::endl;
 
   const char* last_name = "000";

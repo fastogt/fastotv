@@ -21,9 +21,9 @@
 #include <stdint.h>  // for int64_t, uint8_t
 
 #include <condition_variable>
+#include <memory>
 #include <mutex>
 #include <string>  // for string
-#include <memory>
 
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
 

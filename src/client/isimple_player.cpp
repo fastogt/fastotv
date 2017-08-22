@@ -392,14 +392,14 @@ void ISimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   const core::events::KeyPressInfo inf = event->info();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint32 modifier = inf.ks.mod;
-  if (scan_code == SDL_SCANCODE_ESCAPE || scan_code == SDL_SCANCODE_Q) {  // Quit
+  if (scan_code == SDL_SCANCODE_ESCAPE) {  // Quit
     Quit();
   } else if (scan_code == SDL_SCANCODE_F) {
     bool full_screen = !options_.is_full_screen;
     SetFullScreen(full_screen);
   } else if (scan_code == SDL_SCANCODE_F3) {
     ToggleShowStatistic();
-  } else if (scan_code == SDL_SCANCODE_SPACE || scan_code == SDL_SCANCODE_PAUSE) {
+  } else if (scan_code == SDL_SCANCODE_SPACE) {
     PauseStream();
   } else if (scan_code == SDL_SCANCODE_M) {
     ToggleMute();
