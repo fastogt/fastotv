@@ -130,7 +130,7 @@ common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
   iconnection->SetServerHostInfo(user);
   iconnection->SetUid(user_id);
 
-  std::string login = user.GetLogin();
+  login_t login = user.GetLogin();
   connections_[user_id].push_back(iconnection);
   connection->SetName(login);
   return common::Error();
