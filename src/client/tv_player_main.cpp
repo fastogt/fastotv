@@ -29,8 +29,8 @@ extern "C" {
 #include <common/system/system.h>
 
 #include "client/cmdutils.h"  // for DictionaryOptions, show_...
-#include "client/ffmpeg_application.h"
 #include "client/config.h"
+#include "client/ffmpeg_application.h"
 #include "client/player.h"  // for Player
 #include "client/simple_player.h"
 

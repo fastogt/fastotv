@@ -28,8 +28,8 @@ extern "C" {
 #include <common/file_system.h>  // for File, create_directory
 
 #include "client/cmdutils.h"  // for DictionaryOptions, show_...
-#include "client/ffmpeg_application.h"
 #include "client/config.h"
+#include "client/ffmpeg_application.h"
 #include "client/player.h"  // for Player
 #include "client/simple_player.h"
 
