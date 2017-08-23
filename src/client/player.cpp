@@ -203,10 +203,6 @@ core::AppOptions Player::GetStreamOptions() const {
   return opt_;
 }
 
-const std::string& Player::GetAppDirectoryAbsolutePath() const {
-  return app_directory_absolute_path_;
-}
-
 bool Player::GetCurrentUrl(PlaylistEntry* url) const {
   if (!url || play_list_.empty()) {
     return false;

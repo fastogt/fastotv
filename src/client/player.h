@@ -41,7 +41,7 @@ class Player : public ISimplePlayer {
   typedef ISimplePlayer base_class;
   typedef std::string keypad_sym_t;
   enum { footer_height = 60, keypad_height = 30, keypad_width = 60, min_key_pad_size = 0, max_keypad_size = 999 };
-  Player(const std::string& app_directory_absolute_path,
+  Player(const std::string& app_directory_absolute_path,  // for runtime data (cache)
          const PlayerOptions& options,
          const core::AppOptions& opt,
          const core::ComplexOptions& copt);
@@ -49,8 +49,6 @@ class Player : public ISimplePlayer {
   ~Player();
 
   virtual std::string GetCurrentUrlName() const override;  // return Unknown if not found
-
-  const std::string& GetAppDirectoryAbsolutePath() const;
   core::AppOptions GetStreamOptions() const;
 
  protected:

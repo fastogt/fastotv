@@ -77,13 +77,46 @@ extern "C" {
 #define HELP_AVDEVICE
 #endif
 
-#define HELP_TEXT                                                             \
+#define HELP_TEXT_PLAYER                                                      \
   "Usage: " PROJECT_NAME                                                      \
   " [options]\n"                                                              \
   "    -version  show version\n"                                              \
   "    -help [topic]  show help\n"                                            \
   "    -license  show license\n"                                              \
   "    -i [input_file] read specified file\n"                                 \
+  "    -buildconf  show build configuration\n"                                \
+  "    -formats  show available formats\n"                                    \
+  "    -devices  show available devices\n"                                    \
+  "    -codecs  show available codecs\n"                                      \
+  "    -hwaccels  show available hwaccels\n"                                  \
+  "    -decoders  show available decoders\n"                                  \
+  "    -encoders  show available encoders\n"                                  \
+  "    -bsfs  show available bit stream filters\n"                            \
+  "    -protocols  show available protocols\n"                                \
+  "    -filters  show available filters\n"                                    \
+  "    -pix_fmts  show available pixel formats\n"                             \
+  "    -layouts  show standard channel layouts\n"                             \
+  "    -sample_fmts  show available audio sample formats\n"                   \
+  "    -colors  show available color names\n" HELP_AVDEVICE                   \
+  "\nWhile playing:\n"                                                        \
+  "esc                           quit\n"                                      \
+  "f                             toggle full screen\n"                        \
+  "space                         pause\n"                                     \
+  "m                             toggle mute\n"                               \
+  "CTRL + down, CTRL + up        decrease and increase volume respectively\n" \
+  "s                             activate frame-step mode\n"                  \
+  "SHIFT + left, SHIFT + right   seek backward/forward 10 seconds\n"          \
+  "ALT + left, ALT + right       seek backward/forward 1 minute\n"            \
+  "CTRL + left, CTRL + right     seek backward/forward 10 minutes\n"          \
+  "F3                            stream statistic\n"                          \
+  "left double-click             toggle full screen\n"
+
+#define HELP_TEXT_TV_PLAYER                                                   \
+  "Usage: " PROJECT_NAME                                                      \
+  " [options]\n"                                                              \
+  "    -version  show version\n"                                              \
+  "    -help [topic]  show help\n"                                            \
+  "    -license  show license\n"                                              \
   "    -buildconf  show build configuration\n"                                \
   "    -formats  show available formats\n"                                    \
   "    -devices  show available devices\n"                                    \
@@ -578,25 +611,45 @@ void show_help_filter(const std::string& name) {
 #endif
 }
 
-void show_help_default() {
-  show_usage();
-  std::cout << "\nWhile playing:\n"
-               "q, ESC              quit\n"
-               "f                   toggle full screen\n"
-               "p, SPC              pause\n"
-               "m                   toggle mute\n"
-               "9, 0                decrease and increase volume respectively\n"
-               "/, *                decrease and increase volume respectively\n"
-               "[, ]                prev/next channel\n"
-               "F3                  channel statistic\n"
-               "a                   cycle audio channel in the current program\n"
-               "v                   cycle video channel\n"
-               "c                   cycle program\n"
-               "w                   cycle video filters or show modes\n"
-               "s                   activate frame-step mode\n"
-               "left double-click   toggle full screen"
-            << std::endl;
+void show_help_default(bool simple_player) {
+  if (simple_player) {
+    std::cout << HELP_TEXT_PLAYER << std::endl;
+  } else {
+    std::cout << HELP_TEXT_TV_PLAYER << std::endl;
+  }
 }
+
+void show_help(const std::string& topic, bool simple_player) {
+  if (topic.empty()) {
+    show_help_default(simple_player);
+    return;
+  }
+
+  size_t del = topic.find_first_of('=');
+  std::string par;
+  std::string stabled_topic = topic;
+  if (del != std::string::npos) {
+    par = topic.substr(del + 1);
+    stabled_topic = topic.substr(0, del);
+  }
+
+  if (stabled_topic == "decoder") {
+    show_help_codec(par, 0);
+  } else if (stabled_topic == "encoder") {
+    show_help_codec(par, 1);
+  } else if (stabled_topic == "demuxer") {
+    show_help_demuxer(par);
+  } else if (stabled_topic == "muxer") {
+    show_help_muxer(par);
+#if CONFIG_AVFILTER
+  } else if (stabled_topic == "filter") {
+    show_help_filter(par);
+#endif
+  } else {
+    show_help_default(simple_player);
+  }
+}
+
 }  // namespace
 
 void show_license() {
@@ -854,39 +907,12 @@ void show_colors() {
   }
 }
 
-void show_usage() {
-  std::cout << "Simple media player\nusage: " PROJECT_NAME_TITLE " [options]" << std::endl;
+void show_help_tv_player(const std::string& topic) {
+  show_help(topic, false);
 }
 
-void show_help(const std::string& topic) {
-  if (topic.empty()) {
-    std::cout << HELP_TEXT << std::endl;
-    return;
-  }
-
-  size_t del = topic.find_first_of('=');
-  std::string par;
-  std::string stabled_topic = topic;
-  if (del != std::string::npos) {
-    par = topic.substr(del + 1);
-    stabled_topic = topic.substr(0, del);
-  }
-
-  if (stabled_topic == "decoder") {
-    show_help_codec(par, 0);
-  } else if (stabled_topic == "encoder") {
-    show_help_codec(par, 1);
-  } else if (stabled_topic == "demuxer") {
-    show_help_demuxer(par);
-  } else if (stabled_topic == "muxer") {
-    show_help_muxer(par);
-#if CONFIG_AVFILTER
-  } else if (stabled_topic == "filter") {
-    show_help_filter(par);
-#endif
-  } else {
-    show_help_default();
-  }
+void show_help_player(const std::string& topic) {
+  show_help(topic, true);
 }
 
 void init_dynload(void) {

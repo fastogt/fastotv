@@ -38,8 +38,8 @@ extern "C" {
 
 void show_license();
 void show_version();
-void show_usage();
-void show_help(const std::string& topic);
+void show_help_tv_player(const std::string& topic);
+void show_help_player(const std::string& topic);
 void show_buildconf();
 void show_formats();
 void show_devices();
