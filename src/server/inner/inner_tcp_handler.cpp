@@ -407,8 +407,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
 
     // registered user
-    login_t login = uauth.GetLogin();
-    InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(login, dev);
+    InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(uid, dev);
     if (fclient) {
       const std::string error_str = "Double connection reject";
       cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
