@@ -28,7 +28,6 @@
 #define SERVER_INFO_TIMESTAMP_FIELD "timestamp"
 #define CLIENT_INFO_TIMESTAMP_FIELD "timestamp"
 
-namespace fasto {
 namespace fastotv {
 
 class ServerPingInfo : public JsonSerializer<ServerPingInfo> {
@@ -62,4 +61,3 @@ class ClientPingInfo : public JsonSerializer<ClientPingInfo> {
 };
 
 }  // namespace fastotv
-}  // namespace fasto

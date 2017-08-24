@@ -43,13 +43,12 @@
 #define FOOTER_HIDE_DELAY_MSEC 2000  // 2 sec
 #define KEYPAD_HIDE_DELAY_MSEC 3000  // 3 sec
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
 namespace {
 
-SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
+player::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string img_full_path = common::file_system::make_path(absolute_source_dir, relative_path);
   const char* img_full_path_ptr = common::utils::c_strornull(img_full_path);
@@ -58,15 +57,15 @@ SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path)
     return nullptr;
   }
 
-  return new SurfaceSaver(img_surface);
+  return new player::SurfaceSaver(img_surface);
 }
 
 }  // namespace
 
 Player::Player(const std::string& app_directory_absolute_path,
-               const PlayerOptions& options,
-               const core::AppOptions& opt,
-               const core::ComplexOptions& copt)
+               const player::PlayerOptions& options,
+               const player::core::AppOptions& opt,
+               const player::core::ComplexOptions& copt)
     : ISimplePlayer(options),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
@@ -86,16 +85,16 @@ Player::Player(const std::string& app_directory_absolute_path,
       keypad_sym_(),
       show_programms_list_(true),
       last_programms_line_(0) {
-  fApp->Subscribe(this, core::events::BandwidthEstimationEvent::EventType);
+  fApp->Subscribe(this, player::core::events::BandwidthEstimationEvent::EventType);
 
-  fApp->Subscribe(this, core::events::ClientDisconnectedEvent::EventType);
-  fApp->Subscribe(this, core::events::ClientConnectedEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ClientDisconnectedEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ClientConnectedEvent::EventType);
 
-  fApp->Subscribe(this, core::events::ClientAuthorizedEvent::EventType);
-  fApp->Subscribe(this, core::events::ClientUnAuthorizedEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ClientAuthorizedEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ClientUnAuthorizedEvent::EventType);
 
-  fApp->Subscribe(this, core::events::ClientConfigChangeEvent::EventType);
-  fApp->Subscribe(this, core::events::ReceiveChannelsEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ClientConfigChangeEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ReceiveChannelsEvent::EventType);
 }
 
 Player::~Player() {
@@ -103,27 +102,33 @@ Player::~Player() {
 }
 
 void Player::HandleEvent(event_t* event) {
-  if (event->GetEventType() == core::events::BandwidthEstimationEvent::EventType) {
-    core::events::BandwidthEstimationEvent* band_event = static_cast<core::events::BandwidthEstimationEvent*>(event);
+  if (event->GetEventType() == player::core::events::BandwidthEstimationEvent::EventType) {
+    player::core::events::BandwidthEstimationEvent* band_event =
+        static_cast<player::core::events::BandwidthEstimationEvent*>(event);
     HandleBandwidthEstimationEvent(band_event);
-  } else if (event->GetEventType() == core::events::ClientConnectedEvent::EventType) {
-    core::events::ClientConnectedEvent* connect_event = static_cast<core::events::ClientConnectedEvent*>(event);
+  } else if (event->GetEventType() == player::core::events::ClientConnectedEvent::EventType) {
+    player::core::events::ClientConnectedEvent* connect_event =
+        static_cast<player::core::events::ClientConnectedEvent*>(event);
     HandleClientConnectedEvent(connect_event);
-  } else if (event->GetEventType() == core::events::ClientDisconnectedEvent::EventType) {
-    core::events::ClientDisconnectedEvent* disc_event = static_cast<core::events::ClientDisconnectedEvent*>(event);
+  } else if (event->GetEventType() == player::core::events::ClientDisconnectedEvent::EventType) {
+    player::core::events::ClientDisconnectedEvent* disc_event =
+        static_cast<player::core::events::ClientDisconnectedEvent*>(event);
     HandleClientDisconnectedEvent(disc_event);
-  } else if (event->GetEventType() == core::events::ClientAuthorizedEvent::EventType) {
-    core::events::ClientAuthorizedEvent* auth_event = static_cast<core::events::ClientAuthorizedEvent*>(event);
+  } else if (event->GetEventType() == player::core::events::ClientAuthorizedEvent::EventType) {
+    player::core::events::ClientAuthorizedEvent* auth_event =
+        static_cast<player::core::events::ClientAuthorizedEvent*>(event);
     HandleClientAuthorizedEvent(auth_event);
-  } else if (event->GetEventType() == core::events::ClientUnAuthorizedEvent::EventType) {
-    core::events::ClientUnAuthorizedEvent* unauth_event = static_cast<core::events::ClientUnAuthorizedEvent*>(event);
+  } else if (event->GetEventType() == player::core::events::ClientUnAuthorizedEvent::EventType) {
+    player::core::events::ClientUnAuthorizedEvent* unauth_event =
+        static_cast<player::core::events::ClientUnAuthorizedEvent*>(event);
     HandleClientUnAuthorizedEvent(unauth_event);
-  } else if (event->GetEventType() == core::events::ClientConfigChangeEvent::EventType) {
-    core::events::ClientConfigChangeEvent* conf_change_event =
-        static_cast<core::events::ClientConfigChangeEvent*>(event);
+  } else if (event->GetEventType() == player::core::events::ClientConfigChangeEvent::EventType) {
+    player::core::events::ClientConfigChangeEvent* conf_change_event =
+        static_cast<player::core::events::ClientConfigChangeEvent*>(event);
     HandleClientConfigChangeEvent(conf_change_event);
-  } else if (event->GetEventType() == core::events::ReceiveChannelsEvent::EventType) {
-    core::events::ReceiveChannelsEvent* channels_event = static_cast<core::events::ReceiveChannelsEvent*>(event);
+  } else if (event->GetEventType() == player::core::events::ReceiveChannelsEvent::EventType) {
+    player::core::events::ReceiveChannelsEvent* channels_event =
+        static_cast<player::core::events::ReceiveChannelsEvent*>(event);
     HandleReceiveChannelsEvent(channels_event);
   }
 
@@ -131,24 +136,25 @@ void Player::HandleEvent(event_t* event) {
 }
 
 void Player::HandleExceptionEvent(event_t* event, common::Error err) {
-  if (event->GetEventType() == core::events::ClientConnectedEvent::EventType) {
+  if (event->GetEventType() == player::core::events::ClientConnectedEvent::EventType) {
     // core::events::ClientConnectedEvent* connect_event =
     //    static_cast<core::events::ClientConnectedEvent*>(event);
     SwitchToDisconnectMode();
-  } else if (event->GetEventType() == core::events::ClientAuthorizedEvent::EventType) {
+  } else if (event->GetEventType() == player::core::events::ClientAuthorizedEvent::EventType) {
     // core::events::ClientConnectedEvent* connect_event =
     //    static_cast<core::events::ClientConnectedEvent*>(event);
     SwitchToUnAuthorizeMode();
-  } else if (event->GetEventType() == core::events::BandwidthEstimationEvent::EventType) {
-    core::events::BandwidthEstimationEvent* band_event = static_cast<core::events::BandwidthEstimationEvent*>(event);
+  } else if (event->GetEventType() == player::core::events::BandwidthEstimationEvent::EventType) {
+    player::core::events::BandwidthEstimationEvent* band_event =
+        static_cast<player::core::events::BandwidthEstimationEvent*>(event);
     HandleBandwidthEstimationEvent(band_event);
   }
 
   base_class::HandleExceptionEvent(event, err);
 }
 
-void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
-  core::events::PreExecInfo inf = event->info();
+void Player::HandlePreExecEvent(player::core::events::PreExecEvent* event) {
+  player::core::events::PreExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
     offline_channel_texture_ = MakeSurfaceFromImageRelativePath(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
@@ -161,14 +167,14 @@ void Player::HandlePreExecEvent(core::events::PreExecEvent* event) {
   base_class::HandlePreExecEvent(event);
 }
 
-void Player::HandleTimerEvent(core::events::TimerEvent* event) {
-  core::msec_t cur_time = core::GetCurrentMsec();
-  core::msec_t diff_footer = cur_time - footer_last_shown_;
+void Player::HandleTimerEvent(player::core::events::TimerEvent* event) {
+  player::core::msec_t cur_time = player::core::GetCurrentMsec();
+  player::core::msec_t diff_footer = cur_time - footer_last_shown_;
   if (show_footer_ && diff_footer > FOOTER_HIDE_DELAY_MSEC) {
     show_footer_ = false;
   }
 
-  core::msec_t diff_keypad = cur_time - keypad_last_shown_;
+  player::core::msec_t diff_keypad = cur_time - keypad_last_shown_;
   if (show_keypad_ && diff_keypad > KEYPAD_HIDE_DELAY_MSEC) {
     ResetKeyPad();
   }
@@ -176,8 +182,8 @@ void Player::HandleTimerEvent(core::events::TimerEvent* event) {
   base_class::HandleTimerEvent(event);
 }
 
-void Player::HandlePostExecEvent(core::events::PostExecEvent* event) {
-  core::events::PostExecInfo inf = event->info();
+void Player::HandlePostExecEvent(player::core::events::PostExecEvent* event) {
+  player::core::events::PostExecInfo inf = event->info();
   if (inf.code == EXIT_SUCCESS) {
     controller_->Stop();
     destroy(&offline_channel_texture_);
@@ -199,7 +205,7 @@ std::string Player::GetCurrentUrlName() const {
   return "Unknown";
 }
 
-core::AppOptions Player::GetStreamOptions() const {
+player::core::AppOptions Player::GetStreamOptions() const {
   return opt_;
 }
 
@@ -217,7 +223,7 @@ void Player::SwitchToPlayingMode() {
     return;
   }
 
-  PlayerOptions opt = GetOptions();
+  player::PlayerOptions opt = GetOptions();
 
   size_t pos = current_stream_pos_;
   for (size_t i = 0; i < play_list_.size() && opt.last_showed_channel_id != invalid_stream_id; ++i) {
@@ -229,7 +235,7 @@ void Player::SwitchToPlayingMode() {
     }
   }
 
-  core::VideoState* stream = CreateStreamPos(pos);
+  player::core::VideoState* stream = CreateStreamPos(pos);
   SetStream(stream);
 }
 
@@ -249,43 +255,43 @@ void Player::SwitchToDisconnectMode() {
   InitWindow("Disconnected", INIT_STATE);
 }
 
-void Player::HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event) {
-  core::events::BandwidtInfo band_inf = event->info();
+void Player::HandleBandwidthEstimationEvent(player::core::events::BandwidthEstimationEvent* event) {
+  player::core::events::BandwidtInfo band_inf = event->info();
   if (band_inf.host_type == MAIN_SERVER) {
     controller_->RequestChannels();
   }
 }
 
-void Player::HandleClientConnectedEvent(core::events::ClientConnectedEvent* event) {
+void Player::HandleClientConnectedEvent(player::core::events::ClientConnectedEvent* event) {
   UNUSED(event);
   SwitchToAuthorizeMode();
 }
 
-void Player::HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event) {
+void Player::HandleClientDisconnectedEvent(player::core::events::ClientDisconnectedEvent* event) {
   UNUSED(event);
   if (GetCurrentState() == INIT_STATE) {
     SwitchToDisconnectMode();
   }
 }
 
-void Player::HandleClientAuthorizedEvent(core::events::ClientAuthorizedEvent* event) {
+void Player::HandleClientAuthorizedEvent(player::core::events::ClientAuthorizedEvent* event) {
   UNUSED(event);
 
   controller_->RequestServerInfo();
 }
 
-void Player::HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event) {
+void Player::HandleClientUnAuthorizedEvent(player::core::events::ClientUnAuthorizedEvent* event) {
   UNUSED(event);
   if (GetCurrentState() == INIT_STATE) {
     SwitchToDisconnectMode();
   }
 }
 
-void Player::HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event) {
+void Player::HandleClientConfigChangeEvent(player::core::events::ClientConfigChangeEvent* event) {
   UNUSED(event);
 }
 
-void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event) {
+void Player::HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEvent* event) {
   ChannelsInfo chan = event->info();
   // prepare cache folders
   ChannelsInfo::channels_t channels = chan.GetChannels();
@@ -305,7 +311,7 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
     const std::string icon_path = entry.GetIconPath();
     const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
     SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-    channel_icon_t shared_surface = std::make_shared<SurfaceSaver>(surface);
+    channel_icon_t shared_surface = std::make_shared<player::SurfaceSaver>(surface);
     entry.SetIcon(shared_surface);
     play_list_.push_back(entry);
 
@@ -336,7 +342,7 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
         const std::string channel_icon_path = entry.GetIconPath();
         if (!common::file_system::is_file_exist(channel_icon_path)) {  // if not exist trying to download
           common::buffer_t buff;
-          bool is_file_downloaded = DownloadFileToBuffer(uri, &buff);
+          bool is_file_downloaded = player::DownloadFileToBuffer(uri, &buff);
           if (!is_file_downloaded) {
             return;
           }
@@ -368,30 +374,30 @@ void Player::HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* even
   SwitchToPlayingMode();
 }
 
-void Player::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {
+void Player::HandleWindowResizeEvent(player::core::events::WindowResizeEvent* event) {
   last_programms_line_ = 0;
   base_class::HandleWindowResizeEvent(event);
 }
 
-void Player::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
+void Player::HandleWindowExposeEvent(player::core::events::WindowExposeEvent* event) {
   last_programms_line_ = 0;
   base_class::HandleWindowExposeEvent(event);
 }
 
-void Player::HandleMousePressEvent(core::events::MousePressEvent* event) {
-  PlayerOptions opt = GetOptions();
+void Player::HandleMousePressEvent(player::core::events::MousePressEvent* event) {
+  player::PlayerOptions opt = GetOptions();
   if (opt.exit_on_mousedown) {
     return base_class::HandleMousePressEvent(event);
   }
 
-  core::events::MousePressInfo inf = event->info();
+  player::core::events::MousePressInfo inf = event->info();
   SDL_MouseButtonEvent sinfo = inf.mevent;
   if (sinfo.button == SDL_BUTTON_LEFT) {
     SDL_Point point{sinfo.x, sinfo.y};
     if (show_programms_list_) {
       size_t pos;
       if (FindStreamByPoint(point, &pos)) {  // pos in playlist
-        core::VideoState* stream = CreateStreamPos(pos);
+        player::core::VideoState* stream = CreateStreamPos(pos);
         SetStream(stream);
       } else {
         if (IsHideButtonProgramsListRect(point)) {
@@ -422,7 +428,7 @@ bool Player::FindStreamByPoint(SDL_Point point, size_t* pos) const {
     return false;
   }
 
-  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
   int max_line_count = programms_list_rect.h / font_height_2line;
   if (max_line_count == 0) {
     return false;
@@ -458,13 +464,13 @@ bool Player::IsShowButtonProgramsListRect(SDL_Point point) const {
   return SDL_PointInRect(&point, &show_button_rect);
 }
 
-void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
-  PlayerOptions opt = GetOptions();
+void Player::HandleKeyPressEvent(player::core::events::KeyPressEvent* event) {
+  player::PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
     return base_class::HandleKeyPressEvent(event);
   }
 
-  const core::events::KeyPressInfo inf = event->info();
+  const player::core::events::KeyPressInfo inf = event->info();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint32 modifier = inf.ks.mod;
   if (scan_code == SDL_SCANCODE_KP_0) {
@@ -509,13 +515,13 @@ void Player::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   base_class::HandleKeyPressEvent(event);
 }
 
-void Player::HandleLircPressEvent(core::events::LircPressEvent* event) {
-  PlayerOptions opt = GetOptions();
+void Player::HandleLircPressEvent(player::core::events::LircPressEvent* event) {
+  player::PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
     return base_class::HandleLircPressEvent(event);
   }
 
-  core::events::LircPressInfo inf = event->info();
+  player::core::events::LircPressInfo inf = event->info();
   switch (inf.code) {
     case LIRC_KEY_LEFT: {
       MoveToPreviousStream();
@@ -560,7 +566,7 @@ SDL_Rect Player::GetHideButtonProgramsListRect() const {
     return SDL_Rect();
   }
 
-  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
   SDL_Rect prog_rect = GetProgramsListRect();
   SDL_Rect hide_button_rect = {prog_rect.x - font_height_2line, prog_rect.h / 2 - font_height_2line, font_height_2line,
                                font_height_2line};
@@ -573,7 +579,7 @@ SDL_Rect Player::GetShowButtonProgramsListRect() const {
     return SDL_Rect();
   }
 
-  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
   SDL_Rect prog_rect = GetProgramsListRect();
   SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2 - font_height_2line,
                                font_height_2line, font_height_2line};
@@ -643,7 +649,7 @@ void Player::HandleKeyPad(uint8_t key) {
   }
 
   show_keypad_ = true;
-  core::msec_t cur_time = core::GetCurrentMsec();
+  player::core::msec_t cur_time = player::core::GetCurrentMsec();
   keypad_last_shown_ = cur_time;
   size_t nex_keypad_sym = cur_number * 10 + key;
   if (nex_keypad_sym <= max_keypad_size) {
@@ -684,7 +690,7 @@ void Player::CreateStreamPosAfterKeypad(size_t pos) {
     return;
   }
 
-  core::VideoState* stream = CreateStreamPos(stabled_pos);
+  player::core::VideoState* stream = CreateStreamPos(stabled_pos);
   SetStream(stream);
 }
 
@@ -705,7 +711,7 @@ int Player::GetMaxProgrammsLines() const {
   }
 
   const SDL_Rect programms_list_rect = GetProgramsListRect();
-  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
   return programms_list_rect.h / font_height_2line;
 }
 
@@ -713,6 +719,13 @@ void Player::DrawProgramsList() {
   SDL_Renderer* render = GetRenderer();
   TTF_Font* font = GetFont();
   if (!font || !render || play_list_.empty()) {
+    return;
+  }
+
+  const SDL_Rect programms_list_rect = GetProgramsListRect();
+  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
+  int min_size = keypad_width + font_height_2line + font_height_2line;  // number + icon + text
+  if (programms_list_rect.w < min_size) {
     return;
   }
 
@@ -725,13 +738,6 @@ void Player::DrawProgramsList() {
       }
     }
 
-    return;
-  }
-
-  const SDL_Rect programms_list_rect = GetProgramsListRect();
-  int font_height_2line = CalcHeightFontPlaceByRowCount(font, 2);
-  int min_size = keypad_width + font_height_2line + font_height_2line;  // number + icon + text
-  if (programms_list_rect.w < min_size) {
     return;
   }
 
@@ -774,9 +780,9 @@ void Player::DrawProgramsList() {
       shift += font_height_2line;  // in any case shift should be
 
       int text_width = programms_list_rect.w - shift;
-      std::string title_line = DotText(common::MemSPrintf(" Title: %s", descr.title), font, text_width);
+      std::string title_line = player::DotText(common::MemSPrintf(" Title: %s", descr.title), font, text_width);
       std::string description_line =
-          DotText(common::MemSPrintf(" Description: %s", descr.description), font, text_width);
+          player::DotText(common::MemSPrintf(" Description: %s", descr.description), font, text_width);
 
       std::string line_text = common::MemSPrintf(
           "%s\n"
@@ -859,7 +865,7 @@ void Player::DrawFooter() {
           " Title: %s\n"
           " Description: %s",
           descr.title, descr.description);
-      int h = CalcHeightFontPlaceByRowCount(font, 2);
+      int h = player::CalcHeightFontPlaceByRowCount(font, 2);
       if (h > footer_rect.h) {
         h = footer_rect.h;
       }
@@ -927,49 +933,49 @@ void Player::DrawInitStatus() {
 }
 
 void Player::MoveToNextStream() {
-  core::VideoState* stream = CreateNextStream();
+  player::core::VideoState* stream = CreateNextStream();
   SetStream(stream);
 }
 
 void Player::MoveToPreviousStream() {
-  core::VideoState* stream = CreatePrevStream();
+  player::core::VideoState* stream = CreatePrevStream();
   SetStream(stream);
 }
 
-core::VideoState* Player::CreateNextStream() {
+player::core::VideoState* Player::CreateNextStream() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (play_list_.empty()) {
     return nullptr;
   }
 
   size_t pos = GenerateNextPosition();
-  core::VideoState* stream = CreateStreamPos(pos);
+  player::core::VideoState* stream = CreateStreamPos(pos);
   return stream;
 }
 
-core::VideoState* Player::CreatePrevStream() {
+player::core::VideoState* Player::CreatePrevStream() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (play_list_.empty()) {
     return nullptr;
   }
 
   size_t pos = GeneratePrevPosition();
-  core::VideoState* stream = CreateStreamPos(pos);
+  player::core::VideoState* stream = CreateStreamPos(pos);
   return stream;
 }
 
-core::VideoState* Player::CreateStreamPos(size_t pos) {
+player::core::VideoState* Player::CreateStreamPos(size_t pos) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   current_stream_pos_ = pos;
 
   PlaylistEntry entry = play_list_[current_stream_pos_];
   ChannelInfo url = entry.GetChannelInfo();
   stream_id sid = url.GetId();
-  core::AppOptions copy = GetStreamOptions();
+  player::core::AppOptions copy = GetStreamOptions();
   copy.enable_audio = url.IsEnableVideo();
   copy.enable_video = url.IsEnableAudio();
 
-  core::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
+  player::core::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
   return stream;
 }
 
@@ -991,10 +997,9 @@ size_t Player::GeneratePrevPosition() const {
 
 void Player::StartShowFooter() {
   show_footer_ = true;
-  core::msec_t cur_time = core::GetCurrentMsec();
+  player::core::msec_t cur_time = player::core::GetCurrentMsec();
   footer_last_shown_ = cur_time;
 }
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

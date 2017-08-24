@@ -18,7 +18,7 @@
 
 #pragma once
 
-namespace fasto {
+
 namespace fastotv {
 namespace client {
 
@@ -26,4 +26,4 @@ enum BandwidthHostType { UNKNOWN_SERVER, MAIN_SERVER, CHANNEL_SERVER };
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto
+

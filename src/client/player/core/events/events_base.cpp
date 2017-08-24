@@ -17,3 +17,13 @@
 */
 
 #include "client/player/core/events/events_base.h"
+
+namespace fastotv {
+namespace client {
+namespace player {
+namespace core {
+namespace events {}
+}  // namespace core
+}  // namespace player
+}  // namespace client
+}  // namespace fastotv

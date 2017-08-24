@@ -24,9 +24,9 @@
 
 #include "client/player/core/events/events_base.h"  // for EventBase, EventsType::M...
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
@@ -49,6 +49,6 @@ typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
 
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

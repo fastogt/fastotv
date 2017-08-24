@@ -22,7 +22,6 @@
 
 #include <common/convert2string.h>
 
-namespace fasto {
 namespace fastotv {
 
 ServerInfo::ServerInfo() : bandwidth_host_() {}
@@ -39,7 +38,7 @@ common::Error ServerInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error ServerInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_inval_error_value( common::Value::E_ERROR);
+    return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
   json_object* jband = NULL;
@@ -61,4 +60,3 @@ common::net::HostAndPort ServerInfo::GetBandwidthHost() const {
 }
 
 }  // namespace fastotv
-}  // namespace fasto

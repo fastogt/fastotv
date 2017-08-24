@@ -38,7 +38,6 @@ extern "C" {
 // publish COMMANDS_OUT '1 [OK|FAIL] ping args...'
 // id cmd cause
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
@@ -134,7 +133,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
 
   auto cb = std::bind(&InnerSubHandler::ProcessSubscribed, this, std::placeholders::_1, std::placeholders::_2,
                       std::placeholders::_3);
-  fasto::fastotv::inner::RequestCallback rc(id, cb);
+  fastotv::inner::RequestCallback rc(id, cb);
   parent_->SubscribeRequest(rc);
 }
 
@@ -155,4 +154,3 @@ void InnerSubHandler::PublishResponce(const ResponceInfo& resp) {
 }  // namespace inner
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

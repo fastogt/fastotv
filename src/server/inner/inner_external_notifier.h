@@ -24,7 +24,6 @@
 
 #include "server/redis/redis_pub_sub_handler.h"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 class ResponceInfo;
@@ -51,4 +50,3 @@ class InnerSubHandler : public redis::RedisSubHandler {
 }  // namespace inner
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

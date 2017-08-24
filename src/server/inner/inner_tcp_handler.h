@@ -51,7 +51,6 @@ class Thread;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace inner {
 class InnerClient;
@@ -67,8 +66,7 @@ namespace inner {
 class InnerSubHandler;
 class InnerTcpClient;
 
-class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqParser,
-                            public common::libev::IoLoopObserver {
+class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, public common::libev::IoLoopObserver {
  public:
   enum {
     ping_timeout_clients = 60  // sec
@@ -132,4 +130,3 @@ class InnerTcpHandlerHost : public fasto::fastotv::inner::InnerServerCommandSeqP
 }  // namespace inner
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

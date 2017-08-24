@@ -18,9 +18,9 @@
 #include "client/player/core/hwaccels/ffmpeg_videotoolbox.h"
 #endif
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 AVBufferRef* hw_device_ctx = NULL;
@@ -61,7 +61,8 @@ const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
   }
   return NULL;
 }
+
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

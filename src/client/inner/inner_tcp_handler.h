@@ -46,7 +46,6 @@ class IoLoop;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace inner {
 class InnerClient;
@@ -62,8 +61,7 @@ struct StartConfig {
   AuthInfo ainf;
 };
 
-class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParser,
-                        public common::libev::IoLoopObserver {
+class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, public common::libev::IoLoopObserver {
  public:
   enum {
     ping_timeout_server = 30  // sec
@@ -92,15 +90,15 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
                                                    BandwidthHostType hs,
                                                    bandwidth::TcpBandwidthClient** out_band) WARN_UNUSED_RESULT;
 
-  virtual void HandleInnerRequestCommand(fasto::fastotv::inner::InnerClient* connection,
+  virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
-  virtual void HandleInnerResponceCommand(fasto::fastotv::inner::InnerClient* connection,
+  virtual void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
                                           cmd_seq_t id,
                                           int argc,
                                           char* argv[]) override;
-  virtual void HandleInnerApproveCommand(fasto::fastotv::inner::InnerClient* connection,
+  virtual void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
                                          cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
@@ -117,7 +115,7 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
 
   common::Error ParserResponceResponceCommand(int argc, char* argv[], json_object** out) WARN_UNUSED_RESULT;
 
-  fasto::fastotv::inner::InnerClient* inner_connection_;
+  fastotv::inner::InnerClient* inner_connection_;
   std::vector<bandwidth::TcpBandwidthClient*> bandwidth_requests_;
   common::libev::timer_id_t ping_server_id_timer_;
 
@@ -129,4 +127,3 @@ class InnerTcpHandler : public fasto::fastotv::inner::InnerServerCommandSeqParse
 }  // namespace inner
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

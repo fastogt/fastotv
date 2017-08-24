@@ -23,7 +23,6 @@
 
 #include <json-c/json_object.h>  // for json_object, json...
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 
@@ -101,6 +100,6 @@ bool ResponceInfo::Equals(const ResponceInfo& inf) const {
   return request_id_ == inf.request_id_ && state_ == inf.state_ && command_ == inf.command_ &&
          responce_json_ == inf.responce_json_;
 }
+
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

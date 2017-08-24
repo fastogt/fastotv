@@ -18,9 +18,9 @@
 
 #include "client/player/player_options.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 PlayerOptions::PlayerOptions()
     : exit_on_keydown(false),
@@ -31,6 +31,6 @@ PlayerOptions::PlayerOptions()
       audio_volume(volume),
       last_showed_channel_id(invalid_stream_id) {}
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

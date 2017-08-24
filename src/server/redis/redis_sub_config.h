@@ -22,7 +22,6 @@
 
 #include "server/redis/redis_config.h"  // for RedisConfig
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
@@ -35,4 +34,3 @@ struct RedisSubConfig : public RedisConfig {
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

@@ -35,9 +35,9 @@ class Thread;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 class TextureSaver;
 namespace core {
@@ -213,6 +213,6 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   size_t video_frames_handled_;
 };
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

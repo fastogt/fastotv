@@ -37,7 +37,6 @@ struct HostAndPort;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
@@ -54,4 +53,3 @@ class InnerTcpServer : public common::libev::tcp::TcpServer {
 }  // namespace inner
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

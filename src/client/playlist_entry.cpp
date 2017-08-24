@@ -24,7 +24,6 @@
 
 #define ICON_FILE_NAME "icon"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
@@ -66,4 +65,3 @@ ChannelInfo PlaylistEntry::GetChannelInfo() const {
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

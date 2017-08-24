@@ -12,9 +12,9 @@ extern "C" {
 #include "client/player/core/video_state.h"
 #include "client/player/core/video_state_handler.h"
 
-using namespace fasto::fastotv;
-using namespace fasto::fastotv::client;
-using namespace fasto::fastotv::client::core;
+using namespace fastotv;
+using namespace fastotv::client;
+using namespace fastotv::client::player::core;
 
 namespace {
 struct DictionaryOptions {
@@ -46,7 +46,7 @@ class FakeHandler : public VideoStateHandler {
                                            int64_t wanted_channel_layout,
                                            int wanted_nb_channels,
                                            int wanted_sample_rate,
-                                           core::AudioParams* audio_hw_params,
+                                           player::core::AudioParams* audio_hw_params,
                                            int* audio_buff_size) override {
     UNUSED(stream);
     UNUSED(wanted_channel_layout);
@@ -54,8 +54,8 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(wanted_sample_rate);
     UNUSED(audio_buff_size);
 
-    core::AudioParams laudio_hw_params;
-    if (!core::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
+    player::core::AudioParams laudio_hw_params;
+    if (!player::core::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
       return common::make_error_value("Failed to init audio.", common::Value::E_ERROR);
     }
 
@@ -96,8 +96,8 @@ class FakeHandler : public VideoStateHandler {
   }
 
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) override {
-    core::events::QuitStreamEvent* qevent =
-        new core::events::QuitStreamEvent(stream, core::events::QuitStreamInfo(stream, exit_code, err));
+    player::core::events::QuitStreamEvent* qevent =
+        new player::core::events::QuitStreamEvent(stream, player::core::events::QuitStreamInfo(stream, exit_code, err));
     fApp->PostEvent(qevent);
   }
 };
@@ -121,9 +121,9 @@ class FakeApplication : public common::application::IApplication {
     const stream_id id = "unique";
     // wget http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
     const common::uri::Uri uri = common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
-    core::AppOptions opt;
+    player::core::AppOptions opt;
     DictionaryOptions* dict = new DictionaryOptions;
-    const core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+    const player::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
     VideoStateHandler* handler = new FakeHandler;
     VideoState* vs = new VideoState(id, uri, opt, copt);
     vs->SetHandler(handler);
@@ -159,14 +159,14 @@ class FakeApplication : public common::application::IApplication {
 
   virtual void PostEvent(event_t* event) override {
     events::Event* fevent = static_cast<events::Event*>(event);
-    if (fevent->GetEventType() == core::events::RequestVideoEvent::EventType) {
-      core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
-      core::events::FrameInfo fr = avent->info();
+    if (fevent->GetEventType() == player::core::events::RequestVideoEvent::EventType) {
+      player::core::events::RequestVideoEvent* avent = static_cast<player::core::events::RequestVideoEvent*>(event);
+      player::core::events::FrameInfo fr = avent->info();
       common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
       if (err && err->IsError()) {
         fApp->Exit(EXIT_FAILURE);
       }
-    } else if (fevent->GetEventType() == core::events::QuitStreamEvent::EventType) {
+    } else if (fevent->GetEventType() == player::core::events::QuitStreamEvent::EventType) {
       // events::QuitStreamEvent* qevent = static_cast<core::events::QuitStreamEvent*>(event);
       fApp->Exit(EXIT_SUCCESS);
     } else {

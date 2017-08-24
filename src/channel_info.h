@@ -28,7 +28,6 @@
 #include "epg_info.h"
 #include "serializer/json_serializer.h"
 
-namespace fasto {
 namespace fastotv {
 
 class ChannelInfo : public JsonSerializer<ChannelInfo> {
@@ -64,4 +63,3 @@ inline bool operator==(const ChannelInfo& left, const ChannelInfo& right) {
 }
 
 }  // namespace fastotv
-}  // namespace fasto

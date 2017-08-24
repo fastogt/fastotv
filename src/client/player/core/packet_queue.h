@@ -34,9 +34,9 @@ extern "C" {
 #include <common/macros.h>  // for DISALLOW_COPY_AND_ASSIGN
 #include <common/types.h>
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 class PacketQueue {  // compressed queue data
@@ -72,6 +72,6 @@ class PacketQueue {  // compressed queue data
 };
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

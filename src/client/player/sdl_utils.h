@@ -25,9 +25,9 @@
 
 #include <common/error.h>  // for Error
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 class SurfaceSaver {
  public:
@@ -73,6 +73,6 @@ SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
 
 int ConvertToSDLVolume(int val);
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

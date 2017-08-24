@@ -27,10 +27,10 @@ extern "C" {
 
 #include <common/file_system.h>  // for File, create_directory
 
-#include "client/player/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/load_config.h"
+#include "client/player.h"           // for Player
+#include "client/player/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/player/ffmpeg_application.h"
-#include "client/player.h"  // for Player
 #include "client/simple_player.h"
 
 void init_ffmpeg() {
@@ -50,7 +50,7 @@ int main_simple_player_application(int argc,
                                    char** argv,
                                    const common::uri::Uri& stream_url,
                                    const std::string& app_directory_absolute_path) {
-  int res = fasto::fastotv::client::prepare_to_start(app_directory_absolute_path);
+  int res = fastotv::client::player::prepare_to_start(app_directory_absolute_path);
   if (res == EXIT_FAILURE) {
     return EXIT_FAILURE;
   }
@@ -62,8 +62,8 @@ int main_simple_player_application(int argc,
     return EXIT_FAILURE;
   }
 
-  fasto::fastotv::client::TVConfig main_options;
-  common::Error err = fasto::fastotv::client::load_config_file(config_absolute_path, &main_options);
+  fastotv::client::player::TVConfig main_options;
+  common::Error err = fastotv::client::load_config_file(config_absolute_path, &main_options);
   if (err && err->IsError()) {
     return EXIT_FAILURE;
   }
@@ -75,7 +75,7 @@ int main_simple_player_application(int argc,
   INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
 #endif
 
-  fasto::fastotv::client::FFmpegApplication app(argc, argv);
+  fastotv::client::player::FFmpegApplication app(argc, argv);
 
   AVDictionary* sws_dict = NULL;
   AVDictionary* swr_opts = NULL;
@@ -83,8 +83,8 @@ int main_simple_player_application(int argc,
   AVDictionary* codec_opts = NULL;
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
-  fasto::fastotv::client::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
-  fasto::fastotv::client::ISimplePlayer* player = new fasto::fastotv::client::SimplePlayer(main_options.player_options);
+  fastotv::client::player::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
+  auto player = new fastotv::client::SimplePlayer(main_options.player_options);
   player->SetUrlLocation("0", stream_url, main_options.app_options, copt);
   res = app.Exec();
   destroy(&player);

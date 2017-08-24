@@ -18,11 +18,10 @@
 
 #include "client/simple_player.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
-SimplePlayer::SimplePlayer(const PlayerOptions& options) : ISimplePlayer(options), stream_url_() {}
+SimplePlayer::SimplePlayer(const player::PlayerOptions& options) : ISimplePlayer(options), stream_url_() {}
 
 std::string SimplePlayer::GetCurrentUrlName() const {
   return stream_url_.GetUrl();
@@ -30,12 +29,11 @@ std::string SimplePlayer::GetCurrentUrlName() const {
 
 void SimplePlayer::SetUrlLocation(stream_id sid,
                                   const common::uri::Uri& uri,
-                                  core::AppOptions opt,
-                                  core::ComplexOptions copt) {
+                                  player::core::AppOptions opt,
+                                  player::core::ComplexOptions copt) {
   stream_url_ = uri;
   ISimplePlayer::SetUrlLocation(sid, uri, opt, copt);
 }
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

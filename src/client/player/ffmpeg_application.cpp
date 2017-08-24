@@ -111,9 +111,9 @@ int lockmgr(void** mtx, enum AVLockOp op) {
 
 }  // namespace
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 FFmpegApplication::FFmpegApplication(int argc, char** argv) : base_class_t(argc, argv) {
   avformat_network_init();
@@ -137,17 +137,15 @@ int FFmpegApplication::PreExecImpl() {
   }
 
   int pre_exec = base_class_t::PreExecImpl();
-  fasto::fastotv::client::core::events::PreExecInfo inf(pre_exec);
-  fasto::fastotv::client::core::events::PreExecEvent* pre_event =
-      new fasto::fastotv::client::core::events::PreExecEvent(this, inf);
+  core::events::PreExecInfo inf(pre_exec);
+  core::events::PreExecEvent* pre_event = new core::events::PreExecEvent(this, inf);
   base_class_t::SendEvent(pre_event);
   return pre_exec;
 }
 
 int FFmpegApplication::PostExecImpl() {
-  fasto::fastotv::client::core::events::PostExecInfo inf(EXIT_SUCCESS);
-  fasto::fastotv::client::core::events::PostExecEvent* post_event =
-      new fasto::fastotv::client::core::events::PostExecEvent(this, inf);
+  core::events::PostExecInfo inf(EXIT_SUCCESS);
+  core::events::PostExecEvent* post_event = new core::events::PostExecEvent(this, inf);
   base_class_t::SendEvent(post_event);
   return base_class_t::PostExecImpl();
 }
@@ -170,6 +168,7 @@ int prepare_to_start(const std::string& app_directory_absolute_path) {
 
   return EXIT_SUCCESS;
 }
-}
-}
-}
+
+}  // namespace player
+}  // namespace client
+}  // namespace fastotv

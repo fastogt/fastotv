@@ -48,9 +48,9 @@
 
 #define MAIN_FONT_PATH_RELATIVE "share/fonts/FreeSans.ttf"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row) {
   if (!font) {
@@ -911,6 +911,6 @@ core::VideoState* ISimplePlayer::CreateStream(stream_id sid,
   return stream;
 }
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

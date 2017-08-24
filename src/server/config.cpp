@@ -45,7 +45,6 @@
   bandwidth_server=localhost:5544
 */
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace {
@@ -131,4 +130,3 @@ common::Error save_config_file(const std::string& config_absolute_path, Config* 
 
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

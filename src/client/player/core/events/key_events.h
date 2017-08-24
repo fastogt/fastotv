@@ -24,9 +24,9 @@
 
 #include "client/player/core/events/events_base.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
@@ -49,6 +49,6 @@ typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
 
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

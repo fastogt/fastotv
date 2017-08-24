@@ -25,7 +25,6 @@
 
 #include <common/net/types.h>  // for HostAndPort
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
@@ -118,4 +117,3 @@ common::Error redis_connect(const RedisConfig& config, redisContext** conn) {
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

@@ -20,7 +20,6 @@
 
 #include <string>
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
@@ -34,4 +33,3 @@ class RedisSubHandler {
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

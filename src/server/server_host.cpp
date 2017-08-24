@@ -36,7 +36,6 @@
 #define BUF_SIZE 4096
 #define UNKNOWN_CLIENT_NAME "Unknown"
 
-namespace fasto {
 namespace fastotv {
 namespace {
 int exec_server(common::libev::tcp::TcpServer* server) {
@@ -162,4 +161,3 @@ inner::InnerTcpClient* ServerHost::FindInnerConnectionByUserIDAndDeviceID(user_i
 
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

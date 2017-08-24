@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/hwaccels/ffmpeg_vaapi.h"
+#include "client/player/core/hwaccels/ffmpeg_vaapi.h"
 
 #include <errno.h>   // for ENOMEM
 #include <stddef.h>  // for NULL
@@ -33,13 +33,13 @@ extern "C" {
 #include <common/logger.h>  // for COMPACT_LOG_ERROR, ERROR_LOG
 #include <common/macros.h>  // for UNUSED
 
-#include "client/core/ffmpeg_internal.h"
+#include "client/player/core/ffmpeg_internal.h"
 
 #define DEFAULT_SURFACES 20
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 typedef struct VAAPIDecoderContext {
@@ -209,6 +209,6 @@ void vaapi_uninit(AVCodecContext* decoder_ctx) {
 }
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

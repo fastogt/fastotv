@@ -18,15 +18,16 @@
 
 #include "client/player/core/events/window_events.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
 WindowResizeInfo::WindowResizeInfo(const Size& size) : size(size) {}
+
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

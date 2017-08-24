@@ -18,13 +18,13 @@
 
 #include "client/player/core/application/sdl2_application.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
-class FFmpegApplication : public fasto::fastotv::client::core::application::Sdl2Application {
+class FFmpegApplication : public core::application::Sdl2Application {
  public:
-  typedef fasto::fastotv::client::core::application::Sdl2Application base_class_t;
+  typedef core::application::Sdl2Application base_class_t;
   FFmpegApplication(int argc, char** argv);
 
   ~FFmpegApplication();
@@ -37,6 +37,6 @@ class FFmpegApplication : public fasto::fastotv::client::core::application::Sdl2
 
 int prepare_to_start(const std::string& app_directory_absolute_path);
 
-}
-}
-}
+}  // namespace player
+}  // namespace client
+}  // namespace fastotv

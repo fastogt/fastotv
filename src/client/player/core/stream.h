@@ -31,11 +31,11 @@ extern "C" {
 
 #include "client/player/core/bandwidth_estimation.h"  // for DesireBytesPerSec
 #include "client/player/core/types.h"                 // for clock64_t
-#include "client_server_types.h"               // for bandwidth_t
+#include "client_server_types.h"                      // for bandwidth_t
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 class Clock;
@@ -117,6 +117,6 @@ class AudioStream : public Stream {
 };
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

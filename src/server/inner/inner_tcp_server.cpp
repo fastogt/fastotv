@@ -20,7 +20,6 @@
 
 #include "server/inner/inner_tcp_client.h"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
@@ -40,4 +39,3 @@ common::libev::tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::s
 }  // namespace inner
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

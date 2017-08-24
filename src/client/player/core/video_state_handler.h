@@ -26,9 +26,9 @@ extern "C" {
 
 #include <common/error.h>  // for Error
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 class VideoState;
@@ -64,6 +64,6 @@ class VideoStateHandler {
 };
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

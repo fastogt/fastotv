@@ -40,7 +40,6 @@ class socket_info;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 namespace bandwidth {
@@ -71,4 +70,3 @@ class TcpBandwidthClient : public common::libev::tcp::TcpClient {
 }  // namespace bandwidth
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

@@ -63,7 +63,6 @@
 // approve
 // [uint8_t](2) [hex_string]seq [OK|FAIL] [std::string]command args ...
 
-namespace fasto {
 namespace fastotv {
 
 typedef std::string cmd_seq_t;
@@ -113,4 +112,3 @@ cmd_responce_t MakeResponce(cmd_seq_t id, const char* cmd_fmt, Args... args) {
 }
 
 }  // namespace fastotv
-}  // namespace fasto

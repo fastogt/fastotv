@@ -18,9 +18,9 @@
 
 #include "client/player/core/clock.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 Clock::Clock() : paused_(false), speed_(1.0) {
@@ -60,6 +60,6 @@ void Clock::SetPaused(bool paused) {
 }
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

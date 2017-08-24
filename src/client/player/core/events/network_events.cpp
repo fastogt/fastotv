@@ -18,11 +18,12 @@
 
 #include "client/player/core/events/network_events.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
+
 BandwidtInfo::BandwidtInfo() : host(), bandwidth(0), host_type(UNKNOWN_SERVER) {}
 
 BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandwidthHostType hs)
@@ -31,8 +32,9 @@ BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t ban
 ConnectInfo::ConnectInfo() {}
 
 ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {}
+
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

@@ -29,9 +29,9 @@ extern "C" {
 #include <libavutil/rational.h>    // for AVRational
 }
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 double q2d_diff(AVRational a);
@@ -94,6 +94,6 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
 AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* codec_opts);
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

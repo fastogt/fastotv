@@ -47,7 +47,6 @@
 #define CLIENT_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING_COMMAND, "'%s'")
 #define CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "'%s'")
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
@@ -100,4 +99,3 @@ cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info_
 }
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

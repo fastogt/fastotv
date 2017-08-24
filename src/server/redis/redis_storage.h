@@ -28,7 +28,6 @@
 
 #include "server/redis/redis_config.h"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
@@ -50,4 +49,3 @@ class RedisStorage {
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

@@ -22,7 +22,6 @@
 
 #include <common/text_decoders/compress_snappy_edcoder.h>
 
-namespace fasto {
 namespace fastotv {
 namespace inner {
 
@@ -164,4 +163,3 @@ common::Error InnerClient::WriteMessage(const std::string& message) {
 
 }  // namespace inner
 }  // namespace fastotv
-}  // namespace fasto

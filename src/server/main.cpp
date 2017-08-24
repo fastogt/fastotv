@@ -52,8 +52,8 @@ int main(int argc, char* argv[]) {
   INIT_LOGGER(PROJECT_NAME_TITLE, level);
 #endif
 
-  fasto::fastotv::server::Config config;
-  fasto::fastotv::server::load_config_file(config_path, &config);
-  fasto::fastotv::server::ServerHost server(config);
+  fastotv::server::Config config;
+  fastotv::server::load_config_file(config_path, &config);
+  fastotv::server::ServerHost server(config);
   return server.Exec();
 }

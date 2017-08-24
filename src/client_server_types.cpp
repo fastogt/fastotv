@@ -18,8 +18,4 @@
 
 #include "client_server_types.h"
 
-namespace fasto {
-namespace fastotv {
-
-}  // namespace fastotv
-}  // namespace fasto
+namespace fastotv {}  // namespace fastotv

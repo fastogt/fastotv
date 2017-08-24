@@ -24,9 +24,9 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 }
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 struct AudioParams {
@@ -39,6 +39,6 @@ struct AudioParams {
 };
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

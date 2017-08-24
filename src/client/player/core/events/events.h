@@ -29,9 +29,9 @@
 #include "client/player/core/events/stream_events.h"
 #include "client/player/core/events/window_events.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
@@ -62,6 +62,6 @@ typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;
 
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

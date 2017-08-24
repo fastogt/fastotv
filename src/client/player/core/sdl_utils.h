@@ -31,9 +31,9 @@ extern "C" {
 /* Minimum SDL audio buffer size, in samples. */
 #define AUDIO_MIN_BUFFER_SIZE 512
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 struct AudioParams;
@@ -64,6 +64,6 @@ bool create_window(Size window_size,
                    SDL_Window** window) WARN_UNUSED_RESULT;
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

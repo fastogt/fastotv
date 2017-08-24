@@ -26,7 +26,6 @@
 
 #define BANDWIDTH_HOST_FIELD "bandwidth_host"
 
-namespace fasto {
 namespace fastotv {
 
 class ServerInfo : public JsonSerializer<ServerInfo> {
@@ -46,4 +45,3 @@ class ServerInfo : public JsonSerializer<ServerInfo> {
 };
 
 }  // namespace fastotv
-}  // namespace fasto

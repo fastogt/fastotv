@@ -18,9 +18,9 @@
 
 #include "client/player/core/events/mouse_events.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
@@ -30,6 +30,6 @@ MouseReleaseInfo::MouseReleaseInfo(const SDL_MouseButtonEvent& event) : mevent(e
 
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

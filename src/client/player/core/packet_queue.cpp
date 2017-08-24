@@ -20,9 +20,9 @@
 
 #include <stddef.h>  // for NULL
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 PacketQueue::PacketQueue() : queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
@@ -134,6 +134,6 @@ PacketQueue::~PacketQueue() {
 }
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

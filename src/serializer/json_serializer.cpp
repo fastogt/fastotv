@@ -18,6 +18,4 @@
 
 #include "serializer/json_serializer.h"
 
-namespace fasto {
 namespace fastotv {}
-}  // namespace fasto

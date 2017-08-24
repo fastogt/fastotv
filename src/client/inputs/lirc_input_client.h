@@ -34,7 +34,6 @@ class IoLoop;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 namespace inputs {
@@ -64,4 +63,3 @@ class LircInputClient : public common::libev::IoClient {
 }  // namespace inputs
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

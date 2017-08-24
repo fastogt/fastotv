@@ -35,7 +35,7 @@
 #include "client/player/core/events/events.h"  // for QuitEvent, QuitInfo
 
 #include "client/player/core/types.h"  // for GetCurrentMsec, msec_t
-#include "client/types.h"       // for Size
+#include "client/types.h"              // for Size
 
 #define FASTO_EVENT (SDL_USEREVENT)
 
@@ -48,9 +48,9 @@ bool InRange(T a, T amin, T amax) {
 
 }  // namespace
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace application {
 
@@ -297,6 +297,6 @@ void Sdl2Application::HandleQuitEvent(SDL_QuitEvent* event) {
 
 }  // namespace application
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

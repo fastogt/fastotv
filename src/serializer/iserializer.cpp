@@ -20,6 +20,4 @@
 
 #include <common/convert2string.h>
 
-namespace fasto {
 namespace fastotv {}
-}  // namespace fasto

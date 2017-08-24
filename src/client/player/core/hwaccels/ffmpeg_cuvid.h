@@ -24,15 +24,15 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 int cuvid_init(AVCodecContext* decoder_ctx);
 void cuvid_uninit(AVCodecContext* decoder_ctx);
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

@@ -29,7 +29,6 @@
 #define USER_STATE_INFO_DEVICE_ID_FIELD "device_id"
 #define USER_STATE_INFO_CONNECTED_FIELD "connected"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 
@@ -64,4 +63,3 @@ inline bool operator!=(const UserStateInfo& x, const UserStateInfo& y) {
 }
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

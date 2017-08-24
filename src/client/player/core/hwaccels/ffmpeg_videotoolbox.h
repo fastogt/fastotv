@@ -24,7 +24,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-namespace fasto {
+
 namespace fastotv {
 namespace client {
 namespace core {
@@ -35,4 +35,4 @@ void videotoolbox_uninit(AVCodecContext* decoder_ctx);
 }  // namespace core
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto
+

@@ -22,7 +22,6 @@
 
 #include "commands/commands.h"  // for cmd_seq_t, cmd_approve_t, cmd_responce_t
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 
@@ -56,4 +55,3 @@ cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info)
 cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

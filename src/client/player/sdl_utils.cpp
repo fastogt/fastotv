@@ -20,9 +20,9 @@
 
 #include <SDL2/SDL_audio.h>
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 SurfaceSaver::SurfaceSaver(SDL_Surface* surface) : surface_(surface), texture_(NULL), renderer_(NULL) {}
 
@@ -186,6 +186,6 @@ int ConvertToSDLVolume(int val) {
   return stable_value_in_range(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

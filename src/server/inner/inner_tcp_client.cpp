@@ -20,7 +20,6 @@
 
 #include <common/libev/tcp/tcp_server.h>
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
@@ -59,4 +58,3 @@ user_id_t InnerTcpClient::GetUid() const {
 }  // namespace inner
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

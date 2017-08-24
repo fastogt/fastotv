@@ -28,10 +28,10 @@ extern "C" {
 #include <common/file_system.h>  // for File, create_directory
 #include <common/system/system.h>
 
-#include "client/player/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/load_config.h"
+#include "client/player.h"           // for Player
+#include "client/player/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/player/ffmpeg_application.h"
-#include "client/player.h"  // for Player
 #include "client/simple_player.h"
 
 void init_ffmpeg() {
@@ -48,7 +48,7 @@ void init_ffmpeg() {
 }
 
 int main_application(int argc, char** argv, const std::string& app_directory_absolute_path) {
-  int res = fasto::fastotv::client::prepare_to_start(app_directory_absolute_path);
+  int res = fastotv::client::player::prepare_to_start(app_directory_absolute_path);
   if (res == EXIT_FAILURE) {
     return EXIT_FAILURE;
   }
@@ -60,8 +60,8 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
     return EXIT_FAILURE;
   }
 
-  fasto::fastotv::client::TVConfig main_options;
-  common::Error err = fasto::fastotv::client::load_config_file(config_absolute_path, &main_options);
+  fastotv::client::player::TVConfig main_options;
+  common::Error err = fastotv::client::load_config_file(config_absolute_path, &main_options);
   if (err && err->IsError()) {
     return EXIT_FAILURE;
   }
@@ -73,7 +73,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
 #endif
 
-  fasto::fastotv::client::FFmpegApplication app(argc, argv);
+  fastotv::client::player::FFmpegApplication app(argc, argv);
 
   AVDictionary* sws_dict = NULL;
   AVDictionary* swr_opts = NULL;
@@ -81,9 +81,9 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   AVDictionary* codec_opts = NULL;
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
-  fasto::fastotv::client::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
-  fasto::fastotv::client::ISimplePlayer* player = new fasto::fastotv::client::Player(
-      app_directory_absolute_path, main_options.player_options, main_options.app_options, copt);
+  fastotv::client::player::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
+  auto player = new fastotv::client::Player(app_directory_absolute_path, main_options.player_options,
+                                            main_options.app_options, copt);
   res = app.Exec();
   main_options.player_options = player->GetOptions();
   destroy(&player);
@@ -94,7 +94,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   av_dict_free(&codec_opts);
 
   // save config file
-  err = fasto::fastotv::client::save_config_file(config_absolute_path, &main_options);
+  err = fastotv::client::save_config_file(config_absolute_path, &main_options);
   if (main_options.power_off_on_exit) {
     common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);
     if (err_shut && err_shut->IsError()) {

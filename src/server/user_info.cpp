@@ -28,7 +28,6 @@
 #define USER_INFO_LOGIN_FIELD "login"
 #define USER_INFO_PASSWORD_FIELD "password"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 
@@ -143,6 +142,6 @@ ChannelsInfo UserInfo::GetChannelInfo() const {
 bool UserInfo::Equals(const UserInfo& uinf) const {
   return login_ == uinf.login_ && password_ == uinf.password_ && ch_ == uinf.ch_;
 }
+
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

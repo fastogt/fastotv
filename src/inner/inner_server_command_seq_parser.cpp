@@ -34,7 +34,6 @@ extern "C" {
 #define GB (1024 * 1024 * 1024)
 #define BUF_SIZE 4096
 
-namespace fasto {
 namespace fastotv {
 namespace inner {
 
@@ -130,4 +129,3 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
 
 }  // namespace inner
 }  // namespace fastotv
-}  // namespace fasto

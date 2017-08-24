@@ -18,10 +18,10 @@
 
 #include "client/player/core/frames/ring_buffer.h"
 
-namespace fasto {
 namespace fastotv {
+namespace player {
 namespace core {
 namespace client {}
 }  // namespace core
+}  // namespace player
 }  // namespace fastotv
-}  // namespace fasto

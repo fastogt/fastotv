@@ -30,7 +30,6 @@
 #define RESPONCE_INFO_COMMAND_FIELD "command"
 #define RESPONCE_INFO_RESPONCE_FIELD "responce_json"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 
@@ -70,4 +69,3 @@ inline bool operator!=(const ResponceInfo& x, const ResponceInfo& y) {
 }
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

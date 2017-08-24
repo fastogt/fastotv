@@ -18,9 +18,9 @@
 
 #include "client/player/core/events/stream_events.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
@@ -31,8 +31,9 @@ FrameInfo::FrameInfo(VideoState* stream, int width, int height, int av_pixel_for
 
 QuitStreamInfo::QuitStreamInfo(VideoState* stream, int exit_code, common::Error err)
     : StreamInfo(stream), exit_code(exit_code), error(err) {}
+
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

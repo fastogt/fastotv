@@ -20,9 +20,9 @@
 
 #include "client/player/core/types.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 struct PlayerOptions {
   enum { width = 640, height = 480, volume = 100 };
@@ -39,6 +39,6 @@ struct PlayerOptions {
   stream_id last_showed_channel_id;
 };
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

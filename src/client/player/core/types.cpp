@@ -31,9 +31,9 @@ extern "C" {
 
 #include "ffmpeg_internal.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 Size::Size() : width(0), height(0) {}
@@ -89,28 +89,28 @@ bool IsValidPts(pts_t pts) {
 }
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto
 
 namespace common {
-std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value) {
-  if (value == fasto::fastotv::client::core::HWACCEL_AUTO) {
+std::string ConvertToString(const fastotv::client::player::core::HWAccelID& value) {
+  if (value == fastotv::client::player::core::HWACCEL_AUTO) {
     return "auto";
-  } else if (value == fasto::fastotv::client::core::HWACCEL_NONE) {
+  } else if (value == fastotv::client::player::core::HWACCEL_NONE) {
     return "none";
   }
 
-  for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
-    if (value == fasto::fastotv::client::core::hwaccels[i].id) {
-      return fasto::fastotv::client::core::hwaccels[i].name;
+  for (size_t i = 0; i < fastotv::client::player::core::hwaccel_count(); i++) {
+    if (value == fastotv::client::player::core::hwaccels[i].id) {
+      return fastotv::client::player::core::hwaccels[i].name;
     }
   }
 
   return std::string();
 }
 
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out) {
+bool ConvertFromString(const std::string& from, fastotv::client::player::core::HWAccelID* out) {
   if (from.empty() || !out) {
     return false;
   }
@@ -118,15 +118,15 @@ bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HW
   std::string from_copy = from;
   std::transform(from_copy.begin(), from_copy.end(), from_copy.begin(), ::tolower);
   if (from_copy == "auto") {
-    *out = fasto::fastotv::client::core::HWACCEL_AUTO;
+    *out = fastotv::client::player::core::HWACCEL_AUTO;
     return true;
   } else if (from_copy == "none") {
-    *out = fasto::fastotv::client::core::HWACCEL_NONE;
+    *out = fastotv::client::player::core::HWACCEL_NONE;
     return true;
   } else {
-    for (size_t i = 0; i < fasto::fastotv::client::core::hwaccel_count(); i++) {
-      if (strcmp(fasto::fastotv::client::core::hwaccels[i].name, from.c_str()) == 0) {
-        *out = fasto::fastotv::client::core::hwaccels[i].id;
+    for (size_t i = 0; i < fastotv::client::player::core::hwaccel_count(); i++) {
+      if (strcmp(fastotv::client::player::core::hwaccels[i].name, from.c_str()) == 0) {
+        *out = fastotv::client::player::core::hwaccels[i].id;
         return true;
       }
     }
@@ -134,16 +134,16 @@ bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HW
   }
 }
 
-std::string ConvertToString(const fasto::fastotv::client::core::Size& value) {
+std::string ConvertToString(const fastotv::client::player::core::Size& value) {
   return MemSPrintf("%dx%d", value.width, value.height);
 }
 
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::Size* out) {
+bool ConvertFromString(const std::string& from, fastotv::client::player::core::Size* out) {
   if (!out) {
     return false;
   }
 
-  fasto::fastotv::client::core::Size res;
+  fastotv::client::player::core::Size res;
   size_t del = from.find_first_of('x');
   if (del != std::string::npos) {
     int lwidth;

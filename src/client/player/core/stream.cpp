@@ -29,9 +29,9 @@
 
 #include "client/types.h"  // for Size
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 Stream::Stream()
@@ -232,6 +232,6 @@ bool AudioStream::Open(int index, AVStream* av_stream_st) {
 }
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

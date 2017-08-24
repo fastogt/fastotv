@@ -22,7 +22,6 @@
 
 #include <common/net/types.h>  // for HostAndPort
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
@@ -35,4 +34,3 @@ struct RedisConfig {
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

@@ -33,9 +33,9 @@ extern "C" {
 #define SDL_AUDIO_MAX_CALLBACKS_PER_SEC 10
 #define SDL_AUDIO_MIN_BUFFER_SIZE 512
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 SDL_Rect calculate_display_rect(int scr_xleft,
@@ -242,6 +242,6 @@ bool create_window(Size window_size,
 }
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

@@ -21,12 +21,11 @@
 #include <common/types.h>
 #include <common/url.h>
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff);
-
+}
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

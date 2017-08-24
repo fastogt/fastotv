@@ -20,9 +20,9 @@
 
 #include <common/time.h>
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
@@ -31,8 +31,9 @@ TimeInfo::TimeInfo() : time_millisecond(common::time::current_mstime()) {}
 PreExecInfo::PreExecInfo(int code) : code(code) {}
 
 PostExecInfo::PostExecInfo(int code) : code(code) {}
+
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

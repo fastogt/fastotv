@@ -27,7 +27,6 @@
 #include <common/string_util_posix.h>  // for strdup
 #include <common/utils.h>              // for freeifnotnull
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 namespace inputs {
@@ -129,4 +128,3 @@ void LircInputClient::CloseImpl() {
 }  // namespace inputs
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

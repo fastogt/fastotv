@@ -27,7 +27,6 @@
 
 #include "server/redis/redis_connect.h"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
@@ -125,7 +124,7 @@ common::Error RedisPubSub::Publish(const std::string& channel, const std::string
   redisFree(redis_sub);
   return common::Error();
 }
+
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

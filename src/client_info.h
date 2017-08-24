@@ -28,7 +28,6 @@
 
 #include "serializer/json_serializer.h"
 
-namespace fasto {
 namespace fastotv {
 
 class ClientInfo : public JsonSerializer<ClientInfo> {
@@ -65,4 +64,3 @@ class ClientInfo : public JsonSerializer<ClientInfo> {
 };
 
 }  // namespace fastotv
-}  // namespace fasto

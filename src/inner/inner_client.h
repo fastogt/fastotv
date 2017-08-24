@@ -33,7 +33,6 @@ class socket_info;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace inner {
 
@@ -65,4 +64,3 @@ class InnerClient : public common::libev::tcp::TcpClient {
 
 }  // namespace inner
 }  // namespace fastotv
-}  // namespace fasto

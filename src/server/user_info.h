@@ -27,7 +27,6 @@
 
 #include "serializer/json_serializer.h"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 
@@ -74,4 +73,3 @@ inline bool operator!=(const UserInfo& x, const UserInfo& y) {
 }
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

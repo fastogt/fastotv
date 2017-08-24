@@ -20,11 +20,10 @@
 
 #include <string>  // for string
 
+#include <common/bounded_value.h>
 #include <common/time.h>
 #include <common/types.h>  // for time64_t
-#include <common/bounded_value.h>
 
-namespace fasto {
 namespace fastotv {
 
 typedef std::string stream_id;  // must be unique
@@ -43,4 +42,3 @@ typedef std::string serializet_t;
 typedef common::BoundedValue<int8_t, 0, 100> audio_volume_t;
 
 }  // namespace fastotv
-}  // namespace fasto

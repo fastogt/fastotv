@@ -2,7 +2,7 @@
 
 #include "client/commands.h"
 
-using namespace fasto::fastotv;
+using namespace fastotv;
 
 TEST(commands, parse_commands) {
   const cmd_seq_t seq_id_const = "10";

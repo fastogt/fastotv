@@ -21,9 +21,9 @@
 #include "client/player/core/application/sdl2_application.h"
 #include "client/player/core/events/events.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 StreamHandler::~StreamHandler() {}
 
@@ -43,6 +43,6 @@ void StreamHandler::HandleQuitStream(core::VideoState* stream, int exit_code, co
   fApp->PostEvent(qevent);
 }
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

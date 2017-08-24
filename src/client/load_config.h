@@ -16,17 +16,15 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <common/error.h>       // for Error
+#include <common/error.h>  // for Error
 
 #include "client/player/config.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
-common::Error load_config_file(const std::string& config_absolute_path, TVConfig* options) WARN_UNUSED_RESULT;
-common::Error save_config_file(const std::string& config_absolute_path, TVConfig* options) WARN_UNUSED_RESULT;
+common::Error load_config_file(const std::string& config_absolute_path, player::TVConfig* options) WARN_UNUSED_RESULT;
+common::Error save_config_file(const std::string& config_absolute_path, player::TVConfig* options) WARN_UNUSED_RESULT;
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

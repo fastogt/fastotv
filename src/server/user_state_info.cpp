@@ -24,7 +24,6 @@
 
 #include <json-c/json_object.h>  // for json_object, json...
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 
@@ -86,6 +85,6 @@ common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, value
   *obj = inf;
   return common::Error();
 }
+
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

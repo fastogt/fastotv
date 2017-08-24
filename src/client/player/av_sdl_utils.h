@@ -25,12 +25,11 @@ extern "C" {
 
 #include <common/error.h>  // for Error
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 common::Error UploadTexture(SDL_Texture* tex, const AVFrame* frame) WARN_UNUSED_RESULT;
-
+}
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

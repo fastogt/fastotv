@@ -18,9 +18,9 @@
 
 #include "client/player/core/frames/audio_frame.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace frames {
 
@@ -28,6 +28,6 @@ AudioFrame::AudioFrame() : BaseFrame(), format(AV_SAMPLE_FMT_NONE) {}
 
 }  // namespace frames
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

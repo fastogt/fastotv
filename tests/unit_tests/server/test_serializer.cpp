@@ -4,23 +4,23 @@
 #include "server/user_info.h"
 #include "server/user_state_info.h"
 
-typedef fasto::fastotv::ChannelInfo::serialize_type serialize_t;
+typedef fastotv::ChannelInfo::serialize_type serialize_t;
 
 TEST(UserInfo, serialize_deserialize) {
   const std::string login = "palecc";
   const std::string password = "faf";
 
   const std::string name = "alex";
-  const fasto::fastotv::stream_id stream_id = "123";
+  const fastotv::stream_id stream_id = "123";
   const common::uri::Uri url("http://localhost:8080/hls/69_avformat_test_alex_2/play.m3u8");
   const bool enable_video = false;
   const bool enable_audio = true;
 
-  fasto::fastotv::EpgInfo epg_info(stream_id, url, name);
-  fasto::fastotv::ChannelsInfo channel_info;
-  channel_info.AddChannel(fasto::fastotv::ChannelInfo(epg_info, enable_audio, enable_video));
+  fastotv::EpgInfo epg_info(stream_id, url, name);
+  fastotv::ChannelsInfo channel_info;
+  channel_info.AddChannel(fastotv::ChannelInfo(epg_info, enable_audio, enable_video));
 
-  fasto::fastotv::server::UserInfo uinf(login, password, channel_info, fasto::fastotv::server::UserInfo::devices_t());
+  fastotv::server::UserInfo uinf(login, password, channel_info, fastotv::server::UserInfo::devices_t());
   ASSERT_EQ(uinf.GetLogin(), login);
   ASSERT_EQ(uinf.GetPassword(), password);
   ASSERT_EQ(uinf.GetChannelInfo(), channel_info);
@@ -28,7 +28,7 @@ TEST(UserInfo, serialize_deserialize) {
   serialize_t ser;
   common::Error err = uinf.Serialize(&ser);
   ASSERT_TRUE(!err);
-  fasto::fastotv::server::UserInfo duinf;
+  fastotv::server::UserInfo duinf;
   err = uinf.DeSerialize(ser, &duinf);
   ASSERT_TRUE(!err);
 
@@ -84,24 +84,24 @@ TEST(UserInfo, serialize_deserialize) {
 
   err = uinf.DeSerialize(ser, &duinf);
   ASSERT_TRUE(!err);
-  fasto::fastotv::ChannelsInfo ch = duinf.GetChannelInfo();
+  fastotv::ChannelsInfo ch = duinf.GetChannelInfo();
   ASSERT_EQ(duinf.GetLogin(), "atopilski@gmail.com");
   ASSERT_EQ(duinf.GetPassword(), "1234");
   ASSERT_EQ(ch.GetSize(), 3);
 }
 
 TEST(UserStateInfo, serialize_deserialize) {
-  const fasto::fastotv::server::user_id_t user_id = "123fe";
+  const fastotv::server::user_id_t user_id = "123fe";
   const bool connected = false;
 
-  fasto::fastotv::server::UserStateInfo ust(user_id, "", connected);
+  fastotv::server::UserStateInfo ust(user_id, "", connected);
   ASSERT_EQ(ust.GetUserId(), user_id);
   ASSERT_EQ(ust.IsConnected(), connected);
 
   serialize_t ser;
   common::Error err = ust.Serialize(&ser);
   ASSERT_TRUE(!err);
-  fasto::fastotv::server::UserStateInfo dust;
+  fastotv::server::UserStateInfo dust;
   err = ust.DeSerialize(ser, &dust);
   ASSERT_TRUE(!err);
 
@@ -116,7 +116,7 @@ TEST(ResponceInfo, serialize_deserialize) {
   const std::string command = "comma";
   const std::string responce_json = "{}";
 
-  fasto::fastotv::server::ResponceInfo ust(request_id, state, command, responce_json);
+  fastotv::server::ResponceInfo ust(request_id, state, command, responce_json);
   ASSERT_EQ(ust.GetRequestId(), request_id);
   ASSERT_EQ(ust.GetState(), state);
   ASSERT_EQ(ust.GetCommand(), command);
@@ -125,7 +125,7 @@ TEST(ResponceInfo, serialize_deserialize) {
   serialize_t ser;
   common::Error err = ust.Serialize(&ser);
   ASSERT_TRUE(!err);
-  fasto::fastotv::server::ResponceInfo dust;
+  fastotv::server::ResponceInfo dust;
   err = ust.DeSerialize(ser, &dust);
   ASSERT_TRUE(!err);
 

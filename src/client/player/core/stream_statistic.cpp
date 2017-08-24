@@ -23,9 +23,9 @@
 #define ONLY_AUDIO_TEXT "M-A"
 #define VIDEO_AUDIO_TEXT "A-V"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 Stats::Stats()
@@ -42,8 +42,7 @@ Stats::Stats()
       video_bandwidth(0),
       audio_bandwidth(0),
       active_hwaccel(HWACCEL_NONE),
-      start_ts_(common::time::current_mstime()),
-      frame_rate({1, DEFAULT_FRAME_PER_SEC}) {}
+      start_ts_(common::time::current_mstime()) {}
 
 clock64_t Stats::GetDiffStreams() const {
   if (fmt == (HAVE_VIDEO_STREAM | HAVE_AUDIO_STREAM)) {
@@ -67,14 +66,12 @@ double Stats::GetFps() const {
   return fps_per_msec * 1000;
 }
 
-double Stats::GetSreamFps() const {}
-
 std::string ConvertStreamFormatToString(stream_format_t fmt) {
-  if (fmt == (fasto::fastotv::client::core::HAVE_VIDEO_STREAM | fasto::fastotv::client::core::HAVE_AUDIO_STREAM)) {
+  if (fmt == (core::HAVE_VIDEO_STREAM | core::HAVE_AUDIO_STREAM)) {
     return VIDEO_AUDIO_TEXT;
-  } else if (fmt == fasto::fastotv::client::core::HAVE_VIDEO_STREAM) {
+  } else if (fmt == core::HAVE_VIDEO_STREAM) {
     return ONLY_VIDEO_TEXT;
-  } else if (fmt == fasto::fastotv::client::core::HAVE_AUDIO_STREAM) {
+  } else if (fmt == HAVE_AUDIO_STREAM) {
     return ONLY_AUDIO_TEXT;
   }
 
@@ -82,6 +79,6 @@ std::string ConvertStreamFormatToString(stream_format_t fmt) {
 }
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

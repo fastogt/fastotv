@@ -26,9 +26,9 @@
 
 #define DEFAULT_FRAME_PER_SEC 25
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 enum HWAccelID {
@@ -75,15 +75,16 @@ struct Size {
   int width;
   int height;
 };
+
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto
 
 namespace common {
-std::string ConvertToString(const fasto::fastotv::client::core::HWAccelID& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::HWAccelID* out);
+std::string ConvertToString(const fastotv::client::player::core::HWAccelID& value);
+bool ConvertFromString(const std::string& from, fastotv::client::player::core::HWAccelID* out);
 
-std::string ConvertToString(const fasto::fastotv::client::core::Size& value);
-bool ConvertFromString(const std::string& from, fasto::fastotv::client::core::Size* out);
+std::string ConvertToString(const fastotv::client::player::core::Size& value);
+bool ConvertFromString(const std::string& from, fastotv::client::player::core::Size* out);
 }  // namespace common

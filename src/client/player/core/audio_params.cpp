@@ -18,10 +18,10 @@
 
 #include "client/player/core/audio_params.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
-namespace core {}  // namespace core
+namespace player {
+namespace core {}
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

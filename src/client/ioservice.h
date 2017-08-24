@@ -31,7 +31,6 @@ class Thread;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
@@ -62,4 +61,3 @@ class IoService : public common::libev::ILoopController {
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

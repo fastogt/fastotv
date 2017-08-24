@@ -20,20 +20,19 @@
 
 #include "client/player/isimple_player.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
-class SimplePlayer : public ISimplePlayer {
+class SimplePlayer : public player::ISimplePlayer {
  public:
-  SimplePlayer(const PlayerOptions& options);
+  SimplePlayer(const player::PlayerOptions& options);
 
   virtual std::string GetCurrentUrlName() const override;
 
   virtual void SetUrlLocation(stream_id sid,
                               const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
+                              player::core::AppOptions opt,
+                              player::core::ComplexOptions copt) override;
 
  private:
   common::uri::Uri stream_url_;
@@ -41,4 +40,3 @@ class SimplePlayer : public ISimplePlayer {
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

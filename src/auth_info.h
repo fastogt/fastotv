@@ -27,7 +27,6 @@
 
 #include "serializer/json_serializer.h"
 
-namespace fasto {
 namespace fastotv {
 
 class AuthInfo : public JsonSerializer<AuthInfo> {
@@ -62,4 +61,3 @@ inline bool operator!=(const AuthInfo& x, const AuthInfo& y) {
 }
 
 }  // namespace fastotv
-}  // namespace fasto

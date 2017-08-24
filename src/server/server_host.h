@@ -35,7 +35,6 @@ class IoClient;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 class AuthInfo;
 namespace server {
@@ -81,4 +80,3 @@ class ServerHost {
 
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

@@ -29,9 +29,9 @@
 
 #include "client/player/core/types.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace application {
 
@@ -85,8 +85,9 @@ class Sdl2Application : public common::application::IApplication {
   common::threads::EventDispatcher<EventsType> dispatcher_;
   update_display_timeout_t update_display_timeout_msec_;
 };
+
 }  // namespace application
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

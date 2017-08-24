@@ -22,7 +22,6 @@
 
 #include "commands/commands.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
@@ -51,4 +50,3 @@ cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const serializet_t& syst
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info_serialized);
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

@@ -63,9 +63,9 @@ struct event_traits<EventsType> {
 };
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
@@ -98,8 +98,9 @@ class EventBase<event_t, void> : public common::Event<EventsType, event_t> {
 
   explicit EventBase(senders_t* sender) : base_class_t(sender) {}
 };
+
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

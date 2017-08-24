@@ -24,7 +24,6 @@
 #include "channel_info.h"
 #include "serializer/json_serializer.h"
 
-namespace fasto {
 namespace fastotv {
 
 class ChannelsInfo : public JsonSerializer<ChannelsInfo> {
@@ -58,4 +57,3 @@ inline bool operator!=(const ChannelsInfo& x, const ChannelsInfo& y) {
 }
 
 }  // namespace fastotv
-}  // namespace fasto

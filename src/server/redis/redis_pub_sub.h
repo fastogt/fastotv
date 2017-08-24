@@ -23,7 +23,6 @@
 #include "server/redis/redis_pub_sub_handler.h"
 #include "server/redis/redis_sub_config.h"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
@@ -49,4 +48,3 @@ class RedisPubSub {
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

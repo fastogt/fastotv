@@ -21,7 +21,6 @@
 #include <common/convert2string.h>
 #include <common/utils.h>
 
-namespace fasto {
 namespace fastotv {
 
 std::string CmdIdToString(cmd_id_t id) {
@@ -80,4 +79,3 @@ common::Error ParseCommand(const std::string& command, cmd_id_t* cmd_id, cmd_seq
 }
 
 }  // namespace fastotv
-}  // namespace fasto

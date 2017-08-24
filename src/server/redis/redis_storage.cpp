@@ -37,7 +37,6 @@
 
 #define ID_FIELD "id"
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace redis {
@@ -132,4 +131,3 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
 }  // namespace redis
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

@@ -28,7 +28,6 @@
 
 #include "serializer/iserializer.h"  // for ISerializer
 
-namespace fasto {
 namespace fastotv {
 
 template <typename T>
@@ -54,7 +53,7 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
     const char* data_ptr = data.c_str();
     serialize_type res = json_tokener_parse(data_ptr);
     if (!res) {
-      return common::make_inval_error_value( common::Value::E_ERROR);
+      return common::make_inval_error_value(common::Value::E_ERROR);
     }
 
     *out = res;
@@ -66,4 +65,3 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
 };
 
 }  // namespace fastotv
-}  // namespace fasto

@@ -24,12 +24,12 @@
 #include "channels_info.h"
 
 #include "client/player/core/events/events_base.h"  // for EventBase, EventsType::C...
-#include "client/types.h"                    // for BandwidthHostType
-#include "client_server_types.h"             // for bandwidth_t
+#include "client/types.h"                           // for BandwidthHostType
+#include "client_server_types.h"                    // for bandwidth_t
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 namespace events {
 
@@ -59,6 +59,6 @@ typedef EventBase<CLIENT_BANDWIDTH_ESTIMATION_EVENT, BandwidtInfo> BandwidthEsti
 
 }  // namespace events
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

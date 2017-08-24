@@ -3,9 +3,9 @@
 #include "client/player/core/types.h"
 #include "client_server_types.h"  // for bandwidth_t
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 struct DesireBytesPerSec {
@@ -37,6 +37,6 @@ DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(Size encoded_frame_siz
 DesireBytesPerSec CalculateDesireMPEGBandwidthBytesPerSec(Size encoded_frame_size);
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

@@ -31,8 +31,8 @@
 #include "client/inner/inner_tcp_server.h"   // for InnerTcpServer
 
 #ifdef HAVE_LIRC
-#include "client/player/core/events/lirc_events.h"   // for ConvertFromString, Lirc...
-#include "client/inputs/lirc_input_client.h"  // for LircInit, LircInputClient
+#include "client/inputs/lirc_input_client.h"        // for LircInit, LircInputClient
+#include "client/player/core/events/lirc_events.h"  // for ConvertFromString, Lirc...
 #endif
 
 namespace common {
@@ -41,7 +41,6 @@ class IoClient;
 }
 }  // namespace common
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
@@ -95,9 +94,9 @@ class PrivateHandler : public inner::InnerTcpHandler {
           return;
         }
 
-        core::events::LircPressInfo linf;
+        player::core::events::LircPressInfo linf;
         linf.code = lcode;
-        core::events::LircPressEvent* levent = new core::events::LircPressEvent(this, linf);
+        player::core::events::LircPressEvent* levent = new player::core::events::LircPressEvent(this, linf);
         fApp->PostEvent(levent);
       };
       client_->ReadWithCallback(cb);
@@ -194,4 +193,3 @@ void IoService::HandleStoped() {
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

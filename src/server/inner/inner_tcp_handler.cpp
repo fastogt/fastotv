@@ -48,7 +48,6 @@
 #include "server/user_state_info.h"  // for UserStateInfo
 #include "server_info.h"             // for ServerInfo
 
-namespace fasto {
 namespace fastotv {
 namespace server {
 namespace inner {
@@ -538,4 +537,3 @@ common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc, char*
 }  // namespace inner
 }  // namespace server
 }  // namespace fastotv
-}  // namespace fasto

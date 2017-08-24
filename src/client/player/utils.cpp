@@ -24,9 +24,9 @@ extern "C" {
 
 #include <common/utils.h>
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
   if (!uri.IsValid() || !buff) {
@@ -68,6 +68,6 @@ bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
   return true;
 }
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

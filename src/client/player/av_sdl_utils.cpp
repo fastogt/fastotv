@@ -18,9 +18,9 @@
 
 #include "client/player/av_sdl_utils.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 
 common::Error UploadTexture(SDL_Texture* tex, const AVFrame* frame) {
   if (frame->format == AV_PIX_FMT_YUV420P) {
@@ -55,6 +55,6 @@ common::Error UploadTexture(SDL_Texture* tex, const AVFrame* frame) {
                                   common::Value::E_ERROR);
 }
 
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

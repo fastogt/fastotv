@@ -23,7 +23,6 @@
 
 #include "client/player/core/events/network_events.h"  // for BandwidthEstimationEvent
 
-namespace fasto {
 namespace fastotv {
 namespace client {
 
@@ -36,45 +35,45 @@ struct ChannelDescription {
   channel_icon_t icon;
 };
 
-class Player : public ISimplePlayer {
+class Player : public player::ISimplePlayer {
  public:
   typedef ISimplePlayer base_class;
   typedef std::string keypad_sym_t;
   enum { footer_height = 60, keypad_height = 30, keypad_width = 60, min_key_pad_size = 0, max_keypad_size = 999 };
   Player(const std::string& app_directory_absolute_path,  // for runtime data (cache)
-         const PlayerOptions& options,
-         const core::AppOptions& opt,
-         const core::ComplexOptions& copt);
+         const player::PlayerOptions& options,
+         const player::core::AppOptions& opt,
+         const player::core::ComplexOptions& copt);
 
   ~Player();
 
   virtual std::string GetCurrentUrlName() const override;  // return Unknown if not found
-  core::AppOptions GetStreamOptions() const;
+  player::core::AppOptions GetStreamOptions() const;
 
  protected:
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
-  virtual void HandlePreExecEvent(core::events::PreExecEvent* event) override;
-  virtual void HandlePostExecEvent(core::events::PostExecEvent* event) override;
+  virtual void HandlePreExecEvent(player::core::events::PreExecEvent* event) override;
+  virtual void HandlePostExecEvent(player::core::events::PostExecEvent* event) override;
 
-  virtual void HandleTimerEvent(core::events::TimerEvent* event) override;
+  virtual void HandleTimerEvent(player::core::events::TimerEvent* event) override;
 
-  virtual void HandleBandwidthEstimationEvent(core::events::BandwidthEstimationEvent* event);
-  virtual void HandleClientConnectedEvent(core::events::ClientConnectedEvent* event);
-  virtual void HandleClientDisconnectedEvent(core::events::ClientDisconnectedEvent* event);
-  virtual void HandleClientAuthorizedEvent(core::events::ClientAuthorizedEvent* event);
-  virtual void HandleClientUnAuthorizedEvent(core::events::ClientUnAuthorizedEvent* event);
-  virtual void HandleClientConfigChangeEvent(core::events::ClientConfigChangeEvent* event);
-  virtual void HandleReceiveChannelsEvent(core::events::ReceiveChannelsEvent* event);
+  virtual void HandleBandwidthEstimationEvent(player::core::events::BandwidthEstimationEvent* event);
+  virtual void HandleClientConnectedEvent(player::core::events::ClientConnectedEvent* event);
+  virtual void HandleClientDisconnectedEvent(player::core::events::ClientDisconnectedEvent* event);
+  virtual void HandleClientAuthorizedEvent(player::core::events::ClientAuthorizedEvent* event);
+  virtual void HandleClientUnAuthorizedEvent(player::core::events::ClientUnAuthorizedEvent* event);
+  virtual void HandleClientConfigChangeEvent(player::core::events::ClientConfigChangeEvent* event);
+  virtual void HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEvent* event);
 
-  virtual void HandleWindowResizeEvent(core::events::WindowResizeEvent* event) override;
-  virtual void HandleWindowExposeEvent(core::events::WindowExposeEvent* event) override;
+  virtual void HandleWindowResizeEvent(player::core::events::WindowResizeEvent* event) override;
+  virtual void HandleWindowExposeEvent(player::core::events::WindowExposeEvent* event) override;
 
-  virtual void HandleMousePressEvent(core::events::MousePressEvent* event) override;
+  virtual void HandleMousePressEvent(player::core::events::MousePressEvent* event) override;
 
-  virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event) override;
-  virtual void HandleLircPressEvent(core::events::LircPressEvent* event) override;
+  virtual void HandleKeyPressEvent(player::core::events::KeyPressEvent* event) override;
+  virtual void HandleLircPressEvent(player::core::events::LircPressEvent* event) override;
 
   virtual void DrawInfo() override;
   virtual void DrawFailedStatus() override;
@@ -117,9 +116,9 @@ class Player : public ISimplePlayer {
   void SwitchToAuthorizeMode();
   void SwitchToUnAuthorizeMode();
 
-  core::VideoState* CreateNextStream();
-  core::VideoState* CreatePrevStream();
-  core::VideoState* CreateStreamPos(size_t pos);
+  player::core::VideoState* CreateNextStream();
+  player::core::VideoState* CreatePrevStream();
+  player::core::VideoState* CreateStreamPos(size_t pos);
 
   size_t GenerateNextPosition() const;
   size_t GeneratePrevPosition() const;
@@ -131,11 +130,11 @@ class Player : public ISimplePlayer {
   bool IsHideButtonProgramsListRect(SDL_Point point) const;
   bool IsShowButtonProgramsListRect(SDL_Point point) const;
 
-  SurfaceSaver* offline_channel_texture_;
-  SurfaceSaver* connection_error_texture_;
+  player::SurfaceSaver* offline_channel_texture_;
+  player::SurfaceSaver* connection_error_texture_;
 
-  SurfaceSaver* hide_button_texture_;
-  SurfaceSaver* show_button_texture_;
+  player::SurfaceSaver* hide_button_texture_;
+  player::SurfaceSaver* show_button_texture_;
 
   IoService* controller_;
 
@@ -143,16 +142,16 @@ class Player : public ISimplePlayer {
   std::vector<PlaylistEntry> play_list_;
 
   bool show_footer_;
-  core::msec_t footer_last_shown_;
+  player::core::msec_t footer_last_shown_;
   std::string current_state_str_;
 
-  const core::AppOptions opt_;
-  const core::ComplexOptions copt_;
+  const player::core::AppOptions opt_;
+  const player::core::ComplexOptions copt_;
 
   const std::string app_directory_absolute_path_;
 
   bool show_keypad_;
-  core::msec_t keypad_last_shown_;
+  player::core::msec_t keypad_last_shown_;
   keypad_sym_t keypad_sym_;
 
   bool show_programms_list_;
@@ -161,4 +160,3 @@ class Player : public ISimplePlayer {
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

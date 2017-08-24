@@ -2,7 +2,7 @@
 
 #include "server/commands.h"
 
-using namespace fasto::fastotv;
+using namespace fastotv;
 
 void TestParseRequestComand(cmd_request_t req, const std::string& etalon_cmd) {
   cmd_seq_t id_seq = req.GetId();

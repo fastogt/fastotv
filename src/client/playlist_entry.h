@@ -22,12 +22,12 @@
 
 #include "channels_info.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
-
+namespace player {
 class SurfaceSaver;
-typedef std::shared_ptr<SurfaceSaver> channel_icon_t;
+}
+typedef std::shared_ptr<player::SurfaceSaver> channel_icon_t;
 
 class PlaylistEntry {
  public:
@@ -50,4 +50,3 @@ class PlaylistEntry {
 
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto

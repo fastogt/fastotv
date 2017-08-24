@@ -18,10 +18,10 @@
 
 #include "client/player/core/frames/frame_queue.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {}
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-}  // namespace fasto
