@@ -348,6 +348,8 @@ ENDIF(LIRC_CLIENT_FOUND)
 SET(BUILD_PLAYER_SOURCES
   ${SOURCE_ROOT}/client/load_config.h
   ${SOURCE_ROOT}/client/load_config.cpp
+  ${SOURCE_ROOT}/client/cmdutils.h
+  ${SOURCE_ROOT}/client/cmdutils.cpp
 )
 
 SET(BUILD_TV_PLAYER_SOURCES
@@ -355,6 +357,8 @@ SET(BUILD_TV_PLAYER_SOURCES
   ${SOURCE_ROOT}/client/playlist_entry.cpp
   ${SOURCE_ROOT}/client/ioservice.h
   ${SOURCE_ROOT}/client/ioservice.cpp
+  ${SOURCE_ROOT}/client/utils.h
+  ${SOURCE_ROOT}/client/utils.cpp
 
   ${BUILD_PLAYER_SOURCES}
   ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}

@@ -186,6 +186,14 @@ int ConvertToSDLVolume(int val) {
   return stable_value_in_range(SDL_MIX_MAXVOLUME * val / 100, 0, SDL_MIX_MAXVOLUME);
 }
 
+int SetRenderDrawColor(SDL_Renderer* renderer, const SDL_Color& rgba) {
+  if (!renderer) {
+    return -1;
+  }
+
+  return SDL_SetRenderDrawColor(renderer, rgba.r, rgba.g, rgba.b, rgba.a);
+}
+
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -86,6 +86,8 @@ std::string DotText(std::string text, TTF_Font* font, int max_width) {
 
 const SDL_Color ISimplePlayer::text_color = {255, 255, 255, 0};
 const AVRational ISimplePlayer::min_fps = {25, 1};
+const SDL_Color ISimplePlayer::black_color = {0, 0, 0, 255};
+const SDL_Color ISimplePlayer::stream_statistic_color = {171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
 
 ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
     : StreamHandler(),
@@ -617,7 +619,7 @@ void ISimplePlayer::DrawFailedStatus() {
     return;
   }
 
-  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+  SetRenderDrawColor(renderer_, black_color);
   SDL_RenderClear(renderer_);
   DrawInfo();
   SDL_RenderPresent(renderer_);
@@ -678,7 +680,7 @@ void ISimplePlayer::DrawPlayingStatus() {
 
   bool flip_v = frame->frame->linesize[0] < 0;
 
-  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+  SetRenderDrawColor(renderer_, black_color);
   SDL_RenderClear(renderer_);
 
   SDL_Rect rect = core::calculate_display_rect(xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
@@ -694,7 +696,7 @@ void ISimplePlayer::DrawInitStatus() {
     return;
   }
 
-  SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+  SetRenderDrawColor(renderer_, black_color);
   SDL_RenderClear(renderer_);
   DrawInfo();
   SDL_RenderPresent(renderer_);
@@ -779,7 +781,7 @@ void ISimplePlayer::DrawStatistic() {
   }
 
   SDL_Rect dst = {statistic_rect.x, statistic_rect.y, statistic_rect.w, h};
-  SDL_SetRenderDrawColor(renderer_, 171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+  SetRenderDrawColor(renderer_, stream_statistic_color);
   SDL_RenderFillRect(renderer_, &dst);
 
   DrawWrappedTextInRect(result_text, text_color, dst);
@@ -796,7 +798,7 @@ void ISimplePlayer::DrawVolume() {
   int padding_left = volume_rect.w / 4;
   SDL_Rect sdl_volume_rect = {volume_rect.x + padding_left, volume_rect.y, volume_rect.w - padding_left * 2,
                               volume_rect.h};
-  SDL_SetRenderDrawColor(renderer_, 171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5));
+  SetRenderDrawColor(renderer_, stream_statistic_color);
   SDL_RenderFillRect(renderer_, &sdl_volume_rect);
 
   DrawCenterTextInRect(vol_str, text_color, sdl_volume_rect);

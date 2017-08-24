@@ -73,6 +73,8 @@ SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
 
 int ConvertToSDLVolume(int val);
 
+int SetRenderDrawColor(SDL_Renderer* renderer, const SDL_Color& rgba);
+
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

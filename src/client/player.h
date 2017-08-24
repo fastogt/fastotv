@@ -37,6 +37,11 @@ struct ChannelDescription {
 
 class Player : public player::ISimplePlayer {
  public:
+  static const SDL_Color failed_color;
+  static const SDL_Color info_color;
+  static const SDL_Color keypad_color;
+  static const SDL_Color playlist_item_preselect_color;
+
   typedef ISimplePlayer base_class;
   typedef std::string keypad_sym_t;
   enum { footer_height = 60, keypad_height = 30, keypad_width = 60, min_key_pad_size = 0, max_keypad_size = 999 };

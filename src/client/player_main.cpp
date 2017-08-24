@@ -29,7 +29,7 @@ extern "C" {
 
 #include "client/load_config.h"
 #include "client/player.h"           // for Player
-#include "client/player/cmdutils.h"  // for DictionaryOptions, show_...
+#include "client/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/player/ffmpeg_application.h"
 #include "client/simple_player.h"
 

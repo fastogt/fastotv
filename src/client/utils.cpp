@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/utils.h"
+#include "client/utils.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -26,7 +26,6 @@ extern "C" {
 
 namespace fastotv {
 namespace client {
-namespace player {
 
 bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
   if (!uri.IsValid() || !buff) {
@@ -68,6 +67,5 @@ bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
   return true;
 }
 
-}  // namespace player
 }  // namespace client
 }  // namespace fastotv

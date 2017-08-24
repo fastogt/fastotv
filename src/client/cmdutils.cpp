@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/cmdutils.h"
+#include "client/cmdutils.h"
 
 #ifdef _WIN32
 #include <windef.h>

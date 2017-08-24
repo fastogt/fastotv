@@ -62,6 +62,9 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   static const SDL_Color text_color;
   static const AVRational min_fps;
 
+  static const SDL_Color black_color;
+  static const SDL_Color stream_statistic_color;
+
   enum States { INIT_STATE, PLAYING_STATE, FAILED_STATE };
 
   void SetFullScreen(bool full_screen);

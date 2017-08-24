@@ -25,7 +25,7 @@
 
 #include "inih/ini.h"  // for ini_parse
 
-#include "client/player/cmdutils.h"
+#include "client/cmdutils.h"
 #include "client/player/core/ffmpeg_internal.h"  // for HWAccelID
 #include "client/types.h"                        // for Size
 

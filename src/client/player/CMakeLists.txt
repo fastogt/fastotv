@@ -13,10 +13,6 @@ SET(PRIVATE_INCLUDE_DIRECTORIES_PLAYER
 )
 
 SET(BUILD_PLAYER_SOURCES
-  ${SOURCE_ROOT}/client/player/cmdutils.h
-  ${SOURCE_ROOT}/client/player/cmdutils.cpp
-  ${SOURCE_ROOT}/client/player/utils.h
-  ${SOURCE_ROOT}/client/player/utils.cpp
   ${SOURCE_ROOT}/client/player/sdl_utils.h
   ${SOURCE_ROOT}/client/player/sdl_utils.cpp
   ${SOURCE_ROOT}/client/player/av_sdl_utils.h
