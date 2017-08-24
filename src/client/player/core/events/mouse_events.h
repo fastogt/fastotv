@@ -18,27 +18,37 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include <stdint.h>  // for uint8_t
+
+#include <SDL2/SDL_events.h>
+
+#include "client/player/core/events/events_base.h"  // for EventBase, EventsType::M...
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+namespace events {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+struct MouseMoveInfo {};
 
-  virtual std::string GetCurrentUrlName() const override;
+struct MousePressInfo {
+  MousePressInfo(const SDL_MouseButtonEvent& event);
 
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
+  SDL_MouseButtonEvent mevent;
+};
+struct MouseReleaseInfo {
+  MouseReleaseInfo(const SDL_MouseButtonEvent& event);
 
- private:
-  common::uri::Uri stream_url_;
+  SDL_MouseButtonEvent mevent;
 };
 
+typedef EventBase<MOUSE_MOVE_EVENT, MouseMoveInfo> MouseMoveEvent;
+typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
+typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
+
+}  // namespace events
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

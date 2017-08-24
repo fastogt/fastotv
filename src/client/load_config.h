@@ -16,28 +16,16 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include <common/error.h>       // for Error
 
-#include "client/player/isimple_player.h"
+#include "client/player/config.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
-
-  virtual std::string GetCurrentUrlName() const override;
-
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
-
- private:
-  common::uri::Uri stream_url_;
-};
+common::Error load_config_file(const std::string& config_absolute_path, TVConfig* options) WARN_UNUSED_RESULT;
+common::Error save_config_file(const std::string& config_absolute_path, TVConfig* options) WARN_UNUSED_RESULT;
 
 }  // namespace client
 }  // namespace fastotv

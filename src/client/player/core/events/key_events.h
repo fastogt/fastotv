@@ -18,27 +18,37 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include <stdint.h>  // for int32_t, uint16_t
+
+#include <SDL2/SDL_keyboard.h>
+
+#include "client/player/core/events/events_base.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+namespace events {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+struct KeyPressInfo {
+  KeyPressInfo(bool pressed, SDL_Keysym ks);
 
-  virtual std::string GetCurrentUrlName() const override;
-
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
-
- private:
-  common::uri::Uri stream_url_;
+  bool is_pressed;
+  SDL_Keysym ks;
 };
 
+struct KeyReleaseInfo {
+  KeyReleaseInfo(bool pressed, SDL_Keysym ks);
+
+  bool is_pressed;
+  SDL_Keysym ks;
+};
+
+typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;
+typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
+
+}  // namespace events
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

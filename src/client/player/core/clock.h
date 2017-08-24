@@ -18,27 +18,36 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include "client/player/core/types.h"  // for clock64_t
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
 
-class SimplePlayer : public ISimplePlayer {
+class Clock {
  public:
-  SimplePlayer(const PlayerOptions& options);
+  Clock();
 
-  virtual std::string GetCurrentUrlName() const override;
+  clock64_t GetPts() const;
 
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
+  void SetClockAt(clock64_t pts, clock64_t time);
+  void SetClock(clock64_t pts);
+  clock64_t GetClock() const;
+
+  clock64_t LastUpdated() const;
+
+  void SetPaused(bool paused);
 
  private:
-  common::uri::Uri stream_url_;
+  bool paused_;
+  clock64_t pts_;       /* clock base */
+  clock64_t pts_drift_; /* clock base minus time at which we updated the clock */
+  clock64_t last_updated_;
+  double speed_;
 };
 
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

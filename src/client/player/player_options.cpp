@@ -16,28 +16,20 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include "client/player/isimple_player.h"
+#include "client/player/player_options.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
-
-  virtual std::string GetCurrentUrlName() const override;
-
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
-
- private:
-  common::uri::Uri stream_url_;
-};
+PlayerOptions::PlayerOptions()
+    : exit_on_keydown(false),
+      exit_on_mousedown(false),
+      is_full_screen(false),
+      default_size(width, height),
+      screen_size(0, 0),
+      audio_volume(volume),
+      last_showed_channel_id(invalid_stream_id) {}
 
 }  // namespace client
 }  // namespace fastotv

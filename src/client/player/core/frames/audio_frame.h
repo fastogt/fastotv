@@ -18,27 +18,25 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include "client/player/core/frames/base_frame.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+namespace frames {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+struct AudioFrame : public BaseFrame {
+  AudioFrame();
 
-  virtual std::string GetCurrentUrlName() const override;
-
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
+  AVSampleFormat format;
 
  private:
-  common::uri::Uri stream_url_;
+  DISALLOW_COPY_AND_ASSIGN(AudioFrame);
 };
 
+}  // namespace frames
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

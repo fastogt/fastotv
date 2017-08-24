@@ -18,27 +18,46 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+extern "C" {
+#include <libavutil/rational.h>  // for AVRational
+}
+
+#include <common/error.h>
+
+#include "client/player/core/events/events_base.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+class VideoState;
+namespace events {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+struct StreamInfo {
+  explicit StreamInfo(VideoState* stream);
 
-  virtual std::string GetCurrentUrlName() const override;
-
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
-
- private:
-  common::uri::Uri stream_url_;
+  VideoState* stream_;
 };
 
+struct FrameInfo : public StreamInfo {
+  FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio);
+  int width;
+  int height;
+  int av_pixel_format;
+  AVRational aspect_ratio;
+};
+
+struct QuitStreamInfo : public StreamInfo {
+  QuitStreamInfo(VideoState* stream, int exit_code, common::Error err);
+  int exit_code;
+  common::Error error;
+};
+
+typedef EventBase<REQUEST_VIDEO_EVENT, FrameInfo> RequestVideoEvent;
+typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
+
+}  // namespace events
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

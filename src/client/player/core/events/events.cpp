@@ -16,29 +16,23 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include "client/player/core/events/events.h"
 
-#include "client/player/isimple_player.h"
+#include <common/time.h>
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+namespace events {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+TimeInfo::TimeInfo() : time_millisecond(common::time::current_mstime()) {}
 
-  virtual std::string GetCurrentUrlName() const override;
+PreExecInfo::PreExecInfo(int code) : code(code) {}
 
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
-
- private:
-  common::uri::Uri stream_url_;
-};
-
+PostExecInfo::PostExecInfo(int code) : code(code) {}
+}  // namespace events
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

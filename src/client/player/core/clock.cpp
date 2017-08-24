@@ -16,29 +16,50 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include "client/player/isimple_player.h"
+#include "client/player/core/clock.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+Clock::Clock() : paused_(false), speed_(1.0) {
+  SetClock(invalid_clock());
+}
 
-  virtual std::string GetCurrentUrlName() const override;
+void Clock::SetClockAt(clock64_t pts, clock64_t time) {
+  pts_ = pts;
+  last_updated_ = time;
+  pts_drift_ = pts - time;
+}
 
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
+void Clock::SetClock(clock64_t pts) {
+  clock64_t time = GetRealClockTime();
+  SetClockAt(pts, time);
+}
 
- private:
-  common::uri::Uri stream_url_;
-};
+clock64_t Clock::GetPts() const {
+  return pts_;
+}
 
+clock64_t Clock::GetClock() const {
+  if (paused_) {
+    return pts_;
+  }
+
+  clock64_t time = GetRealClockTime();
+  return pts_drift_ + time - (time - last_updated_) * (1.0 - speed_);
+}
+
+clock64_t Clock::LastUpdated() const {
+  return last_updated_;
+}
+
+void Clock::SetPaused(bool paused) {
+  paused_ = paused;
+}
+
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

@@ -18,25 +18,25 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include "client/player/core/types.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+struct PlayerOptions {
+  enum { width = 640, height = 480, volume = 100 };
+  PlayerOptions();
 
-  virtual std::string GetCurrentUrlName() const override;
+  bool exit_on_keydown;
+  bool exit_on_mousedown;
+  bool is_full_screen;
 
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
+  core::Size default_size;
+  core::Size screen_size;
 
- private:
-  common::uri::Uri stream_url_;
+  audio_volume_t audio_volume;  // Range: 0 - 100
+  stream_id last_showed_channel_id;
 };
 
 }  // namespace client

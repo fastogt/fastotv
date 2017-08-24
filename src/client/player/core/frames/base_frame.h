@@ -18,27 +18,39 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include <stdint.h>  // for int64_t
+
+extern "C" {
+#include <libavutil/frame.h>
+}
+
+#include "client/player/core/types.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+namespace frames {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+struct BaseFrame {
+  BaseFrame();
 
-  virtual std::string GetCurrentUrlName() const override;
+  AVFrame* frame;
+  clock64_t pts;      /* presentation timestamp for the frame */
+  clock64_t duration; /* estimated duration of the frame */
+  int64_t pos;        /* byte position of the frame in the input file */
 
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
+  void ClearFrame();
+
+ protected:
+  ~BaseFrame();
 
  private:
-  common::uri::Uri stream_url_;
+  DISALLOW_COPY_AND_ASSIGN(BaseFrame);
 };
 
+}  // namespace frames
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

@@ -18,27 +18,38 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include <string>  // for string
+
+#include "client/player/core/events/events_base.h"  // for EventBase, EventsType::L...
+
+enum LircCode {
+  LIRC_KEY_OK = 0,
+  LIRC_KEY_LEFT,
+  LIRC_KEY_UP,
+  LIRC_KEY_RIGHT,
+  LIRC_KEY_DOWN,
+  LIRC_KEY_EXIT,
+  LIRC_KEY_MUTE
+};
+
+namespace common {
+std::string ConvertToString(LircCode value);
+bool ConvertFromString(const std::string& from, LircCode* out);
+}  // namespace common
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+namespace events {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
-
-  virtual std::string GetCurrentUrlName() const override;
-
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
-
- private:
-  common::uri::Uri stream_url_;
+struct LircPressInfo {
+  LircCode code;
 };
+typedef EventBase<LIRC_PRESS_EVENT, LircPressInfo> LircPressEvent;
 
+}  // namespace events
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

@@ -28,9 +28,9 @@ extern "C" {
 #include <common/file_system.h>  // for File, create_directory
 #include <common/system/system.h>
 
-#include "client/cmdutils.h"  // for DictionaryOptions, show_...
-#include "client/config.h"
-#include "client/ffmpeg_application.h"
+#include "client/player/cmdutils.h"  // for DictionaryOptions, show_...
+#include "client/load_config.h"
+#include "client/player/ffmpeg_application.h"
 #include "client/player.h"  // for Player
 #include "client/simple_player.h"
 
@@ -48,7 +48,7 @@ void init_ffmpeg() {
 }
 
 int main_application(int argc, char** argv, const std::string& app_directory_absolute_path) {
-  int res = prepare_to_start(app_directory_absolute_path);
+  int res = fasto::fastotv::client::prepare_to_start(app_directory_absolute_path);
   if (res == EXIT_FAILURE) {
     return EXIT_FAILURE;
   }
@@ -61,7 +61,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   }
 
   fasto::fastotv::client::TVConfig main_options;
-  common::Error err = load_config_file(config_absolute_path, &main_options);
+  common::Error err = fasto::fastotv::client::load_config_file(config_absolute_path, &main_options);
   if (err && err->IsError()) {
     return EXIT_FAILURE;
   }
@@ -73,7 +73,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
 #endif
 
-  FFmpegApplication app(argc, argv);
+  fasto::fastotv::client::FFmpegApplication app(argc, argv);
 
   AVDictionary* sws_dict = NULL;
   AVDictionary* swr_opts = NULL;
@@ -94,7 +94,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   av_dict_free(&codec_opts);
 
   // save config file
-  err = save_config_file(config_absolute_path, &main_options);
+  err = fasto::fastotv::client::save_config_file(config_absolute_path, &main_options);
   if (main_options.power_off_on_exit) {
     common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);
     if (err_shut && err_shut->IsError()) {

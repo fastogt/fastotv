@@ -16,29 +16,17 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include "client/player/isimple_player.h"
+#include "client/player/core/video_state_handler.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+VideoStateHandler::VideoStateHandler() {}
 
-  virtual std::string GetCurrentUrlName() const override;
-
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
-
- private:
-  common::uri::Uri stream_url_;
-};
-
+VideoStateHandler::~VideoStateHandler() {}
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

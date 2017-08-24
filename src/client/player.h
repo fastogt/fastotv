@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "client/isimple_player.h"
+#include "client/player/isimple_player.h"
 #include "client/playlist_entry.h"
 
-#include "client/core/events/network_events.h"  // for BandwidthEstimationEvent
+#include "client/player/core/events/network_events.h"  // for BandwidthEstimationEvent
 
 namespace fasto {
 namespace fastotv {

@@ -27,9 +27,9 @@ extern "C" {
 
 #include <common/file_system.h>  // for File, create_directory
 
-#include "client/cmdutils.h"  // for DictionaryOptions, show_...
-#include "client/config.h"
-#include "client/ffmpeg_application.h"
+#include "client/player/cmdutils.h"  // for DictionaryOptions, show_...
+#include "client/load_config.h"
+#include "client/player/ffmpeg_application.h"
 #include "client/player.h"  // for Player
 #include "client/simple_player.h"
 
@@ -50,7 +50,7 @@ int main_simple_player_application(int argc,
                                    char** argv,
                                    const common::uri::Uri& stream_url,
                                    const std::string& app_directory_absolute_path) {
-  int res = prepare_to_start(app_directory_absolute_path);
+  int res = fasto::fastotv::client::prepare_to_start(app_directory_absolute_path);
   if (res == EXIT_FAILURE) {
     return EXIT_FAILURE;
   }
@@ -63,7 +63,7 @@ int main_simple_player_application(int argc,
   }
 
   fasto::fastotv::client::TVConfig main_options;
-  common::Error err = load_config_file(config_absolute_path, &main_options);
+  common::Error err = fasto::fastotv::client::load_config_file(config_absolute_path, &main_options);
   if (err && err->IsError()) {
     return EXIT_FAILURE;
   }
@@ -75,7 +75,7 @@ int main_simple_player_application(int argc,
   INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
 #endif
 
-  FFmpegApplication app(argc, argv);
+  fasto::fastotv::client::FFmpegApplication app(argc, argv);
 
   AVDictionary* sws_dict = NULL;
   AVDictionary* swr_opts = NULL;

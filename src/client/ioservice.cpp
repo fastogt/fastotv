@@ -31,7 +31,7 @@
 #include "client/inner/inner_tcp_server.h"   // for InnerTcpServer
 
 #ifdef HAVE_LIRC
-#include "client/core/events/lirc_events.h"   // for ConvertFromString, Lirc...
+#include "client/player/core/events/lirc_events.h"   // for ConvertFromString, Lirc...
 #include "client/inputs/lirc_input_client.h"  // for LircInit, LircInputClient
 #endif
 

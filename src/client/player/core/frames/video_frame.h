@@ -18,27 +18,31 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include "client/player/core/frames/base_frame.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+namespace frames {
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+/* Common struct for handling all types of decoded data and allocated render buffers. */
+struct VideoFrame : public BaseFrame {
+  VideoFrame();
 
-  virtual std::string GetCurrentUrlName() const override;
-
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
+  int width;
+  int height;
+  AVPixelFormat format;  // pixel format in mostly AV_PIX_FMT_YUV420P
+  AVRational sar;        // aspect ratio
 
  private:
-  common::uri::Uri stream_url_;
+  DISALLOW_COPY_AND_ASSIGN(VideoFrame);
 };
 
+clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock64_t max_frame_duration);
+
+}  // namespace frames
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

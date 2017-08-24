@@ -16,29 +16,23 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include "client/player/isimple_player.h"
+#include "client/player/core/events/network_events.h"
 
 namespace fasto {
 namespace fastotv {
 namespace client {
+namespace core {
+namespace events {
+BandwidtInfo::BandwidtInfo() : host(), bandwidth(0), host_type(UNKNOWN_SERVER) {}
 
-class SimplePlayer : public ISimplePlayer {
- public:
-  SimplePlayer(const PlayerOptions& options);
+BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandwidthHostType hs)
+    : host(host), bandwidth(band), host_type(hs) {}
 
-  virtual std::string GetCurrentUrlName() const override;
+ConnectInfo::ConnectInfo() {}
 
-  virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt) override;
-
- private:
-  common::uri::Uri stream_url_;
-};
-
+ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {}
+}  // namespace events
+}  // namespace core
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto

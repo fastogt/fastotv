@@ -27,10 +27,10 @@
 
 #include "client/ioservice.h"  // for IoService
 
-#include "client/core/application/sdl2_application.h"
+#include "client/player/core/application/sdl2_application.h"
 
-#include "client/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
-#include "client/utils.h"
+#include "client/player/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
+#include "client/player/utils.h"
 
 #define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "share/resources/offline_channel.png"
 #define IMG_CONNECTION_ERROR_PATH_RELATIVE "share/resources/connection_error.png"
