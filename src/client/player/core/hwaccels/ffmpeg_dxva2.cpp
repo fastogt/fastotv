@@ -121,9 +121,9 @@ typedef struct DXVA2Context {
   AVBufferRef* hw_frames_ctx;
 } DXVA2Context;
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 static int dxva2_get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {

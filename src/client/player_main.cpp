@@ -28,7 +28,7 @@ extern "C" {
 #include <common/file_system.h>  // for File, create_directory
 
 #include "client/load_config.h"
-#include "client/player.h"           // for Player
+#include "client/player.h"    // for Player
 #include "client/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/player/ffmpeg_application.h"
 #include "client/simple_player.h"
@@ -183,6 +183,11 @@ int main(int argc, char** argv) {
       show_help_player(std::string());
       return EXIT_SUCCESS;
     }
+  }
+
+  if (!url.IsValid()) {
+    show_help_player(std::string());
+    return EXIT_SUCCESS;
   }
 
   const std::string app_directory_path = APPLICATION_DIR;

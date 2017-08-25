@@ -24,15 +24,15 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 int dxva2_init(AVCodecContext* s);
 void dxva2_uninit(AVCodecContext* s);
 
 }  // namespace core
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv
-

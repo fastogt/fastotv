@@ -666,9 +666,8 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                             "to reduce the image size.";
     return;
   }
 
@@ -908,6 +907,10 @@ core::VideoState* ISimplePlayer::CreateStream(stream_id sid,
                                               const common::uri::Uri& uri,
                                               core::AppOptions opt,
                                               core::ComplexOptions copt) {
+  if (!uri.IsValid()) {
+    return nullptr;
+  }
+
   core::VideoState* stream = new core::VideoState(sid, uri, opt, copt);
   options_.last_showed_channel_id = sid;
   return stream;
