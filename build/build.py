@@ -239,9 +239,9 @@ if __name__ == "__main__":
         platform_str = system_info.get_os()
 
     if argc > 4:
-        arch_bit_str = sys.argv[4]
+        arch_name_str = sys.argv[4]
     else:
-        arch_bit_str = system_info.get_arch_name()
+        arch_name_str = system_info.get_arch_name()
 
     if argc > 5:
         bs_str = sys.argv[5]
@@ -254,7 +254,7 @@ if __name__ == "__main__":
     else:
         packages = []
 
-    request = BuildRequest(platform_str, arch_bit_str)
+    request = BuildRequest(platform_str, arch_name_str)
     if branding_file_path != dev_null:
         abs_branding_file = os.path.abspath(branding_file_path)
         branding_options = utils.read_file_line_by_line(abs_branding_file)
