@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/core/hwaccels/ffmpeg_videotoolbox.h"
+#include "client/player/core/hwaccels/ffmpeg_videotoolbox.h"
 
 #if HAVE_UTGETOSTYPEFROMSTRING
 #include <CoreServices/CoreServices.h>
@@ -36,11 +36,11 @@ extern "C" {
 
 #include <common/macros.h>
 
-#include "client/core/ffmpeg_internal.h"
+#include "client/player/core/ffmpeg_internal.h"
 
-namespace fasto {
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 typedef struct VTContext { AVFrame* tmp_frame; } VTContext;

@@ -27,12 +27,14 @@ extern "C" {
 
 namespace fastotv {
 namespace client {
+namespace player {
 namespace core {
 
 int videotoolbox_init(AVCodecContext* decoder_ctx);
 void videotoolbox_uninit(AVCodecContext* decoder_ctx);
 
 }  // namespace core
+}
 }  // namespace client
 }  // namespace fastotv
 
