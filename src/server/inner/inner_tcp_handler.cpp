@@ -300,34 +300,52 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     return;
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
-    bool is_anonim = client->IsAnonimUser();
     if (argc > 1) {
+      bool is_anonim = client->IsAnonimUser();
       char* channel_id_str = argv[1];
       client->SetCurrentStreamId(channel_id_str);
-      for (size_t i = 0; i < chat_channels_.size(); ++i) {
-        if (chat_channels_[i] == channel_id_str) {
-          serializet_t rchannel_str;
-          RuntimeChannelInfo rinf(channel_id_str, GetOnlineUserByStreamId(client->GetServer(), channel_id_str),
-                                  !is_anonim, std::vector<std::string>());
-          common::Error err = rinf.SerializeToString(&rchannel_str);
-          if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
-            return;
-          }
 
-          cmd_responce_t channels_responce = GetRuntimeChannelInfoResponceSuccsess(id, rchannel_str);
-          err = connection->Write(channels_responce);
-          if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
+      size_t watchers = GetOnlineUserByStreamId(client->GetServer(), channel_id_str);
+      RuntimeChannelInfo rinf;
+      rinf.SetChannelId(channel_id_str);
+      rinf.SetWatchersCount(watchers);
+      if (!is_anonim) {  // registered user
+        rinf.SetChatEnabled(true);
+        rinf.SetChannelType(PRIVATE_CHANNEL);
+
+        for (size_t i = 0; i < chat_channels_.size(); ++i) {
+          if (chat_channels_[i] == channel_id_str) {
+            rinf.SetChannelType(OFFICAL_CHANNEL);
+            break;
           }
-          return;
         }
+      } else {  // anonim have only offical channels and readonly mode
+        rinf.SetChannelType(OFFICAL_CHANNEL);
+        rinf.SetChatEnabled(false);
       }
 
-      const std::string error_str = "Not found chat room.";
-      cmd_responce_t resp = GetRuntimeChannelInfoResponceFail(id, error_str);
-      common::Error write_err = connection->Write(resp);
-      UNUSED(write_err);
+      serializet_t rchannel_str;
+      common::Error err = rinf.SerializeToString(&rchannel_str);
+      if (err && err->IsError()) {
+        DEBUG_MSG_ERROR(err);
+        return;
+      }
+
+      cmd_responce_t channels_responce = GetRuntimeChannelInfoResponceSuccsess(id, rchannel_str);
+      err = connection->Write(channels_responce);
+      if (err && err->IsError()) {
+        DEBUG_MSG_ERROR(err);
+      }
+      return;
+    } else {
+      common::Error err = common::make_inval_error_value(common::Value::E_ERROR);
+      cmd_responce_t resp = GetRuntimeChannelInfoResponceFail(id, err->GetDescription());
+      err = connection->Write(resp);
+      if (err && err->IsError()) {
+        DEBUG_MSG_ERROR(err);
+      }
+      connection->Close();
+      delete connection;
       return;
     }
   }

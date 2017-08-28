@@ -29,17 +29,30 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
   typedef std::string message_t;
   typedef std::vector<message_t> messages_t;
   RuntimeChannelInfo();
-  RuntimeChannelInfo(stream_id channel_id, size_t watchers, bool chat_enabled, const messages_t& msgs);
+  RuntimeChannelInfo(stream_id channel_id,
+                     size_t watchers,
+                     ChannelType type,
+                     bool chat_enabled,
+                     const messages_t& msgs = messages_t());
   ~RuntimeChannelInfo();
 
   bool IsValid() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
+  void SetChannelId(stream_id sid);
   stream_id GetChannelId() const;
+
+  void SetWatchersCount(size_t count);
   size_t GetWatchersCount() const;
+
+  void SetChatEnabled(bool en);
   bool IsChatEnabled() const;
+
   messages_t GetMessages() const;
+
+  void SetChannelType(ChannelType ct);
+  ChannelType GetChannelType() const;
 
   bool Equals(const RuntimeChannelInfo& inf) const;
 
@@ -49,6 +62,7 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
  private:
   stream_id channel_id_;
   size_t watchers_;
+  ChannelType type_;
   bool chat_enabled_;
   messages_t messages_;
 };

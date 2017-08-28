@@ -162,11 +162,13 @@ TEST(AuthInfo, serialize_deserialize) {
 TEST(RuntimeChannelInfo, serialize_deserialize) {
   const std::string channel_id = "1234";
   const size_t watchers = 7;
+  const fastotv::ChannelType ct = fastotv::OFFICAL_CHANNEL;
   const bool chat_enabled = true;
   const std::vector<std::string> msgs = {"test"};
-  fastotv::RuntimeChannelInfo rinf_info(channel_id, watchers, chat_enabled, msgs);
+  fastotv::RuntimeChannelInfo rinf_info(channel_id, watchers, ct, chat_enabled, msgs);
   ASSERT_EQ(rinf_info.GetChannelId(), channel_id);
   ASSERT_EQ(rinf_info.GetWatchersCount(), watchers);
+  ASSERT_EQ(rinf_info.GetChannelType(), ct);
   ASSERT_EQ(rinf_info.IsChatEnabled(), chat_enabled);
   serialize_t ser;
   common::Error err = rinf_info.Serialize(&ser);

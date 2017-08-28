@@ -41,4 +41,6 @@ typedef std::string serializet_t;
 
 typedef common::BoundedValue<int8_t, 0, 100> audio_volume_t;
 
+enum ChannelType { UNKNOWN_CHANNEL, OFFICAL_CHANNEL, PRIVATE_CHANNEL };
+
 }  // namespace fastotv
