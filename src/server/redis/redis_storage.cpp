@@ -34,12 +34,12 @@
 #include "server/redis/redis_connect.h"
 
 #define GET_USER_1E "GET %s"
-
+#define GET_CHAT_CHANNELS "GET chat_channels"
 #define ID_FIELD "id"
 
 namespace fastotv {
 namespace server {
-namespace redis {
+
 namespace {
 
 common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInfo* out_info) {
@@ -72,7 +72,31 @@ common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInf
   return common::Error();
 }
 
+common::Error parse_chat_channels_json(const char* channels_json, std::vector<stream_id>* out_info) {
+  if (!out_info) {
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
+  }
+
+  json_object* obj = json_tokener_parse(channels_json);
+  if (!obj) {
+    return common::make_error_value("Can't parse database field", common::ErrorValue::E_ERROR);
+  }
+
+  std::vector<stream_id> linfo;
+  size_t len = json_object_array_length(obj);
+  for (size_t i = 0; i < len; ++i) {
+    json_object* jstream_id = json_object_array_get_idx(obj, i);
+    linfo.push_back(json_object_get_string(jstream_id));
+  }
+
+  *out_info = linfo;
+  json_object_put(obj);
+  return common::Error();
+}
+
 }  // namespace
+
+namespace redis {
 
 RedisStorage::RedisStorage() : config_() {}
 
@@ -123,6 +147,38 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
 
   *uid = luid;
   *uinf = linfo;
+  freeReplyObject(reply);
+  redisFree(redis);
+  return common::Error();
+}
+
+common::Error RedisStorage::GetChatChannels(std::vector<stream_id>* channels) const {
+  if (!channels) {
+    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
+  }
+
+  redisContext* redis = NULL;
+  common::Error err = redis_connect(config_, &redis);
+  if (err && err->IsError()) {
+    return err;
+  }
+
+  redisReply* reply = reinterpret_cast<redisReply*>(redisCommand(redis, GET_CHAT_CHANNELS));
+  if (!reply) {
+    redisFree(redis);
+    return common::make_error_value("User not found", common::ErrorValue::E_ERROR);
+  }
+
+  const char* channels_json = reply->str;
+  std::vector<stream_id> lchannels;
+  err = parse_chat_channels_json(channels_json, &lchannels);
+  if (err && err->IsError()) {
+    freeReplyObject(reply);
+    redisFree(redis);
+    return err;
+  }
+
+  *channels = lchannels;
   freeReplyObject(reply);
   redisFree(redis);
   return common::Error();

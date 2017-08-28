@@ -43,6 +43,7 @@
 #include "server/inner/inner_external_notifier.h"  // for InnerSubHandler
 #include "server/inner/inner_tcp_client.h"         // for InnerTcpClient
 
+#include "runtime_channel_info.h"
 #include "server/server_host.h"      // for ServerHost
 #include "server/user_info.h"        // for user_id_t, UserInfo
 #include "server/user_state_info.h"  // for UserStateInfo
@@ -57,7 +58,9 @@ InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent, const Config& confi
       sub_commands_in_(NULL),
       handler_(NULL),
       ping_client_id_timer_(INVALID_TIMER_ID),
-      config_(config) {
+      reread_cache_id_timer_(INVALID_TIMER_ID),
+      config_(config),
+      chat_channels_() {
   handler_ = new InnerSubHandler(this);
   sub_commands_in_ = new redis::RedisPubSub(handler_);
   redis_subscribe_command_in_thread_ = THREAD_MANAGER()->CreateThread(&redis::RedisPubSub::Listen, sub_commands_in_);
@@ -77,7 +80,9 @@ InnerTcpHandlerHost::~InnerTcpHandlerHost() {
 }
 
 void InnerTcpHandlerHost::PreLooped(common::libev::IoLoop* server) {
-  ping_client_id_timer_ = server->CreateTimer(ping_timeout_clients, ping_timeout_clients);
+  UpdateCache();
+  ping_client_id_timer_ = server->CreateTimer(ping_timeout_clients, true);
+  reread_cache_id_timer_ = server->CreateTimer(reread_cache_timeout, true);
 }
 
 void InnerTcpHandlerHost::Moved(common::libev::IoLoop* server, common::libev::IoClient* client) {
@@ -86,7 +91,15 @@ void InnerTcpHandlerHost::Moved(common::libev::IoLoop* server, common::libev::Io
 }
 
 void InnerTcpHandlerHost::PostLooped(common::libev::IoLoop* server) {
-  UNUSED(server);
+  if (ping_client_id_timer_ != INVALID_TIMER_ID) {
+    server->RemoveTimer(ping_client_id_timer_);
+    ping_client_id_timer_ = INVALID_TIMER_ID;
+  }
+
+  if (reread_cache_id_timer_ != INVALID_TIMER_ID) {
+    server->RemoveTimer(reread_cache_id_timer_);
+    reread_cache_id_timer_ = INVALID_TIMER_ID;
+  }
 }
 
 void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) {
@@ -108,6 +121,8 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
         }
       }
     }
+  } else if (reread_cache_id_timer_ == id) {
+    UpdateCache();
   }
 }
 
@@ -161,6 +176,12 @@ void InnerTcpHandlerHost::DataReadyToWrite(common::libev::IoClient* client) {
 
 common::Error InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
   return sub_commands_in_->PublishToChannelOut(msg);
+}
+
+void InnerTcpHandlerHost::UpdateCache() {
+  std::vector<stream_id> channels;
+  parent_->GetChatChannels(&channels);
+  chat_channels_ = channels;
 }
 
 void InnerTcpHandlerHost::PublishUserStateInfo(const UserStateInfo& state) {
@@ -278,6 +299,37 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
+    inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
+    bool is_anonim = client->IsAnonimUser();
+    if (argc > 1) {
+      char* channel_id_str = argv[1];
+      client->SetCurrentStreamId(channel_id_str);
+      for (size_t i = 0; i < chat_channels_.size(); ++i) {
+        if (chat_channels_[i] == channel_id_str) {
+          serializet_t rchannel_str;
+          RuntimeChannelInfo rinf(channel_id_str, GetOnlineUserByStreamId(client->GetServer(), channel_id_str),
+                                  !is_anonim, std::vector<std::string>());
+          common::Error err = rinf.SerializeToString(&rchannel_str);
+          if (err && err->IsError()) {
+            DEBUG_MSG_ERROR(err);
+            return;
+          }
+
+          cmd_responce_t channels_responce = GetRuntimeChannelInfoResponceSuccsess(id, rchannel_str);
+          err = connection->Write(channels_responce);
+          if (err && err->IsError()) {
+            DEBUG_MSG_ERROR(err);
+          }
+          return;
+        }
+      }
+
+      const std::string error_str = "Not found chat room.";
+      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return;
+    }
   }
 
   WARNING_LOG() << "UNKNOWN COMMAND: " << command;
@@ -535,6 +587,20 @@ common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc, char*
 
   *out = obj;
   return common::Error();
+}
+
+size_t InnerTcpHandlerHost::GetOnlineUserByStreamId(common::libev::IoLoop* server, stream_id sid) const {
+  size_t total = 0;
+  std::vector<common::libev::IoClient*> online_clients = server->GetClients();
+  for (size_t i = 0; i < online_clients.size(); ++i) {
+    common::libev::IoClient* client = online_clients[i];
+    InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
+    if (iclient && iclient->GetCurrentStreamId() == sid) {
+      total++;
+    }
+  }
+
+  return total;
 }
 
 }  // namespace inner

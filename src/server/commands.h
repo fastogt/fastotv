@@ -51,11 +51,12 @@ cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const serializet_t& cha
 cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 
 // get_runtime_channel_info
-cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(cmd_seq_t id, const serializet_t& channels_info);
+cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(cmd_seq_t id, const serializet_t& rchannel_info);
 cmd_responce_t GetRuntimeChannelInfoResponceFail(cmd_seq_t id, const std::string& error_text);
 
 // ping
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info);
 cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+
 }  // namespace server
 }  // namespace fastotv

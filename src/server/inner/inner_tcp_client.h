@@ -56,11 +56,15 @@ class InnerTcpClient : public fastotv::inner::InnerClient {
   void SetUid(user_id_t id);
   user_id_t GetUid() const;
 
+  void SetCurrentStreamId(stream_id sid);
+  user_id_t GetCurrentStreamId() const;
+
   bool IsAnonimUser() const;
 
  private:
   AuthInfo hinfo_;
   user_id_t uid_;
+  stream_id current_stream_id_;
 };
 
 }  // namespace inner

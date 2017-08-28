@@ -42,6 +42,8 @@ class RedisStorage {
                          user_id_t* uid,
                          UserInfo* uinf) const WARN_UNUSED_RESULT;  // check password
 
+  common::Error GetChatChannels(std::vector<stream_id>* channels) const;
+
  private:
   RedisConfig config_;
 };

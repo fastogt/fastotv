@@ -37,6 +37,22 @@ bool RuntimeChannelInfo::IsValid() const {
   return channel_id_ != invalid_epg_channel_id;
 }
 
+stream_id RuntimeChannelInfo::GetChannelId() const {
+  return channel_id_;
+}
+
+size_t RuntimeChannelInfo::GetWatchersCount() const {
+  return watchers_;
+}
+
+bool RuntimeChannelInfo::IsChatEnabled() const {
+  return chat_enabled_;
+}
+
+RuntimeChannelInfo::messages_t RuntimeChannelInfo::GetMessages() const {
+  return messages_;
+}
+
 common::Error RuntimeChannelInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
     return common::make_inval_error_value(common::Value::E_ERROR);

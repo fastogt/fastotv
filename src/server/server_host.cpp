@@ -143,6 +143,10 @@ common::Error ServerHost::FindUser(const AuthInfo& auth, user_id_t* uid, UserInf
   return rstorage_.FindUser(auth, uid, uinf);
 }
 
+common::Error ServerHost::GetChatChannels(std::vector<stream_id>* channels) const {
+  return rstorage_.GetChatChannels(channels);
+}
+
 inner::InnerTcpClient* ServerHost::FindInnerConnectionByUserIDAndDeviceID(user_id_t user_id, device_id_t dev) const {
   inner_connections_type::const_iterator hs = connections_.find(user_id);
   if (hs == connections_.end()) {

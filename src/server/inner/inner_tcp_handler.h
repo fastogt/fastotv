@@ -69,7 +69,8 @@ class InnerTcpClient;
 class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, public common::libev::IoLoopObserver {
  public:
   enum {
-    ping_timeout_clients = 60  // sec
+    ping_timeout_clients = 60,  // sec
+    reread_cache_timeout = 150
   };
 
   explicit InnerTcpHandlerHost(ServerHost* parent, const Config& config);
@@ -91,6 +92,8 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
   inner::InnerTcpClient* FindInnerConnectionByUserIDAndDeviceID(user_id_t user, device_id_t dev) const;
 
  private:
+  void UpdateCache();
+
   void PublishUserStateInfo(const UserStateInfo& state);
 
   virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
@@ -118,13 +121,18 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
 
   common::Error ParserResponceResponceCommand(int argc, char* argv[], json_object** out) WARN_UNUSED_RESULT;
 
+  size_t GetOnlineUserByStreamId(common::libev::IoLoop* server, stream_id sid) const;
+
   ServerHost* const parent_;
 
   redis::RedisPubSub* sub_commands_in_;
   InnerSubHandler* handler_;
   std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
   common::libev::timer_id_t ping_client_id_timer_;
+  common::libev::timer_id_t reread_cache_id_timer_;
   const Config config_;
+
+  mutable std::vector<stream_id> chat_channels_;
 };
 
 }  // namespace inner

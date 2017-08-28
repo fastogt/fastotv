@@ -27,7 +27,7 @@ namespace inner {
 const AuthInfo InnerTcpClient::anonim_user(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
 
 InnerTcpClient::InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info)
-    : InnerClient(server, info), hinfo_(), uid_() {}
+    : InnerClient(server, info), hinfo_(), uid_(), current_stream_id_(invalid_epg_channel_id) {}
 
 bool InnerTcpClient::IsAnonimUser() const {
   return anonim_user == hinfo_;
@@ -53,6 +53,14 @@ void InnerTcpClient::SetUid(user_id_t id) {
 
 user_id_t InnerTcpClient::GetUid() const {
   return uid_;
+}
+
+void InnerTcpClient::SetCurrentStreamId(stream_id sid) {
+  current_stream_id_ = sid;
+}
+
+user_id_t InnerTcpClient::GetCurrentStreamId() const {
+  return current_stream_id_;
 }
 
 }  // namespace inner

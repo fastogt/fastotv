@@ -64,7 +64,7 @@ InnerTcpHandler::~InnerTcpHandler() {
 }
 
 void InnerTcpHandler::PreLooped(common::libev::IoLoop* server) {
-  ping_server_id_timer_ = server->CreateTimer(ping_timeout_server, ping_timeout_server);
+  ping_server_id_timer_ = server->CreateTimer(ping_timeout_server, true);
 
   Connect(server);
 }
@@ -148,6 +148,10 @@ void InnerTcpHandler::DataReadyToWrite(common::libev::IoClient* client) {
 
 void InnerTcpHandler::PostLooped(common::libev::IoLoop* server) {
   UNUSED(server);
+  if (ping_server_id_timer_ != INVALID_TIMER_ID) {
+    server->RemoveTimer(ping_server_id_timer_);
+    ping_server_id_timer_ = INVALID_TIMER_ID;
+  }
   std::vector<bandwidth::TcpBandwidthClient*> copy = bandwidth_requests_;
   for (bandwidth::TcpBandwidthClient* ban : copy) {
     ban->Close();

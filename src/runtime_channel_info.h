@@ -37,6 +37,9 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
   stream_id GetChannelId() const;
+  size_t GetWatchersCount() const;
+  bool IsChatEnabled() const;
+  messages_t GetMessages() const;
 
   bool Equals(const RuntimeChannelInfo& inf) const;
 

@@ -100,8 +100,8 @@ cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_te
   return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E, error_text);
 }
 
-cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(cmd_seq_t id, const serializet_t& channels_info) {
-  return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_SUCCSESS_1E, channels_info);
+cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(cmd_seq_t id, const serializet_t& rchannel_info) {
+  return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_SUCCSESS_1E, rchannel_info);
 }
 cmd_responce_t GetRuntimeChannelInfoResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_FAIL_1E, error_text);

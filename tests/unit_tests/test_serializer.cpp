@@ -5,6 +5,7 @@
 #include "channels_info.h"
 #include "client_info.h"
 #include "ping_info.h"
+#include "runtime_channel_info.h"
 #include "server_info.h"
 
 typedef fastotv::AuthInfo::serialize_type serialize_t;
@@ -156,4 +157,23 @@ TEST(AuthInfo, serialize_deserialize) {
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(auth_info, dser);
+}
+
+TEST(RuntimeChannelInfo, serialize_deserialize) {
+  const std::string channel_id = "1234";
+  const size_t watchers = 7;
+  const bool chat_enabled = true;
+  const std::vector<std::string> msgs = {"test"};
+  fastotv::RuntimeChannelInfo rinf_info(channel_id, watchers, chat_enabled, msgs);
+  ASSERT_EQ(rinf_info.GetChannelId(), channel_id);
+  ASSERT_EQ(rinf_info.GetWatchersCount(), watchers);
+  ASSERT_EQ(rinf_info.IsChatEnabled(), chat_enabled);
+  serialize_t ser;
+  common::Error err = rinf_info.Serialize(&ser);
+  ASSERT_TRUE(!err);
+  fastotv::RuntimeChannelInfo dser;
+  err = rinf_info.DeSerialize(ser, &dser);
+  ASSERT_TRUE(!err);
+
+  ASSERT_EQ(rinf_info, dser);
 }
