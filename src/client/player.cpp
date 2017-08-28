@@ -99,6 +99,7 @@ Player::Player(const std::string& app_directory_absolute_path,
 
   fApp->Subscribe(this, player::core::events::ClientConfigChangeEvent::EventType);
   fApp->Subscribe(this, player::core::events::ReceiveChannelsEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ReceiveRuntimeChannelEvent::EventType);
 }
 
 Player::~Player() {
@@ -134,6 +135,10 @@ void Player::HandleEvent(event_t* event) {
     player::core::events::ReceiveChannelsEvent* channels_event =
         static_cast<player::core::events::ReceiveChannelsEvent*>(event);
     HandleReceiveChannelsEvent(channels_event);
+  } else if (event->GetEventType() == player::core::events::ReceiveRuntimeChannelEvent::EventType) {
+    player::core::events::ReceiveRuntimeChannelEvent* channel_event =
+        static_cast<player::core::events::ReceiveRuntimeChannelEvent*>(event);
+    HandleReceiveRuntimeChannelEvent(channel_event);
   }
 
   base_class::HandleEvent(event);
@@ -376,6 +381,10 @@ void Player::HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEve
   }
 
   SwitchToPlayingMode();
+}
+
+void Player::HandleReceiveRuntimeChannelEvent(player::core::events::ReceiveRuntimeChannelEvent* event) {
+  UNUSED(event);
 }
 
 void Player::HandleWindowResizeEvent(player::core::events::WindowResizeEvent* event) {
@@ -800,7 +809,7 @@ void Player::DrawProgramsList() {
         SDL_RenderFillRect(render, &cell_rect);
       }
 
-      if (is_mouse_visible && SDL_PointInRect(&mouse_point, &cell_rect)) {           // pre selection
+      if (is_mouse_visible && SDL_PointInRect(&mouse_point, &cell_rect)) {  // pre selection
         player::SetRenderDrawColor(render, playlist_item_preselect_color);  // red
         SDL_RenderFillRect(render, &cell_rect);
       }

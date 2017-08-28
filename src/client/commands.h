@@ -41,6 +41,11 @@ cmd_request_t GetChannelsRequest(cmd_seq_t id);
 cmd_approve_t GetChannelsApproveResponceSuccsess(cmd_seq_t id);
 cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
 
+// get_runtime_channel_info
+cmd_request_t GetRuntimeChannelInfoRequest(cmd_seq_t id, stream_id sid);
+cmd_approve_t GetRuntimeChannelInfoApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t GetRuntimeChannelInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text);
+
 // responces
 // who are you
 cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const serializet_t& auth_serialized);

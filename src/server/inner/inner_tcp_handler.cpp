@@ -277,6 +277,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       DEBUG_MSG_ERROR(err);
     }
     return;
+  } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
   }
 
   WARNING_LOG() << "UNKNOWN COMMAND: " << command;
@@ -498,6 +499,7 @@ void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient*
       if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_GET_SERVER_INFO)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_GET_CHANNELS)) {
+      } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
       }
     }
     return;
@@ -507,6 +509,7 @@ void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient*
       if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_PING_COMMAND)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_GET_SERVER_INFO)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_GET_CHANNELS)) {
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
       }
     }
     return;

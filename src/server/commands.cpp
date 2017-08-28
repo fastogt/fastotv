@@ -43,6 +43,11 @@
 #define SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_CHANNELS, "'%s'")
 #define SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "'%s'")
 
+// get_runtime_channel_info
+#define SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
+#define SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_SUCCSESS_1E \
+  GENEATATE_SUCCESS_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
+
 // ping
 #define SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING_COMMAND, "'%s'")
 #define SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "'%s'")
@@ -93,6 +98,13 @@ cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const serializet_t& cha
 }
 cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E, error_text);
+}
+
+cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(cmd_seq_t id, const serializet_t& channels_info) {
+  return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_SUCCSESS_1E, channels_info);
+}
+cmd_responce_t GetRuntimeChannelInfoResponceFail(cmd_seq_t id, const std::string& error_text) {
+  return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_FAIL_1E, error_text);
 }
 
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info) {

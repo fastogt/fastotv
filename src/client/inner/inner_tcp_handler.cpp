@@ -37,6 +37,7 @@
 #include "client/commands.h"
 #include "client/player/core/events/network_events.h"  // for BandwidtInfo, Con...
 #include "client_info.h"                               // for ClientInfo
+#include "runtime_channel_info.h"
 
 #include "inner/inner_client.h"  // for InnerClient
 
@@ -462,6 +463,26 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
 
     fApp->PostEvent(new player::core::events::ReceiveChannelsEvent(this, chan));
     const cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
+    return connection->Write(resp);
+  } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
+    json_object* obj = NULL;
+    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
+    if (parse_err && parse_err->IsError()) {
+      cmd_approve_t resp = GetRuntimeChannelInfoApproveResponceFail(id, parse_err->GetDescription());
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return parse_err;
+    }
+
+    RuntimeChannelInfo chan;
+    common::Error err = RuntimeChannelInfo::DeSerialize(obj, &chan);
+    json_object_put(obj);
+    if (err && err->IsError()) {
+      return err;
+    }
+
+    fApp->PostEvent(new player::core::events::ReceiveRuntimeChannelEvent(this, chan));
+    const cmd_approve_t resp = GetRuntimeChannelInfoApproveResponceSuccsess(id);
     return connection->Write(resp);
   }
 

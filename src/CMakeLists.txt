@@ -64,6 +64,8 @@ SET(CLIENT_SERVER_SOURCES
   ${SOURCE_ROOT}/ping_info.cpp
   ${SOURCE_ROOT}/channels_info.h
   ${SOURCE_ROOT}/channels_info.cpp
+  ${SOURCE_ROOT}/runtime_channel_info.h
+  ${SOURCE_ROOT}/runtime_channel_info.cpp
   ${SOURCE_ROOT}/auth_info.h
   ${SOURCE_ROOT}/auth_info.cpp
   ${SOURCE_ROOT}/server_info.h

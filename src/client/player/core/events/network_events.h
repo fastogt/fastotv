@@ -22,6 +22,7 @@
 
 #include "auth_info.h"
 #include "channels_info.h"
+#include "runtime_channel_info.h"
 
 #include "client/player/core/events/events_base.h"  // for EventBase, EventsType::C...
 #include "client/types.h"                           // for BandwidthHostType
@@ -55,6 +56,7 @@ typedef EventBase<CLIENT_AUTHORIZED_EVENT, AuthInfo> ClientAuthorizedEvent;
 typedef EventBase<CLIENT_UNAUTHORIZED_EVENT, AuthInfo> ClientUnAuthorizedEvent;
 typedef EventBase<CLIENT_CONFIG_CHANGE_EVENT, TvConfig> ClientConfigChangeEvent;
 typedef EventBase<CLIENT_RECEIVE_CHANNELS_EVENT, ChannelsInfo> ReceiveChannelsEvent;
+typedef EventBase<CLIENT_RECEIVE_RUNTIME_CHANNELS_EVENT, RuntimeChannelInfo> ReceiveRuntimeChannelEvent;
 typedef EventBase<CLIENT_BANDWIDTH_ESTIMATION_EVENT, BandwidtInfo> BandwidthEstimationEvent;
 
 }  // namespace events

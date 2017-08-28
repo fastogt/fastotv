@@ -71,6 +71,7 @@ class Player : public player::ISimplePlayer {
   virtual void HandleClientUnAuthorizedEvent(player::core::events::ClientUnAuthorizedEvent* event);
   virtual void HandleClientConfigChangeEvent(player::core::events::ClientConfigChangeEvent* event);
   virtual void HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEvent* event);
+  virtual void HandleReceiveRuntimeChannelEvent(player::core::events::ReceiveRuntimeChannelEvent* event);
 
   virtual void HandleWindowResizeEvent(player::core::events::WindowResizeEvent* event) override;
   virtual void HandleWindowExposeEvent(player::core::events::WindowExposeEvent* event) override;

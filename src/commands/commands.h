@@ -36,6 +36,7 @@
 #define CID_FMT PRIu8
 
 #define GENERATE_REQUEST_FMT(CMD) "%" CID_FMT " %s " CMD END_OF_COMMAND
+#define GENERATE_REQUEST_FMT_ARGS(CMD, CMD_FMT) "%" CID_FMT " %s " CMD " " CMD_FMT END_OF_COMMAND
 
 #define GENEATATE_SUCCESS_FMT(CMD, CMD_FMT) "%" CID_FMT " %s " SUCCESS_COMMAND " " CMD " " CMD_FMT END_OF_COMMAND
 #define GENEATATE_FAIL_FMT(CMD, CMD_FMT) "%" CID_FMT " %s " FAIL_COMMAND " " CMD " " CMD_FMT END_OF_COMMAND
@@ -48,6 +49,7 @@
 #define CLIENT_PING_COMMAND "client_ping"  // ping server
 #define CLIENT_GET_SERVER_INFO "get_server_info"
 #define CLIENT_GET_CHANNELS "get_channels"
+#define CLIENT_GET_RUNTIME_CHANNEL_INFO "get_runtime_channel_info"
 
 // server commands
 #define SERVER_PING_COMMAND "server_ping"  // ping client
