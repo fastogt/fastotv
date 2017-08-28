@@ -280,7 +280,7 @@ common::Error ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
 
 void ISimplePlayer::HandleRequestVideoEvent(core::events::RequestVideoEvent* event) {
   core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
-  core::events::FrameInfo fr = avent->info();
+  core::events::FrameInfo fr = avent->GetInfo();
   common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
   if (err && err->IsError()) {
     SwitchToChannelErrorMode(err);
@@ -289,14 +289,14 @@ void ISimplePlayer::HandleRequestVideoEvent(core::events::RequestVideoEvent* eve
 }
 
 void ISimplePlayer::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
-  core::events::QuitStreamInfo inf = event->info();
+  core::events::QuitStreamInfo inf = event->GetInfo();
   if (inf.error && inf.error->IsError()) {
     SwitchToChannelErrorMode(inf.error);
   }
 }
 
 void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
-  core::events::PreExecInfo inf = event->info();
+  core::events::PreExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
     render_texture_ = new TextureSaver;
@@ -311,7 +311,7 @@ void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
 }
 
 void ISimplePlayer::HandlePostExecEvent(core::events::PostExecEvent* event) {
-  core::events::PostExecInfo inf = event->info();
+  core::events::PostExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     FreeStreamSafe(false);
     if (font_) {
@@ -359,7 +359,7 @@ void ISimplePlayer::HandleLircPressEvent(core::events::LircPressEvent* event) {
     return;
   }
 
-  core::events::LircPressInfo inf = event->info();
+  core::events::LircPressInfo inf = event->GetInfo();
   switch (inf.code) {
     case LIRC_KEY_OK: {
       PauseStream();
@@ -391,7 +391,7 @@ void ISimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
     return;
   }
 
-  const core::events::KeyPressInfo inf = event->info();
+  const core::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint32 modifier = inf.ks.mod;
   if (scan_code == SDL_SCANCODE_ESCAPE) {  // Quit
@@ -471,7 +471,7 @@ void ISimplePlayer::HandleMousePressEvent(core::events::MousePressEvent* event) 
   }
 
   core::msec_t cur_time = core::GetCurrentMsec();
-  core::events::MousePressInfo inf = event->info();
+  core::events::MousePressInfo inf = event->GetInfo();
   if (inf.mevent.button == SDL_BUTTON_LEFT) {
     if (cur_time - last_mouse_left_click_ <= 500) {  // double click 0.5 sec
       bool full_screen = !options_.is_full_screen;
@@ -500,7 +500,7 @@ void ISimplePlayer::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
 }
 
 void ISimplePlayer::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {
-  core::events::WindowResizeInfo inf = event->info();
+  core::events::WindowResizeInfo inf = event->GetInfo();
   window_size_ = inf.size;
   if (stream_) {
     stream_->RefreshRequest();

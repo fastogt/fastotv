@@ -88,6 +88,7 @@ Player::Player(const std::string& app_directory_absolute_path,
       keypad_last_shown_(0),
       keypad_sym_(),
       show_programms_list_(true),
+      show_chat_(false),
       last_programms_line_(0) {
   fApp->Subscribe(this, player::core::events::BandwidthEstimationEvent::EventType);
 
@@ -163,7 +164,7 @@ void Player::HandleExceptionEvent(event_t* event, common::Error err) {
 }
 
 void Player::HandlePreExecEvent(player::core::events::PreExecEvent* event) {
-  player::core::events::PreExecInfo inf = event->info();
+  player::core::events::PreExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     offline_channel_texture_ = MakeSurfaceFromImageRelativePath(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
@@ -192,7 +193,7 @@ void Player::HandleTimerEvent(player::core::events::TimerEvent* event) {
 }
 
 void Player::HandlePostExecEvent(player::core::events::PostExecEvent* event) {
-  player::core::events::PostExecInfo inf = event->info();
+  player::core::events::PostExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     controller_->Stop();
     destroy(&offline_channel_texture_);
@@ -265,7 +266,7 @@ void Player::SwitchToDisconnectMode() {
 }
 
 void Player::HandleBandwidthEstimationEvent(player::core::events::BandwidthEstimationEvent* event) {
-  player::core::events::BandwidtInfo band_inf = event->info();
+  player::core::events::BandwidtInfo band_inf = event->GetInfo();
   if (band_inf.host_type == MAIN_SERVER) {
     controller_->RequestChannels();
   }
@@ -301,7 +302,7 @@ void Player::HandleClientConfigChangeEvent(player::core::events::ClientConfigCha
 }
 
 void Player::HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEvent* event) {
-  ChannelsInfo chan = event->info();
+  ChannelsInfo chan = event->GetInfo();
   // prepare cache folders
   ChannelsInfo::channels_t channels = chan.GetChannels();
   const std::string cache_dir = common::file_system::make_path(app_directory_absolute_path_, CACHE_FOLDER_NAME);
@@ -384,7 +385,14 @@ void Player::HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEve
 }
 
 void Player::HandleReceiveRuntimeChannelEvent(player::core::events::ReceiveRuntimeChannelEvent* event) {
-  UNUSED(event);
+  RuntimeChannelInfo inf = event->GetInfo();
+  for (size_t i = 0; i < play_list_.size(); ++i) {
+    ChannelInfo cinf = play_list_[i].GetChannelInfo();
+    if (inf.GetChannelId() == cinf.GetId()) {
+      play_list_[i].SetRuntimeChannelInfo(inf);
+      break;
+    }
+  }
 }
 
 void Player::HandleWindowResizeEvent(player::core::events::WindowResizeEvent* event) {
@@ -403,10 +411,11 @@ void Player::HandleMousePressEvent(player::core::events::MousePressEvent* event)
     return base_class::HandleMousePressEvent(event);
   }
 
-  player::core::events::MousePressInfo inf = event->info();
+  player::core::events::MousePressInfo inf = event->GetInfo();
   SDL_MouseButtonEvent sinfo = inf.mevent;
   if (sinfo.button == SDL_BUTTON_LEFT) {
     SDL_Point point{sinfo.x, sinfo.y};
+    // playlist
     if (show_programms_list_) {
       size_t pos;
       if (FindStreamByPoint(point, &pos)) {  // pos in playlist
@@ -420,6 +429,17 @@ void Player::HandleMousePressEvent(player::core::events::MousePressEvent* event)
     } else {
       if (IsShowButtonProgramsListRect(point)) {
         show_programms_list_ = true;
+      }
+    }
+
+    // chat
+    if (show_chat_) {
+      if (IsHideButtonChatRect(point)) {
+        show_chat_ = false;
+      }
+    } else {
+      if (IsShowButtonChatRect(point)) {
+        show_chat_ = true;
       }
     }
   }
@@ -477,13 +497,23 @@ bool Player::IsShowButtonProgramsListRect(SDL_Point point) const {
   return SDL_PointInRect(&point, &show_button_rect);
 }
 
+bool Player::IsHideButtonChatRect(SDL_Point point) const {
+  const SDL_Rect hide_button_rect = GetHideButtonChatRect();
+  return SDL_PointInRect(&point, &hide_button_rect);
+}
+
+bool Player::IsShowButtonChatRect(SDL_Point point) const {
+  const SDL_Rect show_button_rect = GetShowButtonChatRect();
+  return SDL_PointInRect(&point, &show_button_rect);
+}
+
 void Player::HandleKeyPressEvent(player::core::events::KeyPressEvent* event) {
   player::PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
     return base_class::HandleKeyPressEvent(event);
   }
 
-  const player::core::events::KeyPressInfo inf = event->info();
+  const player::core::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint32 modifier = inf.ks.mod;
   if (scan_code == SDL_SCANCODE_KP_0) {
@@ -515,6 +545,8 @@ void Player::HandleKeyPressEvent(player::core::events::KeyPressEvent* event) {
     StartShowFooter();
   } else if (scan_code == SDL_SCANCODE_F5) {
     ToggleShowProgramsList();
+  } else if (scan_code == SDL_SCANCODE_F6) {
+    ToggleShowChat();
   } else if (scan_code == SDL_SCANCODE_RIGHT) {
     MoveToPreviousProgrammsPage();
   } else if (scan_code == SDL_SCANCODE_LEFT) {
@@ -534,7 +566,7 @@ void Player::HandleLircPressEvent(player::core::events::LircPressEvent* event) {
     return base_class::HandleLircPressEvent(event);
   }
 
-  player::core::events::LircPressInfo inf = event->info();
+  player::core::events::LircPressInfo inf = event->GetInfo();
   switch (inf.code) {
     case LIRC_KEY_LEFT: {
       MoveToPreviousStream();
@@ -556,6 +588,7 @@ void Player::DrawInfo() {
   DrawVolume();
   DrawKeyPad();
   DrawProgramsList();
+  DrawChat();
 }
 
 SDL_Rect Player::GetFooterRect() const {
@@ -568,9 +601,18 @@ void Player::ToggleShowProgramsList() {
   show_programms_list_ = !show_programms_list_;
 }
 
+void Player::ToggleShowChat() {
+  show_chat_ = !show_chat_;
+}
+
 SDL_Rect Player::GetProgramsListRect() const {
   const SDL_Rect display_rect = GetDisplayRect();
   return {display_rect.x + display_rect.w * 3 / 4, display_rect.y, display_rect.w / 4, display_rect.h};
+}
+
+SDL_Rect Player::GetChatRect() const {
+  const SDL_Rect display_rect = GetDisplayRect();
+  return {0, display_rect.y, display_rect.w / 4, display_rect.h};
 }
 
 SDL_Rect Player::GetHideButtonProgramsListRect() const {
@@ -597,6 +639,30 @@ SDL_Rect Player::GetShowButtonProgramsListRect() const {
   SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2 - font_height_2line,
                                font_height_2line, font_height_2line};
   return show_button_rect;
+}
+
+SDL_Rect Player::GetHideButtonChatRect() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return SDL_Rect();
+  }
+
+  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
+  SDL_Rect chat_rect = GetChatRect();
+  SDL_Rect show_button_rect = {chat_rect.x + chat_rect.w, chat_rect.h / 2, font_height_2line, font_height_2line};
+  return show_button_rect;
+}
+
+SDL_Rect Player::GetShowButtonChatRect() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return SDL_Rect();
+  }
+
+  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
+  SDL_Rect chat_rect = GetChatRect();
+  SDL_Rect hide_button_rect = {chat_rect.x, chat_rect.h / 2, font_height_2line, font_height_2line};
+  return hide_button_rect;
 }
 
 void Player::MoveToNextProgrammsPage() {
@@ -824,6 +890,47 @@ void Player::DrawProgramsList() {
     SDL_Texture* img = hide_button_texture_->GetTexture(render);
     if (img) {
       SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
+      SDL_RenderCopy(render, img, NULL, &hide_button_rect);
+    }
+  }
+}
+
+void Player::DrawChat() {
+  SDL_Renderer* render = GetRenderer();
+  TTF_Font* font = GetFont();
+  if (!font || !render) {
+    return;
+  }
+
+  PlaylistEntry url;
+  if (!GetCurrentUrl(&url)) {
+    return;
+  }
+
+  RuntimeChannelInfo rinfo = url.GetRuntimeChannelInfo();
+  if (!rinfo.IsChatEnabled()) {
+    return;
+  }
+
+  if (!show_chat_) {
+    if (hide_button_texture_ && IsMouseVisible()) {
+      SDL_Texture* img = hide_button_texture_->GetTexture(render);
+      if (img) {
+        SDL_Rect hide_button_rect = GetShowButtonChatRect();
+        SDL_RenderCopy(render, img, NULL, &hide_button_rect);
+      }
+    }
+    return;
+  }
+
+  const SDL_Rect chat_rect = GetChatRect();
+  player::SetRenderDrawColor(render, info_color);
+  SDL_RenderFillRect(render, &chat_rect);
+
+  if (show_button_texture_) {
+    SDL_Texture* img = show_button_texture_->GetTexture(render);
+    if (img) {
+      SDL_Rect hide_button_rect = GetHideButtonChatRect();
       SDL_RenderCopy(render, img, NULL, &hide_button_rect);
     }
   }

@@ -310,11 +310,12 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       rinf.SetChannelId(channel_id_str);
       rinf.SetWatchersCount(watchers);
       if (!is_anonim) {  // registered user
-        rinf.SetChatEnabled(true);
+        rinf.SetChatEnabled(false);
         rinf.SetChannelType(PRIVATE_CHANNEL);
 
         for (size_t i = 0; i < chat_channels_.size(); ++i) {
           if (chat_channels_[i] == channel_id_str) {
+            rinf.SetChatEnabled(true);
             rinf.SetChannelType(OFFICAL_CHANNEL);
             break;
           }

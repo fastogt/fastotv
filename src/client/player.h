@@ -106,15 +106,21 @@ class Player : public player::ISimplePlayer {
   void DrawFooter();
   void DrawKeyPad();
   void DrawProgramsList();
+  void DrawChat();
 
   void StartShowFooter();
   SDL_Rect GetFooterRect() const;
 
   void ToggleShowProgramsList();
+  void ToggleShowChat();
   SDL_Rect GetProgramsListRect() const;
+  SDL_Rect GetChatRect() const;
 
   SDL_Rect GetHideButtonProgramsListRect() const;
   SDL_Rect GetShowButtonProgramsListRect() const;
+
+  SDL_Rect GetHideButtonChatRect() const;
+  SDL_Rect GetShowButtonChatRect() const;
 
   void MoveToNextProgrammsPage();
   void MoveToPreviousProgrammsPage();
@@ -140,6 +146,8 @@ class Player : public player::ISimplePlayer {
   bool FindStreamByPoint(SDL_Point point, size_t* pos) const;
   bool IsHideButtonProgramsListRect(SDL_Point point) const;
   bool IsShowButtonProgramsListRect(SDL_Point point) const;
+  bool IsHideButtonChatRect(SDL_Point point) const;
+  bool IsShowButtonChatRect(SDL_Point point) const;
 
   player::SurfaceSaver* offline_channel_texture_;
   player::SurfaceSaver* connection_error_texture_;
@@ -166,6 +174,7 @@ class Player : public player::ISimplePlayer {
   keypad_sym_t keypad_sym_;
 
   bool show_programms_list_;
+  bool show_chat_;
   int last_programms_line_;
 };
 

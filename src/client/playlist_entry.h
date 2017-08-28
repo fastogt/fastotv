@@ -21,6 +21,7 @@
 #include <memory>
 
 #include "channels_info.h"
+#include "runtime_channel_info.h"
 
 namespace fastotv {
 namespace client {
@@ -36,6 +37,9 @@ class PlaylistEntry {
 
   ChannelInfo GetChannelInfo() const;
 
+  void SetRuntimeChannelInfo(const RuntimeChannelInfo& rinfo);
+  RuntimeChannelInfo GetRuntimeChannelInfo() const;
+
   void SetIcon(channel_icon_t icon);
   channel_icon_t GetIcon() const;
 
@@ -44,6 +48,8 @@ class PlaylistEntry {
 
  private:
   ChannelInfo info_;
+  RuntimeChannelInfo rinfo_;
+
   channel_icon_t icon_;
   std::string cache_dir_;
 };

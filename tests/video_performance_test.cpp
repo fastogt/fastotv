@@ -161,7 +161,7 @@ class FakeApplication : public common::application::IApplication {
     events::Event* fevent = static_cast<events::Event*>(event);
     if (fevent->GetEventType() == player::core::events::RequestVideoEvent::EventType) {
       player::core::events::RequestVideoEvent* avent = static_cast<player::core::events::RequestVideoEvent*>(event);
-      player::core::events::FrameInfo fr = avent->info();
+      player::core::events::FrameInfo fr = avent->GetInfo();
       common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
       if (err && err->IsError()) {
         fApp->Exit(EXIT_FAILURE);

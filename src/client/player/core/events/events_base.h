@@ -84,7 +84,7 @@ class EventBase : public common::Event<EventsType, event_t> {
 
   EventBase(senders_t* sender, info_t info) : base_class_t(sender), info_(info) {}
 
-  info_t info() const { return info_; }
+  info_t GetInfo() const { return info_; }
 
  private:
   const info_t info_;

@@ -30,7 +30,7 @@ namespace client {
 PlaylistEntry::PlaylistEntry() : info_(), icon_(), cache_dir_() {}
 
 PlaylistEntry::PlaylistEntry(const std::string& cache_root_dir, const ChannelInfo& info)
-    : info_(info), icon_(), cache_dir_() {
+    : info_(info), rinfo_(), icon_(), cache_dir_() {
   std::string id = info_.GetId();
   cache_dir_ = common::file_system::make_path(cache_root_dir, id);
 }
@@ -61,6 +61,14 @@ channel_icon_t PlaylistEntry::GetIcon() const {
 
 ChannelInfo PlaylistEntry::GetChannelInfo() const {
   return info_;
+}
+
+void PlaylistEntry::SetRuntimeChannelInfo(const RuntimeChannelInfo& rinfo) {
+  rinfo_ = rinfo;
+}
+
+RuntimeChannelInfo PlaylistEntry::GetRuntimeChannelInfo() const {
+  return rinfo_;
 }
 
 }  // namespace client

@@ -73,7 +73,7 @@ common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInf
 }
 
 common::Error parse_chat_channels_json(const char* channels_json, std::vector<stream_id>* out_info) {
-  if (!out_info) {
+  if (!out_info || !channels_json) {
     return common::make_inval_error_value(common::ErrorValue::E_ERROR);
   }
 
