@@ -141,10 +141,10 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   bool IsMouseVisible() const;
 
-  core::VideoState* CreateStream(stream_id sid,
-                                 const common::uri::Uri& uri,
-                                 core::AppOptions opt,
-                                 core::ComplexOptions copt);
+  virtual core::VideoState* CreateStream(stream_id sid,
+                                         const common::uri::Uri& uri,
+                                         core::AppOptions opt,
+                                         core::ComplexOptions copt);
   void SetStream(core::VideoState* stream);  // if stream == NULL => SwitchToChannelErrorMode
 
   SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins

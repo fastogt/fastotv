@@ -945,6 +945,14 @@ void Player::DrawInitStatus() {
   SDL_RenderPresent(render);
 }
 
+player::core::VideoState* Player::CreateStream(stream_id sid,
+                                               const common::uri::Uri& uri,
+                                               player::core::AppOptions opt,
+                                               player::core::ComplexOptions copt) {
+  controller_->RequesRuntimeChannelInfo(sid);
+  return base_class::CreateStream(sid, uri, opt, copt);
+}
+
 void Player::MoveToNextStream() {
   player::core::VideoState* stream = CreateNextStream();
   SetStream(stream);

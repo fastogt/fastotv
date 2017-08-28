@@ -70,10 +70,11 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
   explicit InnerTcpHandler(const StartConfig& config);
   virtual ~InnerTcpHandler();
 
-  void RequestServerInfo();                     // should be execute in network thread
-  void RequestChannels();                       // should be execute in network thread
-  void Connect(common::libev::IoLoop* server);  // should be execute in network thread
-  void DisConnect(common::Error err);           // should be execute in network thread
+  void RequestServerInfo();                      // should be execute in network thread
+  void RequestChannels();                        // should be execute in network thread
+  void RequesRuntimeChannelInfo(stream_id sid);  // should be execute in network thread
+  void Connect(common::libev::IoLoop* server);   // should be execute in network thread
+  void DisConnect(common::Error err);            // should be execute in network thread
 
   virtual void PreLooped(common::libev::IoLoop* server) override;
   virtual void Accepted(common::libev::IoClient* client) override;

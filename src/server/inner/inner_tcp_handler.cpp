@@ -325,7 +325,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       }
 
       const std::string error_str = "Not found chat room.";
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      cmd_responce_t resp = GetRuntimeChannelInfoResponceFail(id, error_str);
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return;

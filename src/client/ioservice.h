@@ -24,6 +24,8 @@
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/libev/loop_controller.h>   // for ILoopController
 
+#include "client_server_types.h"
+
 namespace common {
 namespace threads {
 template <typename RT>
@@ -46,6 +48,7 @@ class IoService : public common::libev::ILoopController {
   void DisconnectFromServer() const;
   void RequestServerInfo() const;
   void RequestChannels() const;
+  void RequesRuntimeChannelInfo(stream_id sid) const;
 
  private:
   using ILoopController::Exec;

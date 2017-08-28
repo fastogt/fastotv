@@ -206,6 +206,21 @@ void InnerTcpHandler::RequestChannels() {
   }
 }
 
+void InnerTcpHandler::RequesRuntimeChannelInfo(stream_id sid) {
+  if (!inner_connection_) {
+    return;
+  }
+
+  const cmd_request_t channels_request = GetRuntimeChannelInfoRequest(NextRequestID(), sid);
+  fastotv::inner::InnerClient* client = inner_connection_;
+  common::Error err = client->Write(channels_request);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    client->Close();
+    delete client;
+  }
+}
+
 void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
   if (!server) {
     return;

@@ -87,6 +87,11 @@ class Player : public player::ISimplePlayer {
 
   virtual void InitWindow(const std::string& title, States status) override;
 
+  virtual player::core::VideoState* CreateStream(stream_id sid,
+                                                 const common::uri::Uri& uri,
+                                                 player::core::AppOptions opt,
+                                                 player::core::ComplexOptions copt) override;
+
  private:
   int GetMaxProgrammsLines() const;
   bool GetChannelDescription(size_t pos, ChannelDescription* descr) const;

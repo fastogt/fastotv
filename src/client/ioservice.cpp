@@ -168,6 +168,14 @@ void IoService::RequestChannels() const {
   }
 }
 
+void IoService::RequesRuntimeChannelInfo(stream_id sid) const {
+  PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
+  if (handler) {
+    auto cb = [handler, sid]() { handler->RequesRuntimeChannelInfo(sid); };
+    ExecInLoopThread(cb);
+  }
+}
+
 common::libev::IoLoopObserver* IoService::CreateHandler() {
   inner::StartConfig conf;
   conf.inner_host = common::net::HostAndPort(SERVICE_HOST_NAME, SERVICE_HOST_PORT);
