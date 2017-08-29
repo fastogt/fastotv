@@ -307,14 +307,16 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       common::libev::IoLoop* server = client->GetServer();
       bool is_anonim = client->IsAnonimUser();
       AuthInfo ainf = client->GetServerHostInfo();
+      const login_t login = ainf.GetLogin();
       const stream_id channel = argv[1];
-      if (client->GetCurrentStreamId() == invalid_stream_id) {  // first channel
-        SendEnterChatMessage(server, channel, ainf.GetLogin());
-      } else {
-        SendLeaveChatMessage(server, client->GetCurrentStreamId(), ainf.GetLogin());
-        SendEnterChatMessage(server, channel, ainf.GetLogin());
-      }
+      const stream_id prev_channel = client->GetCurrentStreamId();
       client->SetCurrentStreamId(channel);
+      if (prev_channel == invalid_stream_id) {  // first channel
+        SendEnterChatMessage(server, channel, login);
+      } else {
+        SendLeaveChatMessage(server, prev_channel, login);
+        SendEnterChatMessage(server, channel, login);
+      }
 
       size_t watchers = GetOnlineUserByStreamId(server, channel);
       RuntimeChannelInfo rinf;
