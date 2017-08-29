@@ -675,7 +675,7 @@ common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc, char*
 }
 
 void InnerTcpHandlerHost::SendEnterChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login) {
-  const ChatMessage msg(sid, login, common::MemSPrintf("%s leave from chat.", login), ChatMessage::CONTROL);
+  const ChatMessage msg(sid, login, common::MemSPrintf("%s enter to chat.", login), ChatMessage::CONTROL);
   BrodcastChatMessage(server, msg);
 }
 
