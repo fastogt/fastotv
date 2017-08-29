@@ -103,6 +103,8 @@ Player::Player(const std::string& app_directory_absolute_path,
   fApp->Subscribe(this, player::core::events::ClientConfigChangeEvent::EventType);
   fApp->Subscribe(this, player::core::events::ReceiveChannelsEvent::EventType);
   fApp->Subscribe(this, player::core::events::ReceiveRuntimeChannelEvent::EventType);
+  fApp->Subscribe(this, player::core::events::SendChatMessageEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ReceiveChannelsEvent::EventType);
 }
 
 Player::~Player() {
@@ -142,6 +144,14 @@ void Player::HandleEvent(event_t* event) {
     player::core::events::ReceiveRuntimeChannelEvent* channel_event =
         static_cast<player::core::events::ReceiveRuntimeChannelEvent*>(event);
     HandleReceiveRuntimeChannelEvent(channel_event);
+  } else if (event->GetEventType() == player::core::events::SendChatMessageEvent::EventType) {
+    player::core::events::SendChatMessageEvent* chat_msg_event =
+        static_cast<player::core::events::SendChatMessageEvent*>(event);
+    HandleSendChatMessageEvent(chat_msg_event);
+  } else if (event->GetEventType() == player::core::events::SendChatMessageEvent::EventType) {
+    player::core::events::ReceiveChatMessageEvent* chat_msg_event =
+        static_cast<player::core::events::ReceiveChatMessageEvent*>(event);
+    HandleReceiveChatMessageEvent(chat_msg_event);
   }
 
   base_class::HandleEvent(event);
@@ -395,6 +405,14 @@ void Player::HandleReceiveRuntimeChannelEvent(player::core::events::ReceiveRunti
       break;
     }
   }
+}
+
+void Player::HandleSendChatMessageEvent(player::core::events::SendChatMessageEvent* event) {
+  UNUSED(event);
+}
+
+void Player::HandleReceiveChatMessageEvent(player::core::events::ReceiveChatMessageEvent* event) {
+  UNUSED(event);
 }
 
 void Player::HandleWindowResizeEvent(player::core::events::WindowResizeEvent* event) {

@@ -35,6 +35,12 @@ class ChatMessage : public JsonSerializer<ChatMessage> {
 
   bool IsValid() const;
 
+  void SetChannelId(stream_id sid);
+  stream_id GetChannelId() const;
+
+  void SetLogin(login_t login);
+  login_t GetLogin() const;
+
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
   bool Equals(const ChatMessage& inf) const;

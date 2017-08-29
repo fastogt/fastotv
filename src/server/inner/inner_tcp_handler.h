@@ -34,6 +34,8 @@
 #include "server/config.h"  // for Config
 #include "server/user_info.h"
 
+#include "chat_message.h"
+
 namespace common {
 namespace libev {
 class IoClient;
@@ -121,6 +123,9 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
 
   common::Error ParserResponceResponceCommand(int argc, char* argv[], json_object** out) WARN_UNUSED_RESULT;
 
+  void SendEnterChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login);
+  void SendLeaveChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login);
+  void BrodcastChatMessage(common::libev::IoLoop* server, const ChatMessage& msg);
   size_t GetOnlineUserByStreamId(common::libev::IoLoop* server, stream_id sid) const;
 
   ServerHost* const parent_;

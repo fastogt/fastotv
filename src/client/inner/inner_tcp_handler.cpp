@@ -286,7 +286,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
   UNUSED(argc);
   char* command = argv[0];
 
-  if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
+  if (IS_EQUAL_COMMAND(command, SERVER_PING)) {
     ServerPingInfo ping;
     json_object* jping = NULL;
     common::Error err = ping.Serialize(&jping);
@@ -301,7 +301,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
       DEBUG_MSG_ERROR(err);
     }
     return;
-  } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {
+  } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU)) {
     json_object* jauth = NULL;
     common::Error err = config_.ainf.Serialize(&jauth);
     if (err && err->IsError()) {
@@ -317,7 +317,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
       DEBUG_MSG_ERROR(err);
     }
     return;
-  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {
+  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO)) {
     const common::system_info::CpuInfo& c1 = common::system_info::CurrentCpuInfo();
     std::string brand = c1.BrandName();
 
@@ -345,6 +345,28 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
+    json_object* jmsg = NULL;
+    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &jmsg);  // FIXME
+    if (parse_err && parse_err->IsError()) {
+      DNOTREACHED();
+      return;
+    }
+
+    ChatMessage msg;
+    common::Error err = ChatMessage::DeSerialize(jmsg, &msg);
+    std::string msg_str = json_object_get_string(jmsg);
+    json_object_put(jmsg);
+    if (err && err->IsError()) {
+      return;
+    }
+
+    fApp->PostEvent(new player::core::events::ReceiveChatMessageEvent(this, msg));
+    cmd_responce_t resp = SystemInfoResponceSuccsess(id, msg_str);
+    err = connection->Write(resp);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    }
+    return;
   }
 
   WARNING_LOG() << "UNKNOWN REQUEST COMMAND: " << command;
@@ -383,11 +405,11 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
   if (IS_EQUAL_COMMAND(command, SUCCESS_COMMAND)) {
     if (argc > 1) {
       const char* okrespcommand = argv[1];
-      if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING_COMMAND)) {
-      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU_COMMAND)) {
+      if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING)) {
+      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU)) {
         connection->SetName(config_.ainf.GetLogin());
         fApp->PostEvent(new player::core::events::ClientAuthorizedEvent(this, config_.ainf));
-      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_GET_CLIENT_INFO_COMMAND)) {
+      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_GET_CLIENT_INFO)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_SEND_CHAT_MESSAGE)) {
       }
     }
@@ -395,12 +417,12 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
   } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {
     if (argc > 1) {
       const char* failed_resp_command = argv[1];
-      if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING_COMMAND)) {
-      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU_COMMAND)) {
+      if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING)) {
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU)) {
         common::Error err = common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
         auto ex_event = make_exception_event(new player::core::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
-      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO_COMMAND)) {
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_SEND_CHAT_MESSAGE)) {
       }
     }
@@ -507,6 +529,25 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     const cmd_approve_t resp = GetRuntimeChannelInfoApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_SEND_CHAT_MESSAGE)) {
+    json_object* obj = NULL;
+    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
+    if (parse_err && parse_err->IsError()) {
+      cmd_approve_t resp = SendChatMessageApproveResponceFail(id, parse_err->GetDescription());
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return parse_err;
+    }
+
+    ChatMessage msg;
+    common::Error err = ChatMessage::DeSerialize(obj, &msg);
+    json_object_put(obj);
+    if (err && err->IsError()) {
+      return err;
+    }
+
+    fApp->PostEvent(new player::core::events::SendChatMessageEvent(this, msg));
+    const cmd_approve_t resp = SendChatMessageApproveResponceSuccsess(id);
+    return connection->Write(resp);
   }
 
   const std::string error_str = common::MemSPrintf("UNKNOWN RESPONCE COMMAND: %s", command);

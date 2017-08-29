@@ -24,6 +24,8 @@
 
 #include "server/user_info.h"  // for user_id_t
 
+#include "chat_message.h"
+
 namespace common {
 namespace libev {
 namespace tcp {

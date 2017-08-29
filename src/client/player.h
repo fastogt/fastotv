@@ -81,6 +81,8 @@ class Player : public player::ISimplePlayer {
   virtual void HandleClientConfigChangeEvent(player::core::events::ClientConfigChangeEvent* event);
   virtual void HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEvent* event);
   virtual void HandleReceiveRuntimeChannelEvent(player::core::events::ReceiveRuntimeChannelEvent* event);
+  virtual void HandleSendChatMessageEvent(player::core::events::SendChatMessageEvent* event);
+  virtual void HandleReceiveChatMessageEvent(player::core::events::ReceiveChatMessageEvent* event);
 
   virtual void HandleWindowResizeEvent(player::core::events::WindowResizeEvent* event) override;
   virtual void HandleWindowExposeEvent(player::core::events::WindowExposeEvent* event) override;

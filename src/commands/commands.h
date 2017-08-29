@@ -53,9 +53,9 @@
 #define CLIENT_SEND_CHAT_MESSAGE "client_send_chat_message"
 
 // server commands
-#define SERVER_PING_COMMAND "server_ping"  // ping client
-#define SERVER_WHO_ARE_YOU_COMMAND "who_are_you"
-#define SERVER_GET_CLIENT_INFO_COMMAND "get_client_info"
+#define SERVER_PING "server_ping"  // ping client
+#define SERVER_WHO_ARE_YOU "who_are_you"
+#define SERVER_GET_CLIENT_INFO "get_client_info"
 #define SERVER_SEND_CHAT_MESSAGE "server_send_chat_message"
 
 // request

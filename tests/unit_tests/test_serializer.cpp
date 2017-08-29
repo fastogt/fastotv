@@ -19,7 +19,7 @@ TEST(ChannelInfo, serialize_deserialize) {
 
   fastotv::EpgInfo epg_info(stream_id, url, name);
   ASSERT_EQ(epg_info.GetDisplayName(), name);
-  ASSERT_EQ(epg_info.GetId(), stream_id);
+  ASSERT_EQ(epg_info.GetChannelId(), stream_id);
   ASSERT_EQ(epg_info.GetUrl(), url);
 
   serialize_t user;
@@ -164,7 +164,8 @@ TEST(RuntimeChannelInfo, serialize_deserialize) {
   const size_t watchers = 7;
   const fastotv::ChannelType ct = fastotv::OFFICAL_CHANNEL;
   const bool chat_enabled = true;
-  const std::vector<std::string> msgs = {"test"};
+  const std::vector<fastotv::ChatMessage> msgs = {
+      fastotv::ChatMessage("1234", "alex", "test", fastotv::ChatMessage::MESSAGE)};
   fastotv::RuntimeChannelInfo rinf_info(channel_id, watchers, ct, chat_enabled, msgs);
   ASSERT_EQ(rinf_info.GetChannelId(), channel_id);
   ASSERT_EQ(rinf_info.GetWatchersCount(), watchers);

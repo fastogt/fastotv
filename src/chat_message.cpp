@@ -34,6 +34,22 @@ bool ChatMessage::IsValid() const {
   return channel_id_ != invalid_stream_id && !login_.empty() && !message_.empty();
 }
 
+void ChatMessage::SetChannelId(stream_id sid) {
+  channel_id_ = sid;
+}
+
+stream_id ChatMessage::GetChannelId() const {
+  return channel_id_;
+}
+
+void ChatMessage::SetLogin(login_t login) {
+  login_ = login;
+}
+
+login_t ChatMessage::GetLogin() const {
+  return login_;
+}
+
 common::Error ChatMessage::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
     return common::make_inval_error_value(common::Value::E_ERROR);

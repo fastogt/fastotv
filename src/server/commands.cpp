@@ -20,22 +20,22 @@
 
 // requests
 // ping
-#define SERVER_PING_COMMAND_REQ GENERATE_REQUEST_FMT(SERVER_PING_COMMAND)
-#define SERVER_PING_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING_COMMAND, "'%s'")
-#define SERVER_PING_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "")
+#define SERVER_PING_REQ GENERATE_REQUEST_FMT(SERVER_PING)
+#define SERVER_PING_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING, "'%s'")
+#define SERVER_PING_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_PING, "")
 
 // who_are_you
-#define SERVER_WHO_ARE_YOU_COMMAND_REQ GENERATE_REQUEST_FMT(SERVER_WHO_ARE_YOU_COMMAND)
-#define SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
-#define SERVER_WHO_ARE_YOU_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU_COMMAND, "")
+#define SERVER_WHO_ARE_YOU_REQ GENERATE_REQUEST_FMT(SERVER_WHO_ARE_YOU)
+#define SERVER_WHO_ARE_YOU_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU, "'%s'")
+#define SERVER_WHO_ARE_YOU_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU, "")
 
 // system_info
-#define SERVER_GET_CLIENT_INFO_COMMAND_REQ GENERATE_REQUEST_FMT(SERVER_GET_CLIENT_INFO_COMMAND)
-#define SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "'%s'")
-#define SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "")
+#define SERVER_GET_CLIENT_INFO_REQ GENERATE_REQUEST_FMT(SERVER_GET_CLIENT_INFO)
+#define SERVER_GET_CLIENT_INFO_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_GET_CLIENT_INFO, "'%s'")
+#define SERVER_GET_CLIENT_INFO_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_GET_CLIENT_INFO, "")
 
 // chat_message
-#define SERVER_SEND_CHAT_MESSAGE_REQ GENERATE_REQUEST_FMT(SERVER_SEND_CHAT_MESSAGE)
+#define SERVER_SEND_CHAT_MESSAGE_REQ_1E GENERATE_REQUEST_FMT_ARGS(SERVER_SEND_CHAT_MESSAGE, "'%s'")
 #define SERVER_SEND_CHAT_MESSAGE_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_SEND_CHAT_MESSAGE, "'%s'")
 #define SERVER_SEND_CHAT_MESSAGE_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_SEND_CHAT_MESSAGE, "")
 
@@ -64,43 +64,43 @@ namespace fastotv {
 namespace server {
 
 cmd_request_t WhoAreYouRequest(cmd_seq_t id) {
-  return MakeRequest(id, SERVER_WHO_ARE_YOU_COMMAND_REQ);
+  return MakeRequest(id, SERVER_WHO_ARE_YOU_REQ);
 }
 cmd_approve_t WhoAreYouApproveResponceSuccsess(cmd_seq_t id) {
-  return MakeApproveResponce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_SUCCESS);
+  return MakeApproveResponce(id, SERVER_WHO_ARE_YOU_APPROVE_SUCCESS);
 }
 cmd_approve_t WhoAreYouApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeApproveResponce(id, SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E, error_text);
+  return MakeApproveResponce(id, SERVER_WHO_ARE_YOU_APPROVE_FAIL_1E, error_text);
 }
 
 cmd_request_t SystemInfoRequest(cmd_seq_t id) {
-  return MakeRequest(id, SERVER_GET_CLIENT_INFO_COMMAND_REQ);
+  return MakeRequest(id, SERVER_GET_CLIENT_INFO_REQ);
 }
 cmd_approve_t SystemInfoApproveResponceSuccsess(cmd_seq_t id) {
-  return MakeApproveResponce(id, SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_SUCCESS);
+  return MakeApproveResponce(id, SERVER_GET_CLIENT_INFO_APPROVE_SUCCESS);
 }
 cmd_approve_t SystemInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeApproveResponce(id, SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_FAIL_1E, error_text);
+  return MakeApproveResponce(id, SERVER_GET_CLIENT_INFO_APPROVE_FAIL_1E, error_text);
 }
 
-cmd_request_t SendChatMessageRequest(cmd_seq_t id) {
-  return MakeRequest(id, SERVER_SEND_CHAT_MESSAGE_REQ);
+cmd_request_t ServerSendChatMessageRequest(cmd_seq_t id, const serializet_t& msg) {
+  return MakeRequest(id, SERVER_SEND_CHAT_MESSAGE_REQ_1E, msg);
 }
-cmd_approve_t SendChatMessageApproveResponceSuccsess(cmd_seq_t id) {
+cmd_approve_t ServerSendChatMessageApproveResponceSuccsess(cmd_seq_t id) {
   return MakeApproveResponce(id, SERVER_SEND_CHAT_MESSAGE_APPROVE_SUCCESS);
 }
-cmd_approve_t SendChatMessageApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
+cmd_approve_t ServerSendChatMessageApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
   return MakeApproveResponce(id, SERVER_SEND_CHAT_MESSAGE_APPROVE_FAIL_1E, error_text);
 }
 
 cmd_request_t PingRequest(cmd_seq_t id) {
-  return MakeRequest(id, SERVER_PING_COMMAND_REQ);
+  return MakeRequest(id, SERVER_PING_REQ);
 }
 cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id) {
-  return MakeApproveResponce(id, SERVER_PING_COMMAND_APPROVE_SUCCESS);
+  return MakeApproveResponce(id, SERVER_PING_APPROVE_SUCCESS);
 }
 cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeApproveResponce(id, SERVER_PING_COMMAND_APPROVE_FAIL_1E, error_text);
+  return MakeApproveResponce(id, SERVER_PING_APPROVE_FAIL_1E, error_text);
 }
 
 cmd_responce_t GetServerInfoResponceSuccsess(cmd_seq_t id, const serializet_t& server_info) {

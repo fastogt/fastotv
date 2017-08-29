@@ -140,6 +140,9 @@ void InnerTcpHandlerHost::Accepted(common::libev::IoClient* client) {
 void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
   InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
   AuthInfo auth = iconnection->GetServerHostInfo();
+  common::libev::IoLoop* server = client->GetServer();
+  SendLeaveChatMessage(server, iconnection->GetCurrentStreamId(), auth.GetLogin());
+
   if (iconnection->IsAnonimUser()) {  // anonim user
     INFO_LOG() << "Byu anonim user: " << auth.GetLogin();
     return;
@@ -301,20 +304,28 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
     inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
     if (argc > 1) {
+      common::libev::IoLoop* server = client->GetServer();
       bool is_anonim = client->IsAnonimUser();
-      char* channel_id_str = argv[1];
-      client->SetCurrentStreamId(channel_id_str);
+      AuthInfo ainf = client->GetServerHostInfo();
+      const stream_id channel = argv[1];
+      if (client->GetCurrentStreamId() == invalid_stream_id) {  // first channel
+        SendEnterChatMessage(server, channel, ainf.GetLogin());
+      } else {
+        SendLeaveChatMessage(server, client->GetCurrentStreamId(), ainf.GetLogin());
+        SendEnterChatMessage(server, channel, ainf.GetLogin());
+      }
+      client->SetCurrentStreamId(channel);
 
-      size_t watchers = GetOnlineUserByStreamId(client->GetServer(), channel_id_str);
+      size_t watchers = GetOnlineUserByStreamId(server, channel);
       RuntimeChannelInfo rinf;
-      rinf.SetChannelId(channel_id_str);
+      rinf.SetChannelId(channel);
       rinf.SetWatchersCount(watchers);
       if (!is_anonim) {  // registered user
         rinf.SetChatEnabled(false);
         rinf.SetChannelType(PRIVATE_CHANNEL);
 
         for (size_t i = 0; i < chat_channels_.size(); ++i) {
-          if (chat_channels_[i] == channel_id_str) {
+          if (chat_channels_[i] == channel) {
             rinf.SetChatEnabled(true);
             rinf.SetChannelType(OFFICAL_CHANNEL);
             break;
@@ -350,6 +361,30 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
   } else if (IS_EQUAL_COMMAND(command, CLIENT_SEND_CHAT_MESSAGE)) {
+    inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
+    ChatMessage msg;
+    json_object* jmsg = NULL;
+    common::Error err = msg.Serialize(&jmsg);
+    if (err && err->IsError()) {
+      cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
+      common::Error err = connection->Write(resp);
+      if (err && err->IsError()) {
+        DEBUG_MSG_ERROR(err);
+      }
+      connection->Close();
+      delete connection;
+      return;
+    }
+
+    serializet_t msg_str = json_object_get_string(jmsg);
+    BrodcastChatMessage(client->GetServer(), msg);
+    json_object_put(jmsg);
+    cmd_responce_t resp = SendChatMessageResponceSuccsess(id, msg_str);
+    err = connection->Write(resp);
+    if (err && err->IsError()) {
+      DEBUG_MSG_ERROR(err);
+    }
+    return;
   }
 
   WARNING_LOG() << "UNKNOWN COMMAND: " << command;
@@ -391,7 +426,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
                                                                       int argc,
                                                                       char* argv[]) {
   char* command = argv[1];
-  if (IS_EQUAL_COMMAND(command, SERVER_PING_COMMAND)) {
+  if (IS_EQUAL_COMMAND(command, SERVER_PING)) {
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
@@ -417,7 +452,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
       return err;
     }
     return common::Error();
-  } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU_COMMAND)) {  // encoded
+  } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU)) {
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
@@ -502,7 +537,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     PublishUserStateInfo(UserStateInfo(uid, dev, true));
     INFO_LOG() << "Welcome registered user: " << uauth.GetLogin();
     return common::Error();
-  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {
+  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO)) {
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
@@ -538,6 +573,31 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
     return common::Error();
   } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
+    json_object* obj = NULL;
+    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
+    if (parse_err && parse_err->IsError()) {
+      cmd_approve_t resp = ServerSendChatMessageApproveResponceFail(id, parse_err->GetDescription());
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return parse_err;
+    }
+
+    ChatMessage msg;
+    common::Error err = ChatMessage::DeSerialize(obj, &msg);
+    json_object_put(obj);
+    if (err && err->IsError()) {
+      cmd_approve_t resp = ServerSendChatMessageApproveResponceFail(id, parse_err->GetDescription());
+      common::Error write_err = connection->Write(resp);
+      UNUSED(write_err);
+      return err;
+    }
+
+    cmd_approve_t resp = ServerSendChatMessageApproveResponceSuccsess(id);
+    err = connection->Write(resp);
+    if (err && err->IsError()) {
+      return err;
+    }
+    return common::Error();
   }
 
   const std::string error_str = common::MemSPrintf("UNKNOWN RESPONCE COMMAND: %s", command);
@@ -610,6 +670,41 @@ common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc, char*
 
   *out = obj;
   return common::Error();
+}
+
+void InnerTcpHandlerHost::SendEnterChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login) {
+  const ChatMessage msg(sid, login, common::MemSPrintf("%s leave from chat.", login), ChatMessage::CONTROL);
+  BrodcastChatMessage(server, msg);
+}
+
+void InnerTcpHandlerHost::SendLeaveChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login) {
+  const ChatMessage msg(sid, login, common::MemSPrintf("%s leave from chat.", login), ChatMessage::CONTROL);
+  BrodcastChatMessage(server, msg);
+}
+
+void InnerTcpHandlerHost::BrodcastChatMessage(common::libev::IoLoop* server, const ChatMessage& msg) {
+  std::vector<common::libev::IoClient*> online_clients = server->GetClients();
+  serializet_t msg_ser;
+  common::Error err = msg.SerializeToString(&msg_ser);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    return;
+  }
+
+  for (size_t i = 0; i < online_clients.size(); ++i) {
+    common::libev::IoClient* client = online_clients[i];
+    InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
+    if (iclient && iclient->GetCurrentStreamId() == msg.GetChannelId()) {
+      AuthInfo ainf = iclient->GetServerHostInfo();
+      if (ainf.GetLogin() != msg.GetLogin()) {
+        const cmd_request_t message_request = ServerSendChatMessageRequest(NextRequestID(), msg_ser);
+        err = iclient->Write(message_request);
+        if (err && err->IsError()) {
+          DEBUG_MSG_ERROR(err);
+        }
+      }
+    }
+  }
 }
 
 size_t InnerTcpHandlerHost::GetOnlineUserByStreamId(common::libev::IoLoop* server, stream_id sid) const {
