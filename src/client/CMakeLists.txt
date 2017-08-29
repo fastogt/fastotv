@@ -338,6 +338,7 @@ SET(SIMPLE_PLAYER_SOURCES
 SET(EXE_PLAYER_SOURCES
   ${SOURCE_ROOT}/client/player_main.cpp
   ${SIMPLE_PLAYER_SOURCES}
+  $<TARGET_OBJECTS:draw>
   $<TARGET_OBJECTS:player_core>
   $<TARGET_OBJECTS:player>
 )
@@ -419,6 +420,7 @@ SET(TV_PLAYER_SOURCES
 SET(EXE_TV_PLAYER_SOURCES
   ${SOURCE_ROOT}/client/tv_player_main.cpp
   ${TV_PLAYER_SOURCES}
+  $<TARGET_OBJECTS:draw>
   $<TARGET_OBJECTS:player_core>
   $<TARGET_OBJECTS:player>
 )

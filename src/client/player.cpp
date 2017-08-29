@@ -31,6 +31,9 @@
 #include "client/player/core/application/sdl2_application.h"
 #include "client/player/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
 
+#include "client/player/draw/draw.h"
+#include "client/player/draw/surface_saver.h"
+
 #define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "share/resources/offline_channel.png"
 #define IMG_CONNECTION_ERROR_PATH_RELATIVE "share/resources/connection_error.png"
 
@@ -47,7 +50,7 @@ namespace client {
 
 namespace {
 
-player::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
+player::draw::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string img_full_path = common::file_system::make_path(absolute_source_dir, relative_path);
   const char* img_full_path_ptr = common::utils::c_strornull(img_full_path);
@@ -56,7 +59,7 @@ player::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relati
     return nullptr;
   }
 
-  return new player::SurfaceSaver(img_surface);
+  return new player::draw::SurfaceSaver(img_surface);
 }
 
 }  // namespace
@@ -333,7 +336,7 @@ void Player::HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEve
     const std::string icon_path = entry.GetIconPath();
     const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
     SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-    channel_icon_t shared_surface = std::make_shared<player::SurfaceSaver>(surface);
+    channel_icon_t shared_surface = std::make_shared<player::draw::SurfaceSaver>(surface);
     entry.SetIcon(shared_surface);
     play_list_.push_back(entry);
 
@@ -850,8 +853,7 @@ void Player::DrawProgramsList() {
     SDL_GetMouseState(&mouse_point.x, &mouse_point.y);
   }
 
-  player::SetRenderDrawColor(render, playlist_color);
-  SDL_RenderFillRect(render, &programms_list_rect);
+  player::draw::FillRectColor(render, programms_list_rect, playlist_color);
 
   int drawed = 0;
   for (size_t i = last_programms_line_; i < play_list_.size() && drawed < max_line_count; ++i) {
@@ -890,16 +892,14 @@ void Player::DrawProgramsList() {
                             text_width, font_height_2line};
       DrawWrappedTextInRect(line_text, text_color, text_rect);
       if (current_stream_pos_ == i) {  // seleceted item
-        player::SetRenderDrawColor(render, failed_color);
-        SDL_RenderFillRect(render, &cell_rect);
+        player::draw::FillRectColor(render, cell_rect, failed_color);
       }
 
-      if (is_mouse_visible && SDL_PointInRect(&mouse_point, &cell_rect)) {  // pre selection
-        player::SetRenderDrawColor(render, playlist_item_preselect_color);  // red
-        SDL_RenderFillRect(render, &cell_rect);
+      if (is_mouse_visible && SDL_PointInRect(&mouse_point, &cell_rect)) {              // pre selection
+        player::draw::FillRectColor(render, cell_rect, playlist_item_preselect_color);  // red
       }
 
-      player::SetRenderDrawColor(render, playlist_color);
+      player::draw::SetRenderDrawColor(render, playlist_color);
       SDL_RenderDrawRect(render, &cell_rect);
       drawed++;
     }
@@ -948,8 +948,7 @@ void Player::DrawChat() {
     return;
   }
 
-  player::SetRenderDrawColor(render, chat_color);
-  SDL_RenderFillRect(render, &chat_rect);
+  player::draw::FillRectColor(render, chat_rect, chat_color);
 
   if (show_button_texture_) {
     SDL_Texture* img = show_button_texture_->GetTexture(render);
@@ -971,9 +970,9 @@ void Player::DrawKeyPad() {
   if (!keypad_sym_ptr) {
     return;
   }
+
   const SDL_Rect keypad_rect = GetKeyPadRect();
-  player::SetRenderDrawColor(render, keypad_color);
-  SDL_RenderFillRect(render, &keypad_rect);
+  player::draw::FillRectColor(render, keypad_rect, keypad_color);
   DrawCenterTextInRect(keypad_sym_ptr, text_color, keypad_rect);
 }
 
@@ -991,19 +990,16 @@ void Player::DrawFooter() {
   States current_state = GetCurrentState();
   if (current_state == INIT_STATE) {
     std::string footer_text = current_state_str_;
-    player::SetRenderDrawColor(render, failed_color);
-    SDL_RenderFillRect(render, &banner_footer_rect);
+    player::draw::FillRectColor(render, banner_footer_rect, failed_color);
     DrawCenterTextInRect(footer_text, text_color, banner_footer_rect);
   } else if (current_state == FAILED_STATE) {
     std::string footer_text = current_state_str_;
-    player::SetRenderDrawColor(render, failed_color);
-    SDL_RenderFillRect(render, &banner_footer_rect);
+    player::draw::FillRectColor(render, banner_footer_rect, failed_color);
     DrawCenterTextInRect(footer_text, text_color, banner_footer_rect);
   } else if (current_state == PLAYING_STATE) {
     ChannelDescription descr;
     if (GetChannelDescription(current_stream_pos_, &descr)) {
-      player::SetRenderDrawColor(render, info_channel_color);
-      SDL_RenderFillRect(render, &banner_footer_rect);
+      player::draw::FillRectColor(render, banner_footer_rect, info_channel_color);
 
       std::string footer_text = common::MemSPrintf(
           "Title: %s\n"
@@ -1040,8 +1036,7 @@ void Player::DrawFailedStatus() {
     return;
   }
 
-  player::SetRenderDrawColor(render, black_color);
-  SDL_RenderClear(render);
+  player::draw::FlushRender(render, black_color);
   if (offline_channel_texture_) {
     SDL_Texture* img = offline_channel_texture_->GetTexture(render);
     if (img) {
@@ -1065,8 +1060,7 @@ void Player::DrawInitStatus() {
     return;
   }
 
-  player::SetRenderDrawColor(render, black_color);
-  SDL_RenderClear(render);
+  player::draw::FlushRender(render, black_color);
   if (connection_error_texture_) {
     SDL_Texture* img = connection_error_texture_->GetTexture(render);
     if (img) {

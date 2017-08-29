@@ -26,9 +26,11 @@
 namespace fastotv {
 namespace client {
 namespace player {
+namespace draw {
 class SurfaceSaver;
 }
-typedef std::shared_ptr<player::SurfaceSaver> channel_icon_t;
+}  // namespace player
+typedef std::shared_ptr<player::draw::SurfaceSaver> channel_icon_t;
 
 class PlaylistEntry {
  public:

@@ -38,8 +38,9 @@ class Thread;
 namespace fastotv {
 namespace client {
 namespace player {
-
+namespace draw {
 class TextureSaver;
+}
 namespace core {
 struct AudioParams;
 }  // namespace core
@@ -208,7 +209,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   bool muted_;
   bool show_statstic_;
 
-  TextureSaver* render_texture_;
+  draw::TextureSaver* render_texture_;
 
   uint32_t update_video_timer_interval_msec_;
 

@@ -37,6 +37,9 @@
 
 #include "client/player/core/application/sdl2_application.h"
 
+#include "client/player/draw/draw.h"
+#include "client/player/draw/texture_saver.h"
+
 /* Step size for volume control */
 #define VOLUME_STEP 1
 
@@ -47,6 +50,41 @@
 #define URLS_FIELD "urls"
 
 #define MAIN_FONT_PATH_RELATIVE "share/fonts/FreeSans.ttf"
+
+namespace {
+SDL_Rect calculate_display_rect(int scr_xleft,
+                                int scr_ytop,
+                                int scr_width,
+                                int scr_height,
+                                int pic_width,
+                                int pic_height,
+                                AVRational pic_sar) {
+  float aspect_ratio;
+
+  if (pic_sar.num == 0) {
+    aspect_ratio = 0;
+  } else {
+    aspect_ratio = av_q2d(pic_sar);
+  }
+
+  if (aspect_ratio <= 0.0) {
+    aspect_ratio = 1.0;
+  }
+  aspect_ratio *= static_cast<float>(pic_width) / static_cast<float>(pic_height);
+
+  /* XXX: we suppose the screen has a 1.0 pixel ratio */
+  int height = scr_height;
+  int width = lrint(height * aspect_ratio) & ~1;
+  if (width > scr_width) {
+    width = scr_width;
+    height = lrint(width / aspect_ratio) & ~1;
+  }
+
+  int x = (scr_width - width) / 2;
+  int y = (scr_height - height) / 2;
+  return {scr_xleft + x, scr_ytop + y, FFMAX(width, 1), FFMAX(height, 1)};
+}
+}  // namespace
 
 namespace fastotv {
 namespace client {
@@ -267,7 +305,7 @@ common::Error ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
-  SDL_Rect rect = core::calculate_display_rect(0, 0, INT_MAX, height, width, height, aspect_ratio);
+  SDL_Rect rect = calculate_display_rect(0, 0, INT_MAX, height, width, height, aspect_ratio);
   options_.default_size.width = rect.w;
   options_.default_size.height = rect.h;
 
@@ -299,7 +337,7 @@ void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
   core::events::PreExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
-    render_texture_ = new TextureSaver;
+    render_texture_ = new draw::TextureSaver;
 
     const std::string font_path = common::file_system::make_path(absolute_source_dir, MAIN_FONT_PATH_RELATIVE);
     const char* font_path_ptr = common::utils::c_strornull(font_path);
@@ -619,8 +657,7 @@ void ISimplePlayer::DrawFailedStatus() {
     return;
   }
 
-  SetRenderDrawColor(renderer_, black_color);
-  SDL_RenderClear(renderer_);
+  draw::FlushRender(renderer_, black_color);
   DrawInfo();
   SDL_RenderPresent(renderer_);
 }
@@ -666,8 +703,9 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                             "to reduce the image size.";
+                << width << "x" << height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return;
   }
 
@@ -679,11 +717,10 @@ void ISimplePlayer::DrawPlayingStatus() {
 
   bool flip_v = frame->frame->linesize[0] < 0;
 
-  SetRenderDrawColor(renderer_, black_color);
-  SDL_RenderClear(renderer_);
+  draw::FlushRender(renderer_, black_color);
 
-  SDL_Rect rect = core::calculate_display_rect(xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
-                                               frame->height, frame->sar);
+  SDL_Rect rect = calculate_display_rect(xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
+                                         frame->height, frame->sar);
   SDL_RenderCopyEx(renderer_, texture, NULL, &rect, 0, NULL, flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   DrawInfo();
@@ -695,8 +732,7 @@ void ISimplePlayer::DrawInitStatus() {
     return;
   }
 
-  SetRenderDrawColor(renderer_, black_color);
-  SDL_RenderClear(renderer_);
+  draw::FlushRender(renderer_, black_color);
   DrawInfo();
   SDL_RenderPresent(renderer_);
 }
@@ -781,8 +817,7 @@ void ISimplePlayer::DrawStatistic() {
   }
 
   SDL_Rect dst = {statistic_rect.x, statistic_rect.y, statistic_rect.w, h};
-  SetRenderDrawColor(renderer_, stream_statistic_color);
-  SDL_RenderFillRect(renderer_, &dst);
+  draw::FillRectColor(renderer_, dst, stream_statistic_color);
 
   DrawWrappedTextInRect(result_text, text_color, dst);
 }
@@ -798,8 +833,7 @@ void ISimplePlayer::DrawVolume() {
   int padding_left = volume_rect.w / 4;
   SDL_Rect sdl_volume_rect = {volume_rect.x + padding_left, volume_rect.y, volume_rect.w - padding_left * 2,
                               volume_rect.h};
-  SetRenderDrawColor(renderer_, stream_statistic_color);
-  SDL_RenderFillRect(renderer_, &sdl_volume_rect);
+  draw::FillRectColor(renderer_, sdl_volume_rect, stream_statistic_color);
 
   DrawCenterTextInRect(vol_str, text_color, sdl_volume_rect);
 }
@@ -816,7 +850,7 @@ void ISimplePlayer::DrawCenterTextInRect(const std::string& text, SDL_Color text
   }
 
   SDL_Surface* text_surf = TTF_RenderUTF8_Blended(font_, text_ptr, text_color);
-  SDL_Rect dst = GetCenterRect(rect, text_surf->w, text_surf->h);
+  SDL_Rect dst = draw::GetCenterRect(rect, text_surf->w, text_surf->h);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
   SDL_RenderCopy(renderer_, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
@@ -849,7 +883,9 @@ TTF_Font* ISimplePlayer::GetFont() const {
 void ISimplePlayer::InitWindow(const std::string& title, States status) {
   CalculateDispalySize();
   if (!window_) {
-    if (!core::create_window(window_size_, options_.is_full_screen, title, &renderer_, &window_)) {
+    common::Error err = draw::CreateWindow(window_size_.width, window_size_.height, options_.is_full_screen, title,
+                                           &renderer_, &window_);
+    if (err && err->IsError()) {
       return;
     }
   }

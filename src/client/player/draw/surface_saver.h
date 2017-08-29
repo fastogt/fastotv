@@ -18,12 +18,34 @@
 
 #pragma once
 
+#include <SDL2/SDL_surface.h>    // for SDL_Surface
+#include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Texture
+
+#include <common/macros.h>
+
 namespace fastotv {
 namespace client {
 namespace player {
+namespace draw {
 
-int ConvertToSDLVolume(int val);
+class SurfaceSaver {
+ public:
+  explicit SurfaceSaver(SDL_Surface* surface);
+  ~SurfaceSaver();
 
+  SDL_Texture* GetTexture(SDL_Renderer* renderer) const;
+
+  int GetWidthSurface() const;
+  int GetHeightSurface() const;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(SurfaceSaver);
+  SDL_Surface* surface_;
+  mutable SDL_Texture* texture_;
+  mutable SDL_Renderer* renderer_;
+};
+
+}  // namespace draw
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

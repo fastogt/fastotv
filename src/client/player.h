@@ -160,11 +160,11 @@ class Player : public player::ISimplePlayer {
   bool IsHideButtonChatRect(SDL_Point point) const;
   bool IsShowButtonChatRect(SDL_Point point) const;
 
-  player::SurfaceSaver* offline_channel_texture_;
-  player::SurfaceSaver* connection_error_texture_;
+  player::draw::SurfaceSaver* offline_channel_texture_;
+  player::draw::SurfaceSaver* connection_error_texture_;
 
-  player::SurfaceSaver* hide_button_texture_;
-  player::SurfaceSaver* show_button_texture_;
+  player::draw::SurfaceSaver* hide_button_texture_;
+  player::draw::SurfaceSaver* show_button_texture_;
 
   IoService* controller_;
 

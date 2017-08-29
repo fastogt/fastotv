@@ -19,8 +19,6 @@
 #pragma once
 
 #include <SDL2/SDL_audio.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>  // for SDL_Renderer, SDL_Texture
 
 extern "C" {
 #include <libavutil/rational.h>  // for AVRational
@@ -48,20 +46,6 @@ bool audio_open(void* opaque,
                 SDL_AudioCallback cb,
                 AudioParams* audio_hw_params,
                 int* audio_buff_size) WARN_UNUSED_RESULT;
-
-SDL_Rect calculate_display_rect(int scr_xleft,
-                                int scr_ytop,
-                                int scr_width,
-                                int scr_height,
-                                int pic_width,
-                                int pic_height,
-                                AVRational pic_sar);
-
-bool create_window(Size window_size,
-                   bool is_full_screen,
-                   const std::string& title,
-                   SDL_Renderer** renderer,
-                   SDL_Window** window) WARN_UNUSED_RESULT;
 
 }  // namespace core
 }  // namespace player
