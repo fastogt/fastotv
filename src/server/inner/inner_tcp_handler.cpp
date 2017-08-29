@@ -685,7 +685,6 @@ void InnerTcpHandlerHost::SendLeaveChatMessage(common::libev::IoLoop* server, st
 }
 
 void InnerTcpHandlerHost::BrodcastChatMessage(common::libev::IoLoop* server, const ChatMessage& msg) {
-  std::vector<common::libev::IoClient*> online_clients = server->GetClients();
   serializet_t msg_ser;
   common::Error err = msg.SerializeToString(&msg_ser);
   if (err && err->IsError()) {
@@ -693,17 +692,15 @@ void InnerTcpHandlerHost::BrodcastChatMessage(common::libev::IoLoop* server, con
     return;
   }
 
+  std::vector<common::libev::IoClient*> online_clients = server->GetClients();
   for (size_t i = 0; i < online_clients.size(); ++i) {
     common::libev::IoClient* client = online_clients[i];
     InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
     if (iclient && iclient->GetCurrentStreamId() == msg.GetChannelId()) {
-      AuthInfo ainf = iclient->GetServerHostInfo();
-      if (ainf.GetLogin() != msg.GetLogin()) {
-        const cmd_request_t message_request = ServerSendChatMessageRequest(NextRequestID(), msg_ser);
-        err = iclient->Write(message_request);
-        if (err && err->IsError()) {
-          DEBUG_MSG_ERROR(err);
-        }
+      const cmd_request_t message_request = ServerSendChatMessageRequest(NextRequestID(), msg_ser);
+      err = iclient->Write(message_request);
+      if (err && err->IsError()) {
+        DEBUG_MSG_ERROR(err);
       }
     }
   }

@@ -104,7 +104,7 @@ Player::Player(const std::string& app_directory_absolute_path,
   fApp->Subscribe(this, player::core::events::ReceiveChannelsEvent::EventType);
   fApp->Subscribe(this, player::core::events::ReceiveRuntimeChannelEvent::EventType);
   fApp->Subscribe(this, player::core::events::SendChatMessageEvent::EventType);
-  fApp->Subscribe(this, player::core::events::ReceiveChannelsEvent::EventType);
+  fApp->Subscribe(this, player::core::events::ReceiveChatMessageEvent::EventType);
 }
 
 Player::~Player() {
