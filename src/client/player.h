@@ -21,7 +21,7 @@
 #include "client/player/isimple_player.h"
 #include "client/playlist_entry.h"
 
-#include "client/player/core/events/network_events.h"  // for BandwidthEstimationEvent
+#include "client/player/events/network_events.h"  // for BandwidthEstimationEvent
 
 namespace fastotv {
 namespace client {

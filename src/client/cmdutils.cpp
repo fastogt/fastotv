@@ -67,7 +67,7 @@ extern "C" {
 #include <common/sprintf.h>     // for MemSPrintf
 #include <common/utils.h>
 
-#include "client/player/core/ffmpeg_internal.h"
+#include "client/player/media/ffmpeg_internal.h"
 
 #if CONFIG_AVDEVICE
 #define HELP_AVDEVICE                                         \

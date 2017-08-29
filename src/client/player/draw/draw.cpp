@@ -29,35 +29,12 @@ namespace client {
 namespace player {
 namespace draw {
 
-SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height) {
-  int calc_width = rect.w;
-  int calc_height = rect.h;
-  int calc_x = rect.x;
-  int calc_y = rect.y;
-
-  if (rect.w >= width) {
-    calc_x = rect.x + rect.w / 2 - width / 2;
-    calc_width = width;
-  }
-  if (rect.h >= height) {
-    calc_y = rect.y + rect.h / 2 - height / 2;
-    calc_height = height;
-  }
-
-  return {calc_x, calc_y, calc_width, calc_height};
-}
-
-bool IsValidSize(int width, int height) {
-  return width > 0 && height > 0;
-}
-
-common::Error CreateWindow(int width,
-                           int height,
+common::Error CreateWindow(Size size,
                            bool is_full_screen,
                            const std::string& title,
                            SDL_Renderer** renderer,
                            SDL_Window** window) {
-  if (!renderer || !window || !IsValidSize(width, height)) {  // invalid input
+  if (!renderer || !window || !size.IsValid()) {  // invalid input
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
@@ -69,7 +46,8 @@ common::Error CreateWindow(int width,
   for (int i = 0; i < num_video_drivers; ++i) {
     DEBUG_LOG() << "Available video driver: " << SDL_GetVideoDriver(i);
   }
-  SDL_Window* lwindow = SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+  SDL_Window* lwindow =
+      SDL_CreateWindow(NULL, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, size.width, size.height, flags);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_Renderer* lrenderer = NULL;
   if (lwindow) {
@@ -113,7 +91,7 @@ common::Error CreateWindow(int width,
   }
 
   SDL_SetRenderDrawBlendMode(lrenderer, SDL_BLENDMODE_BLEND);
-  SDL_SetWindowSize(lwindow, width, height);
+  SDL_SetWindowSize(lwindow, size.width, size.height);
   SDL_SetWindowTitle(lwindow, title.c_str());
 
   *window = lwindow;

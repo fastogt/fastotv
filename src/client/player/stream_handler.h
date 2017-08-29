@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "client/player/core/video_state_handler.h"
+#include "client/player/media/video_state_handler.h"
 
 namespace fastotv {
 namespace client {

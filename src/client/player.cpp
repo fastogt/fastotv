@@ -28,7 +28,7 @@
 #include "client/ioservice.h"  // for IoService
 #include "client/utils.h"
 
-#include "client/player/core/application/sdl2_application.h"
+#include "client/player/application/sdl2_application.h"
 #include "client/player/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
 
 #include "client/player/draw/draw.h"

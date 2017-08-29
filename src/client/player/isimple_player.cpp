@@ -30,15 +30,16 @@
 #include "client/player/av_sdl_utils.h"
 #include "client/player/sdl_utils.h"
 
-#include "client/player/core/frames/audio_frame.h"  // for AudioFrame
-#include "client/player/core/frames/video_frame.h"  // for VideoFrame
-#include "client/player/core/sdl_utils.h"
-#include "client/player/core/video_state.h"  // for VideoState
+#include "client/player/media/frames/audio_frame.h"  // for AudioFrame
+#include "client/player/media/frames/video_frame.h"  // for VideoFrame
+#include "client/player/media/sdl_utils.h"
+#include "client/player/media/video_state.h"  // for VideoState
 
-#include "client/player/core/application/sdl2_application.h"
+#include "client/player/application/sdl2_application.h"
 
 #include "client/player/draw/draw.h"
 #include "client/player/draw/texture_saver.h"
+#include "client/player/draw/types.h"
 
 /* Step size for volume control */
 #define VOLUME_STEP 1
@@ -759,7 +760,7 @@ SDL_Rect ISimplePlayer::GetDrawRect() const {
 }
 
 SDL_Rect ISimplePlayer::GetDisplayRect() const {
-  const core::Size display_size = window_size_;
+  const draw::Size display_size = window_size_;
   return {0, 0, display_size.width, display_size.height};
 }
 
@@ -883,8 +884,7 @@ TTF_Font* ISimplePlayer::GetFont() const {
 void ISimplePlayer::InitWindow(const std::string& title, States status) {
   CalculateDispalySize();
   if (!window_) {
-    common::Error err = draw::CreateWindow(window_size_.width, window_size_.height, options_.is_full_screen, title,
-                                           &renderer_, &window_);
+    common::Error err = draw::CreateWindow(window_size_, options_.is_full_screen, title, &renderer_, &window_);
     if (err && err->IsError()) {
       return;
     }

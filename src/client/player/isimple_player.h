@@ -25,8 +25,8 @@
 #include "client/player/player_options.h"
 #include "client/player/stream_handler.h"
 
-#include "client/player/core/app_options.h"    // for AppOptions, ComplexOp...
-#include "client/player/core/events/events.h"  // for PostExecEvent, PreExe...
+#include "client/player/media/app_options.h"    // for AppOptions, ComplexOp...
+#include "client/player/events/events.h"  // for PostExecEvent, PreExe...
 
 namespace common {
 namespace threads {
@@ -200,7 +200,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   std::shared_ptr<common::threads::Thread<int> > exec_tid_;
   core::VideoState* stream_;
 
-  core::Size window_size_;
+  draw::Size window_size_;
   const int xleft_;
   const int ytop_;
 

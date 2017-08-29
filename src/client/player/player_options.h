@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include "client/player/core/types.h"
+#include "client/player/media/types.h"
+#include "client/player/draw/draw.h"
 
 namespace fastotv {
 namespace client {
@@ -32,8 +33,8 @@ struct PlayerOptions {
   bool exit_on_mousedown;
   bool is_full_screen;
 
-  core::Size default_size;
-  core::Size screen_size;
+  draw::Size default_size;
+  draw::Size screen_size;
 
   audio_volume_t audio_volume;  // Range: 0 - 100
   stream_id last_showed_channel_id;

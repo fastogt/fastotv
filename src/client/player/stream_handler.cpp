@@ -18,8 +18,8 @@
 
 #include "client/player/stream_handler.h"
 
-#include "client/player/core/application/sdl2_application.h"
-#include "client/player/core/events/events.h"
+#include "client/player/application/sdl2_application.h"
+#include "client/player/events/events.h"
 
 namespace fastotv {
 namespace client {

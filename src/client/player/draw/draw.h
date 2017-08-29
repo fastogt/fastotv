@@ -23,17 +23,14 @@
 
 #include <common/error.h>
 
+#include "client/player/draw/types.h"
+
 namespace fastotv {
 namespace client {
 namespace player {
 namespace draw {
 
-bool IsValidSize(int width, int height);
-
-SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
-
-common::Error CreateWindow(int width,
-                           int height,
+common::Error CreateWindow(Size size,
                            bool is_full_screen,
                            const std::string& title,
                            SDL_Renderer** renderer,

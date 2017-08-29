@@ -26,7 +26,7 @@
 #include "inih/ini.h"  // for ini_parse
 
 #include "client/cmdutils.h"
-#include "client/player/core/ffmpeg_internal.h"  // for HWAccelID
+#include "client/player/media/ffmpeg_internal.h"  // for HWAccelID
 #include "client/types.h"                        // for Size
 
 #include "ffmpeg_config.h"  // for CONFIG_AVFILTER
@@ -254,7 +254,7 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
         std::string key = arg_copy.substr(0, del);
         std::string value = arg_copy.substr(del + 1);
         if (key == "scale") {
-          player::core::Size sz;
+          player::draw::Size sz;
           if (common::ConvertFromString(value, &sz)) {
             pconfig->player_options.screen_size = sz;
           }

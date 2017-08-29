@@ -7,10 +7,10 @@ extern "C" {
 #include <libavdevice/avdevice.h>  // for avdevice_register_all
 }
 
-#include "client/player/core/events/events.h"
-#include "client/player/core/sdl_utils.h"
-#include "client/player/core/video_state.h"
-#include "client/player/core/video_state_handler.h"
+#include "client/player/events/events.h"
+#include "client/player/media/sdl_utils.h"
+#include "client/player/media/video_state.h"
+#include "client/player/media/video_state_handler.h"
 
 using namespace fastotv;
 using namespace fastotv::client;

@@ -20,7 +20,7 @@
 
 #include <common/time.h>  // for current_mstime
 
-#include "client/player/core/types.h"
+#include "client/player/media/types.h"
 
 namespace {
 struct new_session_pkt {
