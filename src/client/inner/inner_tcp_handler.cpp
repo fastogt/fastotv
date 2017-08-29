@@ -345,10 +345,16 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
-    json_object* jmsg = NULL;
-    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &jmsg);  // FIXME
-    if (parse_err && parse_err->IsError()) {
-      DNOTREACHED();
+    if (argc < 2 || !argv[1]) {
+      common::Error parse_err = common::make_inval_error_value(common::Value::E_ERROR);
+      DEBUG_MSG_ERROR(parse_err);
+      return;
+    }
+
+    json_object* jmsg = json_tokener_parse(argv[1]);
+    if (!jmsg) {
+      common::Error parse_err = common::make_inval_error_value(common::Value::E_ERROR);
+      DEBUG_MSG_ERROR(parse_err);
       return;
     }
 

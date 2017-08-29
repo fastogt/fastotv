@@ -148,7 +148,7 @@ void Player::HandleEvent(event_t* event) {
     player::core::events::SendChatMessageEvent* chat_msg_event =
         static_cast<player::core::events::SendChatMessageEvent*>(event);
     HandleSendChatMessageEvent(chat_msg_event);
-  } else if (event->GetEventType() == player::core::events::SendChatMessageEvent::EventType) {
+  } else if (event->GetEventType() == player::core::events::ReceiveChatMessageEvent::EventType) {
     player::core::events::ReceiveChatMessageEvent* chat_msg_event =
         static_cast<player::core::events::ReceiveChatMessageEvent*>(event);
     HandleReceiveChatMessageEvent(chat_msg_event);

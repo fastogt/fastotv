@@ -71,7 +71,7 @@ common::Error ChatMessage::DeSerialize(const serialize_type& serialized, value_t
 
   ChatMessage msg;
   json_object* jchan = NULL;
-  json_bool jchan_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_LOGIN_FIELD, &jchan);
+  json_bool jchan_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_CHANNEL_ID_FIELD, &jchan);
   if (!jchan_exists) {
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
@@ -93,7 +93,7 @@ common::Error ChatMessage::DeSerialize(const serialize_type& serialized, value_t
   msg.login_ = login;
 
   json_object* jmessage = NULL;
-  json_bool jmessage_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_LOGIN_FIELD, &jmessage);
+  json_bool jmessage_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_MESSAGE_FIELD, &jmessage);
   if (!jmessage_exists) {
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
