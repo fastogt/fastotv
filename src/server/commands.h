@@ -26,20 +26,25 @@ namespace fastotv {
 namespace server {
 
 // requests
-// who are you
-cmd_request_t WhoAreYouRequest(cmd_seq_t id);
-cmd_approve_t WhoAreYouApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t WhoAreYouApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
-
-// system info
-cmd_request_t SystemInfoRequest(cmd_seq_t id);
-cmd_approve_t SystemInfoApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t SystemInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
-
 // ping
 cmd_request_t PingRequest(cmd_seq_t id);
 cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id);
 cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+
+// who_are_you
+cmd_request_t WhoAreYouRequest(cmd_seq_t id);
+cmd_approve_t WhoAreYouApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t WhoAreYouApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+
+// system_info
+cmd_request_t SystemInfoRequest(cmd_seq_t id);
+cmd_approve_t SystemInfoApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t SystemInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+
+// send_chat_message
+cmd_request_t SendChatMessageRequest(cmd_seq_t id);
+cmd_approve_t SendChatMessageApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t SendChatMessageApproveResponceFail(cmd_seq_t id, const std::string& error_text);
 
 // responces
 // get_server_info
@@ -53,6 +58,10 @@ cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_te
 // get_runtime_channel_info
 cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(cmd_seq_t id, const serializet_t& rchannel_info);
 cmd_responce_t GetRuntimeChannelInfoResponceFail(cmd_seq_t id, const std::string& error_text);
+
+// send_chat_message
+cmd_responce_t SendChatMessageResponceSuccsess(cmd_seq_t id, const serializet_t& message);
+cmd_responce_t SendChatMessageResponceFail(cmd_seq_t id, const std::string& error_text);
 
 // ping
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info);

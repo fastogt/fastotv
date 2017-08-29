@@ -211,7 +211,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
                                                     char* argv[]) {
   UNUSED(argc);
   char* command = argv[0];
-  if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
+  if (IS_EQUAL_COMMAND(command, CLIENT_PING)) {
     ClientPingInfo ping;
     json_object* jping_info = NULL;
     common::Error err = ping.Serialize(&jping_info);
@@ -349,6 +349,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       delete connection;
       return;
     }
+  } else if (IS_EQUAL_COMMAND(command, CLIENT_SEND_CHAT_MESSAGE)) {
   }
 
   WARNING_LOG() << "UNKNOWN COMMAND: " << command;
@@ -501,7 +502,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     PublishUserStateInfo(UserStateInfo(uid, dev, true));
     INFO_LOG() << "Welcome registered user: " << uauth.GetLogin();
     return common::Error();
-  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {  // encoded
+  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO_COMMAND)) {
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
@@ -536,6 +537,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
       return err;
     }
     return common::Error();
+  } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
   }
 
   const std::string error_str = common::MemSPrintf("UNKNOWN RESPONCE COMMAND: %s", command);
@@ -567,20 +569,22 @@ void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient*
   if (IS_EQUAL_COMMAND(command, SUCCESS_COMMAND)) {
     if (argc > 1) {
       const char* okrespcommand = argv[1];
-      if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_PING_COMMAND)) {
+      if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_PING)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_GET_SERVER_INFO)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_GET_CHANNELS)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
+      } else if (IS_EQUAL_COMMAND(okrespcommand, CLIENT_SEND_CHAT_MESSAGE)) {
       }
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {
     if (argc > 1) {
       const char* failed_resp_command = argv[1];
-      if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_PING_COMMAND)) {
+      if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_PING)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_GET_SERVER_INFO)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_GET_CHANNELS)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, CLIENT_SEND_CHAT_MESSAGE)) {
       }
     }
     return;

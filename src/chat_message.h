@@ -20,55 +20,36 @@
 
 #include "client_server_types.h"
 
-#include "chat_message.h"
-
 #include "serializer/json_serializer.h"
+
+// {"channel" : "1234", "login" : "atopilski@gmail.com", "message" : "leave the channel test", "type" : 0}
+// {"channel" : "1234", "login" : "atopilski@gmail.com", "message" : "Hello", "type" : 1}
 
 namespace fastotv {
 
-class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
+class ChatMessage : public JsonSerializer<ChatMessage> {
  public:
-  typedef std::vector<ChatMessage> messages_t;
-  RuntimeChannelInfo();
-  RuntimeChannelInfo(stream_id channel_id,
-                     size_t watchers,
-                     ChannelType type,
-                     bool chat_enabled,
-                     const messages_t& msgs = messages_t());
-  ~RuntimeChannelInfo();
+  enum Type { CONTROL = 0, MESSAGE };
+  ChatMessage();
+  ChatMessage(stream_id channel, login_t login, const std::string& message, Type type);
 
   bool IsValid() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
-  void SetChannelId(stream_id sid);
-  stream_id GetChannelId() const;
-
-  void SetWatchersCount(size_t count);
-  size_t GetWatchersCount() const;
-
-  void SetChatEnabled(bool en);
-  bool IsChatEnabled() const;
-
-  messages_t GetMessages() const;
-
-  void SetChannelType(ChannelType ct);
-  ChannelType GetChannelType() const;
-
-  bool Equals(const RuntimeChannelInfo& inf) const;
+  bool Equals(const ChatMessage& inf) const;
 
  protected:
-  common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   stream_id channel_id_;
-  size_t watchers_;
-  ChannelType type_;
-  bool chat_enabled_;
-  messages_t messages_;
+  login_t login_;
+  std::string message_;
+  Type type_;
 };
 
-inline bool operator==(const RuntimeChannelInfo& left, const RuntimeChannelInfo& right) {
+inline bool operator==(const ChatMessage& left, const ChatMessage& right) {
   return left.Equals(right);
 }
 

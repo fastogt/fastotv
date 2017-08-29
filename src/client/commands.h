@@ -46,6 +46,11 @@ cmd_request_t GetRuntimeChannelInfoRequest(cmd_seq_t id, stream_id sid);
 cmd_approve_t GetRuntimeChannelInfoApproveResponceSuccsess(cmd_seq_t id);
 cmd_approve_t GetRuntimeChannelInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text);
 
+// send_chat_message
+cmd_request_t SendChatMessageRequest(cmd_seq_t id);
+cmd_approve_t SendChatMessageApproveResponceSuccsess(cmd_seq_t id);
+cmd_approve_t SendChatMessageApproveResponceFail(cmd_seq_t id, const std::string& error_text);
+
 // responces
 // who are you
 cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const serializet_t& auth_serialized);
@@ -53,5 +58,8 @@ cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const serializet_t& auth_
 cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const serializet_t& system_info);
 // ping
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info_serialized);
+// send_chat_message
+cmd_responce_t SendChatMessageResponceSuccsess(cmd_seq_t id, const serializet_t& chat_message_serialized);
+
 }  // namespace client
 }  // namespace fastotv

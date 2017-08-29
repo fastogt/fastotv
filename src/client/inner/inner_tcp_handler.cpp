@@ -344,6 +344,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
       DEBUG_MSG_ERROR(err);
     }
     return;
+  } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
   }
 
   WARNING_LOG() << "UNKNOWN REQUEST COMMAND: " << command;
@@ -387,6 +388,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
         connection->SetName(config_.ainf.GetLogin());
         fApp->PostEvent(new player::core::events::ClientAuthorizedEvent(this, config_.ainf));
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_GET_CLIENT_INFO_COMMAND)) {
+      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_SEND_CHAT_MESSAGE)) {
       }
     }
     return;
@@ -399,6 +401,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
         auto ex_event = make_exception_event(new player::core::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO_COMMAND)) {
+      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_SEND_CHAT_MESSAGE)) {
       }
     }
     return;
@@ -412,7 +415,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
                                                                   int argc,
                                                                   char* argv[]) {
   char* command = argv[1];
-  if (IS_EQUAL_COMMAND(command, CLIENT_PING_COMMAND)) {
+  if (IS_EQUAL_COMMAND(command, CLIENT_PING)) {
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err && parse_err->IsError()) {
@@ -503,6 +506,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     fApp->PostEvent(new player::core::events::ReceiveRuntimeChannelEvent(this, chan));
     const cmd_approve_t resp = GetRuntimeChannelInfoApproveResponceSuccsess(id);
     return connection->Write(resp);
+  } else if (IS_EQUAL_COMMAND(command, CLIENT_SEND_CHAT_MESSAGE)) {
   }
 
   const std::string error_str = common::MemSPrintf("UNKNOWN RESPONCE COMMAND: %s", command);

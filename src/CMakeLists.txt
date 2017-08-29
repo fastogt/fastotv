@@ -66,6 +66,8 @@ SET(CLIENT_SERVER_SOURCES
   ${SOURCE_ROOT}/channels_info.cpp
   ${SOURCE_ROOT}/runtime_channel_info.h
   ${SOURCE_ROOT}/runtime_channel_info.cpp
+  ${SOURCE_ROOT}/chat_message.h
+  ${SOURCE_ROOT}/chat_message.cpp
   ${SOURCE_ROOT}/auth_info.h
   ${SOURCE_ROOT}/auth_info.cpp
   ${SOURCE_ROOT}/server_info.h

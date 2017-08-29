@@ -42,7 +42,7 @@ std::string ChannelInfo::GetName() const {
 }
 
 stream_id ChannelInfo::GetId() const {
-  return epg_.GetId();
+  return epg_.GetChannelId();
 }
 
 EpgInfo ChannelInfo::GetEpg() const {

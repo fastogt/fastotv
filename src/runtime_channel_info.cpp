@@ -27,7 +27,7 @@
 namespace fastotv {
 
 RuntimeChannelInfo::RuntimeChannelInfo()
-    : channel_id_(invalid_epg_channel_id), watchers_(0), type_(UNKNOWN_CHANNEL), chat_enabled_(false), messages_() {}
+    : channel_id_(invalid_stream_id), watchers_(0), type_(UNKNOWN_CHANNEL), chat_enabled_(false), messages_() {}
 
 RuntimeChannelInfo::RuntimeChannelInfo(stream_id channel_id,
                                        size_t watchers,
@@ -39,7 +39,7 @@ RuntimeChannelInfo::RuntimeChannelInfo(stream_id channel_id,
 RuntimeChannelInfo::~RuntimeChannelInfo() {}
 
 bool RuntimeChannelInfo::IsValid() const {
-  return channel_id_ != invalid_epg_channel_id;
+  return channel_id_ != invalid_stream_id;
 }
 
 void RuntimeChannelInfo::SetChannelId(stream_id sid) {
@@ -86,7 +86,12 @@ common::Error RuntimeChannelInfo::SerializeImpl(serialize_type* deserialized) co
   json_object* obj = json_object_new_object();
   json_object* jmsgs = json_object_new_array();
   for (size_t i = 0; i < messages_.size(); ++i) {
-    json_object_array_add(jmsgs, json_object_new_string(messages_[i].c_str()));
+    serialize_type jmsg = NULL;
+    common::Error err = messages_[i].Serialize(&jmsg);
+    if (err && err->IsError()) {
+      continue;
+    }
+    json_object_array_add(jmsgs, jmsg);
   }
 
   json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD, json_object_new_string(channel_id_.c_str()));
@@ -143,7 +148,12 @@ common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, 
     size_t len = json_object_array_length(jmsgs);
     for (size_t i = 0; i < len; ++i) {
       json_object* jmess = json_object_array_get_idx(jmsgs, i);
-      msgs.push_back(json_object_get_string(jmess));
+      ChatMessage msg;
+      common::Error err = ChatMessage::DeSerialize(jmess, &msg);
+      if (err && err->IsError()) {
+        continue;
+      }
+      msgs.push_back(msg);
     }
     inf.messages_ = msgs;
   }

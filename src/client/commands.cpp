@@ -20,9 +20,9 @@
 
 // requests
 // ping
-#define CLIENT_PING_COMMAND_REQ GENERATE_REQUEST_FMT(CLIENT_PING_COMMAND)
-#define CLIENT_PING_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING_COMMAND, "'%s'")
-#define CLIENT_PING_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "")
+#define CLIENT_PING_REQ GENERATE_REQUEST_FMT(CLIENT_PING)
+#define CLIENT_PING_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING, "'%s'")
+#define CLIENT_PING_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_PING, "")
 
 // get_server_info
 #define CLIENT_GET_SERVER_INFO_REQ GENERATE_REQUEST_FMT(CLIENT_GET_SERVER_INFO)
@@ -39,6 +39,11 @@
 #define CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
 #define CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "")
 
+// send_chat_message
+#define CLIENT_SEND_CHAT_MESSAGE_REQ GENERATE_REQUEST_FMT(CLIENT_SEND_CHAT_MESSAGE)
+#define CLIENT_SEND_CHAT_MESSAGE_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_SEND_CHAT_MESSAGE, "'%s'")
+#define CLIENT_SEND_CHAT_MESSAGE_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_SEND_CHAT_MESSAGE, "")
+
 // responces
 // who are you
 #define CLIENT_WHO_ARE_YOU_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
@@ -52,19 +57,23 @@
 #define CLIENT_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING_COMMAND, "'%s'")
 #define CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "'%s'")
 
+// server_send_chat_message
+#define CLIENT_SEND_CHAT_MESSAGE_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_SEND_CHAT_MESSAGE, "'%s'")
+#define CLIENT_SEND_CHAT_MESSAGE_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_SEND_CHAT_MESSAGE, "'%s'")
+
 namespace fastotv {
 namespace client {
 
 cmd_request_t PingRequest(cmd_seq_t id) {
-  return MakeRequest(id, CLIENT_PING_COMMAND_REQ);
+  return MakeRequest(id, CLIENT_PING_REQ);
 }
 
 cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id) {
-  return MakeApproveResponce(id, CLIENT_PING_COMMAND_APPROVE_SUCCESS);
+  return MakeApproveResponce(id, CLIENT_PING_APPROVE_SUCCESS);
 }
 
 cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeApproveResponce(id, CLIENT_PING_COMMAND_APPROVE_FAIL_1E, error_text);
+  return MakeApproveResponce(id, CLIENT_PING_APPROVE_FAIL_1E, error_text);
 }
 
 cmd_request_t GetServerInfoRequest(cmd_seq_t id) {
@@ -79,6 +88,18 @@ cmd_approve_t GetServerInfoApproveResponceFail(cmd_seq_t id, const std::string& 
   return MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E, error_text);
 }
 
+cmd_request_t GetChannelsRequest(cmd_seq_t id) {
+  return MakeRequest(id, CLIENT_GET_CHANNELS_REQ);
+}
+
+cmd_approve_t GetChannelsApproveResponceSuccsess(cmd_seq_t id) {
+  return MakeApproveResponce(id, CLIENT_GET_CHANNELS_APPROVE_SUCCESS);
+}
+
+cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
+  return MakeApproveResponce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1E, error_text);
+}
+
 cmd_request_t GetRuntimeChannelInfoRequest(cmd_seq_t id, stream_id sid) {
   return MakeRequest(id, CLIENT_GET_RUNTIME_CHANNEL_INFO_REQ_1E, sid);
 }
@@ -91,16 +112,16 @@ cmd_approve_t GetRuntimeChannelInfoApproveResponceFail(cmd_seq_t id, const std::
   return MakeApproveResponce(id, CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_FAIL_1E, error_text);
 }
 
-cmd_request_t GetChannelsRequest(cmd_seq_t id) {
-  return MakeRequest(id, CLIENT_GET_CHANNELS_REQ);
+cmd_request_t SendChatMessageRequest(cmd_seq_t id) {
+  return MakeRequest(id, CLIENT_SEND_CHAT_MESSAGE_REQ);
 }
 
-cmd_approve_t GetChannelsApproveResponceSuccsess(cmd_seq_t id) {
-  return MakeApproveResponce(id, CLIENT_GET_CHANNELS_APPROVE_SUCCESS);
+cmd_approve_t SendChatMessageApproveResponceSuccsess(cmd_seq_t id) {
+  return MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS);
 }
 
-cmd_approve_t GetChannelsApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeApproveResponce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1E, error_text);
+cmd_approve_t SendChatMessageApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
+  return MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E, error_text);
 }
 
 cmd_responce_t WhoAreYouResponceSuccsess(cmd_seq_t id, const serializet_t& auth_serialized) {
@@ -114,5 +135,10 @@ cmd_responce_t SystemInfoResponceSuccsess(cmd_seq_t id, const serializet_t& syst
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info_serialized) {
   return MakeResponce(id, CLIENT_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info_serialized);
 }
+
+cmd_responce_t SendChatMessageResponceSuccsess(cmd_seq_t id, const serializet_t& chat_message_serialized) {
+  return MakeResponce(id, CLIENT_SEND_CHAT_MESSAGE_RESP_SUCCSESS_1E, chat_message_serialized);
+}
+
 }  // namespace client
 }  // namespace fastotv

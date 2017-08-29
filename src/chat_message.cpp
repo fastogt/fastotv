@@ -1,0 +1,104 @@
+/*  Copyright (C) 2014-2017 FastoGT. All right reserved.
+
+    This file is part of FastoTV.
+
+    FastoTV is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    FastoTV is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include "chat_message.h"
+
+#define CHAT_MESSAGE_CHANNEL_ID_FIELD "channel_id"
+#define CHAT_MESSAGE_LOGIN_FIELD "login"
+#define CHAT_MESSAGE_MESSAGE_FIELD "message"
+#define CHAT_MESSAGE_TYPE_FIELD "type"
+
+namespace fastotv {
+
+ChatMessage::ChatMessage() : channel_id_(invalid_stream_id), login_(), message_(), type_(CONTROL) {}
+
+ChatMessage::ChatMessage(stream_id channel, login_t login, const std::string& message, Type type)
+    : channel_id_(channel), login_(login), message_(message), type_(type) {}
+
+bool ChatMessage::IsValid() const {
+  return channel_id_ != invalid_stream_id && !login_.empty() && !message_.empty();
+}
+
+common::Error ChatMessage::SerializeImpl(serialize_type* deserialized) const {
+  if (!IsValid()) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+
+  json_object* obj = json_object_new_object();
+  json_object_object_add(obj, CHAT_MESSAGE_CHANNEL_ID_FIELD, json_object_new_string(channel_id_.c_str()));
+  json_object_object_add(obj, CHAT_MESSAGE_LOGIN_FIELD, json_object_new_string(login_.c_str()));
+  json_object_object_add(obj, CHAT_MESSAGE_MESSAGE_FIELD, json_object_new_string(message_.c_str()));
+  json_object_object_add(obj, CHAT_MESSAGE_TYPE_FIELD, json_object_new_int(type_));
+  *deserialized = obj;
+  return common::Error();
+}
+
+common::Error ChatMessage::DeSerialize(const serialize_type& serialized, value_type* obj) {
+  if (!serialized || !obj) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+
+  ChatMessage msg;
+  json_object* jchan = NULL;
+  json_bool jchan_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_LOGIN_FIELD, &jchan);
+  if (!jchan_exists) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+  const stream_id chan = json_object_get_string(jchan);
+  if (chan == invalid_stream_id) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+  msg.login_ = chan;
+
+  json_object* jlogin = NULL;
+  json_bool jlogin_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_LOGIN_FIELD, &jlogin);
+  if (!jlogin_exists) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+  const std::string login = json_object_get_string(jlogin);
+  if (login.empty()) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+  msg.login_ = login;
+
+  json_object* jmessage = NULL;
+  json_bool jmessage_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_LOGIN_FIELD, &jmessage);
+  if (!jmessage_exists) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+  const std::string message = json_object_get_string(jmessage);
+  if (message.empty()) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+  msg.message_ = message;
+
+  json_object* jtype = NULL;
+  json_bool jtype_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_TYPE_FIELD, &jtype);
+  if (jtype_exists) {
+    msg.type_ = static_cast<Type>(json_object_get_int(jtype));
+  }
+
+  *obj = msg;
+  return common::Error();
+}
+
+bool ChatMessage::Equals(const ChatMessage& inf) const {
+  return channel_id_ == inf.channel_id_ && login_ == inf.login_ && message_ == inf.message_ && type_ == inf.type_;
+}
+
+}  // namespace fastotv

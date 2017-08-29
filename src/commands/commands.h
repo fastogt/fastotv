@@ -46,15 +46,17 @@
 #define APPROVE_COMMAND 2
 
 // client commands
-#define CLIENT_PING_COMMAND "client_ping"  // ping server
+#define CLIENT_PING "client_ping"  // ping server
 #define CLIENT_GET_SERVER_INFO "get_server_info"
 #define CLIENT_GET_CHANNELS "get_channels"
 #define CLIENT_GET_RUNTIME_CHANNEL_INFO "get_runtime_channel_info"
+#define CLIENT_SEND_CHAT_MESSAGE "client_send_chat_message"
 
 // server commands
 #define SERVER_PING_COMMAND "server_ping"  // ping client
 #define SERVER_WHO_ARE_YOU_COMMAND "who_are_you"
 #define SERVER_GET_CLIENT_INFO_COMMAND "get_client_info"
+#define SERVER_SEND_CHAT_MESSAGE "server_send_chat_message"
 
 // request
 // [uint8_t](0) [hex_string]seq [std::string]command

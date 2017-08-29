@@ -38,13 +38,22 @@ struct ChannelDescription {
 class Player : public player::ISimplePlayer {
  public:
   static const SDL_Color failed_color;
-  static const SDL_Color info_color;
+  static const SDL_Color playlist_color;
+  static const SDL_Color info_channel_color;
+  static const SDL_Color chat_color;
   static const SDL_Color keypad_color;
   static const SDL_Color playlist_item_preselect_color;
 
   typedef ISimplePlayer base_class;
   typedef std::string keypad_sym_t;
-  enum { footer_height = 60, keypad_height = 30, keypad_width = 60, min_key_pad_size = 0, max_keypad_size = 999 };
+  enum {
+    footer_height = 60,
+    chat_user_name_width = 120,
+    keypad_height = 30,
+    keypad_width = 60,
+    min_key_pad_size = 0,
+    max_keypad_size = 999
+  };
   Player(const std::string& app_directory_absolute_path,  // for runtime data (cache)
          const player::PlayerOptions& options,
          const player::core::AppOptions& opt,

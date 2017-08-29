@@ -32,12 +32,12 @@ namespace fastotv {
 class ProgrammeInfo : public JsonSerializer<ProgrammeInfo> {
  public:
   ProgrammeInfo();
-  ProgrammeInfo(epg_channel_id id, timestamp_t start_time, timestamp_t stop_time, const std::string& title);
+  ProgrammeInfo(stream_id id, timestamp_t start_time, timestamp_t stop_time, const std::string& title);
 
   bool IsValid() const;
 
-  void SetChannel(epg_channel_id channel);
-  epg_channel_id GetChannel() const;
+  void SetChannel(stream_id channel);
+  stream_id GetChannel() const;
 
   void SetStart(timestamp_t start);
   timestamp_t GetStart() const;
@@ -46,7 +46,7 @@ class ProgrammeInfo : public JsonSerializer<ProgrammeInfo> {
   timestamp_t GetStop() const;
 
   void SetTitle(const std::string& title);
-  epg_channel_id GetTitle() const;
+  std::string GetTitle() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
@@ -56,7 +56,7 @@ class ProgrammeInfo : public JsonSerializer<ProgrammeInfo> {
   common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
-  epg_channel_id channel_;
+  stream_id channel_;
   timestamp_t start_time_;  // utc time
   timestamp_t stop_time_;   // utc time
   std::string title_;

@@ -62,9 +62,11 @@ player::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relati
 }  // namespace
 
 const SDL_Color Player::failed_color = {193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
-const SDL_Color Player::info_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
+const SDL_Color Player::playlist_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
 const SDL_Color Player::keypad_color = player::ISimplePlayer::stream_statistic_color;
 const SDL_Color Player::playlist_item_preselect_color = {193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.1)};
+const SDL_Color Player::chat_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
+const SDL_Color Player::info_channel_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
 
 Player::Player(const std::string& app_directory_absolute_path,
                const player::PlayerOptions& options,
@@ -623,8 +625,7 @@ SDL_Rect Player::GetHideButtonProgramsListRect() const {
 
   int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
   SDL_Rect prog_rect = GetProgramsListRect();
-  SDL_Rect hide_button_rect = {prog_rect.x - font_height_2line, prog_rect.h / 2 - font_height_2line, font_height_2line,
-                               font_height_2line};
+  SDL_Rect hide_button_rect = {prog_rect.x - font_height_2line, prog_rect.h / 2, font_height_2line, font_height_2line};
   return hide_button_rect;
 }
 
@@ -636,8 +637,8 @@ SDL_Rect Player::GetShowButtonProgramsListRect() const {
 
   int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
   SDL_Rect prog_rect = GetProgramsListRect();
-  SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2 - font_height_2line,
-                               font_height_2line, font_height_2line};
+  SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2, font_height_2line,
+                               font_height_2line};
   return show_button_rect;
 }
 
@@ -803,8 +804,8 @@ void Player::DrawProgramsList() {
 
   const SDL_Rect programms_list_rect = GetProgramsListRect();
   int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
-  int min_size = keypad_width + font_height_2line + font_height_2line;  // number + icon + text
-  if (programms_list_rect.w < min_size) {
+  int min_size_width = keypad_width + font_height_2line + space_width + font_height_2line;  // number + icon + text
+  if (programms_list_rect.w < min_size_width) {
     return;
   }
 
@@ -831,7 +832,7 @@ void Player::DrawProgramsList() {
     SDL_GetMouseState(&mouse_point.x, &mouse_point.y);
   }
 
-  player::SetRenderDrawColor(render, info_color);
+  player::SetRenderDrawColor(render, playlist_color);
   SDL_RenderFillRect(render, &programms_list_rect);
 
   int drawed = 0;
@@ -856,12 +857,12 @@ void Player::DrawProgramsList() {
           SDL_RenderCopy(render, img, NULL, &icon_rect);
         }
       }
-      shift += font_height_2line;  // in any case shift should be
+      shift += font_height_2line + space_width;  // in any case shift should be
 
       int text_width = programms_list_rect.w - shift;
-      std::string title_line = player::DotText(common::MemSPrintf(" Title: %s", descr.title), font, text_width);
+      std::string title_line = player::DotText(common::MemSPrintf("Title: %s", descr.title), font, text_width);
       std::string description_line =
-          player::DotText(common::MemSPrintf(" Description: %s", descr.description), font, text_width);
+          player::DotText(common::MemSPrintf("Description: %s", descr.description), font, text_width);
 
       std::string line_text = common::MemSPrintf(
           "%s\n"
@@ -880,7 +881,7 @@ void Player::DrawProgramsList() {
         SDL_RenderFillRect(render, &cell_rect);
       }
 
-      player::SetRenderDrawColor(render, info_color);
+      player::SetRenderDrawColor(render, playlist_color);
       SDL_RenderDrawRect(render, &cell_rect);
       drawed++;
     }
@@ -912,6 +913,12 @@ void Player::DrawChat() {
     return;
   }
 
+  const SDL_Rect chat_rect = GetChatRect();
+  int min_size_width = chat_user_name_width + space_width + chat_user_name_width * 2;  // login + space + text
+  if (chat_rect.w < min_size_width) {
+    return;
+  }
+
   if (!show_chat_) {
     if (hide_button_texture_ && IsMouseVisible()) {
       SDL_Texture* img = hide_button_texture_->GetTexture(render);
@@ -923,8 +930,7 @@ void Player::DrawChat() {
     return;
   }
 
-  const SDL_Rect chat_rect = GetChatRect();
-  player::SetRenderDrawColor(render, info_color);
+  player::SetRenderDrawColor(render, chat_color);
   SDL_RenderFillRect(render, &chat_rect);
 
   if (show_button_texture_) {
@@ -962,28 +968,28 @@ void Player::DrawFooter() {
 
   const SDL_Rect footer_rect = GetFooterRect();
   int padding_left = footer_rect.w / 4;
-  SDL_Rect sdl_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.w - padding_left * 2,
-                              footer_rect.h};
+  SDL_Rect banner_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.w - padding_left * 2,
+                                 footer_rect.h};
   States current_state = GetCurrentState();
   if (current_state == INIT_STATE) {
     std::string footer_text = current_state_str_;
     player::SetRenderDrawColor(render, failed_color);
-    SDL_RenderFillRect(render, &sdl_footer_rect);
-    DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
+    SDL_RenderFillRect(render, &banner_footer_rect);
+    DrawCenterTextInRect(footer_text, text_color, banner_footer_rect);
   } else if (current_state == FAILED_STATE) {
     std::string footer_text = current_state_str_;
     player::SetRenderDrawColor(render, failed_color);
-    SDL_RenderFillRect(render, &sdl_footer_rect);
-    DrawCenterTextInRect(footer_text, text_color, sdl_footer_rect);
+    SDL_RenderFillRect(render, &banner_footer_rect);
+    DrawCenterTextInRect(footer_text, text_color, banner_footer_rect);
   } else if (current_state == PLAYING_STATE) {
     ChannelDescription descr;
     if (GetChannelDescription(current_stream_pos_, &descr)) {
-      player::SetRenderDrawColor(render, info_color);
-      SDL_RenderFillRect(render, &sdl_footer_rect);
+      player::SetRenderDrawColor(render, info_channel_color);
+      SDL_RenderFillRect(render, &banner_footer_rect);
 
       std::string footer_text = common::MemSPrintf(
-          " Title: %s\n"
-          " Description: %s",
+          "Title: %s\n"
+          "Description: %s",
           descr.title, descr.description);
       int h = player::CalcHeightFontPlaceByRowCount(font, 2);
       if (h > footer_rect.h) {
@@ -995,13 +1001,14 @@ void Player::DrawFooter() {
       if (icon) {
         SDL_Texture* img = icon->GetTexture(render);
         if (img) {
-          SDL_Rect icon_rect = {sdl_footer_rect.x, sdl_footer_rect.y, h, h};
+          SDL_Rect icon_rect = {banner_footer_rect.x, banner_footer_rect.y, h, h};
           SDL_RenderCopy(render, img, NULL, &icon_rect);
           shift = h;
         }
       }
 
-      SDL_Rect text_rect = {sdl_footer_rect.x + shift, sdl_footer_rect.y, sdl_footer_rect.w - shift, h};
+      SDL_Rect text_rect = {banner_footer_rect.x + shift + space_width, banner_footer_rect.y,
+                            banner_footer_rect.w - shift + space_width, h};
       DrawWrappedTextInRect(footer_text, text_color, text_rect);
     }
   } else {

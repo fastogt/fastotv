@@ -35,13 +35,13 @@
 namespace fastotv {
 
 EpgInfo::EpgInfo()
-    : id_(invalid_epg_channel_id), uri_(), display_name_(), icon_src_(GetUnknownIconUrl()), programs_() {}
+    : channel_id_(invalid_stream_id), uri_(), display_name_(), icon_src_(GetUnknownIconUrl()), programs_() {}
 
-EpgInfo::EpgInfo(epg_channel_id id, const common::uri::Uri& uri, const std::string& name)
-    : id_(id), uri_(uri), display_name_(name), icon_src_(GetUnknownIconUrl()), programs_() {}
+EpgInfo::EpgInfo(stream_id id, const common::uri::Uri& uri, const std::string& name)
+    : channel_id_(id), uri_(uri), display_name_(name), icon_src_(GetUnknownIconUrl()), programs_() {}
 
 bool EpgInfo::IsValid() const {
-  return id_ != invalid_epg_channel_id && uri_.IsValid() && !display_name_.empty();
+  return channel_id_ != invalid_stream_id && uri_.IsValid() && !display_name_.empty();
 }
 
 bool EpgInfo::FindProgrammeByTime(timestamp_t time, ProgrammeInfo* inf) const {
@@ -76,12 +76,12 @@ std::string EpgInfo::GetDisplayName() const {
   return display_name_;
 }
 
-void EpgInfo::SetId(epg_channel_id id) {
-  id_ = id;
+void EpgInfo::SetChannelId(stream_id ch) {
+  channel_id_ = ch;
 }
 
-epg_channel_id EpgInfo::GetId() const {
-  return id_;
+stream_id EpgInfo::GetChannelId() const {
+  return channel_id_;
 }
 
 void EpgInfo::SetIconUrl(const common::uri::Uri& url) {
@@ -106,7 +106,7 @@ common::Error EpgInfo::SerializeImpl(serialize_type* deserialized) const {
   }
 
   json_object* obj = json_object_new_object();
-  json_object_object_add(obj, EPG_INFO_ID_FIELD, json_object_new_string(id_.c_str()));
+  json_object_object_add(obj, EPG_INFO_ID_FIELD, json_object_new_string(channel_id_.c_str()));
   const std::string url_str = uri_.GetUrl();
   json_object_object_add(obj, EPG_INFO_URL_FIELD, json_object_new_string(url_str.c_str()));
   json_object_object_add(obj, EPG_INFO_NAME_FIELD, json_object_new_string(display_name_.c_str()));
@@ -198,7 +198,7 @@ common::Error EpgInfo::DeSerialize(const serialize_type& serialized, value_type*
 }
 
 bool EpgInfo::Equals(const EpgInfo& url) const {
-  return id_ == url.id_ && uri_ == url.uri_ && display_name_ == url.display_name_;
+  return channel_id_ == url.channel_id_ && uri_ == url.uri_ && display_name_ == url.display_name_;
 }
 
 const common::uri::Uri& EpgInfo::GetUnknownIconUrl() {

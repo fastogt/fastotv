@@ -19,38 +19,46 @@
 #include "server/commands.h"
 
 // requests
-// who are you
-#define SERVER_WHO_ARE_YOU_COMMAND_REQ GENERATE_REQUEST_FMT(SERVER_WHO_ARE_YOU_COMMAND)
-#define SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
-#define SERVER_WHO_ARE_YOU_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU_COMMAND, "")
-
-// system info
-#define SERVER_GET_CLIENT_INFO_COMMAND_REQ GENERATE_REQUEST_FMT(SERVER_GET_CLIENT_INFO_COMMAND)
-#define SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "'%s'")
-#define SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "")
-
 // ping
 #define SERVER_PING_COMMAND_REQ GENERATE_REQUEST_FMT(SERVER_PING_COMMAND)
 #define SERVER_PING_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING_COMMAND, "'%s'")
 #define SERVER_PING_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_PING_COMMAND, "")
 
+// who_are_you
+#define SERVER_WHO_ARE_YOU_COMMAND_REQ GENERATE_REQUEST_FMT(SERVER_WHO_ARE_YOU_COMMAND)
+#define SERVER_WHO_ARE_YOU_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU_COMMAND, "'%s'")
+#define SERVER_WHO_ARE_YOU_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU_COMMAND, "")
+
+// system_info
+#define SERVER_GET_CLIENT_INFO_COMMAND_REQ GENERATE_REQUEST_FMT(SERVER_GET_CLIENT_INFO_COMMAND)
+#define SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "'%s'")
+#define SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_GET_CLIENT_INFO_COMMAND, "")
+
+// chat_message
+#define SERVER_SEND_CHAT_MESSAGE_REQ GENERATE_REQUEST_FMT(SERVER_SEND_CHAT_MESSAGE)
+#define SERVER_SEND_CHAT_MESSAGE_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(SERVER_SEND_CHAT_MESSAGE, "'%s'")
+#define SERVER_SEND_CHAT_MESSAGE_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(SERVER_SEND_CHAT_MESSAGE, "")
+
 // responces
 // get_server_info
-#define SERVER_GET_SERVER_INFO_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_SERVER_INFO, "'%s'")
-#define SERVER_GET_SERVER_INFO_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_SERVER_INFO, "'%s'")
+#define SERVER_GET_SERVER_INFO_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_SERVER_INFO, "'%s'")
+#define SERVER_GET_SERVER_INFO_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_SERVER_INFO, "'%s'")
 
 // get_channels
-#define SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_CHANNELS, "'%s'")
-#define SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "'%s'")
+#define SERVER_GET_CHANNELS_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_CHANNELS, "'%s'")
+#define SERVER_GET_CHANNELS_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "'%s'")
 
 // get_runtime_channel_info
-#define SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
-#define SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_SUCCSESS_1E \
-  GENEATATE_SUCCESS_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
+#define SERVER_GET_RUNTIME_CHANNEL_INFO_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
+#define SERVER_GET_RUNTIME_CHANNEL_INFO_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
+
+// send_chat_message
+#define SERVER_SEND_CHAT_MESSAGE_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_SEND_CHAT_MESSAGE, "'%s'")
+#define SERVER_SEND_CHAT_MESSAGE_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_SEND_CHAT_MESSAGE, "'%s'")
 
 // ping
-#define SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING_COMMAND, "'%s'")
-#define SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_PING_COMMAND, "'%s'")
+#define SERVER_PING_RESP_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING, "'%s'")
+#define SERVER_PING_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(CLIENT_PING, "'%s'")
 
 namespace fastotv {
 namespace server {
@@ -75,6 +83,16 @@ cmd_approve_t SystemInfoApproveResponceFail(cmd_seq_t id, const std::string& err
   return MakeApproveResponce(id, SERVER_GET_CLIENT_INFO_COMMAND_APPROVE_FAIL_1E, error_text);
 }
 
+cmd_request_t SendChatMessageRequest(cmd_seq_t id) {
+  return MakeRequest(id, SERVER_SEND_CHAT_MESSAGE_REQ);
+}
+cmd_approve_t SendChatMessageApproveResponceSuccsess(cmd_seq_t id) {
+  return MakeApproveResponce(id, SERVER_SEND_CHAT_MESSAGE_APPROVE_SUCCESS);
+}
+cmd_approve_t SendChatMessageApproveResponceFail(cmd_seq_t id, const std::string& error_text) {
+  return MakeApproveResponce(id, SERVER_SEND_CHAT_MESSAGE_APPROVE_FAIL_1E, error_text);
+}
+
 cmd_request_t PingRequest(cmd_seq_t id) {
   return MakeRequest(id, SERVER_PING_COMMAND_REQ);
 }
@@ -86,32 +104,39 @@ cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_tex
 }
 
 cmd_responce_t GetServerInfoResponceSuccsess(cmd_seq_t id, const serializet_t& server_info) {
-  return MakeResponce(id, SERVER_GET_SERVER_INFO_COMMAND_RESP_SUCCSESS_1E, server_info);
+  return MakeResponce(id, SERVER_GET_SERVER_INFO_RESP_SUCCSESS_1E, server_info);
 }
 
 cmd_responce_t GetServerInfoResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeResponce(id, SERVER_GET_SERVER_INFO_COMMAND_RESP_FAIL_1E, error_text);
+  return MakeResponce(id, SERVER_GET_SERVER_INFO_RESP_FAIL_1E, error_text);
 }
 
 cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const serializet_t& channels_info) {
-  return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_SUCCSESS_1E, channels_info);
+  return MakeResponce(id, SERVER_GET_CHANNELS_RESP_SUCCSESS_1E, channels_info);
 }
 cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeResponce(id, SERVER_GET_CHANNELS_COMMAND_RESP_FAIL_1E, error_text);
+  return MakeResponce(id, SERVER_GET_CHANNELS_RESP_FAIL_1E, error_text);
 }
 
 cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(cmd_seq_t id, const serializet_t& rchannel_info) {
-  return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_SUCCSESS_1E, rchannel_info);
+  return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_RESP_SUCCSESS_1E, rchannel_info);
 }
 cmd_responce_t GetRuntimeChannelInfoResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_COMMAND_RESP_FAIL_1E, error_text);
+  return MakeResponce(id, SERVER_GET_RUNTIME_CHANNEL_INFO_RESP_FAIL_1E, error_text);
+}
+
+cmd_responce_t SendChatMessageResponceSuccsess(cmd_seq_t id, const serializet_t& message) {
+  return MakeResponce(id, SERVER_SEND_CHAT_MESSAGE_RESP_SUCCSESS_1E, message);
+}
+cmd_responce_t SendChatMessageResponceFail(cmd_seq_t id, const std::string& error_text) {
+  return MakeResponce(id, SERVER_SEND_CHAT_MESSAGE_RESP_FAIL_1E, error_text);
 }
 
 cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info) {
-  return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_SUCCSESS_1E, ping_info);
+  return MakeResponce(id, SERVER_PING_RESP_SUCCSESS_1E, ping_info);
 }
 cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text) {
-  return MakeResponce(id, SERVER_PING_COMMAND_COMMAND_RESP_FAIL_1E, error_text);
+  return MakeResponce(id, SERVER_PING_RESP_FAIL_1E, error_text);
 }
 
 }  // namespace server

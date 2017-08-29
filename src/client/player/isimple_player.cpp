@@ -708,7 +708,8 @@ void ISimplePlayer::DrawInfo() {
 
 SDL_Rect ISimplePlayer::GetStatisticRect() const {
   const SDL_Rect display_rect = GetDisplayRect();
-  return {display_rect.x, display_rect.y, display_rect.w / 3, display_rect.h};
+  int padding_left = display_rect.w / 4;
+  return {display_rect.x + padding_left, display_rect.y, display_rect.w - padding_left * 2, display_rect.h};
 }
 
 SDL_Rect ISimplePlayer::GetVolumeRect() const {

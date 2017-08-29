@@ -44,9 +44,9 @@ have everyone listening!</desc>
 
 namespace fastotv {
 
-ProgrammeInfo::ProgrammeInfo() : channel_(invalid_epg_channel_id), start_time_(0), stop_time_(0), title_() {}
+ProgrammeInfo::ProgrammeInfo() : channel_(invalid_stream_id), start_time_(0), stop_time_(0), title_() {}
 
-ProgrammeInfo::ProgrammeInfo(epg_channel_id channel, timestamp_t start, timestamp_t stop, const std::string& title)
+ProgrammeInfo::ProgrammeInfo(stream_id channel, timestamp_t start, timestamp_t stop, const std::string& title)
     : channel_(channel), start_time_(start), stop_time_(stop), title_(title) {}
 
 bool ProgrammeInfo::IsValid() const {
@@ -103,11 +103,11 @@ common::Error ProgrammeInfo::DeSerialize(const serialize_type& serialized, value
   return common::Error();
 }
 
-void ProgrammeInfo::SetChannel(epg_channel_id channel) {
+void ProgrammeInfo::SetChannel(stream_id channel) {
   channel_ = channel;
 }
 
-epg_channel_id ProgrammeInfo::GetChannel() const {
+stream_id ProgrammeInfo::GetChannel() const {
   return channel_;
 }
 
@@ -131,7 +131,7 @@ void ProgrammeInfo::SetTitle(const std::string& title) {
   title_ = title;
 }
 
-epg_channel_id ProgrammeInfo::GetTitle() const {
+std::string ProgrammeInfo::GetTitle() const {
   return title_;
 }
 
