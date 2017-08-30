@@ -29,7 +29,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec) {
   int ret = avformat_match_stream_specifier(s, st, spec);
@@ -248,7 +248,7 @@ AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* cod
   return opts;
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -36,7 +36,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 int cuvid_init(AVCodecContext* decoder_ctx) {
   InputStream* ist = static_cast<InputStream*>(decoder_ctx->opaque);
@@ -82,7 +82,7 @@ void cuvid_uninit(AVCodecContext* decoder_ctx) {
   av_buffer_unref(&ist->hw_frames_ctx);
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

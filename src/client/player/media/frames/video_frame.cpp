@@ -21,7 +21,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 namespace frames {
 
 VideoFrame::VideoFrame() : BaseFrame(), width(0), height(0), format(AV_PIX_FMT_NONE), sar{0, 0} {}
@@ -35,7 +35,7 @@ clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clo
 }
 
 }  // namespace frames
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -28,9 +28,9 @@ extern "C" {
 #include <common/file_system.h>  // for File, create_directory
 #include <common/system/system.h>
 
-#include "client/load_config.h"
-#include "client/player.h"           // for Player
 #include "client/cmdutils.h"  // for DictionaryOptions, show_...
+#include "client/load_config.h"
+#include "client/player.h"  // for Player
 #include "client/player/ffmpeg_application.h"
 #include "client/simple_player.h"
 
@@ -81,7 +81,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   AVDictionary* codec_opts = NULL;
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
-  fastotv::client::player::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
+  fastotv::client::player::media::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
   auto player = new fastotv::client::Player(app_directory_absolute_path, main_options.player_options,
                                             main_options.app_options, copt);
   res = app.Exec();

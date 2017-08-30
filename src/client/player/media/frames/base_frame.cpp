@@ -21,7 +21,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 namespace frames {
 
 BaseFrame::BaseFrame() : frame(av_frame_alloc()), pts(0), duration(0), pos(0) {}
@@ -36,7 +36,7 @@ void BaseFrame::ClearFrame() {
 }
 
 }  // namespace frames
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

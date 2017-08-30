@@ -23,7 +23,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 namespace frames {
 
 struct AudioFrame : public BaseFrame {
@@ -36,7 +36,7 @@ struct AudioFrame : public BaseFrame {
 };
 
 }  // namespace frames
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

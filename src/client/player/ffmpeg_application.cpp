@@ -115,7 +115,7 @@ namespace fastotv {
 namespace client {
 namespace player {
 
-FFmpegApplication::FFmpegApplication(int argc, char** argv) : base_class_t(argc, argv) {
+FFmpegApplication::FFmpegApplication(int argc, char** argv) : base_class(argc, argv) {
   avformat_network_init();
   signal(SIGINT, sigterm_handler);  /* Interrupt (ANSI).    */
   signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
@@ -136,18 +136,18 @@ int FFmpegApplication::PreExecImpl() {
     return EXIT_FAILURE;
   }
 
-  int pre_exec = base_class_t::PreExecImpl();
-  core::events::PreExecInfo inf(pre_exec);
-  core::events::PreExecEvent* pre_event = new core::events::PreExecEvent(this, inf);
-  base_class_t::SendEvent(pre_event);
+  int pre_exec = base_class::PreExecImpl();
+  gui::events::PreExecInfo inf(pre_exec);
+  gui::events::PreExecEvent* pre_event = new gui::events::PreExecEvent(this, inf);
+  base_class::SendEvent(pre_event);
   return pre_exec;
 }
 
 int FFmpegApplication::PostExecImpl() {
-  core::events::PostExecInfo inf(EXIT_SUCCESS);
-  core::events::PostExecEvent* post_event = new core::events::PostExecEvent(this, inf);
-  base_class_t::SendEvent(post_event);
-  return base_class_t::PostExecImpl();
+  gui::events::PostExecInfo inf(EXIT_SUCCESS);
+  gui::events::PostExecEvent* post_event = new gui::events::PostExecEvent(this, inf);
+  base_class::SendEvent(post_event);
+  return base_class::PostExecImpl();
 }
 
 int prepare_to_start(const std::string& app_directory_absolute_path) {

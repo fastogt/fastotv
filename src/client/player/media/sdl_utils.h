@@ -32,7 +32,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 struct AudioParams;
 
@@ -47,7 +47,7 @@ bool audio_open(void* opaque,
                 AudioParams* audio_hw_params,
                 int* audio_buff_size) WARN_UNUSED_RESULT;
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

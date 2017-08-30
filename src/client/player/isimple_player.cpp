@@ -120,29 +120,29 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
       statistic_label_(nullptr),
       render_texture_(NULL),
       update_video_timer_interval_msec_(0),
-      last_pts_checkpoint_(core::invalid_clock()),
+      last_pts_checkpoint_(media::invalid_clock()),
       video_frames_handled_(0) {
   UpdateDisplayInterval(min_fps);
 
-  fApp->Subscribe(this, core::events::PostExecEvent::EventType);
-  fApp->Subscribe(this, core::events::PreExecEvent::EventType);
-  fApp->Subscribe(this, core::events::TimerEvent::EventType);
+  fApp->Subscribe(this, gui::events::PostExecEvent::EventType);
+  fApp->Subscribe(this, gui::events::PreExecEvent::EventType);
+  fApp->Subscribe(this, gui::events::TimerEvent::EventType);
 
-  fApp->Subscribe(this, core::events::RequestVideoEvent::EventType);
-  fApp->Subscribe(this, core::events::QuitStreamEvent::EventType);
+  fApp->Subscribe(this, gui::events::RequestVideoEvent::EventType);
+  fApp->Subscribe(this, gui::events::QuitStreamEvent::EventType);
 
-  fApp->Subscribe(this, core::events::KeyPressEvent::EventType);
+  fApp->Subscribe(this, gui::events::KeyPressEvent::EventType);
 
-  fApp->Subscribe(this, core::events::LircPressEvent::EventType);
+  fApp->Subscribe(this, gui::events::LircPressEvent::EventType);
 
-  fApp->Subscribe(this, core::events::MouseMoveEvent::EventType);
-  fApp->Subscribe(this, core::events::MousePressEvent::EventType);
+  fApp->Subscribe(this, gui::events::MouseMoveEvent::EventType);
+  fApp->Subscribe(this, gui::events::MousePressEvent::EventType);
 
-  fApp->Subscribe(this, core::events::WindowResizeEvent::EventType);
-  fApp->Subscribe(this, core::events::WindowExposeEvent::EventType);
-  fApp->Subscribe(this, core::events::WindowCloseEvent::EventType);
+  fApp->Subscribe(this, gui::events::WindowResizeEvent::EventType);
+  fApp->Subscribe(this, gui::events::WindowExposeEvent::EventType);
+  fApp->Subscribe(this, gui::events::WindowCloseEvent::EventType);
 
-  fApp->Subscribe(this, core::events::QuitEvent::EventType);
+  fApp->Subscribe(this, gui::events::QuitEvent::EventType);
 
   // volume label
   volume_label_ = new gui::Label;
@@ -175,9 +175,9 @@ ISimplePlayer::~ISimplePlayer() {
   destroy(&statistic_label_);
   destroy(&volume_label_);
 
-  if (core::hw_device_ctx) {
-    av_buffer_unref(&core::hw_device_ctx);
-    core::hw_device_ctx = NULL;
+  if (media::hw_device_ctx) {
+    av_buffer_unref(&media::hw_device_ctx);
+    media::hw_device_ctx = NULL;
   }
   fApp->UnSubscribe(this);
 }
@@ -192,51 +192,51 @@ PlayerOptions ISimplePlayer::GetOptions() const {
 
 void ISimplePlayer::SetUrlLocation(stream_id sid,
                                    const common::uri::Uri& uri,
-                                   core::AppOptions opt,
-                                   core::ComplexOptions copt) {
-  core::VideoState* stream = CreateStream(sid, uri, opt, copt);
+                                   media::AppOptions opt,
+                                   media::ComplexOptions copt) {
+  media::VideoState* stream = CreateStream(sid, uri, opt, copt);
   SetStream(stream);
 }
 
 void ISimplePlayer::HandleEvent(event_t* event) {
-  if (event->GetEventType() == core::events::PreExecEvent::EventType) {
-    core::events::PreExecEvent* pre_event = static_cast<core::events::PreExecEvent*>(event);
+  if (event->GetEventType() == gui::events::PreExecEvent::EventType) {
+    gui::events::PreExecEvent* pre_event = static_cast<gui::events::PreExecEvent*>(event);
     HandlePreExecEvent(pre_event);
-  } else if (event->GetEventType() == core::events::PostExecEvent::EventType) {
-    core::events::PostExecEvent* post_event = static_cast<core::events::PostExecEvent*>(event);
+  } else if (event->GetEventType() == gui::events::PostExecEvent::EventType) {
+    gui::events::PostExecEvent* post_event = static_cast<gui::events::PostExecEvent*>(event);
     HandlePostExecEvent(post_event);
-  } else if (event->GetEventType() == core::events::RequestVideoEvent::EventType) {
-    core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
+  } else if (event->GetEventType() == gui::events::RequestVideoEvent::EventType) {
+    gui::events::RequestVideoEvent* avent = static_cast<gui::events::RequestVideoEvent*>(event);
     HandleRequestVideoEvent(avent);
-  } else if (event->GetEventType() == core::events::QuitStreamEvent::EventType) {
-    core::events::QuitStreamEvent* quit_stream_event = static_cast<core::events::QuitStreamEvent*>(event);
+  } else if (event->GetEventType() == gui::events::QuitStreamEvent::EventType) {
+    gui::events::QuitStreamEvent* quit_stream_event = static_cast<gui::events::QuitStreamEvent*>(event);
     HandleQuitStreamEvent(quit_stream_event);
-  } else if (event->GetEventType() == core::events::TimerEvent::EventType) {
-    core::events::TimerEvent* tevent = static_cast<core::events::TimerEvent*>(event);
+  } else if (event->GetEventType() == gui::events::TimerEvent::EventType) {
+    gui::events::TimerEvent* tevent = static_cast<gui::events::TimerEvent*>(event);
     HandleTimerEvent(tevent);
-  } else if (event->GetEventType() == core::events::KeyPressEvent::EventType) {
-    core::events::KeyPressEvent* key_press_event = static_cast<core::events::KeyPressEvent*>(event);
+  } else if (event->GetEventType() == gui::events::KeyPressEvent::EventType) {
+    gui::events::KeyPressEvent* key_press_event = static_cast<gui::events::KeyPressEvent*>(event);
     HandleKeyPressEvent(key_press_event);
-  } else if (event->GetEventType() == core::events::LircPressEvent::EventType) {
-    core::events::LircPressEvent* lirc_press_event = static_cast<core::events::LircPressEvent*>(event);
+  } else if (event->GetEventType() == gui::events::LircPressEvent::EventType) {
+    gui::events::LircPressEvent* lirc_press_event = static_cast<gui::events::LircPressEvent*>(event);
     HandleLircPressEvent(lirc_press_event);
-  } else if (event->GetEventType() == core::events::WindowResizeEvent::EventType) {
-    core::events::WindowResizeEvent* win_resize_event = static_cast<core::events::WindowResizeEvent*>(event);
+  } else if (event->GetEventType() == gui::events::WindowResizeEvent::EventType) {
+    gui::events::WindowResizeEvent* win_resize_event = static_cast<gui::events::WindowResizeEvent*>(event);
     HandleWindowResizeEvent(win_resize_event);
-  } else if (event->GetEventType() == core::events::WindowExposeEvent::EventType) {
-    core::events::WindowExposeEvent* win_expose = static_cast<core::events::WindowExposeEvent*>(event);
+  } else if (event->GetEventType() == gui::events::WindowExposeEvent::EventType) {
+    gui::events::WindowExposeEvent* win_expose = static_cast<gui::events::WindowExposeEvent*>(event);
     HandleWindowExposeEvent(win_expose);
-  } else if (event->GetEventType() == core::events::WindowCloseEvent::EventType) {
-    core::events::WindowCloseEvent* window_close = static_cast<core::events::WindowCloseEvent*>(event);
+  } else if (event->GetEventType() == gui::events::WindowCloseEvent::EventType) {
+    gui::events::WindowCloseEvent* window_close = static_cast<gui::events::WindowCloseEvent*>(event);
     HandleWindowCloseEvent(window_close);
-  } else if (event->GetEventType() == core::events::MouseMoveEvent::EventType) {
-    core::events::MouseMoveEvent* mouse_move = static_cast<core::events::MouseMoveEvent*>(event);
+  } else if (event->GetEventType() == gui::events::MouseMoveEvent::EventType) {
+    gui::events::MouseMoveEvent* mouse_move = static_cast<gui::events::MouseMoveEvent*>(event);
     HandleMouseMoveEvent(mouse_move);
-  } else if (event->GetEventType() == core::events::MousePressEvent::EventType) {
-    core::events::MousePressEvent* mouse_press = static_cast<core::events::MousePressEvent*>(event);
+  } else if (event->GetEventType() == gui::events::MousePressEvent::EventType) {
+    gui::events::MousePressEvent* mouse_press = static_cast<gui::events::MousePressEvent*>(event);
     HandleMousePressEvent(mouse_press);
-  } else if (event->GetEventType() == core::events::QuitEvent::EventType) {
-    core::events::QuitEvent* quit_event = static_cast<core::events::QuitEvent*>(event);
+  } else if (event->GetEventType() == gui::events::QuitEvent::EventType) {
+    gui::events::QuitEvent* quit_event = static_cast<gui::events::QuitEvent*>(event);
     HandleQuitEvent(quit_event);
   }
 }
@@ -246,11 +246,11 @@ void ISimplePlayer::HandleExceptionEvent(event_t* event, common::Error err) {
   UNUSED(err);
 }
 
-common::Error ISimplePlayer::HandleRequestAudio(core::VideoState* stream,
+common::Error ISimplePlayer::HandleRequestAudio(media::VideoState* stream,
                                                 int64_t wanted_channel_layout,
                                                 int wanted_nb_channels,
                                                 int wanted_sample_rate,
-                                                core::AudioParams* audio_hw_params,
+                                                media::AudioParams* audio_hw_params,
                                                 int* audio_buff_size) {
   UNUSED(stream);
 
@@ -261,15 +261,15 @@ common::Error ISimplePlayer::HandleRequestAudio(core::VideoState* stream,
   }
 
   /* prepare audio output */
-  core::AudioParams laudio_hw_params;
+  media::AudioParams laudio_hw_params;
   int laudio_buff_size;
-  if (!core::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, sdl_audio_callback,
-                        &laudio_hw_params, &laudio_buff_size)) {
+  if (!media::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, sdl_audio_callback,
+                         &laudio_hw_params, &laudio_buff_size)) {
     return common::make_error_value("Can't init audio system.", common::Value::E_ERROR);
   }
 
   SDL_PauseAudio(0);
-  audio_params_ = new core::AudioParams(laudio_hw_params);
+  audio_params_ = new media::AudioParams(laudio_hw_params);
   audio_buff_size_ = laudio_buff_size;
 
   *audio_hw_params = *audio_params_;
@@ -281,7 +281,7 @@ void ISimplePlayer::HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src,
   SDL_MixAudio(audio_stream_ptr, src, len, ConvertToSDLVolume(volume));
 }
 
-common::Error ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
+common::Error ISimplePlayer::HandleRequestVideo(media::VideoState* stream,
                                                 int width,
                                                 int height,
                                                 int av_pixel_format,
@@ -303,9 +303,9 @@ common::Error ISimplePlayer::HandleRequestVideo(core::VideoState* stream,
   return common::Error();
 }
 
-void ISimplePlayer::HandleRequestVideoEvent(core::events::RequestVideoEvent* event) {
-  core::events::RequestVideoEvent* avent = static_cast<core::events::RequestVideoEvent*>(event);
-  core::events::FrameInfo fr = avent->GetInfo();
+void ISimplePlayer::HandleRequestVideoEvent(gui::events::RequestVideoEvent* event) {
+  gui::events::RequestVideoEvent* avent = static_cast<gui::events::RequestVideoEvent*>(event);
+  gui::events::FrameInfo fr = avent->GetInfo();
   common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
   if (err && err->IsError()) {
     SwitchToChannelErrorMode(err);
@@ -313,15 +313,15 @@ void ISimplePlayer::HandleRequestVideoEvent(core::events::RequestVideoEvent* eve
   }
 }
 
-void ISimplePlayer::HandleQuitStreamEvent(core::events::QuitStreamEvent* event) {
-  core::events::QuitStreamInfo inf = event->GetInfo();
+void ISimplePlayer::HandleQuitStreamEvent(gui::events::QuitStreamEvent* event) {
+  gui::events::QuitStreamInfo inf = event->GetInfo();
   if (inf.error && inf.error->IsError()) {
     SwitchToChannelErrorMode(inf.error);
   }
 }
 
-void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
-  core::events::PreExecInfo inf = event->GetInfo();
+void ISimplePlayer::HandlePreExecEvent(gui::events::PreExecEvent* event) {
+  gui::events::PreExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
     render_texture_ = new draw::TextureSaver;
@@ -338,8 +338,8 @@ void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
   statistic_label_->SetFont(font_);
 }
 
-void ISimplePlayer::HandlePostExecEvent(core::events::PostExecEvent* event) {
-  core::events::PostExecInfo inf = event->GetInfo();
+void ISimplePlayer::HandlePostExecEvent(gui::events::PostExecEvent* event) {
+  gui::events::PostExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     FreeStreamSafe(false);
     if (font_) {
@@ -365,28 +365,28 @@ void ISimplePlayer::HandlePostExecEvent(core::events::PostExecEvent* event) {
   }
 }
 
-void ISimplePlayer::HandleTimerEvent(core::events::TimerEvent* event) {
+void ISimplePlayer::HandleTimerEvent(gui::events::TimerEvent* event) {
   UNUSED(event);
-  const core::msec_t cur_time = core::GetCurrentMsec();
-  core::msec_t diff_currsor = cur_time - cursor_last_shown_;
+  const media::msec_t cur_time = media::GetCurrentMsec();
+  media::msec_t diff_currsor = cur_time - cursor_last_shown_;
   if (fApp->IsCursorVisible() && diff_currsor > CURSOR_HIDE_DELAY_MSEC) {
     fApp->HideCursor();
   }
 
-  core::msec_t diff_volume = cur_time - volume_last_shown_;
+  media::msec_t diff_volume = cur_time - volume_last_shown_;
   if (volume_label_->IsVisible() && diff_volume > VOLUME_HIDE_DELAY_MSEC) {
     volume_label_->SetVisible(false);
   }
   DrawDisplay();
 }
 
-void ISimplePlayer::HandleLircPressEvent(core::events::LircPressEvent* event) {
+void ISimplePlayer::HandleLircPressEvent(gui::events::LircPressEvent* event) {
   if (options_.exit_on_keydown) {
     Quit();
     return;
   }
 
-  core::events::LircPressInfo inf = event->GetInfo();
+  gui::events::LircPressInfo inf = event->GetInfo();
   switch (inf.code) {
     case LIRC_KEY_OK: {
       PauseStream();
@@ -412,13 +412,13 @@ void ISimplePlayer::HandleLircPressEvent(core::events::LircPressEvent* event) {
   }
 }
 
-void ISimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
+void ISimplePlayer::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
   if (options_.exit_on_keydown) {
     Quit();
     return;
   }
 
-  const core::events::KeyPressInfo inf = event->GetInfo();
+  const gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint32 modifier = inf.ks.mod;
   if (modifier == 0) {
@@ -495,14 +495,14 @@ void ISimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   }
 }
 
-void ISimplePlayer::HandleMousePressEvent(core::events::MousePressEvent* event) {
+void ISimplePlayer::HandleMousePressEvent(gui::events::MousePressEvent* event) {
   if (options_.exit_on_mousedown) {
     Quit();
     return;
   }
 
-  core::msec_t cur_time = core::GetCurrentMsec();
-  core::events::MousePressInfo inf = event->GetInfo();
+  media::msec_t cur_time = media::GetCurrentMsec();
+  gui::events::MousePressInfo inf = event->GetInfo();
   if (inf.mevent.button == SDL_BUTTON_LEFT) {
     if (cur_time - last_mouse_left_click_ <= 500) {  // double click 0.5 sec
       bool full_screen = !options_.is_full_screen;
@@ -519,36 +519,36 @@ void ISimplePlayer::HandleMousePressEvent(core::events::MousePressEvent* event) 
   cursor_last_shown_ = cur_time;
 }
 
-void ISimplePlayer::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
+void ISimplePlayer::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
   UNUSED(event);
   if (!fApp->IsCursorVisible()) {
     fApp->ShowCursor();
   }
-  core::msec_t cur_time = core::GetCurrentMsec();
+  media::msec_t cur_time = media::GetCurrentMsec();
   cursor_last_shown_ = cur_time;
 }
 
-void ISimplePlayer::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {
-  core::events::WindowResizeInfo inf = event->GetInfo();
+void ISimplePlayer::HandleWindowResizeEvent(gui::events::WindowResizeEvent* event) {
+  gui::events::WindowResizeInfo inf = event->GetInfo();
   window_size_ = inf.size;
   if (stream_) {
     stream_->RefreshRequest();
   }
 }
 
-void ISimplePlayer::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
+void ISimplePlayer::HandleWindowExposeEvent(gui::events::WindowExposeEvent* event) {
   UNUSED(event);
   if (stream_) {
     stream_->RefreshRequest();
   }
 }
 
-void ISimplePlayer::HandleWindowCloseEvent(core::events::WindowCloseEvent* event) {
+void ISimplePlayer::HandleWindowCloseEvent(gui::events::WindowCloseEvent* event) {
   UNUSED(event);
   Quit();
 }
 
-void ISimplePlayer::HandleQuitEvent(core::events::QuitEvent* event) {
+void ISimplePlayer::HandleQuitEvent(gui::events::QuitEvent* event) {
   UNUSED(event);
   Quit();
 }
@@ -560,7 +560,7 @@ void ISimplePlayer::FreeStreamSafe(bool fast_cleanup) {
   }
 
   if (fast_cleanup) {
-    core::VideoState* vs = stream_;
+    media::VideoState* vs = stream_;
     auto tid = exec_tid_;
 
     exec_tid_.reset();
@@ -591,13 +591,13 @@ void ISimplePlayer::UpdateDisplayInterval(AVRational fps) {
 
   double frames_per_sec = fps.den / static_cast<double>(fps.num);
   update_video_timer_interval_msec_ = static_cast<uint32_t>(frames_per_sec * 1000);
-  core::application::Sdl2Application* app = static_cast<core::application::Sdl2Application*>(fApp);
+  gui::application::Sdl2Application* app = static_cast<gui::application::Sdl2Application*>(fApp);
   app->SetDisplayUpdateTimeout(update_video_timer_interval_msec_);
 }
 
 void ISimplePlayer::sdl_audio_callback(void* user_data, uint8_t* stream, int len) {
   ISimplePlayer* player = static_cast<ISimplePlayer*>(user_data);
-  core::VideoState* st = player->stream_;
+  media::VideoState* st = player->stream_;
   if (!player->muted_ && st && st->IsStreamReady()) {
     st->UpdateAudioBuffer(stream, len, player->options_.audio_volume);
   } else {
@@ -607,7 +607,7 @@ void ISimplePlayer::sdl_audio_callback(void* user_data, uint8_t* stream, int len
 
 void ISimplePlayer::UpdateVolume(int8_t step) {
   options_.audio_volume = options_.audio_volume + step;
-  core::msec_t cur_time = core::GetCurrentMsec();
+  media::msec_t cur_time = media::GetCurrentMsec();
   volume_last_shown_ = cur_time;
 
   // update ui variables
@@ -658,18 +658,18 @@ void ISimplePlayer::DrawFailedStatus() {
 
 void ISimplePlayer::DrawPlayingStatus() {
   CHECK(THREAD_MANAGER()->IsMainThread());
-  core::frames::VideoFrame* frame = stream_->TryToGetVideoFrame();
+  media::frames::VideoFrame* frame = stream_->TryToGetVideoFrame();
   uint32_t frames_per_sec = 1000 / update_video_timer_interval_msec_;
   uint32_t mod = frames_per_sec * no_data_panic_sec;
   bool need_to_check_is_alive = video_frames_handled_ % mod == 0;
   if (need_to_check_is_alive) {
     INFO_LOG() << "No data checkpoint.";
-    core::VideoState::stats_t stats = stream_->GetStatistic();
-    core::clock64_t cl = stats->master_pts;
-    if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != core::invalid_clock())) {
+    media::VideoState::stats_t stats = stream_->GetStatistic();
+    media::clock64_t cl = stats->master_pts;
+    if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != media::invalid_clock())) {
       common::Error err = common::make_error_value("No input data!", common::Value::E_ERROR);
       SwitchToChannelErrorMode(err);
-      last_pts_checkpoint_ = core::invalid_clock();
+      last_pts_checkpoint_ = media::invalid_clock();
       return;
     }
     last_pts_checkpoint_ = cl;
@@ -762,33 +762,33 @@ void ISimplePlayer::DrawStatistic() {
     return;
   }
 
-  core::VideoState::stats_t stats = std::make_shared<core::Stats>();
+  media::VideoState::stats_t stats = std::make_shared<media::Stats>();
   if (stream_) {
     stats = stream_->GetStatistic();
   }
 
   const SDL_Rect statistic_rect = GetStatisticRect();
-  const bool is_unknown = stats->fmt == core::UNKNOWN_STREAM;
+  const bool is_unknown = stats->fmt == media::UNKNOWN_STREAM;
 
-  std::string fmt_text = (is_unknown ? "N/A" : core::ConvertStreamFormatToString(stats->fmt));
+  std::string fmt_text = (is_unknown ? "N/A" : media::ConvertStreamFormatToString(stats->fmt));
   std::string hwaccel_text = (is_unknown ? "N/A" : common::ConvertToString(stats->active_hwaccel));
   std::transform(hwaccel_text.begin(), hwaccel_text.end(), hwaccel_text.begin(), ::toupper);
   double pts = stats->master_clock / 1000.0;
   std::string pts_text = (is_unknown ? "N/A" : common::ConvertToString(pts, 3));
   std::string fps_text = (is_unknown ? "N/A" : common::ConvertToString(stats->GetFps()));
-  core::clock64_t diff = stats->GetDiffStreams();
+  media::clock64_t diff = stats->GetDiffStreams();
   std::string diff_text = (is_unknown ? "N/A" : common::ConvertToString(diff));
-  std::string fd_text = (stats->fmt & core::HAVE_VIDEO_STREAM
+  std::string fd_text = (stats->fmt & media::HAVE_VIDEO_STREAM
                              ? common::MemSPrintf("%d/%d", stats->frame_drops_early, stats->frame_drops_late)
                              : "N/A");
   std::string vbitrate_text =
-      (stats->fmt & core::HAVE_VIDEO_STREAM ? common::ConvertToString(stats->video_bandwidth * 8 / 1024) : "N/A");
+      (stats->fmt & media::HAVE_VIDEO_STREAM ? common::ConvertToString(stats->video_bandwidth * 8 / 1024) : "N/A");
   std::string abitrate_text =
-      (stats->fmt & core::HAVE_AUDIO_STREAM ? common::ConvertToString(stats->audio_bandwidth * 8 / 1024) : "N/A");
+      (stats->fmt & media::HAVE_AUDIO_STREAM ? common::ConvertToString(stats->audio_bandwidth * 8 / 1024) : "N/A");
   std::string video_queue_text =
-      (stats->fmt & core::HAVE_VIDEO_STREAM ? common::ConvertToString(stats->video_queue_size / 1024) : "N/A");
+      (stats->fmt & media::HAVE_VIDEO_STREAM ? common::ConvertToString(stats->video_queue_size / 1024) : "N/A");
   std::string audio_queue_text =
-      (stats->fmt & core::HAVE_AUDIO_STREAM ? common::ConvertToString(stats->audio_queue_size / 1024) : "N/A");
+      (stats->fmt & media::HAVE_AUDIO_STREAM ? common::ConvertToString(stats->audio_queue_size / 1024) : "N/A");
 
 #define STATS_LINES_COUNT 10
   const std::string result_text = common::MemSPrintf(
@@ -886,7 +886,7 @@ void ISimplePlayer::PauseStream() {
   }
 }
 
-void ISimplePlayer::SetStream(core::VideoState* stream) {
+void ISimplePlayer::SetStream(media::VideoState* stream) {
   FreeStreamSafe(true);
   stream_ = stream;
 
@@ -897,7 +897,7 @@ void ISimplePlayer::SetStream(core::VideoState* stream) {
   }
 
   stream_->SetHandler(this);
-  exec_tid_ = THREAD_MANAGER()->CreateThread(&core::VideoState::Exec, stream_);
+  exec_tid_ = THREAD_MANAGER()->CreateThread(&media::VideoState::Exec, stream_);
   bool is_started = exec_tid_->Start();
   if (!is_started) {
     common::Error err = common::make_error_value("Failed to start stream", common::Value::E_ERROR);
@@ -905,15 +905,15 @@ void ISimplePlayer::SetStream(core::VideoState* stream) {
   }
 }
 
-core::VideoState* ISimplePlayer::CreateStream(stream_id sid,
-                                              const common::uri::Uri& uri,
-                                              core::AppOptions opt,
-                                              core::ComplexOptions copt) {
+media::VideoState* ISimplePlayer::CreateStream(stream_id sid,
+                                               const common::uri::Uri& uri,
+                                               media::AppOptions opt,
+                                               media::ComplexOptions copt) {
   if (!uri.IsValid()) {
     return nullptr;
   }
 
-  core::VideoState* stream = new core::VideoState(sid, uri, opt, copt);
+  media::VideoState* stream = new media::VideoState(sid, uri, opt, copt);
   options_.last_showed_channel_id = sid;
   return stream;
 }

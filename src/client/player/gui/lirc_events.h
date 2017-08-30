@@ -40,7 +40,7 @@ bool ConvertFromString(const std::string& from, LircCode* out);
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 struct LircPressInfo {
@@ -49,7 +49,7 @@ struct LircPressInfo {
 typedef EventBase<LIRC_PRESS_EVENT, LircPressInfo> LircPressEvent;
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

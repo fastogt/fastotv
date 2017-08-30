@@ -34,7 +34,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 bool init_audio_params(int64_t wanted_channel_layout, int freq, int channels, AudioParams* audio_hw_params) {
   if (!audio_hw_params) {
@@ -136,7 +136,7 @@ bool audio_open(void* opaque,
   return true;
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

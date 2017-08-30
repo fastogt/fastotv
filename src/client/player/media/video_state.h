@@ -62,7 +62,7 @@ class Thread;
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 class VideoStateHandler;
 
@@ -251,7 +251,7 @@ class VideoState {
   std::mutex read_thread_mutex_;
 };
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

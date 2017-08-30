@@ -21,19 +21,19 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
-StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {}
+StreamInfo::StreamInfo(media::VideoState* stream) : stream_(stream) {}
 
-FrameInfo::FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio)
+FrameInfo::FrameInfo(media::VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio)
     : StreamInfo(stream), width(width), height(height), av_pixel_format(av_pixel_format), aspect_ratio(aspect_ratio) {}
 
-QuitStreamInfo::QuitStreamInfo(VideoState* stream, int exit_code, common::Error err)
+QuitStreamInfo::QuitStreamInfo(media::VideoState* stream, int exit_code, common::Error err)
     : StreamInfo(stream), exit_code(exit_code), error(err) {}
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

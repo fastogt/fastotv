@@ -40,7 +40,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 typedef struct VDPAUContext {
   AVBufferRef* hw_frames_ctx;
@@ -171,7 +171,7 @@ void vdpau_uninit(AVCodecContext* decoder_ctx) {
   av_freep(&decoder_ctx->hwaccel_context);
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

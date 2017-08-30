@@ -27,7 +27,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 struct MouseMoveInfo {
@@ -58,7 +58,7 @@ typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
 typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

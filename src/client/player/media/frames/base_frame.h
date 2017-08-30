@@ -29,7 +29,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 namespace frames {
 
 struct BaseFrame {
@@ -50,7 +50,7 @@ struct BaseFrame {
 };
 
 }  // namespace frames
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

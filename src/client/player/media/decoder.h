@@ -32,7 +32,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 class PacketQueue;
 class Decoder {
@@ -88,7 +88,7 @@ class VideoDecoder : public IFrameDecoder {
   int DecodeFrame(AVFrame* frame) override;
 };
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

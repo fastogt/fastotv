@@ -27,19 +27,19 @@ namespace player {
 
 StreamHandler::~StreamHandler() {}
 
-void StreamHandler::HandleFrameResize(core::VideoState* stream,
+void StreamHandler::HandleFrameResize(media::VideoState* stream,
                                       int width,
                                       int height,
                                       int av_pixel_format,
                                       AVRational aspect_ratio) {
-  core::events::RequestVideoEvent* qevent = new core::events::RequestVideoEvent(
-      stream, core::events::FrameInfo(stream, width, height, av_pixel_format, aspect_ratio));
+  gui::events::RequestVideoEvent* qevent = new gui::events::RequestVideoEvent(
+      stream, gui::events::FrameInfo(stream, width, height, av_pixel_format, aspect_ratio));
   fApp->PostEvent(qevent);
 }
 
-void StreamHandler::HandleQuitStream(core::VideoState* stream, int exit_code, common::Error err) {
-  core::events::QuitStreamEvent* qevent =
-      new core::events::QuitStreamEvent(stream, core::events::QuitStreamInfo(stream, exit_code, err));
+void StreamHandler::HandleQuitStream(media::VideoState* stream, int exit_code, common::Error err) {
+  gui::events::QuitStreamEvent* qevent =
+      new gui::events::QuitStreamEvent(stream, gui::events::QuitStreamInfo(stream, exit_code, err));
   fApp->PostEvent(qevent);
 }
 

@@ -25,7 +25,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 AppOptions::AppOptions()
     : autorotate(true),
@@ -115,7 +115,7 @@ ComplexOptions& ComplexOptions::operator=(const ComplexOptions& rhs) {
   return *this;
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

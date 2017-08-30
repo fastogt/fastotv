@@ -29,7 +29,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 namespace frames {
 
 template <typename T, size_t buffer_size>
@@ -157,7 +157,7 @@ class RingBuffer {
 };
 
 }  // namespace frames
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

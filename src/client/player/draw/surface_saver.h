@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <SDL2/SDL_surface.h>    // for SDL_Surface
-#include <SDL2/SDL_render.h>     // for SDL_Renderer, SDL_Texture
+#include <SDL2/SDL_render.h>   // for SDL_Renderer, SDL_Texture
+#include <SDL2/SDL_surface.h>  // for SDL_Surface
 
 #include <common/macros.h>
 

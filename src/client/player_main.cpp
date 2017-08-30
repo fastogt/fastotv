@@ -27,9 +27,9 @@ extern "C" {
 
 #include <common/file_system.h>  // for File, create_directory
 
-#include "client/load_config.h"
-#include "client/player.h"    // for Player
 #include "client/cmdutils.h"  // for DictionaryOptions, show_...
+#include "client/load_config.h"
+#include "client/player.h"  // for Player
 #include "client/player/ffmpeg_application.h"
 #include "client/simple_player.h"
 
@@ -83,7 +83,7 @@ int main_simple_player_application(int argc,
   AVDictionary* codec_opts = NULL;
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
-  fastotv::client::player::core::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
+  fastotv::client::player::media::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
   auto player = new fastotv::client::SimplePlayer(main_options.player_options);
   player->SetUrlLocation("0", stream_url, main_options.app_options, copt);
   res = app.Exec();

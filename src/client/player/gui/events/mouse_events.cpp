@@ -21,7 +21,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 MouseMoveInfo::MouseMoveInfo(const SDL_MouseMotionEvent& event) : mevent(event) {}
@@ -43,7 +43,7 @@ SDL_Point MouseReleaseInfo::GetMousePoint() const {
 }
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

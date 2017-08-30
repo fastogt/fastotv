@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "client/player/media/types.h"
 #include "client/player/draw/draw.h"
+#include "client/player/media/types.h"
 
 namespace fastotv {
 namespace client {

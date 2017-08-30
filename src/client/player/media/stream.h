@@ -31,12 +31,12 @@ extern "C" {
 
 #include "client/player/media/bandwidth_estimation.h"  // for DesireBytesPerSec
 #include "client/player/media/types.h"                 // for clock64_t
-#include "client_server_types.h"                      // for bandwidth_t
+#include "client_server_types.h"                       // for bandwidth_t
 
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 class Clock;
 class PacketQueue;
@@ -116,7 +116,7 @@ class AudioStream : public Stream {
   virtual bool Open(int index, AVStream* av_stream_st) override;
 };
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

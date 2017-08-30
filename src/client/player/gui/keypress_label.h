@@ -38,8 +38,8 @@ class KeyPressLabel : public Label {
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
-  virtual void HandleKeyPressEvent(player::core::events::KeyPressEvent* event);
-  virtual void HandleKeyReleaseEvent(player::core::events::KeyReleaseEvent* event);
+  virtual void HandleKeyPressEvent(player::gui::events::KeyPressEvent* event);
+  virtual void HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event);
 };
 
 }  // namespace gui

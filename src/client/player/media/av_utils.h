@@ -32,7 +32,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 double q2d_diff(AVRational a);
 
@@ -93,7 +93,7 @@ AVDictionary* filter_codec_opts(AVDictionary* opts,
  */
 AVDictionary** setup_find_stream_info_opts(AVFormatContext* s, AVDictionary* codec_opts);
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

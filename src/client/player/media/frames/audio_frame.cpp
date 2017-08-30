@@ -21,13 +21,13 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 namespace frames {
 
 AudioFrame::AudioFrame() : BaseFrame(), format(AV_SAMPLE_FMT_NONE) {}
 
 }  // namespace frames
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -23,7 +23,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 typedef uint32_t stream_format_t;
 enum StreamFmt : stream_format_t { UNKNOWN_STREAM = 0, HAVE_AUDIO_STREAM = (1 << 0), HAVE_VIDEO_STREAM = (1 << 1) };
@@ -57,7 +57,7 @@ struct Stats {  // stream realtime statistic
 
 std::string ConvertStreamFormatToString(stream_format_t fmt);
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

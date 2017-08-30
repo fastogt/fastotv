@@ -29,7 +29,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 class VideoState;
 struct AudioParams;
@@ -63,7 +63,7 @@ class VideoStateHandler {
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) = 0;
 };
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

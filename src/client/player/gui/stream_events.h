@@ -29,18 +29,20 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 class VideoState;
+}
+namespace gui {
 namespace events {
 
 struct StreamInfo {
-  explicit StreamInfo(VideoState* stream);
+  explicit StreamInfo(media::VideoState* stream);
 
-  VideoState* stream_;
+  media::VideoState* stream_;
 };
 
 struct FrameInfo : public StreamInfo {
-  FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio);
+  FrameInfo(media::VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio);
   int width;
   int height;
   int av_pixel_format;
@@ -48,7 +50,7 @@ struct FrameInfo : public StreamInfo {
 };
 
 struct QuitStreamInfo : public StreamInfo {
-  QuitStreamInfo(VideoState* stream, int exit_code, common::Error err);
+  QuitStreamInfo(media::VideoState* stream, int exit_code, common::Error err);
   int exit_code;
   common::Error error;
 };
@@ -57,7 +59,7 @@ typedef EventBase<REQUEST_VIDEO_EVENT, FrameInfo> RequestVideoEvent;
 typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

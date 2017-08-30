@@ -23,7 +23,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 TimeInfo::TimeInfo() : time_millisecond(common::time::current_mstime()) {}
@@ -33,7 +33,7 @@ PreExecInfo::PreExecInfo(int code) : code(code) {}
 PostExecInfo::PostExecInfo(int code) : code(code) {}
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

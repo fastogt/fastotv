@@ -15,7 +15,8 @@ extern "C" {
 
 using namespace fastotv;
 using namespace fastotv::client;
-using namespace fastotv::client::player::core;
+using namespace fastotv::client::player::gui;
+using namespace fastotv::client::player::media;
 
 namespace {
 struct DictionaryOptions {
@@ -47,7 +48,7 @@ class FakeHandler : public VideoStateHandler {
                                            int64_t wanted_channel_layout,
                                            int wanted_nb_channels,
                                            int wanted_sample_rate,
-                                           player::core::AudioParams* audio_hw_params,
+                                           player::media::AudioParams* audio_hw_params,
                                            int* audio_buff_size) override {
     UNUSED(stream);
     UNUSED(wanted_channel_layout);
@@ -55,8 +56,8 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(wanted_sample_rate);
     UNUSED(audio_buff_size);
 
-    player::core::AudioParams laudio_hw_params;
-    if (!player::core::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
+    player::media::AudioParams laudio_hw_params;
+    if (!player::media::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
       return common::make_error_value("Failed to init audio.", common::Value::E_ERROR);
     }
 
@@ -97,8 +98,8 @@ class FakeHandler : public VideoStateHandler {
   }
 
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) override {
-    player::core::events::QuitStreamEvent* qevent =
-        new player::core::events::QuitStreamEvent(stream, player::core::events::QuitStreamInfo(stream, exit_code, err));
+    player::gui::events::QuitStreamEvent* qevent =
+        new player::gui::events::QuitStreamEvent(stream, player::gui::events::QuitStreamInfo(stream, exit_code, err));
     fApp->PostEvent(qevent);
   }
 };
@@ -122,9 +123,9 @@ class FakeApplication : public common::application::IApplication {
     const stream_id id = "unique";
     // wget http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
     const common::uri::Uri uri = common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
-    player::core::AppOptions opt;
+    player::media::AppOptions opt;
     DictionaryOptions* dict = new DictionaryOptions;
-    const player::core::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
+    const player::media::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
     VideoStateHandler* handler = new FakeHandler;
     VideoState* vs = new VideoState(id, uri, opt, copt);
     vs->SetHandler(handler);
@@ -160,15 +161,15 @@ class FakeApplication : public common::application::IApplication {
 
   virtual void PostEvent(event_t* event) override {
     events::Event* fevent = static_cast<events::Event*>(event);
-    if (fevent->GetEventType() == player::core::events::RequestVideoEvent::EventType) {
-      player::core::events::RequestVideoEvent* avent = static_cast<player::core::events::RequestVideoEvent*>(event);
-      player::core::events::FrameInfo fr = avent->GetInfo();
+    if (fevent->GetEventType() == player::gui::events::RequestVideoEvent::EventType) {
+      player::gui::events::RequestVideoEvent* avent = static_cast<player::gui::events::RequestVideoEvent*>(event);
+      player::gui::events::FrameInfo fr = avent->GetInfo();
       common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
       if (err && err->IsError()) {
         fApp->Exit(EXIT_FAILURE);
       }
-    } else if (fevent->GetEventType() == player::core::events::QuitStreamEvent::EventType) {
-      // events::QuitStreamEvent* qevent = static_cast<core::events::QuitStreamEvent*>(event);
+    } else if (fevent->GetEventType() == player::gui::events::QuitStreamEvent::EventType) {
+      // events::QuitStreamEvent* qevent = static_cast<gui::events::QuitStreamEvent*>(event);
       fApp->Exit(EXIT_SUCCESS);
     } else {
       NOTREACHED();

@@ -17,7 +17,7 @@
 */
 
 #include "client/player/media/app_options.h"  // for AppOptions
-#include "player_options.h"                  // for PlayerOptions
+#include "player_options.h"                   // for PlayerOptions
 
 namespace fastotv {
 namespace client {
@@ -30,7 +30,7 @@ struct TVConfig {
   bool power_off_on_exit;
   common::logging::LEVEL_LOG loglevel;
 
-  core::AppOptions app_options;
+  media::AppOptions app_options;
   PlayerOptions player_options;
 };
 

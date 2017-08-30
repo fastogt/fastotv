@@ -31,7 +31,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 class TvConfig {};
@@ -62,7 +62,7 @@ typedef EventBase<CLIENT_CHAT_MESSAGE_RECEIVE_EVENT, ChatMessage> ReceiveChatMes
 typedef EventBase<CLIENT_BANDWIDTH_ESTIMATION_EVENT, BandwidtInfo> BandwidthEstimationEvent;
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

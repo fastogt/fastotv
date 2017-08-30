@@ -40,7 +40,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 typedef struct VAAPIDecoderContext {
   AVBufferRef* device_ref;
@@ -208,7 +208,7 @@ void vaapi_uninit(AVCodecContext* decoder_ctx) {
   ist->hwaccel_retrieve_data = NULL;
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

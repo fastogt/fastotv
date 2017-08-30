@@ -25,7 +25,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 struct TimeInfo {
@@ -54,7 +54,7 @@ typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
 typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

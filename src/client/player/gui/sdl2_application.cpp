@@ -54,7 +54,7 @@ bool InRange(T a, T amin, T amax) {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace application {
 
 Sdl2Application::Sdl2Application(int argc, char** argv)
@@ -304,7 +304,7 @@ void Sdl2Application::HandleQuitEvent(SDL_QuitEvent* event) {
 }
 
 }  // namespace application
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

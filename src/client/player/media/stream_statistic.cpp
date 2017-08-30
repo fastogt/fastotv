@@ -26,16 +26,16 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 Stats::Stats()
     : frame_drops_early(0),
       frame_drops_late(0),
       frame_processed(0),
-      master_pts(core::invalid_clock()),
-      master_clock(core::invalid_clock()),
-      audio_clock(core::invalid_clock()),
-      video_clock(core::invalid_clock()),
+      master_pts(media::invalid_clock()),
+      master_clock(media::invalid_clock()),
+      audio_clock(media::invalid_clock()),
+      video_clock(media::invalid_clock()),
       fmt(UNKNOWN_STREAM),
       audio_queue_size(0),
       video_queue_size(0),
@@ -67,9 +67,9 @@ double Stats::GetFps() const {
 }
 
 std::string ConvertStreamFormatToString(stream_format_t fmt) {
-  if (fmt == (core::HAVE_VIDEO_STREAM | core::HAVE_AUDIO_STREAM)) {
+  if (fmt == (media::HAVE_VIDEO_STREAM | media::HAVE_AUDIO_STREAM)) {
     return VIDEO_AUDIO_TEXT;
-  } else if (fmt == core::HAVE_VIDEO_STREAM) {
+  } else if (fmt == media::HAVE_VIDEO_STREAM) {
     return ONLY_VIDEO_TEXT;
   } else if (fmt == HAVE_AUDIO_STREAM) {
     return ONLY_AUDIO_TEXT;
@@ -78,7 +78,7 @@ std::string ConvertStreamFormatToString(stream_format_t fmt) {
   return UNKNOWN_STREAM_TEXT;
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

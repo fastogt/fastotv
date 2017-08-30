@@ -21,7 +21,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 KeyPressInfo::KeyPressInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), ks(ks) {}
@@ -29,7 +29,7 @@ KeyPressInfo::KeyPressInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), k
 KeyReleaseInfo::KeyReleaseInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), ks(ks) {}
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

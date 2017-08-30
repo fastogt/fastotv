@@ -31,10 +31,10 @@ namespace player {
 namespace draw {
 
 common::Error CreateMainWindow(Size size,
-                           bool is_full_screen,
-                           const std::string& title,
-                           SDL_Renderer** renderer,
-                           SDL_Window** window) WARN_UNUSED_RESULT;
+                               bool is_full_screen,
+                               const std::string& title,
+                               SDL_Renderer** renderer,
+                               SDL_Window** window) WARN_UNUSED_RESULT;
 
 common::Error CreateTexture(SDL_Renderer* renderer,
                             Uint32 new_format,

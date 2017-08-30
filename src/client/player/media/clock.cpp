@@ -21,7 +21,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 Clock::Clock() : paused_(false), speed_(1.0) {
   SetClock(invalid_clock());
@@ -59,7 +59,7 @@ void Clock::SetPaused(bool paused) {
   paused_ = paused;
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

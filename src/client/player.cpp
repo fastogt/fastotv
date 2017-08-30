@@ -76,8 +76,8 @@ const SDL_Color Player::info_channel_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQ
 
 Player::Player(const std::string& app_directory_absolute_path,
                const player::PlayerOptions& options,
-               const player::core::AppOptions& opt,
-               const player::core::ComplexOptions& copt)
+               const player::media::AppOptions& opt,
+               const player::media::ComplexOptions& copt)
     : ISimplePlayer(options),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
@@ -98,19 +98,19 @@ Player::Player(const std::string& app_directory_absolute_path,
       show_programms_list_(true),
       last_programms_line_(0),
       chat_window_(nullptr) {
-  fApp->Subscribe(this, player::core::events::BandwidthEstimationEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::BandwidthEstimationEvent::EventType);
 
-  fApp->Subscribe(this, player::core::events::ClientDisconnectedEvent::EventType);
-  fApp->Subscribe(this, player::core::events::ClientConnectedEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::ClientDisconnectedEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::ClientConnectedEvent::EventType);
 
-  fApp->Subscribe(this, player::core::events::ClientAuthorizedEvent::EventType);
-  fApp->Subscribe(this, player::core::events::ClientUnAuthorizedEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::ClientAuthorizedEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::ClientUnAuthorizedEvent::EventType);
 
-  fApp->Subscribe(this, player::core::events::ClientConfigChangeEvent::EventType);
-  fApp->Subscribe(this, player::core::events::ReceiveChannelsEvent::EventType);
-  fApp->Subscribe(this, player::core::events::ReceiveRuntimeChannelEvent::EventType);
-  fApp->Subscribe(this, player::core::events::SendChatMessageEvent::EventType);
-  fApp->Subscribe(this, player::core::events::ReceiveChatMessageEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::ClientConfigChangeEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::ReceiveChannelsEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::ReceiveRuntimeChannelEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::SendChatMessageEvent::EventType);
+  fApp->Subscribe(this, player::gui::events::ReceiveChatMessageEvent::EventType);
 
   chat_window_ = new ChatWindow;
   chat_window_->SetVisible(false);
@@ -123,45 +123,45 @@ Player::~Player() {
 }
 
 void Player::HandleEvent(event_t* event) {
-  if (event->GetEventType() == player::core::events::BandwidthEstimationEvent::EventType) {
-    player::core::events::BandwidthEstimationEvent* band_event =
-        static_cast<player::core::events::BandwidthEstimationEvent*>(event);
+  if (event->GetEventType() == player::gui::events::BandwidthEstimationEvent::EventType) {
+    player::gui::events::BandwidthEstimationEvent* band_event =
+        static_cast<player::gui::events::BandwidthEstimationEvent*>(event);
     HandleBandwidthEstimationEvent(band_event);
-  } else if (event->GetEventType() == player::core::events::ClientConnectedEvent::EventType) {
-    player::core::events::ClientConnectedEvent* connect_event =
-        static_cast<player::core::events::ClientConnectedEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ClientConnectedEvent::EventType) {
+    player::gui::events::ClientConnectedEvent* connect_event =
+        static_cast<player::gui::events::ClientConnectedEvent*>(event);
     HandleClientConnectedEvent(connect_event);
-  } else if (event->GetEventType() == player::core::events::ClientDisconnectedEvent::EventType) {
-    player::core::events::ClientDisconnectedEvent* disc_event =
-        static_cast<player::core::events::ClientDisconnectedEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ClientDisconnectedEvent::EventType) {
+    player::gui::events::ClientDisconnectedEvent* disc_event =
+        static_cast<player::gui::events::ClientDisconnectedEvent*>(event);
     HandleClientDisconnectedEvent(disc_event);
-  } else if (event->GetEventType() == player::core::events::ClientAuthorizedEvent::EventType) {
-    player::core::events::ClientAuthorizedEvent* auth_event =
-        static_cast<player::core::events::ClientAuthorizedEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ClientAuthorizedEvent::EventType) {
+    player::gui::events::ClientAuthorizedEvent* auth_event =
+        static_cast<player::gui::events::ClientAuthorizedEvent*>(event);
     HandleClientAuthorizedEvent(auth_event);
-  } else if (event->GetEventType() == player::core::events::ClientUnAuthorizedEvent::EventType) {
-    player::core::events::ClientUnAuthorizedEvent* unauth_event =
-        static_cast<player::core::events::ClientUnAuthorizedEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ClientUnAuthorizedEvent::EventType) {
+    player::gui::events::ClientUnAuthorizedEvent* unauth_event =
+        static_cast<player::gui::events::ClientUnAuthorizedEvent*>(event);
     HandleClientUnAuthorizedEvent(unauth_event);
-  } else if (event->GetEventType() == player::core::events::ClientConfigChangeEvent::EventType) {
-    player::core::events::ClientConfigChangeEvent* conf_change_event =
-        static_cast<player::core::events::ClientConfigChangeEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ClientConfigChangeEvent::EventType) {
+    player::gui::events::ClientConfigChangeEvent* conf_change_event =
+        static_cast<player::gui::events::ClientConfigChangeEvent*>(event);
     HandleClientConfigChangeEvent(conf_change_event);
-  } else if (event->GetEventType() == player::core::events::ReceiveChannelsEvent::EventType) {
-    player::core::events::ReceiveChannelsEvent* channels_event =
-        static_cast<player::core::events::ReceiveChannelsEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ReceiveChannelsEvent::EventType) {
+    player::gui::events::ReceiveChannelsEvent* channels_event =
+        static_cast<player::gui::events::ReceiveChannelsEvent*>(event);
     HandleReceiveChannelsEvent(channels_event);
-  } else if (event->GetEventType() == player::core::events::ReceiveRuntimeChannelEvent::EventType) {
-    player::core::events::ReceiveRuntimeChannelEvent* channel_event =
-        static_cast<player::core::events::ReceiveRuntimeChannelEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ReceiveRuntimeChannelEvent::EventType) {
+    player::gui::events::ReceiveRuntimeChannelEvent* channel_event =
+        static_cast<player::gui::events::ReceiveRuntimeChannelEvent*>(event);
     HandleReceiveRuntimeChannelEvent(channel_event);
-  } else if (event->GetEventType() == player::core::events::SendChatMessageEvent::EventType) {
-    player::core::events::SendChatMessageEvent* chat_msg_event =
-        static_cast<player::core::events::SendChatMessageEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::SendChatMessageEvent::EventType) {
+    player::gui::events::SendChatMessageEvent* chat_msg_event =
+        static_cast<player::gui::events::SendChatMessageEvent*>(event);
     HandleSendChatMessageEvent(chat_msg_event);
-  } else if (event->GetEventType() == player::core::events::ReceiveChatMessageEvent::EventType) {
-    player::core::events::ReceiveChatMessageEvent* chat_msg_event =
-        static_cast<player::core::events::ReceiveChatMessageEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ReceiveChatMessageEvent::EventType) {
+    player::gui::events::ReceiveChatMessageEvent* chat_msg_event =
+        static_cast<player::gui::events::ReceiveChatMessageEvent*>(event);
     HandleReceiveChatMessageEvent(chat_msg_event);
   }
 
@@ -169,25 +169,25 @@ void Player::HandleEvent(event_t* event) {
 }
 
 void Player::HandleExceptionEvent(event_t* event, common::Error err) {
-  if (event->GetEventType() == player::core::events::ClientConnectedEvent::EventType) {
-    // core::events::ClientConnectedEvent* connect_event =
-    //    static_cast<core::events::ClientConnectedEvent*>(event);
+  if (event->GetEventType() == player::gui::events::ClientConnectedEvent::EventType) {
+    // gui::events::ClientConnectedEvent* connect_event =
+    //    static_cast<gui::events::ClientConnectedEvent*>(event);
     SwitchToDisconnectMode();
-  } else if (event->GetEventType() == player::core::events::ClientAuthorizedEvent::EventType) {
-    // core::events::ClientConnectedEvent* connect_event =
-    //    static_cast<core::events::ClientConnectedEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::ClientAuthorizedEvent::EventType) {
+    // gui::events::ClientConnectedEvent* connect_event =
+    //    static_cast<gui::events::ClientConnectedEvent*>(event);
     SwitchToUnAuthorizeMode();
-  } else if (event->GetEventType() == player::core::events::BandwidthEstimationEvent::EventType) {
-    player::core::events::BandwidthEstimationEvent* band_event =
-        static_cast<player::core::events::BandwidthEstimationEvent*>(event);
+  } else if (event->GetEventType() == player::gui::events::BandwidthEstimationEvent::EventType) {
+    player::gui::events::BandwidthEstimationEvent* band_event =
+        static_cast<player::gui::events::BandwidthEstimationEvent*>(event);
     HandleBandwidthEstimationEvent(band_event);
   }
 
   base_class::HandleExceptionEvent(event, err);
 }
 
-void Player::HandlePreExecEvent(player::core::events::PreExecEvent* event) {
-  player::core::events::PreExecInfo inf = event->GetInfo();
+void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
+  player::gui::events::PreExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     offline_channel_texture_ = MakeSurfaceFromImageRelativePath(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
@@ -205,14 +205,14 @@ void Player::HandlePreExecEvent(player::core::events::PreExecEvent* event) {
   chat_window_->SetFont(GetFont());
 }
 
-void Player::HandleTimerEvent(player::core::events::TimerEvent* event) {
-  player::core::msec_t cur_time = player::core::GetCurrentMsec();
-  player::core::msec_t diff_footer = cur_time - footer_last_shown_;
+void Player::HandleTimerEvent(player::gui::events::TimerEvent* event) {
+  player::media::msec_t cur_time = player::media::GetCurrentMsec();
+  player::media::msec_t diff_footer = cur_time - footer_last_shown_;
   if (show_footer_ && diff_footer > FOOTER_HIDE_DELAY_MSEC) {
     show_footer_ = false;
   }
 
-  player::core::msec_t diff_keypad = cur_time - keypad_last_shown_;
+  player::media::msec_t diff_keypad = cur_time - keypad_last_shown_;
   if (show_keypad_ && diff_keypad > KEYPAD_HIDE_DELAY_MSEC) {
     ResetKeyPad();
   }
@@ -220,8 +220,8 @@ void Player::HandleTimerEvent(player::core::events::TimerEvent* event) {
   base_class::HandleTimerEvent(event);
 }
 
-void Player::HandlePostExecEvent(player::core::events::PostExecEvent* event) {
-  player::core::events::PostExecInfo inf = event->GetInfo();
+void Player::HandlePostExecEvent(player::gui::events::PostExecEvent* event) {
+  player::gui::events::PostExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     controller_->Stop();
     destroy(&offline_channel_texture_);
@@ -243,7 +243,7 @@ std::string Player::GetCurrentUrlName() const {
   return "Unknown";
 }
 
-player::core::AppOptions Player::GetStreamOptions() const {
+player::media::AppOptions Player::GetStreamOptions() const {
   return opt_;
 }
 
@@ -273,7 +273,7 @@ void Player::SwitchToPlayingMode() {
     }
   }
 
-  player::core::VideoState* stream = CreateStreamPos(pos);
+  player::media::VideoState* stream = CreateStreamPos(pos);
   SetStream(stream);
 }
 
@@ -293,43 +293,43 @@ void Player::SwitchToDisconnectMode() {
   InitWindow("Disconnected", INIT_STATE);
 }
 
-void Player::HandleBandwidthEstimationEvent(player::core::events::BandwidthEstimationEvent* event) {
-  player::core::events::BandwidtInfo band_inf = event->GetInfo();
+void Player::HandleBandwidthEstimationEvent(player::gui::events::BandwidthEstimationEvent* event) {
+  player::gui::events::BandwidtInfo band_inf = event->GetInfo();
   if (band_inf.host_type == MAIN_SERVER) {
     controller_->RequestChannels();
   }
 }
 
-void Player::HandleClientConnectedEvent(player::core::events::ClientConnectedEvent* event) {
+void Player::HandleClientConnectedEvent(player::gui::events::ClientConnectedEvent* event) {
   UNUSED(event);
   SwitchToAuthorizeMode();
 }
 
-void Player::HandleClientDisconnectedEvent(player::core::events::ClientDisconnectedEvent* event) {
+void Player::HandleClientDisconnectedEvent(player::gui::events::ClientDisconnectedEvent* event) {
   UNUSED(event);
   if (GetCurrentState() == INIT_STATE) {
     SwitchToDisconnectMode();
   }
 }
 
-void Player::HandleClientAuthorizedEvent(player::core::events::ClientAuthorizedEvent* event) {
+void Player::HandleClientAuthorizedEvent(player::gui::events::ClientAuthorizedEvent* event) {
   UNUSED(event);
 
   controller_->RequestServerInfo();
 }
 
-void Player::HandleClientUnAuthorizedEvent(player::core::events::ClientUnAuthorizedEvent* event) {
+void Player::HandleClientUnAuthorizedEvent(player::gui::events::ClientUnAuthorizedEvent* event) {
   UNUSED(event);
   if (GetCurrentState() == INIT_STATE) {
     SwitchToDisconnectMode();
   }
 }
 
-void Player::HandleClientConfigChangeEvent(player::core::events::ClientConfigChangeEvent* event) {
+void Player::HandleClientConfigChangeEvent(player::gui::events::ClientConfigChangeEvent* event) {
   UNUSED(event);
 }
 
-void Player::HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEvent* event) {
+void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEvent* event) {
   ChannelsInfo chan = event->GetInfo();
   // prepare cache folders
   ChannelsInfo::channels_t channels = chan.GetChannels();
@@ -412,7 +412,7 @@ void Player::HandleReceiveChannelsEvent(player::core::events::ReceiveChannelsEve
   SwitchToPlayingMode();
 }
 
-void Player::HandleReceiveRuntimeChannelEvent(player::core::events::ReceiveRuntimeChannelEvent* event) {
+void Player::HandleReceiveRuntimeChannelEvent(player::gui::events::ReceiveRuntimeChannelEvent* event) {
   RuntimeChannelInfo inf = event->GetInfo();
   for (size_t i = 0; i < play_list_.size(); ++i) {
     ChannelInfo cinf = play_list_[i].GetChannelInfo();
@@ -423,31 +423,31 @@ void Player::HandleReceiveRuntimeChannelEvent(player::core::events::ReceiveRunti
   }
 }
 
-void Player::HandleSendChatMessageEvent(player::core::events::SendChatMessageEvent* event) {
+void Player::HandleSendChatMessageEvent(player::gui::events::SendChatMessageEvent* event) {
   UNUSED(event);
 }
 
-void Player::HandleReceiveChatMessageEvent(player::core::events::ReceiveChatMessageEvent* event) {
+void Player::HandleReceiveChatMessageEvent(player::gui::events::ReceiveChatMessageEvent* event) {
   UNUSED(event);
 }
 
-void Player::HandleWindowResizeEvent(player::core::events::WindowResizeEvent* event) {
+void Player::HandleWindowResizeEvent(player::gui::events::WindowResizeEvent* event) {
   last_programms_line_ = 0;
   base_class::HandleWindowResizeEvent(event);
 }
 
-void Player::HandleWindowExposeEvent(player::core::events::WindowExposeEvent* event) {
+void Player::HandleWindowExposeEvent(player::gui::events::WindowExposeEvent* event) {
   last_programms_line_ = 0;
   base_class::HandleWindowExposeEvent(event);
 }
 
-void Player::HandleMousePressEvent(player::core::events::MousePressEvent* event) {
+void Player::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
   player::PlayerOptions opt = GetOptions();
   if (opt.exit_on_mousedown) {
     return base_class::HandleMousePressEvent(event);
   }
 
-  player::core::events::MousePressInfo inf = event->GetInfo();
+  player::gui::events::MousePressInfo inf = event->GetInfo();
   SDL_MouseButtonEvent sinfo = inf.mevent;
   if (sinfo.button == SDL_BUTTON_LEFT) {
     SDL_Point point = inf.GetMousePoint();
@@ -455,7 +455,7 @@ void Player::HandleMousePressEvent(player::core::events::MousePressEvent* event)
     if (show_programms_list_) {
       size_t pos;
       if (FindStreamByPoint(point, &pos)) {  // pos in playlist
-        player::core::VideoState* stream = CreateStreamPos(pos);
+        player::media::VideoState* stream = CreateStreamPos(pos);
         SetStream(stream);
       } else {
         if (IsHideButtonProgramsListRect(point)) {
@@ -522,13 +522,13 @@ bool Player::IsShowButtonProgramsListRect(const SDL_Point& point) const {
   return player::draw::PointInRect(point, show_button_rect);
 }
 
-void Player::HandleKeyPressEvent(player::core::events::KeyPressEvent* event) {
+void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
   player::PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
     return base_class::HandleKeyPressEvent(event);
   }
 
-  const player::core::events::KeyPressInfo inf = event->GetInfo();
+  const player::gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint32 modifier = inf.ks.mod;
   if (modifier == 0) {
@@ -577,13 +577,13 @@ void Player::HandleKeyPressEvent(player::core::events::KeyPressEvent* event) {
   base_class::HandleKeyPressEvent(event);
 }
 
-void Player::HandleLircPressEvent(player::core::events::LircPressEvent* event) {
+void Player::HandleLircPressEvent(player::gui::events::LircPressEvent* event) {
   player::PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
     return base_class::HandleLircPressEvent(event);
   }
 
-  player::core::events::LircPressInfo inf = event->GetInfo();
+  player::gui::events::LircPressInfo inf = event->GetInfo();
   switch (inf.code) {
     case LIRC_KEY_LEFT: {
       MoveToPreviousStream();
@@ -720,7 +720,7 @@ void Player::HandleKeyPad(uint8_t key) {
   }
 
   show_keypad_ = true;
-  player::core::msec_t cur_time = player::core::GetCurrentMsec();
+  player::media::msec_t cur_time = player::media::GetCurrentMsec();
   keypad_last_shown_ = cur_time;
   size_t nex_keypad_sym = cur_number * 10 + key;
   if (nex_keypad_sym <= max_keypad_size) {
@@ -761,7 +761,7 @@ void Player::CreateStreamPosAfterKeypad(size_t pos) {
     return;
   }
 
-  player::core::VideoState* stream = CreateStreamPos(stabled_pos);
+  player::media::VideoState* stream = CreateStreamPos(stabled_pos);
   SetStream(stream);
 }
 
@@ -1023,58 +1023,58 @@ void Player::DrawInitStatus() {
   SDL_RenderPresent(render);
 }
 
-player::core::VideoState* Player::CreateStream(stream_id sid,
-                                               const common::uri::Uri& uri,
-                                               player::core::AppOptions opt,
-                                               player::core::ComplexOptions copt) {
+player::media::VideoState* Player::CreateStream(stream_id sid,
+                                                const common::uri::Uri& uri,
+                                                player::media::AppOptions opt,
+                                                player::media::ComplexOptions copt) {
   controller_->RequesRuntimeChannelInfo(sid);
   return base_class::CreateStream(sid, uri, opt, copt);
 }
 
 void Player::MoveToNextStream() {
-  player::core::VideoState* stream = CreateNextStream();
+  player::media::VideoState* stream = CreateNextStream();
   SetStream(stream);
 }
 
 void Player::MoveToPreviousStream() {
-  player::core::VideoState* stream = CreatePrevStream();
+  player::media::VideoState* stream = CreatePrevStream();
   SetStream(stream);
 }
 
-player::core::VideoState* Player::CreateNextStream() {
+player::media::VideoState* Player::CreateNextStream() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (play_list_.empty()) {
     return nullptr;
   }
 
   size_t pos = GenerateNextPosition();
-  player::core::VideoState* stream = CreateStreamPos(pos);
+  player::media::VideoState* stream = CreateStreamPos(pos);
   return stream;
 }
 
-player::core::VideoState* Player::CreatePrevStream() {
+player::media::VideoState* Player::CreatePrevStream() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (play_list_.empty()) {
     return nullptr;
   }
 
   size_t pos = GeneratePrevPosition();
-  player::core::VideoState* stream = CreateStreamPos(pos);
+  player::media::VideoState* stream = CreateStreamPos(pos);
   return stream;
 }
 
-player::core::VideoState* Player::CreateStreamPos(size_t pos) {
+player::media::VideoState* Player::CreateStreamPos(size_t pos) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   current_stream_pos_ = pos;
 
   PlaylistEntry entry = play_list_[current_stream_pos_];
   ChannelInfo url = entry.GetChannelInfo();
   stream_id sid = url.GetId();
-  player::core::AppOptions copy = GetStreamOptions();
+  player::media::AppOptions copy = GetStreamOptions();
   copy.enable_audio = url.IsEnableVideo();
   copy.enable_video = url.IsEnableAudio();
 
-  player::core::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
+  player::media::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
   return stream;
 }
 
@@ -1096,7 +1096,7 @@ size_t Player::GeneratePrevPosition() const {
 
 void Player::StartShowFooter() {
   show_footer_ = true;
-  player::core::msec_t cur_time = player::core::GetCurrentMsec();
+  player::media::msec_t cur_time = player::media::GetCurrentMsec();
   footer_last_shown_ = cur_time;
 }
 

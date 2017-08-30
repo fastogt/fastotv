@@ -83,8 +83,8 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
     fastotv::inner::InnerClient* iclient = static_cast<fastotv::inner::InnerClient*>(client);
     common::net::socket_info info = iclient->GetInfo();
     common::net::HostAndPort host(info.host(), info.port());
-    player::core::events::ConnectInfo cinf(host);
-    fApp->PostEvent(new player::core::events::ClientDisconnectedEvent(this, cinf));
+    player::gui::events::ConnectInfo cinf(host);
+    fApp->PostEvent(new player::gui::events::ClientDisconnectedEvent(this, cinf));
     inner_connection_ = nullptr;
     return;
   }
@@ -104,9 +104,9 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   if (hs == MAIN_SERVER) {
     current_bandwidth_ = band;
   }
-  player::core::events::BandwidtInfo cinf(host, band, hs);
-  player::core::events::BandwidthEstimationEvent* band_event =
-      new player::core::events::BandwidthEstimationEvent(this, cinf);
+  player::gui::events::BandwidtInfo cinf(host, band, hs);
+  player::gui::events::BandwidthEstimationEvent* band_event =
+      new player::gui::events::BandwidthEstimationEvent(this, cinf);
   fApp->PostEvent(band_event);
 }
 
@@ -233,8 +233,8 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
   common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, 0, &client_info);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
-    player::core::events::ConnectInfo cinf(host);
-    auto ex_event = make_exception_event(new player::core::events::ClientConnectedEvent(this, cinf), err);
+    player::gui::events::ConnectInfo cinf(host);
+    auto ex_event = make_exception_event(new player::gui::events::ClientConnectedEvent(this, cinf), err);
     fApp->PostEvent(ex_event);
     return;
   }
@@ -366,7 +366,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
       return;
     }
 
-    fApp->PostEvent(new player::core::events::ReceiveChatMessageEvent(this, msg));
+    fApp->PostEvent(new player::gui::events::ReceiveChatMessageEvent(this, msg));
     cmd_responce_t resp = SystemInfoResponceSuccsess(id, msg_str);
     err = connection->Write(resp);
     if (err && err->IsError()) {
@@ -414,7 +414,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
       if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU)) {
         connection->SetName(config_.ainf.GetLogin());
-        fApp->PostEvent(new player::core::events::ClientAuthorizedEvent(this, config_.ainf));
+        fApp->PostEvent(new player::gui::events::ClientAuthorizedEvent(this, config_.ainf));
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_GET_CLIENT_INFO)) {
       } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_SEND_CHAT_MESSAGE)) {
       }
@@ -426,7 +426,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
       if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU)) {
         common::Error err = common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
-        auto ex_event = make_exception_event(new player::core::events::ClientAuthorizedEvent(this, config_.ainf), err);
+        auto ex_event = make_exception_event(new player::gui::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_SEND_CHAT_MESSAGE)) {
@@ -484,9 +484,9 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     const BandwidthHostType hs = MAIN_SERVER;
     err = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
     if (err && err->IsError()) {
-      player::core::events::BandwidtInfo cinf(host, 0, hs);
+      player::gui::events::BandwidtInfo cinf(host, 0, hs);
       current_bandwidth_ = 0;
-      auto ex_event = make_exception_event(new player::core::events::BandwidthEstimationEvent(this, cinf), err);
+      auto ex_event = make_exception_event(new player::gui::events::BandwidthEstimationEvent(this, cinf), err);
       fApp->PostEvent(ex_event);
       return err;
     }
@@ -511,7 +511,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
       return err;
     }
 
-    fApp->PostEvent(new player::core::events::ReceiveChannelsEvent(this, chan));
+    fApp->PostEvent(new player::gui::events::ReceiveChannelsEvent(this, chan));
     const cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
@@ -531,7 +531,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
       return err;
     }
 
-    fApp->PostEvent(new player::core::events::ReceiveRuntimeChannelEvent(this, chan));
+    fApp->PostEvent(new player::gui::events::ReceiveRuntimeChannelEvent(this, chan));
     const cmd_approve_t resp = GetRuntimeChannelInfoApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_SEND_CHAT_MESSAGE)) {
@@ -551,7 +551,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
       return err;
     }
 
-    fApp->PostEvent(new player::core::events::SendChatMessageEvent(this, msg));
+    fApp->PostEvent(new player::gui::events::SendChatMessageEvent(this, msg));
     const cmd_approve_t resp = SendChatMessageApproveResponceSuccsess(id);
     return connection->Write(resp);
   }

@@ -22,9 +22,9 @@ namespace fastotv {
 namespace client {
 namespace player {
 
-class FFmpegApplication : public core::application::Sdl2Application {
+class FFmpegApplication : public gui::application::Sdl2Application {
  public:
-  typedef core::application::Sdl2Application base_class_t;
+  typedef gui::application::Sdl2Application base_class;
   FFmpegApplication(int argc, char** argv);
 
   ~FFmpegApplication();

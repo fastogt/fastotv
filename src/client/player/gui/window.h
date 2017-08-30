@@ -30,7 +30,7 @@ namespace client {
 namespace player {
 namespace gui {
 
-class Window : public core::events::EventListener {
+class Window : public gui::events::EventListener {
  public:
   Window();
   virtual ~Window();
@@ -56,12 +56,12 @@ class Window : public core::events::EventListener {
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
-  virtual void HandleWindowResizeEvent(core::events::WindowResizeEvent* event);
-  virtual void HandleWindowExposeEvent(core::events::WindowExposeEvent* event);
-  virtual void HandleWindowCloseEvent(core::events::WindowCloseEvent* event);
+  virtual void HandleWindowResizeEvent(gui::events::WindowResizeEvent* event);
+  virtual void HandleWindowExposeEvent(gui::events::WindowExposeEvent* event);
+  virtual void HandleWindowCloseEvent(gui::events::WindowCloseEvent* event);
 
-  virtual void HandleMousePressEvent(core::events::MousePressEvent* event);
-  virtual void HandleMouseMoveEvent(core::events::MouseMoveEvent* event);
+  virtual void HandleMousePressEvent(gui::events::MousePressEvent* event);
+  virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event);
 
  private:
   SDL_Rect rect_;
@@ -71,7 +71,7 @@ class Window : public core::events::EventListener {
   bool focus_;
 };
 
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

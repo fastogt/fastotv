@@ -62,8 +62,8 @@ void ChatWindow::Draw(SDL_Renderer* render) {
   base_class::Draw(render);
 }
 
-void ChatWindow::HandleMousePressEvent(player::core::events::MousePressEvent* event) {
-  player::core::events::MousePressInfo inf = event->GetInfo();
+void ChatWindow::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
+  player::gui::events::MousePressInfo inf = event->GetInfo();
   SDL_MouseButtonEvent sinfo = inf.mevent;
   if (sinfo.button == SDL_BUTTON_LEFT) {
     SDL_Point point = inf.GetMousePoint();

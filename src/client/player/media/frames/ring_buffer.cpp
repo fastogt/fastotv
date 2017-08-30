@@ -20,8 +20,8 @@
 
 namespace fastotv {
 namespace player {
-namespace core {
+namespace media {
 namespace client {}
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace fastotv

@@ -23,7 +23,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 namespace frames {
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */
@@ -42,7 +42,7 @@ struct VideoFrame : public BaseFrame {
 clock64_t CalcDurationBetweenVideoFrames(VideoFrame* vp, VideoFrame* nextvp, clock64_t max_frame_duration);
 
 }  // namespace frames
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

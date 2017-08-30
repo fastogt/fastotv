@@ -32,7 +32,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace application {
 
 class Sdl2Application : public common::application::IApplication {
@@ -62,7 +62,7 @@ class Sdl2Application : public common::application::IApplication {
   void SetDisplayUpdateTimeout(update_display_timeout_t msec);
 
  protected:
-  virtual void HandleEvent(core::events::Event* event);
+  virtual void HandleEvent(gui::events::Event* event);
 
   virtual void HandleKeyDownEvent(SDL_KeyboardEvent* event);
   virtual void HandleKeyUpEvent(SDL_KeyboardEvent* event);
@@ -89,7 +89,7 @@ class Sdl2Application : public common::application::IApplication {
 };
 
 }  // namespace application
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -24,7 +24,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 DesireBytesPerSec::DesireBytesPerSec() : min(0), max(0) {}
 DesireBytesPerSec::DesireBytesPerSec(bandwidth_t min, bandwidth_t max) : min(min), max(max) {}
@@ -171,8 +171,7 @@ DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(int width, int height,
     }
   }
 
-  WARNING_LOG() << "Size: " << width << "x" << height << ", framerate: " << framerate
-                << ", profile: " << profile;
+  WARNING_LOG() << "Size: " << width << "x" << height << ", framerate: " << framerate << ", profile: " << profile;
   return DesireBytesPerSec(KBITS_TO_BYTES(0), KBITS_TO_BYTES(0));
 }
 
@@ -193,7 +192,7 @@ DesireBytesPerSec CalculateDesireMPEGBandwidthBytesPerSec(int width, int height)
   return DesireBytesPerSec(KBITS_TO_BYTES(0), KBITS_TO_BYTES(0));
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

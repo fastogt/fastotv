@@ -21,7 +21,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 BandwidtInfo::BandwidtInfo() : host(), bandwidth(0), host_type(UNKNOWN_SERVER) {}
@@ -34,7 +34,7 @@ ConnectInfo::ConnectInfo() {}
 ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {}
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

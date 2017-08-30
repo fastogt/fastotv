@@ -47,15 +47,15 @@ namespace player {
 namespace draw {
 class TextureSaver;
 }
-namespace core {
+namespace media {
 struct AudioParams;
-}  // namespace core
+}  // namespace media
 
 namespace gui {
 class Label;
 }
 
-class ISimplePlayer : public StreamHandler, public core::events::EventListener {
+class ISimplePlayer : public StreamHandler, public gui::events::EventListener {
  public:
   enum {
     volume_height = 30,
@@ -89,8 +89,8 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   virtual void SetUrlLocation(stream_id sid,
                               const common::uri::Uri& uri,
-                              core::AppOptions opt,
-                              core::ComplexOptions copt);
+                              media::AppOptions opt,
+                              media::ComplexOptions copt);
 
  protected:
   explicit ISimplePlayer(const PlayerOptions& options);
@@ -98,41 +98,41 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
-  virtual common::Error HandleRequestAudio(core::VideoState* stream,
+  virtual common::Error HandleRequestAudio(media::VideoState* stream,
                                            int64_t wanted_channel_layout,
                                            int wanted_nb_channels,
                                            int wanted_sample_rate,
-                                           core::AudioParams* audio_hw_params,
+                                           media::AudioParams* audio_hw_params,
                                            int* audio_buff_size) override;
   virtual void HanleAudioMix(uint8_t* audio_stream_ptr, const uint8_t* src, uint32_t len, int volume) override;
 
   // should executed in gui thread
-  virtual common::Error HandleRequestVideo(core::VideoState* stream,
+  virtual common::Error HandleRequestVideo(media::VideoState* stream,
                                            int width,
                                            int height,
                                            int av_pixel_format,
                                            AVRational aspect_ratio) override;
 
-  virtual void HandlePreExecEvent(core::events::PreExecEvent* event);
-  virtual void HandlePostExecEvent(core::events::PostExecEvent* event);
+  virtual void HandlePreExecEvent(gui::events::PreExecEvent* event);
+  virtual void HandlePostExecEvent(gui::events::PostExecEvent* event);
 
-  virtual void HandleTimerEvent(core::events::TimerEvent* event);
+  virtual void HandleTimerEvent(gui::events::TimerEvent* event);
 
-  virtual void HandleRequestVideoEvent(core::events::RequestVideoEvent* event);
-  virtual void HandleQuitStreamEvent(core::events::QuitStreamEvent* event);
+  virtual void HandleRequestVideoEvent(gui::events::RequestVideoEvent* event);
+  virtual void HandleQuitStreamEvent(gui::events::QuitStreamEvent* event);
 
-  virtual void HandleKeyPressEvent(core::events::KeyPressEvent* event);
+  virtual void HandleKeyPressEvent(gui::events::KeyPressEvent* event);
 
-  virtual void HandleLircPressEvent(core::events::LircPressEvent* event);
+  virtual void HandleLircPressEvent(gui::events::LircPressEvent* event);
 
-  virtual void HandleWindowResizeEvent(core::events::WindowResizeEvent* event);
-  virtual void HandleWindowExposeEvent(core::events::WindowExposeEvent* event);
-  virtual void HandleWindowCloseEvent(core::events::WindowCloseEvent* event);
+  virtual void HandleWindowResizeEvent(gui::events::WindowResizeEvent* event);
+  virtual void HandleWindowExposeEvent(gui::events::WindowExposeEvent* event);
+  virtual void HandleWindowCloseEvent(gui::events::WindowCloseEvent* event);
 
-  virtual void HandleMousePressEvent(core::events::MousePressEvent* event);
-  virtual void HandleMouseMoveEvent(core::events::MouseMoveEvent* event);
+  virtual void HandleMousePressEvent(gui::events::MousePressEvent* event);
+  virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event);
 
-  virtual void HandleQuitEvent(core::events::QuitEvent* event);
+  virtual void HandleQuitEvent(gui::events::QuitEvent* event);
 
   virtual void InitWindow(const std::string& title, States status);
 
@@ -148,11 +148,11 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   bool IsMouseVisible() const;
 
-  virtual core::VideoState* CreateStream(stream_id sid,
-                                         const common::uri::Uri& uri,
-                                         core::AppOptions opt,
-                                         core::ComplexOptions copt);
-  void SetStream(core::VideoState* stream);  // if stream == NULL => SwitchToChannelErrorMode
+  virtual media::VideoState* CreateStream(stream_id sid,
+                                          const common::uri::Uri& uri,
+                                          media::AppOptions opt,
+                                          media::ComplexOptions copt);
+  void SetStream(media::VideoState* stream);  // if stream == NULL => SwitchToChannelErrorMode
 
   SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins
   SDL_Rect GetDisplayRect() const;
@@ -190,20 +190,20 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   PlayerOptions options_;
 
-  core::AudioParams* audio_params_;
+  media::AudioParams* audio_params_;
   int audio_buff_size_;
 
   SDL_Window* window_;
 
-  core::msec_t cursor_last_shown_;
+  media::msec_t cursor_last_shown_;
 
   gui::Label* volume_label_;
-  core::msec_t volume_last_shown_;
+  media::msec_t volume_last_shown_;
 
-  core::msec_t last_mouse_left_click_;
+  media::msec_t last_mouse_left_click_;
 
   std::shared_ptr<common::threads::Thread<int> > exec_tid_;
-  core::VideoState* stream_;
+  media::VideoState* stream_;
 
   draw::Size window_size_;
   const int xleft_;
@@ -218,7 +218,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   uint32_t update_video_timer_interval_msec_;
 
-  core::clock64_t last_pts_checkpoint_;
+  media::clock64_t last_pts_checkpoint_;
   size_t video_frames_handled_;
 };
 

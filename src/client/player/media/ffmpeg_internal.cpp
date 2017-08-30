@@ -21,7 +21,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 AVBufferRef* hw_device_ctx = NULL;
 
@@ -62,7 +62,7 @@ const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt) {
   return NULL;
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

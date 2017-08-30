@@ -21,13 +21,13 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 WindowResizeInfo::WindowResizeInfo(const draw::Size& size) : size(size) {}
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -36,7 +36,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 // 640x480
 // 1280x720
@@ -88,7 +88,7 @@ struct ComplexOptions {
   AVDictionary* codec_opts;
 };
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

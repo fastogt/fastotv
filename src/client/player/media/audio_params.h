@@ -27,7 +27,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 struct AudioParams {
   int freq;
@@ -38,7 +38,7 @@ struct AudioParams {
   int bytes_per_sec;
 };
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

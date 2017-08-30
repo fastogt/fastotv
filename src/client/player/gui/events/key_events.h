@@ -27,7 +27,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 struct KeyPressInfo {
@@ -48,7 +48,7 @@ typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;
 typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -5,7 +5,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 struct DesireBytesPerSec {
   DesireBytesPerSec();
@@ -35,7 +35,7 @@ DesireBytesPerSec VideoBitrateAverage(bandwidth_t bytes_per_sec);
 DesireBytesPerSec CalculateDesireH264BandwidthBytesPerSec(int width, int height, double framerate, int profile);
 DesireBytesPerSec CalculateDesireMPEGBandwidthBytesPerSec(int width, int height);
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

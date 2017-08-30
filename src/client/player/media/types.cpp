@@ -34,7 +34,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 bandwidth_t CalculateBandwidth(size_t total_downloaded_bytes, msec_t data_interval) {
   if (data_interval == 0) {
@@ -80,29 +80,29 @@ bool IsValidPts(pts_t pts) {
   return pts != invalid_pts();
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv
 
 namespace common {
-std::string ConvertToString(const fastotv::client::player::core::HWAccelID& value) {
-  if (value == fastotv::client::player::core::HWACCEL_AUTO) {
+std::string ConvertToString(const fastotv::client::player::media::HWAccelID& value) {
+  if (value == fastotv::client::player::media::HWACCEL_AUTO) {
     return "auto";
-  } else if (value == fastotv::client::player::core::HWACCEL_NONE) {
+  } else if (value == fastotv::client::player::media::HWACCEL_NONE) {
     return "none";
   }
 
-  for (size_t i = 0; i < fastotv::client::player::core::hwaccel_count(); i++) {
-    if (value == fastotv::client::player::core::hwaccels[i].id) {
-      return fastotv::client::player::core::hwaccels[i].name;
+  for (size_t i = 0; i < fastotv::client::player::media::hwaccel_count(); i++) {
+    if (value == fastotv::client::player::media::hwaccels[i].id) {
+      return fastotv::client::player::media::hwaccels[i].name;
     }
   }
 
   return std::string();
 }
 
-bool ConvertFromString(const std::string& from, fastotv::client::player::core::HWAccelID* out) {
+bool ConvertFromString(const std::string& from, fastotv::client::player::media::HWAccelID* out) {
   if (from.empty() || !out) {
     return false;
   }
@@ -110,15 +110,15 @@ bool ConvertFromString(const std::string& from, fastotv::client::player::core::H
   std::string from_copy = from;
   std::transform(from_copy.begin(), from_copy.end(), from_copy.begin(), ::tolower);
   if (from_copy == "auto") {
-    *out = fastotv::client::player::core::HWACCEL_AUTO;
+    *out = fastotv::client::player::media::HWACCEL_AUTO;
     return true;
   } else if (from_copy == "none") {
-    *out = fastotv::client::player::core::HWACCEL_NONE;
+    *out = fastotv::client::player::media::HWACCEL_NONE;
     return true;
   } else {
-    for (size_t i = 0; i < fastotv::client::player::core::hwaccel_count(); i++) {
-      if (strcmp(fastotv::client::player::core::hwaccels[i].name, from.c_str()) == 0) {
-        *out = fastotv::client::player::core::hwaccels[i].id;
+    for (size_t i = 0; i < fastotv::client::player::media::hwaccel_count(); i++) {
+      if (strcmp(fastotv::client::player::media::hwaccels[i].name, from.c_str()) == 0) {
+        *out = fastotv::client::player::media::hwaccels[i].id;
         return true;
       }
     }

@@ -29,7 +29,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 enum HWAccelID {
   HWACCEL_NONE = 0,
@@ -66,12 +66,12 @@ enum AvSyncType {
 
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels);
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv
 
 namespace common {
-std::string ConvertToString(const fastotv::client::player::core::HWAccelID& value);
-bool ConvertFromString(const std::string& from, fastotv::client::player::core::HWAccelID* out);
+std::string ConvertToString(const fastotv::client::player::media::HWAccelID& value);
+bool ConvertFromString(const std::string& from, fastotv::client::player::media::HWAccelID* out);
 }  // namespace common

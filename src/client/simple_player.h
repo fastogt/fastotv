@@ -31,8 +31,8 @@ class SimplePlayer : public player::ISimplePlayer {
 
   virtual void SetUrlLocation(stream_id sid,
                               const common::uri::Uri& uri,
-                              player::core::AppOptions opt,
-                              player::core::ComplexOptions copt) override;
+                              player::media::AppOptions opt,
+                              player::media::ComplexOptions copt) override;
 
  private:
   common::uri::Uri stream_url_;

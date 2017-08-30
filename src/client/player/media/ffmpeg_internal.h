@@ -38,7 +38,7 @@ typedef int hw_retrieve_data_callback_t(AVCodecContext* s, AVFrame* frame);
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 extern AVBufferRef* hw_device_ctx;
 
@@ -69,7 +69,7 @@ extern const HWAccel hwaccels[];
 size_t hwaccel_count();
 const HWAccel* get_hwaccel(enum AVPixelFormat pix_fmt);
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

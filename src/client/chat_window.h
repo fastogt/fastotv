@@ -20,8 +20,8 @@
 
 #include <SDL2/SDL_ttf.h>
 
-#include "client/player/gui/window.h"
 #include "client/player/draw/surface_saver.h"
+#include "client/player/gui/window.h"
 
 namespace fastotv {
 namespace client {
@@ -40,7 +40,7 @@ class ChatWindow : public player::gui::Window {
   virtual void Draw(SDL_Renderer* render) override;
 
  protected:
-  virtual void HandleMousePressEvent(player::core::events::MousePressEvent* event) override;
+  virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
 
  private:
   bool IsHideButtonChatRect(const SDL_Point& point) const;

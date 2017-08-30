@@ -31,8 +31,8 @@
 #include "client/inner/inner_tcp_server.h"   // for InnerTcpServer
 
 #ifdef HAVE_LIRC
-#include "client/inputs/lirc_input_client.h"        // for LircInit, LircInputClient
-#include "client/player/gui/lirc_events.h"  // for ConvertFromString, Lirc...
+#include "client/inputs/lirc_input_client.h"  // for LircInit, LircInputClient
+#include "client/player/gui/lirc_events.h"    // for ConvertFromString, Lirc...
 #endif
 
 namespace common {
@@ -94,9 +94,9 @@ class PrivateHandler : public inner::InnerTcpHandler {
           return;
         }
 
-        player::core::events::LircPressInfo linf;
+        player::gui::events::LircPressInfo linf;
         linf.code = lcode;
-        player::core::events::LircPressEvent* levent = new player::core::events::LircPressEvent(this, linf);
+        player::gui::events::LircPressEvent* levent = new player::gui::events::LircPressEvent(this, linf);
         fApp->PostEvent(levent);
       };
       client_->ReadWithCallback(cb);

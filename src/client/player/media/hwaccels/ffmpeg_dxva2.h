@@ -27,12 +27,12 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 int dxva2_init(AVCodecContext* s);
 void dxva2_uninit(AVCodecContext* s);
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

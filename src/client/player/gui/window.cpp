@@ -33,12 +33,12 @@ Window::Window()
       visible_(true),
       transparent_(false),
       focus_(false) {
-  fApp->Subscribe(this, core::events::MouseMoveEvent::EventType);
-  fApp->Subscribe(this, core::events::MousePressEvent::EventType);
+  fApp->Subscribe(this, gui::events::MouseMoveEvent::EventType);
+  fApp->Subscribe(this, gui::events::MousePressEvent::EventType);
 
-  fApp->Subscribe(this, core::events::WindowResizeEvent::EventType);
-  fApp->Subscribe(this, core::events::WindowExposeEvent::EventType);
-  fApp->Subscribe(this, core::events::WindowCloseEvent::EventType);
+  fApp->Subscribe(this, gui::events::WindowResizeEvent::EventType);
+  fApp->Subscribe(this, gui::events::WindowExposeEvent::EventType);
+  fApp->Subscribe(this, gui::events::WindowCloseEvent::EventType);
 }
 
 Window::~Window() {}
@@ -99,20 +99,20 @@ void Window::Draw(SDL_Renderer* render) {
 }
 
 void Window::HandleEvent(event_t* event) {
-  if (event->GetEventType() == core::events::WindowResizeEvent::EventType) {
-    core::events::WindowResizeEvent* win_resize_event = static_cast<core::events::WindowResizeEvent*>(event);
+  if (event->GetEventType() == gui::events::WindowResizeEvent::EventType) {
+    gui::events::WindowResizeEvent* win_resize_event = static_cast<gui::events::WindowResizeEvent*>(event);
     HandleWindowResizeEvent(win_resize_event);
-  } else if (event->GetEventType() == core::events::WindowExposeEvent::EventType) {
-    core::events::WindowExposeEvent* win_expose = static_cast<core::events::WindowExposeEvent*>(event);
+  } else if (event->GetEventType() == gui::events::WindowExposeEvent::EventType) {
+    gui::events::WindowExposeEvent* win_expose = static_cast<gui::events::WindowExposeEvent*>(event);
     HandleWindowExposeEvent(win_expose);
-  } else if (event->GetEventType() == core::events::WindowCloseEvent::EventType) {
-    core::events::WindowCloseEvent* window_close = static_cast<core::events::WindowCloseEvent*>(event);
+  } else if (event->GetEventType() == gui::events::WindowCloseEvent::EventType) {
+    gui::events::WindowCloseEvent* window_close = static_cast<gui::events::WindowCloseEvent*>(event);
     HandleWindowCloseEvent(window_close);
-  } else if (event->GetEventType() == core::events::MouseMoveEvent::EventType) {
-    core::events::MouseMoveEvent* mouse_move = static_cast<core::events::MouseMoveEvent*>(event);
+  } else if (event->GetEventType() == gui::events::MouseMoveEvent::EventType) {
+    gui::events::MouseMoveEvent* mouse_move = static_cast<gui::events::MouseMoveEvent*>(event);
     HandleMouseMoveEvent(mouse_move);
-  } else if (event->GetEventType() == core::events::MousePressEvent::EventType) {
-    core::events::MousePressEvent* mouse_press = static_cast<core::events::MousePressEvent*>(event);
+  } else if (event->GetEventType() == gui::events::MousePressEvent::EventType) {
+    gui::events::MousePressEvent* mouse_press = static_cast<gui::events::MousePressEvent*>(event);
     HandleMousePressEvent(mouse_press);
   }
 }
@@ -122,28 +122,28 @@ void Window::HandleExceptionEvent(event_t* event, common::Error err) {
   UNUSED(err);
 }
 
-void Window::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {
+void Window::HandleWindowResizeEvent(gui::events::WindowResizeEvent* event) {
   UNUSED(event);
 }
 
-void Window::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
+void Window::HandleWindowExposeEvent(gui::events::WindowExposeEvent* event) {
   UNUSED(event);
 }
 
-void Window::HandleWindowCloseEvent(core::events::WindowCloseEvent* event) {
+void Window::HandleWindowCloseEvent(gui::events::WindowCloseEvent* event) {
   UNUSED(event);
 }
 
-void Window::HandleMousePressEvent(core::events::MousePressEvent* event) {
+void Window::HandleMousePressEvent(gui::events::MousePressEvent* event) {
   UNUSED(event);
 }
 
-void Window::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
+void Window::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
   if (!visible_) {
     return;
   }
 
-  player::core::events::MouseMoveInfo minf = event->GetInfo();
+  player::gui::events::MouseMoveInfo minf = event->GetInfo();
   focus_ = draw::PointInRect(minf.GetMousePoint(), rect_);
 }
 

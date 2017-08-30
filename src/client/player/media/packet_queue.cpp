@@ -23,7 +23,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 PacketQueue::PacketQueue() : queue_(), size_(0), duration_(0), abort_request_(true), cond_(), mutex_() {}
 
@@ -133,7 +133,7 @@ PacketQueue::~PacketQueue() {
   Flush();
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

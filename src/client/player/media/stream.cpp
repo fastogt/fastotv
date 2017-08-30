@@ -32,7 +32,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 Stream::Stream()
     : stream_st_(NULL),
@@ -230,7 +230,7 @@ bool AudioStream::Open(int index, AVStream* av_stream_st) {
   return Stream::Open(index, av_stream_st);
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

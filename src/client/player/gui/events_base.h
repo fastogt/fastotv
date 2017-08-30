@@ -70,7 +70,7 @@ struct event_traits<EventsType> {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace gui {
 namespace events {
 
 typedef common::event_traits<EventsType> EventTraits;
@@ -104,7 +104,7 @@ class EventBase<event_t, void> : public common::Event<EventsType, event_t> {
 };
 
 }  // namespace events
-}  // namespace core
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -25,7 +25,7 @@
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 namespace frames {
 
 struct AudioFrame;
@@ -72,7 +72,7 @@ class AudioFrameQueue : public BaseFrameQueue<frames::AudioFrame, buffer_size> {
 };
 
 }  // namespace frames
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -26,8 +26,8 @@ namespace player {
 namespace gui {
 
 KeyPressLabel::KeyPressLabel() : base_class() {
-  fApp->Subscribe(this, core::events::KeyPressEvent::EventType);
-  fApp->Subscribe(this, core::events::KeyReleaseEvent::EventType);
+  fApp->Subscribe(this, gui::events::KeyPressEvent::EventType);
+  fApp->Subscribe(this, gui::events::KeyReleaseEvent::EventType);
 }
 
 KeyPressLabel::~KeyPressLabel() {}
@@ -40,8 +40,8 @@ void KeyPressLabel::HandleExceptionEvent(event_t* event, common::Error err) {
   base_class::HandleExceptionEvent(event, err);
 }
 
-void KeyPressLabel::HandleKeyPressEvent(player::core::events::KeyPressEvent* event) {
-  const player::core::events::KeyPressInfo inf = event->GetInfo();
+void KeyPressLabel::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
+  const player::gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Keycode key_code = inf.ks.sym;
   const Uint32 modifier = inf.ks.mod;
   if (isprint(key_code)) {
@@ -51,7 +51,7 @@ void KeyPressLabel::HandleKeyPressEvent(player::core::events::KeyPressEvent* eve
   }
 }
 
-void KeyPressLabel::HandleKeyReleaseEvent(player::core::events::KeyReleaseEvent* event) {}
+void KeyPressLabel::HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event) {}
 
 }  // namespace gui
 }  // namespace player

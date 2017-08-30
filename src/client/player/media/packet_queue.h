@@ -37,7 +37,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 class PacketQueue {  // compressed queue data
  public:
@@ -71,7 +71,7 @@ class PacketQueue {  // compressed queue data
   std::mutex mutex_;
 };
 
-}  // namespace core
+}  // namespace media
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv
