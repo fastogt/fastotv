@@ -426,7 +426,8 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
       if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU)) {
         common::Error err = common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
-        auto ex_event = common::make_exception_event(new player::gui::events::ClientAuthorizedEvent(this, config_.ainf), err);
+        auto ex_event =
+            common::make_exception_event(new player::gui::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_SEND_CHAT_MESSAGE)) {

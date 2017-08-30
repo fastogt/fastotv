@@ -104,6 +104,7 @@ class Player : public player::ISimplePlayer {
   virtual void DrawInitStatus() override;
 
   virtual void InitWindow(const std::string& title, States status) override;
+  virtual void SetStatus(States new_state) override;
 
   virtual player::media::VideoState* CreateStream(stream_id sid,
                                                   const common::uri::Uri& uri,
@@ -175,14 +176,13 @@ class Player : public player::ISimplePlayer {
 
   player::gui::IconLabel* description_label_;
   player::media::msec_t footer_last_shown_;
-  std::string current_state_str_;
 
   const player::media::AppOptions opt_;
   const player::media::ComplexOptions copt_;
 
   const std::string app_directory_absolute_path_;
 
-  bool show_keypad_;
+  player::gui::Label* keypad_label_;
   player::media::msec_t keypad_last_shown_;
   keypad_sym_t keypad_sym_;
 

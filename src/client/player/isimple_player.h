@@ -135,6 +135,7 @@ class ISimplePlayer : public StreamHandler, public gui::events::EventListener {
   virtual void HandleQuitEvent(gui::events::QuitEvent* event);
 
   virtual void InitWindow(const std::string& title, States status);
+  virtual void SetStatus(States new_state);
 
   virtual void DrawDisplay();
   virtual void DrawPlayingStatus();

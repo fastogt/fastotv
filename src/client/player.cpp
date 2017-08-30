@@ -87,11 +87,10 @@ Player::Player(const std::string& app_directory_absolute_path,
       play_list_(),
       description_label_(nullptr),
       footer_last_shown_(0),
-      current_state_str_("Init"),
       opt_(opt),
       copt_(copt),
       app_directory_absolute_path_(app_directory_absolute_path),
-      show_keypad_(false),
+      keypad_label_(nullptr),
       keypad_last_shown_(0),
       keypad_sym_(),
       show_programms_list_(true),
@@ -116,10 +115,19 @@ Player::Player(const std::string& app_directory_absolute_path,
   chat_window_->SetVisible(false);
   chat_window_->SetBackGroundColor(chat_color);
 
+  // descr window
   description_label_ = new player::gui::IconLabel;
   description_label_->SetVisible(false);
   description_label_->SetTextColor(text_color);
   description_label_->SetSpace(space_width);
+  description_label_->SetText("Init");
+
+  // key_pad window
+  keypad_label_ = new player::gui::Label;
+  keypad_label_->SetVisible(false);
+  keypad_label_->SetBackGroundColor(keypad_color);
+  keypad_label_->SetTextColor(text_color);
+  keypad_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
 }
 
 Player::~Player() {
@@ -211,6 +219,7 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   TTF_Font* font = GetFont();
   chat_window_->SetFont(font);
   description_label_->SetFont(font);
+  keypad_label_->SetFont(font);
 }
 
 void Player::HandleTimerEvent(player::gui::events::TimerEvent* event) {
@@ -221,7 +230,7 @@ void Player::HandleTimerEvent(player::gui::events::TimerEvent* event) {
   }
 
   player::media::msec_t diff_keypad = cur_time - keypad_last_shown_;
-  if (show_keypad_ && diff_keypad > KEYPAD_HIDE_DELAY_MSEC) {
+  if (keypad_label_->IsVisible() && diff_keypad > KEYPAD_HIDE_DELAY_MSEC) {
     ResetKeyPad();
   }
 
@@ -727,7 +736,7 @@ void Player::HandleKeyPad(uint8_t key) {
     cur_number = 0;
   }
 
-  show_keypad_ = true;
+  keypad_label_->SetVisible(true);
   player::media::msec_t cur_time = player::media::GetCurrentMsec();
   keypad_last_shown_ = cur_time;
   size_t nex_keypad_sym = cur_number * 10 + key;
@@ -774,7 +783,7 @@ void Player::CreateStreamPosAfterKeypad(size_t pos) {
 }
 
 void Player::ResetKeyPad() {
-  show_keypad_ = false;
+  keypad_label_->SetVisible(false);
   keypad_sym_.clear();
 }
 
@@ -922,18 +931,14 @@ void Player::DrawChat() {
 void Player::DrawKeyPad() {
   SDL_Renderer* render = GetRenderer();
   TTF_Font* font = GetFont();
-  if (!show_keypad_ || !font || !render) {
-    return;
-  }
-
-  const char* keypad_sym_ptr = common::utils::c_strornull(keypad_sym_);
-  if (!keypad_sym_ptr) {
+  if (!keypad_label_->IsVisible() || !font) {
     return;
   }
 
   const SDL_Rect keypad_rect = GetKeyPadRect();
-  player::draw::FillRectColor(render, keypad_rect, keypad_color);
-  player::draw::DrawCenterTextInRect(render, keypad_sym_ptr, font, text_color, keypad_rect);
+  keypad_label_->SetText(keypad_sym_);
+  keypad_label_->SetRect(keypad_rect);
+  keypad_label_->Draw(render);
 }
 
 void Player::DrawFooter() {
@@ -948,45 +953,6 @@ void Player::DrawFooter() {
   SDL_Rect banner_footer_rect = {footer_rect.x + padding_left, footer_rect.y, footer_rect.w - padding_left * 2,
                                  footer_rect.h};
   description_label_->SetRect(banner_footer_rect);
-
-  States current_state = GetCurrentState();
-  if (current_state == INIT_STATE) {
-    std::string footer_text = current_state_str_;
-    description_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
-    description_label_->SetIconTexture(NULL);
-    description_label_->SetText(footer_text);
-    description_label_->SetBackGroundColor(failed_color);
-  } else if (current_state == FAILED_STATE) {
-    std::string footer_text = current_state_str_;
-    description_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
-    description_label_->SetIconTexture(NULL);
-    description_label_->SetText(footer_text);
-    description_label_->SetBackGroundColor(failed_color);
-  } else if (current_state == PLAYING_STATE) {
-    ChannelDescription descr;
-    if (GetChannelDescription(current_stream_pos_, &descr)) {
-      std::string footer_text = common::MemSPrintf(
-          "Title: %s\n"
-          "Description: %s",
-          descr.title, descr.description);
-      channel_icon_t icon = descr.icon;
-      if (icon) {
-        description_label_->SetIconTexture(icon->GetTexture(render));
-        int h = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
-        if (h > footer_rect.h) {
-          h = footer_rect.h;
-        }
-        description_label_->SetIconSize(player::draw::Size(h, h));
-      } else {
-        description_label_->SetIconTexture(NULL);
-      }
-      description_label_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
-      description_label_->SetText(footer_text);
-      description_label_->SetBackGroundColor(info_channel_color);
-    }
-  } else {
-    NOTREACHED();
-  }
   description_label_->Draw(render);
 }
 
@@ -1008,10 +974,53 @@ void Player::DrawFailedStatus() {
 }
 
 void Player::InitWindow(const std::string& title, States status) {
-  current_state_str_ = title;
   StartShowFooter();
+  description_label_->SetText(title);
 
   base_class::InitWindow(title, status);
+}
+
+void Player::SetStatus(States new_state) {
+  if (new_state == INIT_STATE) {
+    description_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
+    description_label_->SetIconTexture(NULL);
+    description_label_->SetBackGroundColor(failed_color);
+  } else if (new_state == FAILED_STATE) {
+    description_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
+    description_label_->SetIconTexture(NULL);
+    description_label_->SetBackGroundColor(failed_color);
+  } else if (new_state == PLAYING_STATE) {
+    ChannelDescription descr;
+    if (GetChannelDescription(current_stream_pos_, &descr)) {
+#define DESCR_LINES_COUNT 2
+      std::string footer_text = common::MemSPrintf(
+          "Title: %s\n"
+          "Description: %s",
+          descr.title, descr.description);
+      channel_icon_t icon = descr.icon;
+      if (icon) {
+        SDL_Renderer* render = GetRenderer();
+        TTF_Font* font = GetFont();
+
+        const SDL_Rect footer_rect = GetFooterRect();
+        description_label_->SetIconTexture(icon->GetTexture(render));
+        int h = player::draw::CalcHeightFontPlaceByRowCount(font, DESCR_LINES_COUNT);
+        if (h > footer_rect.h) {
+          h = footer_rect.h;
+        }
+        description_label_->SetIconSize(player::draw::Size(h, h));
+      } else {
+        description_label_->SetIconTexture(NULL);
+      }
+      description_label_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
+      description_label_->SetText(footer_text);
+      description_label_->SetBackGroundColor(info_channel_color);
+    }
+  } else {
+    NOTREACHED();
+  }
+
+  base_class::SetStatus(new_state);
 }
 
 void Player::DrawInitStatus() {

@@ -846,7 +846,11 @@ void ISimplePlayer::InitWindow(const std::string& title, States status) {
   }
 
   SDL_SetWindowTitle(window_, title.c_str());
-  current_state_ = status;
+  SetStatus(status);
+}
+
+void ISimplePlayer::SetStatus(States new_state) {
+  current_state_ = new_state;
 }
 
 void ISimplePlayer::CalculateDispalySize() {
