@@ -111,6 +111,8 @@ class Player : public player::ISimplePlayer {
                                                   player::media::AppOptions opt,
                                                   player::media::ComplexOptions copt) override;
 
+  virtual void OnWindowCreated(SDL_Window* window, SDL_Renderer* render) override;
+
  private:
   int GetMaxProgrammsLines() const;
   bool GetChannelDescription(size_t pos, ChannelDescription* descr) const;

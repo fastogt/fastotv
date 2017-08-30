@@ -31,9 +31,9 @@ class ChatWindow : public player::gui::Window {
   typedef player::gui::Window base_class;
   ChatWindow();
 
-  void SetHideButtonTexture(player::draw::SurfaceSaver* sv);
+  void SetHideButtonImage(SDL_Texture* img);
 
-  void SetShowButtonTexture(player::draw::SurfaceSaver* sv);
+  void SetShowButtonImage(SDL_Texture* img);
 
   void SetFont(TTF_Font* font);
 
@@ -48,8 +48,8 @@ class ChatWindow : public player::gui::Window {
   SDL_Rect GetHideButtonChatRect() const;
   SDL_Rect GetShowButtonChatRect() const;
 
-  player::draw::SurfaceSaver* hide_button_texture_;
-  player::draw::SurfaceSaver* show_button_texture_;
+  SDL_Texture* hide_button_img_;
+  SDL_Texture* show_button_img_;
   TTF_Font* font_;
 };
 

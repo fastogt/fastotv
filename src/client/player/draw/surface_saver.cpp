@@ -52,7 +52,7 @@ SDL_Texture* SurfaceSaver::GetTexture(SDL_Renderer* renderer) const {
       texture_ = NULL;
     }
 
-    texture_ = SDL_CreateTextureFromSurface(renderer_, surface_);
+    texture_ = SDL_CreateTextureFromSurface(renderer, surface_);
     renderer_ = renderer;
   }
 

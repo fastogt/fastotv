@@ -25,14 +25,14 @@
 namespace fastotv {
 namespace client {
 
-ChatWindow::ChatWindow() : base_class(), hide_button_texture_(nullptr), show_button_texture_(nullptr), font_(nullptr) {}
+ChatWindow::ChatWindow() : base_class(), hide_button_img_(nullptr), show_button_img_(nullptr), font_(nullptr) {}
 
-void ChatWindow::SetHideButtonTexture(player::draw::SurfaceSaver* sv) {
-  hide_button_texture_ = sv;
+void ChatWindow::SetHideButtonImage(SDL_Texture* img) {
+  hide_button_img_ = img;
 }
 
-void ChatWindow::SetShowButtonTexture(player::draw::SurfaceSaver* sv) {
-  show_button_texture_ = sv;
+void ChatWindow::SetShowButtonImage(SDL_Texture* img) {
+  show_button_img_ = img;
 }
 
 void ChatWindow::SetFont(TTF_Font* font) {
@@ -41,22 +41,18 @@ void ChatWindow::SetFont(TTF_Font* font) {
 
 void ChatWindow::Draw(SDL_Renderer* render) {
   if (!IsVisible()) {
-    if (show_button_texture_ && fApp->IsCursorVisible()) {
-      SDL_Texture* img = show_button_texture_->GetTexture(render);
-      if (img) {
-        SDL_Rect hide_button_rect = GetShowButtonChatRect();
-        SDL_RenderCopy(render, img, NULL, &hide_button_rect);
+    if (fApp->IsCursorVisible()) {
+      if (show_button_img_) {
+        SDL_Rect show_button_rect = GetShowButtonChatRect();
+        SDL_RenderCopy(render, show_button_img_, NULL, &show_button_rect);
       }
     }
     return;
   }
 
-  if (hide_button_texture_) {
-    SDL_Texture* img = hide_button_texture_->GetTexture(render);
-    if (img) {
-      SDL_Rect hide_button_rect = GetHideButtonChatRect();
-      SDL_RenderCopy(render, img, NULL, &hide_button_rect);
-    }
+  if (hide_button_img_) {
+    SDL_Rect hide_button_rect = GetHideButtonChatRect();
+    SDL_RenderCopy(render, hide_button_img_, NULL, &hide_button_rect);
   }
 
   base_class::Draw(render);

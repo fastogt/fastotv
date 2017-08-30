@@ -161,6 +161,8 @@ class ISimplePlayer : public StreamHandler, public gui::events::EventListener {
   SDL_Renderer* GetRenderer() const;
   TTF_Font* GetFont() const;
 
+  virtual void OnWindowCreated(SDL_Window* window, SDL_Renderer* render);
+
  private:
   void SwitchToChannelErrorMode(common::Error err);
 

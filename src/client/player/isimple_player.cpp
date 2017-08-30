@@ -843,10 +843,16 @@ void ISimplePlayer::InitWindow(const std::string& title, States status) {
     if (err && err->IsError()) {
       return;
     }
+    OnWindowCreated(window_, renderer_);
   }
 
   SDL_SetWindowTitle(window_, title.c_str());
   SetStatus(status);
+}
+
+void ISimplePlayer::OnWindowCreated(SDL_Window* window, SDL_Renderer* render) {
+  UNUSED(window);
+  UNUSED(render);
 }
 
 void ISimplePlayer::SetStatus(States new_state) {

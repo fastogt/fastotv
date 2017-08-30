@@ -131,6 +131,7 @@ Player::Player(const std::string& app_directory_absolute_path,
 }
 
 Player::~Player() {
+  destroy(&keypad_label_);
   destroy(&description_label_);
   destroy(&chat_window_);
   destroy(&controller_);
@@ -207,9 +208,6 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
     connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
     right_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_HIDE_BUTTON_PATH_RELATIVE);
     left_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_SHOW_BUTTON_PATH_RELATIVE);
-
-    chat_window_->SetShowButtonTexture(right_arrow_button_texture_);
-    chat_window_->SetHideButtonTexture(left_arrow_button_texture_);
 
     controller_->Start();
     SwitchToConnectMode();
@@ -975,7 +973,9 @@ void Player::DrawFailedStatus() {
 
 void Player::InitWindow(const std::string& title, States status) {
   StartShowFooter();
-  description_label_->SetText(title);
+  if (status != PLAYING_STATE) {
+    description_label_->SetText(title);
+  }
 
   base_class::InitWindow(title, status);
 }
@@ -1046,6 +1046,19 @@ player::media::VideoState* Player::CreateStream(stream_id sid,
                                                 player::media::ComplexOptions copt) {
   controller_->RequesRuntimeChannelInfo(sid);
   return base_class::CreateStream(sid, uri, opt, copt);
+}
+
+void Player::OnWindowCreated(SDL_Window* window, SDL_Renderer* render) {
+  UNUSED(window);
+
+  if (right_arrow_button_texture_) {
+    chat_window_->SetShowButtonImage(right_arrow_button_texture_->GetTexture(render));
+  }
+  if (left_arrow_button_texture_) {
+    chat_window_->SetHideButtonImage(left_arrow_button_texture_->GetTexture(render));
+  }
+
+  base_class::OnWindowCreated(window, render);
 }
 
 void Player::MoveToNextStream() {
