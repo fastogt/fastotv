@@ -35,13 +35,22 @@ class Window : public core::events::EventListener {
   Window();
   virtual ~Window();
 
+  void SetRect(const SDL_Rect& rect);
+  SDL_Rect GetRect() const;
+
+  SDL_Color GetBackGroundColor() const;
+  void SetBackGroundColor(const SDL_Color& color);
+
+  void SetTransparent(bool t);
+  bool IsTransparent() const;
+
   void SetVisible(bool v);
   bool IsVisible() const;
 
   void Show();
   void Hide();
 
-  virtual void Draw(SDL_Renderer* render, const SDL_Rect& rect, const SDL_Color& back_ground_color);
+  virtual void Draw(SDL_Renderer* render);
 
  protected:
   virtual void HandleEvent(event_t* event) override;
@@ -55,7 +64,10 @@ class Window : public core::events::EventListener {
   virtual void HandleMouseMoveEvent(core::events::MouseMoveEvent* event);
 
  private:
+  SDL_Rect rect_;
+  SDL_Color back_ground_color_;
   bool visible_;
+  bool transparent_;
   bool focus_;
 };
 

@@ -27,7 +27,12 @@ namespace client {
 namespace player {
 namespace gui {
 
-Window::Window() : visible_(true), focus_(false) {
+Window::Window()
+    : rect_(draw::empty_rect),
+      back_ground_color_(draw::white_color),
+      visible_(true),
+      transparent_(false),
+      focus_(false) {
   fApp->Subscribe(this, core::events::MouseMoveEvent::EventType);
   fApp->Subscribe(this, core::events::MousePressEvent::EventType);
 
@@ -37,6 +42,30 @@ Window::Window() : visible_(true), focus_(false) {
 }
 
 Window::~Window() {}
+
+void Window::SetRect(const SDL_Rect& rect) {
+  rect_ = rect;
+}
+
+SDL_Rect Window::GetRect() const {
+  return rect_;
+}
+
+SDL_Color Window::GetBackGroundColor() const {
+  return back_ground_color_;
+}
+
+void Window::SetBackGroundColor(const SDL_Color& color) {
+  back_ground_color_ = color;
+}
+
+void Window::SetTransparent(bool t) {
+  transparent_ = t;
+}
+
+bool Window::IsTransparent() const {
+  return transparent_;
+}
 
 void Window::SetVisible(bool v) {
   visible_ = v;
@@ -57,12 +86,16 @@ void Window::Hide() {
   SetVisible(false);
 }
 
-void Window::Draw(SDL_Renderer* render, const SDL_Rect& rect, const SDL_Color& back_ground_color) {
+void Window::Draw(SDL_Renderer* render) {
   if (!visible_) {
     return;
   }
 
-  draw::FillRectColor(render, rect, back_ground_color);
+  if (transparent_) {
+    return;
+  }
+
+  draw::FillRectColor(render, rect_, back_ground_color_);
 }
 
 void Window::HandleEvent(event_t* event) {
@@ -89,17 +122,32 @@ void Window::HandleExceptionEvent(event_t* event, common::Error err) {
   UNUSED(err);
 }
 
-void Window::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {}
+void Window::HandleWindowResizeEvent(core::events::WindowResizeEvent* event) {
+  UNUSED(event);
+}
 
-void Window::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {}
+void Window::HandleWindowExposeEvent(core::events::WindowExposeEvent* event) {
+  UNUSED(event);
+}
 
-void Window::HandleWindowCloseEvent(core::events::WindowCloseEvent* event) {}
+void Window::HandleWindowCloseEvent(core::events::WindowCloseEvent* event) {
+  UNUSED(event);
+}
 
-void Window::HandleMousePressEvent(core::events::MousePressEvent* event) {}
+void Window::HandleMousePressEvent(core::events::MousePressEvent* event) {
+  UNUSED(event);
+}
 
-void Window::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {}
+void Window::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
+  if (!visible_) {
+    return;
+  }
 
-}  // namespace core
+  player::core::events::MouseMoveInfo minf = event->GetInfo();
+  focus_ = draw::PointInRect(minf.GetMousePoint(), rect_);
+}
+
+}  // namespace gui
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

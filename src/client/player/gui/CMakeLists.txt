@@ -32,6 +32,8 @@ SET(SOURCES_CORE_EVENTS
 SET(BUILD_GUI_SOURCES
   ${SOURCE_ROOT}/client/player/gui/window.h
   ${SOURCE_ROOT}/client/player/gui/window.cpp
+  ${SOURCE_ROOT}/client/player/gui/label.h
+  ${SOURCE_ROOT}/client/player/gui/label.cpp
 
   ${SOURCE_ROOT}/client/player/gui/events_base.h
   ${SOURCE_ROOT}/client/player/gui/events_base.cpp

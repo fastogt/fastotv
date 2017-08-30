@@ -32,7 +32,7 @@
 
 #ifdef HAVE_LIRC
 #include "client/inputs/lirc_input_client.h"        // for LircInit, LircInputClient
-#include "client/player/events/lirc_events.h"  // for ConvertFromString, Lirc...
+#include "client/player/gui/lirc_events.h"  // for ConvertFromString, Lirc...
 #endif
 
 namespace common {

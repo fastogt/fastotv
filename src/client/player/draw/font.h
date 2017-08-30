@@ -16,34 +16,31 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/gui/events/mouse_events.h"
+#pragma once
+
+#include <string>
+
+#include <SDL2/SDL_ttf.h>
 
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
-namespace events {
+namespace draw {
 
-MouseMoveInfo::MouseMoveInfo(const SDL_MouseMotionEvent& event) : mevent(event) {}
-
-SDL_Point MouseMoveInfo::GetMousePoint() const {
-  return {mevent.x, mevent.y};
-}
-
-MousePressInfo::MousePressInfo(const SDL_MouseButtonEvent& event) : mevent(event) {}
-
-SDL_Point MousePressInfo::GetMousePoint() const {
-  return {mevent.x, mevent.y};
-}
-
-MouseReleaseInfo::MouseReleaseInfo(const SDL_MouseButtonEvent& event) : mevent(event) {}
-
-SDL_Point MouseReleaseInfo::GetMousePoint() const {
-  return {mevent.x, mevent.y};
-}
-
-}  // namespace events
-}  // namespace core
+int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row);
+bool CaclTextSize(const std::string& text, TTF_Font* font, int* width, int* height);
+std::string DotText(std::string text, TTF_Font* font, int max_width);
+void DrawWrappedTextInRect(SDL_Renderer* render,
+                           const std::string& text,
+                           TTF_Font* font,
+                           SDL_Color text_color,
+                           SDL_Rect rect);
+void DrawCenterTextInRect(SDL_Renderer* render,
+                          const std::string& text,
+                          TTF_Font* font,
+                          SDL_Color text_color,
+                          SDL_Rect rect);
+}  // namespace draw
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv

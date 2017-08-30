@@ -51,7 +51,7 @@ class Sdl2Application : public common::application::IApplication {
 
   virtual void ShowCursor() override;
   virtual void HideCursor() override;
-  virtual bool IsCursorVisible() override;
+  virtual bool IsCursorVisible() const override;
 
   virtual common::application::timer_id_t AddTimer(uint32_t interval,
                                                    common::application::timer_callback_t cb,

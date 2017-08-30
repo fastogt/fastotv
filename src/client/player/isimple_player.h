@@ -29,8 +29,8 @@
 
 #include "client/player/gui/events/events.h"  // for PostExecEvent, PreExe...
 #include "client/player/gui/events/key_events.h"
-#include "client/player/gui/events/window_events.h"
 #include "client/player/gui/events/mouse_events.h"
+#include "client/player/gui/events/window_events.h"
 #include "client/player/gui/lirc_events.h"
 #include "client/player/gui/stream_events.h"
 
@@ -51,9 +51,9 @@ namespace core {
 struct AudioParams;
 }  // namespace core
 
-int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row);
-bool CaclTextSize(const std::string& text, TTF_Font* font, int* width, int* height);
-std::string DotText(std::string text, TTF_Font* font, int max_width);
+namespace gui {
+class Label;
+}
 
 class ISimplePlayer : public StreamHandler, public core::events::EventListener {
  public:
@@ -197,7 +197,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
 
   core::msec_t cursor_last_shown_;
 
-  bool show_volume_;
+  gui::Label* volume_label_;
   core::msec_t volume_last_shown_;
 
   core::msec_t last_mouse_left_click_;

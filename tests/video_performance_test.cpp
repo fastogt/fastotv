@@ -191,7 +191,7 @@ class FakeApplication : public common::application::IApplication {
 
   virtual void ShowCursor() override {}
   virtual void HideCursor() override {}
-  virtual bool IsCursorVisible() override { return true; }
+  virtual bool IsCursorVisible() const override { return true; }
 
   virtual void ExitImpl(int result) override {
     UNUSED(result);

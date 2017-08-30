@@ -18,15 +18,15 @@
 
 #include "client/chat_window.h"
 
-#include "client/player/isimple_player.h"
-
 #include "client/player/gui/sdl2_application.h"
+
+#include "client/player/draw/font.h"
 
 namespace fastotv {
 namespace client {
 
 ChatWindow::ChatWindow()
-    : base_class(), hide_button_texture_(nullptr), show_button_texture_(nullptr), font_(nullptr), rect_() {}
+    : base_class(), hide_button_texture_(nullptr), show_button_texture_(nullptr), font_(nullptr) {}
 
 void ChatWindow::SetHideButtonTexture(player::draw::SurfaceSaver* sv) {
   hide_button_texture_ = sv;
@@ -40,8 +40,7 @@ void ChatWindow::SetFont(TTF_Font* font) {
   font_ = font;
 }
 
-void ChatWindow::Draw(SDL_Renderer* render, const SDL_Rect& rect, const SDL_Color& back_ground_color) {
-  rect_ = rect;
+void ChatWindow::Draw(SDL_Renderer* render) {
   if (!IsVisible()) {
     if (show_button_texture_ && fApp->IsCursorVisible()) {
       SDL_Texture* img = show_button_texture_->GetTexture(render);
@@ -61,7 +60,7 @@ void ChatWindow::Draw(SDL_Renderer* render, const SDL_Rect& rect, const SDL_Colo
     }
   }
 
-  base_class::Draw(render, rect, back_ground_color);
+  base_class::Draw(render);
 }
 
 void ChatWindow::HandleMousePressEvent(player::core::events::MousePressEvent* event) {
@@ -98,8 +97,8 @@ SDL_Rect ChatWindow::GetHideButtonChatRect() const {
     return SDL_Rect();
   }
 
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font_, 2);
-  SDL_Rect chat_rect = rect_;
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 2);
+  SDL_Rect chat_rect = GetRect();
   SDL_Rect show_button_rect = {chat_rect.x + chat_rect.w, chat_rect.h / 2, font_height_2line, font_height_2line};
   return show_button_rect;
 }
@@ -109,10 +108,10 @@ SDL_Rect ChatWindow::GetShowButtonChatRect() const {
     return SDL_Rect();
   }
 
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font_, 2);
-  SDL_Rect chat_rect = rect_;
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 2);
+  SDL_Rect chat_rect = GetRect();
   SDL_Rect hide_button_rect = {chat_rect.x, chat_rect.h / 2, font_height_2line, font_height_2line};
   return hide_button_rect;
 }
-}
-}
+}  // namespace client
+}  // namespace fastotv

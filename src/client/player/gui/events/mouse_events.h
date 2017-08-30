@@ -30,7 +30,13 @@ namespace player {
 namespace core {
 namespace events {
 
-struct MouseMoveInfo {};
+struct MouseMoveInfo {
+  MouseMoveInfo(const SDL_MouseMotionEvent& event);
+
+  SDL_Point GetMousePoint() const;
+
+  SDL_MouseMotionEvent mevent;
+};
 
 struct MousePressInfo {
   MousePressInfo(const SDL_MouseButtonEvent& event);

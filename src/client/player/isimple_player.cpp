@@ -35,9 +35,11 @@
 #include "client/player/media/sdl_utils.h"
 #include "client/player/media/video_state.h"  // for VideoState
 
+#include "client/player/gui/label.h"
 #include "client/player/gui/sdl2_application.h"
 
 #include "client/player/draw/draw.h"
+#include "client/player/draw/font.h"
 #include "client/player/draw/texture_saver.h"
 #include "client/player/draw/types.h"
 
@@ -91,38 +93,6 @@ namespace fastotv {
 namespace client {
 namespace player {
 
-int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row) {
-  if (!font) {
-    return 0;
-  }
-
-  int font_height = TTF_FontLineSkip(font);
-  return 2 << av_log2(font_height * row);
-}
-
-bool CaclTextSize(const std::string& text, TTF_Font* font, int* width, int* height) {
-  const char* text_ptr = common::utils::c_strornull(text);
-  if (!text_ptr || !font || !width || !height) {
-    return false;
-  }
-
-  int res = TTF_SizeText(font, text_ptr, width, height);
-  return res == 0;
-}
-
-std::string DotText(std::string text, TTF_Font* font, int max_width) {
-  int needed_width, needed_height;
-  if (CaclTextSize(text, font, &needed_width, &needed_height) && needed_width > max_width) {
-    int char_width = needed_width / text.size();
-    int diff = max_width / char_width;
-    if (diff - 3 > 0) {
-      text = text.substr(0, diff - 3) + "...";
-    }
-  }
-
-  return text;
-}
-
 const SDL_Color ISimplePlayer::text_color = {255, 255, 255, 0};
 const AVRational ISimplePlayer::min_fps = {25, 1};
 const SDL_Color ISimplePlayer::black_color = {0, 0, 0, 255};
@@ -137,7 +107,7 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
       audio_buff_size_(0),
       window_(NULL),
       cursor_last_shown_(0),
-      show_volume_(false),
+      volume_label_(nullptr),
       volume_last_shown_(0),
       last_mouse_left_click_(0),
       exec_tid_(),
@@ -173,6 +143,13 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
   fApp->Subscribe(this, core::events::WindowCloseEvent::EventType);
 
   fApp->Subscribe(this, core::events::QuitEvent::EventType);
+
+  // volume label
+  volume_label_ = new gui::Label;
+  volume_label_->SetVisible(false);
+  volume_label_->SetDrawType(gui::Label::CENTER_TEXT);
+  volume_label_->SetBackGroundColor(stream_statistic_color);
+  volume_label_->SetTextColor(draw::white_color);
 }
 
 void ISimplePlayer::SetFullScreen(bool full_screen) {
@@ -188,6 +165,8 @@ void ISimplePlayer::SetMute(bool mute) {
 }
 
 ISimplePlayer::~ISimplePlayer() {
+  destroy(&volume_label_);
+
   if (core::hw_device_ctx) {
     av_buffer_unref(&core::hw_device_ctx);
     core::hw_device_ctx = NULL;
@@ -346,6 +325,8 @@ void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
       WARNING_LOG() << "Couldn't open font file path: " << font_path;
     }
   }
+
+  volume_label_->SetFont(font_);
 }
 
 void ISimplePlayer::HandlePostExecEvent(core::events::PostExecEvent* event) {
@@ -384,8 +365,8 @@ void ISimplePlayer::HandleTimerEvent(core::events::TimerEvent* event) {
   }
 
   core::msec_t diff_volume = cur_time - volume_last_shown_;
-  if (show_volume_ && diff_volume > VOLUME_HIDE_DELAY_MSEC) {
-    show_volume_ = false;
+  if (volume_label_->IsVisible() && diff_volume > VOLUME_HIDE_DELAY_MSEC) {
+    volume_label_->SetVisible(false);
   }
   DrawDisplay();
 }
@@ -613,7 +594,7 @@ void ISimplePlayer::sdl_audio_callback(void* user_data, uint8_t* stream, int len
 
 void ISimplePlayer::UpdateVolume(int8_t step) {
   options_.audio_volume = options_.audio_volume + step;
-  show_volume_ = true;
+  volume_label_->SetVisible(true);
   core::msec_t cur_time = core::GetCurrentMsec();
   volume_last_shown_ = cur_time;
 }
@@ -815,24 +796,19 @@ void ISimplePlayer::DrawStatistic() {
 
   SDL_Rect dst = {statistic_rect.x, statistic_rect.y, statistic_rect.w, h};
   draw::FillRectColor(renderer_, dst, stream_statistic_color);
-
   DrawWrappedTextInRect(result_text, text_color, dst);
 }
 
 void ISimplePlayer::DrawVolume() {
-  if (!show_volume_ || !font_ || !renderer_) {
-    return;
-  }
-
-  int vol = options_.audio_volume;
-  std::string vol_str = common::MemSPrintf("VOLUME: %d", vol);
+  std::string vol_str = common::MemSPrintf("VOLUME: %d", options_.audio_volume);
   const SDL_Rect volume_rect = GetVolumeRect();
   int padding_left = volume_rect.w / 4;
   SDL_Rect sdl_volume_rect = {volume_rect.x + padding_left, volume_rect.y, volume_rect.w - padding_left * 2,
                               volume_rect.h};
-  draw::FillRectColor(renderer_, sdl_volume_rect, stream_statistic_color);
 
-  DrawCenterTextInRect(vol_str, text_color, sdl_volume_rect);
+  volume_label_->SetText(vol_str);
+  volume_label_->SetRect(sdl_volume_rect);
+  volume_label_->Draw(renderer_);
 }
 
 bool ISimplePlayer::IsMouseVisible() const {
@@ -840,33 +816,11 @@ bool ISimplePlayer::IsMouseVisible() const {
 }
 
 void ISimplePlayer::DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
-  const char* text_ptr = common::utils::c_strornull(text);
-  if (!renderer_ || !font_ || !text_ptr) {
-    DNOTREACHED();
-    return;
-  }
-
-  SDL_Surface* text_surf = TTF_RenderUTF8_Blended(font_, text_ptr, text_color);
-  SDL_Rect dst = draw::GetCenterRect(rect, text_surf->w, text_surf->h);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
-  SDL_RenderCopy(renderer_, texture, NULL, &dst);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(text_surf);
+  draw::DrawCenterTextInRect(renderer_, text, font_, text_color, rect);
 }
 
 void ISimplePlayer::DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
-  const char* text_ptr = common::utils::c_strornull(text);
-  if (!renderer_ || !font_ || !text_ptr) {
-    DNOTREACHED();
-    return;
-  }
-
-  SDL_Surface* text_surf = TTF_RenderUTF8_Blended_Wrapped(font_, text_ptr, text_color, rect.w);
-  SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, text_surf);
-  rect.w = text_surf->w;
-  SDL_RenderCopy(renderer_, texture, NULL, &rect);
-  SDL_DestroyTexture(texture);
-  SDL_FreeSurface(text_surf);
+  draw::DrawWrappedTextInRect(renderer_, text, font_, text_color, rect);
 }
 
 SDL_Renderer* ISimplePlayer::GetRenderer() const {

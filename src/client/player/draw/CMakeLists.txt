@@ -11,6 +11,9 @@ SET(PRIVATE_INCLUDE_DIRECTORIES_DRAW
 SET(BUILD_DRAW_SOURCES
   ${SOURCE_ROOT}/client/player/draw/types.h
   ${SOURCE_ROOT}/client/player/draw/types.cpp
+  ${SOURCE_ROOT}/client/player/draw/font.h
+  ${SOURCE_ROOT}/client/player/draw/font.cpp
+
   ${SOURCE_ROOT}/client/player/draw/draw.h
   ${SOURCE_ROOT}/client/player/draw/draw.cpp
   ${SOURCE_ROOT}/client/player/draw/surface_saver.h

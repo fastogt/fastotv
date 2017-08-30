@@ -34,8 +34,8 @@
 
 #include "client/player/gui/events/events.h"  // for QuitEvent, QuitInfo
 #include "client/player/gui/events/key_events.h"
-#include "client/player/gui/events/window_events.h"
 #include "client/player/gui/events/mouse_events.h"
+#include "client/player/gui/events/window_events.h"
 
 #include "client/player/media/types.h"  // for GetCurrentMsec, msec_t
 #include "client/types.h"               // for Size
@@ -227,7 +227,7 @@ void Sdl2Application::HideCursor() {
   cursor_visible_ = false;
 }
 
-bool Sdl2Application::IsCursorVisible() {
+bool Sdl2Application::IsCursorVisible() const {
   return cursor_visible_;
 }
 
@@ -290,9 +290,7 @@ void Sdl2Application::HandleMouseReleaseEvent(SDL_MouseButtonEvent* event) {
 }
 
 void Sdl2Application::HandleMouseMoveEvent(SDL_MouseMotionEvent* event) {
-  UNUSED(event);
-
-  events::MouseMoveInfo inf;
+  events::MouseMoveInfo inf(*event);
   events::MouseMoveEvent* mouse_move_event = new events::MouseMoveEvent(this, inf);
   HandleEvent(mouse_move_event);
 }

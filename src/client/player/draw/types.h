@@ -38,10 +38,18 @@ struct Size {
 };
 
 bool IsValidSize(int width, int height);
+bool IsEmptyRect(const SDL_Rect& rect);
 
 SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
 
 bool PointInRect(const SDL_Point& point, const SDL_Rect& rect);
+
+static const SDL_Rect empty_rect = {0, 0, 0, 0};
+static const SDL_Color white_color = {255, 255, 255, 255};
+static const SDL_Color black_color = {0, 0, 0, 255};
+static const SDL_Color green_color = {0, 150, 0, 255};
+static const SDL_Color blue_color = {0, 0, 255, 255};
+static const SDL_Color lightblue_color = {200, 225, 255, 255};
 
 }  // namespace draw
 }  // namespace player

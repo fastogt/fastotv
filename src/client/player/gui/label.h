@@ -18,40 +18,44 @@
 
 #pragma once
 
-#include <SDL2/SDL_ttf.h>
-
+#include "client/player/draw/font.h"
 #include "client/player/gui/window.h"
-#include "client/player/draw/surface_saver.h"
 
 namespace fastotv {
 namespace client {
+namespace player {
+namespace gui {
 
-class ChatWindow : public player::gui::Window {
+class Label : public Window {
  public:
-  typedef player::gui::Window base_class;
-  ChatWindow();
+  typedef Window base_class;
+  enum DrawType { WRAPPED_TEXT, CENTER_TEXT };
 
-  void SetHideButtonTexture(player::draw::SurfaceSaver* sv);
+  Label();
+  virtual ~Label();
 
-  void SetShowButtonTexture(player::draw::SurfaceSaver* sv);
+  void SetDrawType(DrawType dt);
+  DrawType GetDrawType() const;
+
+  void SetText(const std::string& text);
+  std::string GetText() const;
+
+  void SetTextColor(const SDL_Color& color);
+  SDL_Color GetTextColor() const;
 
   void SetFont(TTF_Font* font);
-
   virtual void Draw(SDL_Renderer* render) override;
 
- protected:
-  virtual void HandleMousePressEvent(player::core::events::MousePressEvent* event) override;
-
  private:
-  bool IsHideButtonChatRect(const SDL_Point& point) const;
-  bool IsShowButtonChatRect(const SDL_Point& point) const;
-  SDL_Rect GetHideButtonChatRect() const;
-  SDL_Rect GetShowButtonChatRect() const;
+  void DrawText(SDL_Renderer* render);
 
-  player::draw::SurfaceSaver* hide_button_texture_;
-  player::draw::SurfaceSaver* show_button_texture_;
+  DrawType dt_;
+  std::string text_;
+  SDL_Color text_color_;
   TTF_Font* font_;
 };
 
+}  // namespace gui
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv

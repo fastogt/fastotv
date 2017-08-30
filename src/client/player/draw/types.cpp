@@ -60,6 +60,10 @@ bool IsValidSize(int width, int height) {
   return width > 0 && height > 0;
 }
 
+bool IsEmptyRect(const SDL_Rect& rect) {
+  return SDL_RectEmpty(&rect);
+}
+
 }  // namespace draw
 }  // namespace player
 }  // namespace client

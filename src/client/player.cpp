@@ -33,6 +33,7 @@
 
 #include "client/player/draw/draw.h"
 #include "client/player/draw/surface_saver.h"
+#include "client/player/draw/font.h"
 
 #include "client/chat_window.h"
 
@@ -113,6 +114,7 @@ Player::Player(const std::string& app_directory_absolute_path,
 
   chat_window_ = new ChatWindow;
   chat_window_->SetVisible(false);
+  chat_window_->SetBackGroundColor(chat_color);
 }
 
 Player::~Player() {
@@ -484,7 +486,7 @@ bool Player::FindStreamByPoint(SDL_Point point, size_t* pos) const {
     return false;
   }
 
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
   int max_line_count = programms_list_rect.h / font_height_2line;
   if (max_line_count == 0) {
     return false;
@@ -634,7 +636,7 @@ SDL_Rect Player::GetHideButtonProgramsListRect() const {
     return SDL_Rect();
   }
 
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
   SDL_Rect prog_rect = GetProgramsListRect();
   SDL_Rect hide_button_rect = {prog_rect.x - font_height_2line, prog_rect.h / 2, font_height_2line, font_height_2line};
   return hide_button_rect;
@@ -646,7 +648,7 @@ SDL_Rect Player::GetShowButtonProgramsListRect() const {
     return SDL_Rect();
   }
 
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
   SDL_Rect prog_rect = GetProgramsListRect();
   SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2, font_height_2line,
                                font_height_2line};
@@ -778,7 +780,7 @@ int Player::GetMaxProgrammsLines() const {
   }
 
   const SDL_Rect programms_list_rect = GetProgramsListRect();
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
   return programms_list_rect.h / font_height_2line;
 }
 
@@ -790,7 +792,7 @@ void Player::DrawProgramsList() {
   }
 
   const SDL_Rect programms_list_rect = GetProgramsListRect();
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
   int min_size_width = keypad_width + font_height_2line + space_width + font_height_2line;  // number + icon + text
   if (programms_list_rect.w < min_size_width) {
     return;
@@ -846,9 +848,9 @@ void Player::DrawProgramsList() {
       shift += font_height_2line + space_width;  // in any case shift should be
 
       int text_width = programms_list_rect.w - shift;
-      std::string title_line = player::DotText(common::MemSPrintf("Title: %s", descr.title), font, text_width);
+      std::string title_line = player::draw::DotText(common::MemSPrintf("Title: %s", descr.title), font, text_width);
       std::string description_line =
-          player::DotText(common::MemSPrintf("Description: %s", descr.description), font, text_width);
+          player::draw::DotText(common::MemSPrintf("Description: %s", descr.description), font, text_width);
 
       std::string line_text = common::MemSPrintf(
           "%s\n"
@@ -903,7 +905,8 @@ void Player::DrawChat() {
     return;
   }
 
-  chat_window_->Draw(render, chat_rect, chat_color);
+  chat_window_->SetRect(chat_rect);
+  chat_window_->Draw(render);
 }
 
 void Player::DrawKeyPad() {
@@ -952,7 +955,7 @@ void Player::DrawFooter() {
           "Title: %s\n"
           "Description: %s",
           descr.title, descr.description);
-      int h = player::CalcHeightFontPlaceByRowCount(font, 2);
+      int h = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
       if (h > footer_rect.h) {
         h = footer_rect.h;
       }
