@@ -18,43 +18,35 @@
 
 #pragma once
 
-extern "C" {
-#include <libavutil/rational.h>  // for AVRational
-}
+#include <string>  // for string
 
-#include <common/error.h>
+#include "client/player/gui/events_base.h"  // for EventBase, EventsType::L...
 
-#include "client/player/events/events_base.h"
+enum LircCode {
+  LIRC_KEY_OK = 0,
+  LIRC_KEY_LEFT,
+  LIRC_KEY_UP,
+  LIRC_KEY_RIGHT,
+  LIRC_KEY_DOWN,
+  LIRC_KEY_EXIT,
+  LIRC_KEY_MUTE
+};
+
+namespace common {
+std::string ConvertToString(LircCode value);
+bool ConvertFromString(const std::string& from, LircCode* out);
+}  // namespace common
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace core {
-class VideoState;
 namespace events {
 
-struct StreamInfo {
-  explicit StreamInfo(VideoState* stream);
-
-  VideoState* stream_;
+struct LircPressInfo {
+  LircCode code;
 };
-
-struct FrameInfo : public StreamInfo {
-  FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio);
-  int width;
-  int height;
-  int av_pixel_format;
-  AVRational aspect_ratio;
-};
-
-struct QuitStreamInfo : public StreamInfo {
-  QuitStreamInfo(VideoState* stream, int exit_code, common::Error err);
-  int exit_code;
-  common::Error error;
-};
-
-typedef EventBase<REQUEST_VIDEO_EVENT, FrameInfo> RequestVideoEvent;
-typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
+typedef EventBase<LIRC_PRESS_EVENT, LircPressInfo> LircPressEvent;
 
 }  // namespace events
 }  // namespace core

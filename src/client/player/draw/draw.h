@@ -30,7 +30,7 @@ namespace client {
 namespace player {
 namespace draw {
 
-common::Error CreateWindow(Size size,
+common::Error CreateMainWindow(Size size,
                            bool is_full_screen,
                            const std::string& title,
                            SDL_Renderer** renderer,

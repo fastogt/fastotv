@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/application/sdl2_application.h"
+#include "client/player/gui/sdl2_application.h"
 
 #include <stdlib.h>  // for EXIT_SUCCESS, EXIT_FAI...
 
@@ -32,10 +32,13 @@
 #include <common/macros.h>                  // for UNUSED, DNOTREACHED
 #include <common/threads/thread_manager.h>  // for THREAD_MANAGER
 
-#include "client/player/events/events.h"  // for QuitEvent, QuitInfo
+#include "client/player/gui/events/events.h"  // for QuitEvent, QuitInfo
+#include "client/player/gui/events/key_events.h"
+#include "client/player/gui/events/window_events.h"
+#include "client/player/gui/events/mouse_events.h"
 
 #include "client/player/media/types.h"  // for GetCurrentMsec, msec_t
-#include "client/types.h"              // for Size
+#include "client/types.h"               // for Size
 
 #define FASTO_EVENT (SDL_USEREVENT)
 
@@ -57,7 +60,8 @@ namespace application {
 Sdl2Application::Sdl2Application(int argc, char** argv)
     : common::application::IApplication(argc, argv),
       dispatcher_(),
-      update_display_timeout_msec_(event_timeout_wait_msec) {}
+      update_display_timeout_msec_(event_timeout_wait_msec),
+      cursor_visible_(false) {}
 
 Sdl2Application::~Sdl2Application() {
   THREAD_MANAGER()->FreeInstance();
@@ -215,10 +219,16 @@ void Sdl2Application::ExitImpl(int result) {
 
 void Sdl2Application::ShowCursor() {
   SDL_ShowCursor(1);
+  cursor_visible_ = true;
 }
 
 void Sdl2Application::HideCursor() {
   SDL_ShowCursor(0);
+  cursor_visible_ = false;
+}
+
+bool Sdl2Application::IsCursorVisible() {
+  return cursor_visible_;
 }
 
 common::application::timer_id_t Sdl2Application::AddTimer(uint32_t interval,

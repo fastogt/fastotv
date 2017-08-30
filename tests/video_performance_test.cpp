@@ -7,7 +7,8 @@ extern "C" {
 #include <libavdevice/avdevice.h>  // for avdevice_register_all
 }
 
-#include "client/player/events/events.h"
+#include "client/player/gui/stream_events.h"
+
 #include "client/player/media/sdl_utils.h"
 #include "client/player/media/video_state.h"
 #include "client/player/media/video_state_handler.h"
@@ -190,6 +191,7 @@ class FakeApplication : public common::application::IApplication {
 
   virtual void ShowCursor() override {}
   virtual void HideCursor() override {}
+  virtual bool IsCursorVisible() override { return true; }
 
   virtual void ExitImpl(int result) override {
     UNUSED(result);

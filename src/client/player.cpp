@@ -28,11 +28,13 @@
 #include "client/ioservice.h"  // for IoService
 #include "client/utils.h"
 
-#include "client/player/application/sdl2_application.h"
+#include "client/player/gui/sdl2_application.h"
 #include "client/player/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
 
 #include "client/player/draw/draw.h"
 #include "client/player/draw/surface_saver.h"
+
+#include "client/chat_window.h"
 
 #define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "share/resources/offline_channel.png"
 #define IMG_CONNECTION_ERROR_PATH_RELATIVE "share/resources/connection_error.png"
@@ -78,8 +80,8 @@ Player::Player(const std::string& app_directory_absolute_path,
     : ISimplePlayer(options),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
-      hide_button_texture_(nullptr),
-      show_button_texture_(nullptr),
+      right_arrow_button_texture_(nullptr),
+      left_arrow_button_texture_(nullptr),
       controller_(new IoService),
       current_stream_pos_(0),
       play_list_(),
@@ -93,8 +95,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       keypad_last_shown_(0),
       keypad_sym_(),
       show_programms_list_(true),
-      show_chat_(false),
-      last_programms_line_(0) {
+      last_programms_line_(0),
+      chat_window_(nullptr) {
   fApp->Subscribe(this, player::core::events::BandwidthEstimationEvent::EventType);
 
   fApp->Subscribe(this, player::core::events::ClientDisconnectedEvent::EventType);
@@ -108,9 +110,13 @@ Player::Player(const std::string& app_directory_absolute_path,
   fApp->Subscribe(this, player::core::events::ReceiveRuntimeChannelEvent::EventType);
   fApp->Subscribe(this, player::core::events::SendChatMessageEvent::EventType);
   fApp->Subscribe(this, player::core::events::ReceiveChatMessageEvent::EventType);
+
+  chat_window_ = new ChatWindow;
+  chat_window_->SetVisible(false);
 }
 
 Player::~Player() {
+  destroy(&chat_window_);
   destroy(&controller_);
 }
 
@@ -183,13 +189,18 @@ void Player::HandlePreExecEvent(player::core::events::PreExecEvent* event) {
   if (inf.code == EXIT_SUCCESS) {
     offline_channel_texture_ = MakeSurfaceFromImageRelativePath(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
-    hide_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_HIDE_BUTTON_PATH_RELATIVE);
-    show_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_SHOW_BUTTON_PATH_RELATIVE);
+    right_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_HIDE_BUTTON_PATH_RELATIVE);
+    left_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_SHOW_BUTTON_PATH_RELATIVE);
+
+    chat_window_->SetShowButtonTexture(right_arrow_button_texture_);
+    chat_window_->SetHideButtonTexture(left_arrow_button_texture_);
 
     controller_->Start();
     SwitchToConnectMode();
   }
+
   base_class::HandlePreExecEvent(event);
+  chat_window_->SetFont(GetFont());
 }
 
 void Player::HandleTimerEvent(player::core::events::TimerEvent* event) {
@@ -213,8 +224,8 @@ void Player::HandlePostExecEvent(player::core::events::PostExecEvent* event) {
     controller_->Stop();
     destroy(&offline_channel_texture_);
     destroy(&connection_error_texture_);
-    destroy(&hide_button_texture_);
-    destroy(&show_button_texture_);
+    destroy(&right_arrow_button_texture_);
+    destroy(&left_arrow_button_texture_);
     play_list_.clear();
   }
   base_class::HandlePostExecEvent(event);
@@ -437,7 +448,7 @@ void Player::HandleMousePressEvent(player::core::events::MousePressEvent* event)
   player::core::events::MousePressInfo inf = event->GetInfo();
   SDL_MouseButtonEvent sinfo = inf.mevent;
   if (sinfo.button == SDL_BUTTON_LEFT) {
-    SDL_Point point{sinfo.x, sinfo.y};
+    SDL_Point point = inf.GetMousePoint();
     // playlist
     if (show_programms_list_) {
       size_t pos;
@@ -452,17 +463,6 @@ void Player::HandleMousePressEvent(player::core::events::MousePressEvent* event)
     } else {
       if (IsShowButtonProgramsListRect(point)) {
         show_programms_list_ = true;
-      }
-    }
-
-    // chat
-    if (show_chat_) {
-      if (IsHideButtonChatRect(point)) {
-        show_chat_ = false;
-      }
-    } else {
-      if (IsShowButtonChatRect(point)) {
-        show_chat_ = true;
       }
     }
   }
@@ -510,24 +510,14 @@ bool Player::FindStreamByPoint(SDL_Point point, size_t* pos) const {
   return false;
 }
 
-bool Player::IsHideButtonProgramsListRect(SDL_Point point) const {
+bool Player::IsHideButtonProgramsListRect(const SDL_Point& point) const {
   const SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
-  return SDL_PointInRect(&point, &hide_button_rect);
+  return player::draw::PointInRect(point, hide_button_rect);
 }
 
-bool Player::IsShowButtonProgramsListRect(SDL_Point point) const {
+bool Player::IsShowButtonProgramsListRect(const SDL_Point& point) const {
   const SDL_Rect show_button_rect = GetShowButtonProgramsListRect();
-  return SDL_PointInRect(&point, &show_button_rect);
-}
-
-bool Player::IsHideButtonChatRect(SDL_Point point) const {
-  const SDL_Rect hide_button_rect = GetHideButtonChatRect();
-  return SDL_PointInRect(&point, &hide_button_rect);
-}
-
-bool Player::IsShowButtonChatRect(SDL_Point point) const {
-  const SDL_Rect show_button_rect = GetShowButtonChatRect();
-  return SDL_PointInRect(&point, &show_button_rect);
+  return player::draw::PointInRect(point, show_button_rect);
 }
 
 void Player::HandleKeyPressEvent(player::core::events::KeyPressEvent* event) {
@@ -625,7 +615,7 @@ void Player::ToggleShowProgramsList() {
 }
 
 void Player::ToggleShowChat() {
-  show_chat_ = !show_chat_;
+  chat_window_->SetVisible(!chat_window_->IsVisible());
 }
 
 SDL_Rect Player::GetProgramsListRect() const {
@@ -661,30 +651,6 @@ SDL_Rect Player::GetShowButtonProgramsListRect() const {
   SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2, font_height_2line,
                                font_height_2line};
   return show_button_rect;
-}
-
-SDL_Rect Player::GetHideButtonChatRect() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return SDL_Rect();
-  }
-
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
-  SDL_Rect chat_rect = GetChatRect();
-  SDL_Rect show_button_rect = {chat_rect.x + chat_rect.w, chat_rect.h / 2, font_height_2line, font_height_2line};
-  return show_button_rect;
-}
-
-SDL_Rect Player::GetShowButtonChatRect() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return SDL_Rect();
-  }
-
-  int font_height_2line = player::CalcHeightFontPlaceByRowCount(font, 2);
-  SDL_Rect chat_rect = GetChatRect();
-  SDL_Rect hide_button_rect = {chat_rect.x, chat_rect.h / 2, font_height_2line, font_height_2line};
-  return hide_button_rect;
 }
 
 void Player::MoveToNextProgrammsPage() {
@@ -831,8 +797,8 @@ void Player::DrawProgramsList() {
   }
 
   if (!show_programms_list_) {
-    if (show_button_texture_ && IsMouseVisible()) {
-      SDL_Texture* img = show_button_texture_->GetTexture(render);
+    if (left_arrow_button_texture_ && IsMouseVisible()) {
+      SDL_Texture* img = left_arrow_button_texture_->GetTexture(render);
       if (img) {
         SDL_Rect hide_button_rect = GetShowButtonProgramsListRect();
         SDL_RenderCopy(render, img, NULL, &hide_button_rect);
@@ -905,8 +871,8 @@ void Player::DrawProgramsList() {
     }
   }
 
-  if (hide_button_texture_) {
-    SDL_Texture* img = hide_button_texture_->GetTexture(render);
+  if (right_arrow_button_texture_) {
+    SDL_Texture* img = right_arrow_button_texture_->GetTexture(render);
     if (img) {
       SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
       SDL_RenderCopy(render, img, NULL, &hide_button_rect);
@@ -937,26 +903,7 @@ void Player::DrawChat() {
     return;
   }
 
-  if (!show_chat_) {
-    if (hide_button_texture_ && IsMouseVisible()) {
-      SDL_Texture* img = hide_button_texture_->GetTexture(render);
-      if (img) {
-        SDL_Rect hide_button_rect = GetShowButtonChatRect();
-        SDL_RenderCopy(render, img, NULL, &hide_button_rect);
-      }
-    }
-    return;
-  }
-
-  player::draw::FillRectColor(render, chat_rect, chat_color);
-
-  if (show_button_texture_) {
-    SDL_Texture* img = show_button_texture_->GetTexture(render);
-    if (img) {
-      SDL_Rect hide_button_rect = GetHideButtonChatRect();
-      SDL_RenderCopy(render, img, NULL, &hide_button_rect);
-    }
-  }
+  chat_window_->Draw(render, chat_rect, chat_color);
 }
 
 void Player::DrawKeyPad() {

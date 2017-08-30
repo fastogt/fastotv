@@ -16,7 +16,11 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/events/window_events.h"
+#pragma once
+
+#include <common/types.h>  // for time64_t
+
+#include "client/player/gui/events_base.h"
 
 namespace fastotv {
 namespace client {
@@ -24,7 +28,30 @@ namespace player {
 namespace core {
 namespace events {
 
-WindowResizeInfo::WindowResizeInfo(const draw::Size& size) : size(size) {}
+struct TimeInfo {
+  TimeInfo();
+
+  common::time64_t time_millisecond;
+};
+
+struct QuitInfo {};
+
+struct PreExecInfo {
+  explicit PreExecInfo(int code);
+  int code;
+};
+
+struct PostExecInfo {
+  explicit PostExecInfo(int code);
+  int code;
+};
+
+typedef EventBase<PRE_EXEC_EVENT, PreExecInfo> PreExecEvent;
+typedef EventBase<POST_EXEC_EVENT, PostExecInfo> PostExecEvent;
+
+typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
+
+typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;
 
 }  // namespace events
 }  // namespace core

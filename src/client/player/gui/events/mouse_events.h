@@ -16,7 +16,13 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/events/key_events.h"
+#pragma once
+
+#include <stdint.h>  // for uint8_t
+
+#include <SDL2/SDL_events.h>
+
+#include "client/player/gui/events_base.h"  // for EventBase, EventsType::M...
 
 namespace fastotv {
 namespace client {
@@ -24,9 +30,26 @@ namespace player {
 namespace core {
 namespace events {
 
-KeyPressInfo::KeyPressInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), ks(ks) {}
+struct MouseMoveInfo {};
 
-KeyReleaseInfo::KeyReleaseInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), ks(ks) {}
+struct MousePressInfo {
+  MousePressInfo(const SDL_MouseButtonEvent& event);
+
+  SDL_Point GetMousePoint() const;
+
+  SDL_MouseButtonEvent mevent;
+};
+struct MouseReleaseInfo {
+  MouseReleaseInfo(const SDL_MouseButtonEvent& event);
+
+  SDL_Point GetMousePoint() const;
+
+  SDL_MouseButtonEvent mevent;
+};
+
+typedef EventBase<MOUSE_MOVE_EVENT, MouseMoveInfo> MouseMoveEvent;
+typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
+typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
 
 }  // namespace events
 }  // namespace core

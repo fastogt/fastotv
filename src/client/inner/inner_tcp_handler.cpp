@@ -35,8 +35,8 @@
 
 #include "client/bandwidth/tcp_bandwidth_client.h"  // for TcpBandwidthClient
 #include "client/commands.h"
-#include "client/player/events/network_events.h"  // for BandwidtInfo, Con...
-#include "client_info.h"                               // for ClientInfo
+#include "client/player/gui/network_events.h"  // for BandwidtInfo, Con...
+#include "client_info.h"                       // for ClientInfo
 #include "runtime_channel_info.h"
 
 #include "inner/inner_client.h"  // for InnerClient

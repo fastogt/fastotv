@@ -18,11 +18,9 @@
 
 #pragma once
 
-#include <stdint.h>  // for int32_t, uint16_t
+#include "client/player/gui/events_base.h"
 
-#include <SDL2/SDL_keyboard.h>
-
-#include "client/player/events/events_base.h"
+#include "client/player/draw/types.h"
 
 namespace fastotv {
 namespace client {
@@ -30,22 +28,18 @@ namespace player {
 namespace core {
 namespace events {
 
-struct KeyPressInfo {
-  KeyPressInfo(bool pressed, SDL_Keysym ks);
+struct WindowResizeInfo {
+  explicit WindowResizeInfo(const draw::Size& size);
 
-  bool is_pressed;
-  SDL_Keysym ks;
+  draw::Size size;
 };
 
-struct KeyReleaseInfo {
-  KeyReleaseInfo(bool pressed, SDL_Keysym ks);
+struct WindowExposeInfo {};
+struct WindowCloseInfo {};
 
-  bool is_pressed;
-  SDL_Keysym ks;
-};
-
-typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;
-typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
+typedef EventBase<WINDOW_RESIZE_EVENT, WindowResizeInfo> WindowResizeEvent;
+typedef EventBase<WINDOW_EXPOSE_EVENT, WindowExposeInfo> WindowExposeEvent;
+typedef EventBase<WINDOW_CLOSE_EVENT, WindowCloseInfo> WindowCloseEvent;
 
 }  // namespace events
 }  // namespace core

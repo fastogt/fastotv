@@ -41,6 +41,8 @@ bool IsValidSize(int width, int height);
 
 SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
 
+bool PointInRect(const SDL_Point& point, const SDL_Rect& rect);
+
 }  // namespace draw
 }  // namespace player
 }  // namespace client

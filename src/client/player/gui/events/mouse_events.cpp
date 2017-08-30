@@ -16,42 +16,27 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/events/lirc_events.h"
-
-#include <common/macros.h>  // for SIZEOFMASS
-
-namespace {
-
-const std::string g_lirc_types[] = {"LIRC_KEY_OK",   "LIRC_KEY_LEFT", "LIRC_KEY_UP",  "LIRC_KEY_RIGHT",
-                                    "LIRC_KEY_DOWN", "LIRC_KEY_EXIT", "LIRC_KEY_MUTE"};
-}
-
-namespace common {
-std::string ConvertToString(LircCode value) {
-  return g_lirc_types[value];
-}
-
-bool ConvertFromString(const std::string& from, LircCode* out) {
-  if (!out) {
-    return false;
-  }
-
-  for (uint32_t i = 0; i < SIZEOFMASS(g_lirc_types); ++i) {
-    if (from == g_lirc_types[i]) {
-      *out = static_cast<LircCode>(i);
-      return true;
-    }
-  }
-
-  return false;
-}
-}  // namespace common
+#include "client/player/gui/events/mouse_events.h"
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace core {
-namespace events {}
+namespace events {
+
+MousePressInfo::MousePressInfo(const SDL_MouseButtonEvent& event) : mevent(event) {}
+
+SDL_Point MousePressInfo::GetMousePoint() const {
+  return {mevent.x, mevent.y};
+}
+
+MouseReleaseInfo::MouseReleaseInfo(const SDL_MouseButtonEvent& event) : mevent(event) {}
+
+SDL_Point MouseReleaseInfo::GetMousePoint() const {
+  return {mevent.x, mevent.y};
+}
+
+}  // namespace events
 }  // namespace core
 }  // namespace player
 }  // namespace client

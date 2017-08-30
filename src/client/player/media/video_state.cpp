@@ -65,7 +65,6 @@ extern "C" {
 #include "client/player/media/av_utils.h"
 #include "client/player/media/bandwidth_estimation.h"  // for DesireBytesPerSec
 #include "client/player/media/decoder.h"               // for VideoDecoder, AudioDec...
-#include "client/player/events/stream_events.h"  // for QuitStreamEvent, Alloc...
 #include "client/player/media/packet_queue.h"          // for PacketQueue
 #include "client/player/media/sdl_utils.h"
 #include "client/player/media/stream.h"  // for AudioStream, VideoStream
@@ -1588,9 +1587,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);

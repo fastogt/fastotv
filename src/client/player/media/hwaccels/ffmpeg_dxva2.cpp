@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/core/hwaccels/ffmpeg_dxva2.h"
+#include "client/player/media/hwaccels/ffmpeg_dxva2.h"
 
 #include <windows.h>
 
@@ -48,7 +48,7 @@ extern "C" {
 
 #include <common/macros.h>
 
-#include "client/player/core/ffmpeg_internal.h"
+#include "client/player/media/ffmpeg_internal.h"
 
 DEFINE_GUID(IID_IDirectXVideoDecoderService,
             0xfc51a551,

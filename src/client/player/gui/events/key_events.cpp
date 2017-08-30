@@ -16,18 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include <common/types.h>  // for time64_t
-
-#include "client/player/events/events_base.h"
-
-#include "client/player/events/key_events.h"
-#include "client/player/events/lirc_events.h"
-#include "client/player/events/mouse_events.h"
-#include "client/player/events/network_events.h"
-#include "client/player/events/stream_events.h"
-#include "client/player/events/window_events.h"
+#include "client/player/gui/events/key_events.h"
 
 namespace fastotv {
 namespace client {
@@ -35,30 +24,9 @@ namespace player {
 namespace core {
 namespace events {
 
-struct TimeInfo {
-  TimeInfo();
+KeyPressInfo::KeyPressInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), ks(ks) {}
 
-  common::time64_t time_millisecond;
-};
-
-struct QuitInfo {};
-
-struct PreExecInfo {
-  explicit PreExecInfo(int code);
-  int code;
-};
-
-struct PostExecInfo {
-  explicit PostExecInfo(int code);
-  int code;
-};
-
-typedef EventBase<PRE_EXEC_EVENT, PreExecInfo> PreExecEvent;
-typedef EventBase<POST_EXEC_EVENT, PostExecInfo> PostExecEvent;
-
-typedef EventBase<TIMER_EVENT, TimeInfo> TimerEvent;
-
-typedef EventBase<QUIT_EVENT, QuitInfo> QuitEvent;
+KeyReleaseInfo::KeyReleaseInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), ks(ks) {}
 
 }  // namespace events
 }  // namespace core

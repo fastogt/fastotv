@@ -16,17 +16,45 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/events/mouse_events.h"
+#pragma once
+
+extern "C" {
+#include <libavutil/rational.h>  // for AVRational
+}
+
+#include <common/error.h>
+
+#include "client/player/gui/events_base.h"
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace core {
+class VideoState;
 namespace events {
 
-MousePressInfo::MousePressInfo(const SDL_MouseButtonEvent& event) : mevent(event) {}
+struct StreamInfo {
+  explicit StreamInfo(VideoState* stream);
 
-MouseReleaseInfo::MouseReleaseInfo(const SDL_MouseButtonEvent& event) : mevent(event) {}
+  VideoState* stream_;
+};
+
+struct FrameInfo : public StreamInfo {
+  FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio);
+  int width;
+  int height;
+  int av_pixel_format;
+  AVRational aspect_ratio;
+};
+
+struct QuitStreamInfo : public StreamInfo {
+  QuitStreamInfo(VideoState* stream, int exit_code, common::Error err);
+  int exit_code;
+  common::Error error;
+};
+
+typedef EventBase<REQUEST_VIDEO_EVENT, FrameInfo> RequestVideoEvent;
+typedef EventBase<QUIT_STREAM_EVENT, QuitStreamInfo> QuitStreamEvent;
 
 }  // namespace events
 }  // namespace core

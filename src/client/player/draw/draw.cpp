@@ -29,11 +29,11 @@ namespace client {
 namespace player {
 namespace draw {
 
-common::Error CreateWindow(Size size,
-                           bool is_full_screen,
-                           const std::string& title,
-                           SDL_Renderer** renderer,
-                           SDL_Window** window) {
+common::Error CreateMainWindow(Size size,
+                               bool is_full_screen,
+                               const std::string& title,
+                               SDL_Renderer** renderer,
+                               SDL_Window** window) {
   if (!renderer || !window || !size.IsValid()) {  // invalid input
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
@@ -87,7 +87,7 @@ common::Error CreateWindow(Size size,
     if (lwindow) {
       SDL_DestroyWindow(lwindow);
     }
-    return false;
+    return common::make_error_value("Could not set video mode", common::Value::E_ERROR);
   }
 
   SDL_SetRenderDrawBlendMode(lrenderer, SDL_BLENDMODE_BLEND);

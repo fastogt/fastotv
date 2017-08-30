@@ -24,9 +24,9 @@
 #include "channels_info.h"
 #include "runtime_channel_info.h"
 
-#include "client/player/events/events_base.h"  // for EventBase, EventsType::C...
-#include "client/types.h"                           // for BandwidthHostType
-#include "client_server_types.h"                    // for bandwidth_t
+#include "client/player/gui/events_base.h"  // for EventBase, EventsType::C...
+#include "client/types.h"                   // for BandwidthHostType
+#include "client_server_types.h"            // for bandwidth_t
 
 namespace fastotv {
 namespace client {

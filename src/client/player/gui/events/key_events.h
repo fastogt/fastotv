@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <stdint.h>  // for uint8_t
+#include <stdint.h>  // for int32_t, uint16_t
 
-#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_keyboard.h>
 
-#include "client/player/events/events_base.h"  // for EventBase, EventsType::M...
+#include "client/player/gui/events_base.h"
 
 namespace fastotv {
 namespace client {
@@ -30,22 +30,22 @@ namespace player {
 namespace core {
 namespace events {
 
-struct MouseMoveInfo {};
+struct KeyPressInfo {
+  KeyPressInfo(bool pressed, SDL_Keysym ks);
 
-struct MousePressInfo {
-  MousePressInfo(const SDL_MouseButtonEvent& event);
-
-  SDL_MouseButtonEvent mevent;
-};
-struct MouseReleaseInfo {
-  MouseReleaseInfo(const SDL_MouseButtonEvent& event);
-
-  SDL_MouseButtonEvent mevent;
+  bool is_pressed;
+  SDL_Keysym ks;
 };
 
-typedef EventBase<MOUSE_MOVE_EVENT, MouseMoveInfo> MouseMoveEvent;
-typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
-typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;
+struct KeyReleaseInfo {
+  KeyReleaseInfo(bool pressed, SDL_Keysym ks);
+
+  bool is_pressed;
+  SDL_Keysym ks;
+};
+
+typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;
+typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
 
 }  // namespace events
 }  // namespace core

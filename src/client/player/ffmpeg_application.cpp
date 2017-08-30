@@ -28,7 +28,7 @@ extern "C" {
 
 #include <common/file_system.h>
 
-#include "client/player/events/events.h"
+#include "client/player/gui/events/events.h"
 
 namespace {
 

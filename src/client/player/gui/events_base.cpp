@@ -16,32 +16,13 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include "client/player/events/events_base.h"
-
-#include "client/player/draw/types.h"
+#include "client/player/gui/events_base.h"
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace core {
-namespace events {
-
-struct WindowResizeInfo {
-  explicit WindowResizeInfo(const draw::Size& size);
-
-  draw::Size size;
-};
-
-struct WindowExposeInfo {};
-struct WindowCloseInfo {};
-
-typedef EventBase<WINDOW_RESIZE_EVENT, WindowResizeInfo> WindowResizeEvent;
-typedef EventBase<WINDOW_EXPOSE_EVENT, WindowExposeInfo> WindowExposeEvent;
-typedef EventBase<WINDOW_CLOSE_EVENT, WindowCloseInfo> WindowCloseEvent;
-
-}  // namespace events
+namespace events {}
 }  // namespace core
 }  // namespace player
 }  // namespace client

@@ -16,23 +16,42 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/events/stream_events.h"
+#include "client/player/gui/lirc_events.h"
+
+#include <common/macros.h>  // for SIZEOFMASS
+
+namespace {
+
+const std::string g_lirc_types[] = {"LIRC_KEY_OK",   "LIRC_KEY_LEFT", "LIRC_KEY_UP",  "LIRC_KEY_RIGHT",
+                                    "LIRC_KEY_DOWN", "LIRC_KEY_EXIT", "LIRC_KEY_MUTE"};
+}
+
+namespace common {
+std::string ConvertToString(LircCode value) {
+  return g_lirc_types[value];
+}
+
+bool ConvertFromString(const std::string& from, LircCode* out) {
+  if (!out) {
+    return false;
+  }
+
+  for (uint32_t i = 0; i < SIZEOFMASS(g_lirc_types); ++i) {
+    if (from == g_lirc_types[i]) {
+      *out = static_cast<LircCode>(i);
+      return true;
+    }
+  }
+
+  return false;
+}
+}  // namespace common
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace core {
-namespace events {
-
-StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {}
-
-FrameInfo::FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio)
-    : StreamInfo(stream), width(width), height(height), av_pixel_format(av_pixel_format), aspect_ratio(aspect_ratio) {}
-
-QuitStreamInfo::QuitStreamInfo(VideoState* stream, int exit_code, common::Error err)
-    : StreamInfo(stream), exit_code(exit_code), error(err) {}
-
-}  // namespace events
+namespace events {}
 }  // namespace core
 }  // namespace player
 }  // namespace client

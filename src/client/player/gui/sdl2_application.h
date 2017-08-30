@@ -25,7 +25,7 @@
 #include <common/event.h>                     // for IListener (ptr only)
 #include <common/threads/event_dispatcher.h>  // for EventDispatcher
 
-#include "client/player/events/events_base.h"  // for Event, EventsType
+#include "client/player/gui/events_base.h"  // for Event, EventsType
 
 #include "client/player/media/types.h"
 
@@ -51,6 +51,7 @@ class Sdl2Application : public common::application::IApplication {
 
   virtual void ShowCursor() override;
   virtual void HideCursor() override;
+  virtual bool IsCursorVisible() override;
 
   virtual common::application::timer_id_t AddTimer(uint32_t interval,
                                                    common::application::timer_callback_t cb,
@@ -84,6 +85,7 @@ class Sdl2Application : public common::application::IApplication {
 
   common::threads::EventDispatcher<EventsType> dispatcher_;
   update_display_timeout_t update_display_timeout_msec_;
+  bool cursor_visible_;
 };
 
 }  // namespace application

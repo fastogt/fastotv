@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/events/network_events.h"
+#include "client/player/gui/events/window_events.h"
 
 namespace fastotv {
 namespace client {
@@ -24,14 +24,7 @@ namespace player {
 namespace core {
 namespace events {
 
-BandwidtInfo::BandwidtInfo() : host(), bandwidth(0), host_type(UNKNOWN_SERVER) {}
-
-BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandwidthHostType hs)
-    : host(host), bandwidth(band), host_type(hs) {}
-
-ConnectInfo::ConnectInfo() {}
-
-ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {}
+WindowResizeInfo::WindowResizeInfo(const draw::Size& size) : size(size) {}
 
 }  // namespace events
 }  // namespace core

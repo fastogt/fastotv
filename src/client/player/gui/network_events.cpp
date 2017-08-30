@@ -16,26 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include <string>  // for string
-
-#include "client/player/events/events_base.h"  // for EventBase, EventsType::L...
-
-enum LircCode {
-  LIRC_KEY_OK = 0,
-  LIRC_KEY_LEFT,
-  LIRC_KEY_UP,
-  LIRC_KEY_RIGHT,
-  LIRC_KEY_DOWN,
-  LIRC_KEY_EXIT,
-  LIRC_KEY_MUTE
-};
-
-namespace common {
-std::string ConvertToString(LircCode value);
-bool ConvertFromString(const std::string& from, LircCode* out);
-}  // namespace common
+#include "client/player/gui/network_events.h"
 
 namespace fastotv {
 namespace client {
@@ -43,10 +24,14 @@ namespace player {
 namespace core {
 namespace events {
 
-struct LircPressInfo {
-  LircCode code;
-};
-typedef EventBase<LIRC_PRESS_EVENT, LircPressInfo> LircPressEvent;
+BandwidtInfo::BandwidtInfo() : host(), bandwidth(0), host_type(UNKNOWN_SERVER) {}
+
+BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandwidthHostType hs)
+    : host(host), bandwidth(band), host_type(hs) {}
+
+ConnectInfo::ConnectInfo() {}
+
+ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {}
 
 }  // namespace events
 }  // namespace core

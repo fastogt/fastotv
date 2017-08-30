@@ -21,12 +21,13 @@
 #include "client/player/isimple_player.h"
 #include "client/playlist_entry.h"
 
-#include "client/player/events/network_events.h"  // for BandwidthEstimationEvent
+#include "client/player/gui/network_events.h"  // for BandwidthEstimationEvent
 
 namespace fastotv {
 namespace client {
 
 class IoService;
+class ChatWindow;
 
 struct ChannelDescription {
   size_t pos;
@@ -130,9 +131,6 @@ class Player : public player::ISimplePlayer {
   SDL_Rect GetHideButtonProgramsListRect() const;
   SDL_Rect GetShowButtonProgramsListRect() const;
 
-  SDL_Rect GetHideButtonChatRect() const;
-  SDL_Rect GetShowButtonChatRect() const;
-
   void MoveToNextProgrammsPage();
   void MoveToPreviousProgrammsPage();
 
@@ -155,16 +153,14 @@ class Player : public player::ISimplePlayer {
   void MoveToPreviousStream();
 
   bool FindStreamByPoint(SDL_Point point, size_t* pos) const;
-  bool IsHideButtonProgramsListRect(SDL_Point point) const;
-  bool IsShowButtonProgramsListRect(SDL_Point point) const;
-  bool IsHideButtonChatRect(SDL_Point point) const;
-  bool IsShowButtonChatRect(SDL_Point point) const;
+  bool IsHideButtonProgramsListRect(const SDL_Point& point) const;
+  bool IsShowButtonProgramsListRect(const SDL_Point& point) const;
 
   player::draw::SurfaceSaver* offline_channel_texture_;
   player::draw::SurfaceSaver* connection_error_texture_;
 
-  player::draw::SurfaceSaver* hide_button_texture_;
-  player::draw::SurfaceSaver* show_button_texture_;
+  player::draw::SurfaceSaver* right_arrow_button_texture_;
+  player::draw::SurfaceSaver* left_arrow_button_texture_;
 
   IoService* controller_;
 
@@ -185,8 +181,9 @@ class Player : public player::ISimplePlayer {
   keypad_sym_t keypad_sym_;
 
   bool show_programms_list_;
-  bool show_chat_;
   int last_programms_line_;
+
+  ChatWindow* chat_window_;
 };
 
 }  // namespace client

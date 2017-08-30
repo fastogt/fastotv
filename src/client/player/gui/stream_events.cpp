@@ -16,9 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/events/events.h"
-
-#include <common/time.h>
+#include "client/player/gui/stream_events.h"
 
 namespace fastotv {
 namespace client {
@@ -26,11 +24,13 @@ namespace player {
 namespace core {
 namespace events {
 
-TimeInfo::TimeInfo() : time_millisecond(common::time::current_mstime()) {}
+StreamInfo::StreamInfo(VideoState* stream) : stream_(stream) {}
 
-PreExecInfo::PreExecInfo(int code) : code(code) {}
+FrameInfo::FrameInfo(VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio)
+    : StreamInfo(stream), width(width), height(height), av_pixel_format(av_pixel_format), aspect_ratio(aspect_ratio) {}
 
-PostExecInfo::PostExecInfo(int code) : code(code) {}
+QuitStreamInfo::QuitStreamInfo(VideoState* stream, int exit_code, common::Error err)
+    : StreamInfo(stream), exit_code(exit_code), error(err) {}
 
 }  // namespace events
 }  // namespace core

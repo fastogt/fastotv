@@ -16,13 +16,23 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/events/events_base.h"
+#include "client/player/gui/events/events.h"
+
+#include <common/time.h>
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace core {
-namespace events {}
+namespace events {
+
+TimeInfo::TimeInfo() : time_millisecond(common::time::current_mstime()) {}
+
+PreExecInfo::PreExecInfo(int code) : code(code) {}
+
+PostExecInfo::PostExecInfo(int code) : code(code) {}
+
+}  // namespace events
 }  // namespace core
 }  // namespace player
 }  // namespace client

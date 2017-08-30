@@ -35,7 +35,7 @@
 #include "client/player/media/sdl_utils.h"
 #include "client/player/media/video_state.h"  // for VideoState
 
-#include "client/player/application/sdl2_application.h"
+#include "client/player/gui/sdl2_application.h"
 
 #include "client/player/draw/draw.h"
 #include "client/player/draw/texture_saver.h"
@@ -136,7 +136,6 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
       audio_params_(nullptr),
       audio_buff_size_(0),
       window_(NULL),
-      show_cursor_(false),
       cursor_last_shown_(0),
       show_volume_(false),
       volume_last_shown_(0),
@@ -380,9 +379,8 @@ void ISimplePlayer::HandleTimerEvent(core::events::TimerEvent* event) {
   UNUSED(event);
   const core::msec_t cur_time = core::GetCurrentMsec();
   core::msec_t diff_currsor = cur_time - cursor_last_shown_;
-  if (show_cursor_ && diff_currsor > CURSOR_HIDE_DELAY_MSEC) {
+  if (fApp->IsCursorVisible() && diff_currsor > CURSOR_HIDE_DELAY_MSEC) {
     fApp->HideCursor();
-    show_cursor_ = false;
   }
 
   core::msec_t diff_volume = cur_time - volume_last_shown_;
@@ -521,18 +519,16 @@ void ISimplePlayer::HandleMousePressEvent(core::events::MousePressEvent* event) 
     }
   }
 
-  if (!show_cursor_) {
+  if (!fApp->IsCursorVisible()) {
     fApp->ShowCursor();
-    show_cursor_ = true;
   }
   cursor_last_shown_ = cur_time;
 }
 
 void ISimplePlayer::HandleMouseMoveEvent(core::events::MouseMoveEvent* event) {
   UNUSED(event);
-  if (!show_cursor_) {
+  if (!fApp->IsCursorVisible()) {
     fApp->ShowCursor();
-    show_cursor_ = true;
   }
   core::msec_t cur_time = core::GetCurrentMsec();
   cursor_last_shown_ = cur_time;
@@ -840,7 +836,7 @@ void ISimplePlayer::DrawVolume() {
 }
 
 bool ISimplePlayer::IsMouseVisible() const {
-  return show_cursor_;
+  return fApp->IsCursorVisible();
 }
 
 void ISimplePlayer::DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
@@ -884,7 +880,7 @@ TTF_Font* ISimplePlayer::GetFont() const {
 void ISimplePlayer::InitWindow(const std::string& title, States status) {
   CalculateDispalySize();
   if (!window_) {
-    common::Error err = draw::CreateWindow(window_size_, options_.is_full_screen, title, &renderer_, &window_);
+    common::Error err = draw::CreateMainWindow(window_size_, options_.is_full_screen, title, &renderer_, &window_);
     if (err && err->IsError()) {
       return;
     }
