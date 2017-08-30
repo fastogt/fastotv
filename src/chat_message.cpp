@@ -79,7 +79,7 @@ common::Error ChatMessage::DeSerialize(const serialize_type& serialized, value_t
   if (chan == invalid_stream_id) {
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
-  msg.login_ = chan;
+  msg.channel_id_ = chan;
 
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_LOGIN_FIELD, &jlogin);

@@ -44,6 +44,7 @@ void KeyPressLabel::HandleKeyPressEvent(player::gui::events::KeyPressEvent* even
   const player::gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Keycode key_code = inf.ks.sym;
   const Uint32 modifier = inf.ks.mod;
+  UNUSED(modifier);
   if (isprint(key_code)) {
     text_ += key_code;
   } else if (key_code == SDLK_BACKSPACE) {
@@ -51,7 +52,9 @@ void KeyPressLabel::HandleKeyPressEvent(player::gui::events::KeyPressEvent* even
   }
 }
 
-void KeyPressLabel::HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event) {}
+void KeyPressLabel::HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event) {
+  UNUSED(event);
+}
 
 }  // namespace gui
 }  // namespace player

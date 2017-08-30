@@ -385,30 +385,18 @@ void ISimplePlayer::HandleLircPressEvent(gui::events::LircPressEvent* event) {
   }
 
   gui::events::LircPressInfo inf = event->GetInfo();
-  switch (inf.code) {
-    case LIRC_KEY_OK: {
-      PauseStream();
-      break;
-    }
-    case LIRC_KEY_UP: {
-      UpdateVolume(VOLUME_STEP);
-      break;
-    }
-    case LIRC_KEY_DOWN: {
-      UpdateVolume(-VOLUME_STEP);
-      break;
-    }
-    case LIRC_KEY_EXIT: {
-      Quit();
-      break;
-    }
-    case LIRC_KEY_MUTE: {
-      ToggleMute();
-      break;
-    }
-    default: { break; }
+  if (inf.code == LIRC_KEY_OK) {
+    PauseStream();
+  } else if (inf.code == LIRC_KEY_UP) {
+    UpdateVolume(VOLUME_STEP);
+  } else if (inf.code == LIRC_KEY_DOWN) {
+    UpdateVolume(-VOLUME_STEP);
+  } else if (inf.code == LIRC_KEY_EXIT) {
+    Quit();
+  } else if (inf.code == LIRC_KEY_MUTE) {
+    ToggleMute();
   }
-}
+}  // namespace player
 
 void ISimplePlayer::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
   if (options_.exit_on_keydown) {

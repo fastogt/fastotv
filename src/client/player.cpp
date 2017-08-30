@@ -599,16 +599,10 @@ void Player::HandleLircPressEvent(player::gui::events::LircPressEvent* event) {
   }
 
   player::gui::events::LircPressInfo inf = event->GetInfo();
-  switch (inf.code) {
-    case LIRC_KEY_LEFT: {
-      MoveToPreviousStream();
-      break;
-    }
-    case LIRC_KEY_RIGHT: {
-      MoveToNextStream();
-      break;
-    }
-    default: { break; }
+  if (inf.code == LIRC_KEY_LEFT) {
+    MoveToPreviousStream();
+  } else if (inf.code == LIRC_KEY_RIGHT) {
+    MoveToNextStream();
   }
 
   base_class::HandleLircPressEvent(event);

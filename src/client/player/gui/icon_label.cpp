@@ -25,7 +25,7 @@ namespace client {
 namespace player {
 namespace gui {
 
-IconLabel::IconLabel() : base_class(), icon_img_(nullptr), space_betwen_image_and_label_(default_space), icon_size_() {}
+IconLabel::IconLabel() : base_class(), icon_img_(nullptr), icon_size_(), space_betwen_image_and_label_(default_space) {}
 
 IconLabel::~IconLabel() {}
 
