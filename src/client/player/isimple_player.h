@@ -212,7 +212,7 @@ class ISimplePlayer : public StreamHandler, public core::events::EventListener {
   States current_state_;
 
   bool muted_;
-  bool show_statstic_;
+  gui::Label* statistic_label_;
 
   draw::TextureSaver* render_texture_;
 

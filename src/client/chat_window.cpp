@@ -25,8 +25,7 @@
 namespace fastotv {
 namespace client {
 
-ChatWindow::ChatWindow()
-    : base_class(), hide_button_texture_(nullptr), show_button_texture_(nullptr), font_(nullptr) {}
+ChatWindow::ChatWindow() : base_class(), hide_button_texture_(nullptr), show_button_texture_(nullptr), font_(nullptr) {}
 
 void ChatWindow::SetHideButtonTexture(player::draw::SurfaceSaver* sv) {
   hide_button_texture_ = sv;
@@ -113,5 +112,6 @@ SDL_Rect ChatWindow::GetShowButtonChatRect() const {
   SDL_Rect hide_button_rect = {chat_rect.x, chat_rect.h / 2, font_height_2line, font_height_2line};
   return hide_button_rect;
 }
+
 }  // namespace client
 }  // namespace fastotv

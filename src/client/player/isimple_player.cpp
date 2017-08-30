@@ -117,7 +117,7 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
       ytop_(0),
       current_state_(INIT_STATE),
       muted_(false),
-      show_statstic_(false),
+      statistic_label_(nullptr),
       render_texture_(NULL),
       update_video_timer_interval_msec_(0),
       last_pts_checkpoint_(core::invalid_clock()),
@@ -149,7 +149,14 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
   volume_label_->SetVisible(false);
   volume_label_->SetDrawType(gui::Label::CENTER_TEXT);
   volume_label_->SetBackGroundColor(stream_statistic_color);
-  volume_label_->SetTextColor(draw::white_color);
+  volume_label_->SetTextColor(text_color);
+
+  // statistic label
+  statistic_label_ = new gui::Label;
+  statistic_label_->SetVisible(false);
+  statistic_label_->SetDrawType(gui::Label::WRAPPED_TEXT);
+  statistic_label_->SetBackGroundColor(stream_statistic_color);
+  statistic_label_->SetTextColor(text_color);
 }
 
 void ISimplePlayer::SetFullScreen(bool full_screen) {
@@ -165,6 +172,7 @@ void ISimplePlayer::SetMute(bool mute) {
 }
 
 ISimplePlayer::~ISimplePlayer() {
+  destroy(&statistic_label_);
   destroy(&volume_label_);
 
   if (core::hw_device_ctx) {
@@ -327,6 +335,7 @@ void ISimplePlayer::HandlePreExecEvent(core::events::PreExecEvent* event) {
   }
 
   volume_label_->SetFont(font_);
+  statistic_label_->SetFont(font_);
 }
 
 void ISimplePlayer::HandlePostExecEvent(core::events::PostExecEvent* event) {
@@ -412,71 +421,75 @@ void ISimplePlayer::HandleKeyPressEvent(core::events::KeyPressEvent* event) {
   const core::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint32 modifier = inf.ks.mod;
-  if (scan_code == SDL_SCANCODE_ESCAPE) {  // Quit
-    Quit();
-  } else if (scan_code == SDL_SCANCODE_F) {
-    bool full_screen = !options_.is_full_screen;
-    SetFullScreen(full_screen);
-  } else if (scan_code == SDL_SCANCODE_F3) {
-    ToggleShowStatistic();
-  } else if (scan_code == SDL_SCANCODE_SPACE) {
-    PauseStream();
-  } else if (scan_code == SDL_SCANCODE_M) {
-    ToggleMute();
-  } else if (scan_code == SDL_SCANCODE_UP) {
-    if (modifier & SDL_SCANCODE_LCTRL) {
-      UpdateVolume(VOLUME_STEP);
-    }
-  } else if (scan_code == SDL_SCANCODE_DOWN) {
-    if (modifier & SDL_SCANCODE_LCTRL) {
-      UpdateVolume(-VOLUME_STEP);
-    }
-  } else if (scan_code == SDL_SCANCODE_S) {  // Step to next frame
-    if (stream_) {
-      stream_->StepToNextFrame();
-    }
-  } else if (scan_code == SDL_SCANCODE_A) {
-    if (stream_) {
-      stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
-    }
-  } else if (scan_code == SDL_SCANCODE_V) {
-    if (stream_) {
-      stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-    }
-  } else if (scan_code == SDL_SCANCODE_C) {
-    if (stream_) {
-      stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-      stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
-    }
-  } else if (scan_code == SDL_SCANCODE_T) {
-    // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
-  } else if (scan_code == SDL_SCANCODE_W) {
-  } else if (scan_code == SDL_SCANCODE_LEFT) {
-    if (modifier & SDL_SCANCODE_LSHIFT) {
+  if (modifier == 0) {
+    if (scan_code == SDL_SCANCODE_ESCAPE) {  // Quit
+      Quit();
+    } else if (scan_code == SDL_SCANCODE_F) {
+      bool full_screen = !options_.is_full_screen;
+      SetFullScreen(full_screen);
+    } else if (scan_code == SDL_SCANCODE_F3) {
+      ToggleShowStatistic();
+    } else if (scan_code == SDL_SCANCODE_SPACE) {
+      PauseStream();
+    } else if (scan_code == SDL_SCANCODE_M) {
+      ToggleMute();
+    } else if (scan_code == SDL_SCANCODE_S) {  // Step to next frame
       if (stream_) {
-        stream_->Seek(-10000);  // msec
+        stream_->StepToNextFrame();
       }
-    } else if (modifier & SDL_SCANCODE_LALT) {
+    } else if (scan_code == SDL_SCANCODE_A) {
       if (stream_) {
-        stream_->Seek(-60000);  // msec
+        stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
       }
-    } else if (modifier & SDL_SCANCODE_LCTRL) {
+    } else if (scan_code == SDL_SCANCODE_V) {
       if (stream_) {
-        stream_->SeekPrevChunk();
+        stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
       }
+    } else if (scan_code == SDL_SCANCODE_C) {
+      if (stream_) {
+        stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
+        stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+      }
+    } else if (scan_code == SDL_SCANCODE_T) {
+      // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
+    } else if (scan_code == SDL_SCANCODE_W) {
     }
-  } else if (scan_code == SDL_SCANCODE_RIGHT) {
-    if (modifier & SDL_SCANCODE_LSHIFT) {
-      if (stream_) {
-        stream_->Seek(10000);  // msec
+  } else {
+    if (scan_code == SDL_SCANCODE_LEFT) {
+      if (modifier & SDL_SCANCODE_LSHIFT) {
+        if (stream_) {
+          stream_->Seek(-10000);  // msec
+        }
+      } else if (modifier & SDL_SCANCODE_LALT) {
+        if (stream_) {
+          stream_->Seek(-60000);  // msec
+        }
+      } else if (modifier & SDL_SCANCODE_LCTRL) {
+        if (stream_) {
+          stream_->SeekPrevChunk();
+        }
       }
-    } else if (modifier & SDL_SCANCODE_LALT) {
-      if (stream_) {
-        stream_->Seek(60000);  // msec
+    } else if (scan_code == SDL_SCANCODE_RIGHT) {
+      if (modifier & SDL_SCANCODE_LSHIFT) {
+        if (stream_) {
+          stream_->Seek(10000);  // msec
+        }
+      } else if (modifier & SDL_SCANCODE_LALT) {
+        if (stream_) {
+          stream_->Seek(60000);  // msec
+        }
+      } else if (modifier & SDL_SCANCODE_LCTRL) {
+        if (stream_) {
+          stream_->SeekNextChunk();
+        }
       }
-    } else if (modifier & SDL_SCANCODE_LCTRL) {
-      if (stream_) {
-        stream_->SeekNextChunk();
+    } else if (scan_code == SDL_SCANCODE_UP) {
+      if (modifier & SDL_SCANCODE_LCTRL) {
+        UpdateVolume(VOLUME_STEP);
+      }
+    } else if (scan_code == SDL_SCANCODE_DOWN) {
+      if (modifier & SDL_SCANCODE_LCTRL) {
+        UpdateVolume(-VOLUME_STEP);
       }
     }
   }
@@ -594,9 +607,12 @@ void ISimplePlayer::sdl_audio_callback(void* user_data, uint8_t* stream, int len
 
 void ISimplePlayer::UpdateVolume(int8_t step) {
   options_.audio_volume = options_.audio_volume + step;
-  volume_label_->SetVisible(true);
   core::msec_t cur_time = core::GetCurrentMsec();
   volume_last_shown_ = cur_time;
+
+  // update ui variables
+  volume_label_->SetVisible(true);
+  volume_label_->SetText(common::MemSPrintf("VOLUME: %d", options_.audio_volume));
 }
 
 void ISimplePlayer::Quit() {
@@ -742,7 +758,7 @@ SDL_Rect ISimplePlayer::GetDisplayRect() const {
 }
 
 void ISimplePlayer::DrawStatistic() {
-  if (!show_statstic_ || !font_ || !renderer_) {
+  if (!statistic_label_->IsVisible() || !font_) {
     return;
   }
 
@@ -795,18 +811,17 @@ void ISimplePlayer::DrawStatistic() {
   }
 
   SDL_Rect dst = {statistic_rect.x, statistic_rect.y, statistic_rect.w, h};
-  draw::FillRectColor(renderer_, dst, stream_statistic_color);
-  DrawWrappedTextInRect(result_text, text_color, dst);
+  statistic_label_->SetText(result_text);
+  statistic_label_->SetRect(dst);
+  statistic_label_->Draw(renderer_);
 }
 
 void ISimplePlayer::DrawVolume() {
-  std::string vol_str = common::MemSPrintf("VOLUME: %d", options_.audio_volume);
   const SDL_Rect volume_rect = GetVolumeRect();
   int padding_left = volume_rect.w / 4;
   SDL_Rect sdl_volume_rect = {volume_rect.x + padding_left, volume_rect.y, volume_rect.w - padding_left * 2,
                               volume_rect.h};
 
-  volume_label_->SetText(vol_str);
   volume_label_->SetRect(sdl_volume_rect);
   volume_label_->Draw(renderer_);
 }
@@ -857,7 +872,7 @@ void ISimplePlayer::CalculateDispalySize() {
 }
 
 void ISimplePlayer::ToggleShowStatistic() {
-  show_statstic_ = !show_statstic_;
+  statistic_label_->SetVisible(!statistic_label_->IsVisible());
 }
 
 void ISimplePlayer::ToggleMute() {

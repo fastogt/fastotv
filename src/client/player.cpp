@@ -32,8 +32,8 @@
 #include "client/player/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
 
 #include "client/player/draw/draw.h"
-#include "client/player/draw/surface_saver.h"
 #include "client/player/draw/font.h"
+#include "client/player/draw/surface_saver.h"
 
 #include "client/chat_window.h"
 
@@ -531,45 +531,47 @@ void Player::HandleKeyPressEvent(player::core::events::KeyPressEvent* event) {
   const player::core::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint32 modifier = inf.ks.mod;
-  if (scan_code == SDL_SCANCODE_KP_0) {
-  } else if (scan_code == SDL_SCANCODE_KP_0) {
-    HandleKeyPad(0);
-  } else if (scan_code == SDL_SCANCODE_KP_1) {
-    HandleKeyPad(1);
-  } else if (scan_code == SDL_SCANCODE_KP_2) {
-    HandleKeyPad(2);
-  } else if (scan_code == SDL_SCANCODE_KP_3) {
-    HandleKeyPad(3);
-  } else if (scan_code == SDL_SCANCODE_KP_4) {
-    HandleKeyPad(4);
-  } else if (scan_code == SDL_SCANCODE_KP_5) {
-    HandleKeyPad(5);
-  } else if (scan_code == SDL_SCANCODE_KP_6) {
-    HandleKeyPad(6);
-  } else if (scan_code == SDL_SCANCODE_KP_7) {
-    HandleKeyPad(7);
-  } else if (scan_code == SDL_SCANCODE_KP_8) {
-    HandleKeyPad(8);
-  } else if (scan_code == SDL_SCANCODE_KP_9) {
-    HandleKeyPad(9);
-  } else if (scan_code == SDL_SCANCODE_BACKSPACE) {
-    RemoveLastSymbolInKeypad();
-  } else if (scan_code == SDL_SCANCODE_KP_ENTER) {
-    FinishKeyPadInput();
-  } else if (scan_code == SDL_SCANCODE_F4) {
-    StartShowFooter();
-  } else if (scan_code == SDL_SCANCODE_F5) {
-    ToggleShowProgramsList();
-  } else if (scan_code == SDL_SCANCODE_F6) {
-    ToggleShowChat();
-  } else if (scan_code == SDL_SCANCODE_RIGHT) {
-    MoveToPreviousProgrammsPage();
-  } else if (scan_code == SDL_SCANCODE_LEFT) {
-    MoveToNextProgrammsPage();
-  } else if (scan_code == SDL_SCANCODE_UP) {
-    MoveToPreviousStream();
-  } else if (scan_code == SDL_SCANCODE_DOWN) {
-    MoveToNextStream();
+  if (modifier == 0) {
+    if (scan_code == SDL_SCANCODE_KP_0) {
+    } else if (scan_code == SDL_SCANCODE_KP_0) {
+      HandleKeyPad(0);
+    } else if (scan_code == SDL_SCANCODE_KP_1) {
+      HandleKeyPad(1);
+    } else if (scan_code == SDL_SCANCODE_KP_2) {
+      HandleKeyPad(2);
+    } else if (scan_code == SDL_SCANCODE_KP_3) {
+      HandleKeyPad(3);
+    } else if (scan_code == SDL_SCANCODE_KP_4) {
+      HandleKeyPad(4);
+    } else if (scan_code == SDL_SCANCODE_KP_5) {
+      HandleKeyPad(5);
+    } else if (scan_code == SDL_SCANCODE_KP_6) {
+      HandleKeyPad(6);
+    } else if (scan_code == SDL_SCANCODE_KP_7) {
+      HandleKeyPad(7);
+    } else if (scan_code == SDL_SCANCODE_KP_8) {
+      HandleKeyPad(8);
+    } else if (scan_code == SDL_SCANCODE_KP_9) {
+      HandleKeyPad(9);
+    } else if (scan_code == SDL_SCANCODE_BACKSPACE) {
+      RemoveLastSymbolInKeypad();
+    } else if (scan_code == SDL_SCANCODE_KP_ENTER) {
+      FinishKeyPadInput();
+    } else if (scan_code == SDL_SCANCODE_F4) {
+      StartShowFooter();
+    } else if (scan_code == SDL_SCANCODE_F5) {
+      ToggleShowProgramsList();
+    } else if (scan_code == SDL_SCANCODE_F6) {
+      ToggleShowChat();
+    } else if (scan_code == SDL_SCANCODE_RIGHT) {
+      MoveToPreviousProgrammsPage();
+    } else if (scan_code == SDL_SCANCODE_LEFT) {
+      MoveToNextProgrammsPage();
+    } else if (scan_code == SDL_SCANCODE_UP) {
+      MoveToPreviousStream();
+    } else if (scan_code == SDL_SCANCODE_DOWN) {
+      MoveToNextStream();
+    }
   }
 
   base_class::HandleKeyPressEvent(event);

@@ -25,7 +25,7 @@ namespace client {
 namespace player {
 namespace gui {
 
-Label::Label() : dt_(WRAPPED_TEXT), text_(), text_color_(), font_(nullptr) {}
+Label::Label() : text_(), dt_(WRAPPED_TEXT), text_color_(), font_(nullptr) {}
 
 Label::~Label() {}
 
