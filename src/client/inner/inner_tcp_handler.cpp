@@ -234,7 +234,7 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
     player::gui::events::ConnectInfo cinf(host);
-    auto ex_event = make_exception_event(new player::gui::events::ClientConnectedEvent(this, cinf), err);
+    auto ex_event = common::make_exception_event(new player::gui::events::ClientConnectedEvent(this, cinf), err);
     fApp->PostEvent(ex_event);
     return;
   }
@@ -426,7 +426,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
       if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU)) {
         common::Error err = common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
-        auto ex_event = make_exception_event(new player::gui::events::ClientAuthorizedEvent(this, config_.ainf), err);
+        auto ex_event = common::make_exception_event(new player::gui::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_SEND_CHAT_MESSAGE)) {
@@ -486,7 +486,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     if (err && err->IsError()) {
       player::gui::events::BandwidtInfo cinf(host, 0, hs);
       current_bandwidth_ = 0;
-      auto ex_event = make_exception_event(new player::gui::events::BandwidthEstimationEvent(this, cinf), err);
+      auto ex_event = common::make_exception_event(new player::gui::events::BandwidthEstimationEvent(this, cinf), err);
       fApp->PostEvent(ex_event);
       return err;
     }

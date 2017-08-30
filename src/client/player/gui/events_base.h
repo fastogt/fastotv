@@ -65,6 +65,7 @@ struct event_traits<EventsType> {
   static const unsigned max_count = COUNT_EVENTS;
   static const unsigned id = EVENT_LOOP_ID;
 };
+
 }  // namespace common
 
 namespace fastotv {
@@ -75,6 +76,7 @@ namespace events {
 
 typedef common::event_traits<EventsType> EventTraits;
 typedef EventTraits::event_t Event;
+typedef EventTraits::ex_event_t EventEx;
 typedef EventTraits::listener_t EventListener;
 
 // event base templates

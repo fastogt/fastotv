@@ -242,8 +242,9 @@ void ISimplePlayer::HandleEvent(event_t* event) {
 }
 
 void ISimplePlayer::HandleExceptionEvent(event_t* event, common::Error err) {
-  UNUSED(event);
-  UNUSED(err);
+  if (event->GetEventType() == gui::events::QuitStreamEvent::EventType) {
+    SwitchToChannelErrorMode(err);
+  }
 }
 
 common::Error ISimplePlayer::HandleRequestAudio(media::VideoState* stream,
@@ -314,10 +315,7 @@ void ISimplePlayer::HandleRequestVideoEvent(gui::events::RequestVideoEvent* even
 }
 
 void ISimplePlayer::HandleQuitStreamEvent(gui::events::QuitStreamEvent* event) {
-  gui::events::QuitStreamInfo inf = event->GetInfo();
-  if (inf.error && inf.error->IsError()) {
-    SwitchToChannelErrorMode(inf.error);
-  }
+  UNUSED(event);
 }
 
 void ISimplePlayer::HandlePreExecEvent(gui::events::PreExecEvent* event) {
@@ -828,14 +826,6 @@ void ISimplePlayer::DrawVolume() {
 
 bool ISimplePlayer::IsMouseVisible() const {
   return fApp->IsCursorVisible();
-}
-
-void ISimplePlayer::DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
-  draw::DrawCenterTextInRect(renderer_, text, font_, text_color, rect);
-}
-
-void ISimplePlayer::DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect) {
-  draw::DrawWrappedTextInRect(renderer_, text, font_, text_color, rect);
 }
 
 SDL_Renderer* ISimplePlayer::GetRenderer() const {

@@ -26,6 +26,12 @@
 namespace fastotv {
 namespace client {
 
+namespace player {
+namespace gui {
+class IconLabel;
+}
+}  // namespace player
+
 class IoService;
 class ChatWindow;
 
@@ -167,7 +173,7 @@ class Player : public player::ISimplePlayer {
   size_t current_stream_pos_;
   std::vector<PlaylistEntry> play_list_;
 
-  bool show_footer_;
+  player::gui::IconLabel* description_label_;
   player::media::msec_t footer_last_shown_;
   std::string current_state_str_;
 

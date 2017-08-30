@@ -24,13 +24,10 @@ namespace player {
 namespace gui {
 namespace events {
 
-StreamInfo::StreamInfo(media::VideoState* stream) : stream_(stream) {}
-
 FrameInfo::FrameInfo(media::VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio)
-    : StreamInfo(stream), width(width), height(height), av_pixel_format(av_pixel_format), aspect_ratio(aspect_ratio) {}
+    : stream_(stream), width(width), height(height), av_pixel_format(av_pixel_format), aspect_ratio(aspect_ratio) {}
 
-QuitStreamInfo::QuitStreamInfo(media::VideoState* stream, int exit_code, common::Error err)
-    : StreamInfo(stream), exit_code(exit_code), error(err) {}
+QuitStreamInfo::QuitStreamInfo(media::VideoState* stream, int exit_code) : stream_(stream), exit_code(exit_code) {}
 
 }  // namespace events
 }  // namespace gui

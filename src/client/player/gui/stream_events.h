@@ -22,8 +22,6 @@ extern "C" {
 #include <libavutil/rational.h>  // for AVRational
 }
 
-#include <common/error.h>
-
 #include "client/player/gui/events_base.h"
 
 namespace fastotv {
@@ -35,24 +33,21 @@ class VideoState;
 namespace gui {
 namespace events {
 
-struct StreamInfo {
-  explicit StreamInfo(media::VideoState* stream);
+struct FrameInfo {
+  FrameInfo(media::VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio);
 
   media::VideoState* stream_;
-};
-
-struct FrameInfo : public StreamInfo {
-  FrameInfo(media::VideoState* stream, int width, int height, int av_pixel_format, AVRational aspect_ratio);
   int width;
   int height;
   int av_pixel_format;
   AVRational aspect_ratio;
 };
 
-struct QuitStreamInfo : public StreamInfo {
-  QuitStreamInfo(media::VideoState* stream, int exit_code, common::Error err);
+struct QuitStreamInfo {
+  QuitStreamInfo(media::VideoState* stream, int exit_code);
+
+  media::VideoState* stream_;
   int exit_code;
-  common::Error error;
 };
 
 typedef EventBase<REQUEST_VIDEO_EVENT, FrameInfo> RequestVideoEvent;

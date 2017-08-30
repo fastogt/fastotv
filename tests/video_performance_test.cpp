@@ -98,8 +98,12 @@ class FakeHandler : public VideoStateHandler {
   }
 
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) override {
-    player::gui::events::QuitStreamEvent* qevent =
-        new player::gui::events::QuitStreamEvent(stream, player::gui::events::QuitStreamInfo(stream, exit_code, err));
+    events::QuitStreamEvent* qevent = new events::QuitStreamEvent(stream, events::QuitStreamInfo(stream, exit_code));
+    if (err && err->IsError()) {
+      fApp->PostEvent(common::make_exception_event(qevent, err));
+      return;
+    }
+
     fApp->PostEvent(qevent);
   }
 };

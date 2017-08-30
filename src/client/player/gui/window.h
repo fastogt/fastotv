@@ -22,8 +22,8 @@
 
 #include "client/player/draw/types.h"
 
-#include "client/player/gui/events/window_events.h"
 #include "client/player/gui/events/mouse_events.h"
+#include "client/player/gui/events/window_events.h"
 
 namespace fastotv {
 namespace client {
@@ -63,9 +63,10 @@ class Window : public gui::events::EventListener {
   virtual void HandleMousePressEvent(gui::events::MousePressEvent* event);
   virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event);
 
- private:
   SDL_Rect rect_;
   SDL_Color back_ground_color_;
+
+ private:
   bool visible_;
   bool transparent_;
   bool focus_;

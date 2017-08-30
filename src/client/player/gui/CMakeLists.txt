@@ -36,6 +36,8 @@ SET(BUILD_GUI_SOURCES
   ${SOURCE_ROOT}/client/player/gui/label.cpp
   ${SOURCE_ROOT}/client/player/gui/keypress_label.h
   ${SOURCE_ROOT}/client/player/gui/keypress_label.cpp
+  ${SOURCE_ROOT}/client/player/gui/icon_label.h
+  ${SOURCE_ROOT}/client/player/gui/icon_label.cpp
 
   ${SOURCE_ROOT}/client/player/gui/events_base.h
   ${SOURCE_ROOT}/client/player/gui/events_base.cpp

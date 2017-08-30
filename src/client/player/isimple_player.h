@@ -157,9 +157,6 @@ class ISimplePlayer : public StreamHandler, public gui::events::EventListener {
   SDL_Rect GetDrawRect() const;  // GetDisplayRect + with margins
   SDL_Rect GetDisplayRect() const;
 
-  void DrawCenterTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
-  void DrawWrappedTextInRect(const std::string& text, SDL_Color text_color, SDL_Rect rect);
-
   SDL_Renderer* GetRenderer() const;
   TTF_Font* GetFont() const;
 

@@ -57,20 +57,24 @@ void Label::SetFont(TTF_Font* font) {
   font_ = font;
 }
 
+TTF_Font* Label::GetFont() const {
+  return font_;
+}
+
 void Label::Draw(SDL_Renderer* render) {
   if (!IsVisible()) {
     return;
   }
 
   base_class::Draw(render);
-  DrawText(render);
+  DrawText(render, GetRect());
 }
 
-void Label::DrawText(SDL_Renderer* render) {
+void Label::DrawText(SDL_Renderer* render, const SDL_Rect& rect) {
   if (dt_ == WRAPPED_TEXT) {
-    draw::DrawWrappedTextInRect(render, text_, font_, text_color_, GetRect());
+    draw::DrawWrappedTextInRect(render, text_, font_, text_color_, rect);
   } else if (dt_ == CENTER_TEXT) {
-    draw::DrawCenterTextInRect(render, text_, font_, text_color_, GetRect());
+    draw::DrawCenterTextInRect(render, text_, font_, text_color_, rect);
   } else {
     NOTREACHED();
   }
