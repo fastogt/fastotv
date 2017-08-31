@@ -67,6 +67,7 @@ void IListBox::Draw(SDL_Renderer* render) {
   base_class::Draw(render);
 
   if (row_height_ == 0) {
+    DNOTREACHED();
     return;
   }
 
@@ -106,6 +107,11 @@ void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
   if (!draw::IsPointInRect(point, draw_area)) {  // not in rect
     active_row_ = draw::invalid_row_position;
     base_class::HandleMouseMoveEvent(event);
+    return;
+  }
+
+  if (row_height_ == 0) {
+    DNOTREACHED();
     return;
   }
 

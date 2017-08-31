@@ -45,6 +45,8 @@ class SurfaceSaver {
   mutable SDL_Renderer* renderer_;
 };
 
+SurfaceSaver* MakeSurfaceFromPath(const std::string& img_full_path);
+
 }  // namespace draw
 }  // namespace player
 }  // namespace client

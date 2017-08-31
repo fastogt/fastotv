@@ -18,10 +18,25 @@
 
 #include "client/player/draw/surface_saver.h"
 
+#include <SDL2/SDL_image.h>
+
 namespace fastotv {
 namespace client {
 namespace player {
 namespace draw {
+
+SurfaceSaver* MakeSurfaceFromPath(const std::string& img_full_path) {
+  if (img_full_path.empty()) {
+    return nullptr;
+  }
+
+  SDL_Surface* img_surface = IMG_Load(img_full_path.c_str());
+  if (!img_surface) {
+    return nullptr;
+  }
+
+  return new player::draw::SurfaceSaver(img_surface);
+}
 
 SurfaceSaver::SurfaceSaver(SDL_Surface* surface) : surface_(surface), texture_(NULL), renderer_(NULL) {}
 

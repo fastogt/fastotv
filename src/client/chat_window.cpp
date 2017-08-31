@@ -25,7 +25,7 @@
 namespace fastotv {
 namespace client {
 
-ChatWindow::ChatWindow() : base_class(), hide_button_img_(nullptr), show_button_img_(nullptr), font_(nullptr) {}
+ChatWindow::ChatWindow() : base_class(), hide_button_img_(nullptr), show_button_img_(nullptr) {}
 
 void ChatWindow::SetHideButtonImage(SDL_Texture* img) {
   hide_button_img_ = img;
@@ -33,10 +33,6 @@ void ChatWindow::SetHideButtonImage(SDL_Texture* img) {
 
 void ChatWindow::SetShowButtonImage(SDL_Texture* img) {
   show_button_img_ = img;
-}
-
-void ChatWindow::SetFont(TTF_Font* font) {
-  font_ = font;
 }
 
 void ChatWindow::Draw(SDL_Renderer* render) {
@@ -56,6 +52,17 @@ void ChatWindow::Draw(SDL_Renderer* render) {
   }
 
   base_class::Draw(render);
+}
+
+size_t ChatWindow::GetRowCount() const {
+  return 0;
+}
+
+void ChatWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) {
+  UNUSED(render);
+  UNUSED(pos);
+  UNUSED(is_active_row);
+  UNUSED(row_rect);
 }
 
 void ChatWindow::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
@@ -89,7 +96,7 @@ bool ChatWindow::IsShowButtonChatRect(const SDL_Point& point) const {
 
 SDL_Rect ChatWindow::GetHideButtonChatRect() const {
   if (!font_) {
-    return SDL_Rect();
+    return player::draw::empty_rect;
   }
 
   int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 2);
@@ -100,7 +107,7 @@ SDL_Rect ChatWindow::GetHideButtonChatRect() const {
 
 SDL_Rect ChatWindow::GetShowButtonChatRect() const {
   if (!font_) {
-    return SDL_Rect();
+    return player::draw::empty_rect;
   }
 
   int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 2);

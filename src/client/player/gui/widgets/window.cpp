@@ -18,7 +18,7 @@
 
 #include "client/player/gui/widgets/window.h"
 
-#include "client/player/gui/sdl2_application.h"
+#include <common/application/application.h>
 
 #include "client/player/draw/draw.h"
 
@@ -49,6 +49,9 @@ void Window::SetRect(const SDL_Rect& rect) {
 }
 
 SDL_Rect Window::GetRect() const {
+  /*if(draw::IsEmptyRect(rect_)) {
+    DNOTREACHED();
+  }*/
   return rect_;
 }
 

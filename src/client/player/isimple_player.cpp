@@ -54,41 +54,6 @@
 
 #define MAIN_FONT_PATH_RELATIVE "share/fonts/FreeSans.ttf"
 
-namespace {
-SDL_Rect calculate_display_rect(int scr_xleft,
-                                int scr_ytop,
-                                int scr_width,
-                                int scr_height,
-                                int pic_width,
-                                int pic_height,
-                                AVRational pic_sar) {
-  float aspect_ratio;
-
-  if (pic_sar.num == 0) {
-    aspect_ratio = 0;
-  } else {
-    aspect_ratio = av_q2d(pic_sar);
-  }
-
-  if (aspect_ratio <= 0.0) {
-    aspect_ratio = 1.0;
-  }
-  aspect_ratio *= static_cast<float>(pic_width) / static_cast<float>(pic_height);
-
-  /* XXX: we suppose the screen has a 1.0 pixel ratio */
-  int height = scr_height;
-  int width = lrint(height * aspect_ratio) & ~1;
-  if (width > scr_width) {
-    width = scr_width;
-    height = lrint(width / aspect_ratio) & ~1;
-  }
-
-  int x = (scr_width - width) / 2;
-  int y = (scr_height - height) / 2;
-  return {scr_xleft + x, scr_ytop + y, FFMAX(width, 1), FFMAX(height, 1)};
-}
-}  // namespace
-
 namespace fastotv {
 namespace client {
 namespace player {
@@ -293,7 +258,7 @@ common::Error ISimplePlayer::HandleRequestVideo(media::VideoState* stream,
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
-  SDL_Rect rect = calculate_display_rect(0, 0, INT_MAX, height, width, height, aspect_ratio);
+  SDL_Rect rect = CalculateDisplayRect(xleft_, ytop_, INT_MAX, height, width, height, aspect_ratio);
   options_.default_size.width = rect.w;
   options_.default_size.height = rect.h;
 
@@ -699,8 +664,8 @@ void ISimplePlayer::DrawPlayingStatus() {
 
   draw::FlushRender(renderer_, black_color);
 
-  SDL_Rect rect = calculate_display_rect(xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
-                                         frame->height, frame->sar);
+  SDL_Rect rect = CalculateDisplayRect(xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
+                                       frame->height, frame->sar);
   SDL_RenderCopyEx(renderer_, texture, NULL, &rect, 0, NULL, flip_v ? SDL_FLIP_VERTICAL : SDL_FLIP_NONE);
 
   DrawInfo();

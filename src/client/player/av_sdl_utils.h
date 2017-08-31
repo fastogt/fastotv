@@ -29,7 +29,15 @@ namespace fastotv {
 namespace client {
 namespace player {
 
+SDL_Rect CalculateDisplayRect(int scr_xleft,
+                              int scr_ytop,
+                              int scr_width,
+                              int scr_height,
+                              int pic_width,
+                              int pic_height,
+                              AVRational pic_sar);
 common::Error UploadTexture(SDL_Texture* tex, const AVFrame* frame) WARN_UNUSED_RESULT;
-}
+
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv

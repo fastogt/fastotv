@@ -18,8 +18,7 @@
 
 #include "client/player.h"
 
-#include <SDL2/SDL_image.h>
-
+#include <common/application/application.h>
 #include <common/convert2string.h>
 #include <common/file_system.h>
 #include <common/threads/thread_manager.h>
@@ -28,10 +27,11 @@
 #include "client/ioservice.h"  // for IoService
 #include "client/utils.h"
 
-#include "client/player/gui/sdl2_application.h"
 #include "client/player/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
 
 #include "client/player/draw/surface_saver.h"
+
+// widgets
 #include "client/player/gui/widgets/icon_label.h"
 
 #include "client/chat_window.h"
@@ -56,13 +56,7 @@ namespace {
 player::draw::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string img_full_path = common::file_system::make_path(absolute_source_dir, relative_path);
-  const char* img_full_path_ptr = common::utils::c_strornull(img_full_path);
-  SDL_Surface* img_surface = IMG_Load(img_full_path_ptr);
-  if (!img_surface) {
-    return nullptr;
-  }
-
-  return new player::draw::SurfaceSaver(img_surface);
+  return player::draw::MakeSurfaceFromPath(img_full_path);
 }
 
 }  // namespace
@@ -226,11 +220,13 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
 
   base_class::HandlePreExecEvent(event);
   TTF_Font* font = GetFont();
+  int h = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
+
   chat_window_->SetFont(font);
+  chat_window_->SetRowHeight(h);
   description_label_->SetFont(font);
   keypad_label_->SetFont(font);
   plailist_window_->SetFont(font);
-  int h = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
   plailist_window_->SetRowHeight(h);
 }
 
@@ -376,9 +372,8 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
   for (const ChannelInfo& ch : channels) {
     PlaylistEntry entry = PlaylistEntry(cache_dir, ch);
     const std::string icon_path = entry.GetIconPath();
-    const char* channel_icon_img_full_path_ptr = common::utils::c_strornull(icon_path);
-    SDL_Surface* surface = IMG_Load(channel_icon_img_full_path_ptr);
-    channel_icon_t shared_surface = std::make_shared<player::draw::SurfaceSaver>(surface);
+    player::draw::SurfaceSaver* surf = player::draw::MakeSurfaceFromPath(icon_path);
+    channel_icon_t shared_surface(surf);
     entry.SetIcon(shared_surface);
     play_list_.push_back(entry);
 

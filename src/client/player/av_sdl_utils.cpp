@@ -22,6 +22,39 @@ namespace fastotv {
 namespace client {
 namespace player {
 
+SDL_Rect CalculateDisplayRect(int scr_xleft,
+                              int scr_ytop,
+                              int scr_width,
+                              int scr_height,
+                              int pic_width,
+                              int pic_height,
+                              AVRational pic_sar) {
+  float aspect_ratio;
+
+  if (pic_sar.num == 0) {
+    aspect_ratio = 0;
+  } else {
+    aspect_ratio = av_q2d(pic_sar);
+  }
+
+  if (aspect_ratio <= 0.0) {
+    aspect_ratio = 1.0;
+  }
+  aspect_ratio *= static_cast<float>(pic_width) / static_cast<float>(pic_height);
+
+  /* XXX: we suppose the screen has a 1.0 pixel ratio */
+  int height = scr_height;
+  int width = lrint(height * aspect_ratio) & ~1;
+  if (width > scr_width) {
+    width = scr_width;
+    height = lrint(width / aspect_ratio) & ~1;
+  }
+
+  int x = (scr_width - width) / 2;
+  int y = (scr_height - height) / 2;
+  return {scr_xleft + x, scr_ytop + y, FFMAX(width, 1), FFMAX(height, 1)};
+}
+
 common::Error UploadTexture(SDL_Texture* tex, const AVFrame* frame) {
   if (frame->format == AV_PIX_FMT_YUV420P) {
     if (frame->linesize[0] < 0 || frame->linesize[1] < 0 || frame->linesize[2] < 0) {

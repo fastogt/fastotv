@@ -18,39 +18,38 @@
 
 #pragma once
 
-#include <SDL2/SDL_ttf.h>
-
-#include "client/player/draw/surface_saver.h"
-#include "client/player/gui/widgets/window.h"
+#include "client/player/gui/widgets/list_box.h"
 
 namespace fastotv {
 namespace client {
 
-class ChatWindow : public player::gui::Window {
+class ChatWindow : public player::gui::IListBox {
  public:
-  typedef player::gui::Window base_class;
+  typedef player::gui::IListBox base_class;
   ChatWindow();
 
   void SetHideButtonImage(SDL_Texture* img);
 
   void SetShowButtonImage(SDL_Texture* img);
 
-  void SetFont(TTF_Font* font);
-
   virtual void Draw(SDL_Renderer* render) override;
 
+  virtual size_t GetRowCount() const override;
+
  protected:
+  virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
+
   virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
 
  private:
   bool IsHideButtonChatRect(const SDL_Point& point) const;
   bool IsShowButtonChatRect(const SDL_Point& point) const;
+
   SDL_Rect GetHideButtonChatRect() const;
   SDL_Rect GetShowButtonChatRect() const;
 
   SDL_Texture* hide_button_img_;
   SDL_Texture* show_button_img_;
-  TTF_Font* font_;
 };
 
 }  // namespace client

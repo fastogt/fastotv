@@ -18,7 +18,7 @@
 
 #include "client/player/gui/widgets/icon_label.h"
 
-#include "client/player/gui/sdl2_application.h"
+#include <common/application/application.h>
 
 namespace fastotv {
 namespace client {
