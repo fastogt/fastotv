@@ -220,11 +220,19 @@ void Sdl2Application::ExitImpl(int result) {
 void Sdl2Application::ShowCursor() {
   SDL_ShowCursor(1);
   cursor_visible_ = true;
+  SDL_Point point = {0, 0};
+  SDL_GetMouseState(&point.x, &point.y);
+  events::MouseStateChangeInfo minf(point, true);
+  PostEvent(new events::MouseStateChangeEvent(this, minf));
 }
 
 void Sdl2Application::HideCursor() {
   SDL_ShowCursor(0);
   cursor_visible_ = false;
+  SDL_Point point = {0, 0};
+  SDL_GetMouseState(&point.x, &point.y);
+  events::MouseStateChangeInfo minf(point, false);
+  PostEvent(new events::MouseStateChangeEvent(this, minf));
 }
 
 bool Sdl2Application::IsCursorVisible() const {

@@ -503,9 +503,8 @@ void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
   const player::gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint16 modifier = inf.ks.mod;
-  if (modifier == 0) {
+  if (modifier == KMOD_NONE) {
     if (scan_code == SDL_SCANCODE_KP_0) {
-    } else if (scan_code == SDL_SCANCODE_KP_0) {
       HandleKeyPad(0);
     } else if (scan_code == SDL_SCANCODE_KP_1) {
       HandleKeyPad(1);
@@ -562,12 +561,11 @@ void Player::HandleLircPressEvent(player::gui::events::LircPressEvent* event) {
 }
 
 void Player::DrawInfo() {
-  DrawStatistic();
   DrawFooter();
-  DrawVolume();
   DrawKeyPad();
   DrawProgramsList();
   DrawChat();
+  base_class::DrawInfo();
 }
 
 SDL_Rect Player::GetFooterRect() const {

@@ -30,6 +30,16 @@ namespace player {
 namespace gui {
 namespace events {
 
+struct MouseStateChangeInfo {
+  MouseStateChangeInfo(const SDL_Point& mouse_point, bool cursor_visible);
+
+  SDL_Point GetMousePoint() const;
+  bool IsCursorVisible() const;
+
+  SDL_Point position;
+  bool cursor_visible;
+};
+
 struct MouseMoveInfo {
   MouseMoveInfo(const SDL_MouseMotionEvent& event);
 
@@ -53,6 +63,7 @@ struct MouseReleaseInfo {
   SDL_MouseButtonEvent mevent;
 };
 
+typedef EventBase<MOUSE_CHANGE_STATE_EVENT, MouseStateChangeInfo> MouseStateChangeEvent;
 typedef EventBase<MOUSE_MOVE_EVENT, MouseMoveInfo> MouseMoveEvent;
 typedef EventBase<MOUSE_PRESS_EVENT, MousePressInfo> MousePressEvent;
 typedef EventBase<MOUSE_RELEASE_EVENT, MouseReleaseInfo> MouseReleaseEvent;

@@ -94,6 +94,12 @@ size_t IListBox::GetActiveRow() const {
 }
 
 void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
+  if (!IsFocused()) {
+    active_row_ = draw::invalid_row_position;
+    base_class::HandleMouseMoveEvent(event);
+    return;
+  }
+
   gui::events::MouseMoveInfo minf = event->GetInfo();
   SDL_Point point = minf.GetMousePoint();
   SDL_Rect draw_area = GetRect();
@@ -120,6 +126,14 @@ void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
     drawed++;
   }
   base_class::HandleMouseMoveEvent(event);
+}
+
+void IListBox::OnFocusChanged(bool focus) {
+  if (!focus) {
+    active_row_ = draw::invalid_row_position;
+  }
+
+  base_class::OnFocusChanged(focus);
 }
 
 ListBox::ListBox() : base_class(), lines_() {}

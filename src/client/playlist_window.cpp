@@ -62,19 +62,19 @@ size_t PlaylistWindow::GetRowCount() const {
 }
 
 void PlaylistWindow::Draw(SDL_Renderer* render) {
-  if (!IsVisible()) {
-    if (fApp->IsCursorVisible()) {
+  if (fApp->IsCursorVisible()) {
+    if (!IsVisible()) {
       if (show_button_img_) {
         SDL_Rect show_button_rect = GetShowButtonProgramsListRect();
         SDL_RenderCopy(render, show_button_img_, NULL, &show_button_rect);
       }
+      return;
     }
-    return;
-  }
 
-  if (hide_button_img_) {
-    SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
-    SDL_RenderCopy(render, hide_button_img_, NULL, &hide_button_rect);
+    if (hide_button_img_) {
+      SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
+      SDL_RenderCopy(render, hide_button_img_, NULL, &hide_button_rect);
+    }
   }
 
   base_class::Draw(render);

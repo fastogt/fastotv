@@ -47,6 +47,7 @@ class Window : public gui::events::EventListener {
   void SetVisible(bool v);
   bool IsVisible() const;
 
+  void SetFocus(bool focus);
   bool IsFocused() const;
 
   void Show();
@@ -62,8 +63,11 @@ class Window : public gui::events::EventListener {
   virtual void HandleWindowExposeEvent(gui::events::WindowExposeEvent* event);
   virtual void HandleWindowCloseEvent(gui::events::WindowCloseEvent* event);
 
+  virtual void HandleMouseStateChangeEvent(gui::events::MouseStateChangeEvent* event);
   virtual void HandleMousePressEvent(gui::events::MousePressEvent* event);
   virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event);
+
+  virtual void OnFocusChanged(bool focus);
 
  private:
   SDL_Rect rect_;

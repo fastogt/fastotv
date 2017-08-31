@@ -50,6 +50,8 @@ class IListBox : public FontWindow {
   virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) = 0;
   virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) override;
 
+  virtual void OnFocusChanged(bool focus) override;
+
  private:
   int row_height_;
   size_t last_drawed_row_pos_;

@@ -407,7 +407,7 @@ void ISimplePlayer::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
   const gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint16 modifier = inf.ks.mod;
-  if (modifier == 0) {
+  if (modifier == KMOD_NONE) {
     if (scan_code == SDL_SCANCODE_ESCAPE) {  // Quit
       Quit();
     } else if (scan_code == SDL_SCANCODE_F) {
@@ -442,39 +442,39 @@ void ISimplePlayer::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
     }
   } else {
     if (scan_code == SDL_SCANCODE_LEFT) {
-      if (modifier & SDL_SCANCODE_LSHIFT) {
+      if (modifier & KMOD_SHIFT) {
         if (stream_) {
           stream_->Seek(-10000);  // msec
         }
-      } else if (modifier & SDL_SCANCODE_LALT) {
+      } else if (modifier & KMOD_ALT) {
         if (stream_) {
           stream_->Seek(-60000);  // msec
         }
-      } else if (modifier & SDL_SCANCODE_LCTRL) {
+      } else if (modifier & KMOD_CTRL) {
         if (stream_) {
           stream_->SeekPrevChunk();
         }
       }
     } else if (scan_code == SDL_SCANCODE_RIGHT) {
-      if (modifier & SDL_SCANCODE_LSHIFT) {
+      if (modifier & KMOD_SHIFT) {
         if (stream_) {
           stream_->Seek(10000);  // msec
         }
-      } else if (modifier & SDL_SCANCODE_LALT) {
+      } else if (modifier & KMOD_ALT) {
         if (stream_) {
           stream_->Seek(60000);  // msec
         }
-      } else if (modifier & SDL_SCANCODE_LCTRL) {
+      } else if (modifier & KMOD_CTRL) {
         if (stream_) {
           stream_->SeekNextChunk();
         }
       }
     } else if (scan_code == SDL_SCANCODE_UP) {
-      if (modifier & SDL_SCANCODE_LCTRL) {
+      if (modifier & KMOD_CTRL) {
         UpdateVolume(VOLUME_STEP);
       }
     } else if (scan_code == SDL_SCANCODE_DOWN) {
-      if (modifier & SDL_SCANCODE_LCTRL) {
+      if (modifier & KMOD_CTRL) {
         UpdateVolume(-VOLUME_STEP);
       }
     }

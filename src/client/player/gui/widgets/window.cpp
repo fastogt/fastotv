@@ -33,6 +33,7 @@ Window::Window()
       visible_(true),
       transparent_(false),
       focus_(false) {
+  fApp->Subscribe(this, gui::events::MouseStateChangeEvent::EventType);
   fApp->Subscribe(this, gui::events::MouseMoveEvent::EventType);
   fApp->Subscribe(this, gui::events::MousePressEvent::EventType);
 
@@ -70,12 +71,17 @@ bool Window::IsTransparent() const {
 void Window::SetVisible(bool v) {
   visible_ = v;
   if (!visible_) {
-    focus_ = false;
+    SetFocus(false);
   }
 }
 
 bool Window::IsVisible() const {
   return visible_;
+}
+
+void Window::SetFocus(bool focus) {
+  focus_ = focus;
+  OnFocusChanged(focus);
 }
 
 bool Window::IsFocused() const {
@@ -112,6 +118,9 @@ void Window::HandleEvent(event_t* event) {
   } else if (event->GetEventType() == gui::events::WindowCloseEvent::EventType) {
     gui::events::WindowCloseEvent* window_close = static_cast<gui::events::WindowCloseEvent*>(event);
     HandleWindowCloseEvent(window_close);
+  } else if (event->GetEventType() == gui::events::MouseStateChangeEvent::EventType) {
+    gui::events::MouseStateChangeEvent* mouse_state = static_cast<gui::events::MouseStateChangeEvent*>(event);
+    HandleMouseStateChangeEvent(mouse_state);
   } else if (event->GetEventType() == gui::events::MouseMoveEvent::EventType) {
     gui::events::MouseMoveEvent* mouse_move = static_cast<gui::events::MouseMoveEvent*>(event);
     HandleMouseMoveEvent(mouse_move);
@@ -138,6 +147,20 @@ void Window::HandleWindowCloseEvent(gui::events::WindowCloseEvent* event) {
   UNUSED(event);
 }
 
+void Window::HandleMouseStateChangeEvent(gui::events::MouseStateChangeEvent* event) {
+  if (!visible_) {
+    return;
+  }
+
+  player::gui::events::MouseStateChangeInfo minf = event->GetInfo();
+  if (!minf.IsCursorVisible()) {
+    SetFocus(false);
+    return;
+  }
+
+  SetFocus(draw::IsPointInRect(minf.GetMousePoint(), rect_));
+}
+
 void Window::HandleMousePressEvent(gui::events::MousePressEvent* event) {
   UNUSED(event);
 }
@@ -148,7 +171,11 @@ void Window::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
   }
 
   player::gui::events::MouseMoveInfo minf = event->GetInfo();
-  focus_ = draw::IsPointInRect(minf.GetMousePoint(), rect_);
+  SetFocus(draw::IsPointInRect(minf.GetMousePoint(), rect_));
+}
+
+void Window::OnFocusChanged(bool focus) {
+  UNUSED(focus);
 }
 
 }  // namespace gui

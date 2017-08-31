@@ -24,6 +24,17 @@ namespace player {
 namespace gui {
 namespace events {
 
+MouseStateChangeInfo::MouseStateChangeInfo(const SDL_Point& mouse_point, bool cursor_visible)
+    : position(mouse_point), cursor_visible(cursor_visible) {}
+
+SDL_Point MouseStateChangeInfo::GetMousePoint() const {
+  return position;
+}
+
+bool MouseStateChangeInfo::IsCursorVisible() const {
+  return cursor_visible;
+}
+
 MouseMoveInfo::MouseMoveInfo(const SDL_MouseMotionEvent& event) : mevent(event) {}
 
 SDL_Point MouseMoveInfo::GetMousePoint() const {
