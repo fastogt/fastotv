@@ -56,5 +56,12 @@ class PlaylistEntry {
   std::string cache_dir_;
 };
 
+struct ChannelDescription {
+  size_t pos;
+  std::string title;
+  std::string description;
+  channel_icon_t icon;
+};
+
 }  // namespace client
 }  // namespace fastotv

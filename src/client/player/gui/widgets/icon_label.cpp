@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/gui/icon_label.h"
+#include "client/player/gui/widgets/icon_label.h"
 
 #include "client/player/gui/sdl2_application.h"
 
@@ -48,12 +48,13 @@ void IconLabel::Draw(SDL_Renderer* render) {
   }
 
   Window::Draw(render);
-  SDL_Rect icon_rect = {rect_.x, rect_.y, icon_size_.height, icon_size_.width};
+  SDL_Rect area_rect = GetRect();
+  SDL_Rect icon_rect = {area_rect.x, area_rect.y, icon_size_.height, icon_size_.width};
   SDL_RenderCopy(render, icon_img_, NULL, &icon_rect);
   int shift = icon_size_.width + space_betwen_image_and_label_;
 
-  SDL_Rect text_rect = {rect_.x + shift, rect_.y, rect_.w - shift, rect_.h};
-  base_class::DrawText(render, text_rect);
+  SDL_Rect text_rect = {area_rect.x + shift, area_rect.y, area_rect.w - shift, area_rect.h};
+  base_class::DrawText(render, text_, text_rect, GetDrawType());
 }
 
 void IconLabel::SetIconSize(const draw::Size& icon_size) {

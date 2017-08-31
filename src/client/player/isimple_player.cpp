@@ -35,7 +35,7 @@
 #include "client/player/media/sdl_utils.h"
 #include "client/player/media/video_state.h"  // for VideoState
 
-#include "client/player/gui/label.h"
+#include "client/player/gui/widgets/label.h"
 #include "client/player/gui/sdl2_application.h"
 
 #include "client/player/draw/draw.h"
@@ -406,7 +406,7 @@ void ISimplePlayer::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
 
   const gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
-  const Uint32 modifier = inf.ks.mod;
+  const Uint16 modifier = inf.ks.mod;
   if (modifier == 0) {
     if (scan_code == SDL_SCANCODE_ESCAPE) {  // Quit
       Quit();

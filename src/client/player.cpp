@@ -32,9 +32,10 @@
 #include "client/player/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
 
 #include "client/player/draw/surface_saver.h"
-#include "client/player/gui/icon_label.h"
+#include "client/player/gui/widgets/icon_label.h"
 
 #include "client/chat_window.h"
+#include "client/playlist_window.h"
 
 #define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "share/resources/offline_channel.png"
 #define IMG_CONNECTION_ERROR_PATH_RELATIVE "share/resources/connection_error.png"
@@ -93,8 +94,7 @@ Player::Player(const std::string& app_directory_absolute_path,
       keypad_label_(nullptr),
       keypad_last_shown_(0),
       keypad_sym_(),
-      show_programms_list_(true),
-      last_programms_line_(0),
+      plailist_window_(nullptr),
       chat_window_(nullptr) {
   fApp->Subscribe(this, player::gui::events::BandwidthEstimationEvent::EventType);
 
@@ -128,9 +128,19 @@ Player::Player(const std::string& app_directory_absolute_path,
   keypad_label_->SetBackGroundColor(keypad_color);
   keypad_label_->SetTextColor(text_color);
   keypad_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
+
+  // playlist window
+  plailist_window_ = new PlaylistWindow;
+  plailist_window_->SetVisible(false);
+  plailist_window_->SetBackGroundColor(playlist_color);
+  plailist_window_->SetSelection(PlaylistWindow::SINGLE_ROW_SELECT);
+  plailist_window_->SetSelectionColor(playlist_item_preselect_color);
+  plailist_window_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
+  plailist_window_->SetTextColor(text_color);
 }
 
 Player::~Player() {
+  destroy(&plailist_window_);
   destroy(&keypad_label_);
   destroy(&description_label_);
   destroy(&chat_window_);
@@ -218,6 +228,9 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   chat_window_->SetFont(font);
   description_label_->SetFont(font);
   keypad_label_->SetFont(font);
+  plailist_window_->SetFont(font);
+  int h = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
+  plailist_window_->SetRowHeight(h);
 }
 
 void Player::HandleTimerEvent(player::gui::events::TimerEvent* event) {
@@ -424,6 +437,15 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
     }
   }
 
+  plailist_window_->SetVisible(true);
+  std::vector<ChannelDescription> descr_list;
+  for (size_t i = 0; i < play_list_.size(); ++i) {
+    ChannelDescription descr;
+    if (GetChannelDescription(i, &descr)) {
+      descr_list.push_back(descr);
+    }
+  }
+  plailist_window_->SetPlaylist(descr_list);
   SwitchToPlayingMode();
 }
 
@@ -447,12 +469,10 @@ void Player::HandleReceiveChatMessageEvent(player::gui::events::ReceiveChatMessa
 }
 
 void Player::HandleWindowResizeEvent(player::gui::events::WindowResizeEvent* event) {
-  last_programms_line_ = 0;
   base_class::HandleWindowResizeEvent(event);
 }
 
 void Player::HandleWindowExposeEvent(player::gui::events::WindowExposeEvent* event) {
-  last_programms_line_ = 0;
   base_class::HandleWindowExposeEvent(event);
 }
 
@@ -465,76 +485,19 @@ void Player::HandleMousePressEvent(player::gui::events::MousePressEvent* event) 
   player::gui::events::MousePressInfo inf = event->GetInfo();
   SDL_MouseButtonEvent sinfo = inf.mevent;
   if (sinfo.button == SDL_BUTTON_LEFT) {
-    SDL_Point point = inf.GetMousePoint();
-    // playlist
-    if (show_programms_list_) {
-      size_t pos;
-      if (FindStreamByPoint(point, &pos)) {  // pos in playlist
-        player::media::VideoState* stream = CreateStreamPos(pos);
-        SetStream(stream);
-      } else {
-        if (IsHideButtonProgramsListRect(point)) {
-          show_programms_list_ = false;
+    if (plailist_window_->IsVisible()) {
+      SDL_Point point = inf.GetMousePoint();
+      const SDL_Rect programms_list_rect = GetProgramsListRect();
+      if (player::draw::IsPointInRect(point, programms_list_rect)) {
+        size_t pos = plailist_window_->GetActiveRow();
+        if (pos != player::draw::invalid_row_position) {  // pos in playlist
+          player::media::VideoState* stream = CreateStreamPos(pos);
+          SetStream(stream);
         }
-      }
-    } else {
-      if (IsShowButtonProgramsListRect(point)) {
-        show_programms_list_ = true;
       }
     }
   }
   base_class::HandleMousePressEvent(event);
-}
-
-bool Player::FindStreamByPoint(SDL_Point point, size_t* pos) const {
-  if (!pos) {
-    return false;
-  }
-
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return false;
-  }
-
-  const SDL_Rect programms_list_rect = GetProgramsListRect();
-  if (!SDL_PointInRect(&point, &programms_list_rect)) {
-    return false;
-  }
-
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
-  int max_line_count = programms_list_rect.h / font_height_2line;
-  if (max_line_count == 0) {
-    return false;
-  }
-
-  int drawed = 0;
-  for (size_t i = last_programms_line_; i < play_list_.size() && drawed < max_line_count; ++i) {
-    ChannelDescription descr;
-    if (GetChannelDescription(i, &descr)) {
-      SDL_Rect cell_rect = {programms_list_rect.x, programms_list_rect.y + font_height_2line * drawed,
-                            programms_list_rect.w, font_height_2line};
-      if (SDL_PointInRect(&point, &cell_rect)) {
-        if (current_stream_pos_ == i) {  // seleceted item
-          return false;
-        }
-
-        *pos = i;
-        return true;
-      }
-      drawed++;
-    }
-  }
-  return false;
-}
-
-bool Player::IsHideButtonProgramsListRect(const SDL_Point& point) const {
-  const SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
-  return player::draw::PointInRect(point, hide_button_rect);
-}
-
-bool Player::IsShowButtonProgramsListRect(const SDL_Point& point) const {
-  const SDL_Rect show_button_rect = GetShowButtonProgramsListRect();
-  return player::draw::PointInRect(point, show_button_rect);
 }
 
 void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
@@ -545,7 +508,7 @@ void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
 
   const player::gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
-  const Uint32 modifier = inf.ks.mod;
+  const Uint16 modifier = inf.ks.mod;
   if (modifier == 0) {
     if (scan_code == SDL_SCANCODE_KP_0) {
     } else if (scan_code == SDL_SCANCODE_KP_0) {
@@ -578,10 +541,6 @@ void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
       ToggleShowProgramsList();
     } else if (scan_code == SDL_SCANCODE_F6) {
       ToggleShowChat();
-    } else if (scan_code == SDL_SCANCODE_RIGHT) {
-      MoveToPreviousProgrammsPage();
-    } else if (scan_code == SDL_SCANCODE_LEFT) {
-      MoveToNextProgrammsPage();
     } else if (scan_code == SDL_SCANCODE_UP) {
       MoveToPreviousStream();
     } else if (scan_code == SDL_SCANCODE_DOWN) {
@@ -624,7 +583,7 @@ SDL_Rect Player::GetFooterRect() const {
 }
 
 void Player::ToggleShowProgramsList() {
-  show_programms_list_ = !show_programms_list_;
+  plailist_window_->SetVisible(!plailist_window_->IsVisible());
 }
 
 void Player::ToggleShowChat() {
@@ -639,64 +598,6 @@ SDL_Rect Player::GetProgramsListRect() const {
 SDL_Rect Player::GetChatRect() const {
   const SDL_Rect display_rect = GetDisplayRect();
   return {0, display_rect.y, display_rect.w / 4, display_rect.h};
-}
-
-SDL_Rect Player::GetHideButtonProgramsListRect() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return SDL_Rect();
-  }
-
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
-  SDL_Rect prog_rect = GetProgramsListRect();
-  SDL_Rect hide_button_rect = {prog_rect.x - font_height_2line, prog_rect.h / 2, font_height_2line, font_height_2line};
-  return hide_button_rect;
-}
-
-SDL_Rect Player::GetShowButtonProgramsListRect() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return SDL_Rect();
-  }
-
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
-  SDL_Rect prog_rect = GetProgramsListRect();
-  SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2, font_height_2line,
-                               font_height_2line};
-  return show_button_rect;
-}
-
-void Player::MoveToNextProgrammsPage() {
-  if (play_list_.empty()) {
-    last_programms_line_ = 0;
-    return;
-  }
-
-  int lines = GetMaxProgrammsLines();
-  int last_pos = play_list_.size() - 1;
-  int max_size_on_page = last_pos - lines;
-  if (max_size_on_page < 0) {
-    last_programms_line_ = 0;
-    return;
-  }
-
-  last_programms_line_ += lines;
-  if (last_programms_line_ > last_pos) {
-    last_programms_line_ = last_pos;
-  }
-}
-
-void Player::MoveToPreviousProgrammsPage() {
-  if (play_list_.empty()) {
-    last_programms_line_ = 0;
-    return;
-  }
-
-  int lines = GetMaxProgrammsLines();
-  last_programms_line_ -= lines;
-  if (last_programms_line_ < 0) {
-    last_programms_line_ = 0;
-  }
 }
 
 bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const {
@@ -798,7 +699,7 @@ int Player::GetMaxProgrammsLines() const {
 void Player::DrawProgramsList() {
   SDL_Renderer* render = GetRenderer();
   TTF_Font* font = GetFont();
-  if (!font || !render || play_list_.empty()) {
+  if (!font || !render) {
     return;
   }
 
@@ -809,88 +710,8 @@ void Player::DrawProgramsList() {
     return;
   }
 
-  if (!show_programms_list_) {
-    if (left_arrow_button_texture_ && IsMouseVisible()) {
-      SDL_Texture* img = left_arrow_button_texture_->GetTexture(render);
-      if (img) {
-        SDL_Rect hide_button_rect = GetShowButtonProgramsListRect();
-        SDL_RenderCopy(render, img, NULL, &hide_button_rect);
-      }
-    }
-
-    return;
-  }
-
-  int max_line_count = GetMaxProgrammsLines();
-  if (max_line_count == 0) {
-    return;
-  }
-
-  SDL_Point mouse_point;
-  bool is_mouse_visible = IsMouseVisible();
-  if (is_mouse_visible) {
-    SDL_GetMouseState(&mouse_point.x, &mouse_point.y);
-  }
-
-  player::draw::FillRectColor(render, programms_list_rect, playlist_color);
-
-  int drawed = 0;
-  for (size_t i = last_programms_line_; i < play_list_.size() && drawed < max_line_count; ++i) {
-    ChannelDescription descr;
-    if (GetChannelDescription(i, &descr)) {
-      int shift = 0;
-      SDL_Rect cell_rect = {programms_list_rect.x, programms_list_rect.y + font_height_2line * drawed,
-                            programms_list_rect.w, font_height_2line};
-      SDL_Rect number_rect = {programms_list_rect.x, programms_list_rect.y + font_height_2line * drawed, keypad_width,
-                              keypad_height};
-      std::string number_str = common::ConvertToString(i + 1);
-      player::draw::DrawCenterTextInRect(render, number_str, font, text_color, number_rect);
-
-      channel_icon_t icon = descr.icon;
-      shift = keypad_width;  // in any case shift should be
-      if (icon) {
-        SDL_Texture* img = icon->GetTexture(render);
-        if (img) {
-          SDL_Rect icon_rect = {programms_list_rect.x + shift, programms_list_rect.y + font_height_2line * drawed,
-                                font_height_2line, font_height_2line};
-          SDL_RenderCopy(render, img, NULL, &icon_rect);
-        }
-      }
-      shift += font_height_2line + space_width;  // in any case shift should be
-
-      int text_width = programms_list_rect.w - shift;
-      std::string title_line = player::draw::DotText(common::MemSPrintf("Title: %s", descr.title), font, text_width);
-      std::string description_line =
-          player::draw::DotText(common::MemSPrintf("Description: %s", descr.description), font, text_width);
-
-      std::string line_text = common::MemSPrintf(
-          "%s\n"
-          "%s",
-          title_line, description_line);
-      SDL_Rect text_rect = {programms_list_rect.x + shift, programms_list_rect.y + font_height_2line * drawed,
-                            text_width, font_height_2line};
-      player::draw::DrawWrappedTextInRect(render, line_text, font, text_color, text_rect);
-      if (current_stream_pos_ == i) {  // seleceted item
-        player::draw::FillRectColor(render, cell_rect, failed_color);
-      }
-
-      if (is_mouse_visible && SDL_PointInRect(&mouse_point, &cell_rect)) {              // pre selection
-        player::draw::FillRectColor(render, cell_rect, playlist_item_preselect_color);  // red
-      }
-
-      player::draw::SetRenderDrawColor(render, playlist_color);
-      SDL_RenderDrawRect(render, &cell_rect);
-      drawed++;
-    }
-  }
-
-  if (right_arrow_button_texture_) {
-    SDL_Texture* img = right_arrow_button_texture_->GetTexture(render);
-    if (img) {
-      SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
-      SDL_RenderCopy(render, img, NULL, &hide_button_rect);
-    }
-  }
+  plailist_window_->SetRect(programms_list_rect);
+  plailist_window_->Draw(render);
 }
 
 void Player::DrawChat() {
@@ -1047,9 +868,11 @@ void Player::OnWindowCreated(SDL_Window* window, SDL_Renderer* render) {
 
   if (right_arrow_button_texture_) {
     chat_window_->SetShowButtonImage(right_arrow_button_texture_->GetTexture(render));
+    plailist_window_->SetHideButtonImage(right_arrow_button_texture_->GetTexture(render));
   }
   if (left_arrow_button_texture_) {
     chat_window_->SetHideButtonImage(left_arrow_button_texture_->GetTexture(render));
+    plailist_window_->SetShowButtonImage(left_arrow_button_texture_->GetTexture(render));
   }
 
   base_class::OnWindowCreated(window, render);

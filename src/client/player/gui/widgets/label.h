@@ -18,28 +18,27 @@
 
 #pragma once
 
-#include "client/player/gui/label.h"
-
-#include "client/player/gui/events/key_events.h"
+#include "client/player/gui/widgets/font_window.h"
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace gui {
 
-class KeyPressLabel : public Label {
+class Label : public FontWindow {
  public:
-  typedef Label base_class;
+  typedef FontWindow base_class;
 
-  KeyPressLabel();
-  virtual ~KeyPressLabel();
+  Label();
+  virtual ~Label();
+
+  void SetText(const std::string& text);
+  std::string GetText() const;
+
+  virtual void Draw(SDL_Renderer* render) override;
 
  protected:
-  virtual void HandleEvent(event_t* event) override;
-  virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
-
-  virtual void HandleKeyPressEvent(player::gui::events::KeyPressEvent* event);
-  virtual void HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event);
+  std::string text_;
 };
 
 }  // namespace gui

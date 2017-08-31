@@ -18,39 +18,44 @@
 
 #pragma once
 
-#include <SDL2/SDL_ttf.h>
+#include "client/player/gui/widgets/list_box.h"
 
-#include "client/player/draw/surface_saver.h"
-#include "client/player/gui/widgets/window.h"
+#include "client/playlist_entry.h"
 
 namespace fastotv {
 namespace client {
 
-class ChatWindow : public player::gui::Window {
+class PlaylistWindow : public player::gui::IListBox {
  public:
-  typedef player::gui::Window base_class;
-  ChatWindow();
+  typedef player::gui::IListBox base_class;
+  typedef std::vector<ChannelDescription> playlist_t;
+  enum { keypad_width = 60, space_width = 10 };
+  PlaylistWindow();
+  ~PlaylistWindow();
+
+  void SetPlaylist(const playlist_t& pl);
+  playlist_t GetPlaylist() const;
 
   void SetHideButtonImage(SDL_Texture* img);
 
   void SetShowButtonImage(SDL_Texture* img);
-
-  void SetFont(TTF_Font* font);
+  virtual size_t GetRowCount() const override;
 
   virtual void Draw(SDL_Renderer* render) override;
 
  protected:
   virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
+  virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
 
  private:
-  bool IsHideButtonChatRect(const SDL_Point& point) const;
-  bool IsShowButtonChatRect(const SDL_Point& point) const;
-  SDL_Rect GetHideButtonChatRect() const;
-  SDL_Rect GetShowButtonChatRect() const;
+  bool IsHideButtonProgramsListRect(const SDL_Point& point) const;
+  bool IsShowButtonProgramsListRect(const SDL_Point& point) const;
+  SDL_Rect GetHideButtonProgramsListRect() const;
+  SDL_Rect GetShowButtonProgramsListRect() const;
 
   SDL_Texture* hide_button_img_;
   SDL_Texture* show_button_img_;
-  TTF_Font* font_;
+  playlist_t play_list_;
 };
 
 }  // namespace client

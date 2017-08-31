@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/gui/window.h"
+#include "client/player/gui/widgets/window.h"
 
 #include "client/player/gui/sdl2_application.h"
 
@@ -76,6 +76,10 @@ void Window::SetVisible(bool v) {
 
 bool Window::IsVisible() const {
   return visible_;
+}
+
+bool Window::IsFocused() const {
+  return focus_;
 }
 
 void Window::Show() {
@@ -144,7 +148,7 @@ void Window::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
   }
 
   player::gui::events::MouseMoveInfo minf = event->GetInfo();
-  focus_ = draw::PointInRect(minf.GetMousePoint(), rect_);
+  focus_ = draw::IsPointInRect(minf.GetMousePoint(), rect_);
 }
 
 }  // namespace gui

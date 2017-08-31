@@ -29,16 +29,25 @@ SET(SOURCES_EVENTS
 )
 
 
-SET(BUILD_GUI_SOURCES
-  ${SOURCE_ROOT}/client/player/gui/window.h
-  ${SOURCE_ROOT}/client/player/gui/window.cpp
-  ${SOURCE_ROOT}/client/player/gui/label.h
-  ${SOURCE_ROOT}/client/player/gui/label.cpp
-  ${SOURCE_ROOT}/client/player/gui/keypress_label.h
-  ${SOURCE_ROOT}/client/player/gui/keypress_label.cpp
-  ${SOURCE_ROOT}/client/player/gui/icon_label.h
-  ${SOURCE_ROOT}/client/player/gui/icon_label.cpp
+SET(HEADERS_WIDGETS
+  ${SOURCE_ROOT}/client/player/gui/widgets/window.h
+  ${SOURCE_ROOT}/client/player/gui/widgets/font_window.h
+  ${SOURCE_ROOT}/client/player/gui/widgets/label.h
+  ${SOURCE_ROOT}/client/player/gui/widgets/keypress_label.h
+  ${SOURCE_ROOT}/client/player/gui/widgets/icon_label.h
+  ${SOURCE_ROOT}/client/player/gui/widgets/list_box.h
+)
 
+SET(SOURCES_WIDGETS
+  ${SOURCE_ROOT}/client/player/gui/widgets/window.cpp
+  ${SOURCE_ROOT}/client/player/gui/widgets/font_window.cpp
+  ${SOURCE_ROOT}/client/player/gui/widgets/label.cpp
+  ${SOURCE_ROOT}/client/player/gui/widgets/keypress_label.cpp
+  ${SOURCE_ROOT}/client/player/gui/widgets/icon_label.cpp
+  ${SOURCE_ROOT}/client/player/gui/widgets/list_box.cpp
+)
+
+SET(BUILD_GUI_SOURCES
   ${SOURCE_ROOT}/client/player/gui/events_base.h
   ${SOURCE_ROOT}/client/player/gui/events_base.cpp
   ${SOURCE_ROOT}/client/player/gui/stream_events.h
@@ -52,6 +61,8 @@ SET(BUILD_GUI_SOURCES
 
   ${HEADERS_EVENTS}
   ${SOURCES_EVENTS}
+  ${HEADERS_WIDGETS}
+  ${SOURCES_WIDGETS}
 )
 
 ADD_LIBRARY(${GUI_LIBRARY} OBJECT ${BUILD_GUI_SOURCES})

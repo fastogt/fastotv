@@ -42,14 +42,16 @@ bool IsEmptyRect(const SDL_Rect& rect);
 
 SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
 
-bool PointInRect(const SDL_Point& point, const SDL_Rect& rect);
+bool IsPointInRect(const SDL_Point& point, const SDL_Rect& rect);
 
-static const SDL_Rect empty_rect = {0, 0, 0, 0};
-static const SDL_Color white_color = {255, 255, 255, 255};
-static const SDL_Color black_color = {0, 0, 0, 255};
-static const SDL_Color green_color = {0, 150, 0, 255};
-static const SDL_Color blue_color = {0, 0, 255, 255};
-static const SDL_Color lightblue_color = {200, 225, 255, 255};
+extern const SDL_Rect empty_rect;
+extern const SDL_Color white_color;
+extern const SDL_Color black_color;
+extern const SDL_Color green_color;
+extern const SDL_Color blue_color;
+extern const SDL_Color lightblue_color;
+
+extern const size_t invalid_row_position;
 
 }  // namespace draw
 }  // namespace player

@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/gui/keypress_label.h"
+#include "client/player/gui/widgets/keypress_label.h"
 
 #include "client/player/gui/sdl2_application.h"
 
@@ -43,7 +43,7 @@ void KeyPressLabel::HandleExceptionEvent(event_t* event, common::Error err) {
 void KeyPressLabel::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
   const player::gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Keycode key_code = inf.ks.sym;
-  const Uint32 modifier = inf.ks.mod;
+  const Uint16 modifier = inf.ks.mod;
   UNUSED(modifier);
   if (isprint(key_code)) {
     text_ += key_code;

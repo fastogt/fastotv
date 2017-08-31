@@ -124,7 +124,7 @@ typedef struct DXVA2Context {
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 static int dxva2_get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
   UNUSED(flags);

@@ -18,7 +18,7 @@
 
 #include "client/chat_window.h"
 
-#include "client/player/gui/sdl2_application.h"
+#include <common/application/application.h>
 
 #include "client/player/draw/font.h"
 
@@ -79,12 +79,12 @@ void ChatWindow::HandleMousePressEvent(player::gui::events::MousePressEvent* eve
 
 bool ChatWindow::IsHideButtonChatRect(const SDL_Point& point) const {
   const SDL_Rect hide_button_rect = GetHideButtonChatRect();
-  return player::draw::PointInRect(point, hide_button_rect);
+  return player::draw::IsPointInRect(point, hide_button_rect);
 }
 
 bool ChatWindow::IsShowButtonChatRect(const SDL_Point& point) const {
   const SDL_Rect show_button_rect = GetShowButtonChatRect();
-  return player::draw::PointInRect(point, show_button_rect);
+  return player::draw::IsPointInRect(point, show_button_rect);
 }
 
 SDL_Rect ChatWindow::GetHideButtonChatRect() const {

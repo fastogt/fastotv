@@ -26,6 +26,15 @@ namespace client {
 namespace player {
 namespace draw {
 
+const SDL_Rect empty_rect = {0, 0, 0, 0};
+const SDL_Color white_color = {255, 255, 255, 255};
+const SDL_Color black_color = {0, 0, 0, 255};
+const SDL_Color green_color = {0, 150, 0, 255};
+const SDL_Color blue_color = {0, 0, 255, 255};
+const SDL_Color lightblue_color = {200, 225, 255, 255};
+
+const size_t invalid_row_position = static_cast<size_t>(-1);
+
 Size::Size() : width(0), height(0) {}
 
 Size::Size(int width, int height) : width(width), height(height) {}
@@ -52,7 +61,7 @@ SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height) {
   return {calc_x, calc_y, calc_width, calc_height};
 }
 
-bool PointInRect(const SDL_Point& point, const SDL_Rect& rect) {
+bool IsPointInRect(const SDL_Point& point, const SDL_Rect& rect) {
   return SDL_PointInRect(&point, &rect);
 }
 

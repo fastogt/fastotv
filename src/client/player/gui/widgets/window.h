@@ -47,6 +47,8 @@ class Window : public gui::events::EventListener {
   void SetVisible(bool v);
   bool IsVisible() const;
 
+  bool IsFocused() const;
+
   void Show();
   void Hide();
 
@@ -63,10 +65,10 @@ class Window : public gui::events::EventListener {
   virtual void HandleMousePressEvent(gui::events::MousePressEvent* event);
   virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event);
 
+ private:
   SDL_Rect rect_;
   SDL_Color back_ground_color_;
 
- private:
   bool visible_;
   bool transparent_;
   bool focus_;

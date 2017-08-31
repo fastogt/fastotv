@@ -18,40 +18,31 @@
 
 #pragma once
 
-#include <SDL2/SDL_ttf.h>
+#include "client/player/gui/widgets/label.h"
 
-#include "client/player/draw/surface_saver.h"
-#include "client/player/gui/widgets/window.h"
+#include "client/player/gui/events/key_events.h"
 
 namespace fastotv {
 namespace client {
+namespace player {
+namespace gui {
 
-class ChatWindow : public player::gui::Window {
+class KeyPressLabel : public Label {
  public:
-  typedef player::gui::Window base_class;
-  ChatWindow();
+  typedef Label base_class;
 
-  void SetHideButtonImage(SDL_Texture* img);
-
-  void SetShowButtonImage(SDL_Texture* img);
-
-  void SetFont(TTF_Font* font);
-
-  virtual void Draw(SDL_Renderer* render) override;
+  KeyPressLabel();
+  virtual ~KeyPressLabel();
 
  protected:
-  virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
+  virtual void HandleEvent(event_t* event) override;
+  virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
- private:
-  bool IsHideButtonChatRect(const SDL_Point& point) const;
-  bool IsShowButtonChatRect(const SDL_Point& point) const;
-  SDL_Rect GetHideButtonChatRect() const;
-  SDL_Rect GetShowButtonChatRect() const;
-
-  SDL_Texture* hide_button_img_;
-  SDL_Texture* show_button_img_;
-  TTF_Font* font_;
+  virtual void HandleKeyPressEvent(player::gui::events::KeyPressEvent* event);
+  virtual void HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event);
 };
 
+}  // namespace gui
+}  // namespace player
 }  // namespace client
 }  // namespace fastotv

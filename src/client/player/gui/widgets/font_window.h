@@ -18,36 +18,37 @@
 
 #pragma once
 
-#include "client/player/gui/label.h"
+#include "client/player/draw/font.h"
+#include "client/player/gui/widgets/window.h"
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace gui {
 
-class IconLabel : public Label {
+class FontWindow : public Window {
  public:
-  typedef Label base_class;
-  enum { default_space = 1 };
+  typedef Window base_class;
+  enum DrawType { WRAPPED_TEXT, CENTER_TEXT };
 
-  IconLabel();
-  virtual ~IconLabel();
+  FontWindow();
+  virtual ~FontWindow();
 
-  void SetSpace(int space);
-  int GetSpace() const;
+  void SetDrawType(DrawType dt);
+  DrawType GetDrawType() const;
 
-  void SetIconSize(const draw::Size& icon_size);
-  draw::Size GetIconSize() const;
+  void SetTextColor(const SDL_Color& color);
+  SDL_Color GetTextColor() const;
 
-  void SetIconTexture(SDL_Texture* icon_img);
-  SDL_Texture* GetIconTexture() const;
+  void SetFont(TTF_Font* font);
+  TTF_Font* GetFont() const;
 
-  virtual void Draw(SDL_Renderer* render) override;
+ protected:
+  void DrawText(SDL_Renderer* render, const std::string& text, const SDL_Rect& rect, DrawType dt);
 
- private:
-  SDL_Texture* icon_img_;
-  draw::Size icon_size_;
-  int space_betwen_image_and_label_;
+  DrawType draw_type_;
+  SDL_Color text_color_;
+  TTF_Font* font_;
 };
 
 }  // namespace gui

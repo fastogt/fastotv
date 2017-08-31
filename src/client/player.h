@@ -34,13 +34,7 @@ class IconLabel;
 
 class IoService;
 class ChatWindow;
-
-struct ChannelDescription {
-  size_t pos;
-  std::string title;
-  std::string description;
-  channel_icon_t icon;
-};
+class PlaylistWindow;
 
 class Player : public player::ISimplePlayer {
  public:
@@ -137,12 +131,6 @@ class Player : public player::ISimplePlayer {
   SDL_Rect GetProgramsListRect() const;
   SDL_Rect GetChatRect() const;
 
-  SDL_Rect GetHideButtonProgramsListRect() const;
-  SDL_Rect GetShowButtonProgramsListRect() const;
-
-  void MoveToNextProgrammsPage();
-  void MoveToPreviousProgrammsPage();
-
   bool GetCurrentUrl(PlaylistEntry* url) const;
 
   void SwitchToPlayingMode();
@@ -160,10 +148,6 @@ class Player : public player::ISimplePlayer {
 
   void MoveToNextStream();
   void MoveToPreviousStream();
-
-  bool FindStreamByPoint(SDL_Point point, size_t* pos) const;
-  bool IsHideButtonProgramsListRect(const SDL_Point& point) const;
-  bool IsShowButtonProgramsListRect(const SDL_Point& point) const;
 
   player::draw::SurfaceSaver* offline_channel_texture_;
   player::draw::SurfaceSaver* connection_error_texture_;
@@ -188,9 +172,7 @@ class Player : public player::ISimplePlayer {
   player::media::msec_t keypad_last_shown_;
   keypad_sym_t keypad_sym_;
 
-  bool show_programms_list_;
-  int last_programms_line_;
-
+  PlaylistWindow* plailist_window_;
   ChatWindow* chat_window_;
 };
 
