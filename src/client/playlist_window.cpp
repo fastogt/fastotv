@@ -62,6 +62,11 @@ size_t PlaylistWindow::GetRowCount() const {
 }
 
 void PlaylistWindow::Draw(SDL_Renderer* render) {
+  if (!IsCanDraw()) {
+    base_class::Draw(render);
+    return;
+  }
+
   if (fApp->IsCursorVisible()) {
     if (!IsVisible()) {
       if (show_button_img_) {
@@ -99,14 +104,13 @@ void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
     return;
   }
 
-  int shift = 0;
-  SDL_Rect number_rect = {row_rect.x, row_rect.y, keypad_width, row_rect.h};
+  SDL_Rect number_rect = {row_rect.x, row_rect.y, channel_number_width, row_rect.h};
   std::string number_str = common::ConvertToString(pos + 1);
   DrawText(render, number_str, number_rect, PlaylistWindow::CENTER_TEXT);
 
   ChannelDescription descr = play_list_->operator[](pos).GetChannelDescription();
   channel_icon_t icon = descr.icon;
-  shift = keypad_width;  // in any case shift should be
+  int shift = channel_number_width;
   if (icon) {
     SDL_Texture* img = icon->GetTexture(render);
     if (img) {

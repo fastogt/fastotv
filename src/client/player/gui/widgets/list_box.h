@@ -53,6 +53,8 @@ class IListBox : public FontWindow {
   virtual void OnFocusChanged(bool focus) override;
 
  private:
+  bool IsNeedDrawListBox() const;
+
   int row_height_;
   size_t last_drawed_row_pos_;
   Selection selection_;

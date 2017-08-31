@@ -33,14 +33,19 @@ const SDL_Color green_color = {0, 150, 0, 255};
 const SDL_Color blue_color = {0, 0, 255, 255};
 const SDL_Color lightblue_color = {200, 225, 255, 255};
 
+const Size invalid_size = {0, 0};
 const size_t invalid_row_position = static_cast<size_t>(-1);
 
-Size::Size() : width(0), height(0) {}
+Size::Size() : width(invalid_size.width), height(invalid_size.height) {}
 
 Size::Size(int width, int height) : width(width), height(height) {}
 
 bool Size::IsValid() const {
   return IsValidSize(width, height);
+}
+
+bool Size::Equals(const Size& sz) const {
+  return width == sz.width && height == sz.height;
 }
 
 SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height) {

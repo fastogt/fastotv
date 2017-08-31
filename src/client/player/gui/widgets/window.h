@@ -41,6 +41,9 @@ class Window : public gui::events::EventListener {
   SDL_Color GetBackGroundColor() const;
   void SetBackGroundColor(const SDL_Color& color);
 
+  void SetMinimalSize(const draw::Size& ms);
+  draw::Size GetMinimalSize() const;
+
   void SetTransparent(bool t);
   bool IsTransparent() const;
 
@@ -69,13 +72,18 @@ class Window : public gui::events::EventListener {
 
   virtual void OnFocusChanged(bool focus);
 
+  bool IsCanDraw() const;
+
  private:
+  bool IsNeedDrawWindow() const;
+
   SDL_Rect rect_;
   SDL_Color back_ground_color_;
 
   bool visible_;
   bool transparent_;
   bool focus_;
+  draw::Size min_size_;
 };
 
 }  // namespace gui

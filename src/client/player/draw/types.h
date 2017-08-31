@@ -32,10 +32,19 @@ struct Size {
   Size(int width, int height);
 
   bool IsValid() const;
+  bool Equals(const Size& sz) const;
 
   int width;
   int height;
 };
+
+inline bool operator==(const Size& left, const Size& right) {
+  return left.Equals(right);
+}
+
+inline bool operator!=(const Size& left, const Size& right) {
+  return !left.Equals(right);
+}
 
 bool IsValidSize(int width, int height);
 bool IsEmptyRect(const SDL_Rect& rect);
@@ -51,6 +60,7 @@ extern const SDL_Color green_color;
 extern const SDL_Color blue_color;
 extern const SDL_Color lightblue_color;
 
+extern const Size invalid_size;
 extern const size_t invalid_row_position;
 
 }  // namespace draw

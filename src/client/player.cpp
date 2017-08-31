@@ -224,10 +224,18 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
 
   chat_window_->SetFont(font);
   chat_window_->SetRowHeight(h);
+  int cmin_size_width = chat_user_name_width + space_width + chat_user_name_width * 2;  // login + space + text
+  player::draw::Size chat_minsize = {cmin_size_width, h};
+  chat_window_->SetMinimalSize(chat_minsize);
+
   description_label_->SetFont(font);
   keypad_label_->SetFont(font);
   plailist_window_->SetFont(font);
   plailist_window_->SetRowHeight(h);
+
+  int pmin_size_width = keypad_width + h + space_width + h;  // number + icon + text
+  player::draw::Size playlist_minsize = {pmin_size_width, h};
+  plailist_window_->SetMinimalSize(playlist_minsize);
 }
 
 void Player::HandleTimerEvent(player::gui::events::TimerEvent* event) {
@@ -682,12 +690,6 @@ void Player::DrawProgramsList() {
   }
 
   const SDL_Rect programms_list_rect = GetProgramsListRect();
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
-  int min_size_width = keypad_width + font_height_2line + space_width + font_height_2line;  // number + icon + text
-  if (programms_list_rect.w < min_size_width) {
-    return;
-  }
-
   plailist_window_->SetRect(programms_list_rect);
   plailist_window_->Draw(render);
 }
@@ -710,11 +712,6 @@ void Player::DrawChat() {
   }
 
   const SDL_Rect chat_rect = GetChatRect();
-  int min_size_width = chat_user_name_width + space_width + chat_user_name_width * 2;  // login + space + text
-  if (chat_rect.w < min_size_width) {
-    return;
-  }
-
   chat_window_->SetRect(chat_rect);
   chat_window_->Draw(render);
 }

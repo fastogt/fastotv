@@ -60,20 +60,20 @@ int IListBox::GetRowHeight() const {
 }
 
 void IListBox::Draw(SDL_Renderer* render) {
-  if (!IsVisible()) {
+  if (!IsNeedDrawListBox()) {
     return;
   }
 
   base_class::Draw(render);
 
-  if (row_height_ == 0) {
+  if (row_height_ <= 0) {  // nothing to draw, prevent devide by zero
     DNOTREACHED();
     return;
   }
 
   SDL_Rect draw_area = GetRect();
   int max_line_count = draw_area.h / row_height_;
-  if (max_line_count == 0) {
+  if (max_line_count == 0) {  // nothing to draw
     return;
   }
 
@@ -95,7 +95,7 @@ size_t IListBox::GetActiveRow() const {
 }
 
 void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
-  if (!IsFocused()) {
+  if (!IsVisible()) {
     active_row_ = draw::invalid_row_position;
     base_class::HandleMouseMoveEvent(event);
     return;
@@ -110,7 +110,7 @@ void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
     return;
   }
 
-  if (row_height_ == 0) {
+  if (row_height_ <= 0) {  // nothing to draw, prevent devide by zero
     DNOTREACHED();
     return;
   }
@@ -140,6 +140,10 @@ void IListBox::OnFocusChanged(bool focus) {
   }
 
   base_class::OnFocusChanged(focus);
+}
+
+bool IListBox::IsNeedDrawListBox() const {
+  return IsVisible() && IsCanDraw();
 }
 
 ListBox::ListBox() : base_class(), lines_() {}

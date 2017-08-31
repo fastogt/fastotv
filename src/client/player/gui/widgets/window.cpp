@@ -32,7 +32,8 @@ Window::Window()
       back_ground_color_(draw::white_color),
       visible_(true),
       transparent_(false),
-      focus_(false) {
+      focus_(false),
+      min_size_(draw::invalid_size) {
   fApp->Subscribe(this, gui::events::MouseStateChangeEvent::EventType);
   fApp->Subscribe(this, gui::events::MouseMoveEvent::EventType);
   fApp->Subscribe(this, gui::events::MousePressEvent::EventType);
@@ -61,6 +62,14 @@ SDL_Color Window::GetBackGroundColor() const {
 
 void Window::SetBackGroundColor(const SDL_Color& color) {
   back_ground_color_ = color;
+}
+
+void Window::SetMinimalSize(const draw::Size& ms) {
+  min_size_ = ms;
+}
+
+draw::Size Window::GetMinimalSize() const {
+  return min_size_;
 }
 
 void Window::SetTransparent(bool t) {
@@ -100,15 +109,33 @@ void Window::Hide() {
 }
 
 void Window::Draw(SDL_Renderer* render) {
-  if (!visible_) {
-    return;
-  }
-
-  if (transparent_) {
+  if (!IsNeedDrawWindow()) {
     return;
   }
 
   draw::FillRectColor(render, rect_, back_ground_color_);
+}
+
+bool Window::IsNeedDrawWindow() const {
+  if (!visible_) {
+    return false;
+  }
+
+  if (transparent_) {
+    return false;
+  }
+
+  return IsCanDraw();
+}
+
+bool Window::IsCanDraw() const {
+  if (min_size_ != draw::invalid_size) {
+    if (min_size_.height > rect_.h || min_size_.width > rect_.w) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 void Window::HandleEvent(event_t* event) {
@@ -151,7 +178,7 @@ void Window::HandleWindowCloseEvent(gui::events::WindowCloseEvent* event) {
 }
 
 void Window::HandleMouseStateChangeEvent(gui::events::MouseStateChangeEvent* event) {
-  if (!visible_) {
+  if (!IsVisible()) {
     return;
   }
 
@@ -169,7 +196,7 @@ void Window::HandleMousePressEvent(gui::events::MousePressEvent* event) {
 }
 
 void Window::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
-  if (!visible_) {
+  if (!IsVisible()) {
     return;
   }
 

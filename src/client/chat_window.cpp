@@ -36,6 +36,11 @@ void ChatWindow::SetShowButtonImage(SDL_Texture* img) {
 }
 
 void ChatWindow::Draw(SDL_Renderer* render) {
+  if (!IsCanDraw()) {
+    base_class::Draw(render);
+    return;
+  }
+
   if (fApp->IsCursorVisible()) {
     if (!IsVisible()) {
       if (show_button_img_) {

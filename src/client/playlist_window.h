@@ -29,7 +29,7 @@ class PlaylistWindow : public player::gui::IListBox {
  public:
   typedef player::gui::IListBox base_class;
   typedef std::vector<PlaylistEntry> playlist_t;
-  enum { keypad_width = 60, space_width = 10 };
+  enum { channel_number_width = 60, space_width = 10 };
   PlaylistWindow();
   ~PlaylistWindow();
 
