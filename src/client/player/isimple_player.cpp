@@ -35,8 +35,8 @@
 #include "client/player/media/sdl_utils.h"
 #include "client/player/media/video_state.h"  // for VideoState
 
-#include "client/player/gui/widgets/label.h"
 #include "client/player/gui/sdl2_application.h"
+#include "client/player/gui/widgets/label.h"
 
 #include "client/player/draw/draw.h"
 #include "client/player/draw/font.h"

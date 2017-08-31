@@ -30,7 +30,14 @@ namespace draw {
 class SurfaceSaver;
 }
 }  // namespace player
+
 typedef std::shared_ptr<player::draw::SurfaceSaver> channel_icon_t;
+
+struct ChannelDescription {
+  std::string title;
+  std::string description;
+  channel_icon_t icon;
+};
 
 class PlaylistEntry {
  public:
@@ -48,19 +55,14 @@ class PlaylistEntry {
   std::string GetCacheDir() const;
   std::string GetIconPath() const;
 
+  ChannelDescription GetChannelDescription() const;
+
  private:
   ChannelInfo info_;
   RuntimeChannelInfo rinfo_;
 
   channel_icon_t icon_;
   std::string cache_dir_;
-};
-
-struct ChannelDescription {
-  size_t pos;
-  std::string title;
-  std::string description;
-  channel_icon_t icon;
 };
 
 }  // namespace client

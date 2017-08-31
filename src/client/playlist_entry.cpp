@@ -51,6 +51,18 @@ std::string PlaylistEntry::GetIconPath() const {
   return common::file_system::make_path(dir, ICON_FILE_NAME);
 }
 
+ChannelDescription PlaylistEntry::GetChannelDescription() const {
+  std::string decr = "N/A";
+  ChannelInfo url = GetChannelInfo();
+  EpgInfo epg = url.GetEpg();
+  ProgrammeInfo prog;
+  if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
+    decr = prog.GetTitle();
+  }
+
+  return {url.GetName(), decr, GetIcon()};
+}
+
 void PlaylistEntry::SetIcon(channel_icon_t icon) {
   icon_ = icon;
 }

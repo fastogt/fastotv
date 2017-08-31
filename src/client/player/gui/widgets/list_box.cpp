@@ -113,7 +113,7 @@ void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
   int drawed = 0;
   for (size_t i = last_drawed_row_pos_; i < GetRowCount() && drawed < max_line_count; ++i) {
     SDL_Rect cell_rect = {draw_area.x, draw_area.y + row_height_ * drawed, draw_area.w, row_height_};
-    if (!draw::IsPointInRect(point, cell_rect)) {
+    if (draw::IsPointInRect(point, cell_rect)) {
       active_row_ = i;
       break;
     }

@@ -137,6 +137,7 @@ Player::Player(const std::string& app_directory_absolute_path,
   plailist_window_->SetSelectionColor(playlist_item_preselect_color);
   plailist_window_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
   plailist_window_->SetTextColor(text_color);
+  plailist_window_->SetCurrentPositionSelectionColor(failed_color);
 }
 
 Player::~Player() {
@@ -438,14 +439,7 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
   }
 
   plailist_window_->SetVisible(true);
-  std::vector<ChannelDescription> descr_list;
-  for (size_t i = 0; i < play_list_.size(); ++i) {
-    ChannelDescription descr;
-    if (GetChannelDescription(i, &descr)) {
-      descr_list.push_back(descr);
-    }
-  }
-  plailist_window_->SetPlaylist(descr_list);
+  plailist_window_->SetPlaylist(&play_list_);
   SwitchToPlayingMode();
 }
 
@@ -606,16 +600,7 @@ bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const 
     return false;
   }
 
-  PlaylistEntry entry = play_list_[pos];
-  std::string decr = "N/A";
-  ChannelInfo url = entry.GetChannelInfo();
-  EpgInfo epg = url.GetEpg();
-  ProgrammeInfo prog;
-  if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
-    decr = prog.GetTitle();
-  }
-
-  *descr = {pos, url.GetName(), decr, entry.GetIcon()};
+  *descr = play_list_[pos].GetChannelDescription();
   return true;
 }
 
@@ -921,6 +906,7 @@ player::media::VideoState* Player::CreateStreamPos(size_t pos) {
   copy.enable_audio = url.IsEnableVideo();
   copy.enable_video = url.IsEnableAudio();
 
+  plailist_window_->SetCurrentPositionInPlaylist(current_stream_pos_);
   player::media::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
   return stream;
 }

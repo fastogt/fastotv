@@ -28,13 +28,13 @@ namespace client {
 class PlaylistWindow : public player::gui::IListBox {
  public:
   typedef player::gui::IListBox base_class;
-  typedef std::vector<ChannelDescription> playlist_t;
+  typedef std::vector<PlaylistEntry> playlist_t;
   enum { keypad_width = 60, space_width = 10 };
   PlaylistWindow();
   ~PlaylistWindow();
 
-  void SetPlaylist(const playlist_t& pl);
-  playlist_t GetPlaylist() const;
+  void SetPlaylist(const playlist_t* pl);
+  const playlist_t* GetPlaylist() const;
 
   void SetHideButtonImage(SDL_Texture* img);
 
@@ -42,6 +42,11 @@ class PlaylistWindow : public player::gui::IListBox {
   virtual size_t GetRowCount() const override;
 
   virtual void Draw(SDL_Renderer* render) override;
+
+  void SetCurrentPositionInPlaylist(size_t pos);
+
+  void SetCurrentPositionSelectionColor(const SDL_Color& sel);
+  SDL_Color GetCurrentPositionSelectionColor() const;
 
  protected:
   virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
@@ -55,7 +60,10 @@ class PlaylistWindow : public player::gui::IListBox {
 
   SDL_Texture* hide_button_img_;
   SDL_Texture* show_button_img_;
-  playlist_t play_list_;
+  const playlist_t* play_list_;  // pointer
+
+  size_t current_position_in_playlist_;
+  SDL_Color select_cur_color_;
 };
 
 }  // namespace client

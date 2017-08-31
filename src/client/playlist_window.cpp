@@ -22,20 +22,27 @@
 
 #include <common/convert2string.h>
 
+#include "client/player/draw/draw.h"
 #include "client/player/draw/surface_saver.h"
 
 namespace fastotv {
 namespace client {
 
-PlaylistWindow::PlaylistWindow() : base_class(), hide_button_img_(nullptr), show_button_img_(nullptr), play_list_() {}
+PlaylistWindow::PlaylistWindow()
+    : base_class(),
+      hide_button_img_(nullptr),
+      show_button_img_(nullptr),
+      play_list_(nullptr),
+      current_position_in_playlist_(player::draw::invalid_row_position),
+      select_cur_color_() {}
 
 PlaylistWindow::~PlaylistWindow() {}
 
-void PlaylistWindow::SetPlaylist(const playlist_t& pl) {
+void PlaylistWindow::SetPlaylist(const playlist_t* pl) {
   play_list_ = pl;
 }
 
-PlaylistWindow::playlist_t PlaylistWindow::GetPlaylist() const {
+const PlaylistWindow::playlist_t* PlaylistWindow::GetPlaylist() const {
   return play_list_;
 }
 
@@ -48,7 +55,10 @@ void PlaylistWindow::SetShowButtonImage(SDL_Texture* img) {
 }
 
 size_t PlaylistWindow::GetRowCount() const {
-  return play_list_.size();
+  if (!play_list_) {
+    return 0;
+  }
+  return play_list_->size();
 }
 
 void PlaylistWindow::Draw(SDL_Renderer* render) {
@@ -70,13 +80,31 @@ void PlaylistWindow::Draw(SDL_Renderer* render) {
   base_class::Draw(render);
 }
 
+void PlaylistWindow::SetCurrentPositionInPlaylist(size_t pos) {
+  current_position_in_playlist_ = pos;
+}
+
+void PlaylistWindow::SetCurrentPositionSelectionColor(const SDL_Color& sel) {
+  select_cur_color_ = sel;
+}
+
+SDL_Color PlaylistWindow::GetCurrentPositionSelectionColor() const {
+  return select_cur_color_;
+}
+
 void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) {
+  UNUSED(is_active_row);
+
+  if (!play_list_) {
+    return;
+  }
+
   int shift = 0;
   SDL_Rect number_rect = {row_rect.x, row_rect.y, keypad_width, row_rect.h};
   std::string number_str = common::ConvertToString(pos + 1);
   DrawText(render, number_str, number_rect, PlaylistWindow::CENTER_TEXT);
 
-  auto descr = play_list_[pos];
+  ChannelDescription descr = play_list_->operator[](pos).GetChannelDescription();
   channel_icon_t icon = descr.icon;
   shift = keypad_width;  // in any case shift should be
   if (icon) {
@@ -99,6 +127,10 @@ void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
       title_line, description_line);
   SDL_Rect text_rect = {row_rect.x + shift, row_rect.y, text_width, row_rect.h};
   DrawText(render, line_text, text_rect, GetDrawType());
+
+  if (pos == current_position_in_playlist_) {
+    player::draw::FillRectColor(render, row_rect, select_cur_color_);
+  }
 }
 
 void PlaylistWindow::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
