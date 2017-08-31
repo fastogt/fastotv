@@ -33,6 +33,14 @@ IListBox::IListBox()
       selection_color_(),
       active_row_(draw::invalid_row_position) {}
 
+IListBox::IListBox(const SDL_Color& back_ground_color)
+    : base_class(back_ground_color),
+      row_height_(0),
+      last_drawed_row_pos_(0),
+      selection_(NO_SELECT),
+      selection_color_(),
+      active_row_(draw::invalid_row_position) {}
+
 IListBox::~IListBox() {}
 
 void IListBox::SetSelection(Selection sel) {
@@ -60,7 +68,7 @@ int IListBox::GetRowHeight() const {
 }
 
 void IListBox::Draw(SDL_Renderer* render) {
-  if (!IsNeedDrawListBox()) {
+  if (!IsVisible() || !IsCanDraw()) {
     return;
   }
 
@@ -95,7 +103,7 @@ size_t IListBox::GetActiveRow() const {
 }
 
 void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
-  if (!IsVisible()) {
+  if (!IsVisible() || !IsCanDraw()) {
     active_row_ = draw::invalid_row_position;
     base_class::HandleMouseMoveEvent(event);
     return;
@@ -103,8 +111,7 @@ void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
 
   gui::events::MouseMoveInfo minf = event->GetInfo();
   SDL_Point point = minf.GetMousePoint();
-  SDL_Rect draw_area = GetRect();
-  if (!draw::IsPointInRect(point, draw_area)) {  // not in rect
+  if (!IsPointInControlArea(point)) {  // not in rect
     active_row_ = draw::invalid_row_position;
     base_class::HandleMouseMoveEvent(event);
     return;
@@ -115,6 +122,7 @@ void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
     return;
   }
 
+  SDL_Rect draw_area = GetRect();
   int max_line_count = draw_area.h / row_height_;
   if (max_line_count == 0) {  // nothing draw
     active_row_ = draw::invalid_row_position;
@@ -142,11 +150,9 @@ void IListBox::OnFocusChanged(bool focus) {
   base_class::OnFocusChanged(focus);
 }
 
-bool IListBox::IsNeedDrawListBox() const {
-  return IsVisible() && IsCanDraw();
-}
-
 ListBox::ListBox() : base_class(), lines_() {}
+
+ListBox::ListBox(const SDL_Color& back_ground_color) : base_class(back_ground_color), lines_() {}
 
 ListBox::~ListBox() {}
 

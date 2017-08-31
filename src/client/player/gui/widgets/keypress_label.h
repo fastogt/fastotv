@@ -31,13 +31,10 @@ class KeyPressLabel : public Label {
  public:
   typedef Label base_class;
 
-  KeyPressLabel();
+  KeyPressLabel(const SDL_Color& back_ground_color);
   virtual ~KeyPressLabel();
 
  protected:
-  virtual void HandleEvent(event_t* event) override;
-  virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
-
   virtual void HandleKeyPressEvent(player::gui::events::KeyPressEvent* event);
   virtual void HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event);
 };

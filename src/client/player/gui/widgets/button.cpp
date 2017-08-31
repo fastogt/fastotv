@@ -16,31 +16,40 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
+#include "client/player/gui/widgets/button.h"
 
-#include "client/player/gui/widgets/font_window.h"
+#include <common/application/application.h>
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace gui {
 
-class Label : public FontWindow {
- public:
-  typedef FontWindow base_class;
+Button::Button() : base_class() {
+  fApp->Subscribe(this, gui::events::MouseReleaseEvent::EventType);
+}
 
-  Label();
-  Label(const SDL_Color& back_ground_color);
-  virtual ~Label();
+Button::Button(const SDL_Color& back_ground_color) : base_class(back_ground_color) {}
 
-  void SetText(const std::string& text);
-  std::string GetText() const;
+Button::~Button() {}
 
-  virtual void Draw(SDL_Renderer* render) override;
+void Button::HandleEvent(event_t* event) {
+  if (event->GetEventType() == gui::events::MouseReleaseEvent::EventType) {
+    gui::events::MouseReleaseEvent* mouse_release = static_cast<gui::events::MouseReleaseEvent*>(event);
+    HandleMouseReleaseEvent(mouse_release);
+  }
 
- protected:
-  std::string text_;
-};
+  base_class::HandleEvent(event);
+}
+
+void Button::HandleExceptionEvent(event_t* event, common::Error err) {
+  UNUSED(event);
+  UNUSED(err);
+}
+
+void Button::HandleMouseReleaseEvent(events::MouseReleaseEvent* event) {
+  UNUSED(event);
+}
 
 }  // namespace gui
 }  // namespace player

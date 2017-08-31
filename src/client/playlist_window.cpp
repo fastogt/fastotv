@@ -28,8 +28,8 @@
 namespace fastotv {
 namespace client {
 
-PlaylistWindow::PlaylistWindow()
-    : base_class(),
+PlaylistWindow::PlaylistWindow(const SDL_Color& back_ground_color)
+    : base_class(back_ground_color),
       hide_button_img_(nullptr),
       show_button_img_(nullptr),
       play_list_(nullptr),

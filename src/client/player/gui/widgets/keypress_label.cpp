@@ -25,20 +25,12 @@ namespace client {
 namespace player {
 namespace gui {
 
-KeyPressLabel::KeyPressLabel() : base_class() {
+KeyPressLabel::KeyPressLabel(const SDL_Color& back_ground_color) : base_class(back_ground_color) {
   fApp->Subscribe(this, gui::events::KeyPressEvent::EventType);
   fApp->Subscribe(this, gui::events::KeyReleaseEvent::EventType);
 }
 
 KeyPressLabel::~KeyPressLabel() {}
-
-void KeyPressLabel::HandleEvent(event_t* event) {
-  base_class::HandleEvent(event);
-}
-
-void KeyPressLabel::HandleExceptionEvent(event_t* event, common::Error err) {
-  base_class::HandleExceptionEvent(event, err);
-}
 
 void KeyPressLabel::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
   const player::gui::events::KeyPressInfo inf = event->GetInfo();

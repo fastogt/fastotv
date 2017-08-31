@@ -18,28 +18,26 @@
 
 #pragma once
 
-#include "client/player/gui/widgets/font_window.h"
+#include "client/player/gui/widgets/label.h"
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace gui {
 
-class Label : public FontWindow {
+class Button : public Label {
  public:
-  typedef FontWindow base_class;
+  typedef Label base_class;
 
-  Label();
-  Label(const SDL_Color& back_ground_color);
-  virtual ~Label();
-
-  void SetText(const std::string& text);
-  std::string GetText() const;
-
-  virtual void Draw(SDL_Renderer* render) override;
+  Button();
+  Button(const SDL_Color& back_ground_color);
+  virtual ~Button();
 
  protected:
-  std::string text_;
+  virtual void HandleEvent(event_t* event) override;
+  virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
+
+  virtual void HandleMouseReleaseEvent(events::MouseReleaseEvent* event);
 };
 
 }  // namespace gui

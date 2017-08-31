@@ -33,6 +33,7 @@ namespace gui {
 class Window : public gui::events::EventListener {
  public:
   Window();
+  Window(const SDL_Color& back_ground_color);
   virtual ~Window();
 
   void SetRect(const SDL_Rect& rect);
@@ -41,17 +42,23 @@ class Window : public gui::events::EventListener {
   SDL_Color GetBackGroundColor() const;
   void SetBackGroundColor(const SDL_Color& color);
 
-  void SetMinimalSize(const draw::Size& ms);
-  draw::Size GetMinimalSize() const;
+  SDL_Color GetBorderColor() const;
+  void SetBorderColor(const SDL_Color& color);
 
-  void SetTransparent(bool t);
+  draw::Size GetMinimalSize() const;
+  void SetMinimalSize(const draw::Size& ms);
+
   bool IsTransparent() const;
+  void SetTransparent(bool t);
+
+  bool IsBordered() const;
+  void SetBordered(bool b);
 
   void SetVisible(bool v);
   bool IsVisible() const;
 
-  void SetFocus(bool focus);
   bool IsFocused() const;
+  void SetFocus(bool focus);
 
   void Show();
   void Hide();
@@ -71,17 +78,22 @@ class Window : public gui::events::EventListener {
   virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event);
 
   virtual void OnFocusChanged(bool focus);
+  virtual void OnMouseClicked(Uint8 button);
 
   bool IsCanDraw() const;
+  bool IsPointInControlArea(const SDL_Point& point) const;
 
  private:
-  bool IsNeedDrawWindow() const;
+  void DrawBackground(SDL_Renderer* render);
+  void DrawBorder(SDL_Renderer* render);
 
   SDL_Rect rect_;
   SDL_Color back_ground_color_;
+  SDL_Color border_color_;
 
   bool visible_;
   bool transparent_;
+  bool bordered_;
   bool focus_;
   draw::Size min_size_;
 };

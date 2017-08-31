@@ -30,7 +30,7 @@ class PlaylistWindow : public player::gui::IListBox {
   typedef player::gui::IListBox base_class;
   typedef std::vector<PlaylistEntry> playlist_t;
   enum { channel_number_width = 60, space_width = 10 };
-  PlaylistWindow();
+  PlaylistWindow(const SDL_Color& back_ground_color);
   ~PlaylistWindow();
 
   void SetPlaylist(const playlist_t* pl);

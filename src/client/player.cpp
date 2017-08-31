@@ -105,28 +105,25 @@ Player::Player(const std::string& app_directory_absolute_path,
   fApp->Subscribe(this, player::gui::events::ReceiveChatMessageEvent::EventType);
 
   // chat window
-  chat_window_ = new ChatWindow;
+  chat_window_ = new ChatWindow(chat_color);
   chat_window_->SetVisible(false);
-  chat_window_->SetBackGroundColor(chat_color);
 
   // descr window
-  description_label_ = new player::gui::IconLabel;
+  description_label_ = new player::gui::IconLabel(failed_color);
   description_label_->SetVisible(false);
   description_label_->SetTextColor(text_color);
   description_label_->SetSpace(space_width);
   description_label_->SetText("Init");
 
   // key_pad window
-  keypad_label_ = new player::gui::Label;
+  keypad_label_ = new player::gui::Label(keypad_color);
   keypad_label_->SetVisible(false);
-  keypad_label_->SetBackGroundColor(keypad_color);
   keypad_label_->SetTextColor(text_color);
   keypad_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
 
   // playlist window
-  plailist_window_ = new PlaylistWindow;
+  plailist_window_ = new PlaylistWindow(playlist_color);
   plailist_window_->SetVisible(false);
-  plailist_window_->SetBackGroundColor(playlist_color);
   plailist_window_->SetSelection(PlaylistWindow::SINGLE_ROW_SELECT);
   plailist_window_->SetSelectionColor(playlist_item_preselect_color);
   plailist_window_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
@@ -750,7 +747,7 @@ void Player::DrawFailedStatus() {
     return;
   }
 
-  player::draw::FlushRender(render, black_color);
+  player::draw::FlushRender(render, player::draw::black_color);
   if (offline_channel_texture_) {
     SDL_Texture* img = offline_channel_texture_->GetTexture(render);
     if (img) {
@@ -819,7 +816,7 @@ void Player::DrawInitStatus() {
     return;
   }
 
-  player::draw::FlushRender(render, black_color);
+  player::draw::FlushRender(render, player::draw::black_color);
   if (connection_error_texture_) {
     SDL_Texture* img = connection_error_texture_->GetTexture(render);
     if (img) {

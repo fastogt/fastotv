@@ -46,6 +46,7 @@ common::Error CreateTexture(SDL_Renderer* renderer,
 
 common::Error SetRenderDrawColor(SDL_Renderer* render, const SDL_Color& rgba) WARN_UNUSED_RESULT;
 common::Error FillRectColor(SDL_Renderer* render, const SDL_Rect& rect, const SDL_Color& rgba) WARN_UNUSED_RESULT;
+common::Error DrawBorder(SDL_Renderer* render, const SDL_Rect& rect, const SDL_Color& rgba) WARN_UNUSED_RESULT;
 common::Error FlushRender(SDL_Renderer* render, const SDL_Color& rgba) WARN_UNUSED_RESULT;
 
 }  // namespace draw

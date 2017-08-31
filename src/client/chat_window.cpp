@@ -25,7 +25,8 @@
 namespace fastotv {
 namespace client {
 
-ChatWindow::ChatWindow() : base_class(), hide_button_img_(nullptr), show_button_img_(nullptr) {}
+ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
+    : base_class(back_ground_color), hide_button_img_(nullptr), show_button_img_(nullptr) {}
 
 void ChatWindow::SetHideButtonImage(SDL_Texture* img) {
   hide_button_img_ = img;

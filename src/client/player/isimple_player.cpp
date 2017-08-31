@@ -60,8 +60,8 @@ namespace player {
 
 const SDL_Color ISimplePlayer::text_color = {255, 255, 255, 0};
 const AVRational ISimplePlayer::min_fps = {25, 1};
-const SDL_Color ISimplePlayer::black_color = {0, 0, 0, 255};
 const SDL_Color ISimplePlayer::stream_statistic_color = {171, 217, 98, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
+const SDL_Color ISimplePlayer::volume_color = stream_statistic_color;
 
 ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
     : StreamHandler(),
@@ -110,17 +110,15 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
   fApp->Subscribe(this, gui::events::QuitEvent::EventType);
 
   // volume label
-  volume_label_ = new gui::Label;
+  volume_label_ = new gui::Label(volume_color);
   volume_label_->SetVisible(false);
   volume_label_->SetDrawType(gui::Label::CENTER_TEXT);
-  volume_label_->SetBackGroundColor(stream_statistic_color);
   volume_label_->SetTextColor(text_color);
 
   // statistic label
-  statistic_label_ = new gui::Label;
+  statistic_label_ = new gui::Label(stream_statistic_color);
   statistic_label_->SetVisible(false);
   statistic_label_->SetDrawType(gui::Label::WRAPPED_TEXT);
-  statistic_label_->SetBackGroundColor(stream_statistic_color);
   statistic_label_->SetTextColor(text_color);
 }
 
@@ -602,7 +600,7 @@ void ISimplePlayer::DrawFailedStatus() {
     return;
   }
 
-  draw::FlushRender(renderer_, black_color);
+  draw::FlushRender(renderer_, player::draw::black_color);
   DrawInfo();
   SDL_RenderPresent(renderer_);
 }
@@ -662,7 +660,7 @@ void ISimplePlayer::DrawPlayingStatus() {
 
   bool flip_v = frame->frame->linesize[0] < 0;
 
-  draw::FlushRender(renderer_, black_color);
+  draw::FlushRender(renderer_, player::draw::black_color);
 
   SDL_Rect rect = CalculateDisplayRect(xleft_, ytop_, window_size_.width, window_size_.height, frame->width,
                                        frame->height, frame->sar);
@@ -677,7 +675,7 @@ void ISimplePlayer::DrawInitStatus() {
     return;
   }
 
-  draw::FlushRender(renderer_, black_color);
+  draw::FlushRender(renderer_, player::draw::black_color);
   DrawInfo();
   SDL_RenderPresent(renderer_);
 }

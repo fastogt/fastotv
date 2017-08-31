@@ -27,11 +27,15 @@ namespace client {
 namespace player {
 namespace gui {
 
-Window::Window()
+Window::Window() : Window(draw::white_color) {}
+
+Window::Window(const SDL_Color& back_ground_color)
     : rect_(draw::empty_rect),
-      back_ground_color_(draw::white_color),
+      back_ground_color_(back_ground_color),
+      border_color_(draw::black_color),
       visible_(true),
       transparent_(false),
+      bordered_(false),
       focus_(false),
       min_size_(draw::invalid_size) {
   fApp->Subscribe(this, gui::events::MouseStateChangeEvent::EventType);
@@ -64,6 +68,14 @@ void Window::SetBackGroundColor(const SDL_Color& color) {
   back_ground_color_ = color;
 }
 
+SDL_Color Window::GetBorderColor() const {
+  return border_color_;
+}
+
+void Window::SetBorderColor(const SDL_Color& color) {
+  border_color_ = color;
+}
+
 void Window::SetMinimalSize(const draw::Size& ms) {
   min_size_ = ms;
 }
@@ -78,6 +90,14 @@ void Window::SetTransparent(bool t) {
 
 bool Window::IsTransparent() const {
   return transparent_;
+}
+
+bool Window::IsBordered() const {
+  return bordered_;
+}
+
+void Window::SetBordered(bool b) {
+  bordered_ = b;
 }
 
 void Window::SetVisible(bool v) {
@@ -109,23 +129,25 @@ void Window::Hide() {
 }
 
 void Window::Draw(SDL_Renderer* render) {
-  if (!IsNeedDrawWindow()) {
+  if (!IsVisible() || !IsCanDraw()) {
     return;
   }
 
+  if (!IsTransparent()) {
+    DrawBackground(render);
+  }
+
+  if (IsBordered()) {
+    DrawBorder(render);
+  }
+}
+
+void Window::DrawBackground(SDL_Renderer* render) {
   draw::FillRectColor(render, rect_, back_ground_color_);
 }
 
-bool Window::IsNeedDrawWindow() const {
-  if (!visible_) {
-    return false;
-  }
-
-  if (transparent_) {
-    return false;
-  }
-
-  return IsCanDraw();
+void Window::DrawBorder(SDL_Renderer* render) {
+  draw::DrawBorder(render, rect_, border_color_);
 }
 
 bool Window::IsCanDraw() const {
@@ -136,6 +158,14 @@ bool Window::IsCanDraw() const {
   }
 
   return true;
+}
+
+bool Window::IsPointInControlArea(const SDL_Point& point) const {
+  if (!IsVisible() || !IsCanDraw()) {
+    return false;
+  }
+
+  return draw::IsPointInRect(point, rect_);
 }
 
 void Window::HandleEvent(event_t* event) {
@@ -178,7 +208,7 @@ void Window::HandleWindowCloseEvent(gui::events::WindowCloseEvent* event) {
 }
 
 void Window::HandleMouseStateChangeEvent(gui::events::MouseStateChangeEvent* event) {
-  if (!IsVisible()) {
+  if (!IsVisible() || !IsCanDraw()) {
     return;
   }
 
@@ -188,20 +218,32 @@ void Window::HandleMouseStateChangeEvent(gui::events::MouseStateChangeEvent* eve
     return;
   }
 
-  SetFocus(draw::IsPointInRect(minf.GetMousePoint(), rect_));
+  SetFocus(IsPointInControlArea(minf.GetMousePoint()));
 }
 
 void Window::HandleMousePressEvent(gui::events::MousePressEvent* event) {
-  UNUSED(event);
+  if (!IsVisible() || !IsCanDraw()) {
+    return;
+  }
+
+  player::gui::events::MousePressInfo inf = event->GetInfo();
+  SDL_Point point = inf.GetMousePoint();
+  if (IsPointInControlArea(point)) {
+    OnMouseClicked(inf.mevent.button);
+  }
+}
+
+void Window::OnMouseClicked(Uint8 button) {
+  UNUSED(button);
 }
 
 void Window::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
-  if (!IsVisible()) {
+  if (!IsVisible() || !IsCanDraw()) {
     return;
   }
 
   player::gui::events::MouseMoveInfo minf = event->GetInfo();
-  SetFocus(draw::IsPointInRect(minf.GetMousePoint(), rect_));
+  SetFocus(IsPointInControlArea(minf.GetMousePoint()));
 }
 
 void Window::OnFocusChanged(bool focus) {

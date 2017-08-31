@@ -25,6 +25,8 @@ namespace gui {
 
 Label::Label() : base_class(), text_() {}
 
+Label::Label(const SDL_Color& back_ground_color) : base_class(back_ground_color), text_() {}
+
 Label::~Label() {}
 
 void Label::SetText(const std::string& text) {

@@ -156,6 +156,19 @@ common::Error FillRectColor(SDL_Renderer* render, const SDL_Rect& rect, const SD
   return common::Error();
 }
 
+common::Error DrawBorder(SDL_Renderer* render, const SDL_Rect& rect, const SDL_Color& rgba) {
+  common::Error err = SetRenderDrawColor(render, rgba);
+  if (err && err->IsError()) {
+    return err;
+  }
+
+  int res = SDL_RenderDrawRect(render, &rect);
+  if (res == -1) {
+    return common::make_error_value_perror("Couldn't draw rect", -1, common::Value::E_ERROR);
+  }
+  return common::Error();
+}
+
 common::Error FlushRender(SDL_Renderer* render, const SDL_Color& rgba) {
   common::Error err = SetRenderDrawColor(render, rgba);
   if (err && err->IsError()) {

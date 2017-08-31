@@ -29,7 +29,9 @@ class IListBox : public FontWindow {
  public:
   typedef FontWindow base_class;
   enum Selection { NO_SELECT, SINGLE_ROW_SELECT };
+
   IListBox();
+  IListBox(const SDL_Color& back_ground_color);
   ~IListBox();
 
   void SetSelection(Selection sel);
@@ -53,8 +55,6 @@ class IListBox : public FontWindow {
   virtual void OnFocusChanged(bool focus) override;
 
  private:
-  bool IsNeedDrawListBox() const;
-
   int row_height_;
   size_t last_drawed_row_pos_;
   Selection selection_;
@@ -66,7 +66,9 @@ class ListBox : public IListBox {
  public:
   typedef IListBox base_class;
   typedef std::vector<std::string> lines_t;
+
   ListBox();
+  ListBox(const SDL_Color& back_ground_color);
   ~ListBox();
 
   void SetLines(const lines_t& lines);

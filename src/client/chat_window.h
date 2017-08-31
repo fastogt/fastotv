@@ -26,7 +26,7 @@ namespace client {
 class ChatWindow : public player::gui::IListBox {
  public:
   typedef player::gui::IListBox base_class;
-  ChatWindow();
+  ChatWindow(const SDL_Color& back_ground_color);
 
   void SetHideButtonImage(SDL_Texture* img);
 

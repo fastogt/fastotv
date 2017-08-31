@@ -69,7 +69,7 @@ class ISimplePlayer : public StreamHandler, public gui::events::EventListener {
   static const SDL_Color text_color;
   static const AVRational min_fps;
 
-  static const SDL_Color black_color;
+  static const SDL_Color volume_color;
   static const SDL_Color stream_statistic_color;
 
   enum States { INIT_STATE, PLAYING_STATE, FAILED_STATE };

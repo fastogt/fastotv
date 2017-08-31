@@ -32,6 +32,7 @@ class FontWindow : public Window {
   enum DrawType { WRAPPED_TEXT, CENTER_TEXT };
 
   FontWindow();
+  FontWindow(const SDL_Color& back_ground_color);
   virtual ~FontWindow();
 
   void SetDrawType(DrawType dt);

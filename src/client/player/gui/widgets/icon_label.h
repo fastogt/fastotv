@@ -30,7 +30,7 @@ class IconLabel : public Label {
   typedef Label base_class;
   enum { default_space = 1 };
 
-  IconLabel();
+  IconLabel(const SDL_Color& back_ground_color);
   virtual ~IconLabel();
 
   void SetSpace(int space);

@@ -25,7 +25,10 @@ namespace client {
 namespace player {
 namespace gui {
 
-FontWindow::FontWindow() : draw_type_(WRAPPED_TEXT), text_color_(), font_(nullptr) {}
+FontWindow::FontWindow() : base_class(), draw_type_(WRAPPED_TEXT), text_color_(), font_(nullptr) {}
+
+FontWindow::FontWindow(const SDL_Color& back_ground_color)
+    : base_class(back_ground_color), draw_type_(WRAPPED_TEXT), text_color_(), font_(nullptr) {}
 
 FontWindow::~FontWindow() {}
 
