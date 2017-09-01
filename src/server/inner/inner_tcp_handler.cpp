@@ -310,9 +310,10 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       const login_t login = ainf.GetLogin();
       const stream_id channel = argv[1];
       const stream_id prev_channel = client->GetCurrentStreamId();
-      client->SetCurrentStreamId(channel);
 
-      size_t watchers = GetOnlineUserByStreamId(server, channel);
+      size_t watchers = GetOnlineUserByStreamId(server, channel);  // calc watchers
+      client->SetCurrentStreamId(channel);                         // add to watcher
+
       RuntimeChannelInfo rinf;
       rinf.SetChannelId(channel);
       rinf.SetWatchersCount(watchers);

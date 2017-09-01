@@ -47,6 +47,8 @@ ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
   send_message_button_->SetText("Post");
   send_message_button_->SetDrawType(player::gui::Label::CENTER_TEXT);
   send_message_button_->SetVisible(true);
+  send_message_button_->SetBorderColor(player::draw::black_color);
+  send_message_button_->SetBordered(true);
 }
 
 ChatWindow::~ChatWindow() {
