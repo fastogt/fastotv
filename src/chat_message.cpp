@@ -145,7 +145,7 @@ bool IsEnterMessage(const ChatMessage& msg) {
   }
 
   std::string msg_str = msg.GetMessage();
-  return msg_str.find(ENTER_MESSAGE);
+  return msg_str.find(ENTER_MESSAGE) != std::string::npos;
 }
 
 bool IsLeaveMessage(const ChatMessage& msg) {
@@ -154,7 +154,7 @@ bool IsLeaveMessage(const ChatMessage& msg) {
   }
 
   std::string msg_str = msg.GetMessage();
-  return msg_str.find(LEAVE_MESSAGE);
+  return msg_str.find(LEAVE_MESSAGE) != std::string::npos;
 }
 
 bool ChatMessage::Equals(const ChatMessage& inf) const {
