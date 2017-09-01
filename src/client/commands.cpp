@@ -40,7 +40,7 @@
 #define CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "")
 
 // send_chat_message
-#define CLIENT_SEND_CHAT_MESSAGE_REQ GENERATE_REQUEST_FMT(CLIENT_SEND_CHAT_MESSAGE)
+#define CLIENT_SEND_CHAT_MESSAGE_REQ_1E GENERATE_REQUEST_FMT_ARGS(CLIENT_SEND_CHAT_MESSAGE, "'%s'")
 #define CLIENT_SEND_CHAT_MESSAGE_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_SEND_CHAT_MESSAGE, "'%s'")
 #define CLIENT_SEND_CHAT_MESSAGE_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_SEND_CHAT_MESSAGE, "")
 
@@ -112,8 +112,8 @@ cmd_approve_t GetRuntimeChannelInfoApproveResponceFail(cmd_seq_t id, const std::
   return MakeApproveResponce(id, CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_FAIL_1E, error_text);
 }
 
-cmd_request_t SendChatMessageRequest(cmd_seq_t id) {
-  return MakeRequest(id, CLIENT_SEND_CHAT_MESSAGE_REQ);
+cmd_request_t SendChatMessageRequest(cmd_seq_t id, const serializet_t& msg) {
+  return MakeRequest(id, CLIENT_SEND_CHAT_MESSAGE_REQ_1E, msg);
 }
 
 cmd_approve_t SendChatMessageApproveResponceSuccsess(cmd_seq_t id) {

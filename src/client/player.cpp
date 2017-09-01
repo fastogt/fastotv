@@ -110,30 +110,45 @@ Player::Player(const std::string& app_directory_absolute_path,
 
   // chat window
   chat_window_ = new ChatWindow(chat_color);
-  chat_window_->SetVisible(false);
   chat_window_->SetTextColor(text_color);
+  auto post_clicked_cb = [this](Uint8 button, const SDL_Point& position) {
+    UNUSED(position);
+    if (button == SDL_BUTTON_LEFT) {
+      PlaylistEntry url;
+      if (GetCurrentUrl(&url)) {
+        ChannelInfo ch = url.GetChannelInfo();
+        ChatMessage msg(ch.GetId(), "atopilski@gmail.com", "Hello", ChatMessage::MESSAGE);
+        controller_->PostMessageToChat(msg);
+      }
+    }
+  };
+  chat_window_->SetPostClickedCallback(post_clicked_cb);
 
   // descr window
   description_label_ = new player::gui::IconLabel(failed_color);
-  description_label_->SetVisible(false);
   description_label_->SetTextColor(text_color);
   description_label_->SetSpace(space_width);
   description_label_->SetText("Init");
 
   // key_pad window
   keypad_label_ = new player::gui::Label(keypad_color);
-  keypad_label_->SetVisible(false);
   keypad_label_->SetTextColor(text_color);
   keypad_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
 
   // playlist window
   plailist_window_ = new PlaylistWindow(playlist_color);
-  plailist_window_->SetVisible(false);
   plailist_window_->SetSelection(PlaylistWindow::SINGLE_ROW_SELECT);
   plailist_window_->SetSelectionColor(playlist_item_preselect_color);
   plailist_window_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
   plailist_window_->SetTextColor(text_color);
   plailist_window_->SetCurrentPositionSelectionColor(failed_color);
+  auto channel_clicked_cb = [this](Uint8 button, size_t row) {
+    if (button == SDL_BUTTON_LEFT && row != current_stream_pos_) {
+      player::media::VideoState* stream = CreateStreamPos(row);
+      SetStream(stream);
+    }
+  };
+  plailist_window_->SetMouseClickedRowCallback(channel_clicked_cb);
 }
 
 Player::~Player() {
@@ -505,21 +520,6 @@ void Player::HandleMousePressEvent(player::gui::events::MousePressEvent* event) 
     return base_class::HandleMousePressEvent(event);
   }
 
-  player::gui::events::MousePressInfo inf = event->GetInfo();
-  SDL_MouseButtonEvent sinfo = inf.mevent;
-  if (sinfo.button == SDL_BUTTON_LEFT) {
-    if (plailist_window_->IsVisible()) {
-      SDL_Point point = inf.GetMousePoint();
-      const SDL_Rect programms_list_rect = GetProgramsListRect();
-      if (player::draw::IsPointInRect(point, programms_list_rect)) {
-        size_t pos = plailist_window_->GetActiveRow();
-        if (pos != player::draw::invalid_row_position) {  // pos in playlist
-          player::media::VideoState* stream = CreateStreamPos(pos);
-          SetStream(stream);
-        }
-      }
-    }
-  }
   base_class::HandleMousePressEvent(event);
 }
 
@@ -607,11 +607,11 @@ SDL_Rect Player::GetFooterRect() const {
 }
 
 void Player::ToggleShowProgramsList() {
-  plailist_window_->SetVisible(!plailist_window_->IsVisible());
+  plailist_window_->ToggleVisible();
 }
 
 void Player::ToggleShowChat() {
-  chat_window_->SetVisible(!chat_window_->IsVisible());
+  chat_window_->ToggleVisible();
 }
 
 SDL_Rect Player::GetProgramsListRect() const {

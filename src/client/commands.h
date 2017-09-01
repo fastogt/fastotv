@@ -47,7 +47,7 @@ cmd_approve_t GetRuntimeChannelInfoApproveResponceSuccsess(cmd_seq_t id);
 cmd_approve_t GetRuntimeChannelInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text);
 
 // send_chat_message
-cmd_request_t SendChatMessageRequest(cmd_seq_t id);
+cmd_request_t SendChatMessageRequest(cmd_seq_t id, const serializet_t& msg);
 cmd_approve_t SendChatMessageApproveResponceSuccsess(cmd_seq_t id);
 cmd_approve_t SendChatMessageApproveResponceFail(cmd_seq_t id, const std::string& error_text);
 

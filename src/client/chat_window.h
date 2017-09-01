@@ -18,37 +18,49 @@
 
 #pragma once
 
-#include "client/player/gui/widgets/list_box.h"
+#include "client/player/draw/font.h"
+
+#include "client/player/gui/widgets/window.h"
 
 #include "chat_message.h"
 
 namespace fastotv {
 namespace client {
+namespace player {
+namespace gui {
+class Button;
+}
+}  // namespace player
 
-class ChatWindow : public player::gui::IListBox {
+class ChatListWindow;
+
+class ChatWindow : public player::gui::Window {
  public:
-  typedef player::gui::IListBox base_class;
+  typedef player::gui::Window base_class;
   typedef std::vector<ChatMessage> messages_t;
   enum { login_field_width = 240, space_width = 10 };
   ChatWindow(const SDL_Color& back_ground_color);
+  ~ChatWindow();
+
+  void SetPostClickedCallback(mouse_clicked_callback_t cb);
+
+  void SetTextColor(const SDL_Color& color);
+
+  void SetFont(TTF_Font* font);
 
   void SetWatchers(size_t watchers);
-  size_t GetWatchers() const;
-
-  void SetMessages(const messages_t& msgs);
-  messages_t GetMessages() const;
 
   void SetHideButtonImage(SDL_Texture* img);
 
   void SetShowButtonImage(SDL_Texture* img);
 
+  void SetMessages(const messages_t& msgs);
+
+  void SetRowHeight(int row_height);
+
   virtual void Draw(SDL_Renderer* render) override;
 
-  virtual size_t GetRowCount() const override;
-
  protected:
-  virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
-
   virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
 
  private:
@@ -58,11 +70,17 @@ class ChatWindow : public player::gui::IListBox {
   SDL_Rect GetHideButtonChatRect() const;
   SDL_Rect GetShowButtonChatRect() const;
   SDL_Rect GetWatcherRect() const;
+  SDL_Rect GetSendButtonRect() const;
 
   SDL_Texture* hide_button_img_;
   SDL_Texture* show_button_img_;
-  messages_t msgs_;
   size_t watchers_;
+
+  ChatListWindow* chat_window_;
+  player::gui::Button* send_message_button_;
+
+  TTF_Font* font_;
+  SDL_Color text_color_;
 };
 
 }  // namespace client

@@ -33,14 +33,18 @@ Window::Window(const SDL_Color& back_ground_color)
     : rect_(draw::empty_rect),
       back_ground_color_(back_ground_color),
       border_color_(draw::black_color),
-      visible_(true),
+      visible_(false),
       transparent_(false),
       bordered_(false),
       focus_(false),
-      min_size_(draw::invalid_size) {
+      min_size_(draw::invalid_size),
+      mouse_clicked_cb_(),
+      mouse_released_cb_(),
+      focus_changed_cb_() {
   fApp->Subscribe(this, gui::events::MouseStateChangeEvent::EventType);
   fApp->Subscribe(this, gui::events::MouseMoveEvent::EventType);
   fApp->Subscribe(this, gui::events::MousePressEvent::EventType);
+  fApp->Subscribe(this, gui::events::MouseReleaseEvent::EventType);
 
   fApp->Subscribe(this, gui::events::WindowResizeEvent::EventType);
   fApp->Subscribe(this, gui::events::WindowExposeEvent::EventType);
@@ -51,6 +55,18 @@ Window::~Window() {}
 
 void Window::SetRect(const SDL_Rect& rect) {
   rect_ = rect;
+}
+
+void Window::SetMouseClickedCallback(mouse_clicked_callback_t cb) {
+  mouse_clicked_cb_ = cb;
+}
+
+void Window::SetMouseReeleasedCallback(mouse_released_callback_t cb) {
+  mouse_released_cb_ = cb;
+}
+
+void Window::SetFocusChangedCallback(focus_changed_callback_t cb) {
+  focus_changed_cb_ = cb;
 }
 
 SDL_Rect Window::GetRect() const {
@@ -128,6 +144,10 @@ void Window::Hide() {
   SetVisible(false);
 }
 
+void Window::ToggleVisible() {
+  SetVisible(!IsVisible());
+}
+
 void Window::Draw(SDL_Renderer* render) {
   if (!IsVisible() || !IsCanDraw()) {
     return;
@@ -187,6 +207,9 @@ void Window::HandleEvent(event_t* event) {
   } else if (event->GetEventType() == gui::events::MousePressEvent::EventType) {
     gui::events::MousePressEvent* mouse_press = static_cast<gui::events::MousePressEvent*>(event);
     HandleMousePressEvent(mouse_press);
+  } else if (event->GetEventType() == gui::events::MouseReleaseEvent::EventType) {
+    gui::events::MouseReleaseEvent* mouse_release = static_cast<gui::events::MouseReleaseEvent*>(event);
+    HandleMouseReleaseEvent(mouse_release);
   }
 }
 
@@ -229,12 +252,38 @@ void Window::HandleMousePressEvent(gui::events::MousePressEvent* event) {
   player::gui::events::MousePressInfo inf = event->GetInfo();
   SDL_Point point = inf.GetMousePoint();
   if (IsPointInControlArea(point)) {
-    OnMouseClicked(inf.mevent.button);
+    OnMouseClicked(inf.mevent.button, point);
   }
 }
 
-void Window::OnMouseClicked(Uint8 button) {
-  UNUSED(button);
+void Window::HandleMouseReleaseEvent(events::MouseReleaseEvent* event) {
+  if (!IsVisible() || !IsCanDraw()) {
+    return;
+  }
+
+  player::gui::events::MouseReleaseInfo inf = event->GetInfo();
+  SDL_Point point = inf.GetMousePoint();
+  if (IsPointInControlArea(point)) {
+    OnMouseReleased(inf.mevent.button, point);
+  }
+}
+
+void Window::OnMouseClicked(Uint8 button, const SDL_Point& position) {
+  if (mouse_clicked_cb_) {
+    mouse_clicked_cb_(button, position);
+  }
+}
+
+void Window::OnMouseReleased(Uint8 button, const SDL_Point& position) {
+  if (mouse_released_cb_) {
+    mouse_released_cb_(button, position);
+  }
+}
+
+void Window::OnFocusChanged(bool focus) {
+  if (focus_changed_cb_) {
+    focus_changed_cb_(focus);
+  }
 }
 
 void Window::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
@@ -244,10 +293,6 @@ void Window::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
 
   player::gui::events::MouseMoveInfo minf = event->GetInfo();
   SetFocus(IsPointInControlArea(minf.GetMousePoint()));
-}
-
-void Window::OnFocusChanged(bool focus) {
-  UNUSED(focus);
 }
 
 }  // namespace gui

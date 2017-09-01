@@ -138,6 +138,8 @@ void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
 }
 
 void PlaylistWindow::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
+  base_class::HandleMousePressEvent(event);
+
   player::gui::events::MousePressInfo inf = event->GetInfo();
   SDL_MouseButtonEvent sinfo = inf.mevent;
   if (sinfo.button == SDL_BUTTON_LEFT) {
@@ -152,8 +154,6 @@ void PlaylistWindow::HandleMousePressEvent(player::gui::events::MousePressEvent*
       }
     }
   }
-
-  base_class::HandleMousePressEvent(event);
 }
 
 bool PlaylistWindow::IsHideButtonProgramsListRect(const SDL_Point& point) const {

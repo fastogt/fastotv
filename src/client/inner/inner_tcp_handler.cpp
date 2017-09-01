@@ -206,6 +206,28 @@ void InnerTcpHandler::RequestChannels() {
   }
 }
 
+void InnerTcpHandler::PostMessageToChat(const ChatMessage& msg) {
+  if (!inner_connection_) {
+    return;
+  }
+
+  serializet_t msg_ser;
+  common::Error err = msg.SerializeToString(&msg_ser);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    return;
+  }
+
+  const cmd_request_t channels_request = SendChatMessageRequest(NextRequestID(), msg_ser);
+  fastotv::inner::InnerClient* client = inner_connection_;
+  err = client->Write(channels_request);
+  if (err && err->IsError()) {
+    DEBUG_MSG_ERROR(err);
+    client->Close();
+    delete client;
+  }
+}
+
 void InnerTcpHandler::RequesRuntimeChannelInfo(stream_id sid) {
   if (!inner_connection_) {
     return;

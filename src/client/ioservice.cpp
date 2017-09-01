@@ -176,6 +176,14 @@ void IoService::RequesRuntimeChannelInfo(stream_id sid) const {
   }
 }
 
+void IoService::PostMessageToChat(const ChatMessage& msg) const {
+  PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
+  if (handler) {
+    auto cb = [handler, msg]() { handler->PostMessageToChat(msg); };
+    ExecInLoopThread(cb);
+  }
+}
+
 common::libev::IoLoopObserver* IoService::CreateHandler() {
   inner::StartConfig conf;
   conf.inner_host = common::net::HostAndPort(SERVICE_HOST_NAME, SERVICE_HOST_PORT);

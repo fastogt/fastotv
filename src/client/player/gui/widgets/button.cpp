@@ -25,30 +25,46 @@ namespace client {
 namespace player {
 namespace gui {
 
-Button::Button() : base_class() {
-  fApp->Subscribe(this, gui::events::MouseReleaseEvent::EventType);
-}
+Button::Button() : base_class(), pressed_(false) {}
 
 Button::Button(const SDL_Color& back_ground_color) : base_class(back_ground_color) {}
 
 Button::~Button() {}
 
-void Button::HandleEvent(event_t* event) {
-  if (event->GetEventType() == gui::events::MouseReleaseEvent::EventType) {
-    gui::events::MouseReleaseEvent* mouse_release = static_cast<gui::events::MouseReleaseEvent*>(event);
-    HandleMouseReleaseEvent(mouse_release);
+bool Button::IsPressed() const {
+  return pressed_;
+}
+
+void Button::Draw(SDL_Renderer* render) {
+  const SDL_Color curr_collor = GetBackGroundColor();
+  SDL_Color draw_color = curr_collor;
+  if (pressed_) {
+    draw_color.r = 0.5 * draw_color.r;
+    draw_color.g = 0.5 * draw_color.g;
+    draw_color.b = 0.5 * draw_color.b;
+  } else if (IsFocused()) {
+    draw_color.r = 0.7 * draw_color.r;
+    draw_color.g = 0.7 * draw_color.g;
+    draw_color.b = 0.7 * draw_color.b;
   }
-
-  base_class::HandleEvent(event);
+  SetBackGroundColor(draw_color);
+  base_class::Draw(render);
+  SetBackGroundColor(curr_collor);
 }
 
-void Button::HandleExceptionEvent(event_t* event, common::Error err) {
-  UNUSED(event);
-  UNUSED(err);
+void Button::OnFocusChanged(bool focus) {
+  pressed_ = false;
+  base_class::OnFocusChanged(focus);
 }
 
-void Button::HandleMouseReleaseEvent(events::MouseReleaseEvent* event) {
-  UNUSED(event);
+void Button::OnMouseClicked(Uint8 button, const SDL_Point& position) {
+  pressed_ = true;
+  base_class::OnMouseClicked(button, position);
+}
+
+void Button::OnMouseReleased(Uint8 button, const SDL_Point& position) {
+  pressed_ = false;
+  base_class::OnMouseReleased(button, position);
 }
 
 }  // namespace gui

@@ -363,13 +363,47 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
   } else if (IS_EQUAL_COMMAND(command, CLIENT_SEND_CHAT_MESSAGE)) {
-    inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
-    ChatMessage msg;
-    json_object* jmsg = NULL;
-    common::Error err = msg.Serialize(&jmsg);
-    if (err && err->IsError()) {
+    if (argc > 1) {
+      inner::InnerTcpClient* client = static_cast<inner::InnerTcpClient*>(connection);
+      serializet_t msg_str = argv[1];
+      json_object* jmsg = json_tokener_parse(argv[1]);
+      if (!jmsg) {
+        common::Error err = common::make_inval_error_value(common::Value::E_ERROR);
+        cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
+        err = connection->Write(resp);
+        if (err && err->IsError()) {
+          DEBUG_MSG_ERROR(err);
+        }
+        connection->Close();
+        delete connection;
+        return;
+      }
+
+      ChatMessage msg;
+      common::Error err = ChatMessage::DeSerialize(jmsg, &msg);
+      json_object_put(jmsg);
+      if (err && err->IsError()) {
+        cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
+        err = connection->Write(resp);
+        if (err && err->IsError()) {
+          DEBUG_MSG_ERROR(err);
+        }
+        connection->Close();
+        delete connection;
+        return;
+      }
+
+      BrodcastChatMessage(client->GetServer(), msg);
+      cmd_responce_t resp = SendChatMessageResponceSuccsess(id, msg_str);
+      err = connection->Write(resp);
+      if (err && err->IsError()) {
+        DEBUG_MSG_ERROR(err);
+      }
+      return;
+    } else {
+      common::Error err = common::make_inval_error_value(common::Value::E_ERROR);
       cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
-      common::Error err = connection->Write(resp);
+      err = connection->Write(resp);
       if (err && err->IsError()) {
         DEBUG_MSG_ERROR(err);
       }
@@ -377,16 +411,6 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       delete connection;
       return;
     }
-
-    serializet_t msg_str = json_object_get_string(jmsg);
-    BrodcastChatMessage(client->GetServer(), msg);
-    json_object_put(jmsg);
-    cmd_responce_t resp = SendChatMessageResponceSuccsess(id, msg_str);
-    err = connection->Write(resp);
-    if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
-    }
-    return;
   }
 
   WARNING_LOG() << "UNKNOWN COMMAND: " << command;

@@ -18,35 +18,31 @@
 
 #pragma once
 
-#include "client/player/gui/widgets/icon_label.h"
+#include "client/player/gui/widgets/list_box.h"
+
+#include "chat_message.h"
 
 namespace fastotv {
 namespace client {
-namespace player {
-namespace gui {
 
-class Button : public IconLabel {
+class ChatListWindow : public player::gui::IListBox {
  public:
-  typedef IconLabel base_class;
+  enum { login_field_width = 240, space_width = 10 };
+  typedef player::gui::IListBox base_class;
+  typedef std::vector<ChatMessage> messages_t;
+  ChatListWindow(const SDL_Color& back_ground_color);
 
-  Button();
-  Button(const SDL_Color& back_ground_color);
-  virtual ~Button();
+  virtual size_t GetRowCount() const override;
 
-  bool IsPressed() const;
-
-  virtual void Draw(SDL_Renderer* render) override;
+  void SetMessages(const messages_t& msgs);
+  messages_t GetMessages() const;
 
  protected:
-  virtual void OnFocusChanged(bool focus) override;
-  virtual void OnMouseClicked(Uint8 button, const SDL_Point& position) override;
-  virtual void OnMouseReleased(Uint8 button, const SDL_Point& position) override;
+  virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
 
  private:
-  bool pressed_;
+  messages_t msgs_;
 };
 
-}  // namespace gui
-}  // namespace player
 }  // namespace client
 }  // namespace fastotv

@@ -31,7 +31,9 @@ IListBox::IListBox()
       last_drawed_row_pos_(0),
       selection_(NO_SELECT),
       selection_color_(),
-      active_row_(draw::invalid_row_position) {}
+      preselected_row_(draw::invalid_row_position),
+      mouse_clicked_row_cb_(),
+      mouse_released_row_cb_() {}
 
 IListBox::IListBox(const SDL_Color& back_ground_color)
     : base_class(back_ground_color),
@@ -39,9 +41,19 @@ IListBox::IListBox(const SDL_Color& back_ground_color)
       last_drawed_row_pos_(0),
       selection_(NO_SELECT),
       selection_color_(),
-      active_row_(draw::invalid_row_position) {}
+      preselected_row_(draw::invalid_row_position),
+      mouse_clicked_row_cb_(),
+      mouse_released_row_cb_() {}
 
 IListBox::~IListBox() {}
+
+void IListBox::SetMouseClickedRowCallback(mouse_clicked_row_callback_t cb) {
+  mouse_clicked_row_cb_ = cb;
+}
+
+void IListBox::SetMouseReeleasedRowCallback(mouse_clicked_row_callback_t cb) {
+  mouse_released_row_cb_ = cb;
+}
 
 void IListBox::SetSelection(Selection sel) {
   selection_ = sel;
@@ -85,11 +97,11 @@ void IListBox::Draw(SDL_Renderer* render) {
     return;
   }
 
-  bool have_active_row = active_row_ != draw::invalid_row_position;
+  bool have_active_row = preselected_row_ != draw::invalid_row_position;
   int drawed = 0;
   for (size_t i = last_drawed_row_pos_; i < GetRowCount() && drawed < max_line_count; ++i) {
     SDL_Rect cell_rect = {draw_area.x, draw_area.y + row_height_ * drawed, draw_area.w, row_height_};
-    bool is_active_row = have_active_row && active_row_ == i;
+    bool is_active_row = have_active_row && preselected_row_ == i;
     DrawRow(render, i, is_active_row, cell_rect);
     if (is_active_row && selection_ == SINGLE_ROW_SELECT) {
       draw::FillRectColor(render, cell_rect, selection_color_);
@@ -98,56 +110,72 @@ void IListBox::Draw(SDL_Renderer* render) {
   }
 }
 
-size_t IListBox::GetActiveRow() const {
-  return active_row_;
-}
-
 void IListBox::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
-  if (!IsVisible() || !IsCanDraw()) {
-    active_row_ = draw::invalid_row_position;
-    base_class::HandleMouseMoveEvent(event);
-    return;
-  }
-
   gui::events::MouseMoveInfo minf = event->GetInfo();
   SDL_Point point = minf.GetMousePoint();
-  if (!IsPointInControlArea(point)) {  // not in rect
-    active_row_ = draw::invalid_row_position;
-    base_class::HandleMouseMoveEvent(event);
-    return;
-  }
-
-  if (row_height_ <= 0) {  // nothing to draw, prevent devide by zero
-    DNOTREACHED();
-    return;
-  }
-
-  SDL_Rect draw_area = GetRect();
-  int max_line_count = draw_area.h / row_height_;
-  if (max_line_count == 0) {  // nothing draw
-    active_row_ = draw::invalid_row_position;
-    base_class::HandleMouseMoveEvent(event);
-    return;
-  }
-
-  int drawed = 0;
-  for (size_t i = last_drawed_row_pos_; i < GetRowCount() && drawed < max_line_count; ++i) {
-    SDL_Rect cell_rect = {draw_area.x, draw_area.y + row_height_ * drawed, draw_area.w, row_height_};
-    if (draw::IsPointInRect(point, cell_rect)) {
-      active_row_ = i;
-      break;
-    }
-    drawed++;
-  }
+  preselected_row_ = FindRowInPosition(point);
   base_class::HandleMouseMoveEvent(event);
 }
 
 void IListBox::OnFocusChanged(bool focus) {
   if (!focus) {
-    active_row_ = draw::invalid_row_position;
+    preselected_row_ = draw::invalid_row_position;
   }
 
   base_class::OnFocusChanged(focus);
+}
+
+void IListBox::OnMouseClicked(Uint8 button, const SDL_Point& position) {
+  if (mouse_clicked_row_cb_) {
+    size_t pos = FindRowInPosition(position);
+    if (pos != draw::invalid_row_position) {
+      mouse_clicked_row_cb_(button, pos);
+    }
+  }
+  base_class::OnMouseClicked(button, position);
+}
+
+void IListBox::OnMouseReleased(Uint8 button, const SDL_Point& position) {
+  if (mouse_released_row_cb_) {
+    size_t pos = FindRowInPosition(position);
+    if (pos != draw::invalid_row_position) {
+      mouse_released_row_cb_(button, pos);
+    }
+  }
+  base_class::OnMouseReleased(button, position);
+}
+
+size_t IListBox::FindRowInPosition(const SDL_Point& position) const {
+  if (!IsVisible() || !IsCanDraw()) {
+    return draw::invalid_row_position;
+  }
+
+
+  if (!IsPointInControlArea(position)) {  // not in rect
+    return draw::invalid_row_position;
+  }
+
+  if (row_height_ <= 0) {  // nothing to draw, prevent devide by zero
+    DNOTREACHED();
+    return draw::invalid_row_position;
+  }
+
+  SDL_Rect draw_area = GetRect();
+  int max_line_count = draw_area.h / row_height_;
+  if (max_line_count == 0) {  // nothing draw
+    return draw::invalid_row_position;
+  }
+
+  int drawed = 0;
+  for (size_t i = last_drawed_row_pos_; i < GetRowCount() && drawed < max_line_count; ++i) {
+    SDL_Rect cell_rect = {draw_area.x, draw_area.y + row_height_ * drawed, draw_area.w, row_height_};
+    if (draw::IsPointInRect(position, cell_rect)) {
+      return i;
+    }
+    drawed++;
+  }
+
+  return draw::invalid_row_position;
 }
 
 ListBox::ListBox() : base_class(), lines_() {}

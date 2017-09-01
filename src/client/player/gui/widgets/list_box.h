@@ -28,11 +28,17 @@ namespace gui {
 class IListBox : public FontWindow {
  public:
   typedef FontWindow base_class;
+  typedef std::function<void(Uint8 button, size_t row)> mouse_clicked_row_callback_t;
+  typedef std::function<void(Uint8 button, size_t row)> mouse_released_row_callback_t;
+
   enum Selection { NO_SELECT, SINGLE_ROW_SELECT };
 
   IListBox();
   IListBox(const SDL_Color& back_ground_color);
   ~IListBox();
+
+  void SetMouseClickedRowCallback(mouse_clicked_row_callback_t cb);
+  void SetMouseReeleasedRowCallback(mouse_clicked_row_callback_t cb);
 
   void SetSelection(Selection sel);
   int GetSelection() const;
@@ -46,20 +52,26 @@ class IListBox : public FontWindow {
   virtual size_t GetRowCount() const = 0;
   virtual void Draw(SDL_Renderer* render) override;
 
-  size_t GetActiveRow() const;
-
  protected:
   virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) = 0;
   virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) override;
 
   virtual void OnFocusChanged(bool focus) override;
+  virtual void OnMouseClicked(Uint8 button, const SDL_Point& position) override;
+  virtual void OnMouseReleased(Uint8 button, const SDL_Point& position) override;
 
  private:
+  size_t FindRowInPosition(const SDL_Point& position) const;
+
   int row_height_;
   size_t last_drawed_row_pos_;
+
   Selection selection_;
   SDL_Color selection_color_;
-  size_t active_row_;
+  size_t preselected_row_;
+
+  mouse_clicked_row_callback_t mouse_clicked_row_cb_;
+  mouse_released_row_callback_t mouse_released_row_cb_;
 };
 
 class ListBox : public IListBox {

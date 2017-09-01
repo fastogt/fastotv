@@ -111,13 +111,11 @@ ISimplePlayer::ISimplePlayer(const PlayerOptions& options)
 
   // volume label
   volume_label_ = new gui::Label(volume_color);
-  volume_label_->SetVisible(false);
   volume_label_->SetDrawType(gui::Label::CENTER_TEXT);
   volume_label_->SetTextColor(text_color);
 
   // statistic label
   statistic_label_ = new gui::Label(stream_statistic_color);
-  statistic_label_->SetVisible(false);
   statistic_label_->SetDrawType(gui::Label::WRAPPED_TEXT);
   statistic_label_->SetTextColor(text_color);
 }
@@ -818,7 +816,7 @@ void ISimplePlayer::CalculateDispalySize() {
 }
 
 void ISimplePlayer::ToggleShowStatistic() {
-  statistic_label_->SetVisible(!statistic_label_->IsVisible());
+  statistic_label_->ToggleVisible();
 }
 
 void ISimplePlayer::ToggleMute() {

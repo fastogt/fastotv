@@ -32,9 +32,17 @@ namespace gui {
 
 class Window : public gui::events::EventListener {
  public:
+  typedef std::function<void(Uint8 button, const SDL_Point& position)> mouse_clicked_callback_t;
+  typedef std::function<void(Uint8 button, const SDL_Point& position)> mouse_released_callback_t;
+  typedef std::function<void(bool focus)> focus_changed_callback_t;
+
   Window();
   Window(const SDL_Color& back_ground_color);
   virtual ~Window();
+
+  void SetMouseClickedCallback(mouse_clicked_callback_t cb);
+  void SetMouseReeleasedCallback(mouse_released_callback_t cb);
+  void SetFocusChangedCallback(focus_changed_callback_t cb);
 
   void SetRect(const SDL_Rect& rect);
   SDL_Rect GetRect() const;
@@ -62,6 +70,7 @@ class Window : public gui::events::EventListener {
 
   void Show();
   void Hide();
+  void ToggleVisible();
 
   virtual void Draw(SDL_Renderer* render);
 
@@ -76,9 +85,11 @@ class Window : public gui::events::EventListener {
   virtual void HandleMouseStateChangeEvent(gui::events::MouseStateChangeEvent* event);
   virtual void HandleMousePressEvent(gui::events::MousePressEvent* event);
   virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event);
+  virtual void HandleMouseReleaseEvent(events::MouseReleaseEvent* event);
 
   virtual void OnFocusChanged(bool focus);
-  virtual void OnMouseClicked(Uint8 button);
+  virtual void OnMouseClicked(Uint8 button, const SDL_Point& position);
+  virtual void OnMouseReleased(Uint8 button, const SDL_Point& position);
 
   bool IsCanDraw() const;
   bool IsPointInControlArea(const SDL_Point& point) const;
@@ -96,6 +107,10 @@ class Window : public gui::events::EventListener {
   bool bordered_;
   bool focus_;
   draw::Size min_size_;
+
+  mouse_clicked_callback_t mouse_clicked_cb_;
+  mouse_released_callback_t mouse_released_cb_;
+  focus_changed_callback_t focus_changed_cb_;
 };
 
 }  // namespace gui

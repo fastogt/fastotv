@@ -25,6 +25,7 @@
 #include <common/libev/loop_controller.h>   // for ILoopController
 
 #include "client_server_types.h"
+#include "chat_message.h"
 
 namespace common {
 namespace threads {
@@ -49,6 +50,7 @@ class IoService : public common::libev::ILoopController {
   void RequestServerInfo() const;
   void RequestChannels() const;
   void RequesRuntimeChannelInfo(stream_id sid) const;
+  void PostMessageToChat(const ChatMessage& msg) const;
 
  private:
   using ILoopController::Exec;
