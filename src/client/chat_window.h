@@ -71,6 +71,7 @@ class ChatWindow : public player::gui::Window {
   SDL_Rect GetShowButtonChatRect() const;
   SDL_Rect GetWatcherRect() const;
   SDL_Rect GetSendButtonRect() const;
+  SDL_Rect GetChatRect() const;
 
   SDL_Texture* hide_button_img_;
   SDL_Texture* show_button_img_;

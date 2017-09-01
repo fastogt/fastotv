@@ -116,7 +116,7 @@ void ChatWindow::Draw(SDL_Renderer* render) {
     player::draw::DrawCenterTextInRect(render, watchers_str, font_, text_color_, watchers_rect);
   }
 
-  chat_window_->SetRect(GetRect());
+  chat_window_->SetRect(GetChatRect());
   chat_window_->Draw(render);
 
   send_message_button_->SetRect(GetSendButtonRect());
@@ -197,6 +197,18 @@ SDL_Rect ChatWindow::GetSendButtonRect() const {
   int button_width = font_height_2line * 4;
   SDL_Rect hide_button_rect = {chat_rect.w - button_width, chat_rect.y + chat_rect.h - font_height_2line, button_width,
                                font_height_2line};
+  return hide_button_rect;
+}
+
+SDL_Rect ChatWindow::GetChatRect() const {
+  if (!font_) {
+    return player::draw::empty_rect;
+  }
+
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 2);
+  SDL_Rect chat_rect = GetRect();
+  int button_height = font_height_2line;
+  SDL_Rect hide_button_rect = {chat_rect.x, chat_rect.y, chat_rect.w, chat_rect.h - button_height};
   return hide_button_rect;
 }
 

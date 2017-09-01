@@ -174,6 +174,8 @@ class Player : public player::ISimplePlayer {
 
   PlaylistWindow* plailist_window_;
   ChatWindow* chat_window_;
+
+  AuthInfo auth_;
 };
 
 }  // namespace client

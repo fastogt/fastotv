@@ -311,12 +311,6 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       const stream_id channel = argv[1];
       const stream_id prev_channel = client->GetCurrentStreamId();
       client->SetCurrentStreamId(channel);
-      if (prev_channel == invalid_stream_id) {  // first channel
-        SendEnterChatMessage(server, channel, login);
-      } else {
-        SendLeaveChatMessage(server, prev_channel, login);
-        SendEnterChatMessage(server, channel, login);
-      }
 
       size_t watchers = GetOnlineUserByStreamId(server, channel);
       RuntimeChannelInfo rinf;
@@ -349,6 +343,13 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       err = connection->Write(channels_responce);
       if (err && err->IsError()) {
         DEBUG_MSG_ERROR(err);
+      } else {
+        if (prev_channel == invalid_stream_id) {  // first channel
+          SendEnterChatMessage(server, channel, login);
+        } else {
+          SendLeaveChatMessage(server, prev_channel, login);
+          SendEnterChatMessage(server, channel, login);
+        }
       }
       return;
     } else {

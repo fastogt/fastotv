@@ -93,7 +93,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       keypad_last_shown_(0),
       keypad_sym_(),
       plailist_window_(nullptr),
-      chat_window_(nullptr) {
+      chat_window_(nullptr),
+      auth_() {
   fApp->Subscribe(this, player::gui::events::BandwidthEstimationEvent::EventType);
 
   fApp->Subscribe(this, player::gui::events::ClientDisconnectedEvent::EventType);
@@ -113,11 +114,11 @@ Player::Player(const std::string& app_directory_absolute_path,
   chat_window_->SetTextColor(text_color);
   auto post_clicked_cb = [this](Uint8 button, const SDL_Point& position) {
     UNUSED(position);
-    if (button == SDL_BUTTON_LEFT) {
+    if (button == SDL_BUTTON_LEFT && auth_.IsValid()) {
       PlaylistEntry url;
       if (GetCurrentUrl(&url)) {
         ChannelInfo ch = url.GetChannelInfo();
-        ChatMessage msg(ch.GetId(), "atopilski@gmail.com", "Hello", ChatMessage::MESSAGE);
+        ChatMessage msg(ch.GetId(), auth_.GetLogin(), "Hello", ChatMessage::MESSAGE);
         controller_->PostMessageToChat(msg);
       }
     }
@@ -368,13 +369,13 @@ void Player::HandleClientDisconnectedEvent(player::gui::events::ClientDisconnect
 }
 
 void Player::HandleClientAuthorizedEvent(player::gui::events::ClientAuthorizedEvent* event) {
-  UNUSED(event);
-
+  auth_ = event->GetInfo();
   controller_->RequestServerInfo();
 }
 
 void Player::HandleClientUnAuthorizedEvent(player::gui::events::ClientUnAuthorizedEvent* event) {
   UNUSED(event);
+  auth_ = AuthInfo();
   if (GetCurrentState() == INIT_STATE) {
     SwitchToDisconnectMode();
   }
