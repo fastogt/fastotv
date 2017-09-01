@@ -50,6 +50,7 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
   void SetChatEnabled(bool en);
   bool IsChatEnabled() const;
 
+  void AddMessage(const ChatMessage& msg);
   messages_t GetMessages() const;
 
   void SetChannelType(ChannelType ct);

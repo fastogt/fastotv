@@ -46,6 +46,8 @@ class PlaylistEntry {
 
   ChannelInfo GetChannelInfo() const;
 
+  void AddChatMessage(const ChatMessage& msg);
+
   void SetRuntimeChannelInfo(const RuntimeChannelInfo& rinfo);
   RuntimeChannelInfo GetRuntimeChannelInfo() const;
 

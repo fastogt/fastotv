@@ -370,76 +370,72 @@ void ISimplePlayer::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
   const gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint16 modifier = inf.ks.mod;
-  if (modifier == KMOD_NONE) {
-    if (scan_code == SDL_SCANCODE_ESCAPE) {  // Quit
-      Quit();
-    } else if (scan_code == SDL_SCANCODE_F) {
-      bool full_screen = !options_.is_full_screen;
-      SetFullScreen(full_screen);
-    } else if (scan_code == SDL_SCANCODE_F3) {
-      ToggleShowStatistic();
-    } else if (scan_code == SDL_SCANCODE_SPACE) {
-      PauseStream();
-    } else if (scan_code == SDL_SCANCODE_M) {
-      ToggleMute();
-    } else if (scan_code == SDL_SCANCODE_S) {  // Step to next frame
-      if (stream_) {
-        stream_->StepToNextFrame();
-      }
-    } else if (scan_code == SDL_SCANCODE_A) {
-      if (stream_) {
-        stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
-      }
-    } else if (scan_code == SDL_SCANCODE_V) {
-      if (stream_) {
-        stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-      }
-    } else if (scan_code == SDL_SCANCODE_C) {
-      if (stream_) {
-        stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
-        stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
-      }
-    } else if (scan_code == SDL_SCANCODE_T) {
-      // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
-    } else if (scan_code == SDL_SCANCODE_W) {
+  if (scan_code == SDL_SCANCODE_ESCAPE) {  // Quit
+    Quit();
+  } else if (scan_code == SDL_SCANCODE_F) {
+    bool full_screen = !options_.is_full_screen;
+    SetFullScreen(full_screen);
+  } else if (scan_code == SDL_SCANCODE_F3) {
+    ToggleShowStatistic();
+  } else if (scan_code == SDL_SCANCODE_SPACE) {
+    PauseStream();
+  } else if (scan_code == SDL_SCANCODE_M) {
+    ToggleMute();
+  } else if (scan_code == SDL_SCANCODE_S) {  // Step to next frame
+    if (stream_) {
+      stream_->StepToNextFrame();
     }
-  } else {
-    if (scan_code == SDL_SCANCODE_LEFT) {
-      if (modifier & KMOD_SHIFT) {
-        if (stream_) {
-          stream_->Seek(-10000);  // msec
-        }
-      } else if (modifier & KMOD_ALT) {
-        if (stream_) {
-          stream_->Seek(-60000);  // msec
-        }
-      } else if (modifier & KMOD_CTRL) {
-        if (stream_) {
-          stream_->SeekPrevChunk();
-        }
+  } else if (scan_code == SDL_SCANCODE_A) {
+    if (stream_) {
+      stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+    }
+  } else if (scan_code == SDL_SCANCODE_V) {
+    if (stream_) {
+      stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
+    }
+  } else if (scan_code == SDL_SCANCODE_C) {
+    if (stream_) {
+      stream_->StreamCycleChannel(AVMEDIA_TYPE_VIDEO);
+      stream_->StreamCycleChannel(AVMEDIA_TYPE_AUDIO);
+    }
+  } else if (scan_code == SDL_SCANCODE_T) {
+    // StreamCycleChannel(AVMEDIA_TYPE_SUBTITLE);
+  } else if (scan_code == SDL_SCANCODE_W) {
+  } else if (scan_code == SDL_SCANCODE_LEFT) {
+    if (modifier & KMOD_SHIFT) {
+      if (stream_) {
+        stream_->Seek(-10000);  // msec
       }
-    } else if (scan_code == SDL_SCANCODE_RIGHT) {
-      if (modifier & KMOD_SHIFT) {
-        if (stream_) {
-          stream_->Seek(10000);  // msec
-        }
-      } else if (modifier & KMOD_ALT) {
-        if (stream_) {
-          stream_->Seek(60000);  // msec
-        }
-      } else if (modifier & KMOD_CTRL) {
-        if (stream_) {
-          stream_->SeekNextChunk();
-        }
+    } else if (modifier & KMOD_ALT) {
+      if (stream_) {
+        stream_->Seek(-60000);  // msec
       }
-    } else if (scan_code == SDL_SCANCODE_UP) {
-      if (modifier & KMOD_CTRL) {
-        UpdateVolume(VOLUME_STEP);
+    } else if (modifier & KMOD_CTRL) {
+      if (stream_) {
+        stream_->SeekPrevChunk();
       }
-    } else if (scan_code == SDL_SCANCODE_DOWN) {
-      if (modifier & KMOD_CTRL) {
-        UpdateVolume(-VOLUME_STEP);
+    }
+  } else if (scan_code == SDL_SCANCODE_RIGHT) {
+    if (modifier & KMOD_SHIFT) {
+      if (stream_) {
+        stream_->Seek(10000);  // msec
       }
+    } else if (modifier & KMOD_ALT) {
+      if (stream_) {
+        stream_->Seek(60000);  // msec
+      }
+    } else if (modifier & KMOD_CTRL) {
+      if (stream_) {
+        stream_->SeekNextChunk();
+      }
+    }
+  } else if (scan_code == SDL_SCANCODE_UP) {
+    if (modifier & KMOD_CTRL) {
+      UpdateVolume(VOLUME_STEP);
+    }
+  } else if (scan_code == SDL_SCANCODE_DOWN) {
+    if (modifier & KMOD_CTRL) {
+      UpdateVolume(-VOLUME_STEP);
     }
   }
 }
@@ -646,9 +642,8 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                             "to reduce the image size.";
     return;
   }
 

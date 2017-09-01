@@ -49,7 +49,6 @@ class Player : public player::ISimplePlayer {
   typedef std::string keypad_sym_t;
   enum {
     footer_height = 60,
-    chat_user_name_width = 120,
     keypad_height = 30,
     keypad_width = 60,
     min_key_pad_size = 0,
@@ -108,7 +107,6 @@ class Player : public player::ISimplePlayer {
   virtual void OnWindowCreated(SDL_Window* window, SDL_Renderer* render) override;
 
  private:
-  int GetMaxProgrammsLines() const;
   bool GetChannelDescription(size_t pos, ChannelDescription* descr) const;
 
   void HandleKeyPad(uint8_t key);
@@ -154,6 +152,8 @@ class Player : public player::ISimplePlayer {
 
   player::draw::SurfaceSaver* right_arrow_button_texture_;
   player::draw::SurfaceSaver* left_arrow_button_texture_;
+  player::draw::SurfaceSaver* up_arrow_button_texture_;
+  player::draw::SurfaceSaver* down_arrow_button_texture_;
 
   IoService* controller_;
 

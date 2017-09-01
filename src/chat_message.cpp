@@ -23,6 +23,12 @@
 #define CHAT_MESSAGE_MESSAGE_FIELD "message"
 #define CHAT_MESSAGE_TYPE_FIELD "type"
 
+#define ENTER_MESSAGE "enter to chat."
+#define ENTER_MESSAGE_TEMPLATE "%s " ENTER_MESSAGE
+
+#define LEAVE_MESSAGE "leave from chat."
+#define LEAVE_MESSAGE_TEMPLATE "%s " LEAVE_MESSAGE
+
 namespace fastotv {
 
 ChatMessage::ChatMessage() : channel_id_(invalid_stream_id), login_(), message_(), type_(CONTROL) {}
@@ -32,6 +38,14 @@ ChatMessage::ChatMessage(stream_id channel, login_t login, const std::string& me
 
 bool ChatMessage::IsValid() const {
   return channel_id_ != invalid_stream_id && !login_.empty() && !message_.empty();
+}
+
+void ChatMessage::SetMessage(const std::string& msg) {
+  message_ = msg;
+}
+
+std::string ChatMessage::GetMessage() const {
+  return message_;
 }
 
 void ChatMessage::SetChannelId(stream_id sid) {
@@ -48,6 +62,10 @@ void ChatMessage::SetLogin(login_t login) {
 
 login_t ChatMessage::GetLogin() const {
   return login_;
+}
+
+ChatMessage::Type ChatMessage::GetType() const {
+  return type_;
 }
 
 common::Error ChatMessage::SerializeImpl(serialize_type* deserialized) const {
@@ -111,6 +129,32 @@ common::Error ChatMessage::DeSerialize(const serialize_type& serialized, value_t
 
   *obj = msg;
   return common::Error();
+}
+
+ChatMessage MakeEnterMessage(stream_id sid, login_t login) {
+  return ChatMessage(sid, login, common::MemSPrintf(ENTER_MESSAGE_TEMPLATE, login), ChatMessage::CONTROL);
+}
+
+ChatMessage MakeLeaveMessage(stream_id sid, login_t login) {
+  return ChatMessage(sid, login, common::MemSPrintf(LEAVE_MESSAGE_TEMPLATE, login), ChatMessage::CONTROL);
+}
+
+bool IsEnterMessage(const ChatMessage& msg) {
+  if (msg.GetType() != ChatMessage::CONTROL) {
+    return false;
+  }
+
+  std::string msg_str = msg.GetMessage();
+  return msg_str.find(ENTER_MESSAGE);
+}
+
+bool IsLeaveMessage(const ChatMessage& msg) {
+  if (msg.GetType() != ChatMessage::CONTROL) {
+    return false;
+  }
+
+  std::string msg_str = msg.GetMessage();
+  return msg_str.find(LEAVE_MESSAGE);
 }
 
 bool ChatMessage::Equals(const ChatMessage& inf) const {

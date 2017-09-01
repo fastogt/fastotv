@@ -19,14 +19,32 @@
 #include "client/chat_window.h"
 
 #include <common/application/application.h>
+#include <common/convert2string.h>
 
 #include "client/player/draw/font.h"
+#include "client/player/draw/draw.h"
 
 namespace fastotv {
 namespace client {
 
 ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
-    : base_class(back_ground_color), hide_button_img_(nullptr), show_button_img_(nullptr) {}
+    : base_class(back_ground_color), hide_button_img_(nullptr), show_button_img_(nullptr), msgs_(), watchers_(0) {}
+
+void ChatWindow::SetWatchers(size_t watchers) {
+  watchers_ = watchers;
+}
+
+size_t ChatWindow::GetWatchers() const {
+  return watchers_;
+}
+
+void ChatWindow::SetMessages(const messages_t& msgs) {
+  msgs_ = msgs;
+}
+
+ChatWindow::messages_t ChatWindow::GetMessages() const {
+  return msgs_;
+}
 
 void ChatWindow::SetHideButtonImage(SDL_Texture* img) {
   hide_button_img_ = img;
@@ -55,20 +73,34 @@ void ChatWindow::Draw(SDL_Renderer* render) {
       SDL_Rect hide_button_rect = GetHideButtonChatRect();
       SDL_RenderCopy(render, hide_button_img_, NULL, &hide_button_rect);
     }
+
+    SDL_Rect watchers_rect = GetWatcherRect();
+    std::string watchers_str = common::ConvertToString(watchers_);
+    player::draw::FillRectColor(render, watchers_rect, player::draw::red_color);
+    base_class::DrawText(render, watchers_str.c_str(), watchers_rect, DrawType::CENTER_TEXT);
   }
 
   base_class::Draw(render);
 }
 
 size_t ChatWindow::GetRowCount() const {
-  return 0;
+  return msgs_.size();
 }
 
 void ChatWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) {
-  UNUSED(render);
-  UNUSED(pos);
   UNUSED(is_active_row);
-  UNUSED(row_rect);
+
+  ChatMessage msg = msgs_[pos];
+  std::string login = msg.GetLogin();
+  SDL_Rect login_rect = {row_rect.x, row_rect.y, login_field_width, row_rect.h};
+  std::string login_text_doted = player::draw::DotText(login, GetFont(), login_rect.w);
+  base_class::DrawText(render, login_text_doted + ":", login_rect, DrawType::CENTER_TEXT);
+
+  std::string mess_text = msg.GetMessage();
+  SDL_Rect text_rect = {row_rect.x + login_field_width + space_width, row_rect.y,
+                        row_rect.w - login_field_width - space_width, row_rect.h};
+  std::string mess_text_doted = player::draw::DotText(mess_text, GetFont(), text_rect.w);
+  base_class::DrawText(render, mess_text_doted, text_rect, DrawType::WRAPPED_TEXT);
 }
 
 void ChatWindow::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
@@ -101,24 +133,40 @@ bool ChatWindow::IsShowButtonChatRect(const SDL_Point& point) const {
 }
 
 SDL_Rect ChatWindow::GetHideButtonChatRect() const {
-  if (!font_) {
+  TTF_Font* font = GetFont();
+  if (!font) {
     return player::draw::empty_rect;
   }
 
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 2);
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
   SDL_Rect chat_rect = GetRect();
-  SDL_Rect show_button_rect = {chat_rect.x + chat_rect.w, chat_rect.h / 2, font_height_2line, font_height_2line};
+  SDL_Rect show_button_rect = {chat_rect.w / 2, chat_rect.y - font_height_2line, font_height_2line, font_height_2line};
   return show_button_rect;
 }
 
 SDL_Rect ChatWindow::GetShowButtonChatRect() const {
-  if (!font_) {
+  TTF_Font* font = GetFont();
+  if (!font) {
     return player::draw::empty_rect;
   }
 
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 2);
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
   SDL_Rect chat_rect = GetRect();
-  SDL_Rect hide_button_rect = {chat_rect.x, chat_rect.h / 2, font_height_2line, font_height_2line};
+  SDL_Rect hide_button_rect = {chat_rect.w / 2, chat_rect.y + chat_rect.h - font_height_2line, font_height_2line,
+                               font_height_2line};
+  return hide_button_rect;
+}
+
+SDL_Rect ChatWindow::GetWatcherRect() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return player::draw::empty_rect;
+  }
+
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
+  SDL_Rect chat_rect = GetRect();
+  SDL_Rect hide_button_rect = {chat_rect.w - font_height_2line, chat_rect.y - font_height_2line, font_height_2line,
+                               font_height_2line};
   return hide_button_rect;
 }
 

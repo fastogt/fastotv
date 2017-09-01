@@ -47,6 +47,7 @@ class FontWindow : public Window {
  protected:
   void DrawText(SDL_Renderer* render, const std::string& text, const SDL_Rect& rect, DrawType dt);
 
+ private:
   DrawType draw_type_;
   SDL_Color text_color_;
   TTF_Font* font_;

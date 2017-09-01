@@ -40,8 +40,10 @@
 #define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "share/resources/offline_channel.png"
 #define IMG_CONNECTION_ERROR_PATH_RELATIVE "share/resources/connection_error.png"
 
-#define IMG_HIDE_BUTTON_PATH_RELATIVE "share/resources/right_arrow.png"
-#define IMG_SHOW_BUTTON_PATH_RELATIVE "share/resources/left_arrow.png"
+#define IMG_RIGHT_BUTTON_PATH_RELATIVE "share/resources/right_arrow.png"
+#define IMG_LEFT_BUTTON_PATH_RELATIVE "share/resources/left_arrow.png"
+#define IMG_UP_BUTTON_PATH_RELATIVE "share/resources/up_arrow.png"
+#define IMG_DOWN_BUTTON_PATH_RELATIVE "share/resources/down_arrow.png"
 
 #define CACHE_FOLDER_NAME "cache"
 
@@ -65,7 +67,7 @@ const SDL_Color Player::failed_color = {193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.
 const SDL_Color Player::playlist_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
 const SDL_Color Player::keypad_color = player::ISimplePlayer::stream_statistic_color;
 const SDL_Color Player::playlist_item_preselect_color = {193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.1)};
-const SDL_Color Player::chat_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
+const SDL_Color Player::chat_color = player::ISimplePlayer::stream_statistic_color;
 const SDL_Color Player::info_channel_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
 
 Player::Player(const std::string& app_directory_absolute_path,
@@ -77,6 +79,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       connection_error_texture_(nullptr),
       right_arrow_button_texture_(nullptr),
       left_arrow_button_texture_(nullptr),
+      up_arrow_button_texture_(nullptr),
+      down_arrow_button_texture_(nullptr),
       controller_(new IoService),
       current_stream_pos_(0),
       play_list_(),
@@ -107,6 +111,7 @@ Player::Player(const std::string& app_directory_absolute_path,
   // chat window
   chat_window_ = new ChatWindow(chat_color);
   chat_window_->SetVisible(false);
+  chat_window_->SetTextColor(text_color);
 
   // descr window
   description_label_ = new player::gui::IconLabel(failed_color);
@@ -208,9 +213,10 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   if (inf.code == EXIT_SUCCESS) {
     offline_channel_texture_ = MakeSurfaceFromImageRelativePath(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
-    right_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_HIDE_BUTTON_PATH_RELATIVE);
-    left_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_SHOW_BUTTON_PATH_RELATIVE);
-
+    right_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_RIGHT_BUTTON_PATH_RELATIVE);
+    left_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_LEFT_BUTTON_PATH_RELATIVE);
+    up_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_UP_BUTTON_PATH_RELATIVE);
+    down_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_DOWN_BUTTON_PATH_RELATIVE);
     controller_->Start();
     SwitchToConnectMode();
   }
@@ -219,10 +225,12 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   TTF_Font* font = GetFont();
   int h = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
 
+  int chat_row_height = h / 2;
   chat_window_->SetFont(font);
-  chat_window_->SetRowHeight(h);
-  int cmin_size_width = chat_user_name_width + space_width + chat_user_name_width * 2;  // login + space + text
-  player::draw::Size chat_minsize = {cmin_size_width, h};
+  chat_window_->SetRowHeight(chat_row_height);
+  int cmin_size_width = ChatWindow::login_field_width + ChatWindow::space_width +
+                        ChatWindow::login_field_width * 2;  // login + space + text
+  player::draw::Size chat_minsize = {cmin_size_width, chat_row_height};
   chat_window_->SetMinimalSize(chat_minsize);
 
   description_label_->SetFont(font);
@@ -258,6 +266,8 @@ void Player::HandlePostExecEvent(player::gui::events::PostExecEvent* event) {
     destroy(&connection_error_texture_);
     destroy(&right_arrow_button_texture_);
     destroy(&left_arrow_button_texture_);
+    destroy(&up_arrow_button_texture_);
+    destroy(&down_arrow_button_texture_);
     play_list_.clear();
   }
   base_class::HandlePostExecEvent(event);
@@ -459,7 +469,26 @@ void Player::HandleSendChatMessageEvent(player::gui::events::SendChatMessageEven
 }
 
 void Player::HandleReceiveChatMessageEvent(player::gui::events::ReceiveChatMessageEvent* event) {
-  UNUSED(event);
+  ChatMessage message = event->GetInfo();
+  for (size_t i = 0; i < play_list_.size(); ++i) {
+    ChannelInfo cinfo = play_list_[i].GetChannelInfo();
+    if (cinfo.GetId() == message.GetChannelId()) {
+      RuntimeChannelInfo rinfo = play_list_[i].GetRuntimeChannelInfo();
+      rinfo.AddMessage(message);
+      size_t watchers = rinfo.GetWatchersCount();
+      if (message.GetType() == ChatMessage::CONTROL) {
+        if (IsEnterMessage(message)) {
+          rinfo.SetWatchersCount(watchers + 1);
+        } else if (IsLeaveMessage(message)) {
+          rinfo.SetWatchersCount(watchers - 1);
+        }
+      }
+      chat_window_->SetMessages(rinfo.GetMessages());
+      chat_window_->SetWatchers(rinfo.GetWatchersCount());
+      play_list_[i].SetRuntimeChannelInfo(rinfo);
+      break;
+    }
+  }
 }
 
 void Player::HandleWindowResizeEvent(player::gui::events::WindowResizeEvent* event) {
@@ -503,40 +532,43 @@ void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
   const player::gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint16 modifier = inf.ks.mod;
-  if (modifier == KMOD_NONE) {
-    if (scan_code == SDL_SCANCODE_KP_0) {
-      HandleKeyPad(0);
-    } else if (scan_code == SDL_SCANCODE_KP_1) {
-      HandleKeyPad(1);
-    } else if (scan_code == SDL_SCANCODE_KP_2) {
-      HandleKeyPad(2);
-    } else if (scan_code == SDL_SCANCODE_KP_3) {
-      HandleKeyPad(3);
-    } else if (scan_code == SDL_SCANCODE_KP_4) {
-      HandleKeyPad(4);
-    } else if (scan_code == SDL_SCANCODE_KP_5) {
-      HandleKeyPad(5);
-    } else if (scan_code == SDL_SCANCODE_KP_6) {
-      HandleKeyPad(6);
-    } else if (scan_code == SDL_SCANCODE_KP_7) {
-      HandleKeyPad(7);
-    } else if (scan_code == SDL_SCANCODE_KP_8) {
-      HandleKeyPad(8);
-    } else if (scan_code == SDL_SCANCODE_KP_9) {
-      HandleKeyPad(9);
-    } else if (scan_code == SDL_SCANCODE_BACKSPACE) {
-      RemoveLastSymbolInKeypad();
-    } else if (scan_code == SDL_SCANCODE_KP_ENTER) {
-      FinishKeyPadInput();
-    } else if (scan_code == SDL_SCANCODE_F4) {
-      StartShowFooter();
-    } else if (scan_code == SDL_SCANCODE_F5) {
-      ToggleShowProgramsList();
-    } else if (scan_code == SDL_SCANCODE_F6) {
-      ToggleShowChat();
-    } else if (scan_code == SDL_SCANCODE_UP) {
+  bool is_acceptable_mods = modifier == KMOD_NONE || modifier & KMOD_NUM;
+  if (scan_code == SDL_SCANCODE_KP_0 && modifier & KMOD_NUM) {
+    HandleKeyPad(0);
+  } else if (scan_code == SDL_SCANCODE_KP_1 && modifier & KMOD_NUM) {
+    HandleKeyPad(1);
+  } else if (scan_code == SDL_SCANCODE_KP_2 && modifier & KMOD_NUM) {
+    HandleKeyPad(2);
+  } else if (scan_code == SDL_SCANCODE_KP_3 && modifier & KMOD_NUM) {
+    HandleKeyPad(3);
+  } else if (scan_code == SDL_SCANCODE_KP_4 && modifier & KMOD_NUM) {
+    HandleKeyPad(4);
+  } else if (scan_code == SDL_SCANCODE_KP_5 && modifier & KMOD_NUM) {
+    HandleKeyPad(5);
+  } else if (scan_code == SDL_SCANCODE_KP_6 && modifier & KMOD_NUM) {
+    HandleKeyPad(6);
+  } else if (scan_code == SDL_SCANCODE_KP_7 && modifier & KMOD_NUM) {
+    HandleKeyPad(7);
+  } else if (scan_code == SDL_SCANCODE_KP_8 && modifier & KMOD_NUM) {
+    HandleKeyPad(8);
+  } else if (scan_code == SDL_SCANCODE_KP_9 && modifier & KMOD_NUM) {
+    HandleKeyPad(9);
+  } else if (scan_code == SDL_SCANCODE_BACKSPACE) {
+    RemoveLastSymbolInKeypad();
+  } else if (scan_code == SDL_SCANCODE_KP_ENTER && modifier & KMOD_NUM) {
+    FinishKeyPadInput();
+  } else if (scan_code == SDL_SCANCODE_F4) {
+    StartShowFooter();
+  } else if (scan_code == SDL_SCANCODE_F5) {
+    ToggleShowProgramsList();
+  } else if (scan_code == SDL_SCANCODE_F6) {
+    ToggleShowChat();
+  } else if (scan_code == SDL_SCANCODE_UP) {
+    if (is_acceptable_mods) {
       MoveToPreviousStream();
-    } else if (scan_code == SDL_SCANCODE_DOWN) {
+    }
+  } else if (scan_code == SDL_SCANCODE_DOWN) {
+    if (is_acceptable_mods) {
       MoveToNextStream();
     }
   }
@@ -589,7 +621,12 @@ SDL_Rect Player::GetProgramsListRect() const {
 
 SDL_Rect Player::GetChatRect() const {
   const SDL_Rect display_rect = GetDisplayRect();
-  return {0, display_rect.y, display_rect.w / 4, display_rect.h};
+  int height = display_rect.h / 4;
+  int width = display_rect.w;
+  if (plailist_window_->IsVisible()) {
+    width = display_rect.w * 3 / 4;
+  }
+  return {0, display_rect.h - height, width, height};
 }
 
 bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const {
@@ -666,17 +703,6 @@ void Player::ResetKeyPad() {
 SDL_Rect Player::GetKeyPadRect() const {
   const SDL_Rect display_rect = GetDrawRect();
   return {display_rect.w + space_width - keypad_width, display_rect.y, keypad_width, keypad_height};
-}
-
-int Player::GetMaxProgrammsLines() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return 0;
-  }
-
-  const SDL_Rect programms_list_rect = GetProgramsListRect();
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
-  return programms_list_rect.h / font_height_2line;
 }
 
 void Player::DrawProgramsList() {
@@ -839,12 +865,16 @@ void Player::OnWindowCreated(SDL_Window* window, SDL_Renderer* render) {
   UNUSED(window);
 
   if (right_arrow_button_texture_) {
-    chat_window_->SetShowButtonImage(right_arrow_button_texture_->GetTexture(render));
     plailist_window_->SetHideButtonImage(right_arrow_button_texture_->GetTexture(render));
   }
   if (left_arrow_button_texture_) {
-    chat_window_->SetHideButtonImage(left_arrow_button_texture_->GetTexture(render));
     plailist_window_->SetShowButtonImage(left_arrow_button_texture_->GetTexture(render));
+  }
+  if (up_arrow_button_texture_) {
+    chat_window_->SetShowButtonImage(up_arrow_button_texture_->GetTexture(render));
+  }
+  if (down_arrow_button_texture_) {
+    chat_window_->SetHideButtonImage(down_arrow_button_texture_->GetTexture(render));
   }
 
   base_class::OnWindowCreated(window, render);

@@ -66,6 +66,10 @@ bool RuntimeChannelInfo::IsChatEnabled() const {
   return chat_enabled_;
 }
 
+void RuntimeChannelInfo::AddMessage(const ChatMessage& msg) {
+  messages_.push_back(msg);
+}
+
 RuntimeChannelInfo::messages_t RuntimeChannelInfo::GetMessages() const {
   return messages_;
 }

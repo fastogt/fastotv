@@ -35,11 +35,16 @@ class ChatMessage : public JsonSerializer<ChatMessage> {
 
   bool IsValid() const;
 
+  void SetMessage(const std::string& msg);
+  std::string GetMessage() const;
+
   void SetChannelId(stream_id sid);
   stream_id GetChannelId() const;
 
   void SetLogin(login_t login);
   login_t GetLogin() const;
+
+  Type GetType() const;
 
   static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
 
@@ -54,6 +59,12 @@ class ChatMessage : public JsonSerializer<ChatMessage> {
   std::string message_;
   Type type_;
 };
+
+ChatMessage MakeEnterMessage(stream_id sid, login_t login);
+ChatMessage MakeLeaveMessage(stream_id sid, login_t login);
+
+bool IsEnterMessage(const ChatMessage& msg);
+bool IsLeaveMessage(const ChatMessage& msg);
 
 inline bool operator==(const ChatMessage& left, const ChatMessage& right) {
   return left.Equals(right);

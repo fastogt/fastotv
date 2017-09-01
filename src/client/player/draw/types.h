@@ -56,6 +56,7 @@ bool IsPointInRect(const SDL_Point& point, const SDL_Rect& rect);
 extern const SDL_Rect empty_rect;
 extern const SDL_Color white_color;
 extern const SDL_Color black_color;
+extern const SDL_Color red_color;
 extern const SDL_Color green_color;
 extern const SDL_Color blue_color;
 extern const SDL_Color lightblue_color;
