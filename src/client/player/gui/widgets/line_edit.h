@@ -20,23 +20,18 @@
 
 #include "client/player/gui/widgets/label.h"
 
-#include "client/player/gui/events/key_events.h"
-
 namespace fastotv {
 namespace client {
 namespace player {
 namespace gui {
 
-class KeyPressLabel : public Label {
+class LineEdit : public Label {
  public:
   typedef Label base_class;
 
-  KeyPressLabel(const SDL_Color& back_ground_color);
-  virtual ~KeyPressLabel();
-
- protected:
-  virtual void HandleKeyPressEvent(player::gui::events::KeyPressEvent* event);
-  virtual void HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event);
+  LineEdit();
+  LineEdit(const SDL_Color& back_ground_color);
+  virtual ~LineEdit();
 };
 
 }  // namespace gui

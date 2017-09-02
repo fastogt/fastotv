@@ -68,7 +68,6 @@ void DrawWrappedTextInRect(SDL_Renderer* render,
                            SDL_Rect rect) {
   const char* text_ptr = common::utils::c_strornull(text);
   if (!render || !font || !text_ptr) {
-    DNOTREACHED();
     return;
   }
 
@@ -87,7 +86,6 @@ void DrawCenterTextInRect(SDL_Renderer* render,
                           SDL_Rect rect) {
   const char* text_ptr = common::utils::c_strornull(text);
   if (!render || !font || !text_ptr) {
-    DNOTREACHED();
     return;
   }
 

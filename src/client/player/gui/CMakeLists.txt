@@ -33,8 +33,8 @@ SET(HEADERS_WIDGETS
   ${SOURCE_ROOT}/client/player/gui/widgets/window.h
   ${SOURCE_ROOT}/client/player/gui/widgets/font_window.h
   ${SOURCE_ROOT}/client/player/gui/widgets/label.h
+  ${SOURCE_ROOT}/client/player/gui/widgets/line_edit.h
   ${SOURCE_ROOT}/client/player/gui/widgets/button.h
-  ${SOURCE_ROOT}/client/player/gui/widgets/keypress_label.h
   ${SOURCE_ROOT}/client/player/gui/widgets/icon_label.h
   ${SOURCE_ROOT}/client/player/gui/widgets/list_box.h
 )
@@ -43,8 +43,8 @@ SET(SOURCES_WIDGETS
   ${SOURCE_ROOT}/client/player/gui/widgets/window.cpp
   ${SOURCE_ROOT}/client/player/gui/widgets/font_window.cpp
   ${SOURCE_ROOT}/client/player/gui/widgets/label.cpp
+  ${SOURCE_ROOT}/client/player/gui/widgets/line_edit.cpp
   ${SOURCE_ROOT}/client/player/gui/widgets/button.cpp
-  ${SOURCE_ROOT}/client/player/gui/widgets/keypress_label.cpp
   ${SOURCE_ROOT}/client/player/gui/widgets/icon_label.cpp
   ${SOURCE_ROOT}/client/player/gui/widgets/list_box.cpp
 )

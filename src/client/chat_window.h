@@ -29,6 +29,7 @@ namespace client {
 namespace player {
 namespace gui {
 class Button;
+class LineEdit;
 }
 }  // namespace player
 
@@ -38,7 +39,7 @@ class ChatWindow : public player::gui::Window {
  public:
   typedef player::gui::Window base_class;
   typedef std::vector<ChatMessage> messages_t;
-  enum { login_field_width = 240, space_width = 10 };
+  enum { login_field_width = 240, space_width = 10, post_button_width = 100 };
   ChatWindow(const SDL_Color& back_ground_color);
   ~ChatWindow();
 
@@ -70,8 +71,9 @@ class ChatWindow : public player::gui::Window {
   SDL_Rect GetHideButtonChatRect() const;
   SDL_Rect GetShowButtonChatRect() const;
   SDL_Rect GetWatcherRect() const;
-  SDL_Rect GetSendButtonRect() const;
   SDL_Rect GetChatRect() const;
+  SDL_Rect GetSendButtonRect() const;
+  SDL_Rect GetTextInputRect() const;
 
   SDL_Texture* hide_button_img_;
   SDL_Texture* show_button_img_;
@@ -79,6 +81,7 @@ class ChatWindow : public player::gui::Window {
 
   ChatListWindow* chat_window_;
   player::gui::Button* send_message_button_;
+  player::gui::LineEdit* text_input_box_;
 
   TTF_Font* font_;
   SDL_Color text_color_;

@@ -16,37 +16,18 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/gui/widgets/keypress_label.h"
-
-#include <common/application/application.h>
+#include "client/player/gui/widgets/line_edit.h"
 
 namespace fastotv {
 namespace client {
 namespace player {
 namespace gui {
 
-KeyPressLabel::KeyPressLabel(const SDL_Color& back_ground_color) : base_class(back_ground_color) {
-  fApp->Subscribe(this, gui::events::KeyPressEvent::EventType);
-  fApp->Subscribe(this, gui::events::KeyReleaseEvent::EventType);
-}
+LineEdit::LineEdit() : base_class() {}
 
-KeyPressLabel::~KeyPressLabel() {}
+LineEdit::LineEdit(const SDL_Color& back_ground_color) : base_class(back_ground_color) {}
 
-void KeyPressLabel::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
-  const player::gui::events::KeyPressInfo inf = event->GetInfo();
-  const SDL_Keycode key_code = inf.ks.sym;
-  const Uint16 modifier = inf.ks.mod;
-  UNUSED(modifier);
-  if (isprint(key_code)) {
-    text_ += key_code;
-  } else if (key_code == SDLK_BACKSPACE) {
-    text_.pop_back();
-  }
-}
-
-void KeyPressLabel::HandleKeyReleaseEvent(player::gui::events::KeyReleaseEvent* event) {
-  UNUSED(event);
-}
+LineEdit::~LineEdit() {}
 
 }  // namespace gui
 }  // namespace player
