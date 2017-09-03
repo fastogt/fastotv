@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <stdint.h>  // for int32_t, uint16_t
-
 #include <SDL2/SDL_keyboard.h>
 
 #include "client/player/gui/events_base.h"
@@ -44,8 +42,15 @@ struct KeyReleaseInfo {
   SDL_Keysym ks;
 };
 
+struct TextInputInfo {
+  TextInputInfo(const std::string& text);
+
+  std::string text;
+};
+
 typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;
 typedef EventBase<KEY_RELEASE_EVENT, KeyReleaseInfo> KeyReleaseEvent;
+typedef EventBase<TEXT_INPUT_EVENT, TextInputInfo> TextInputEvent;
 
 }  // namespace events
 }  // namespace gui

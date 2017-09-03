@@ -37,8 +37,12 @@ std::string Label::GetText() const {
   return text_;
 }
 
+void Label::ClearText() {
+  text_.clear();
+}
+
 void Label::Draw(SDL_Renderer* render) {
-  if (!IsVisible()) {
+  if (!IsVisible() || !IsCanDraw()) {
     return;
   }
 

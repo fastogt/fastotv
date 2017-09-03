@@ -30,6 +30,8 @@
 namespace fastotv {
 namespace client {
 
+const SDL_Color ChatWindow::text_background_color = player::draw::white_color;
+
 ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
     : base_class(),
       hide_button_img_(nullptr),
@@ -52,8 +54,9 @@ ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
   send_message_button_->SetBorderColor(player::draw::black_color);
   send_message_button_->SetBordered(true);
 
-  text_input_box_ = new player::gui::LineEdit(player::draw::white_color);
-  text_input_box_->SetDrawType(player::gui::Label::CENTER_TEXT);
+  text_input_box_ = new player::gui::LineEdit(text_background_color);
+  text_input_box_->SetTextColor(player::draw::black_color);
+  text_input_box_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
   text_input_box_->SetVisible(true);
   text_input_box_->SetBorderColor(player::draw::black_color);
   text_input_box_->SetBordered(true);
@@ -63,6 +66,14 @@ ChatWindow::~ChatWindow() {
   destroy(&text_input_box_);
   destroy(&send_message_button_);
   destroy(&chat_window_);
+}
+
+std::string ChatWindow::GetInputText() const {
+  return text_input_box_->GetText();
+}
+
+void ChatWindow::ClearInputText() const {
+  text_input_box_->ClearText();
 }
 
 void ChatWindow::SetPostClickedCallback(mouse_clicked_callback_t cb) {
@@ -78,6 +89,7 @@ void ChatWindow::SetTextColor(const SDL_Color& color) {
 void ChatWindow::SetFont(TTF_Font* font) {
   chat_window_->SetFont(font);
   send_message_button_->SetFont(font);
+  text_input_box_->SetFont(font);
   font_ = font;
 }
 

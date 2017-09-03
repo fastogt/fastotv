@@ -127,6 +127,10 @@ void Sdl2Application::ProcessEvent(SDL_Event* event) {
       HandleKeyUpEvent(&event->key);
       break;
     }
+    case SDL_TEXTINPUT: {
+      HandleTextInputEvent(&event->text);
+      break;
+    }
     case SDL_MOUSEBUTTONDOWN: {
       HandleMousePressEvent(&event->button);
       break;
@@ -266,6 +270,12 @@ void Sdl2Application::HandleKeyUpEvent(SDL_KeyboardEvent* event) {
   events::KeyReleaseInfo inf(event->state == SDL_PRESSED, ks);
   events::KeyReleaseEvent* key_release = new events::KeyReleaseEvent(this, inf);
   HandleEvent(key_release);
+}
+
+void Sdl2Application::HandleTextInputEvent(SDL_TextInputEvent* event) {
+  events::TextInputInfo inf(event->text);
+  events::TextInputEvent* text_input = new events::TextInputEvent(this, inf);
+  HandleEvent(text_input);
 }
 
 void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {  // SDL_WindowEventID

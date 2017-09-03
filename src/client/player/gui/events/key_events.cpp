@@ -28,6 +28,8 @@ KeyPressInfo::KeyPressInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), k
 
 KeyReleaseInfo::KeyReleaseInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed), ks(ks) {}
 
+TextInputInfo::TextInputInfo(const std::string& text) : text(text) {}
+
 }  // namespace events
 }  // namespace gui
 }  // namespace player

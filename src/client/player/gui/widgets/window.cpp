@@ -41,14 +41,7 @@ Window::Window(const SDL_Color& back_ground_color)
       mouse_clicked_cb_(),
       mouse_released_cb_(),
       focus_changed_cb_() {
-  fApp->Subscribe(this, gui::events::MouseStateChangeEvent::EventType);
-  fApp->Subscribe(this, gui::events::MouseMoveEvent::EventType);
-  fApp->Subscribe(this, gui::events::MousePressEvent::EventType);
-  fApp->Subscribe(this, gui::events::MouseReleaseEvent::EventType);
-
-  fApp->Subscribe(this, gui::events::WindowResizeEvent::EventType);
-  fApp->Subscribe(this, gui::events::WindowExposeEvent::EventType);
-  fApp->Subscribe(this, gui::events::WindowCloseEvent::EventType);
+  Init();
 }
 
 Window::~Window() {}
@@ -160,6 +153,17 @@ void Window::Draw(SDL_Renderer* render) {
   if (IsBordered()) {
     DrawBorder(render);
   }
+}
+
+void Window::Init() {
+  fApp->Subscribe(this, gui::events::MouseStateChangeEvent::EventType);
+  fApp->Subscribe(this, gui::events::MouseMoveEvent::EventType);
+  fApp->Subscribe(this, gui::events::MousePressEvent::EventType);
+  fApp->Subscribe(this, gui::events::MouseReleaseEvent::EventType);
+
+  fApp->Subscribe(this, gui::events::WindowResizeEvent::EventType);
+  fApp->Subscribe(this, gui::events::WindowExposeEvent::EventType);
+  fApp->Subscribe(this, gui::events::WindowCloseEvent::EventType);
 }
 
 void Window::DrawBackground(SDL_Renderer* render) {

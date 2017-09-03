@@ -40,8 +40,13 @@ class ChatWindow : public player::gui::Window {
   typedef player::gui::Window base_class;
   typedef std::vector<ChatMessage> messages_t;
   enum { login_field_width = 240, space_width = 10, post_button_width = 100 };
+  static const SDL_Color text_background_color;
+
   ChatWindow(const SDL_Color& back_ground_color);
   ~ChatWindow();
+
+  std::string GetInputText() const;
+  void ClearInputText() const;
 
   void SetPostClickedCallback(mouse_clicked_callback_t cb);
 

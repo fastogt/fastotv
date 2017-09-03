@@ -35,6 +35,7 @@ class Label : public FontWindow {
 
   void SetText(const std::string& text);
   std::string GetText() const;
+  void ClearText();
 
   virtual void Draw(SDL_Renderer* render) override;
 

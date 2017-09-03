@@ -20,6 +20,8 @@
 
 #include "client/player/gui/widgets/label.h"
 
+#include "client/player/gui/events/key_events.h"
+
 namespace fastotv {
 namespace client {
 namespace player {
@@ -32,6 +34,27 @@ class LineEdit : public Label {
   LineEdit();
   LineEdit(const SDL_Color& back_ground_color);
   virtual ~LineEdit();
+
+  bool IsActived() const;
+  void SetActived(bool active);
+
+  virtual void Draw(SDL_Renderer* render) override;
+
+ protected:
+  virtual void HandleEvent(event_t* event) override;
+  virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
+
+  virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
+
+  virtual void HandleKeyPressEvent(gui::events::KeyPressEvent* event);
+  virtual void HandleKeyReleaseEvent(gui::events::KeyReleaseEvent* event);
+  virtual void HandleTextInputEvent(gui::events::TextInputEvent* event);
+
+  virtual void OnActiveChanged(bool active);
+
+ private:
+  void Init();
+  bool active_;
 };
 
 }  // namespace gui

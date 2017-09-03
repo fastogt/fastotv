@@ -95,6 +95,8 @@ class Window : public gui::events::EventListener {
   bool IsPointInControlArea(const SDL_Point& point) const;
 
  private:
+  void Init();
+
   void DrawBackground(SDL_Renderer* render);
   void DrawBorder(SDL_Renderer* render);
 

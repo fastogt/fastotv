@@ -118,8 +118,12 @@ Player::Player(const std::string& app_directory_absolute_path,
       PlaylistEntry url;
       if (GetCurrentUrl(&url)) {
         ChannelInfo ch = url.GetChannelInfo();
-        ChatMessage msg(ch.GetId(), auth_.GetLogin(), "Hello", ChatMessage::MESSAGE);
-        controller_->PostMessageToChat(msg);
+        std::string text = chat_window_->GetInputText();
+        if (!text.empty()) {
+          chat_window_->ClearInputText();
+          ChatMessage msg(ch.GetId(), auth_.GetLogin(), text, ChatMessage::MESSAGE);
+          controller_->PostMessageToChat(msg);
+        }
       }
     }
   };
