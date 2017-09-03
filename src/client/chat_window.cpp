@@ -139,14 +139,16 @@ void ChatWindow::Draw(SDL_Renderer* render) {
     player::draw::DrawCenterTextInRect(render, watchers_str, font_, text_color_, watchers_rect);
   }
 
-  chat_window_->SetRect(GetChatRect());
-  chat_window_->Draw(render);
+  if (IsVisible()) {
+    chat_window_->SetRect(GetChatRect());
+    chat_window_->Draw(render);
 
-  text_input_box_->SetRect(GetTextInputRect());
-  text_input_box_->Draw(render);
+    text_input_box_->SetRect(GetTextInputRect());
+    text_input_box_->Draw(render);
 
-  send_message_button_->SetRect(GetSendButtonRect());
-  send_message_button_->Draw(render);
+    send_message_button_->SetRect(GetSendButtonRect());
+    send_message_button_->Draw(render);
+  }
 }
 
 void ChatWindow::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {

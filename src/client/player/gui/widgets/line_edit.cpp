@@ -98,6 +98,8 @@ void LineEdit::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
     SetActived(false);
   } else if (kinf.ks.scancode == SDL_SCANCODE_BACKSPACE) {
     text_.pop_back();
+  } else if ((kinf.ks.mod & KMOD_CTRL) && kinf.ks.scancode == SDL_SCANCODE_U) {
+    ClearText();
   }
 }
 
