@@ -148,11 +148,11 @@ void ChatWindow::Draw(SDL_Renderer* render) {
     player::draw::DrawCenterTextInRect(render, watchers_str, font_, text_color_, watchers_rect);
   }
 
-  if (show_post_controls_) {
-    if (chat_window_->IsVisible()) {
-      chat_window_->SetRect(GetChatRect());
-      chat_window_->Draw(render);
+  if (chat_window_->IsVisible()) {
+    chat_window_->SetRect(GetChatRect());
+    chat_window_->Draw(render);
 
+    if (show_post_controls_) {
       text_input_box_->SetRect(GetTextInputRect());
       text_input_box_->Draw(render);
 
