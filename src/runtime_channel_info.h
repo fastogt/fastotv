@@ -33,7 +33,7 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
   RuntimeChannelInfo(stream_id channel_id,
                      size_t watchers,
                      ChannelType type,
-                     bool chat_enabled,
+                     bool chat_enabled, bool read_only,
                      const messages_t& msgs = messages_t());
   ~RuntimeChannelInfo();
 
@@ -49,6 +49,9 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
 
   void SetChatEnabled(bool en);
   bool IsChatEnabled() const;
+
+  void SetChatReadOnly(bool ro);
+  bool IsChatReadOnly() const;
 
   void AddMessage(const ChatMessage& msg);
   messages_t GetMessages() const;
@@ -66,6 +69,7 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
   size_t watchers_;
   ChannelType type_;
   bool chat_enabled_;
+  bool chat_read_only_;
   messages_t messages_;
 };
 

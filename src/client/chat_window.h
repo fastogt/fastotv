@@ -48,6 +48,8 @@ class ChatWindow : public player::gui::Window {
   std::string GetInputText() const;
   void ClearInputText() const;
 
+  void SetPostMessageEnabled(bool en);
+
   bool IsActived() const;
 
   void SetPostClickedCallback(mouse_clicked_callback_t cb);
@@ -92,6 +94,7 @@ class ChatWindow : public player::gui::Window {
 
   TTF_Font* font_;
   SDL_Color text_color_;
+  bool show_post_controls_;
 };
 
 }  // namespace client

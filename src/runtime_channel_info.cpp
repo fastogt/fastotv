@@ -22,19 +22,31 @@
 #define RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD "channel_type"
 #define RUNTIME_CHANNEL_INFO_WATCHERS_FIELD "watchers"
 #define RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD "chat_enabled"
+#define RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD "chat_readonly"
 #define RUNTIME_CHANNEL_INFO_MESSAGES_FIELD "messages"
 
 namespace fastotv {
 
 RuntimeChannelInfo::RuntimeChannelInfo()
-    : channel_id_(invalid_stream_id), watchers_(0), type_(UNKNOWN_CHANNEL), chat_enabled_(false), messages_() {}
+    : channel_id_(invalid_stream_id),
+      watchers_(0),
+      type_(UNKNOWN_CHANNEL),
+      chat_enabled_(false),
+      chat_read_only_(false),
+      messages_() {}
 
 RuntimeChannelInfo::RuntimeChannelInfo(stream_id channel_id,
                                        size_t watchers,
                                        ChannelType type,
                                        bool chat_enabled,
+                                       bool read_only,
                                        const messages_t& msgs)
-    : channel_id_(channel_id), watchers_(watchers), type_(type), chat_enabled_(chat_enabled), messages_(msgs) {}
+    : channel_id_(channel_id),
+      watchers_(watchers),
+      type_(type),
+      chat_enabled_(chat_enabled),
+      chat_read_only_(read_only),
+      messages_(msgs) {}
 
 RuntimeChannelInfo::~RuntimeChannelInfo() {}
 
@@ -64,6 +76,14 @@ void RuntimeChannelInfo::SetChatEnabled(bool en) {
 
 bool RuntimeChannelInfo::IsChatEnabled() const {
   return chat_enabled_;
+}
+
+void RuntimeChannelInfo::SetChatReadOnly(bool ro) {
+  chat_read_only_ = ro;
+}
+
+bool RuntimeChannelInfo::IsChatReadOnly() const {
+  return chat_read_only_;
 }
 
 void RuntimeChannelInfo::AddMessage(const ChatMessage& msg) {
@@ -102,6 +122,7 @@ common::Error RuntimeChannelInfo::SerializeImpl(serialize_type* deserialized) co
   json_object_object_add(obj, RUNTIME_CHANNEL_INFO_WATCHERS_FIELD, json_object_new_int(watchers_));
   json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD, json_object_new_int(type_));
   json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD, json_object_new_boolean(chat_enabled_));
+  json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD, json_object_new_boolean(chat_read_only_));
   json_object_object_add(obj, RUNTIME_CHANNEL_INFO_MESSAGES_FIELD, jmsgs);
   *deserialized = obj;
   return common::Error();
@@ -143,6 +164,13 @@ common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, 
       json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD, &jchat_enabled);
   if (jchat_enabled_exists) {
     inf.chat_enabled_ = json_object_get_boolean(jchat_enabled);
+  }
+
+  json_object* jchat_readonly = NULL;
+  json_bool jchat_readonly_exists =
+      json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD, &jchat_readonly);
+  if (jchat_readonly_exists) {
+    inf.chat_read_only_ = json_object_get_boolean(jchat_readonly);
   }
 
   json_object* jmsgs = NULL;

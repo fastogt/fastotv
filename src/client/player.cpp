@@ -743,6 +743,8 @@ void Player::DrawChat() {
     return;
   }
 
+  chat_window_->SetPostMessageEnabled(!rinfo.IsChatReadOnly());
+
   const SDL_Rect chat_rect = GetChatRect();
   chat_window_->SetRect(chat_rect);
   chat_window_->Draw(render);

@@ -319,18 +319,21 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       rinf.SetWatchersCount(watchers);
       if (!is_anonim) {  // registered user
         rinf.SetChatEnabled(false);
+        rinf.SetChatReadOnly(true);
         rinf.SetChannelType(PRIVATE_CHANNEL);
 
         for (size_t i = 0; i < chat_channels_.size(); ++i) {
           if (chat_channels_[i] == channel) {
             rinf.SetChatEnabled(true);
+            rinf.SetChatReadOnly(false);
             rinf.SetChannelType(OFFICAL_CHANNEL);
             break;
           }
         }
       } else {  // anonim have only offical channels and readonly mode
         rinf.SetChannelType(OFFICAL_CHANNEL);
-        rinf.SetChatEnabled(false);
+        rinf.SetChatEnabled(true);
+        rinf.SetChatReadOnly(true);
       }
 
       serializet_t rchannel_str;
