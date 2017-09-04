@@ -34,7 +34,8 @@ common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisConte
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
-  struct redisContext* redis = redisConnect(host.host.c_str(), host.port);
+  const std::string host_str = host.GetHost();
+  struct redisContext* redis = redisConnect(host_str.c_str(), host.GetPort());
   if (!redis || redis->err) {
     if (redis) {
       common::Error err = common::make_error_value(redis->errstr, common::Value::E_ERROR);
@@ -43,9 +44,9 @@ common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisConte
       return err;
     }
 
-    std::string host_str = common::ConvertToString(host);
-    return common::make_error_value(common::MemSPrintf("Could not connect to Redis at %s : no context", host_str),
-                                    common::Value::E_ERROR);
+    return common::make_error_value(
+        common::MemSPrintf("Could not connect to Redis at %s:%u : no context", host_str, host.GetPort()),
+        common::Value::E_ERROR);
   }
 
   *conn = redis;
