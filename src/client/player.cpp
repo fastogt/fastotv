@@ -529,6 +529,10 @@ void Player::HandleMousePressEvent(player::gui::events::MousePressEvent* event) 
 }
 
 void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
+  if (chat_window_->IsActived()) {
+    return;
+  }
+
   player::PlayerOptions opt = GetOptions();
   if (opt.exit_on_keydown) {
     return base_class::HandleKeyPressEvent(event);

@@ -34,12 +34,17 @@ void DrawWrappedTextInRect(SDL_Renderer* render,
                            const std::string& text,
                            TTF_Font* font,
                            SDL_Color text_color,
-                           SDL_Rect rect);
+                           SDL_Rect rect,
+                           SDL_Rect* text_rect = NULL);
 void DrawCenterTextInRect(SDL_Renderer* render,
                           const std::string& text,
                           TTF_Font* font,
                           SDL_Color text_color,
-                          SDL_Rect rect);
+                          SDL_Rect rect,
+                          SDL_Rect* text_rect = NULL);
+
+bool GetTextSize(TTF_Font* font, const std::string& text, int* w, int* h);
+
 }  // namespace draw
 }  // namespace player
 }  // namespace client

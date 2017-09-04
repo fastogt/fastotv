@@ -67,6 +67,7 @@ class Sdl2Application : public common::application::IApplication {
   virtual void HandleKeyDownEvent(SDL_KeyboardEvent* event);
   virtual void HandleKeyUpEvent(SDL_KeyboardEvent* event);
   virtual void HandleTextInputEvent(SDL_TextInputEvent* event);
+  virtual void HandleTextEditEvent(SDL_TextEditingEvent*event);
 
   virtual void HandleWindowEvent(SDL_WindowEvent* event);
 

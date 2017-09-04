@@ -30,6 +30,9 @@ KeyReleaseInfo::KeyReleaseInfo(bool pressed, SDL_Keysym ks) : is_pressed(pressed
 
 TextInputInfo::TextInputInfo(const std::string& text) : text(text) {}
 
+TextEditInfo::TextEditInfo(const std::string& text, Sint32 start, Sint32 length)
+    : text(text), start(start), length(length) {}
+
 }  // namespace events
 }  // namespace gui
 }  // namespace player

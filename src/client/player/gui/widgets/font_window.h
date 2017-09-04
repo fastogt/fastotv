@@ -45,7 +45,11 @@ class FontWindow : public Window {
   TTF_Font* GetFont() const;
 
  protected:
-  void DrawText(SDL_Renderer* render, const std::string& text, const SDL_Rect& rect, DrawType dt);
+  void DrawText(SDL_Renderer* render,
+                const std::string& text,
+                const SDL_Rect& rect,
+                DrawType dt,
+                SDL_Rect* text_rect = NULL);
 
  private:
   DrawType draw_type_;

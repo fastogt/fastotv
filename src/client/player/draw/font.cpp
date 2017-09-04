@@ -65,7 +65,8 @@ void DrawWrappedTextInRect(SDL_Renderer* render,
                            const std::string& text,
                            TTF_Font* font,
                            SDL_Color text_color,
-                           SDL_Rect rect) {
+                           SDL_Rect rect,
+                           SDL_Rect* text_rect) {
   const char* text_ptr = common::utils::c_strornull(text);
   if (!render || !font || !text_ptr) {
     return;
@@ -73,17 +74,22 @@ void DrawWrappedTextInRect(SDL_Renderer* render,
 
   SDL_Surface* text_surf = TTF_RenderUTF8_Blended_Wrapped(font, text_ptr, text_color, rect.w);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(render, text_surf);
-  rect.w = text_surf->w;
-  SDL_RenderCopy(render, texture, NULL, &rect);
+  SDL_Rect dst = rect;
+  dst.w = text_surf->w;
+  SDL_RenderCopy(render, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
   SDL_FreeSurface(text_surf);
+  if (text_rect) {
+    *text_rect = dst;
+  }
 }
 
 void DrawCenterTextInRect(SDL_Renderer* render,
                           const std::string& text,
                           TTF_Font* font,
                           SDL_Color text_color,
-                          SDL_Rect rect) {
+                          SDL_Rect rect,
+                          SDL_Rect* text_rect) {
   const char* text_ptr = common::utils::c_strornull(text);
   if (!render || !font || !text_ptr) {
     return;
@@ -95,6 +101,19 @@ void DrawCenterTextInRect(SDL_Renderer* render,
   SDL_RenderCopy(render, texture, NULL, &dst);
   SDL_DestroyTexture(texture);
   SDL_FreeSurface(text_surf);
+
+  if (text_rect) {
+    *text_rect = dst;
+  }
+}
+
+bool GetTextSize(TTF_Font* font, const std::string& text, int* w, int* h) {
+  const char* text_ptr = common::utils::c_strornull(text);
+  if (!font || !text_ptr) {
+    return false;
+  }
+
+  return TTF_SizeUTF8(font, text_ptr, w, h) == 0;
 }
 
 }  // namespace draw

@@ -48,6 +48,8 @@ class ChatWindow : public player::gui::Window {
   std::string GetInputText() const;
   void ClearInputText() const;
 
+  bool IsActived() const;
+
   void SetPostClickedCallback(mouse_clicked_callback_t cb);
 
   void SetTextColor(const SDL_Color& color);

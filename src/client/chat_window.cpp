@@ -76,6 +76,10 @@ void ChatWindow::ClearInputText() const {
   text_input_box_->ClearText();
 }
 
+bool ChatWindow::IsActived() const {
+  return text_input_box_->IsActived();
+}
+
 void ChatWindow::SetPostClickedCallback(mouse_clicked_callback_t cb) {
   send_message_button_->SetMouseClickedCallback(cb);
 }
@@ -139,7 +143,7 @@ void ChatWindow::Draw(SDL_Renderer* render) {
     player::draw::DrawCenterTextInRect(render, watchers_str, font_, text_color_, watchers_rect);
   }
 
-  if (IsVisible()) {
+  if (chat_window_->IsVisible()) {
     chat_window_->SetRect(GetChatRect());
     chat_window_->Draw(render);
 

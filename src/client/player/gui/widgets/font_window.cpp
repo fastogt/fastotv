@@ -56,11 +56,15 @@ TTF_Font* FontWindow::GetFont() const {
   return font_;
 }
 
-void FontWindow::DrawText(SDL_Renderer* render, const std::string& text, const SDL_Rect& rect, DrawType dt) {
+void FontWindow::DrawText(SDL_Renderer* render,
+                          const std::string& text,
+                          const SDL_Rect& rect,
+                          DrawType dt,
+                          SDL_Rect* text_rect) {
   if (dt == WRAPPED_TEXT) {
-    draw::DrawWrappedTextInRect(render, text, font_, text_color_, rect);
+    draw::DrawWrappedTextInRect(render, text, font_, text_color_, rect, text_rect);
   } else if (dt == CENTER_TEXT) {
-    draw::DrawCenterTextInRect(render, text, font_, text_color_, rect);
+    draw::DrawCenterTextInRect(render, text, font_, text_color_, rect, text_rect);
   } else {
     NOTREACHED();
   }

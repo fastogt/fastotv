@@ -131,6 +131,10 @@ void Sdl2Application::ProcessEvent(SDL_Event* event) {
       HandleTextInputEvent(&event->text);
       break;
     }
+    case SDL_TEXTEDITING: {
+      HandleTextEditEvent(&event->edit);
+      break;
+    }
     case SDL_MOUSEBUTTONDOWN: {
       HandleMousePressEvent(&event->button);
       break;
@@ -276,6 +280,12 @@ void Sdl2Application::HandleTextInputEvent(SDL_TextInputEvent* event) {
   events::TextInputInfo inf(event->text);
   events::TextInputEvent* text_input = new events::TextInputEvent(this, inf);
   HandleEvent(text_input);
+}
+
+void Sdl2Application::HandleTextEditEvent(SDL_TextEditingEvent* event) {
+  events::TextEditInfo inf(event->text, event->start, event->length);
+  events::TextEditEvent* text_edit = new events::TextEditEvent(this, inf);
+  HandleEvent(text_edit);
 }
 
 void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {  // SDL_WindowEventID

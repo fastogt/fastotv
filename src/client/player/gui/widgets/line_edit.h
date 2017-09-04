@@ -30,6 +30,7 @@ namespace gui {
 class LineEdit : public Label {
  public:
   typedef Label base_class;
+  enum { blinking_cursor_time_msec = 500, cursor_width = 2 };
 
   LineEdit();
   LineEdit(const SDL_Color& back_ground_color);
@@ -49,12 +50,16 @@ class LineEdit : public Label {
   virtual void HandleKeyPressEvent(gui::events::KeyPressEvent* event);
   virtual void HandleKeyReleaseEvent(gui::events::KeyReleaseEvent* event);
   virtual void HandleTextInputEvent(gui::events::TextInputEvent* event);
+  virtual void HandleTextEditEvent(gui::events::TextEditEvent* event);
 
   virtual void OnActiveChanged(bool active);
 
  private:
   void Init();
   bool active_;
+
+  common::time64_t start_blink_ts_;
+  bool show_cursor_;
 };
 
 }  // namespace gui

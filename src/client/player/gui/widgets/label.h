@@ -40,6 +40,8 @@ class Label : public FontWindow {
   virtual void Draw(SDL_Renderer* render) override;
 
  protected:
+  void DrawLabel(SDL_Renderer* render, SDL_Rect* text_rect);
+
   std::string text_;
 };
 
