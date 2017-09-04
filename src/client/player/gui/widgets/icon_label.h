@@ -45,6 +45,9 @@ class IconLabel : public Label {
 
   virtual void Draw(SDL_Renderer* render) override;
 
+ protected:
+  void DrawImage(SDL_Renderer* render, SDL_Texture* texture, const SDL_Rect& rect);
+
  private:
   SDL_Texture* icon_img_;
   draw::Size icon_size_;

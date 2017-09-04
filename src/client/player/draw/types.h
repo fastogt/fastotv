@@ -60,6 +60,7 @@ extern const SDL_Color red_color;
 extern const SDL_Color green_color;
 extern const SDL_Color blue_color;
 extern const SDL_Color lightblue_color;
+extern const SDL_Color gray_color;
 
 extern const Size invalid_size;
 extern const size_t invalid_row_position;

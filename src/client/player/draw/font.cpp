@@ -107,6 +107,14 @@ void DrawCenterTextInRect(SDL_Renderer* render,
   }
 }
 
+void DrawImage(SDL_Renderer* render, SDL_Texture* texture, const SDL_Rect& rect) {
+  if (!render || !texture) {
+    return;
+  }
+
+  SDL_RenderCopy(render, texture, NULL, &rect);
+}
+
 bool GetTextSize(TTF_Font* font, const std::string& text, int* w, int* h) {
   const char* text_ptr = common::utils::c_strornull(text);
   if (!font || !text_ptr) {

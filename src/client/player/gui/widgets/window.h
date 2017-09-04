@@ -35,6 +35,7 @@ class Window : public gui::events::EventListener {
   typedef std::function<void(Uint8 button, const SDL_Point& position)> mouse_clicked_callback_t;
   typedef std::function<void(Uint8 button, const SDL_Point& position)> mouse_released_callback_t;
   typedef std::function<void(bool focus)> focus_changed_callback_t;
+  typedef std::function<void(bool enable)> enable_changed_callback_t;
 
   Window();
   Window(const SDL_Color& back_ground_color);
@@ -43,6 +44,7 @@ class Window : public gui::events::EventListener {
   void SetMouseClickedCallback(mouse_clicked_callback_t cb);
   void SetMouseReeleasedCallback(mouse_released_callback_t cb);
   void SetFocusChangedCallback(focus_changed_callback_t cb);
+  void SetEnableChangedCallback(enable_changed_callback_t cb);
 
   void SetRect(const SDL_Rect& rect);
   SDL_Rect GetRect() const;
@@ -64,6 +66,9 @@ class Window : public gui::events::EventListener {
 
   void SetVisible(bool v);
   bool IsVisible() const;
+
+  void SetEnabled(bool en);
+  bool IsEnabled() const;
 
   bool IsFocused() const;
   void SetFocus(bool focus);
@@ -87,6 +92,7 @@ class Window : public gui::events::EventListener {
   virtual void HandleMouseMoveEvent(gui::events::MouseMoveEvent* event);
   virtual void HandleMouseReleaseEvent(events::MouseReleaseEvent* event);
 
+  virtual void OnEnabledChanged(bool enable);
   virtual void OnFocusChanged(bool focus);
   virtual void OnMouseClicked(Uint8 button, const SDL_Point& position);
   virtual void OnMouseReleased(Uint8 button, const SDL_Point& position);
@@ -97,9 +103,6 @@ class Window : public gui::events::EventListener {
  private:
   void Init();
 
-  void DrawBackground(SDL_Renderer* render);
-  void DrawBorder(SDL_Renderer* render);
-
   SDL_Rect rect_;
   SDL_Color back_ground_color_;
   SDL_Color border_color_;
@@ -108,11 +111,13 @@ class Window : public gui::events::EventListener {
   bool transparent_;
   bool bordered_;
   bool focus_;
+  bool enabled_;
   draw::Size min_size_;
 
   mouse_clicked_callback_t mouse_clicked_cb_;
   mouse_released_callback_t mouse_released_cb_;
   focus_changed_callback_t focus_changed_cb_;
+  enable_changed_callback_t enable_chaned_cb_;
 };
 
 }  // namespace gui

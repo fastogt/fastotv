@@ -41,7 +41,8 @@ int IconLabel::GetSpace() const {
 }
 
 void IconLabel::Draw(SDL_Renderer* render) {
-  if (!IsVisible()) {
+  if (!IsVisible() || !IsCanDraw()) {
+    base_class::Draw(render);
     return;
   }
 
@@ -50,14 +51,18 @@ void IconLabel::Draw(SDL_Renderer* render) {
     return;
   }
 
-  Window::Draw(render);
+  FontWindow::Draw(render);
   SDL_Rect area_rect = GetRect();
   SDL_Rect icon_rect = {area_rect.x, area_rect.y, icon_size_.height, icon_size_.width};
-  SDL_RenderCopy(render, icon_img_, NULL, &icon_rect);
-  int shift = icon_size_.width + space_betwen_image_and_label_;
 
+  int shift = icon_size_.width + space_betwen_image_and_label_;
+  DrawImage(render, icon_img_, icon_rect);
   SDL_Rect text_rect = {area_rect.x + shift, area_rect.y, area_rect.w - shift, area_rect.h};
   base_class::DrawText(render, text_, text_rect, GetDrawType());
+}
+
+void IconLabel::DrawImage(SDL_Renderer* render, SDL_Texture* texture, const SDL_Rect& rect) {
+  draw::DrawImage(render, texture, rect);
 }
 
 void IconLabel::SetIconSize(const draw::Size& icon_size) {

@@ -36,7 +36,19 @@ bool Button::IsPressed() const {
 }
 
 void Button::Draw(SDL_Renderer* render) {
+  if (!IsVisible() || !IsCanDraw()) {
+    base_class::Draw(render);
+    return;
+  }
+
   const SDL_Color curr_collor = GetBackGroundColor();
+  if (!IsEnabled()) {
+    SetBackGroundColor(draw::gray_color);
+    base_class::Draw(render);
+    SetBackGroundColor(curr_collor);
+    return;
+  }
+
   SDL_Color draw_color = curr_collor;
   if (pressed_) {
     draw_color.r = 0.5 * draw_color.r;

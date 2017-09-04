@@ -94,7 +94,7 @@ class ChatWindow : public player::gui::Window {
 
   TTF_Font* font_;
   SDL_Color text_color_;
-  bool show_post_controls_;
+  bool post_message_enabled_;
 };
 
 }  // namespace client

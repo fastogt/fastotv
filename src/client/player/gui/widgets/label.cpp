@@ -42,14 +42,15 @@ void Label::ClearText() {
 }
 
 void Label::Draw(SDL_Renderer* render) {
+  if (!IsVisible() || !IsCanDraw()) {
+    base_class::Draw(render);
+    return;
+  }
+
   DrawLabel(render, NULL);
 }
 
 void Label::DrawLabel(SDL_Renderer* render, SDL_Rect* text_rect) {
-  if (!IsVisible() || !IsCanDraw()) {
-    return;
-  }
-
   base_class::Draw(render);
   base_class::DrawText(render, text_, GetRect(), GetDrawType(), text_rect);
 }

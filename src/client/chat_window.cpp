@@ -42,7 +42,7 @@ ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
       text_input_box_(nullptr),
       font_(nullptr),
       text_color_(),
-      show_post_controls_(false) {
+      post_message_enabled_(false) {
   SetTransparent(true);
 
   chat_window_ = new ChatListWindow(back_ground_color);
@@ -78,7 +78,7 @@ void ChatWindow::ClearInputText() const {
 }
 
 void ChatWindow::SetPostMessageEnabled(bool en) {
-  show_post_controls_ = en;
+  post_message_enabled_ = en;
 }
 
 bool ChatWindow::IsActived() const {
@@ -152,13 +152,13 @@ void ChatWindow::Draw(SDL_Renderer* render) {
     chat_window_->SetRect(GetChatRect());
     chat_window_->Draw(render);
 
-    if (show_post_controls_) {
-      text_input_box_->SetRect(GetTextInputRect());
-      text_input_box_->Draw(render);
+    text_input_box_->SetEnabled(post_message_enabled_);
+    text_input_box_->SetRect(GetTextInputRect());
+    text_input_box_->Draw(render);
 
-      send_message_button_->SetRect(GetSendButtonRect());
-      send_message_button_->Draw(render);
-    }
+    send_message_button_->SetEnabled(post_message_enabled_);
+    send_message_button_->SetRect(GetSendButtonRect());
+    send_message_button_->Draw(render);
   }
 }
 
@@ -258,9 +258,6 @@ SDL_Rect ChatWindow::GetChatRect() const {
   int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 1);
   SDL_Rect chat_rect = GetRect();
   int button_height = font_height_2line;
-  if (!show_post_controls_) {
-    button_height = 0;
-  }
   SDL_Rect hide_button_rect = {chat_rect.x, chat_rect.y, chat_rect.w, chat_rect.h - button_height};
   return hide_button_rect;
 }

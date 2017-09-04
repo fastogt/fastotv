@@ -29,6 +29,7 @@ namespace draw {
 const SDL_Rect empty_rect = {0, 0, 0, 0};
 const SDL_Color white_color = {255, 255, 255, 255};
 const SDL_Color black_color = {0, 0, 0, 255};
+const SDL_Color gray_color = {200, 200, 200, 255};
 const SDL_Color green_color = {0, 150, 0, 255};
 const SDL_Color red_color = {255, 0, 0, 255};
 const SDL_Color blue_color = {0, 0, 255, 255};

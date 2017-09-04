@@ -50,6 +50,15 @@ void LineEdit::SetActived(bool active) {
 
 void LineEdit::Draw(SDL_Renderer* render) {
   if (!IsVisible() || !IsCanDraw()) {
+    base_class::Draw(render);
+    return;
+  }
+
+  const SDL_Color curr_collor = GetBackGroundColor();
+  if (!IsEnabled()) {
+    SetBackGroundColor(draw::gray_color);
+    base_class::Draw(render);
+    SetBackGroundColor(curr_collor);
     return;
   }
 
@@ -121,6 +130,10 @@ void LineEdit::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
     return;
   }
 
+  if (!IsEnabled()) {
+    return;
+  }
+
   if (!active_) {
     return;
   }
@@ -141,6 +154,10 @@ void LineEdit::HandleKeyReleaseEvent(gui::events::KeyReleaseEvent* event) {
     return;
   }
 
+  if (!IsEnabled()) {
+    return;
+  }
+
   if (!active_) {
     return;
   }
@@ -149,6 +166,11 @@ void LineEdit::HandleKeyReleaseEvent(gui::events::KeyReleaseEvent* event) {
 void LineEdit::HandleTextInputEvent(gui::events::TextInputEvent* event) {
   UNUSED(event);
   if (!IsVisible() || !IsCanDraw()) {
+    return;
+  }
+
+
+  if (!IsEnabled()) {
     return;
   }
 
@@ -169,6 +191,11 @@ void LineEdit::HandleTextInputEvent(gui::events::TextInputEvent* event) {
 void LineEdit::HandleTextEditEvent(gui::events::TextEditEvent* event) {
   UNUSED(event);
   if (!IsVisible() || !IsCanDraw()) {
+    return;
+  }
+
+
+  if (!IsEnabled()) {
     return;
   }
 
