@@ -52,8 +52,8 @@ struct TextEditInfo {
   TextEditInfo(const std::string& text, Sint32 start, Sint32 length);
 
   std::string text;
-  Sint32 start;                              /**< The start cursor of selected editing text */
-  Sint32 length;                             /**< The length of selected editing text */
+  Sint32 start;  /**< The start cursor of selected editing text */
+  Sint32 length; /**< The length of selected editing text */
 };
 
 typedef EventBase<KEY_PRESS_EVENT, KeyPressInfo> KeyPressEvent;

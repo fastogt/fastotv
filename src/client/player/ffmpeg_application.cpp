@@ -37,37 +37,37 @@ void __attribute__((noreturn)) sigterm_handler(int sig) {
   exit(EXIT_FAILURE);
 }
 
-int fasto_log_to_ffmpeg(common::logging::LEVEL_LOG level) {
-  if (level <= common::logging::L_CRIT) {
+int fasto_log_to_ffmpeg(common::logging::LOG_LEVEL level) {
+  if (level <= common::logging::LOG_LEVEL_CRIT) {
     return AV_LOG_FATAL;
-  } else if (level <= common::logging::L_ERR) {
+  } else if (level <= common::logging::LOG_LEVEL_ERR) {
     return AV_LOG_ERROR;
-  } else if (level <= common::logging::L_WARNING) {
+  } else if (level <= common::logging::LOG_LEVEL_WARNING) {
     return AV_LOG_WARNING;
-  } else if (level <= common::logging::L_INFO) {
+  } else if (level <= common::logging::LOG_LEVEL_INFO) {
     return AV_LOG_INFO;
   } else {
-    return common::logging::L_DEBUG;
+    return common::logging::LOG_LEVEL_DEBUG;
   }
 }
 
-common::logging::LEVEL_LOG ffmpeg_log_to_fasto(int level) {
+common::logging::LOG_LEVEL ffmpeg_log_to_fasto(int level) {
   if (level <= AV_LOG_FATAL) {
-    return common::logging::L_CRIT;
+    return common::logging::LOG_LEVEL_CRIT;
   } else if (level <= AV_LOG_ERROR) {
-    return common::logging::L_ERR;
+    return common::logging::LOG_LEVEL_ERR;
   } else if (level <= AV_LOG_WARNING) {
-    return common::logging::L_WARNING;
+    return common::logging::LOG_LEVEL_WARNING;
   } else if (level <= AV_LOG_INFO) {
-    return common::logging::L_INFO;
+    return common::logging::LOG_LEVEL_INFO;
   } else {
-    return common::logging::L_DEBUG;
+    return common::logging::LOG_LEVEL_DEBUG;
   }
 }
 
 void avlog_cb(void*, int level, const char* sz_fmt, va_list varg) {
-  common::logging::LEVEL_LOG lg = ffmpeg_log_to_fasto(level);
-  common::logging::LEVEL_LOG clg = common::logging::CURRENT_LOG_LEVEL();
+  common::logging::LOG_LEVEL lg = ffmpeg_log_to_fasto(level);
+  common::logging::LOG_LEVEL clg = common::logging::CURRENT_LOG_LEVEL();
   if (lg > clg) {
     return;
   }
@@ -78,7 +78,7 @@ void avlog_cb(void*, int level, const char* sz_fmt, va_list varg) {
     return;
   }
 
-  static std::ostream& info_stream = common::logging::LogMessage(common::logging::L_INFO, false).Stream();
+  static std::ostream& info_stream = common::logging::LogMessage(common::logging::LOG_LEVEL_INFO, false).Stream();
   info_stream << ret;
   free(ret);
 }

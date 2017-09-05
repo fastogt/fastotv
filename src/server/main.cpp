@@ -20,7 +20,7 @@
 #include <stdlib.h>  // for exit, EXIT_FAILURE
 #include <unistd.h>  // for getopt, optind
 
-#include <common/log_levels.h>  // for LEVEL_LOG, LEVEL_LOG::L_DEBUG
+#include <common/log_levels.h>  // for LOG_LEVEL, LOG_LEVEL::L_DEBUG
 
 #include "server/config.h"  // for Config
 #include "server_host.h"    // for ServerHost
@@ -41,9 +41,9 @@ int main(int argc, char* argv[]) {
   }
 
 #if defined(NDEBUG)
-  common::logging::LEVEL_LOG level = common::logging::L_INFO;
+  common::logging::LOG_LEVEL level = common::logging::LOG_LEVEL_INFO;
 #else
-  common::logging::LEVEL_LOG level = common::logging::L_DEBUG;
+  common::logging::LOG_LEVEL level = common::logging::LOG_LEVEL_DEBUG;
 #endif
 #if defined(LOG_TO_FILE)
   std::string log_path = common::file_system::prepare_path("/var/log/" PROJECT_NAME_LOWERCASE ".log");

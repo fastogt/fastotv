@@ -119,12 +119,14 @@ common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
   return sock_.Read(out, max_size, nread);
 }
 
-void LircInputClient::CloseImpl() {
+common::Error LircInputClient::CloseImpl() {
   common::Error err = LircDeinit(sock_.GetFd(), &cfg_);
   if (err && err->IsError()) {
     DEBUG_MSG_ERROR(err);
   }
+  return err;
 }
+
 }  // namespace inputs
 }  // namespace client
 }  // namespace fastotv

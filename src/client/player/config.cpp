@@ -22,7 +22,8 @@ namespace fastotv {
 namespace client {
 namespace player {
 
-TVConfig::TVConfig() : power_off_on_exit(false), loglevel(common::logging::L_INFO), app_options(), player_options() {}
+TVConfig::TVConfig()
+    : power_off_on_exit(false), loglevel(common::logging::LOG_LEVEL_INFO), app_options(), player_options() {}
 
 TVConfig::~TVConfig() {}
 

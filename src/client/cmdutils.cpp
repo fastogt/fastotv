@@ -63,7 +63,7 @@ extern "C" {
 #include <libswscale/version.h>        // for LIBSWSCALE_VERSION_MAJOR, etc
 }
 
-#include <common/log_levels.h>  // for LEVEL_LOG::L_INFO, etc
+#include <common/log_levels.h>  // for LOG_LEVEL::LOG_LEVEL_INFO, etc
 #include <common/sprintf.h>     // for MemSPrintf
 #include <common/utils.h>
 
@@ -226,7 +226,7 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
     }                                                                                                           \
   }
 
-void print_all_libs_info(int flags, common::logging::LEVEL_LOG level) {
+void print_all_libs_info(int flags, common::logging::LOG_LEVEL level) {
   PRINT_LIB_INFO(avutil, AVUTIL, flags, level);
   PRINT_LIB_INFO(avcodec, AVCODEC, flags, level);
   PRINT_LIB_INFO(avformat, AVFORMAT, flags, level);
@@ -238,7 +238,7 @@ void print_all_libs_info(int flags, common::logging::LEVEL_LOG level) {
   //    PRINT_LIB_INFO(postproc,   POSTPROC,   flags, level);
 }
 
-void print_program_info(int flags, common::logging::LEVEL_LOG level) {
+void print_program_info(int flags, common::logging::LOG_LEVEL level) {
   const char* indent = (flags & INDENT) ? "  " : "";
   RUNTIME_LOG(level) << PROJECT_NAME_TITLE " version: " PROJECT_VERSION;
   if (flags & SHOW_COPYRIGHT) {
@@ -670,8 +670,8 @@ void show_license() {
 }
 
 void show_version() {
-  print_program_info(SHOW_COPYRIGHT, common::logging::L_INFO);
-  print_all_libs_info(SHOW_VERSION, common::logging::L_INFO);
+  print_program_info(SHOW_COPYRIGHT, common::logging::LOG_LEVEL_INFO);
+  print_all_libs_info(SHOW_VERSION, common::logging::LOG_LEVEL_INFO);
 }
 
 void show_buildconf() {

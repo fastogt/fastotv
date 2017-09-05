@@ -30,7 +30,7 @@ namespace player {
 namespace gui {
 class Button;
 class LineEdit;
-}
+}  // namespace gui
 }  // namespace player
 
 class ChatListWindow;

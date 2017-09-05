@@ -228,9 +228,9 @@ class FakeApplication : public common::application::IApplication {
 
 int main(int argc, char** argv) {
 #if defined(NDEBUG)
-  common::logging::LEVEL_LOG level = common::logging::L_INFO;
+  common::logging::LOG_LEVEL level = common::logging::LOG_LEVEL_INFO;
 #else
-  common::logging::LEVEL_LOG level = common::logging::L_INFO;
+  common::logging::LOG_LEVEL level = common::logging::LOG_LEVEL_INFO;
 #endif
 #if defined(LOG_TO_FILE)
   std::string log_path = common::file_system::prepare_path("~/" PROJECT_NAME_LOWERCASE ".log");

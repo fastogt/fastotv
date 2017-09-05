@@ -28,7 +28,7 @@ struct TVConfig {
   ~TVConfig();
 
   bool power_off_on_exit;
-  common::logging::LEVEL_LOG loglevel;
+  common::logging::LOG_LEVEL loglevel;
 
   media::AppOptions app_options;
   PlayerOptions player_options;

@@ -150,7 +150,6 @@ size_t IListBox::FindRowInPosition(const SDL_Point& position) const {
     return draw::invalid_row_position;
   }
 
-
   if (!IsPointInControlArea(position)) {  // not in rect
     return draw::invalid_row_position;
   }

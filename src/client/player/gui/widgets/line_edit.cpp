@@ -169,7 +169,6 @@ void LineEdit::HandleTextInputEvent(gui::events::TextInputEvent* event) {
     return;
   }
 
-
   if (!IsEnabled()) {
     return;
   }
@@ -193,7 +192,6 @@ void LineEdit::HandleTextEditEvent(gui::events::TextEditEvent* event) {
   if (!IsVisible() || !IsCanDraw()) {
     return;
   }
-
 
   if (!IsEnabled()) {
     return;

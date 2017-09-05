@@ -50,10 +50,9 @@ class LircInputClient : public common::libev::IoClient {
 
   common::Error ReadWithCallback(read_callback_t cb) WARN_UNUSED_RESULT;
 
- protected:
-  virtual void CloseImpl() override;
-
  private:
+  virtual common::Error CloseImpl() override;
+
   virtual common::Error Write(const char* data, size_t size, size_t* nwrite) final WARN_UNUSED_RESULT;
   virtual common::Error Read(char* out, size_t max_size, size_t* nread) final WARN_UNUSED_RESULT;
 

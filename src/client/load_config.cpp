@@ -118,7 +118,7 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
   if (MATCH(CONFIG_MAIN_OPTIONS, CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD)) {
-    common::logging::LEVEL_LOG lg;
+    common::logging::LOG_LEVEL lg;
     if (common::logging::text_to_log_level(value, &lg)) {
       pconfig->loglevel = lg;
     }
