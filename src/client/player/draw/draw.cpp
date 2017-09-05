@@ -137,7 +137,7 @@ common::Error SetRenderDrawColor(SDL_Renderer* render, const SDL_Color& rgba) {
 
   int res = SDL_SetRenderDrawColor(render, rgba.r, rgba.g, rgba.b, rgba.a);
   if (res == -1) {
-    return common::make_error_value_perror("Couldn't set draw color for render", -1, common::Value::E_ERROR);
+    return common::make_error_value("Couldn't set draw color for render.", common::Value::E_ERROR);
   }
 
   return common::Error();
@@ -151,7 +151,7 @@ common::Error FillRectColor(SDL_Renderer* render, const SDL_Rect& rect, const SD
 
   int res = SDL_RenderFillRect(render, &rect);
   if (res == -1) {
-    return common::make_error_value_perror("Couldn't fill rect", -1, common::Value::E_ERROR);
+    return common::make_error_value("Couldn't fill rect.", common::Value::E_ERROR);
   }
   return common::Error();
 }
@@ -164,7 +164,7 @@ common::Error DrawBorder(SDL_Renderer* render, const SDL_Rect& rect, const SDL_C
 
   int res = SDL_RenderDrawRect(render, &rect);
   if (res == -1) {
-    return common::make_error_value_perror("Couldn't draw rect", -1, common::Value::E_ERROR);
+    return common::make_error_value("Couldn't draw rect.", common::Value::E_ERROR);
   }
   return common::Error();
 }
@@ -177,7 +177,7 @@ common::Error FlushRender(SDL_Renderer* render, const SDL_Color& rgba) {
 
   int res = SDL_RenderClear(render);
   if (res == -1) {
-    return common::make_error_value_perror("Couldn't clear render", -1, common::Value::E_ERROR);
+    return common::make_error_value("Couldn't clear render.", common::Value::E_ERROR);
   }
   return common::Error();
 }

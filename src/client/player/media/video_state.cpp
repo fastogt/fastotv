@@ -1184,7 +1184,8 @@ int VideoState::ReadRoutine() {
   AVFormatContext* ic = avformat_alloc_context();
   if (!ic) {
     const int av_errno = AVERROR(ENOMEM);
-    common::Error err = common::make_error_value_errno(av_errno, common::Value::E_ERROR);
+    common::Error err =
+        common::make_error_value_errno(AVUNERROR(av_errno), common::SYSTEM_ERRNO, common::Value::E_ERROR);
     if (handler_) {
       handler_->HandleQuitStream(this, av_errno, err);
     }
@@ -1587,9 +1588,8 @@ int VideoState::VideoThread() {
           "Video frame changed from size:%dx%d format:%s serial:%d to size:%dx%d format:%s "
           "serial:%d",
           last_w, last_h, static_cast<const char*>(av_x_if_null(av_get_pix_fmt_name(last_format), "none")), 0,
-          frame->width, frame->height,
-          static_cast<const char*>(
-              av_x_if_null(av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
+          frame->width, frame->height, static_cast<const char*>(av_x_if_null(
+                                           av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)), "none")),
           0);
       DEBUG_LOG() << mess;
       avfilter_graph_free(&graph);
