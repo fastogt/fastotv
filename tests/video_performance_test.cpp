@@ -230,7 +230,7 @@ int main(int argc, char** argv) {
 #if defined(NDEBUG)
   common::logging::LOG_LEVEL level = common::logging::LOG_LEVEL_INFO;
 #else
-  common::logging::LOG_LEVEL level = common::logging::LOG_LEVEL_INFO;
+  common::logging::LOG_LEVEL level = common::logging::LOG_LEVEL_DEBUG;
 #endif
 #if defined(LOG_TO_FILE)
   std::string log_path = common::file_system::prepare_path("~/" PROJECT_NAME_LOWERCASE ".log");
