@@ -13,7 +13,7 @@ typedef fastotv::AuthInfo::serialize_type serialize_t;
 TEST(ChannelInfo, serialize_deserialize) {
   const std::string name = "alex";
   const fastotv::stream_id stream_id = "123";
-  const common::uri::Uri url("http://localhost:8080/hls/69_avformat_test_alex_2/play.m3u8");
+  const common::uri::Url url("http://localhost:8080/hls/69_avformat_test_alex_2/play.m3u8");
   const bool enable_video = false;
   const bool enable_audio = true;
 
@@ -122,7 +122,7 @@ TEST(ClientInfo, serialize_deserialize) {
 TEST(channels_t, serialize_deserialize) {
   const std::string name = "alex";
   const fastotv::stream_id stream_id = "123";
-  const common::uri::Uri url("http://localhost:8080/hls/69_avformat_test_alex_2/play.m3u8");
+  const common::uri::Url url("http://localhost:8080/hls/69_avformat_test_alex_2/play.m3u8");
   const bool enable_video = false;
   const bool enable_audio = true;
 

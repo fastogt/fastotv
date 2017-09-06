@@ -29,6 +29,7 @@ namespace client {
 namespace player {
 namespace gui {
 class IconLabel;
+class Button;
 }
 }  // namespace player
 
@@ -101,6 +102,8 @@ class Player : public player::ISimplePlayer {
   virtual void OnWindowCreated(SDL_Window* window, SDL_Renderer* render) override;
 
  private:
+  void SetVisibleChat(bool visible);
+
   bool GetChannelDescription(size_t pos, ChannelDescription* descr) const;
 
   void HandleKeyPad(uint8_t key);
@@ -122,6 +125,8 @@ class Player : public player::ISimplePlayer {
   void ToggleShowChat();
   SDL_Rect GetProgramsListRect() const;
   SDL_Rect GetChatRect() const;
+  SDL_Rect GetHideButtonChatRect() const;
+  SDL_Rect GetShowButtonChatRect() const;
 
   bool GetCurrentUrl(PlaylistEntry* url) const;
 
@@ -148,6 +153,9 @@ class Player : public player::ISimplePlayer {
   player::draw::SurfaceSaver* left_arrow_button_texture_;
   player::draw::SurfaceSaver* up_arrow_button_texture_;
   player::draw::SurfaceSaver* down_arrow_button_texture_;
+
+  player::gui::Button* show_chat_button_;
+  player::gui::Button* hide_chat_button_;
 
   IoService* controller_;
 

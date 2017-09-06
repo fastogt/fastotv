@@ -48,8 +48,6 @@ class ChatWindow : public player::gui::Window {
   std::string GetInputText() const;
   void ClearInputText() const;
 
-  void ToggleChatVisible();
-
   void SetPostMessageEnabled(bool en);
 
   bool IsActived() const;
@@ -62,32 +60,18 @@ class ChatWindow : public player::gui::Window {
 
   void SetWatchers(size_t watchers);
 
-  void SetHideButtonImage(SDL_Texture* img);
-
-  void SetShowButtonImage(SDL_Texture* img);
-
   void SetMessages(const messages_t& msgs);
 
   void SetRowHeight(int row_height);
 
   virtual void Draw(SDL_Renderer* render) override;
 
- protected:
-  virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
-
  private:
-  bool IsHideButtonChatRect(const SDL_Point& point) const;
-  bool IsShowButtonChatRect(const SDL_Point& point) const;
-
-  SDL_Rect GetHideButtonChatRect() const;
-  SDL_Rect GetShowButtonChatRect() const;
   SDL_Rect GetWatcherRect() const;
   SDL_Rect GetChatRect() const;
   SDL_Rect GetSendButtonRect() const;
   SDL_Rect GetTextInputRect() const;
 
-  SDL_Texture* hide_button_img_;
-  SDL_Texture* show_button_img_;
   size_t watchers_;
 
   ChatListWindow* chat_window_;

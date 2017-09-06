@@ -32,6 +32,7 @@
 #include "client/player/draw/surface_saver.h"
 
 // widgets
+#include "client/player/gui/widgets/button.h"
 #include "client/player/gui/widgets/icon_label.h"
 
 #include "client/chat_window.h"
@@ -81,6 +82,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       left_arrow_button_texture_(nullptr),
       up_arrow_button_texture_(nullptr),
       down_arrow_button_texture_(nullptr),
+      show_chat_button_(nullptr),
+      hide_chat_button_(nullptr),
       controller_(new IoService),
       current_stream_pos_(0),
       play_list_(),
@@ -129,6 +132,27 @@ Player::Player(const std::string& app_directory_absolute_path,
   };
   chat_window_->SetPostClickedCallback(post_clicked_cb);
 
+  show_chat_button_ = new player::gui::Button;
+  auto show_chat_cb = [this](Uint8 button, const SDL_Point& position) {
+    UNUSED(position);
+    if (button == SDL_BUTTON_LEFT) {
+      SetVisibleChat(true);
+    }
+  };
+  show_chat_button_->SetMouseClickedCallback(show_chat_cb);
+  show_chat_button_->SetTransparent(true);
+
+  hide_chat_button_ = new player::gui::Button;
+  auto hide_chat_cb = [this](Uint8 button, const SDL_Point& position) {
+    UNUSED(position);
+    if (button == SDL_BUTTON_LEFT) {
+      SetVisibleChat(false);
+    }
+  };
+  hide_chat_button_->SetMouseClickedCallback(hide_chat_cb);
+  hide_chat_button_->SetTransparent(true);
+  SetVisibleChat(false);
+
   // descr window
   description_label_ = new player::gui::IconLabel(failed_color);
   description_label_->SetTextColor(text_color);
@@ -160,6 +184,8 @@ Player::~Player() {
   destroy(&plailist_window_);
   destroy(&keypad_label_);
   destroy(&description_label_);
+  destroy(&show_chat_button_);
+  destroy(&hide_chat_button_);
   destroy(&chat_window_);
   destroy(&controller_);
 }
@@ -252,6 +278,9 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
                         ChatWindow::login_field_width * 2;  // login + space + text
   player::draw::Size chat_minsize = {cmin_size_width, chat_row_height};
   chat_window_->SetMinimalSize(chat_minsize);
+
+  show_chat_button_->SetIconSize(player::draw::Size(h, h));
+  hide_chat_button_->SetIconSize(player::draw::Size(h, h));
 
   description_label_->SetFont(font);
   keypad_label_->SetFont(font);
@@ -620,7 +649,7 @@ void Player::ToggleShowProgramsList() {
 }
 
 void Player::ToggleShowChat() {
-  chat_window_->ToggleChatVisible();
+  SetVisibleChat(!chat_window_->IsVisible());
 }
 
 SDL_Rect Player::GetProgramsListRect() const {
@@ -636,6 +665,41 @@ SDL_Rect Player::GetChatRect() const {
     width = display_rect.w * 3 / 4;
   }
   return {0, display_rect.h - height, width, height};
+}
+
+SDL_Rect Player::GetHideButtonChatRect() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return player::draw::empty_rect;
+  }
+
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
+  SDL_Rect chat_rect = GetChatRect();
+  SDL_Rect show_button_rect = {chat_rect.w / 2, chat_rect.y - font_height_2line, font_height_2line, font_height_2line};
+  return show_button_rect;
+}
+
+SDL_Rect Player::GetShowButtonChatRect() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return player::draw::empty_rect;
+  }
+
+  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
+  SDL_Rect chat_rect = GetChatRect();
+  SDL_Rect hide_button_rect = {chat_rect.w / 2, chat_rect.y + chat_rect.h - font_height_2line, font_height_2line,
+                               font_height_2line};
+  return hide_button_rect;
+}
+
+void Player::SetVisibleChat(bool visible) {
+  if (visible) {
+    chat_window_->SetVisible(true);
+    hide_chat_button_->SetVisible(true);
+  } else {
+    chat_window_->SetVisible(false);
+    show_chat_button_->SetVisible(true);
+  }
 }
 
 bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const {
@@ -744,10 +808,21 @@ void Player::DrawChat() {
   }
 
   chat_window_->SetPostMessageEnabled(!rinfo.IsChatReadOnly());
-
   const SDL_Rect chat_rect = GetChatRect();
   chat_window_->SetRect(chat_rect);
   chat_window_->Draw(render);
+
+  if (chat_window_->IsVisible()) {
+    if (fApp->IsCursorVisible()) {
+      hide_chat_button_->SetRect(GetHideButtonChatRect());
+      hide_chat_button_->Draw(render);
+    }
+  } else {
+    if (fApp->IsCursorVisible()) {
+      show_chat_button_->SetRect(GetShowButtonChatRect());
+      show_chat_button_->Draw(render);
+    }
+  }
 }
 
 void Player::DrawKeyPad() {
@@ -882,10 +957,10 @@ void Player::OnWindowCreated(SDL_Window* window, SDL_Renderer* render) {
     plailist_window_->SetShowButtonImage(left_arrow_button_texture_->GetTexture(render));
   }
   if (up_arrow_button_texture_) {
-    chat_window_->SetShowButtonImage(up_arrow_button_texture_->GetTexture(render));
+    show_chat_button_->SetIconTexture(up_arrow_button_texture_->GetTexture(render));
   }
   if (down_arrow_button_texture_) {
-    chat_window_->SetHideButtonImage(down_arrow_button_texture_->GetTexture(render));
+    hide_chat_button_->SetIconTexture(down_arrow_button_texture_->GetTexture(render));
   }
 
   base_class::OnWindowCreated(window, render);
