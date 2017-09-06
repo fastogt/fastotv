@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/core/hwaccels/ffmpeg_videotoolbox.h"
+#include "client/player/media/hwaccels/ffmpeg_videotoolbox.h"
 
 #if HAVE_UTGETOSTYPEFROMSTRING
 #include <CoreServices/CoreServices.h>
@@ -36,12 +36,12 @@ extern "C" {
 
 #include <common/macros.h>
 
-#include "client/player/core/ffmpeg_internal.h"
+#include "client/player/media/ffmpeg_internal.h"
 
 namespace fastotv {
 namespace client {
 namespace player {
-namespace core {
+namespace media {
 
 typedef struct VTContext { AVFrame* tmp_frame; } VTContext;
 
@@ -210,7 +210,7 @@ void videotoolbox_uninit(AVCodecContext* s) {
   av_freep(&ist->hwaccel_ctx);
 }
 
-}  // namespace core
+}  // namespace media
 }  // namespace client
 }  // namespace fastotv
 }  // namespace fasto
