@@ -46,7 +46,7 @@ ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
   SetTransparent(true);
 
   chat_window_ = new ChatListWindow(back_ground_color);
-  chat_window_->SetVisible(true);
+  chat_window_->SetVisible(false);
 
   send_message_button_ = new player::gui::Button(player::draw::blue_color);
   send_message_button_->SetText("Post");
@@ -75,6 +75,10 @@ std::string ChatWindow::GetInputText() const {
 
 void ChatWindow::ClearInputText() const {
   text_input_box_->ClearText();
+}
+
+void ChatWindow::ToggleChatVisible() {
+  chat_window_->ToggleVisible();
 }
 
 void ChatWindow::SetPostMessageEnabled(bool en) {

@@ -620,7 +620,7 @@ void Player::ToggleShowProgramsList() {
 }
 
 void Player::ToggleShowChat() {
-  chat_window_->ToggleVisible();
+  chat_window_->ToggleChatVisible();
 }
 
 SDL_Rect Player::GetProgramsListRect() const {

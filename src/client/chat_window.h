@@ -48,6 +48,8 @@ class ChatWindow : public player::gui::Window {
   std::string GetInputText() const;
   void ClearInputText() const;
 
+  void ToggleChatVisible();
+
   void SetPostMessageEnabled(bool en);
 
   bool IsActived() const;
