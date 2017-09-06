@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <SDL2/SDL_render.h>
 
 #include "client/player/draw/types.h"
