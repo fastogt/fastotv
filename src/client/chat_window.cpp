@@ -113,7 +113,7 @@ void ChatWindow::SetRowHeight(int row_height) {
 }
 
 void ChatWindow::Draw(SDL_Renderer* render) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     base_class::Draw(render);
     return;
   }

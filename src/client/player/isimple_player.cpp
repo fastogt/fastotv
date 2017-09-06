@@ -340,11 +340,6 @@ void ISimplePlayer::HandleTimerEvent(gui::events::TimerEvent* event) {
 }
 
 void ISimplePlayer::HandleLircPressEvent(gui::events::LircPressEvent* event) {
-  if (options_.exit_on_keydown) {
-    Quit();
-    return;
-  }
-
   gui::events::LircPressInfo inf = event->GetInfo();
   if (inf.code == LIRC_KEY_OK) {
     PauseStream();
@@ -360,11 +355,6 @@ void ISimplePlayer::HandleLircPressEvent(gui::events::LircPressEvent* event) {
 }  // namespace player
 
 void ISimplePlayer::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
-  if (options_.exit_on_keydown) {
-    Quit();
-    return;
-  }
-
   const gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint16 modifier = inf.ks.mod;
@@ -439,11 +429,6 @@ void ISimplePlayer::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
 }
 
 void ISimplePlayer::HandleMousePressEvent(gui::events::MousePressEvent* event) {
-  if (options_.exit_on_mousedown) {
-    Quit();
-    return;
-  }
-
   media::msec_t cur_time = media::GetCurrentMsec();
   gui::events::MousePressInfo inf = event->GetInfo();
   if (inf.mevent.button == SDL_BUTTON_LEFT) {

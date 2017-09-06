@@ -160,7 +160,7 @@ void Window::ToggleVisible() {
 }
 
 void Window::Draw(SDL_Renderer* render) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
@@ -185,6 +185,14 @@ void Window::Init() {
 }
 
 bool Window::IsCanDraw() const {
+  if (!IsVisible()) {
+    return false;
+  }
+
+  return IsSizeEnough();
+}
+
+bool Window::IsSizeEnough() const {
   if (min_size_ != draw::invalid_size) {
     if (min_size_.height > rect_.h || min_size_.width > rect_.w) {
       return false;
@@ -195,7 +203,7 @@ bool Window::IsCanDraw() const {
 }
 
 bool Window::IsPointInControlArea(const SDL_Point& point) const {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return false;
   }
 
@@ -245,7 +253,7 @@ void Window::HandleWindowCloseEvent(gui::events::WindowCloseEvent* event) {
 }
 
 void Window::HandleMouseStateChangeEvent(gui::events::MouseStateChangeEvent* event) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
@@ -263,7 +271,7 @@ void Window::HandleMouseStateChangeEvent(gui::events::MouseStateChangeEvent* eve
 }
 
 void Window::HandleMousePressEvent(gui::events::MousePressEvent* event) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
@@ -279,7 +287,7 @@ void Window::HandleMousePressEvent(gui::events::MousePressEvent* event) {
 }
 
 void Window::HandleMouseReleaseEvent(events::MouseReleaseEvent* event) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
@@ -295,7 +303,7 @@ void Window::HandleMouseReleaseEvent(events::MouseReleaseEvent* event) {
 }
 
 void Window::HandleMouseMoveEvent(gui::events::MouseMoveEvent* event) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 

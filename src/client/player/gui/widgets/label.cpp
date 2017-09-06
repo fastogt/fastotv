@@ -42,7 +42,7 @@ void Label::ClearText() {
 }
 
 void Label::Draw(SDL_Renderer* render) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     base_class::Draw(render);
     return;
   }

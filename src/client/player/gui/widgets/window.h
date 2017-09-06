@@ -81,6 +81,9 @@ class Window : public gui::events::EventListener {
 
   virtual void Draw(SDL_Renderer* render);
 
+  bool IsCanDraw() const;
+  bool IsSizeEnough() const;
+
  protected:
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
@@ -99,7 +102,6 @@ class Window : public gui::events::EventListener {
   virtual void OnMouseClicked(Uint8 button, const SDL_Point& position);
   virtual void OnMouseReleased(Uint8 button, const SDL_Point& position);
 
-  bool IsCanDraw() const;
   bool IsPointInControlArea(const SDL_Point& point) const;
 
  private:

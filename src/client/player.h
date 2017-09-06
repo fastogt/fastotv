@@ -30,7 +30,7 @@ namespace player {
 namespace gui {
 class IconLabel;
 class Button;
-}
+}  // namespace gui
 }  // namespace player
 
 class IoService;
@@ -47,7 +47,6 @@ class Player : public player::ISimplePlayer {
   static const SDL_Color playlist_item_preselect_color;
 
   typedef ISimplePlayer base_class;
-  typedef std::string keypad_sym_t;
   enum { footer_height = 60, keypad_height = 30, keypad_width = 60, min_key_pad_size = 0, max_keypad_size = 999 };
   Player(const std::string& app_directory_absolute_path,  // for runtime data (cache)
          const player::PlayerOptions& options,
@@ -79,11 +78,6 @@ class Player : public player::ISimplePlayer {
   virtual void HandleSendChatMessageEvent(player::gui::events::SendChatMessageEvent* event);
   virtual void HandleReceiveChatMessageEvent(player::gui::events::ReceiveChatMessageEvent* event);
 
-  virtual void HandleWindowResizeEvent(player::gui::events::WindowResizeEvent* event) override;
-  virtual void HandleWindowExposeEvent(player::gui::events::WindowExposeEvent* event) override;
-
-  virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
-
   virtual void HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) override;
   virtual void HandleLircPressEvent(player::gui::events::LircPressEvent* event) override;
 
@@ -102,6 +96,7 @@ class Player : public player::ISimplePlayer {
   virtual void OnWindowCreated(SDL_Window* window, SDL_Renderer* render) override;
 
  private:
+  void SetVisiblePlaylist(bool visible);
   void SetVisibleChat(bool visible);
 
   bool GetChannelDescription(size_t pos, ChannelDescription* descr) const;
@@ -125,6 +120,8 @@ class Player : public player::ISimplePlayer {
   void ToggleShowChat();
   SDL_Rect GetProgramsListRect() const;
   SDL_Rect GetChatRect() const;
+  SDL_Rect GetHideButtonPlayListRect() const;
+  SDL_Rect GetShowButtonPlayListRect() const;
   SDL_Rect GetHideButtonChatRect() const;
   SDL_Rect GetShowButtonChatRect() const;
 
@@ -154,6 +151,9 @@ class Player : public player::ISimplePlayer {
   player::draw::SurfaceSaver* up_arrow_button_texture_;
   player::draw::SurfaceSaver* down_arrow_button_texture_;
 
+  player::gui::Button* show_playlist_button_;
+  player::gui::Button* hide_playlist_button_;
+
   player::gui::Button* show_chat_button_;
   player::gui::Button* hide_chat_button_;
 
@@ -172,7 +172,6 @@ class Player : public player::ISimplePlayer {
 
   player::gui::Label* keypad_label_;
   player::media::msec_t keypad_last_shown_;
-  keypad_sym_t keypad_sym_;
 
   PlaylistWindow* plailist_window_;
   ChatWindow* chat_window_;

@@ -41,8 +41,6 @@
 #define CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD "fullscreen"
 #define CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "volume"
 #define CONFIG_PLAYER_OPTIONS_LAST_SHOWED_CHANNEL_ID_FIELD "last_showed_channel_id"
-#define CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD "exitonkeydown"
-#define CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "exitonmousedown"
 
 #define CONFIG_APP_OPTIONS "app_options"
 #define CONFIG_APP_OPTIONS_AST_FIELD "ast"
@@ -151,18 +149,6 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     int volume;
     if (parse_number(value, 0, 100, &volume)) {
       pconfig->player_options.audio_volume = volume;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD)) {
-    bool exit;
-    if (parse_bool(value, &exit)) {
-      pconfig->player_options.exit_on_keydown = exit;
-    }
-    return 1;
-  } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD)) {
-    bool exit;
-    if (parse_bool(value, &exit)) {
-      pconfig->player_options.exit_on_mousedown = exit;
     }
     return 1;
   } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_LAST_SHOWED_CHANNEL_ID_FIELD)) {
@@ -375,10 +361,6 @@ common::Error save_config_file(const std::string& config_absolute_path, player::
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD "=%s\n",
                                  common::ConvertToString(options->player_options.is_full_screen));
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "=%d\n", options->player_options.audio_volume);
-  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_EXIT_ON_KEYDOWN_FIELD "=%s\n",
-                                 common::ConvertToString(options->player_options.exit_on_keydown));
-  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_EXIT_ON_MOUSEDOWN_FIELD "=%s\n",
-                                 common::ConvertToString(options->player_options.exit_on_mousedown));
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_LAST_SHOWED_CHANNEL_ID_FIELD "=%s\n",
                                  options->player_options.last_showed_channel_id);
 

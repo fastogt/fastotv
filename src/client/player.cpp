@@ -82,6 +82,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       left_arrow_button_texture_(nullptr),
       up_arrow_button_texture_(nullptr),
       down_arrow_button_texture_(nullptr),
+      show_playlist_button_(nullptr),
+      hide_playlist_button_(nullptr),
       show_chat_button_(nullptr),
       hide_chat_button_(nullptr),
       controller_(new IoService),
@@ -94,7 +96,6 @@ Player::Player(const std::string& app_directory_absolute_path,
       app_directory_absolute_path_(app_directory_absolute_path),
       keypad_label_(nullptr),
       keypad_last_shown_(0),
-      keypad_sym_(),
       plailist_window_(nullptr),
       chat_window_(nullptr),
       auth_() {
@@ -178,9 +179,31 @@ Player::Player(const std::string& app_directory_absolute_path,
     }
   };
   plailist_window_->SetMouseClickedRowCallback(channel_clicked_cb);
+
+  show_playlist_button_ = new player::gui::Button;
+  auto show_playlist_cb = [this](Uint8 button, const SDL_Point& position) {
+    UNUSED(position);
+    if (button == SDL_BUTTON_LEFT) {
+      SetVisiblePlaylist(true);
+    }
+  };
+  show_playlist_button_->SetMouseClickedCallback(show_playlist_cb);
+  show_playlist_button_->SetTransparent(true);
+
+  hide_playlist_button_ = new player::gui::Button;
+  auto hide_playlist_cb = [this](Uint8 button, const SDL_Point& position) {
+    UNUSED(position);
+    if (button == SDL_BUTTON_LEFT) {
+      SetVisiblePlaylist(false);
+    }
+  };
+  hide_playlist_button_->SetMouseClickedCallback(hide_playlist_cb);
+  hide_playlist_button_->SetTransparent(true);
 }
 
 Player::~Player() {
+  destroy(&show_playlist_button_);
+  destroy(&hide_playlist_button_);
   destroy(&plailist_window_);
   destroy(&keypad_label_);
   destroy(&description_label_);
@@ -279,8 +302,9 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   player::draw::Size chat_minsize = {cmin_size_width, chat_row_height};
   chat_window_->SetMinimalSize(chat_minsize);
 
-  show_chat_button_->SetIconSize(player::draw::Size(h, h));
-  hide_chat_button_->SetIconSize(player::draw::Size(h, h));
+  const player::draw::Size icon_size(h, h);
+  show_chat_button_->SetIconSize(icon_size);
+  hide_chat_button_->SetIconSize(icon_size);
 
   description_label_->SetFont(font);
   keypad_label_->SetFont(font);
@@ -290,6 +314,9 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   int pmin_size_width = keypad_width + h + space_width + h;  // number + icon + text
   player::draw::Size playlist_minsize = {pmin_size_width, h};
   plailist_window_->SetMinimalSize(playlist_minsize);
+
+  show_playlist_button_->SetIconSize(icon_size);
+  hide_playlist_button_->SetIconSize(icon_size);
 }
 
 void Player::HandleTimerEvent(player::gui::events::TimerEvent* event) {
@@ -497,7 +524,7 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
     }
   }
 
-  plailist_window_->SetVisible(true);
+  SetVisiblePlaylist(true);
   plailist_window_->SetPlaylist(&play_list_);
   SwitchToPlayingMode();
 }
@@ -540,31 +567,9 @@ void Player::HandleReceiveChatMessageEvent(player::gui::events::ReceiveChatMessa
   }
 }
 
-void Player::HandleWindowResizeEvent(player::gui::events::WindowResizeEvent* event) {
-  base_class::HandleWindowResizeEvent(event);
-}
-
-void Player::HandleWindowExposeEvent(player::gui::events::WindowExposeEvent* event) {
-  base_class::HandleWindowExposeEvent(event);
-}
-
-void Player::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
-  player::PlayerOptions opt = GetOptions();
-  if (opt.exit_on_mousedown) {
-    return base_class::HandleMousePressEvent(event);
-  }
-
-  base_class::HandleMousePressEvent(event);
-}
-
 void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
   if (chat_window_->IsActived()) {
     return;
-  }
-
-  player::PlayerOptions opt = GetOptions();
-  if (opt.exit_on_keydown) {
-    return base_class::HandleKeyPressEvent(event);
   }
 
   const player::gui::events::KeyPressInfo inf = event->GetInfo();
@@ -615,11 +620,6 @@ void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
 }
 
 void Player::HandleLircPressEvent(player::gui::events::LircPressEvent* event) {
-  player::PlayerOptions opt = GetOptions();
-  if (opt.exit_on_keydown) {
-    return base_class::HandleLircPressEvent(event);
-  }
-
   player::gui::events::LircPressInfo inf = event->GetInfo();
   if (inf.code == LIRC_KEY_LEFT) {
     MoveToPreviousStream();
@@ -645,7 +645,7 @@ SDL_Rect Player::GetFooterRect() const {
 }
 
 void Player::ToggleShowProgramsList() {
-  plailist_window_->ToggleVisible();
+  SetVisiblePlaylist(!plailist_window_->IsVisible());
 }
 
 void Player::ToggleShowChat() {
@@ -667,39 +667,44 @@ SDL_Rect Player::GetChatRect() const {
   return {0, display_rect.h - height, width, height};
 }
 
-SDL_Rect Player::GetHideButtonChatRect() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return player::draw::empty_rect;
-  }
+SDL_Rect Player::GetHideButtonPlayListRect() const {
+  const player::draw::Size sz = hide_playlist_button_->GetIconSize();
+  SDL_Rect prog_rect = GetProgramsListRect();
+  SDL_Rect hide_button_rect = {prog_rect.x - sz.width, prog_rect.h / 2, sz.width, sz.height};
+  return hide_button_rect;
+}
 
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
+SDL_Rect Player::GetShowButtonPlayListRect() const {
+  const player::draw::Size sz = show_playlist_button_->GetIconSize();
+  SDL_Rect prog_rect = GetProgramsListRect();
+  SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - sz.width, prog_rect.h / 2, sz.width, sz.height};
+  return show_button_rect;
+}
+
+SDL_Rect Player::GetHideButtonChatRect() const {
+  const player::draw::Size sz = hide_chat_button_->GetIconSize();
   SDL_Rect chat_rect = GetChatRect();
-  SDL_Rect show_button_rect = {chat_rect.w / 2, chat_rect.y - font_height_2line, font_height_2line, font_height_2line};
+  SDL_Rect show_button_rect = {chat_rect.w / 2, chat_rect.y - sz.height, sz.width, sz.height};
   return show_button_rect;
 }
 
 SDL_Rect Player::GetShowButtonChatRect() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return player::draw::empty_rect;
-  }
-
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
+  const player::draw::Size sz = show_chat_button_->GetIconSize();
   SDL_Rect chat_rect = GetChatRect();
-  SDL_Rect hide_button_rect = {chat_rect.w / 2, chat_rect.y + chat_rect.h - font_height_2line, font_height_2line,
-                               font_height_2line};
+  SDL_Rect hide_button_rect = {chat_rect.w / 2, chat_rect.y + chat_rect.h - sz.height, sz.width, sz.height};
   return hide_button_rect;
 }
 
+void Player::SetVisiblePlaylist(bool visible) {
+  plailist_window_->SetVisible(visible);
+  hide_playlist_button_->SetVisible(visible);
+  show_playlist_button_->SetVisible(!visible);
+}
+
 void Player::SetVisibleChat(bool visible) {
-  if (visible) {
-    chat_window_->SetVisible(true);
-    hide_chat_button_->SetVisible(true);
-  } else {
-    chat_window_->SetVisible(false);
-    show_chat_button_->SetVisible(true);
-  }
+  chat_window_->SetVisible(visible);
+  hide_chat_button_->SetVisible(visible);
+  show_chat_button_->SetVisible(!visible);
 }
 
 bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const {
@@ -717,8 +722,9 @@ void Player::HandleKeyPad(uint8_t key) {
     return;
   }
 
+  const std::string keypad_sym = keypad_label_->GetText();
   size_t cur_number;
-  if (!common::ConvertFromString(keypad_sym_, &cur_number)) {
+  if (!common::ConvertFromString(keypad_sym, &cur_number)) {
     cur_number = 0;
   }
 
@@ -727,13 +733,14 @@ void Player::HandleKeyPad(uint8_t key) {
   keypad_last_shown_ = cur_time;
   size_t nex_keypad_sym = cur_number * 10 + key;
   if (nex_keypad_sym <= max_keypad_size) {
-    keypad_sym_ = common::ConvertToString(nex_keypad_sym);
+    keypad_label_->SetText(common::ConvertToString(nex_keypad_sym));
   }
 }
 
 void Player::RemoveLastSymbolInKeypad() {
+  const std::string keypad_sym = keypad_label_->GetText();
   size_t cur_number;
-  if (!common::ConvertFromString(keypad_sym_, &cur_number)) {
+  if (!common::ConvertFromString(keypad_sym, &cur_number)) {
     return;
   }
 
@@ -743,17 +750,17 @@ void Player::RemoveLastSymbolInKeypad() {
     return;
   }
 
-  keypad_sym_ = common::ConvertToString(nex_keypad_sym);
+  keypad_label_->SetText(common::ConvertToString(nex_keypad_sym));
 }
 
 void Player::FinishKeyPadInput() {
-  CHECK(THREAD_MANAGER()->IsMainThread());
+  const std::string keypad_sym = keypad_label_->GetText();
   size_t pos;
-  if (!common::ConvertFromString(keypad_sym_, &pos)) {
+  if (!common::ConvertFromString(keypad_sym, &pos)) {
     return;
   }
-  ResetKeyPad();
 
+  ResetKeyPad();
   CreateStreamPosAfterKeypad(pos);
 }
 
@@ -770,7 +777,7 @@ void Player::CreateStreamPosAfterKeypad(size_t pos) {
 
 void Player::ResetKeyPad() {
   keypad_label_->SetVisible(false);
-  keypad_sym_.clear();
+  keypad_label_->ClearText();
 }
 
 SDL_Rect Player::GetKeyPadRect() const {
@@ -788,6 +795,13 @@ void Player::DrawProgramsList() {
   const SDL_Rect programms_list_rect = GetProgramsListRect();
   plailist_window_->SetRect(programms_list_rect);
   plailist_window_->Draw(render);
+
+  if (fApp->IsCursorVisible() && plailist_window_->IsSizeEnough()) {
+    hide_playlist_button_->SetRect(GetHideButtonPlayListRect());
+    hide_playlist_button_->Draw(render);
+    show_playlist_button_->SetRect(GetShowButtonPlayListRect());
+    show_playlist_button_->Draw(render);
+  }
 }
 
 void Player::DrawChat() {
@@ -812,16 +826,11 @@ void Player::DrawChat() {
   chat_window_->SetRect(chat_rect);
   chat_window_->Draw(render);
 
-  if (chat_window_->IsVisible()) {
-    if (fApp->IsCursorVisible()) {
-      hide_chat_button_->SetRect(GetHideButtonChatRect());
-      hide_chat_button_->Draw(render);
-    }
-  } else {
-    if (fApp->IsCursorVisible()) {
-      show_chat_button_->SetRect(GetShowButtonChatRect());
-      show_chat_button_->Draw(render);
-    }
+  if (fApp->IsCursorVisible() && chat_window_->IsSizeEnough()) {
+    hide_chat_button_->SetRect(GetHideButtonChatRect());
+    hide_chat_button_->Draw(render);
+    show_chat_button_->SetRect(GetShowButtonChatRect());
+    show_chat_button_->Draw(render);
   }
 }
 
@@ -833,7 +842,6 @@ void Player::DrawKeyPad() {
   }
 
   const SDL_Rect keypad_rect = GetKeyPadRect();
-  keypad_label_->SetText(keypad_sym_);
   keypad_label_->SetRect(keypad_rect);
   keypad_label_->Draw(render);
 }
@@ -948,13 +956,11 @@ player::media::VideoState* Player::CreateStream(stream_id sid,
 }
 
 void Player::OnWindowCreated(SDL_Window* window, SDL_Renderer* render) {
-  UNUSED(window);
-
   if (right_arrow_button_texture_) {
-    plailist_window_->SetHideButtonImage(right_arrow_button_texture_->GetTexture(render));
+    hide_playlist_button_->SetIconTexture(right_arrow_button_texture_->GetTexture(render));
   }
   if (left_arrow_button_texture_) {
-    plailist_window_->SetShowButtonImage(left_arrow_button_texture_->GetTexture(render));
+    show_playlist_button_->SetIconTexture(left_arrow_button_texture_->GetTexture(render));
   }
   if (up_arrow_button_texture_) {
     show_chat_button_->SetIconTexture(up_arrow_button_texture_->GetTexture(render));

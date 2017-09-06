@@ -23,9 +23,7 @@ namespace client {
 namespace player {
 
 PlayerOptions::PlayerOptions()
-    : exit_on_keydown(false),
-      exit_on_mousedown(false),
-      is_full_screen(false),
+    : is_full_screen(false),
       default_size(width, height),
       screen_size(0, 0),
       audio_volume(volume),

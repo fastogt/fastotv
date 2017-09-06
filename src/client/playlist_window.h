@@ -36,12 +36,7 @@ class PlaylistWindow : public player::gui::IListBox {
   void SetPlaylist(const playlist_t* pl);
   const playlist_t* GetPlaylist() const;
 
-  void SetHideButtonImage(SDL_Texture* img);
-
-  void SetShowButtonImage(SDL_Texture* img);
   virtual size_t GetRowCount() const override;
-
-  virtual void Draw(SDL_Renderer* render) override;
 
   void SetCurrentPositionInPlaylist(size_t pos);
 
@@ -49,17 +44,9 @@ class PlaylistWindow : public player::gui::IListBox {
   SDL_Color GetCurrentPositionSelectionColor() const;
 
  protected:
-  virtual void HandleMousePressEvent(player::gui::events::MousePressEvent* event) override;
   virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
 
  private:
-  bool IsHideButtonProgramsListRect(const SDL_Point& point) const;
-  bool IsShowButtonProgramsListRect(const SDL_Point& point) const;
-  SDL_Rect GetHideButtonProgramsListRect() const;
-  SDL_Rect GetShowButtonProgramsListRect() const;
-
-  SDL_Texture* hide_button_img_;
-  SDL_Texture* show_button_img_;
   const playlist_t* play_list_;  // pointer
 
   size_t current_position_in_playlist_;

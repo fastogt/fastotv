@@ -80,7 +80,7 @@ int IListBox::GetRowHeight() const {
 }
 
 void IListBox::Draw(SDL_Renderer* render) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
@@ -146,7 +146,7 @@ void IListBox::OnMouseReleased(Uint8 button, const SDL_Point& position) {
 }
 
 size_t IListBox::FindRowInPosition(const SDL_Point& position) const {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return draw::invalid_row_position;
   }
 

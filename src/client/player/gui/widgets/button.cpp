@@ -36,7 +36,7 @@ bool Button::IsPressed() const {
 }
 
 void Button::Draw(SDL_Renderer* render) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     base_class::Draw(render);
     return;
   }

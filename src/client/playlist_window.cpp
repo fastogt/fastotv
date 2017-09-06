@@ -30,8 +30,6 @@ namespace client {
 
 PlaylistWindow::PlaylistWindow(const SDL_Color& back_ground_color)
     : base_class(back_ground_color),
-      hide_button_img_(nullptr),
-      show_button_img_(nullptr),
       play_list_(nullptr),
       current_position_in_playlist_(player::draw::invalid_row_position),
       select_cur_color_() {}
@@ -46,43 +44,11 @@ const PlaylistWindow::playlist_t* PlaylistWindow::GetPlaylist() const {
   return play_list_;
 }
 
-void PlaylistWindow::SetHideButtonImage(SDL_Texture* img) {
-  hide_button_img_ = img;
-}
-
-void PlaylistWindow::SetShowButtonImage(SDL_Texture* img) {
-  show_button_img_ = img;
-}
-
 size_t PlaylistWindow::GetRowCount() const {
   if (!play_list_) {
     return 0;
   }
   return play_list_->size();
-}
-
-void PlaylistWindow::Draw(SDL_Renderer* render) {
-  if (!IsCanDraw()) {
-    base_class::Draw(render);
-    return;
-  }
-
-  if (fApp->IsCursorVisible()) {
-    if (!IsVisible()) {
-      if (show_button_img_) {
-        SDL_Rect show_button_rect = GetShowButtonProgramsListRect();
-        SDL_RenderCopy(render, show_button_img_, NULL, &show_button_rect);
-      }
-      return;
-    }
-
-    if (hide_button_img_) {
-      SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
-      SDL_RenderCopy(render, hide_button_img_, NULL, &hide_button_rect);
-    }
-  }
-
-  base_class::Draw(render);
 }
 
 void PlaylistWindow::SetCurrentPositionInPlaylist(size_t pos) {
@@ -135,60 +101,6 @@ void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
   if (pos == current_position_in_playlist_) {
     player::draw::FillRectColor(render, row_rect, select_cur_color_);
   }
-}
-
-void PlaylistWindow::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
-  base_class::HandleMousePressEvent(event);
-
-  player::gui::events::MousePressInfo inf = event->GetInfo();
-  SDL_MouseButtonEvent sinfo = inf.mevent;
-  if (sinfo.button == SDL_BUTTON_LEFT) {
-    SDL_Point point = inf.GetMousePoint();
-    if (IsVisible()) {
-      if (IsHideButtonProgramsListRect(point)) {
-        SetVisible(false);
-      }
-    } else {
-      if (IsShowButtonProgramsListRect(point)) {
-        SetVisible(true);
-      }
-    }
-  }
-}
-
-bool PlaylistWindow::IsHideButtonProgramsListRect(const SDL_Point& point) const {
-  const SDL_Rect hide_button_rect = GetHideButtonProgramsListRect();
-  return player::draw::IsPointInRect(point, hide_button_rect);
-}
-
-bool PlaylistWindow::IsShowButtonProgramsListRect(const SDL_Point& point) const {
-  const SDL_Rect show_button_rect = GetShowButtonProgramsListRect();
-  return player::draw::IsPointInRect(point, show_button_rect);
-}
-
-SDL_Rect PlaylistWindow::GetHideButtonProgramsListRect() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return SDL_Rect();
-  }
-
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
-  SDL_Rect prog_rect = GetRect();
-  SDL_Rect hide_button_rect = {prog_rect.x - font_height_2line, prog_rect.h / 2, font_height_2line, font_height_2line};
-  return hide_button_rect;
-}
-
-SDL_Rect PlaylistWindow::GetShowButtonProgramsListRect() const {
-  TTF_Font* font = GetFont();
-  if (!font) {
-    return SDL_Rect();
-  }
-
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
-  SDL_Rect prog_rect = GetRect();
-  SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - font_height_2line, prog_rect.h / 2, font_height_2line,
-                               font_height_2line};
-  return show_button_rect;
 }
 
 }  // namespace client

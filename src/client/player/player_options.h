@@ -29,8 +29,6 @@ struct PlayerOptions {
   enum { width = 640, height = 480, volume = 100 };
   PlayerOptions();
 
-  bool exit_on_keydown;
-  bool exit_on_mousedown;
   bool is_full_screen;
 
   draw::Size default_size;

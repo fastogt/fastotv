@@ -49,7 +49,7 @@ void LineEdit::SetActived(bool active) {
 }
 
 void LineEdit::Draw(SDL_Renderer* render) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     base_class::Draw(render);
     return;
   }
@@ -110,7 +110,7 @@ void LineEdit::HandleExceptionEvent(event_t* event, common::Error err) {
 }
 
 void LineEdit::HandleMousePressEvent(player::gui::events::MousePressEvent* event) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     base_class::HandleMousePressEvent(event);
     return;
   }
@@ -126,7 +126,7 @@ void LineEdit::HandleMousePressEvent(player::gui::events::MousePressEvent* event
 }
 
 void LineEdit::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
@@ -150,7 +150,7 @@ void LineEdit::HandleKeyPressEvent(gui::events::KeyPressEvent* event) {
 
 void LineEdit::HandleKeyReleaseEvent(gui::events::KeyReleaseEvent* event) {
   UNUSED(event);
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
@@ -165,7 +165,7 @@ void LineEdit::HandleKeyReleaseEvent(gui::events::KeyReleaseEvent* event) {
 
 void LineEdit::HandleTextInputEvent(gui::events::TextInputEvent* event) {
   UNUSED(event);
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
@@ -189,7 +189,7 @@ void LineEdit::HandleTextInputEvent(gui::events::TextInputEvent* event) {
 
 void LineEdit::HandleTextEditEvent(gui::events::TextEditEvent* event) {
   UNUSED(event);
-  if (!IsVisible() || !IsCanDraw()) {
+  if (!IsCanDraw()) {
     return;
   }
 
