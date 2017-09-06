@@ -36,7 +36,7 @@ extern "C" {
 
 #include <common/error.h>
 #include <common/threads/types.h>  // for condition_variable, mutex
-#include <common/url.h>            // for Uri
+#include <common/uri/url.h>        // for Uri
 
 #include "client_server_types.h"  // for stream_id
 
@@ -87,7 +87,7 @@ class VideoState {
   typedef frames::AudioFrameQueue<SAMPLE_QUEUE_SIZE> audio_frame_queue_t;
 
   enum { invalid_stream_index = -1 };
-  VideoState(stream_id id, const common::uri::Uri& uri, const AppOptions& opt, const ComplexOptions& copt);
+  VideoState(stream_id id, const common::uri::Url& uri, const AppOptions& opt, const ComplexOptions& copt);
   void SetHandler(VideoStateHandler* handler);
 
   int Exec() WARN_UNUSED_RESULT;
@@ -99,7 +99,7 @@ class VideoState {
   bool IsAborted() const;
   bool IsStreamReady() const;
   stream_id GetId() const;
-  const common::uri::Uri& GetUri() const;
+  const common::uri::Url& GetUri() const;
   virtual ~VideoState();
 
   void RefreshRequest();
@@ -171,7 +171,7 @@ class VideoState {
   int AudioThread();
 
   const stream_id id_;
-  const common::uri::Uri uri_;
+  const common::uri::Url uri_;
 
   AppOptions opt_;
   ComplexOptions copt_;

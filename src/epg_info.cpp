@@ -37,7 +37,7 @@ namespace fastotv {
 EpgInfo::EpgInfo()
     : channel_id_(invalid_stream_id), uri_(), display_name_(), icon_src_(GetUnknownIconUrl()), programs_() {}
 
-EpgInfo::EpgInfo(stream_id id, const common::uri::Uri& uri, const std::string& name)
+EpgInfo::EpgInfo(stream_id id, const common::uri::Url& uri, const std::string& name)
     : channel_id_(id), uri_(uri), display_name_(name), icon_src_(GetUnknownIconUrl()), programs_() {}
 
 bool EpgInfo::IsValid() const {
@@ -60,11 +60,11 @@ bool EpgInfo::FindProgrammeByTime(timestamp_t time, ProgrammeInfo* inf) const {
   return false;
 }
 
-void EpgInfo::SetUrl(const common::uri::Uri& url) {
+void EpgInfo::SetUrl(const common::uri::Url& url) {
   uri_ = url;
 }
 
-common::uri::Uri EpgInfo::GetUrl() const {
+common::uri::Url EpgInfo::GetUrl() const {
   return uri_;
 }
 
@@ -84,7 +84,7 @@ stream_id EpgInfo::GetChannelId() const {
   return channel_id_;
 }
 
-void EpgInfo::SetIconUrl(const common::uri::Uri& url) {
+void EpgInfo::SetIconUrl(const common::uri::Url& url) {
   icon_src_ = url;
 }
 
@@ -96,7 +96,7 @@ EpgInfo::programs_t EpgInfo::GetPrograms() const {
   return programs_;
 }
 
-common::uri::Uri EpgInfo::GetIconUrl() const {
+common::uri::Url EpgInfo::GetIconUrl() const {
   return icon_src_;
 }
 
@@ -149,7 +149,7 @@ common::Error EpgInfo::DeSerialize(const serialize_type& serialized, value_type*
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
 
-  common::uri::Uri uri(json_object_get_string(jurl));
+  common::uri::Url uri(json_object_get_string(jurl));
   if (!uri.IsValid()) {
     return common::make_inval_error_value(common::Value::E_ERROR);
   }
@@ -173,7 +173,7 @@ common::Error EpgInfo::DeSerialize(const serialize_type& serialized, value_type*
   json_object* jurl_icon = NULL;
   json_bool jurl_icon_exists = json_object_object_get_ex(serialized, EPG_INFO_ICON_FIELD, &jurl_icon);
   if (jurl_icon_exists) {
-    url.icon_src_ = common::uri::Uri(json_object_get_string(jurl_icon));
+    url.icon_src_ = common::uri::Url(json_object_get_string(jurl_icon));
   }
 
   json_object* jprogs = NULL;
@@ -201,12 +201,12 @@ bool EpgInfo::Equals(const EpgInfo& url) const {
   return channel_id_ == url.channel_id_ && uri_ == url.uri_ && display_name_ == url.display_name_;
 }
 
-const common::uri::Uri& EpgInfo::GetUnknownIconUrl() {
-  static const common::uri::Uri url(UNKNOWN_ICON_URI);
+const common::uri::Url& EpgInfo::GetUnknownIconUrl() {
+  static const common::uri::Url url(UNKNOWN_ICON_URI);
   return url;
 }
 
-bool EpgInfo::IsUnknownIconUrl(const common::uri::Uri& url) {
+bool EpgInfo::IsUnknownIconUrl(const common::uri::Url& url) {
   return url == GetUnknownIconUrl();
 }
 

@@ -179,7 +179,7 @@ int get_buffer(AVCodecContext* s, AVFrame* frame, int flags) {
 }
 }  // namespace
 
-VideoState::VideoState(stream_id id, const common::uri::Uri& uri, const AppOptions& opt, const ComplexOptions& copt)
+VideoState::VideoState(stream_id id, const common::uri::Url& uri, const AppOptions& opt, const ComplexOptions& copt)
     : id_(id),
       uri_(uri),
       opt_(opt),
@@ -696,7 +696,7 @@ stream_id VideoState::GetId() const {
   return id_;
 }
 
-const common::uri::Uri& VideoState::GetUri() const {
+const common::uri::Url& VideoState::GetUri() const {
   return uri_;
 }
 
@@ -1194,7 +1194,7 @@ int VideoState::ReadRoutine() {
 
   bool scan_all_pmts_set = false;
   std::string uri_str;
-  if (uri_.GetScheme() == common::uri::Uri::file) {
+  if (uri_.GetScheme() == common::uri::Url::file) {
     common::uri::Upath upath = uri_.GetPath();
     uri_str = upath.GetPath();
   } else {

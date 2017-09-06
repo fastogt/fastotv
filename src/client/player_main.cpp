@@ -48,7 +48,7 @@ void init_ffmpeg() {
 
 int main_simple_player_application(int argc,
                                    char** argv,
-                                   const common::uri::Uri& stream_url,
+                                   const common::uri::Url& stream_url,
                                    const std::string& app_directory_absolute_path) {
   int res = fastotv::client::player::prepare_to_start(app_directory_absolute_path);
   if (res == EXIT_FAILURE) {
@@ -100,7 +100,7 @@ int main_simple_player_application(int argc,
 int main(int argc, char** argv) {
   init_ffmpeg();
 
-  common::uri::Uri url;
+  common::uri::Url url;
 
   for (int i = 1; i < argc; ++i) {
     const bool lastarg = i == argc - 1;
@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
       show_colors();
       return EXIT_SUCCESS;
     } else if (strcmp(argv[i], "-i") == 0 && !lastarg) {
-      url = common::uri::Uri(argv[++i]);
+      url = common::uri::Url(argv[++i]);
     }
 #if CONFIG_AVDEVICE
     else if (strcmp(argv[i], "-sources") == 0) {

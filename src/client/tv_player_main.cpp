@@ -108,7 +108,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
 int main(int argc, char** argv) {
   init_ffmpeg();
 
-  common::uri::Uri url;
+  common::uri::Url url;
 
   for (int i = 1; i < argc; ++i) {
     const bool lastarg = i == argc - 1;

@@ -429,7 +429,7 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
       }
 
       EpgInfo epg = ch.GetEpg();
-      common::uri::Uri uri = epg.GetIconUrl();
+      common::uri::Url uri = epg.GetIconUrl();
       bool is_unknown_icon = EpgInfo::IsUnknownIconUrl(uri);
       if (is_unknown_icon) {
         continue;
@@ -865,7 +865,7 @@ void Player::DrawInitStatus() {
 }
 
 player::media::VideoState* Player::CreateStream(stream_id sid,
-                                                const common::uri::Uri& uri,
+                                                const common::uri::Url& uri,
                                                 player::media::AppOptions opt,
                                                 player::media::ComplexOptions copt) {
   controller_->RequesRuntimeChannelInfo(sid);

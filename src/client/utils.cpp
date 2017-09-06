@@ -27,7 +27,7 @@ extern "C" {
 namespace fastotv {
 namespace client {
 
-bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
+bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff) {
   if (!uri.IsValid() || !buff) {
     return false;
   }
@@ -38,7 +38,7 @@ bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff) {
   }
 
   std::string uri_str;
-  if (uri.GetScheme() == common::uri::Uri::file) {
+  if (uri.GetScheme() == common::uri::Url::file) {
     common::uri::Upath upath = uri.GetPath();
     uri_str = upath.GetPath();
   } else {

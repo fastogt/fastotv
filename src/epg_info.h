@@ -20,9 +20,9 @@
 
 #include <string>  // for string
 
-#include <common/error.h>   // for Error
-#include <common/macros.h>  // for WARN_UNUSED_RESULT
-#include <common/url.h>     // for Uri
+#include <common/error.h>    // for Error
+#include <common/macros.h>   // for WARN_UNUSED_RESULT
+#include <common/uri/url.h>  // for Uri
 
 #include "client_server_types.h"
 #include "programme_info.h"
@@ -35,13 +35,13 @@ class EpgInfo : public JsonSerializer<EpgInfo> {
  public:
   typedef std::vector<ProgrammeInfo> programs_t;
   EpgInfo();
-  EpgInfo(stream_id id, const common::uri::Uri& uri, const std::string& name);  // required args
+  EpgInfo(stream_id id, const common::uri::Url& uri, const std::string& name);  // required args
 
   bool IsValid() const;
   bool FindProgrammeByTime(timestamp_t time, ProgrammeInfo* inf) const;
 
-  void SetUrl(const common::uri::Uri& url);
-  common::uri::Uri GetUrl() const;
+  void SetUrl(const common::uri::Url& url);
+  common::uri::Url GetUrl() const;
 
   void SetDisplayName(const std::string& name);
   std::string GetDisplayName() const;
@@ -49,8 +49,8 @@ class EpgInfo : public JsonSerializer<EpgInfo> {
   void SetChannelId(stream_id ch);
   stream_id GetChannelId() const;
 
-  void SetIconUrl(const common::uri::Uri& url);
-  common::uri::Uri GetIconUrl() const;
+  void SetIconUrl(const common::uri::Url& url);
+  common::uri::Url GetIconUrl() const;
 
   void SetPrograms(const programs_t& progs);
   programs_t GetPrograms() const;
@@ -59,17 +59,17 @@ class EpgInfo : public JsonSerializer<EpgInfo> {
 
   bool Equals(const EpgInfo& url) const;
 
-  static const common::uri::Uri& GetUnknownIconUrl();
-  static bool IsUnknownIconUrl(const common::uri::Uri& url);
+  static const common::uri::Url& GetUnknownIconUrl();
+  static bool IsUnknownIconUrl(const common::uri::Url& url);
 
  protected:
   common::Error SerializeImpl(serialize_type* deserialized) const override;
 
  private:
   stream_id channel_id_;
-  common::uri::Uri uri_;
+  common::uri::Url uri_;
   std::string display_name_;
-  common::uri::Uri icon_src_;
+  common::uri::Url icon_src_;
   programs_t programs_;
 };
 

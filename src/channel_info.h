@@ -20,9 +20,9 @@
 
 #include <string>  // for string
 
-#include <common/error.h>   // for Error
-#include <common/macros.h>  // for WARN_UNUSED_RESULT
-#include <common/url.h>     // for Uri
+#include <common/error.h>    // for Error
+#include <common/macros.h>   // for WARN_UNUSED_RESULT
+#include <common/uri/url.h>  // for Uri
 
 #include "client_server_types.h"
 #include "epg_info.h"
@@ -36,7 +36,7 @@ class ChannelInfo : public JsonSerializer<ChannelInfo> {
   ChannelInfo(const EpgInfo& epg, bool enable_audio, bool enable_video);
 
   bool IsValid() const;
-  common::uri::Uri GetUrl() const;
+  common::uri::Url GetUrl() const;
   std::string GetName() const;
   stream_id GetId() const;
   EpgInfo GetEpg() const;

@@ -33,7 +33,7 @@ bool ChannelInfo::IsValid() const {
   return epg_.IsValid();
 }
 
-common::uri::Uri ChannelInfo::GetUrl() const {
+common::uri::Url ChannelInfo::GetUrl() const {
   return epg_.GetUrl();
 }
 

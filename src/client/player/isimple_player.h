@@ -20,7 +20,7 @@
 
 #include <SDL2/SDL_ttf.h>  // for TTF_Font
 
-#include <common/url.h>  // for Error
+#include <common/uri/url.h>
 
 #include "client/player/player_options.h"
 #include "client/player/stream_handler.h"
@@ -88,7 +88,7 @@ class ISimplePlayer : public StreamHandler, public gui::events::EventListener {
   PlayerOptions GetOptions() const;
 
   virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
+                              const common::uri::Url& uri,
                               media::AppOptions opt,
                               media::ComplexOptions copt);
 
@@ -150,7 +150,7 @@ class ISimplePlayer : public StreamHandler, public gui::events::EventListener {
   bool IsMouseVisible() const;
 
   virtual media::VideoState* CreateStream(stream_id sid,
-                                          const common::uri::Uri& uri,
+                                          const common::uri::Url& uri,
                                           media::AppOptions opt,
                                           media::ComplexOptions copt);
   void SetStream(media::VideoState* stream);  // if stream == NULL => SwitchToChannelErrorMode

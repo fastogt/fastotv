@@ -94,7 +94,7 @@ class Player : public player::ISimplePlayer {
   virtual void SetStatus(States new_state) override;
 
   virtual player::media::VideoState* CreateStream(stream_id sid,
-                                                  const common::uri::Uri& uri,
+                                                  const common::uri::Url& uri,
                                                   player::media::AppOptions opt,
                                                   player::media::ComplexOptions copt) override;
 

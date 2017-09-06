@@ -19,12 +19,12 @@
 #pragma once
 
 #include <common/types.h>
-#include <common/url.h>
+#include <common/uri/url.h>
 
 namespace fastotv {
 namespace client {
 
-bool DownloadFileToBuffer(const common::uri::Uri& uri, common::buffer_t* buff);
+bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff);
 
 }  // namespace client
 }  // namespace fastotv

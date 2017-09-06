@@ -30,12 +30,12 @@ class SimplePlayer : public player::ISimplePlayer {
   virtual std::string GetCurrentUrlName() const override;
 
   virtual void SetUrlLocation(stream_id sid,
-                              const common::uri::Uri& uri,
+                              const common::uri::Url& uri,
                               player::media::AppOptions opt,
                               player::media::ComplexOptions copt) override;
 
  private:
-  common::uri::Uri stream_url_;
+  common::uri::Url stream_url_;
 };
 
 }  // namespace client

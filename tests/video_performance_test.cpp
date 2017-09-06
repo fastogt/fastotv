@@ -126,7 +126,7 @@ class FakeApplication : public common::application::IApplication {
   virtual int ExecImpl() override {
     const stream_id id = "unique";
     // wget http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_1080p_h264.mov
-    const common::uri::Uri uri = common::uri::Uri("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
+    const common::uri::Url uri = common::uri::Url("file://" PROJECT_TEST_SOURCES_DIR "/big_buck_bunny_1080p_h264.mov");
     player::media::AppOptions opt;
     DictionaryOptions* dict = new DictionaryOptions;
     const player::media::ComplexOptions copt(dict->swr_opts, dict->sws_dict, dict->format_opts, dict->codec_opts);
