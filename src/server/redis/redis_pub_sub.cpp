@@ -111,8 +111,12 @@ common::Error RedisPubSub::Publish(const std::string& channel, const std::string
     return err;
   }
 
-  const char* chn = common::utils::c_strornull(channel);
-  const char* m = common::utils::c_strornull(msg);
+  if (channel.empty() || msg.empty()) {
+    return common::make_inval_error_value(common::Value::E_ERROR);
+  }
+
+  const char* chn = channel.c_str();
+  const char* m = msg.c_str();
   void* rreply = redisCommand(redis_sub, "PUBLISH %s %s", chn, m);
   if (!rreply) {
     err = common::make_error_value(redis_sub->errstr, common::Value::E_ERROR);

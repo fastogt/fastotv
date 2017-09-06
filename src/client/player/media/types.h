@@ -21,6 +21,7 @@
 #include <stdint.h>  // for int64_t
 
 #include <common/types.h>  // for time64_t
+#include <common/uri/url.h>
 
 #include "client_server_types.h"  // for bandwidth_t
 
@@ -58,6 +59,8 @@ msec_t GetCurrentMsec();
 typedef clock64_t pts_t;
 pts_t invalid_pts();
 bool IsValidPts(pts_t pts);
+
+std::string make_url(const common::uri::Url& uri);
 
 enum AvSyncType {
   AV_SYNC_AUDIO_MASTER, /* default choice */

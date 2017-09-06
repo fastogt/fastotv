@@ -51,7 +51,11 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   lirc_config* lcfg = NULL;
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string lirc_config_path = common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
-  const char* lirc_config_path_ptr = common::utils::c_strornull(lirc_config_path);
+  if (lirc_config_path.empty()) {
+    return common::make_error_value("Lirc invalid config path!", common::Value::E_ERROR);
+  }
+
+  const char* lirc_config_path_ptr = lirc_config_path.c_str();
   char* lirc_config_copy_ptr = common::strdup(lirc_config_path_ptr);  // copy for removing warning
   int res = lirc_readconfig(lirc_config_copy_ptr, &lcfg, NULL);
   common::utils::freeifnotnull(lirc_config_copy_ptr);

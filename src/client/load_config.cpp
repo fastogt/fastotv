@@ -294,8 +294,9 @@ common::Error load_config_file(const std::string& config_absolute_path, player::
     copy_config_absolute_path = common::file_system::make_path(absolute_source_dir, CONFIG_FILE_PATH_RELATIVE);
   }
 
-  const char* copy_config_absolute_path_ptr = common::utils::c_strornull(copy_config_absolute_path);
-  ini_parse(copy_config_absolute_path_ptr, ini_handler_fasto, options);
+  if (!copy_config_absolute_path.empty()) {
+    ini_parse(copy_config_absolute_path.c_str(), ini_handler_fasto, options);
+  }
   return common::Error();
 }
 

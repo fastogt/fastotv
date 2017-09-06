@@ -39,11 +39,11 @@ int CalcHeightFontPlaceByRowCount(const TTF_Font* font, int row) {
 }
 
 bool CaclTextSize(const std::string& text, TTF_Font* font, int* width, int* height) {
-  const char* text_ptr = common::utils::c_strornull(text);
-  if (!text_ptr || !font || !width || !height) {
+  if (text.empty() || !font || !width || !height) {
     return false;
   }
 
+  const char* text_ptr = text.c_str();
   int res = TTF_SizeText(font, text_ptr, width, height);
   return res == 0;
 }
@@ -67,11 +67,11 @@ void DrawWrappedTextInRect(SDL_Renderer* render,
                            SDL_Color text_color,
                            SDL_Rect rect,
                            SDL_Rect* text_rect) {
-  const char* text_ptr = common::utils::c_strornull(text);
-  if (!render || !font || !text_ptr) {
+  if (!render || !font || text.empty()) {
     return;
   }
 
+  const char* text_ptr = text.c_str();
   SDL_Surface* text_surf = TTF_RenderUTF8_Blended_Wrapped(font, text_ptr, text_color, rect.w);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(render, text_surf);
   SDL_Rect dst = rect;
@@ -90,11 +90,11 @@ void DrawCenterTextInRect(SDL_Renderer* render,
                           SDL_Color text_color,
                           SDL_Rect rect,
                           SDL_Rect* text_rect) {
-  const char* text_ptr = common::utils::c_strornull(text);
-  if (!render || !font || !text_ptr) {
+  if (!render || !font || text.empty()) {
     return;
   }
 
+  const char* text_ptr = text.c_str();
   SDL_Surface* text_surf = TTF_RenderUTF8_Blended(font, text_ptr, text_color);
   SDL_Rect dst = GetCenterRect(rect, text_surf->w, text_surf->h);
   SDL_Texture* texture = SDL_CreateTextureFromSurface(render, text_surf);
@@ -116,11 +116,11 @@ void DrawImage(SDL_Renderer* render, SDL_Texture* texture, const SDL_Rect& rect)
 }
 
 bool GetTextSize(TTF_Font* font, const std::string& text, int* w, int* h) {
-  const char* text_ptr = common::utils::c_strornull(text);
-  if (!font || !text_ptr) {
+  if (!font || text.empty()) {
     return false;
   }
 
+  const char* text_ptr = text.c_str();
   return TTF_SizeUTF8(font, text_ptr, w, h) == 0;
 }
 

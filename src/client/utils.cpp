@@ -22,7 +22,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
-#include <common/utils.h>
+#include "client/player/media/types.h"
 
 namespace fastotv {
 namespace client {
@@ -32,20 +32,17 @@ bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff) {
     return false;
   }
 
+  const std::string url_str = player::media::make_url(uri);
+  if (url_str.empty()) {
+    return false;
+  }
+
   AVFormatContext* ic = avformat_alloc_context();
   if (!ic) {
     return false;
   }
 
-  std::string uri_str;
-  if (uri.GetScheme() == common::uri::Url::file) {
-    common::uri::Upath upath = uri.GetPath();
-    uri_str = upath.GetPath();
-  } else {
-    uri_str = uri.GetUrl();
-  }
-
-  const char* in_filename = common::utils::c_strornull(uri_str);
+  const char* in_filename = url_str.c_str();
   int open_result = avformat_open_input(&ic, in_filename, NULL, NULL);
   if (open_result < 0) {
     avformat_free_context(ic);

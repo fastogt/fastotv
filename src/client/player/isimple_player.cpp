@@ -286,7 +286,12 @@ void ISimplePlayer::HandlePreExecEvent(gui::events::PreExecEvent* event) {
     render_texture_ = new draw::TextureSaver;
 
     const std::string font_path = common::file_system::make_path(absolute_source_dir, MAIN_FONT_PATH_RELATIVE);
-    const char* font_path_ptr = common::utils::c_strornull(font_path);
+    if (font_path.empty()) {
+      WARNING_LOG() << "Couldn't open font file path invalid!";
+      return;
+    }
+
+    const char* font_path_ptr = font_path.c_str();
     font_ = TTF_OpenFont(font_path_ptr, 24);
     if (!font_) {
       WARNING_LOG() << "Couldn't open font file path: " << font_path;

@@ -65,7 +65,6 @@ extern "C" {
 
 #include <common/log_levels.h>  // for LOG_LEVEL::LOG_LEVEL_INFO, etc
 #include <common/sprintf.h>     // for MemSPrintf
-#include <common/utils.h>
 
 #include "client/player/media/ffmpeg_internal.h"
 
@@ -1023,7 +1022,7 @@ int show_sinks_sources_parse_arg(const char* arg, char** dev, AVDictionary** opt
 }  // namespace
 
 void show_sources(const std::string& device) {
-  const char* arg = common::utils::c_strornull(device);
+  const char* arg = device.c_str();
   AVInputFormat* fmt = NULL;
   char* dev = NULL;
   AVDictionary* opts = NULL;
@@ -1060,7 +1059,7 @@ void show_sources(const std::string& device) {
 }
 
 void show_sinks(const std::string& device) {
-  const char* arg = common::utils::c_strornull(device);
+  const char* arg = device.c_str();
   AVOutputFormat* fmt = NULL;
   char* dev = NULL;
   AVDictionary* opts = NULL;

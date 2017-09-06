@@ -72,6 +72,15 @@ int64_t get_valid_channel_layout(int64_t channel_layout, int channels) {
   return 0;
 }
 
+std::string make_url(const common::uri::Url& uri) {
+  if (uri.GetScheme() == common::uri::Url::file) {
+    common::uri::Upath upath = uri.GetPath();
+    return upath.GetPath();
+  }
+
+  return uri.GetUrl();
+}
+
 pts_t invalid_pts() {
   return AV_NOPTS_VALUE;
 }

@@ -245,8 +245,8 @@ VideoState::VideoState(stream_id id, const common::uri::Url& uri, const AppOptio
 
   input_st_->hwaccel_id = opt_.hwaccel_id;
   input_st_->hwaccel_device = common::utils::strdupornull(opt_.hwaccel_device);
-  const char* hwaccel_output_format = common::utils::c_strornull(opt_.hwaccel_output_format);
-  if (hwaccel_output_format) {
+  if (!opt_.hwaccel_output_format.empty()) {
+    const char* hwaccel_output_format = opt_.hwaccel_output_format.c_str();
     input_st_->hwaccel_output_format = av_get_pix_fmt(hwaccel_output_format);
     if (input_st_->hwaccel_output_format == AV_PIX_FMT_NONE) {
       CRITICAL_LOG() << "Unrecognised hwaccel output format: " << hwaccel_output_format;
@@ -294,10 +294,10 @@ int VideoState::StreamComponentOpen(int stream_index) {
 
   if (avctx->codec_type == AVMEDIA_TYPE_VIDEO) {
     last_video_stream_ = stream_index;
-    forced_codec_name = common::utils::c_strornull(opt_.video_codec_name);
+    forced_codec_name = opt_.video_codec_name.empty() ? NULL : opt_.video_codec_name.c_str();
   } else if (avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
     last_audio_stream_ = stream_index;
-    forced_codec_name = common::utils::c_strornull(opt_.audio_codec_name);
+    forced_codec_name = opt_.audio_codec_name.empty() ? NULL : opt_.audio_codec_name.c_str();
   }
 
   if (forced_codec_name) {
@@ -1193,14 +1193,16 @@ int VideoState::ReadRoutine() {
   }
 
   bool scan_all_pmts_set = false;
-  std::string uri_str;
-  if (uri_.GetScheme() == common::uri::Url::file) {
-    common::uri::Upath upath = uri_.GetPath();
-    uri_str = upath.GetPath();
-  } else {
-    uri_str = uri_.GetUrl();
+  const std::string uri_str = make_url(uri_);
+  if (uri_str.empty()) {
+    common::Error err = common::make_inval_error_value(common::Value::E_ERROR);
+    if (handler_) {
+      handler_->HandleQuitStream(this, EINVAL, err);
+    }
+    return ERROR_RESULT_VALUE;
   }
-  const char* in_filename = common::utils::c_strornull(uri_str);
+
+  const char* in_filename = uri_str.c_str();
   ic->interrupt_callback.callback = decode_interrupt_callback;
   ic->interrupt_callback.opaque = this;
   if (!av_dict_get(copt_.format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
@@ -1276,17 +1278,16 @@ int VideoState::ReadRoutine() {
     AVStream* st = ic->streams[i];
     enum AVMediaType type = st->codecpar->codec_type;
     st->discard = AVDISCARD_ALL;
-    const char* want_spec = common::utils::c_strornull(opt_.wanted_stream_spec[type]);
-    if (type >= 0 && want_spec && st_index[type] == -1) {
+    if (type >= 0 && !opt_.wanted_stream_spec[type].empty() && st_index[type] == -1) {
+      const char* want_spec = opt_.wanted_stream_spec[type].c_str();
       if (avformat_match_stream_specifier(ic, st, want_spec) > 0) {
         st_index[type] = i;
       }
     }
   }
   for (int i = 0; i < static_cast<int>(AVMEDIA_TYPE_NB); i++) {
-    const char* want_spec = common::utils::c_strornull(opt_.wanted_stream_spec[i]);
-    if (want_spec && st_index[i] == -1) {
-      ERROR_LOG() << "Stream specifier " << want_spec << " does not match any "
+    if (!opt_.wanted_stream_spec[i].empty() && st_index[i] == -1) {
+      ERROR_LOG() << "Stream specifier " << opt_.wanted_stream_spec[i] << " does not match any "
                   << av_get_media_type_string(static_cast<AVMediaType>(i)) << " stream";
       st_index[i] = INT_MAX;
     }
@@ -1744,7 +1745,7 @@ int VideoState::ConfigureVideoFilters(AVFilterGraph* graph, const std::string& v
     }
   }
 
-  const char* vfilters_ptr = common::utils::c_strornull(vfilters);
+  const char* vfilters_ptr = vfilters.empty() ? NULL : vfilters.c_str();
   ret = configure_filtergraph(graph, vfilters_ptr, filt_src, last_filter);
   if (ret < 0) {
     WARNING_LOG() << "Failed to configure_filtergraph ret: " << ret;
@@ -1839,7 +1840,7 @@ int VideoState::ConfigureAudioFilters(const std::string& afilters, int force_out
     }
   }
 
-  const char* afilters_ptr = common::utils::c_strornull(afilters);
+  const char* afilters_ptr = afilters.empty() ? NULL : afilters.c_str();
   ret = configure_filtergraph(agraph_, afilters_ptr, filt_asrc, filt_asink);
   if (ret < 0) {
     avfilter_graph_free(&agraph_);
