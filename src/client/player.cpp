@@ -454,7 +454,7 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
   if (!is_exist_cache_root) {
     common::ErrnoError err = common::file_system::create_directory(cache_dir, true);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     } else {
       is_exist_cache_root = true;
     }
@@ -474,7 +474,7 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
       if (!is_cache_channel_dir_exist) {
         common::ErrnoError err = common::file_system::create_directory(channel_dir, true);
         if (err && err->IsError()) {
-          DEBUG_MSG_ERROR(err);
+          DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
         } else {
           is_cache_channel_dir_exist = true;
         }
@@ -505,14 +505,14 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
           common::file_system::File channel_icon_file;
           common::ErrnoError err = channel_icon_file.Open(channel_icon_path, fl);
           if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
+            DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
             return;
           }
 
           size_t writed;
           err = channel_icon_file.Write(buff, &writed);
           if (err && err->IsError()) {
-            DEBUG_MSG_ERROR(err);
+            DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
             err = channel_icon_file.Close();
             return;
           }

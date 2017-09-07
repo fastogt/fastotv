@@ -41,13 +41,13 @@ namespace {
 int exec_server(common::libev::tcp::TcpServer* server) {
   common::Error err = server->Bind(true);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return EXIT_FAILURE;
   }
 
   err = server->Listen(5);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return EXIT_FAILURE;
   }
 

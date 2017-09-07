@@ -562,7 +562,7 @@ void ISimplePlayer::SwitchToChannelErrorMode(common::Error err) {
   std::string url_str = GetCurrentUrlName();
   std::string err_descr = err->GetDescription();
   std::string error_str = common::MemSPrintf("%s (%s)", url_str, err_descr);
-  RUNTIME_LOG(err->GetLevel()) << error_str;
+  ERROR_LOG() << error_str;
   InitWindow(error_str, FAILED_STATE);
 }
 
@@ -630,15 +630,14 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                             "to reduce the image size.";
     return;
   }
 
   common::Error err = UploadTexture(texture, frame->frame);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return;
   }
 

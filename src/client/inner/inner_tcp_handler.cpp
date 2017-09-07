@@ -116,7 +116,7 @@ void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
     fastotv::inner::InnerClient* iclient = static_cast<fastotv::inner::InnerClient*>(client);
     common::Error err = iclient->ReadCommand(&buff);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       client->Close();
       delete client;
       return;
@@ -134,7 +134,7 @@ void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
   if (err && err->IsError()) {
     common::ErrorType e_type = err->GetErrorType();
     if (e_type != common::INTERRUPTED_TYPE) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     client->Close();
     delete client;
@@ -169,7 +169,7 @@ void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::
     fastotv::inner::InnerClient* client = inner_connection_;
     common::Error err = client->Write(ping_request);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       client->Close();
       delete client;
     }
@@ -185,7 +185,7 @@ void InnerTcpHandler::RequestServerInfo() {
   fastotv::inner::InnerClient* client = inner_connection_;
   common::Error err = client->Write(channels_request);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     client->Close();
     delete client;
   }
@@ -200,7 +200,7 @@ void InnerTcpHandler::RequestChannels() {
   fastotv::inner::InnerClient* client = inner_connection_;
   common::Error err = client->Write(channels_request);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     client->Close();
     delete client;
   }
@@ -214,7 +214,7 @@ void InnerTcpHandler::PostMessageToChat(const ChatMessage& msg) {
   serializet_t msg_ser;
   common::Error err = msg.SerializeToString(&msg_ser);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return;
   }
 
@@ -222,7 +222,7 @@ void InnerTcpHandler::PostMessageToChat(const ChatMessage& msg) {
   fastotv::inner::InnerClient* client = inner_connection_;
   err = client->Write(channels_request);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     client->Close();
     delete client;
   }
@@ -237,7 +237,7 @@ void InnerTcpHandler::RequesRuntimeChannelInfo(stream_id sid) {
   fastotv::inner::InnerClient* client = inner_connection_;
   common::Error err = client->Write(channels_request);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     client->Close();
     delete client;
   }
@@ -254,7 +254,7 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
   common::net::socket_info client_info;
   common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, 0, &client_info);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     player::gui::events::ConnectInfo cinf(host);
     auto ex_event = common::make_exception_event(new player::gui::events::ClientConnectedEvent(this, cinf), err);
     fApp->PostEvent(ex_event);
@@ -320,14 +320,14 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     const cmd_responce_t pong = PingResponceSuccsess(id, ping_str);
     err = connection->Write(pong);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU)) {
     json_object* jauth = NULL;
     common::Error err = config_.ainf.Serialize(&jauth);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       return;
     }
 
@@ -336,7 +336,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     cmd_responce_t iAm = WhoAreYouResponceSuccsess(id, auth_str);
     err = connection->Write(iAm);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO)) {
@@ -356,27 +356,27 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     serializet_t info_json_string;
     common::Error err = info.SerializeToString(&info_json_string);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       return;
     }
 
     cmd_responce_t resp = SystemInfoResponceSuccsess(id, info_json_string);
     err = connection->Write(resp);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
     if (argc < 2 || !argv[1]) {
       common::Error parse_err = common::make_inval_error_value(common::ERROR_TYPE);
-      DEBUG_MSG_ERROR(parse_err);
+      DEBUG_MSG_ERROR(parse_err, common::logging::LOG_LEVEL_ERR);
       return;
     }
 
     json_object* jmsg = json_tokener_parse(argv[1]);
     if (!jmsg) {
       common::Error parse_err = common::make_inval_error_value(common::ERROR_TYPE);
-      DEBUG_MSG_ERROR(parse_err);
+      DEBUG_MSG_ERROR(parse_err, common::logging::LOG_LEVEL_ERR);
       return;
     }
 
@@ -392,7 +392,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     cmd_responce_t resp = SystemInfoResponceSuccsess(id, msg_str);
     err = connection->Write(resp);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     return;
   }
@@ -409,13 +409,13 @@ void InnerTcpHandler::HandleInnerResponceCommand(fastotv::inner::InnerClient* co
   if (IS_EQUAL_COMMAND(state_command, SUCCESS_COMMAND) && argc > 1) {
     common::Error err = HandleInnerSuccsessResponceCommand(connection, id, argc, argv);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     return;
   } else if (IS_EQUAL_COMMAND(state_command, FAIL_COMMAND) && argc > 1) {
     common::Error err = HandleInnerFailedResponceCommand(connection, id, argc, argv);
     if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     return;
   }

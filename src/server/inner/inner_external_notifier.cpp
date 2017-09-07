@@ -141,7 +141,7 @@ void InnerSubHandler::PublishResponce(const ResponceInfo& resp) {
   std::string resp_str;
   common::Error err = resp.SerializeToString(&resp_str);
   if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return;
   }
 
