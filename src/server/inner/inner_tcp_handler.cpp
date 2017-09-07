@@ -27,7 +27,6 @@
 #include <common/libev/io_loop.h>           // for IoLoop
 #include <common/logger.h>                  // for COMPACT_LOG_WARNING
 #include <common/threads/thread_manager.h>  // for THREAD_MANAGER
-#include <common/value.h>                   // for Value, Value::Erro...
 
 #include "auth_info.h"            // for AuthInfo
 #include "channels_info.h"        // for ChannelsInfo
@@ -357,7 +356,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       }
       return;
     } else {
-      common::Error err = common::make_inval_error_value(common::Value::E_ERROR);
+      common::Error err = common::make_inval_error_value(common::ERROR_TYPE);
       cmd_responce_t resp = GetRuntimeChannelInfoResponceFail(id, err->GetDescription());
       err = connection->Write(resp);
       if (err && err->IsError()) {
@@ -373,7 +372,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       serializet_t msg_str = argv[1];
       json_object* jmsg = json_tokener_parse(argv[1]);
       if (!jmsg) {
-        common::Error err = common::make_inval_error_value(common::Value::E_ERROR);
+        common::Error err = common::make_inval_error_value(common::ERROR_TYPE);
         cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
         err = connection->Write(resp);
         if (err && err->IsError()) {
@@ -406,7 +405,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       }
       return;
     } else {
-      common::Error err = common::make_inval_error_value(common::Value::E_ERROR);
+      common::Error err = common::make_inval_error_value(common::ERROR_TYPE);
       cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
       err = connection->Write(resp);
       if (err && err->IsError()) {
@@ -446,7 +445,7 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
   }
 
   const std::string error_str = common::MemSPrintf("UNKNOWN STATE COMMAND: %s", state_command);
-  common::Error err = common::make_error_value(error_str, common::Value::E_ERROR);
+  common::Error err = common::make_error_value(error_str, common::ERROR_TYPE);
   DEBUG_MSG_ERROR(err);
   connection->Close();
   delete connection;
@@ -505,7 +504,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
 
     if (!uauth.IsValid()) {
-      common::Error lerr = common::make_inval_error_value(common::Value::E_ERROR);
+      common::Error lerr = common::make_inval_error_value(common::ERROR_TYPE);
       cmd_approve_t resp = WhoAreYouApproveResponceFail(id, lerr->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
@@ -590,7 +589,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     }
 
     if (!cinf.IsValid()) {
-      common::Error lerr = common::make_inval_error_value(common::Value::E_ERROR);
+      common::Error lerr = common::make_inval_error_value(common::ERROR_TYPE);
       cmd_approve_t resp = SystemInfoApproveResponceFail(id, lerr->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
@@ -632,7 +631,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
   }
 
   const std::string error_str = common::MemSPrintf("UNKNOWN RESPONCE COMMAND: %s", command);
-  return common::make_error_value(error_str, common::Value::E_ERROR);
+  return common::make_error_value(error_str, common::ERROR_TYPE);
 }
 
 common::Error InnerTcpHandlerHost::HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
@@ -646,7 +645,7 @@ common::Error InnerTcpHandlerHost::HandleInnerFailedResponceCommand(fastotv::inn
   char* command = argv[1];
   const std::string error_str =
       common::MemSPrintf("Sorry now we can't handle failed pesponce for command: %s", command);
-  return common::make_error_value(error_str, common::Value::E_ERROR);
+  return common::make_error_value(error_str, common::ERROR_TYPE);
 }
 
 void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
@@ -686,17 +685,17 @@ void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient*
 
 common::Error InnerTcpHandlerHost::ParserResponceResponceCommand(int argc, char* argv[], json_object** out) {
   if (argc < 2) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   const char* arg_2_str = argv[2];
   if (!arg_2_str) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   json_object* obj = json_tokener_parse(arg_2_str);
   if (!obj) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   *out = obj;

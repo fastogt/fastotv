@@ -132,8 +132,8 @@ void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
   size_t nwread;
   common::Error err = band_client->Read(buff, bandwidth::TcpBandwidthClient::max_payload_len, &nwread);
   if (err && err->IsError()) {
-    common::Value::ErrorsType e_type = err->GetErrorType();
-    if (e_type != common::Value::E_INTERRUPTED) {
+    common::ErrorType e_type = err->GetErrorType();
+    if (e_type != common::INTERRUPTED_TYPE) {
       DEBUG_MSG_ERROR(err);
     }
     client->Close();
@@ -248,7 +248,7 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
     return;
   }
 
-  DisConnect(common::make_error_value("Reconnect", common::Value::E_ERROR));
+  DisConnect(common::make_error_value("Reconnect", common::ERROR_TYPE));
 
   common::net::HostAndPort host = config_.inner_host;
   common::net::socket_info client_info;
@@ -280,7 +280,7 @@ common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(common::libev:
                                                                   BandwidthHostType hs,
                                                                   bandwidth::TcpBandwidthClient** out_band) {
   if (!server || !out_band) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   common::net::socket_info client_info;
@@ -368,14 +368,14 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
     if (argc < 2 || !argv[1]) {
-      common::Error parse_err = common::make_inval_error_value(common::Value::E_ERROR);
+      common::Error parse_err = common::make_inval_error_value(common::ERROR_TYPE);
       DEBUG_MSG_ERROR(parse_err);
       return;
     }
 
     json_object* jmsg = json_tokener_parse(argv[1]);
     if (!jmsg) {
-      common::Error parse_err = common::make_inval_error_value(common::Value::E_ERROR);
+      common::Error parse_err = common::make_inval_error_value(common::ERROR_TYPE);
       DEBUG_MSG_ERROR(parse_err);
       return;
     }
@@ -447,7 +447,7 @@ void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* con
       const char* failed_resp_command = argv[1];
       if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING)) {
       } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU)) {
-        common::Error err = common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::Value::E_ERROR);
+        common::Error err = common::make_error_value(argc > 2 ? argv[2] : "Unknown", common::ERROR_TYPE);
         auto ex_event =
             common::make_exception_event(new player::gui::events::ClientAuthorizedEvent(this, config_.ainf), err);
         fApp->PostEvent(ex_event);
@@ -580,7 +580,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
   }
 
   const std::string error_str = common::MemSPrintf("UNKNOWN RESPONCE COMMAND: %s", command);
-  return common::make_error_value(error_str, common::Value::E_ERROR);
+  return common::make_error_value(error_str, common::ERROR_TYPE);
 }
 
 common::Error InnerTcpHandler::HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
@@ -594,22 +594,22 @@ common::Error InnerTcpHandler::HandleInnerFailedResponceCommand(fastotv::inner::
   char* command = argv[1];
   const std::string error_str =
       common::MemSPrintf("Sorry now we can't handle failed pesponce for command: %s", command);
-  return common::make_error_value(error_str, common::Value::E_ERROR);
+  return common::make_error_value(error_str, common::ERROR_TYPE);
 }
 
 common::Error InnerTcpHandler::ParserResponceResponceCommand(int argc, char* argv[], json_object** out) {
   if (argc < 2) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   const char* arg_2_str = argv[2];
   if (!arg_2_str) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   json_object* obj = json_tokener_parse(arg_2_str);
   if (!obj) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   *out = obj;

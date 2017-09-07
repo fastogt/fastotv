@@ -20,6 +20,7 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <unordered_map>
 
 #include <common/error.h>   // for Error
 #include <common/macros.h>  // for WARN_UNUSED_RESULT, DISALLOW_COPY_...

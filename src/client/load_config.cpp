@@ -285,7 +285,7 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
 
 common::Error load_config_file(const std::string& config_absolute_path, player::TVConfig* options) {
   if (!options) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   std::string copy_config_absolute_path = config_absolute_path;
@@ -302,7 +302,7 @@ common::Error load_config_file(const std::string& config_absolute_path, player::
 
 common::Error save_config_file(const std::string& config_absolute_path, player::TVConfig* options) {
   if (!options || config_absolute_path.empty()) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   common::file_system::ascii_string_path config_path(config_absolute_path);

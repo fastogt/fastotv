@@ -50,7 +50,7 @@ common::Error InnerClient::Write(const cmd_approve_t& approve) {
 
 common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
   if (!sz) {
-    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   protocoled_size_t lsz = 0;
@@ -62,11 +62,11 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
 
   if (nread != sizeof(protocoled_size_t)) {  // connection closed
     if (nread == 0) {
-      return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
+      return common::make_error_value("Connection closed", common::ERROR_TYPE);
     }
     return common::make_error_value(common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
                                                        sizeof(protocoled_size_t), nread),
-                                    common::ErrorValue::E_ERROR);
+                                    common::ERROR_TYPE);
   }
 
   *sz = lsz;
@@ -75,7 +75,7 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
 
 common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
   if (!out || size == 0) {
-    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   size_t nread;
@@ -86,11 +86,11 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
 
   if (nread != size) {  // connection closed
     if (nread == 0) {
-      return common::make_error_value("Connection closed", common::ErrorValue::E_ERROR);
+      return common::make_error_value("Connection closed", common::ERROR_TYPE);
     }
     return common::make_error_value(
         common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu", size, nread),
-        common::ErrorValue::E_ERROR);
+        common::ERROR_TYPE);
   }
 
   return common::Error();
@@ -98,7 +98,7 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
 
 common::Error InnerClient::ReadCommand(std::string* out) {
   if (!out) {
-    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   protocoled_size_t message_size;
@@ -129,7 +129,7 @@ common::Error InnerClient::ReadCommand(std::string* out) {
 
 common::Error InnerClient::WriteMessage(const std::string& message) {
   if (message.empty()) {
-    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   std::string compressed;
@@ -154,7 +154,7 @@ common::Error InnerClient::WriteMessage(const std::string& message) {
     free(protocoled_data);
     return common::make_error_value(
         common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu", protocoled_data_len, nwrite),
-        common::ErrorValue::E_ERROR);
+        common::ERROR_TYPE);
   }
 
   free(protocoled_data);

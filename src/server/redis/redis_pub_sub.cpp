@@ -102,7 +102,7 @@ common::Error RedisPubSub::PublishToChannelOut(const std::string& msg) {
 
 common::Error RedisPubSub::Publish(const std::string& channel, const std::string& msg) {
   if (channel.empty() || msg.empty()) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   redisContext* redis_sub = NULL;
@@ -112,14 +112,14 @@ common::Error RedisPubSub::Publish(const std::string& channel, const std::string
   }
 
   if (channel.empty() || msg.empty()) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   const char* chn = channel.c_str();
   const char* m = msg.c_str();
   void* rreply = redisCommand(redis_sub, "PUBLISH %s %s", chn, m);
   if (!rreply) {
-    err = common::make_error_value(redis_sub->errstr, common::Value::E_ERROR);
+    err = common::make_error_value(redis_sub->errstr, common::ERROR_TYPE);
     redisFree(redis_sub);
     return err;
   }

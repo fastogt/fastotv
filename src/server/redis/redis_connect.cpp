@@ -31,14 +31,14 @@ namespace redis {
 
 common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisContext** conn) {
   if (!conn || !host.IsValid()) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   const std::string host_str = host.GetHost();
   struct redisContext* redis = redisConnect(host_str.c_str(), host.GetPort());
   if (!redis || redis->err) {
     if (redis) {
-      common::Error err = common::make_error_value(redis->errstr, common::Value::E_ERROR);
+      common::Error err = common::make_error_value(redis->errstr, common::ERROR_TYPE);
       redisFree(redis);
       redis = NULL;
       return err;
@@ -46,7 +46,7 @@ common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisConte
 
     return common::make_error_value(
         common::MemSPrintf("Could not connect to Redis at %s:%u : no context", host_str, host.GetPort()),
-        common::Value::E_ERROR);
+        common::ERROR_TYPE);
   }
 
   *conn = redis;
@@ -55,20 +55,20 @@ common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisConte
 
 common::Error redis_unix_connect(const std::string& unix_path, redisContext** conn) {
   if (!conn || unix_path.empty()) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   struct redisContext* redis = redisConnectUnix(unix_path.c_str());
   if (!redis || redis->err) {
     if (redis) {
-      common::Error err = common::make_error_value(redis->errstr, common::Value::E_ERROR);
+      common::Error err = common::make_error_value(redis->errstr, common::ERROR_TYPE);
       redisFree(redis);
       redis = NULL;
       return err;
     }
 
     return common::make_error_value(common::MemSPrintf("Could not connect to Redis at %s : no context", unix_path),
-                                    common::Value::E_ERROR);
+                                    common::ERROR_TYPE);
   }
 
   *conn = redis;
@@ -77,14 +77,14 @@ common::Error redis_unix_connect(const std::string& unix_path, redisContext** co
 
 common::Error redis_connect(const RedisConfig& config, redisContext** conn) {
   if (!conn) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   const common::net::HostAndPort redis_host = config.redis_host;
   const std::string unix_path = config.redis_unix_socket;
 
   if (!redis_host.IsValid() && unix_path.empty()) {
-    return common::make_inval_error_value(common::Value::E_ERROR);
+    return common::make_inval_error_value(common::ERROR_TYPE);
   }
 
   if (unix_path.empty()) {
