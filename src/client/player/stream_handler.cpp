@@ -41,7 +41,7 @@ void StreamHandler::HandleFrameResize(media::VideoState* stream,
 void StreamHandler::HandleQuitStream(media::VideoState* stream, int exit_code, common::Error err) {
   gui::events::QuitStreamEvent* qevent =
       new gui::events::QuitStreamEvent(stream, gui::events::QuitStreamInfo(stream, exit_code));
-  if (err && err->IsError()) {
+  if (err) {
     fApp->PostEvent(common::make_exception_event(qevent, err));
     return;
   }

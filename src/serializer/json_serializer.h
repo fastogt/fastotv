@@ -40,7 +40,7 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
   virtual common::Error SerializeToString(std::string* deserialized) const override final {
     serialize_type des = NULL;
     common::Error err = base_class::Serialize(&des);
-    if (err && err->IsError()) {
+    if (err) {
       return err;
     }
 
@@ -53,7 +53,7 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
     const char* data_ptr = data.c_str();
     serialize_type res = json_tokener_parse(data_ptr);
     if (!res) {
-      return common::make_inval_error_value(common::ERROR_TYPE);
+      return common::make_error_inval(common::ERROR_TYPE);
     }
 
     *out = res;

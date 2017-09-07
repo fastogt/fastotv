@@ -61,8 +61,8 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   }
 
   fastotv::client::player::TVConfig main_options;
-  common::Error err = fastotv::client::load_config_file(config_absolute_path, &main_options);
-  if (err && err->IsError()) {
+  common::ErrnoError err = fastotv::client::load_config_file(config_absolute_path, &main_options);
+  if (err) {
     return EXIT_FAILURE;
   }
 
@@ -96,8 +96,8 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   // save config file
   err = fastotv::client::save_config_file(config_absolute_path, &main_options);
   if (main_options.power_off_on_exit) {
-    common::Error err_shut = common::system::Shutdown(common::system::SHUTDOWN);
-    if (err_shut && err_shut->IsError()) {
+    common::ErrnoError err_shut = common::system::Shutdown(common::system::SHUTDOWN);
+    if (err_shut) {
       WARNING_LOG() << "Can't shutdown error: " << err_shut->GetDescription();
     }
   }

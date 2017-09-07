@@ -227,7 +227,7 @@ common::Error ISimplePlayer::HandleRequestAudio(media::VideoState* stream,
   int laudio_buff_size;
   if (!media::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, sdl_audio_callback,
                          &laudio_hw_params, &laudio_buff_size)) {
-    return common::make_error_value("Can't init audio system.", common::ERROR_TYPE);
+    return common::make_error("Can't init audio system.", common::ERROR_TYPE);
   }
 
   SDL_PauseAudio(0);
@@ -251,7 +251,7 @@ common::Error ISimplePlayer::HandleRequestVideo(media::VideoState* stream,
   UNUSED(av_pixel_format);
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   SDL_Rect rect = CalculateDisplayRect(xleft_, ytop_, INT_MAX, height, width, height, aspect_ratio);
@@ -269,7 +269,7 @@ void ISimplePlayer::HandleRequestVideoEvent(gui::events::RequestVideoEvent* even
   gui::events::RequestVideoEvent* avent = static_cast<gui::events::RequestVideoEvent*>(event);
   gui::events::FrameInfo fr = avent->GetInfo();
   common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
-  if (err && err->IsError()) {
+  if (err) {
     SwitchToChannelErrorMode(err);
     Quit();
   }
@@ -600,7 +600,7 @@ void ISimplePlayer::DrawPlayingStatus() {
     media::VideoState::stats_t stats = stream_->GetStatistic();
     media::clock64_t cl = stats->master_pts;
     if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != media::invalid_clock())) {
-      common::Error err = common::make_error_value("No input data!", common::ERROR_TYPE);
+      common::Error err = common::make_error("No input data!", common::ERROR_TYPE);
       SwitchToChannelErrorMode(err);
       last_pts_checkpoint_ = media::invalid_clock();
       return;
@@ -630,13 +630,14 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                                             "to reduce the image size.";
+                << width << "x" << height
+                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                   "to reduce the image size.";
     return;
   }
 
   common::Error err = UploadTexture(texture, frame->frame);
-  if (err && err->IsError()) {
+  if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return;
   }
@@ -774,7 +775,7 @@ void ISimplePlayer::InitWindow(const std::string& title, States status) {
   CalculateDispalySize();
   if (!window_) {
     common::Error err = draw::CreateMainWindow(window_size_, options_.is_full_screen, title, &renderer_, &window_);
-    if (err && err->IsError()) {
+    if (err) {
       return;
     }
     OnWindowCreated(window_, renderer_);
@@ -825,7 +826,7 @@ void ISimplePlayer::SetStream(media::VideoState* stream) {
   stream_ = stream;
 
   if (!stream_) {
-    common::Error err = common::make_error_value("Failed to create stream", common::ERROR_TYPE);
+    common::Error err = common::make_error("Failed to create stream", common::ERROR_TYPE);
     SwitchToChannelErrorMode(err);
     return;
   }
@@ -834,7 +835,7 @@ void ISimplePlayer::SetStream(media::VideoState* stream) {
   exec_tid_ = THREAD_MANAGER()->CreateThread(&media::VideoState::Exec, stream_);
   bool is_started = exec_tid_->Start();
   if (!is_started) {
-    common::Error err = common::make_error_value("Failed to start stream", common::ERROR_TYPE);
+    common::Error err = common::make_error("Failed to start stream", common::ERROR_TYPE);
     SwitchToChannelErrorMode(err);
   }
 }

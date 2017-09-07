@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <common/time.h>
+
 #include "client/player/gui/widgets/label.h"
 
 #include "client/player/gui/events/key_events.h"

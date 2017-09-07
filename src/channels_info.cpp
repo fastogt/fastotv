@@ -52,7 +52,7 @@ common::Error ChannelsInfo::SerializeImpl(serialize_type* deserialized) const {
   for (ChannelInfo url : channels_) {
     json_object* jurl = NULL;
     common::Error err = url.Serialize(&jurl);
-    if (err && err->IsError()) {
+    if (err) {
       continue;
     }
     json_object_array_add(jchannels, jurl);
@@ -64,7 +64,7 @@ common::Error ChannelsInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error ChannelsInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   channels_t chan;
@@ -73,7 +73,7 @@ common::Error ChannelsInfo::DeSerialize(const serialize_type& serialized, value_
     json_object* jurl = json_object_array_get_idx(serialized, i);
     ChannelInfo url;
     common::Error err = ChannelInfo::DeSerialize(jurl, &url);
-    if (err && err->IsError()) {
+    if (err) {
       continue;
     }
     chan.push_back(url);

@@ -104,7 +104,7 @@ ChannelType RuntimeChannelInfo::GetChannelType() const {
 
 common::Error RuntimeChannelInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   json_object* obj = json_object_new_object();
@@ -112,7 +112,7 @@ common::Error RuntimeChannelInfo::SerializeImpl(serialize_type* deserialized) co
   for (size_t i = 0; i < messages_.size(); ++i) {
     serialize_type jmsg = NULL;
     common::Error err = messages_[i].Serialize(&jmsg);
-    if (err && err->IsError()) {
+    if (err) {
       continue;
     }
     json_object_array_add(jmsgs, jmsg);
@@ -130,7 +130,7 @@ common::Error RuntimeChannelInfo::SerializeImpl(serialize_type* deserialized) co
 
 common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   RuntimeChannelInfo inf;
@@ -144,11 +144,11 @@ common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, 
   json_object* jcid = NULL;
   json_bool jcid_exists = json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD, &jcid);
   if (!jcid_exists) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
   stream_id cid = json_object_get_string(jcid);
   if (cid == invalid_stream_id) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
   inf.channel_id_ = cid;
 
@@ -182,7 +182,7 @@ common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, 
       json_object* jmess = json_object_array_get_idx(jmsgs, i);
       ChatMessage msg;
       common::Error err = ChatMessage::DeSerialize(jmess, &msg);
-      if (err && err->IsError()) {
+      if (err) {
         continue;
       }
       msgs.push_back(msg);

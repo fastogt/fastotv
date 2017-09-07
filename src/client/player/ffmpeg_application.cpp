@@ -153,7 +153,7 @@ int FFmpegApplication::PostExecImpl() {
 int prepare_to_start(const std::string& app_directory_absolute_path) {
   if (!common::file_system::is_directory_exist(app_directory_absolute_path)) {
     common::ErrnoError err = common::file_system::create_directory(app_directory_absolute_path, true);
-    if (err && err->IsError()) {
+    if (err) {
       std::cout << "Can't create app directory error:(" << err->GetDescription()
                 << "), path: " << app_directory_absolute_path << std::endl;
       return EXIT_FAILURE;
@@ -161,7 +161,7 @@ int prepare_to_start(const std::string& app_directory_absolute_path) {
   }
 
   common::ErrnoError err = common::file_system::node_access(app_directory_absolute_path);
-  if (err && err->IsError()) {
+  if (err) {
     std::cout << "Can't have permissions to app directory path: " << app_directory_absolute_path << std::endl;
     return EXIT_FAILURE;
   }

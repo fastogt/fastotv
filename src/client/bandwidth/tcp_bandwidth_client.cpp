@@ -57,7 +57,7 @@ common::Error TcpBandwidthClient::StartSession(uint16_t ms_betwen_send, common::
   session_pkt->iat = ms_betwen_send;
   size_t writed = 0;
   common::Error err = Write(bytes, buff_size, &writed);
-  if (err && err->IsError()) {
+  if (err) {
     return err;
   }
 
@@ -79,7 +79,7 @@ BandwidthHostType TcpBandwidthClient::GetHostType() const {
 
 common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
   common::Error err = base_class::Read(out, size, nread);
-  if (err && err->IsError()) {
+  if (err) {
     return err;
   }
 
@@ -91,7 +91,7 @@ common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
   const common::time64_t data_interval = cur_ts - start_ts_;
   if (duration_ && data_interval >= duration_) {
     downloaded_bytes_per_sec_ = player::media::CalculateBandwidth(total_downloaded_bytes_, data_interval);
-    return common::make_error_value("Bandwidth calculation finished!", common::INTERRUPTED_TYPE);
+    return common::make_error("Bandwidth calculation finished!", common::INTERRUPTED_TYPE);
   }
   return common::Error();
 }

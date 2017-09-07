@@ -33,26 +33,26 @@ namespace inputs {
 
 common::Error LircInit(int* fd, struct lirc_config** cfg) {
   if (!fd || !cfg) {
-    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   char* copy = common::strdup(PROJECT_NAME_LOWERCASE);  // copy for removing warning
   int lfd = lirc_init(copy, 1);
   common::utils::freeifnotnull(copy);
   if (lfd == -1) {
-    return common::make_error_value("Lirc init failed!", common::Value::E_ERROR);
+    return common::make_error("Lirc init failed!", common::ERROR_TYPE);
   }
 
   common::ErrnoError err = common::net::set_blocking_socket(lfd, false);
-  if (err && err->IsError()) {
-    return err;
+  if (err) {
+    return common::ErrorValue(err->GetDescription(), common::ERROR_TYPE);
   }
 
   lirc_config* lcfg = NULL;
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string lirc_config_path = common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
   if (lirc_config_path.empty()) {
-    return common::make_error_value("Lirc invalid config path!", common::Value::E_ERROR);
+    return common::make_error("Lirc invalid config path!", common::ERROR_TYPE);
   }
 
   const char* lirc_config_path_ptr = lirc_config_path.c_str();
@@ -62,7 +62,7 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   if (res == -1) {
     LircDeinit(lfd, NULL);
     std::string msg_error = common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
-    return common::make_error_value(msg_error, common::Value::E_ERROR);
+    return common::make_error(msg_error, common::ERROR_TYPE);
   }
 
   *fd = lfd;
@@ -76,7 +76,7 @@ common::Error LircDeinit(int fd, struct lirc_config** cfg) {
   }
 
   if (lirc_deinit() == -1) {
-    return common::make_error_value("Lirc deinit failed!", common::Value::E_ERROR);
+    return common::make_error("Lirc deinit failed!", common::ERROR_TYPE);
   }
 
   if (cfg) {
@@ -112,21 +112,30 @@ int LircInputClient::GetFd() const {
 }
 
 common::Error LircInputClient::Write(const char* data, size_t size, size_t* nwrite) {
-  return sock_.Write(data, size, nwrite);
+  common::ErrnoError err = sock_.Write(data, size, nwrite);
+  if (err) {
+    return common::ErrorValue(err->GetDescription(), common::ERROR_TYPE);
+  }
+
+  return common::Error();
 }
 
 common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
   if (!out || !nread) {
-    return common::make_inval_error_value(common::ErrorValue::E_ERROR);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
-  return sock_.Read(out, max_size, nread);
+  common::ErrnoError err = sock_.Read(out, max_size, nread);
+  if (err) {
+    return common::ErrorValue(err->GetDescription(), common::ERROR_TYPE);
+  }
+  return common::Error();
 }
 
 common::Error LircInputClient::CloseImpl() {
   common::Error err = LircDeinit(sock_.GetFd(), &cfg_);
-  if (err && err->IsError()) {
-    DEBUG_MSG_ERROR(err);
+  if (err) {
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
   }
   return err;
 }

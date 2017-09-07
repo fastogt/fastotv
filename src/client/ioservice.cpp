@@ -64,8 +64,8 @@ class PrivateHandler : public inner::InnerTcpHandler {
     int fd = INVALID_DESCRIPTOR;
     struct lirc_config* lcd = NULL;
     common::Error err = inputs::LircInit(&fd, &lcd);
-    if (err && err->IsError()) {
-      DEBUG_MSG_ERROR(err);
+    if (err) {
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     } else {
       client_ = new inputs::LircInputClient(server, fd, lcd);
       server->RegisterClient(client_);

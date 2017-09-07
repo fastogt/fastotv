@@ -50,23 +50,23 @@ common::Error InnerClient::Write(const cmd_approve_t& approve) {
 
 common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
   if (!sz) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   protocoled_size_t lsz = 0;
   size_t nread = 0;
   common::Error err = Read(reinterpret_cast<char*>(&lsz), sizeof(protocoled_size_t), &nread);
-  if (err && err->IsError()) {
+  if (err) {
     return err;
   }
 
   if (nread != sizeof(protocoled_size_t)) {  // connection closed
     if (nread == 0) {
-      return common::make_error_value("Connection closed", common::ERROR_TYPE);
+      return common::make_error("Connection closed", common::ERROR_TYPE);
     }
-    return common::make_error_value(common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
-                                                       sizeof(protocoled_size_t), nread),
-                                    common::ERROR_TYPE);
+    return common::make_error(common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
+                                                 sizeof(protocoled_size_t), nread),
+                              common::ERROR_TYPE);
   }
 
   *sz = lsz;
@@ -75,20 +75,20 @@ common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
 
 common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
   if (!out || size == 0) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   size_t nread;
   common::Error err = Read(out, size, &nread);
-  if (err && err->IsError()) {
+  if (err) {
     return err;
   }
 
   if (nread != size) {  // connection closed
     if (nread == 0) {
-      return common::make_error_value("Connection closed", common::ERROR_TYPE);
+      return common::make_error("Connection closed", common::ERROR_TYPE);
     }
-    return common::make_error_value(
+    return common::make_error(
         common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu", size, nread),
         common::ERROR_TYPE);
   }
@@ -98,19 +98,19 @@ common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
 
 common::Error InnerClient::ReadCommand(std::string* out) {
   if (!out) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   protocoled_size_t message_size;
   common::Error err = ReadDataSize(&message_size);
-  if (err && err->IsError()) {
+  if (err) {
     return err;
   }
 
   message_size = common::NetToHost32(message_size);  // stable
   char* msg = static_cast<char*>(malloc(message_size));
   err = ReadMessage(msg, message_size);
-  if (err && err->IsError()) {
+  if (err) {
     free(msg);
     return err;
   }
@@ -119,7 +119,7 @@ common::Error InnerClient::ReadCommand(std::string* out) {
   std::string un_compressed;
   err = compressor_->Decode(compressed, &un_compressed);
   free(msg);
-  if (err && err->IsError()) {
+  if (err) {
     return err;
   }
 
@@ -129,12 +129,12 @@ common::Error InnerClient::ReadCommand(std::string* out) {
 
 common::Error InnerClient::WriteMessage(const std::string& message) {
   if (message.empty()) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   std::string compressed;
   common::Error err = compressor_->Encode(message, &compressed);
-  if (err && err->IsError()) {
+  if (err) {
     return err;
   }
 
@@ -152,7 +152,7 @@ common::Error InnerClient::WriteMessage(const std::string& message) {
   err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);
   if (nwrite != protocoled_data_len) {  // connection closed
     free(protocoled_data);
-    return common::make_error_value(
+    return common::make_error(
         common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu", protocoled_data_len, nwrite),
         common::ERROR_TYPE);
   }

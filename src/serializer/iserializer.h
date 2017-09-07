@@ -32,7 +32,7 @@ class ISerializer {
 
   common::Error Serialize(serialize_type* deserialized) const WARN_UNUSED_RESULT {
     if (!deserialized) {
-      return common::make_inval_error_value(common::ERROR_TYPE);
+      return common::make_error_inval(common::ERROR_TYPE);
     }
     return SerializeImpl(deserialized);
   }

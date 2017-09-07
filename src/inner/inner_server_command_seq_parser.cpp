@@ -93,7 +93,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   std::string cmd_str;
 
   common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
-  if (err && err->IsError()) {
+  if (err) {
     WARNING_LOG() << err->GetDescription();
     connection->Close();
     delete connection;

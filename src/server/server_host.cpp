@@ -39,14 +39,14 @@
 namespace fastotv {
 namespace {
 int exec_server(common::libev::tcp::TcpServer* server) {
-  common::Error err = server->Bind(true);
-  if (err && err->IsError()) {
+  common::ErrnoError err = server->Bind(true);
+  if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return EXIT_FAILURE;
   }
 
   err = server->Listen(5);
-  if (err && err->IsError()) {
+  if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return EXIT_FAILURE;
   }
@@ -104,12 +104,12 @@ common::Error ServerHost::UnRegisterInnerConnectionByHost(common::libev::IoClien
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   user_id_t uid = iconnection->GetUid();
   if (uid.empty()) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   connections_.erase(uid);
@@ -123,7 +123,7 @@ common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   iconnection->SetServerHostInfo(user);

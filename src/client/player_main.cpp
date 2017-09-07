@@ -63,8 +63,8 @@ int main_simple_player_application(int argc,
   }
 
   fastotv::client::player::TVConfig main_options;
-  common::Error err = fastotv::client::load_config_file(config_absolute_path, &main_options);
-  if (err && err->IsError()) {
+  common::ErrnoError err = fastotv::client::load_config_file(config_absolute_path, &main_options);
+  if (err) {
     return EXIT_FAILURE;
   }
 

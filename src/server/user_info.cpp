@@ -42,7 +42,7 @@ bool UserInfo::IsValid() const {
 
 common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   json_object* obj = json_object_new_object();
@@ -52,7 +52,7 @@ common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
 
   json_object* jchannels = NULL;
   common::Error err = ch_.Serialize(&jchannels);
-  if (err && err->IsError()) {
+  if (err) {
     return err;
   }
   json_object_object_add(obj, USER_INFO_CHANNELS_FIELD, jchannels);
@@ -70,7 +70,7 @@ common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
 
   ChannelsInfo chan;
@@ -78,7 +78,7 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
   json_bool jchan_exists = json_object_object_get_ex(serialized, USER_INFO_CHANNELS_FIELD, &jchan);
   if (jchan_exists) {
     common::Error err = ChannelsInfo::DeSerialize(jchan, &chan);
-    if (err && err->IsError()) {
+    if (err) {
       return err;
     }
   }
@@ -87,7 +87,7 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, USER_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
   login = json_object_get_string(jlogin);
 
@@ -95,7 +95,7 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
   json_object* jpassword = NULL;
   json_bool jpassword_exists = json_object_object_get_ex(serialized, USER_INFO_PASSWORD_FIELD, &jpassword);
   if (!jpassword_exists) {
-    return common::make_inval_error_value(common::ERROR_TYPE);
+    return common::make_error_inval(common::ERROR_TYPE);
   }
   password = json_object_get_string(jpassword);
 

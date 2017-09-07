@@ -58,7 +58,7 @@ class FakeHandler : public VideoStateHandler {
 
     player::media::AudioParams laudio_hw_params;
     if (!player::media::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
-      return common::make_error_value("Failed to init audio.", common::ERROR_TYPE);
+      return common::make_error("Failed to init audio.", common::ERROR_TYPE);
     }
 
     *audio_hw_params = laudio_hw_params;
@@ -99,7 +99,7 @@ class FakeHandler : public VideoStateHandler {
 
   virtual void HandleQuitStream(VideoState* stream, int exit_code, common::Error err) override {
     events::QuitStreamEvent* qevent = new events::QuitStreamEvent(stream, events::QuitStreamInfo(stream, exit_code));
-    if (err && err->IsError()) {
+    if (err) {
       fApp->PostEvent(common::make_exception_event(qevent, err));
       return;
     }
@@ -169,7 +169,7 @@ class FakeApplication : public common::application::IApplication {
       player::gui::events::RequestVideoEvent* avent = static_cast<player::gui::events::RequestVideoEvent*>(event);
       player::gui::events::FrameInfo fr = avent->GetInfo();
       common::Error err = fr.stream_->RequestVideo(fr.width, fr.height, fr.av_pixel_format, fr.aspect_ratio);
-      if (err && err->IsError()) {
+      if (err) {
         fApp->Exit(EXIT_FAILURE);
       }
     } else if (fevent->GetEventType() == player::gui::events::QuitStreamEvent::EventType) {

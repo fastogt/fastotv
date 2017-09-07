@@ -416,7 +416,7 @@ int VideoState::StreamComponentOpen(int stream_index) {
 
     common::Error err =
         handler_->HandleRequestAudio(this, channel_layout, nb_channels, sample_rate, &audio_tgt_, &audio_buff_size);
-    if (err && err->IsError()) {
+    if (err) {
       avcodec_free_context(&avctx);
       av_dict_free(&opts);
       return ret;
@@ -1183,10 +1183,9 @@ int VideoState::ReadRoutine() {
   AVFormatContext* ic = avformat_alloc_context();
   if (!ic) {
     const int av_errno = AVERROR(ENOMEM);
-    common::Error err =
-        common::make_error_value_errno(AVUNERROR(av_errno), common::SYSTEM_ERRNO, common::ERROR_TYPE);
+    common::ErrnoError err = common::make_errno_error(AVUNERROR(av_errno), common::ERROR_TYPE);
     if (handler_) {
-      handler_->HandleQuitStream(this, av_errno, err);
+      handler_->HandleQuitStream(this, av_errno, common::make_error_from_errno(err));
     }
     return ERROR_RESULT_VALUE;
   }
@@ -1194,7 +1193,7 @@ int VideoState::ReadRoutine() {
   bool scan_all_pmts_set = false;
   const std::string uri_str = make_url(uri_);
   if (uri_str.empty()) {
-    common::Error err = common::make_inval_error_value(common::ERROR_TYPE);
+    common::Error err = common::make_error_inval(common::ERROR_TYPE);
     if (handler_) {
       handler_->HandleQuitStream(this, EINVAL, err);
     }
@@ -1212,7 +1211,7 @@ int VideoState::ReadRoutine() {
   int open_result = avformat_open_input(&ic, in_filename, NULL, &copt_.format_opts);  // autodetect format
   if (open_result < 0) {
     std::string err_str = ffmpeg_errno_to_string(open_result);
-    common::Error err = common::make_error_value(err_str, common::ERROR_TYPE);
+    common::Error err = common::make_error(err_str, common::ERROR_TYPE);
     avformat_close_input(&ic);
     if (handler_) {
       handler_->HandleQuitStream(this, open_result, err);
@@ -1251,7 +1250,7 @@ int VideoState::ReadRoutine() {
   AVPacket pkt1, *pkt = &pkt1;
   if (find_stream_info_result < 0) {
     std::string err_str = ffmpeg_errno_to_string(find_stream_info_result);
-    common::Error err = common::make_error_value(err_str, common::ERROR_TYPE);
+    common::Error err = common::make_error(err_str, common::ERROR_TYPE);
     if (handler_) {
       handler_->HandleQuitStream(this, -1, err);
     }
@@ -1396,7 +1395,7 @@ int VideoState::ReadRoutine() {
           (!is_video_dec_ready || (is_video_dec_ready && is_video_not_finished_but_empty)) && opt_.auto_exit) {
         int errn = AVERROR_EOF;
         std::string err_str = ffmpeg_errno_to_string(errn);
-        common::Error err = common::make_error_value(err_str, common::ERROR_TYPE);
+        common::Error err = common::make_error(err_str, common::ERROR_TYPE);
         if (handler_) {
           handler_->HandleQuitStream(this, errn, err);
         }
