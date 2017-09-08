@@ -65,11 +65,11 @@ void IconLabel::DrawImage(SDL_Renderer* render, SDL_Texture* texture, const SDL_
   draw::DrawImage(render, texture, rect);
 }
 
-void IconLabel::SetIconSize(const draw::Size& icon_size) {
+void IconLabel::SetIconSize(const common::draw::Size& icon_size) {
   icon_size_ = icon_size;
 }
 
-draw::Size IconLabel::GetIconSize() const {
+common::draw::Size IconLabel::GetIconSize() const {
   return icon_size_;
 }
 

@@ -24,7 +24,7 @@ namespace player {
 namespace gui {
 namespace events {
 
-WindowResizeInfo::WindowResizeInfo(const draw::Size& size) : size(size) {}
+WindowResizeInfo::WindowResizeInfo(const common::draw::Size& size) : size(size) {}
 
 }  // namespace events
 }  // namespace gui

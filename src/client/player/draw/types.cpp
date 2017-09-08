@@ -18,9 +18,6 @@
 
 #include "client/player/draw/types.h"
 
-#include <common/convert2string.h>
-#include <common/sprintf.h>
-
 namespace fastotv {
 namespace client {
 namespace player {
@@ -35,20 +32,7 @@ const SDL_Color red_color = {255, 0, 0, 255};
 const SDL_Color blue_color = {0, 0, 255, 255};
 const SDL_Color lightblue_color = {200, 225, 255, 255};
 
-const Size invalid_size = {0, 0};
 const size_t invalid_row_position = static_cast<size_t>(-1);
-
-Size::Size() : width(invalid_size.width), height(invalid_size.height) {}
-
-Size::Size(int width, int height) : width(width), height(height) {}
-
-bool Size::IsValid() const {
-  return IsValidSize(width, height);
-}
-
-bool Size::Equals(const Size& sz) const {
-  return width == sz.width && height == sz.height;
-}
 
 SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height) {
   int calc_width = rect.w;
@@ -84,36 +68,3 @@ bool IsEmptyRect(const SDL_Rect& rect) {
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv
-
-namespace common {
-
-std::string ConvertToString(const fastotv::client::player::draw::Size& value) {
-  return MemSPrintf("%dx%d", value.width, value.height);
-}
-
-bool ConvertFromString(const std::string& from, fastotv::client::player::draw::Size* out) {
-  if (!out) {
-    return false;
-  }
-
-  fastotv::client::player::draw::Size res;
-  size_t del = from.find_first_of('x');
-  if (del != std::string::npos) {
-    int lwidth;
-    if (!ConvertFromString(from.substr(0, del), &lwidth)) {
-      return false;
-    }
-    res.width = lwidth;
-
-    int lheight;
-    if (!ConvertFromString(from.substr(del + 1), &lheight)) {
-      return false;
-    }
-    res.height = lheight;
-  }
-
-  *out = res;
-  return true;
-}
-
-}  // namespace common

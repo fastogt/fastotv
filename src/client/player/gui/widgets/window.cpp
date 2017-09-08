@@ -38,7 +38,7 @@ Window::Window(const SDL_Color& back_ground_color)
       bordered_(false),
       focus_(false),
       enabled_(true),
-      min_size_(draw::invalid_size),
+      min_size_(),
       mouse_clicked_cb_(),
       mouse_released_cb_(),
       focus_changed_cb_(),
@@ -91,11 +91,11 @@ void Window::SetBorderColor(const SDL_Color& color) {
   border_color_ = color;
 }
 
-void Window::SetMinimalSize(const draw::Size& ms) {
+void Window::SetMinimalSize(const common::draw::Size& ms) {
   min_size_ = ms;
 }
 
-draw::Size Window::GetMinimalSize() const {
+common::draw::Size Window::GetMinimalSize() const {
   return min_size_;
 }
 
@@ -193,7 +193,7 @@ bool Window::IsCanDraw() const {
 }
 
 bool Window::IsSizeEnough() const {
-  if (min_size_ != draw::invalid_size) {
+  if (min_size_.IsValid()) {
     if (min_size_.height > rect_.h || min_size_.width > rect_.w) {
       return false;
     }

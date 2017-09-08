@@ -686,7 +686,7 @@ SDL_Rect ISimplePlayer::GetDrawRect() const {
 }
 
 SDL_Rect ISimplePlayer::GetDisplayRect() const {
-  const draw::Size display_size = window_size_;
+  const common::draw::Size display_size = window_size_;
   return {0, 0, display_size.width, display_size.height};
 }
 

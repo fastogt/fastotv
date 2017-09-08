@@ -21,6 +21,7 @@
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>  // for SDL_Renderer, SDL_Texture
 
+#include <common/draw/types.h>
 #include <common/error.h>
 
 #include "client/player/draw/types.h"
@@ -30,7 +31,7 @@ namespace client {
 namespace player {
 namespace draw {
 
-common::Error CreateMainWindow(Size size,
+common::Error CreateMainWindow(const common::draw::Size& size,
                                bool is_full_screen,
                                const std::string& title,
                                SDL_Renderer** renderer,

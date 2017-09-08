@@ -27,26 +27,6 @@ namespace client {
 namespace player {
 namespace draw {
 
-struct Size {
-  Size();
-  Size(int width, int height);
-
-  bool IsValid() const;
-  bool Equals(const Size& sz) const;
-
-  int width;
-  int height;
-};
-
-inline bool operator==(const Size& left, const Size& right) {
-  return left.Equals(right);
-}
-
-inline bool operator!=(const Size& left, const Size& right) {
-  return !left.Equals(right);
-}
-
-bool IsValidSize(int width, int height);
 bool IsEmptyRect(const SDL_Rect& rect);
 
 SDL_Rect GetCenterRect(SDL_Rect rect, int width, int height);
@@ -62,17 +42,9 @@ extern const SDL_Color blue_color;
 extern const SDL_Color lightblue_color;
 extern const SDL_Color gray_color;
 
-extern const Size invalid_size;
 extern const size_t invalid_row_position;
 
 }  // namespace draw
 }  // namespace player
 }  // namespace client
 }  // namespace fastotv
-
-namespace common {
-
-std::string ConvertToString(const fastotv::client::player::draw::Size& value);
-bool ConvertFromString(const std::string& from, fastotv::client::player::draw::Size* out);
-
-}  // namespace common

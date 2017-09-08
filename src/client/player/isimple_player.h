@@ -205,7 +205,7 @@ class ISimplePlayer : public StreamHandler, public gui::events::EventListener {
   std::shared_ptr<common::threads::Thread<int> > exec_tid_;
   media::VideoState* stream_;
 
-  draw::Size window_size_;
+  common::draw::Size window_size_;
   const int xleft_;
   const int ytop_;
 

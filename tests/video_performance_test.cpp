@@ -1,7 +1,6 @@
 #include <thread>
 
 #include <common/application/application.h>
-#include <common/threads/types.h>  // for condition_variable, mutex
 
 extern "C" {
 #include <libavdevice/avdevice.h>  // for avdevice_register_all

@@ -3,8 +3,6 @@
 #include <common/logger.h>  // for COMPACT_LOG_FILE_CRIT
 #include <common/macros.h>  // for DNOTREACHED
 
-#include "client/types.h"  // for Size
-
 #define KBITS_TO_BYTES(X) (X * 1024 / 8)
 
 #define PROFILE_H264_BASELINE 66                                           // cbr

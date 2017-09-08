@@ -31,8 +31,8 @@ struct PlayerOptions {
 
   bool is_full_screen;
 
-  draw::Size default_size;
-  draw::Size screen_size;
+  common::draw::Size default_size;
+  common::draw::Size screen_size;
 
   audio_volume_t audio_volume;  // Range: 0 - 100
   stream_id last_showed_channel_id;

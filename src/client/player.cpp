@@ -299,10 +299,10 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   chat_window_->SetRowHeight(chat_row_height);
   int cmin_size_width = ChatWindow::login_field_width + ChatWindow::space_width +
                         ChatWindow::login_field_width * 2;  // login + space + text
-  player::draw::Size chat_minsize = {cmin_size_width, chat_row_height};
+  common::draw::Size chat_minsize = {cmin_size_width, chat_row_height};
   chat_window_->SetMinimalSize(chat_minsize);
 
-  const player::draw::Size icon_size(h, h);
+  const common::draw::Size icon_size(h, h);
   show_chat_button_->SetIconSize(icon_size);
   hide_chat_button_->SetIconSize(icon_size);
 
@@ -312,7 +312,7 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   plailist_window_->SetRowHeight(h);
 
   int pmin_size_width = keypad_width + h + space_width + h;  // number + icon + text
-  player::draw::Size playlist_minsize = {pmin_size_width, h};
+  common::draw::Size playlist_minsize = {pmin_size_width, h};
   plailist_window_->SetMinimalSize(playlist_minsize);
 
   show_playlist_button_->SetIconSize(icon_size);
@@ -668,28 +668,28 @@ SDL_Rect Player::GetChatRect() const {
 }
 
 SDL_Rect Player::GetHideButtonPlayListRect() const {
-  const player::draw::Size sz = hide_playlist_button_->GetIconSize();
+  const common::draw::Size sz = hide_playlist_button_->GetIconSize();
   SDL_Rect prog_rect = GetProgramsListRect();
   SDL_Rect hide_button_rect = {prog_rect.x - sz.width, prog_rect.h / 2, sz.width, sz.height};
   return hide_button_rect;
 }
 
 SDL_Rect Player::GetShowButtonPlayListRect() const {
-  const player::draw::Size sz = show_playlist_button_->GetIconSize();
+  const common::draw::Size sz = show_playlist_button_->GetIconSize();
   SDL_Rect prog_rect = GetProgramsListRect();
   SDL_Rect show_button_rect = {prog_rect.x + prog_rect.w - sz.width, prog_rect.h / 2, sz.width, sz.height};
   return show_button_rect;
 }
 
 SDL_Rect Player::GetHideButtonChatRect() const {
-  const player::draw::Size sz = hide_chat_button_->GetIconSize();
+  const common::draw::Size sz = hide_chat_button_->GetIconSize();
   SDL_Rect chat_rect = GetChatRect();
   SDL_Rect show_button_rect = {chat_rect.w / 2, chat_rect.y - sz.height, sz.width, sz.height};
   return show_button_rect;
 }
 
 SDL_Rect Player::GetShowButtonChatRect() const {
-  const player::draw::Size sz = show_chat_button_->GetIconSize();
+  const common::draw::Size sz = show_chat_button_->GetIconSize();
   SDL_Rect chat_rect = GetChatRect();
   SDL_Rect hide_button_rect = {chat_rect.w / 2, chat_rect.y + chat_rect.h - sz.height, sz.width, sz.height};
   return hide_button_rect;
@@ -915,7 +915,7 @@ void Player::SetStatus(States new_state) {
         if (h > footer_rect.h) {
           h = footer_rect.h;
         }
-        description_label_->SetIconSize(player::draw::Size(h, h));
+        description_label_->SetIconSize(common::draw::Size(h, h));
       } else {
         description_label_->SetIconTexture(NULL);
       }

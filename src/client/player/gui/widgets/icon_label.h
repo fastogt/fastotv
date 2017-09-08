@@ -37,8 +37,8 @@ class IconLabel : public Label {
   void SetSpace(int space);
   int GetSpace() const;
 
-  void SetIconSize(const draw::Size& icon_size);
-  draw::Size GetIconSize() const;
+  void SetIconSize(const common::draw::Size& icon_size);
+  common::draw::Size GetIconSize() const;
 
   void SetIconTexture(SDL_Texture* icon_img);
   SDL_Texture* GetIconTexture() const;
@@ -50,7 +50,7 @@ class IconLabel : public Label {
 
  private:
   SDL_Texture* icon_img_;
-  draw::Size icon_size_;
+  common::draw::Size icon_size_;
   int space_betwen_image_and_label_;
 };
 

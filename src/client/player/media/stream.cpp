@@ -27,8 +27,6 @@
 #include "client/player/media/clock.h"         // for Clock
 #include "client/player/media/packet_queue.h"  // for PacketQueue
 
-#include "client/types.h"  // for Size
-
 namespace fastotv {
 namespace client {
 namespace player {

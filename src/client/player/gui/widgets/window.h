@@ -57,8 +57,8 @@ class Window : public gui::events::EventListener {
   SDL_Color GetBorderColor() const;
   void SetBorderColor(const SDL_Color& color);
 
-  draw::Size GetMinimalSize() const;
-  void SetMinimalSize(const draw::Size& ms);
+  common::draw::Size GetMinimalSize() const;
+  void SetMinimalSize(const common::draw::Size& ms);
 
   bool IsTransparent() const;
   void SetTransparent(bool t);
@@ -116,7 +116,7 @@ class Window : public gui::events::EventListener {
   bool bordered_;
   bool focus_;
   bool enabled_;
-  draw::Size min_size_;
+  common::draw::Size min_size_;
 
   mouse_clicked_callback_t mouse_clicked_cb_;
   mouse_released_callback_t mouse_released_cb_;

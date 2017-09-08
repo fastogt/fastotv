@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <common/draw/types.h>
+
 #include "client/player/gui/events_base.h"
 
 #include "client/player/draw/types.h"
@@ -29,9 +31,9 @@ namespace gui {
 namespace events {
 
 struct WindowResizeInfo {
-  explicit WindowResizeInfo(const draw::Size& size);
+  explicit WindowResizeInfo(const common::draw::Size& size);
 
-  draw::Size size;
+  common::draw::Size size;
 };
 
 struct WindowExposeInfo {};

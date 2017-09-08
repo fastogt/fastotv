@@ -240,7 +240,7 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
         std::string key = arg_copy.substr(0, del);
         std::string value = arg_copy.substr(del + 1);
         if (key == "scale") {
-          player::draw::Size sz;
+          common::draw::Size sz;
           if (common::ConvertFromString(value, &sz)) {
             pconfig->player_options.screen_size = sz;
           }

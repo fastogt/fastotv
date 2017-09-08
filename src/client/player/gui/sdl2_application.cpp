@@ -37,9 +37,6 @@
 #include "client/player/gui/events/mouse_events.h"
 #include "client/player/gui/events/window_events.h"
 
-#include "client/player/media/types.h"  // for GetCurrentMsec, msec_t
-#include "client/types.h"               // for Size
-
 #define FASTO_EVENT (SDL_USEREVENT)
 
 namespace {
@@ -290,7 +287,7 @@ void Sdl2Application::HandleTextEditEvent(SDL_TextEditingEvent* event) {
 
 void Sdl2Application::HandleWindowEvent(SDL_WindowEvent* event) {  // SDL_WindowEventID
   if (event->event == SDL_WINDOWEVENT_RESIZED) {
-    draw::Size new_size(event->data1, event->data2);
+    common::draw::Size new_size(event->data1, event->data2);
     events::WindowResizeInfo inf(new_size);
     events::WindowResizeEvent* wind_resize = new events::WindowResizeEvent(this, inf);
     HandleEvent(wind_resize);
