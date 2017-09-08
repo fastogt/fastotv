@@ -53,7 +53,7 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
     const char* data_ptr = data.c_str();
     serialize_type res = json_tokener_parse(data_ptr);
     if (!res) {
-      return common::make_error_inval(common::ERROR_TYPE);
+      return common::make_error_inval();
     }
 
     *out = res;

@@ -41,7 +41,7 @@ bool AuthInfo::IsValid() const {
 
 common::Error AuthInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* obj = json_object_new_object();
@@ -55,25 +55,25 @@ common::Error AuthInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error AuthInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, AUTH_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jpass = NULL;
   json_bool jpass_exists = json_object_object_get_ex(serialized, AUTH_INFO_PASSWORD_FIELD, &jpass);
   if (!jpass_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jdevid = NULL;
   json_bool jdevid_exists = json_object_object_get_ex(serialized, AUTH_INFO_DEVICE_ID_FIELD, &jdevid);
   if (!jdevid_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   fastotv::AuthInfo ainf(json_object_get_string(jlogin), json_object_get_string(jpass), json_object_get_string(jdevid));

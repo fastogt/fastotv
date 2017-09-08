@@ -227,7 +227,7 @@ common::Error ISimplePlayer::HandleRequestAudio(media::VideoState* stream,
   int laudio_buff_size;
   if (!media::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, sdl_audio_callback,
                          &laudio_hw_params, &laudio_buff_size)) {
-    return common::make_error("Can't init audio system.", common::ERROR_TYPE);
+    return common::make_error("Can't init audio system.");
   }
 
   SDL_PauseAudio(0);
@@ -251,7 +251,7 @@ common::Error ISimplePlayer::HandleRequestVideo(media::VideoState* stream,
   UNUSED(av_pixel_format);
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (!stream) {  // invalid input
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   SDL_Rect rect = CalculateDisplayRect(xleft_, ytop_, INT_MAX, height, width, height, aspect_ratio);
@@ -600,7 +600,7 @@ void ISimplePlayer::DrawPlayingStatus() {
     media::VideoState::stats_t stats = stream_->GetStatistic();
     media::clock64_t cl = stats->master_pts;
     if (!stream_->IsPaused() && (last_pts_checkpoint_ == cl && cl != media::invalid_clock())) {
-      common::Error err = common::make_error("No input data!", common::ERROR_TYPE);
+      common::Error err = common::make_error("No input data!");
       SwitchToChannelErrorMode(err);
       last_pts_checkpoint_ = media::invalid_clock();
       return;
@@ -826,7 +826,7 @@ void ISimplePlayer::SetStream(media::VideoState* stream) {
   stream_ = stream;
 
   if (!stream_) {
-    common::Error err = common::make_error("Failed to create stream", common::ERROR_TYPE);
+    common::Error err = common::make_error("Failed to create stream");
     SwitchToChannelErrorMode(err);
     return;
   }
@@ -835,7 +835,7 @@ void ISimplePlayer::SetStream(media::VideoState* stream) {
   exec_tid_ = THREAD_MANAGER()->CreateThread(&media::VideoState::Exec, stream_);
   bool is_started = exec_tid_->Start();
   if (!is_started) {
-    common::Error err = common::make_error("Failed to start stream", common::ERROR_TYPE);
+    common::Error err = common::make_error("Failed to start stream");
     SwitchToChannelErrorMode(err);
   }
 }

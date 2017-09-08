@@ -104,12 +104,12 @@ common::Error ServerHost::UnRegisterInnerConnectionByHost(common::libev::IoClien
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   user_id_t uid = iconnection->GetUid();
   if (uid.empty()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   connections_.erase(uid);
@@ -123,7 +123,7 @@ common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
   inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
   if (!iconnection) {
     DNOTREACHED();
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   iconnection->SetServerHostInfo(user);

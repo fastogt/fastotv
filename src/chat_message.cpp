@@ -70,7 +70,7 @@ ChatMessage::Type ChatMessage::GetType() const {
 
 common::Error ChatMessage::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* obj = json_object_new_object();
@@ -84,40 +84,40 @@ common::Error ChatMessage::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error ChatMessage::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   ChatMessage msg;
   json_object* jchan = NULL;
   json_bool jchan_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_CHANNEL_ID_FIELD, &jchan);
   if (!jchan_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   const stream_id chan = json_object_get_string(jchan);
   if (chan == invalid_stream_id) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   msg.channel_id_ = chan;
 
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   const std::string login = json_object_get_string(jlogin);
   if (login.empty()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   msg.login_ = login;
 
   json_object* jmessage = NULL;
   json_bool jmessage_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_MESSAGE_FIELD, &jmessage);
   if (!jmessage_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   const std::string message = json_object_get_string(jmessage);
   if (message.empty()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   msg.message_ = message;
 

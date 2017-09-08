@@ -35,7 +35,7 @@ common::Error CreateMainWindow(Size size,
                                SDL_Renderer** renderer,
                                SDL_Window** window) {
   if (!renderer || !window || !size.IsValid()) {  // invalid input
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
@@ -87,7 +87,7 @@ common::Error CreateMainWindow(Size size,
     if (lwindow) {
       SDL_DestroyWindow(lwindow);
     }
-    return common::make_error("Could not set video mode", common::ERROR_TYPE);
+    return common::make_error("Could not set video mode");
   }
 
   SDL_SetRenderDrawBlendMode(lrenderer, SDL_BLENDMODE_BLEND);
@@ -108,18 +108,18 @@ common::Error CreateTexture(SDL_Renderer* renderer,
                             SDL_Texture** texture_out) {
   SDL_Texture* ltexture = SDL_CreateTexture(renderer, new_format, SDL_TEXTUREACCESS_STREAMING, new_width, new_height);
   if (!ltexture) {
-    return common::make_error("Couldn't allocate memory for texture", common::ERROR_TYPE);
+    return common::make_error("Couldn't allocate memory for texture");
   }
   if (SDL_SetTextureBlendMode(ltexture, blendmode) < 0) {
     SDL_DestroyTexture(ltexture);
-    return common::make_error("Couldn't set blend mode for texture", common::ERROR_TYPE);
+    return common::make_error("Couldn't set blend mode for texture");
   }
   if (init_texture) {
     void* pixels;
     int pitch;
     if (SDL_LockTexture(ltexture, NULL, &pixels, &pitch) < 0) {
       SDL_DestroyTexture(ltexture);
-      return common::make_error("Couldn't lock texture", common::ERROR_TYPE);
+      return common::make_error("Couldn't lock texture");
     }
     const size_t pixels_size = pitch * new_height;
     memset(pixels, 0, pixels_size);
@@ -132,12 +132,12 @@ common::Error CreateTexture(SDL_Renderer* renderer,
 
 common::Error SetRenderDrawColor(SDL_Renderer* render, const SDL_Color& rgba) {
   if (!render) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   int res = SDL_SetRenderDrawColor(render, rgba.r, rgba.g, rgba.b, rgba.a);
   if (res == -1) {
-    return common::make_error("Couldn't set draw color for render.", common::ERROR_TYPE);
+    return common::make_error("Couldn't set draw color for render.");
   }
 
   return common::Error();
@@ -151,7 +151,7 @@ common::Error FillRectColor(SDL_Renderer* render, const SDL_Rect& rect, const SD
 
   int res = SDL_RenderFillRect(render, &rect);
   if (res == -1) {
-    return common::make_error("Couldn't fill rect.", common::ERROR_TYPE);
+    return common::make_error("Couldn't fill rect.");
   }
   return common::Error();
 }
@@ -164,7 +164,7 @@ common::Error DrawBorder(SDL_Renderer* render, const SDL_Rect& rect, const SDL_C
 
   int res = SDL_RenderDrawRect(render, &rect);
   if (res == -1) {
-    return common::make_error("Couldn't draw rect.", common::ERROR_TYPE);
+    return common::make_error("Couldn't draw rect.");
   }
   return common::Error();
 }
@@ -177,7 +177,7 @@ common::Error FlushRender(SDL_Renderer* render, const SDL_Color& rgba) {
 
   int res = SDL_RenderClear(render);
   if (res == -1) {
-    return common::make_error("Couldn't clear render.", common::ERROR_TYPE);
+    return common::make_error("Couldn't clear render.");
   }
   return common::Error();
 }

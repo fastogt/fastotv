@@ -44,19 +44,19 @@ namespace {
 
 common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInfo* out_info) {
   if (!user_json || !out_uid || !out_info) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* obj = json_tokener_parse(user_json);
   if (!obj) {
-    return common::make_error("Can't parse database field", common::ERROR_TYPE);
+    return common::make_error("Can't parse database field");
   }
 
   json_object* jid = NULL;
   json_bool jid_exists = json_object_object_get_ex(obj, ID_FIELD, &jid);  // mongodb id
   if (!jid_exists) {
     json_object_put(obj);
-    return common::make_error("Can't parse database field", common::ERROR_TYPE);
+    return common::make_error("Can't parse database field");
   }
 
   UserInfo uinf;
@@ -74,12 +74,12 @@ common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInf
 
 common::Error parse_chat_channels_json(const char* channels_json, std::vector<stream_id>* out_info) {
   if (!out_info || !channels_json) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* obj = json_tokener_parse(channels_json);
   if (!obj) {
-    return common::make_error("Can't parse database field", common::ERROR_TYPE);
+    return common::make_error("Can't parse database field");
   }
 
   std::vector<stream_id> linfo;
@@ -111,7 +111,7 @@ common::Error RedisStorage::FindUserAuth(const AuthInfo& user, user_id_t* uid) c
 
 common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserInfo* uinf) const {
   if (!user.IsValid() || !uid || !uinf) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   redisContext* redis = NULL;
@@ -125,7 +125,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
   redisReply* reply = reinterpret_cast<redisReply*>(redisCommand(redis, GET_USER_1E, login_str));
   if (!reply) {
     redisFree(redis);
-    return common::make_error("User not found", common::ERROR_TYPE);
+    return common::make_error("User not found");
   }
 
   const char* user_json = reply->str;
@@ -142,7 +142,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
   if (user.GetPassword() != pass) {
     freeReplyObject(reply);
     redisFree(redis);
-    return common::make_error("Password missmatch", common::ERROR_TYPE);
+    return common::make_error("Password missmatch");
   }
 
   *uid = luid;
@@ -154,7 +154,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
 
 common::Error RedisStorage::GetChatChannels(std::vector<stream_id>* channels) const {
   if (!channels) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   redisContext* redis = NULL;
@@ -166,7 +166,7 @@ common::Error RedisStorage::GetChatChannels(std::vector<stream_id>* channels) co
   redisReply* reply = reinterpret_cast<redisReply*>(redisCommand(redis, GET_CHAT_CHANNELS));
   if (!reply) {
     redisFree(redis);
-    return common::make_error("User not found", common::ERROR_TYPE);
+    return common::make_error("User not found");
   }
 
   const char* channels_json = reply->str;

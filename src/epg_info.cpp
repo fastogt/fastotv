@@ -102,7 +102,7 @@ common::uri::Url EpgInfo::GetIconUrl() const {
 
 common::Error EpgInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* obj = json_object_new_object();
@@ -130,44 +130,44 @@ common::Error EpgInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error EpgInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jid = NULL;
   json_bool jid_exists = json_object_object_get_ex(serialized, EPG_INFO_ID_FIELD, &jid);
   if (!jid_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   stream_id id = json_object_get_string(jid);
   if (id == invalid_stream_id) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jurl = NULL;
   json_bool jurls_exists = json_object_object_get_ex(serialized, EPG_INFO_URL_FIELD, &jurl);
   if (!jurls_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   common::uri::Url uri(json_object_get_string(jurl));
   if (!uri.IsValid()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jname = NULL;
   json_bool jname_exists = json_object_object_get_ex(serialized, EPG_INFO_NAME_FIELD, &jname);
   if (!jname_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   std::string name = json_object_get_string(jname);
   if (name.empty()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   fastotv::EpgInfo url(id, uri, name);
   if (!url.IsValid()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jurl_icon = NULL;

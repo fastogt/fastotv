@@ -35,7 +35,7 @@ common::Error ServerPingInfo::SerializeImpl(serialize_type* deserialized) const 
 
 common::Error ServerPingInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jtimestamp = NULL;
@@ -64,7 +64,7 @@ common::Error ClientPingInfo::SerializeImpl(serialize_type* deserialized) const 
 
 common::Error ClientPingInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jtimestamp = NULL;

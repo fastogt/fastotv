@@ -42,7 +42,7 @@ bool UserInfo::IsValid() const {
 
 common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
   if (!IsValid()) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* obj = json_object_new_object();
@@ -70,7 +70,7 @@ common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   ChannelsInfo chan;
@@ -87,7 +87,7 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, USER_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   login = json_object_get_string(jlogin);
 
@@ -95,7 +95,7 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type
   json_object* jpassword = NULL;
   json_bool jpassword_exists = json_object_object_get_ex(serialized, USER_INFO_PASSWORD_FIELD, &jpassword);
   if (!jpassword_exists) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
   password = json_object_get_string(jpassword);
 

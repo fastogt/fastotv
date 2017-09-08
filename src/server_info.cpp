@@ -38,7 +38,7 @@ common::Error ServerInfo::SerializeImpl(serialize_type* deserialized) const {
 
 common::Error ServerInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
   if (!serialized || !obj) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   json_object* jband = NULL;

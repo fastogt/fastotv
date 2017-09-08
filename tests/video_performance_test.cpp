@@ -58,7 +58,7 @@ class FakeHandler : public VideoStateHandler {
 
     player::media::AudioParams laudio_hw_params;
     if (!player::media::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
-      return common::make_error("Failed to init audio.", common::ERROR_TYPE);
+      return common::make_error("Failed to init audio.");
     }
 
     *audio_hw_params = laudio_hw_params;
