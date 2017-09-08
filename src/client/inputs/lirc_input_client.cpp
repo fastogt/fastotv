@@ -33,26 +33,26 @@ namespace inputs {
 
 common::Error LircInit(int* fd, struct lirc_config** cfg) {
   if (!fd || !cfg) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   char* copy = common::strdup(PROJECT_NAME_LOWERCASE);  // copy for removing warning
   int lfd = lirc_init(copy, 1);
   common::utils::freeifnotnull(copy);
   if (lfd == -1) {
-    return common::make_error("Lirc init failed!", common::ERROR_TYPE);
+    return common::make_error("Lirc init failed!");
   }
 
   common::ErrnoError err = common::net::set_blocking_socket(lfd, false);
   if (err) {
-    return common::ErrorValue(err->GetDescription(), common::ERROR_TYPE);
+    return common::ErrorValue(err->GetDescription());
   }
 
   lirc_config* lcfg = NULL;
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string lirc_config_path = common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
   if (lirc_config_path.empty()) {
-    return common::make_error("Lirc invalid config path!", common::ERROR_TYPE);
+    return common::make_error("Lirc invalid config path!");
   }
 
   const char* lirc_config_path_ptr = lirc_config_path.c_str();
@@ -62,7 +62,7 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   if (res == -1) {
     LircDeinit(lfd, NULL);
     std::string msg_error = common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
-    return common::make_error(msg_error, common::ERROR_TYPE);
+    return common::make_error(msg_error);
   }
 
   *fd = lfd;
@@ -76,7 +76,7 @@ common::Error LircDeinit(int fd, struct lirc_config** cfg) {
   }
 
   if (lirc_deinit() == -1) {
-    return common::make_error("Lirc deinit failed!", common::ERROR_TYPE);
+    return common::make_error("Lirc deinit failed!");
   }
 
   if (cfg) {
@@ -114,7 +114,7 @@ int LircInputClient::GetFd() const {
 common::Error LircInputClient::Write(const char* data, size_t size, size_t* nwrite) {
   common::ErrnoError err = sock_.Write(data, size, nwrite);
   if (err) {
-    return common::ErrorValue(err->GetDescription(), common::ERROR_TYPE);
+    return common::ErrorValue(err->GetDescription());
   }
 
   return common::Error();
@@ -122,12 +122,12 @@ common::Error LircInputClient::Write(const char* data, size_t size, size_t* nwri
 
 common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
   if (!out || !nread) {
-    return common::make_error_inval(common::ERROR_TYPE);
+    return common::make_error_inval();
   }
 
   common::ErrnoError err = sock_.Read(out, max_size, nread);
   if (err) {
-    return common::ErrorValue(err->GetDescription(), common::ERROR_TYPE);
+    return common::make_error(err->GetDescription());
   }
   return common::Error();
 }
