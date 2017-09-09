@@ -32,8 +32,7 @@
 
 #include "client/player/media/frames/audio_frame.h"  // for AudioFrame
 #include "client/player/media/frames/video_frame.h"  // for VideoFrame
-#include "client/player/media/sdl_utils.h"
-#include "client/player/media/video_state.h"  // for VideoState
+#include "client/player/media/video_state.h"         // for VideoState
 
 #include "client/player/gui/sdl2_application.h"
 #include "client/player/gui/widgets/label.h"
@@ -225,8 +224,8 @@ common::Error ISimplePlayer::HandleRequestAudio(media::VideoState* stream,
   /* prepare audio output */
   media::AudioParams laudio_hw_params;
   int laudio_buff_size;
-  if (!media::audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, sdl_audio_callback,
-                         &laudio_hw_params, &laudio_buff_size)) {
+  if (!audio_open(this, wanted_channel_layout, wanted_nb_channels, wanted_sample_rate, sdl_audio_callback,
+                  &laudio_hw_params, &laudio_buff_size)) {
     return common::make_error("Can't init audio system.");
   }
 
@@ -630,9 +629,8 @@ void ISimplePlayer::DrawPlayingStatus() {
 
     ERROR_LOG() << "Error: the video system does not support an image\n"
                    "size of "
-                << width << "x" << height
-                << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
-                   "to reduce the image size.";
+                << width << "x" << height << " pixels. Try using -lowres or -vf \"scale=w:h\"\n"
+                                             "to reduce the image size.";
     return;
   }
 

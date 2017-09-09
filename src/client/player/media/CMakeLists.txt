@@ -14,7 +14,6 @@ SET(HEADERS_MEDIA
   ${SOURCE_ROOT}/client/player/media/types.h
   ${SOURCE_ROOT}/client/player/media/stream_statistic.h
   ${SOURCE_ROOT}/client/player/media/av_utils.h
-  ${SOURCE_ROOT}/client/player/media/sdl_utils.h
   ${SOURCE_ROOT}/client/player/media/clock.h
   ${SOURCE_ROOT}/client/player/media/packet_queue.h
   ${SOURCE_ROOT}/client/player/media/decoder.h
@@ -40,7 +39,6 @@ SET(SOURCES_MEDIA
   ${SOURCE_ROOT}/client/player/media/types.cpp
   ${SOURCE_ROOT}/client/player/media/stream_statistic.cpp
   ${SOURCE_ROOT}/client/player/media/av_utils.cpp
-  ${SOURCE_ROOT}/client/player/media/sdl_utils.cpp
   ${SOURCE_ROOT}/client/player/media/clock.cpp
   ${SOURCE_ROOT}/client/player/media/packet_queue.cpp
   ${SOURCE_ROOT}/client/player/media/decoder.cpp
@@ -66,7 +64,6 @@ SET(PRIVATE_INCLUDE_DIRECTORIES_MEDIA
  ${SOURCE_ROOT}
  ${FFMPEG_INCLUDE_DIR}
  ${COMMON_INCLUDE_DIR}
- ${SDL2_INCLUDE_DIRS}
 )
 
 IF(VDPAU_FOUND)
@@ -101,4 +98,23 @@ IF(DEVELOPER_CHECK_STYLE)
 ENDIF(DEVELOPER_CHECK_STYLE)
 
 IF(DEVELOPER_ENABLE_TESTS)
+  SET(VIDEO_STATE_TEST video_state_test)
+  ADD_EXECUTABLE(${VIDEO_STATE_TEST}
+    ${CMAKE_SOURCE_DIR}/tests/video_state_test.cpp
+    $<TARGET_OBJECTS:media>
+  )
+  TARGET_INCLUDE_DIRECTORIES(${VIDEO_STATE_TEST} PRIVATE
+    ${SOURCE_ROOT}
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${COMMON_INCLUDE_DIR}
+  )
+  TARGET_LINK_LIBRARIES(${VIDEO_STATE_TEST}
+    ${FFMPEG_LIBRARIES}
+    ${DEPENDENS_LIBRARIES}
+    ${COMMON_LIBRARIES}
+    ${PLATFORM_LIBRARIES}
+    ${BZIP2_LIBRARIES}
+    ${ZLIB_LIBRARY}
+    ${OPENSSL_LIBRARIES}
+  )
 ENDIF(DEVELOPER_ENABLE_TESTS)

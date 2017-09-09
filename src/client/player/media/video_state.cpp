@@ -65,7 +65,6 @@ extern "C" {
 #include "client/player/media/bandwidth_estimation.h"  // for DesireBytesPerSec
 #include "client/player/media/decoder.h"               // for VideoDecoder, AudioDec...
 #include "client/player/media/packet_queue.h"          // for PacketQueue
-#include "client/player/media/sdl_utils.h"
 #include "client/player/media/stream.h"  // for AudioStream, VideoStream
 #include "client/player/media/types.h"   // for clock64_t, IsValidClock
 #include "client/player/media/video_state_handler.h"

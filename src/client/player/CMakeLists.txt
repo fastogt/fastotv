@@ -47,6 +47,7 @@ IF(DEVELOPER_ENABLE_TESTS)
   SET(PROJECT_VIDEO_PERFORMANCE_TEST video_performance_test)
   ADD_EXECUTABLE(${PROJECT_VIDEO_PERFORMANCE_TEST}
     ${CMAKE_SOURCE_DIR}/tests/video_performance_test.cpp
+    ${SOURCE_ROOT}/client/player/sdl_utils.cpp
     $<TARGET_OBJECTS:draw>
     $<TARGET_OBJECTS:gui>
     $<TARGET_OBJECTS:media>

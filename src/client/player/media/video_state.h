@@ -38,8 +38,6 @@ extern "C" {
 #include <common/threads/types.h>  // for condition_variable, mutex
 #include <common/uri/url.h>        // for Uri
 
-#include "client_server_types.h"  // for stream_id
-
 #include "client/player/media/app_options.h"   // for AppOptions, ComplexOptions
 #include "client/player/media/audio_params.h"  // for AudioParams
 #include "client/player/media/stream_statistic.h"

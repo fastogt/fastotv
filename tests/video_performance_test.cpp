@@ -8,7 +8,7 @@ extern "C" {
 
 #include "client/player/gui/stream_events.h"
 
-#include "client/player/media/sdl_utils.h"
+#include "client/player/sdl_utils.h"
 #include "client/player/media/video_state.h"
 #include "client/player/media/video_state_handler.h"
 
@@ -56,7 +56,7 @@ class FakeHandler : public VideoStateHandler {
     UNUSED(audio_buff_size);
 
     player::media::AudioParams laudio_hw_params;
-    if (!player::media::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
+    if (!player::init_audio_params(3, 48000, 2, &laudio_hw_params)) {
       return common::make_error("Failed to init audio.");
     }
 

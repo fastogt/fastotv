@@ -24,6 +24,9 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 }
 
+/* Minimum SDL audio buffer size, in samples. */
+#define AUDIO_MIN_BUFFER_SIZE 512
+
 namespace fastotv {
 namespace client {
 namespace player {
