@@ -24,16 +24,16 @@
 #include <common/threads/thread_manager.h>
 #include <common/utils.h>
 
-#include "client/ioservice.h"  // for IoService
-#include "client/utils.h"
-
-#include "client/player/sdl_utils.h"  // for IMG_LoadPNG, SurfaceSaver
-
-#include "client/player/draw/surface_saver.h"
+#include <player/sdl_utils.h>  // for IMG_LoadPNG, SurfaceSaver
+#include <player/draw/surface_saver.h>
 
 // widgets
-#include "client/player/gui/widgets/button.h"
-#include "client/player/gui/widgets/icon_label.h"
+#include <player/gui/widgets/button.h>
+#include <player/gui/widgets/icon_label.h>
+#include <player/draw/draw.h>
+
+#include "client/ioservice.h"  // for IoService
+#include "client/utils.h"
 
 #include "client/chat_window.h"
 #include "client/playlist_window.h"
@@ -56,25 +56,25 @@ namespace client {
 
 namespace {
 
-player::draw::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
+fastoplayer::draw::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string img_full_path = common::file_system::make_path(absolute_source_dir, relative_path);
-  return player::draw::MakeSurfaceFromPath(img_full_path);
+  return fastoplayer::draw::MakeSurfaceFromPath(img_full_path);
 }
 
 }  // namespace
 
 const SDL_Color Player::failed_color = {193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
 const SDL_Color Player::playlist_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
-const SDL_Color Player::keypad_color = player::ISimplePlayer::stream_statistic_color;
+const SDL_Color Player::keypad_color = fastoplayer::ISimplePlayer::stream_statistic_color;
 const SDL_Color Player::playlist_item_preselect_color = {193, 66, 66, Uint8(SDL_ALPHA_OPAQUE * 0.1)};
-const SDL_Color Player::chat_color = player::ISimplePlayer::stream_statistic_color;
+const SDL_Color Player::chat_color = fastoplayer::ISimplePlayer::stream_statistic_color;
 const SDL_Color Player::info_channel_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
 
 Player::Player(const std::string& app_directory_absolute_path,
-               const player::PlayerOptions& options,
-               const player::media::AppOptions& opt,
-               const player::media::ComplexOptions& copt)
+               const fastoplayer::PlayerOptions& options,
+               const fastoplayer::media::AppOptions& opt,
+               const fastoplayer::media::ComplexOptions& copt)
     : ISimplePlayer(options),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
@@ -99,19 +99,19 @@ Player::Player(const std::string& app_directory_absolute_path,
       plailist_window_(nullptr),
       chat_window_(nullptr),
       auth_() {
-  fApp->Subscribe(this, player::gui::events::BandwidthEstimationEvent::EventType);
+  fApp->Subscribe(this, events::BandwidthEstimationEvent::EventType);
 
-  fApp->Subscribe(this, player::gui::events::ClientDisconnectedEvent::EventType);
-  fApp->Subscribe(this, player::gui::events::ClientConnectedEvent::EventType);
+  fApp->Subscribe(this, events::ClientDisconnectedEvent::EventType);
+  fApp->Subscribe(this, events::ClientConnectedEvent::EventType);
 
-  fApp->Subscribe(this, player::gui::events::ClientAuthorizedEvent::EventType);
-  fApp->Subscribe(this, player::gui::events::ClientUnAuthorizedEvent::EventType);
+  fApp->Subscribe(this, events::ClientAuthorizedEvent::EventType);
+  fApp->Subscribe(this, events::ClientUnAuthorizedEvent::EventType);
 
-  fApp->Subscribe(this, player::gui::events::ClientConfigChangeEvent::EventType);
-  fApp->Subscribe(this, player::gui::events::ReceiveChannelsEvent::EventType);
-  fApp->Subscribe(this, player::gui::events::ReceiveRuntimeChannelEvent::EventType);
-  fApp->Subscribe(this, player::gui::events::SendChatMessageEvent::EventType);
-  fApp->Subscribe(this, player::gui::events::ReceiveChatMessageEvent::EventType);
+  fApp->Subscribe(this, events::ClientConfigChangeEvent::EventType);
+  fApp->Subscribe(this, events::ReceiveChannelsEvent::EventType);
+  fApp->Subscribe(this, events::ReceiveRuntimeChannelEvent::EventType);
+  fApp->Subscribe(this, events::SendChatMessageEvent::EventType);
+  fApp->Subscribe(this, events::ReceiveChatMessageEvent::EventType);
 
   // chat window
   chat_window_ = new ChatWindow(chat_color);
@@ -133,7 +133,7 @@ Player::Player(const std::string& app_directory_absolute_path,
   };
   chat_window_->SetPostClickedCallback(post_clicked_cb);
 
-  show_chat_button_ = new player::gui::Button;
+  show_chat_button_ = new fastoplayer::gui::Button;
   auto show_chat_cb = [this](Uint8 button, const SDL_Point& position) {
     UNUSED(position);
     if (button == SDL_BUTTON_LEFT) {
@@ -143,7 +143,7 @@ Player::Player(const std::string& app_directory_absolute_path,
   show_chat_button_->SetMouseClickedCallback(show_chat_cb);
   show_chat_button_->SetTransparent(true);
 
-  hide_chat_button_ = new player::gui::Button;
+  hide_chat_button_ = new fastoplayer::gui::Button;
   auto hide_chat_cb = [this](Uint8 button, const SDL_Point& position) {
     UNUSED(position);
     if (button == SDL_BUTTON_LEFT) {
@@ -155,32 +155,32 @@ Player::Player(const std::string& app_directory_absolute_path,
   SetVisibleChat(false);
 
   // descr window
-  description_label_ = new player::gui::IconLabel(failed_color);
+  description_label_ = new fastoplayer::gui::IconLabel(failed_color);
   description_label_->SetTextColor(text_color);
   description_label_->SetSpace(space_width);
   description_label_->SetText("Init");
 
   // key_pad window
-  keypad_label_ = new player::gui::Label(keypad_color);
+  keypad_label_ = new fastoplayer::gui::Label(keypad_color);
   keypad_label_->SetTextColor(text_color);
-  keypad_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
+  keypad_label_->SetDrawType(fastoplayer::gui::Label::CENTER_TEXT);
 
   // playlist window
   plailist_window_ = new PlaylistWindow(playlist_color);
   plailist_window_->SetSelection(PlaylistWindow::SINGLE_ROW_SELECT);
   plailist_window_->SetSelectionColor(playlist_item_preselect_color);
-  plailist_window_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
+  plailist_window_->SetDrawType(fastoplayer::gui::Label::WRAPPED_TEXT);
   plailist_window_->SetTextColor(text_color);
   plailist_window_->SetCurrentPositionSelectionColor(failed_color);
   auto channel_clicked_cb = [this](Uint8 button, size_t row) {
     if (button == SDL_BUTTON_LEFT && row != current_stream_pos_) {
-      player::media::VideoState* stream = CreateStreamPos(row);
+      fastoplayer::media::VideoState* stream = CreateStreamPos(row);
       SetStream(stream);
     }
   };
   plailist_window_->SetMouseClickedRowCallback(channel_clicked_cb);
 
-  show_playlist_button_ = new player::gui::Button;
+  show_playlist_button_ = new fastoplayer::gui::Button;
   auto show_playlist_cb = [this](Uint8 button, const SDL_Point& position) {
     UNUSED(position);
     if (button == SDL_BUTTON_LEFT) {
@@ -190,7 +190,7 @@ Player::Player(const std::string& app_directory_absolute_path,
   show_playlist_button_->SetMouseClickedCallback(show_playlist_cb);
   show_playlist_button_->SetTransparent(true);
 
-  hide_playlist_button_ = new player::gui::Button;
+  hide_playlist_button_ = new fastoplayer::gui::Button;
   auto hide_playlist_cb = [this](Uint8 button, const SDL_Point& position) {
     UNUSED(position);
     if (button == SDL_BUTTON_LEFT) {
@@ -214,45 +214,35 @@ Player::~Player() {
 }
 
 void Player::HandleEvent(event_t* event) {
-  if (event->GetEventType() == player::gui::events::BandwidthEstimationEvent::EventType) {
-    player::gui::events::BandwidthEstimationEvent* band_event =
-        static_cast<player::gui::events::BandwidthEstimationEvent*>(event);
+  if (event->GetEventType() == events::BandwidthEstimationEvent::EventType) {
+    events::BandwidthEstimationEvent* band_event = static_cast<events::BandwidthEstimationEvent*>(event);
     HandleBandwidthEstimationEvent(band_event);
-  } else if (event->GetEventType() == player::gui::events::ClientConnectedEvent::EventType) {
-    player::gui::events::ClientConnectedEvent* connect_event =
-        static_cast<player::gui::events::ClientConnectedEvent*>(event);
+  } else if (event->GetEventType() == events::ClientConnectedEvent::EventType) {
+    events::ClientConnectedEvent* connect_event = static_cast<events::ClientConnectedEvent*>(event);
     HandleClientConnectedEvent(connect_event);
-  } else if (event->GetEventType() == player::gui::events::ClientDisconnectedEvent::EventType) {
-    player::gui::events::ClientDisconnectedEvent* disc_event =
-        static_cast<player::gui::events::ClientDisconnectedEvent*>(event);
+  } else if (event->GetEventType() == events::ClientDisconnectedEvent::EventType) {
+    events::ClientDisconnectedEvent* disc_event = static_cast<events::ClientDisconnectedEvent*>(event);
     HandleClientDisconnectedEvent(disc_event);
-  } else if (event->GetEventType() == player::gui::events::ClientAuthorizedEvent::EventType) {
-    player::gui::events::ClientAuthorizedEvent* auth_event =
-        static_cast<player::gui::events::ClientAuthorizedEvent*>(event);
+  } else if (event->GetEventType() == events::ClientAuthorizedEvent::EventType) {
+    events::ClientAuthorizedEvent* auth_event = static_cast<events::ClientAuthorizedEvent*>(event);
     HandleClientAuthorizedEvent(auth_event);
-  } else if (event->GetEventType() == player::gui::events::ClientUnAuthorizedEvent::EventType) {
-    player::gui::events::ClientUnAuthorizedEvent* unauth_event =
-        static_cast<player::gui::events::ClientUnAuthorizedEvent*>(event);
+  } else if (event->GetEventType() == events::ClientUnAuthorizedEvent::EventType) {
+    events::ClientUnAuthorizedEvent* unauth_event = static_cast<events::ClientUnAuthorizedEvent*>(event);
     HandleClientUnAuthorizedEvent(unauth_event);
-  } else if (event->GetEventType() == player::gui::events::ClientConfigChangeEvent::EventType) {
-    player::gui::events::ClientConfigChangeEvent* conf_change_event =
-        static_cast<player::gui::events::ClientConfigChangeEvent*>(event);
+  } else if (event->GetEventType() == events::ClientConfigChangeEvent::EventType) {
+    events::ClientConfigChangeEvent* conf_change_event = static_cast<events::ClientConfigChangeEvent*>(event);
     HandleClientConfigChangeEvent(conf_change_event);
-  } else if (event->GetEventType() == player::gui::events::ReceiveChannelsEvent::EventType) {
-    player::gui::events::ReceiveChannelsEvent* channels_event =
-        static_cast<player::gui::events::ReceiveChannelsEvent*>(event);
+  } else if (event->GetEventType() == events::ReceiveChannelsEvent::EventType) {
+    events::ReceiveChannelsEvent* channels_event = static_cast<events::ReceiveChannelsEvent*>(event);
     HandleReceiveChannelsEvent(channels_event);
-  } else if (event->GetEventType() == player::gui::events::ReceiveRuntimeChannelEvent::EventType) {
-    player::gui::events::ReceiveRuntimeChannelEvent* channel_event =
-        static_cast<player::gui::events::ReceiveRuntimeChannelEvent*>(event);
+  } else if (event->GetEventType() == events::ReceiveRuntimeChannelEvent::EventType) {
+    events::ReceiveRuntimeChannelEvent* channel_event = static_cast<events::ReceiveRuntimeChannelEvent*>(event);
     HandleReceiveRuntimeChannelEvent(channel_event);
-  } else if (event->GetEventType() == player::gui::events::SendChatMessageEvent::EventType) {
-    player::gui::events::SendChatMessageEvent* chat_msg_event =
-        static_cast<player::gui::events::SendChatMessageEvent*>(event);
+  } else if (event->GetEventType() == events::SendChatMessageEvent::EventType) {
+    events::SendChatMessageEvent* chat_msg_event = static_cast<events::SendChatMessageEvent*>(event);
     HandleSendChatMessageEvent(chat_msg_event);
-  } else if (event->GetEventType() == player::gui::events::ReceiveChatMessageEvent::EventType) {
-    player::gui::events::ReceiveChatMessageEvent* chat_msg_event =
-        static_cast<player::gui::events::ReceiveChatMessageEvent*>(event);
+  } else if (event->GetEventType() == events::ReceiveChatMessageEvent::EventType) {
+    events::ReceiveChatMessageEvent* chat_msg_event = static_cast<events::ReceiveChatMessageEvent*>(event);
     HandleReceiveChatMessageEvent(chat_msg_event);
   }
 
@@ -260,25 +250,24 @@ void Player::HandleEvent(event_t* event) {
 }
 
 void Player::HandleExceptionEvent(event_t* event, common::Error err) {
-  if (event->GetEventType() == player::gui::events::ClientConnectedEvent::EventType) {
+  if (event->GetEventType() == events::ClientConnectedEvent::EventType) {
     // gui::events::ClientConnectedEvent* connect_event =
     //    static_cast<gui::events::ClientConnectedEvent*>(event);
     SwitchToDisconnectMode();
-  } else if (event->GetEventType() == player::gui::events::ClientAuthorizedEvent::EventType) {
+  } else if (event->GetEventType() == events::ClientAuthorizedEvent::EventType) {
     // gui::events::ClientConnectedEvent* connect_event =
     //    static_cast<gui::events::ClientConnectedEvent*>(event);
     SwitchToUnAuthorizeMode();
-  } else if (event->GetEventType() == player::gui::events::BandwidthEstimationEvent::EventType) {
-    player::gui::events::BandwidthEstimationEvent* band_event =
-        static_cast<player::gui::events::BandwidthEstimationEvent*>(event);
+  } else if (event->GetEventType() == events::BandwidthEstimationEvent::EventType) {
+    events::BandwidthEstimationEvent* band_event = static_cast<events::BandwidthEstimationEvent*>(event);
     HandleBandwidthEstimationEvent(band_event);
   }
 
   base_class::HandleExceptionEvent(event, err);
 }
 
-void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
-  player::gui::events::PreExecInfo inf = event->GetInfo();
+void Player::HandlePreExecEvent(fastoplayer::gui::events::PreExecEvent* event) {
+  fastoplayer::gui::events::PreExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     offline_channel_texture_ = MakeSurfaceFromImageRelativePath(IMG_OFFLINE_CHANNEL_PATH_RELATIVE);
     connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
@@ -292,7 +281,7 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
 
   base_class::HandlePreExecEvent(event);
   TTF_Font* font = GetFont();
-  int h = player::draw::CalcHeightFontPlaceByRowCount(font, 2);
+  int h = fastoplayer::draw::CalcHeightFontPlaceByRowCount(font, 2);
 
   int chat_row_height = h / 2;
   chat_window_->SetFont(font);
@@ -319,14 +308,14 @@ void Player::HandlePreExecEvent(player::gui::events::PreExecEvent* event) {
   hide_playlist_button_->SetIconSize(icon_size);
 }
 
-void Player::HandleTimerEvent(player::gui::events::TimerEvent* event) {
-  player::media::msec_t cur_time = player::media::GetCurrentMsec();
-  player::media::msec_t diff_footer = cur_time - footer_last_shown_;
+void Player::HandleTimerEvent(fastoplayer::gui::events::TimerEvent* event) {
+  fastoplayer::media::msec_t cur_time = fastoplayer::media::GetCurrentMsec();
+  fastoplayer::media::msec_t diff_footer = cur_time - footer_last_shown_;
   if (description_label_->IsVisible() && diff_footer > FOOTER_HIDE_DELAY_MSEC) {
     description_label_->SetVisible(false);
   }
 
-  player::media::msec_t diff_keypad = cur_time - keypad_last_shown_;
+  fastoplayer::media::msec_t diff_keypad = cur_time - keypad_last_shown_;
   if (keypad_label_->IsVisible() && diff_keypad > KEYPAD_HIDE_DELAY_MSEC) {
     ResetKeyPad();
   }
@@ -334,8 +323,8 @@ void Player::HandleTimerEvent(player::gui::events::TimerEvent* event) {
   base_class::HandleTimerEvent(event);
 }
 
-void Player::HandlePostExecEvent(player::gui::events::PostExecEvent* event) {
-  player::gui::events::PostExecInfo inf = event->GetInfo();
+void Player::HandlePostExecEvent(fastoplayer::gui::events::PostExecEvent* event) {
+  fastoplayer::gui::events::PostExecInfo inf = event->GetInfo();
   if (inf.code == EXIT_SUCCESS) {
     controller_->Stop();
     destroy(&offline_channel_texture_);
@@ -359,7 +348,7 @@ std::string Player::GetCurrentUrlName() const {
   return "Unknown";
 }
 
-player::media::AppOptions Player::GetStreamOptions() const {
+fastoplayer::media::AppOptions Player::GetStreamOptions() const {
   return opt_;
 }
 
@@ -377,7 +366,7 @@ void Player::SwitchToPlayingMode() {
     return;
   }
 
-  player::PlayerOptions opt = GetOptions();
+  fastoplayer::PlayerOptions opt = GetOptions();
 
   size_t pos = current_stream_pos_;
   for (size_t i = 0; i < play_list_.size() && opt.last_showed_channel_id != invalid_stream_id; ++i) {
@@ -389,7 +378,7 @@ void Player::SwitchToPlayingMode() {
     }
   }
 
-  player::media::VideoState* stream = CreateStreamPos(pos);
+  fastoplayer::media::VideoState* stream = CreateStreamPos(pos);
   SetStream(stream);
 }
 
@@ -409,31 +398,31 @@ void Player::SwitchToDisconnectMode() {
   InitWindow("Disconnected", INIT_STATE);
 }
 
-void Player::HandleBandwidthEstimationEvent(player::gui::events::BandwidthEstimationEvent* event) {
-  player::gui::events::BandwidtInfo band_inf = event->GetInfo();
+void Player::HandleBandwidthEstimationEvent(events::BandwidthEstimationEvent* event) {
+  events::BandwidtInfo band_inf = event->GetInfo();
   if (band_inf.host_type == MAIN_SERVER) {
     controller_->RequestChannels();
   }
 }
 
-void Player::HandleClientConnectedEvent(player::gui::events::ClientConnectedEvent* event) {
+void Player::HandleClientConnectedEvent(events::ClientConnectedEvent* event) {
   UNUSED(event);
   SwitchToAuthorizeMode();
 }
 
-void Player::HandleClientDisconnectedEvent(player::gui::events::ClientDisconnectedEvent* event) {
+void Player::HandleClientDisconnectedEvent(events::ClientDisconnectedEvent* event) {
   UNUSED(event);
   if (GetCurrentState() == INIT_STATE) {
     SwitchToDisconnectMode();
   }
 }
 
-void Player::HandleClientAuthorizedEvent(player::gui::events::ClientAuthorizedEvent* event) {
+void Player::HandleClientAuthorizedEvent(events::ClientAuthorizedEvent* event) {
   auth_ = event->GetInfo();
   controller_->RequestServerInfo();
 }
 
-void Player::HandleClientUnAuthorizedEvent(player::gui::events::ClientUnAuthorizedEvent* event) {
+void Player::HandleClientUnAuthorizedEvent(events::ClientUnAuthorizedEvent* event) {
   UNUSED(event);
   auth_ = AuthInfo();
   if (GetCurrentState() == INIT_STATE) {
@@ -441,11 +430,11 @@ void Player::HandleClientUnAuthorizedEvent(player::gui::events::ClientUnAuthoriz
   }
 }
 
-void Player::HandleClientConfigChangeEvent(player::gui::events::ClientConfigChangeEvent* event) {
+void Player::HandleClientConfigChangeEvent(events::ClientConfigChangeEvent* event) {
   UNUSED(event);
 }
 
-void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEvent* event) {
+void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
   ChannelsInfo chan = event->GetInfo();
   // prepare cache folders
   ChannelsInfo::channels_t channels = chan.GetChannels();
@@ -463,7 +452,7 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
   for (const ChannelInfo& ch : channels) {
     PlaylistEntry entry = PlaylistEntry(cache_dir, ch);
     const std::string icon_path = entry.GetIconPath();
-    player::draw::SurfaceSaver* surf = player::draw::MakeSurfaceFromPath(icon_path);
+    fastoplayer::draw::SurfaceSaver* surf = fastoplayer::draw::MakeSurfaceFromPath(icon_path);
     channel_icon_t shared_surface(surf);
     entry.SetIcon(shared_surface);
     play_list_.push_back(entry);
@@ -529,7 +518,7 @@ void Player::HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEven
   SwitchToPlayingMode();
 }
 
-void Player::HandleReceiveRuntimeChannelEvent(player::gui::events::ReceiveRuntimeChannelEvent* event) {
+void Player::HandleReceiveRuntimeChannelEvent(events::ReceiveRuntimeChannelEvent* event) {
   RuntimeChannelInfo inf = event->GetInfo();
   for (size_t i = 0; i < play_list_.size(); ++i) {
     ChannelInfo cinf = play_list_[i].GetChannelInfo();
@@ -540,11 +529,11 @@ void Player::HandleReceiveRuntimeChannelEvent(player::gui::events::ReceiveRuntim
   }
 }
 
-void Player::HandleSendChatMessageEvent(player::gui::events::SendChatMessageEvent* event) {
+void Player::HandleSendChatMessageEvent(events::SendChatMessageEvent* event) {
   UNUSED(event);
 }
 
-void Player::HandleReceiveChatMessageEvent(player::gui::events::ReceiveChatMessageEvent* event) {
+void Player::HandleReceiveChatMessageEvent(events::ReceiveChatMessageEvent* event) {
   ChatMessage message = event->GetInfo();
   for (size_t i = 0; i < play_list_.size(); ++i) {
     ChannelInfo cinfo = play_list_[i].GetChannelInfo();
@@ -567,12 +556,12 @@ void Player::HandleReceiveChatMessageEvent(player::gui::events::ReceiveChatMessa
   }
 }
 
-void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
+void Player::HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) {
   if (chat_window_->IsActived()) {
     return;
   }
 
-  const player::gui::events::KeyPressInfo inf = event->GetInfo();
+  const fastoplayer::gui::events::KeyPressInfo inf = event->GetInfo();
   const SDL_Scancode scan_code = inf.ks.scancode;
   const Uint16 modifier = inf.ks.mod;
   bool is_acceptable_mods = modifier == KMOD_NONE || modifier & KMOD_NUM;
@@ -619,8 +608,8 @@ void Player::HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) {
   base_class::HandleKeyPressEvent(event);
 }
 
-void Player::HandleLircPressEvent(player::gui::events::LircPressEvent* event) {
-  player::gui::events::LircPressInfo inf = event->GetInfo();
+void Player::HandleLircPressEvent(fastoplayer::gui::events::LircPressEvent* event) {
+  fastoplayer::gui::events::LircPressInfo inf = event->GetInfo();
   if (inf.code == LIRC_KEY_LEFT) {
     MoveToPreviousStream();
   } else if (inf.code == LIRC_KEY_RIGHT) {
@@ -729,7 +718,7 @@ void Player::HandleKeyPad(uint8_t key) {
   }
 
   keypad_label_->SetVisible(true);
-  player::media::msec_t cur_time = player::media::GetCurrentMsec();
+  fastoplayer::media::msec_t cur_time = fastoplayer::media::GetCurrentMsec();
   keypad_last_shown_ = cur_time;
   size_t nex_keypad_sym = cur_number * 10 + key;
   if (nex_keypad_sym <= max_keypad_size) {
@@ -771,7 +760,7 @@ void Player::CreateStreamPosAfterKeypad(size_t pos) {
     return;
   }
 
-  player::media::VideoState* stream = CreateStreamPos(stabled_pos);
+  fastoplayer::media::VideoState* stream = CreateStreamPos(stabled_pos);
   SetStream(stream);
 }
 
@@ -867,7 +856,7 @@ void Player::DrawFailedStatus() {
     return;
   }
 
-  player::draw::FlushRender(render, player::draw::black_color);
+  fastoplayer::draw::FlushRender(render, fastoplayer::draw::black_color);
   if (offline_channel_texture_) {
     SDL_Texture* img = offline_channel_texture_->GetTexture(render);
     if (img) {
@@ -889,11 +878,11 @@ void Player::InitWindow(const std::string& title, States status) {
 
 void Player::SetStatus(States new_state) {
   if (new_state == INIT_STATE) {
-    description_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
+    description_label_->SetDrawType(fastoplayer::gui::Label::CENTER_TEXT);
     description_label_->SetIconTexture(NULL);
     description_label_->SetBackGroundColor(failed_color);
   } else if (new_state == FAILED_STATE) {
-    description_label_->SetDrawType(player::gui::Label::CENTER_TEXT);
+    description_label_->SetDrawType(fastoplayer::gui::Label::CENTER_TEXT);
     description_label_->SetIconTexture(NULL);
     description_label_->SetBackGroundColor(failed_color);
   } else if (new_state == PLAYING_STATE) {
@@ -911,7 +900,7 @@ void Player::SetStatus(States new_state) {
 
         const SDL_Rect footer_rect = GetFooterRect();
         description_label_->SetIconTexture(icon->GetTexture(render));
-        int h = player::draw::CalcHeightFontPlaceByRowCount(font, DESCR_LINES_COUNT);
+        int h = fastoplayer::draw::CalcHeightFontPlaceByRowCount(font, DESCR_LINES_COUNT);
         if (h > footer_rect.h) {
           h = footer_rect.h;
         }
@@ -919,7 +908,7 @@ void Player::SetStatus(States new_state) {
       } else {
         description_label_->SetIconTexture(NULL);
       }
-      description_label_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
+      description_label_->SetDrawType(fastoplayer::gui::Label::WRAPPED_TEXT);
       description_label_->SetText(footer_text);
       description_label_->SetBackGroundColor(info_channel_color);
     }
@@ -936,7 +925,7 @@ void Player::DrawInitStatus() {
     return;
   }
 
-  player::draw::FlushRender(render, player::draw::black_color);
+  fastoplayer::draw::FlushRender(render, fastoplayer::draw::black_color);
   if (connection_error_texture_) {
     SDL_Texture* img = connection_error_texture_->GetTexture(render);
     if (img) {
@@ -947,10 +936,10 @@ void Player::DrawInitStatus() {
   SDL_RenderPresent(render);
 }
 
-player::media::VideoState* Player::CreateStream(stream_id sid,
+fastoplayer::media::VideoState* Player::CreateStream(stream_id sid,
                                                 const common::uri::Url& uri,
-                                                player::media::AppOptions opt,
-                                                player::media::ComplexOptions copt) {
+                                                fastoplayer::media::AppOptions opt,
+                                                fastoplayer::media::ComplexOptions copt) {
   controller_->RequesRuntimeChannelInfo(sid);
   return base_class::CreateStream(sid, uri, opt, copt);
 }
@@ -973,50 +962,50 @@ void Player::OnWindowCreated(SDL_Window* window, SDL_Renderer* render) {
 }
 
 void Player::MoveToNextStream() {
-  player::media::VideoState* stream = CreateNextStream();
+  fastoplayer::media::VideoState* stream = CreateNextStream();
   SetStream(stream);
 }
 
 void Player::MoveToPreviousStream() {
-  player::media::VideoState* stream = CreatePrevStream();
+  fastoplayer::media::VideoState* stream = CreatePrevStream();
   SetStream(stream);
 }
 
-player::media::VideoState* Player::CreateNextStream() {
+fastoplayer::media::VideoState* Player::CreateNextStream() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (play_list_.empty()) {
     return nullptr;
   }
 
   size_t pos = GenerateNextPosition();
-  player::media::VideoState* stream = CreateStreamPos(pos);
+  fastoplayer::media::VideoState* stream = CreateStreamPos(pos);
   return stream;
 }
 
-player::media::VideoState* Player::CreatePrevStream() {
+fastoplayer::media::VideoState* Player::CreatePrevStream() {
   CHECK(THREAD_MANAGER()->IsMainThread());
   if (play_list_.empty()) {
     return nullptr;
   }
 
   size_t pos = GeneratePrevPosition();
-  player::media::VideoState* stream = CreateStreamPos(pos);
+  fastoplayer::media::VideoState* stream = CreateStreamPos(pos);
   return stream;
 }
 
-player::media::VideoState* Player::CreateStreamPos(size_t pos) {
+fastoplayer::media::VideoState* Player::CreateStreamPos(size_t pos) {
   CHECK(THREAD_MANAGER()->IsMainThread());
   current_stream_pos_ = pos;
 
   PlaylistEntry entry = play_list_[current_stream_pos_];
   ChannelInfo url = entry.GetChannelInfo();
   stream_id sid = url.GetId();
-  player::media::AppOptions copy = GetStreamOptions();
+  fastoplayer::media::AppOptions copy = GetStreamOptions();
   copy.enable_audio = url.IsEnableVideo();
   copy.enable_video = url.IsEnableAudio();
 
   plailist_window_->SetCurrentPositionInPlaylist(current_stream_pos_);
-  player::media::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
+  fastoplayer::media::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
   return stream;
 }
 
@@ -1038,7 +1027,7 @@ size_t Player::GeneratePrevPosition() const {
 
 void Player::StartShowFooter() {
   description_label_->SetVisible(true);
-  player::media::msec_t cur_time = player::media::GetCurrentMsec();
+  fastoplayer::media::msec_t cur_time = fastoplayer::media::GetCurrentMsec();
   footer_last_shown_ = cur_time;
 }
 

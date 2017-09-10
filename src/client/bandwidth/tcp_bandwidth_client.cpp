@@ -20,7 +20,7 @@
 
 #include <common/time.h>  // for current_mstime
 
-#include "client/player/media/types.h"
+#include <player/media/types.h>
 
 namespace {
 struct new_session_pkt {
@@ -90,7 +90,7 @@ common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
   total_downloaded_bytes_ += *nread;
   const common::time64_t data_interval = cur_ts - start_ts_;
   if (duration_ && data_interval >= duration_) {
-    downloaded_bytes_per_sec_ = player::media::CalculateBandwidth(total_downloaded_bytes_, data_interval);
+    downloaded_bytes_per_sec_ = fastoplayer::media::CalculateBandwidth(total_downloaded_bytes_, data_interval);
     return common::ErrorValue(common::COMMON_EINTR);
   }
   return common::Error();

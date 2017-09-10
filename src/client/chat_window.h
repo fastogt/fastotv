@@ -18,26 +18,26 @@
 
 #pragma once
 
-#include "client/player/draw/font.h"
-
-#include "client/player/gui/widgets/window.h"
+#include <player/draw/font.h>
+#include <player/gui/widgets/window.h>
 
 #include "chat_message.h"
 
-namespace fastotv {
-namespace client {
-namespace player {
+namespace fastoplayer {
 namespace gui {
 class Button;
 class LineEdit;
 }  // namespace gui
 }  // namespace player
 
+namespace fastotv {
+namespace client {
+
 class ChatListWindow;
 
-class ChatWindow : public player::gui::Window {
+class ChatWindow : public fastoplayer::gui::Window {
  public:
-  typedef player::gui::Window base_class;
+  typedef fastoplayer::gui::Window base_class;
   typedef std::vector<ChatMessage> messages_t;
   enum { login_field_width = 240, space_width = 10, post_button_width = 100 };
   static const SDL_Color text_background_color;
@@ -75,8 +75,8 @@ class ChatWindow : public player::gui::Window {
   size_t watchers_;
 
   ChatListWindow* chat_window_;
-  player::gui::Button* send_message_button_;
-  player::gui::LineEdit* text_input_box_;
+  fastoplayer::gui::Button* send_message_button_;
+  fastoplayer::gui::LineEdit* text_input_box_;
 
   TTF_Font* font_;
   SDL_Color text_color_;

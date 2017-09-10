@@ -41,13 +41,13 @@ void ChatListWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
   ChatMessage msg = msgs_[pos];
   std::string login = msg.GetLogin();
   SDL_Rect login_rect = {row_rect.x, row_rect.y, login_field_width, row_rect.h};
-  std::string login_text_doted = player::draw::DotText(login, GetFont(), login_rect.w);
+  std::string login_text_doted = fastoplayer::draw::DotText(login, GetFont(), login_rect.w);
   base_class::DrawText(render, login_text_doted + ":", login_rect, DrawType::CENTER_TEXT);
 
   std::string mess_text = msg.GetMessage();
   SDL_Rect text_rect = {row_rect.x + login_field_width + space_width, row_rect.y,
                         row_rect.w - login_field_width - space_width, row_rect.h};
-  std::string mess_text_doted = player::draw::DotText(mess_text, GetFont(), text_rect.w);
+  std::string mess_text_doted = fastoplayer::draw::DotText(mess_text, GetFont(), text_rect.w);
   base_class::DrawText(render, mess_text_doted, text_rect, DrawType::WRAPPED_TEXT);
 }
 

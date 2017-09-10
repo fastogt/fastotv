@@ -22,8 +22,8 @@
 
 #include <common/convert2string.h>
 
-#include "client/player/draw/draw.h"
-#include "client/player/draw/surface_saver.h"
+#include <player/draw/draw.h>
+#include <player/draw/surface_saver.h>
 
 namespace fastotv {
 namespace client {
@@ -31,7 +31,7 @@ namespace client {
 PlaylistWindow::PlaylistWindow(const SDL_Color& back_ground_color)
     : base_class(back_ground_color),
       play_list_(nullptr),
-      current_position_in_playlist_(player::draw::invalid_row_position),
+      current_position_in_playlist_(fastoplayer::draw::invalid_row_position),
       select_cur_color_() {}
 
 PlaylistWindow::~PlaylistWindow() {}
@@ -87,9 +87,10 @@ void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
   shift += row_rect.h + space_width;  // in any case shift should be
 
   int text_width = row_rect.w - shift;
-  std::string title_line = player::draw::DotText(common::MemSPrintf("Title: %s", descr.title), GetFont(), text_width);
+  std::string title_line =
+      fastoplayer::draw::DotText(common::MemSPrintf("Title: %s", descr.title), GetFont(), text_width);
   std::string description_line =
-      player::draw::DotText(common::MemSPrintf("Description: %s", descr.description), GetFont(), text_width);
+      fastoplayer::draw::DotText(common::MemSPrintf("Description: %s", descr.description), GetFont(), text_width);
 
   std::string line_text = common::MemSPrintf(
       "%s\n"
@@ -99,7 +100,7 @@ void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
   DrawText(render, line_text, text_rect, GetDrawType());
 
   if (pos == current_position_in_playlist_) {
-    player::draw::FillRectColor(render, row_rect, select_cur_color_);
+    fastoplayer::draw::FillRectColor(render, row_rect, select_cur_color_);
   }
 }
 

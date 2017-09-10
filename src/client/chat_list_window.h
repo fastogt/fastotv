@@ -18,17 +18,17 @@
 
 #pragma once
 
-#include "client/player/gui/widgets/list_box.h"
+#include <player/gui/widgets/list_box.h>
 
 #include "chat_message.h"
 
 namespace fastotv {
 namespace client {
 
-class ChatListWindow : public player::gui::IListBox {
+class ChatListWindow : public fastoplayer::gui::IListBox {
  public:
   enum { login_field_width = 240, space_width = 10 };
-  typedef player::gui::IListBox base_class;
+  typedef fastoplayer::gui::IListBox base_class;
   typedef std::vector<ChatMessage> messages_t;
   ChatListWindow(const SDL_Color& back_ground_color);
 

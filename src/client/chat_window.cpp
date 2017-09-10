@@ -21,16 +21,16 @@
 #include <common/application/application.h>
 #include <common/convert2string.h>
 
-#include "client/player/draw/draw.h"
-#include "client/player/gui/widgets/button.h"
-#include "client/player/gui/widgets/line_edit.h"
+#include <player/draw/draw.h>
+#include <player/gui/widgets/button.h>
+#include <player/gui/widgets/line_edit.h>
 
 #include "client/chat_list_window.h"
 
 namespace fastotv {
 namespace client {
 
-const SDL_Color ChatWindow::text_background_color = player::draw::white_color;
+const SDL_Color ChatWindow::text_background_color = fastoplayer::draw::white_color;
 
 ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
     : base_class(),
@@ -46,18 +46,18 @@ ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
   chat_window_ = new ChatListWindow(back_ground_color);
   chat_window_->SetVisible(true);
 
-  send_message_button_ = new player::gui::Button(player::draw::blue_color);
+  send_message_button_ = new fastoplayer::gui::Button(fastoplayer::draw::blue_color);
   send_message_button_->SetText("Post");
-  send_message_button_->SetDrawType(player::gui::Label::CENTER_TEXT);
+  send_message_button_->SetDrawType(fastoplayer::gui::Label::CENTER_TEXT);
   send_message_button_->SetVisible(true);
-  send_message_button_->SetBorderColor(player::draw::black_color);
+  send_message_button_->SetBorderColor(fastoplayer::draw::black_color);
   send_message_button_->SetBordered(true);
 
-  text_input_box_ = new player::gui::LineEdit(text_background_color);
-  text_input_box_->SetTextColor(player::draw::black_color);
-  text_input_box_->SetDrawType(player::gui::Label::WRAPPED_TEXT);
+  text_input_box_ = new fastoplayer::gui::LineEdit(text_background_color);
+  text_input_box_->SetTextColor(fastoplayer::draw::black_color);
+  text_input_box_->SetDrawType(fastoplayer::gui::Label::WRAPPED_TEXT);
   text_input_box_->SetVisible(true);
-  text_input_box_->SetBorderColor(player::draw::black_color);
+  text_input_box_->SetBorderColor(fastoplayer::draw::black_color);
   text_input_box_->SetBordered(true);
 }
 
@@ -121,8 +121,8 @@ void ChatWindow::Draw(SDL_Renderer* render) {
   if (fApp->IsCursorVisible()) {
     SDL_Rect watchers_rect = GetWatcherRect();
     std::string watchers_str = common::ConvertToString(watchers_);
-    player::draw::FillRectColor(render, watchers_rect, player::draw::red_color);
-    player::draw::DrawCenterTextInRect(render, watchers_str, font_, text_color_, watchers_rect);
+    fastoplayer::draw::FillRectColor(render, watchers_rect, fastoplayer::draw::red_color);
+    fastoplayer::draw::DrawCenterTextInRect(render, watchers_str, font_, text_color_, watchers_rect);
   }
 
   base_class::Draw(render);
@@ -141,10 +141,10 @@ void ChatWindow::Draw(SDL_Renderer* render) {
 
 SDL_Rect ChatWindow::GetWatcherRect() const {
   if (!font_) {
-    return player::draw::empty_rect;
+    return fastoplayer::draw::empty_rect;
   }
 
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 2);
+  int font_height_2line = fastoplayer::draw::CalcHeightFontPlaceByRowCount(font_, 2);
   SDL_Rect chat_rect = GetRect();
   SDL_Rect hide_button_rect = {chat_rect.w - font_height_2line, chat_rect.y - font_height_2line, font_height_2line,
                                font_height_2line};
@@ -153,10 +153,10 @@ SDL_Rect ChatWindow::GetWatcherRect() const {
 
 SDL_Rect ChatWindow::GetSendButtonRect() const {
   if (!font_) {
-    return player::draw::empty_rect;
+    return fastoplayer::draw::empty_rect;
   }
 
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 1);
+  int font_height_2line = fastoplayer::draw::CalcHeightFontPlaceByRowCount(font_, 1);
   SDL_Rect chat_rect = GetRect();
   SDL_Rect button_rect = {chat_rect.w - post_button_width, chat_rect.y + chat_rect.h - font_height_2line,
                           post_button_width, font_height_2line};
@@ -165,10 +165,10 @@ SDL_Rect ChatWindow::GetSendButtonRect() const {
 
 SDL_Rect ChatWindow::GetTextInputRect() const {
   if (!font_) {
-    return player::draw::empty_rect;
+    return fastoplayer::draw::empty_rect;
   }
 
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 1);
+  int font_height_2line = fastoplayer::draw::CalcHeightFontPlaceByRowCount(font_, 1);
   SDL_Rect chat_rect = GetRect();
   SDL_Rect text_input_rect = {chat_rect.x, chat_rect.y + chat_rect.h - font_height_2line,
                               chat_rect.w - post_button_width, font_height_2line};
@@ -177,10 +177,10 @@ SDL_Rect ChatWindow::GetTextInputRect() const {
 
 SDL_Rect ChatWindow::GetChatRect() const {
   if (!font_) {
-    return player::draw::empty_rect;
+    return fastoplayer::draw::empty_rect;
   }
 
-  int font_height_2line = player::draw::CalcHeightFontPlaceByRowCount(font_, 1);
+  int font_height_2line = fastoplayer::draw::CalcHeightFontPlaceByRowCount(font_, 1);
   SDL_Rect chat_rect = GetRect();
   int button_height = font_height_2line;
   SDL_Rect hide_button_rect = {chat_rect.x, chat_rect.y, chat_rect.w, chat_rect.h - button_height};

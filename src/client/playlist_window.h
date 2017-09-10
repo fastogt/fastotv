@@ -18,16 +18,16 @@
 
 #pragma once
 
-#include "client/player/gui/widgets/list_box.h"
+#include <player/gui/widgets/list_box.h>
 
 #include "client/playlist_entry.h"
 
 namespace fastotv {
 namespace client {
 
-class PlaylistWindow : public player::gui::IListBox {
+class PlaylistWindow : public fastoplayer::gui::IListBox {
  public:
-  typedef player::gui::IListBox base_class;
+  typedef fastoplayer::gui::IListBox base_class;
   typedef std::vector<PlaylistEntry> playlist_t;
   enum { channel_number_width = 60, space_width = 10 };
   PlaylistWindow(const SDL_Color& back_ground_color);

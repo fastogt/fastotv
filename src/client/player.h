@@ -18,26 +18,26 @@
 
 #pragma once
 
-#include "client/player/isimple_player.h"
+#include <player/isimple_player.h>
+
 #include "client/playlist_entry.h"
+#include "client/events/network_events.h"  // for BandwidthEstimationEvent
 
-#include "client/player/gui/network_events.h"  // for BandwidthEstimationEvent
-
-namespace fastotv {
-namespace client {
-
-namespace player {
+namespace fastoplayer {
 namespace gui {
 class IconLabel;
 class Button;
 }  // namespace gui
 }  // namespace player
 
+namespace fastotv {
+namespace client {
+
 class IoService;
 class ChatWindow;
 class PlaylistWindow;
 
-class Player : public player::ISimplePlayer {
+class Player : public fastoplayer::ISimplePlayer {
  public:
   static const SDL_Color failed_color;
   static const SDL_Color playlist_color;
@@ -46,40 +46,40 @@ class Player : public player::ISimplePlayer {
   static const SDL_Color keypad_color;
   static const SDL_Color playlist_item_preselect_color;
 
-  typedef ISimplePlayer base_class;
+  typedef fastoplayer::ISimplePlayer base_class;
   enum { footer_height = 60, keypad_height = 30, keypad_width = 60, min_key_pad_size = 0, max_keypad_size = 999 };
   Player(const std::string& app_directory_absolute_path,  // for runtime data (cache)
-         const player::PlayerOptions& options,
-         const player::media::AppOptions& opt,
-         const player::media::ComplexOptions& copt);
+         const fastoplayer::PlayerOptions& options,
+         const fastoplayer::media::AppOptions& opt,
+         const fastoplayer::media::ComplexOptions& copt);
 
   ~Player();
 
   virtual std::string GetCurrentUrlName() const override;  // return Unknown if not found
-  player::media::AppOptions GetStreamOptions() const;
+  fastoplayer::media::AppOptions GetStreamOptions() const;
 
  protected:
   virtual void HandleEvent(event_t* event) override;
   virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
 
-  virtual void HandlePreExecEvent(player::gui::events::PreExecEvent* event) override;
-  virtual void HandlePostExecEvent(player::gui::events::PostExecEvent* event) override;
+  virtual void HandlePreExecEvent(fastoplayer::gui::events::PreExecEvent* event) override;
+  virtual void HandlePostExecEvent(fastoplayer::gui::events::PostExecEvent* event) override;
 
-  virtual void HandleTimerEvent(player::gui::events::TimerEvent* event) override;
+  virtual void HandleTimerEvent(fastoplayer::gui::events::TimerEvent* event) override;
 
-  virtual void HandleBandwidthEstimationEvent(player::gui::events::BandwidthEstimationEvent* event);
-  virtual void HandleClientConnectedEvent(player::gui::events::ClientConnectedEvent* event);
-  virtual void HandleClientDisconnectedEvent(player::gui::events::ClientDisconnectedEvent* event);
-  virtual void HandleClientAuthorizedEvent(player::gui::events::ClientAuthorizedEvent* event);
-  virtual void HandleClientUnAuthorizedEvent(player::gui::events::ClientUnAuthorizedEvent* event);
-  virtual void HandleClientConfigChangeEvent(player::gui::events::ClientConfigChangeEvent* event);
-  virtual void HandleReceiveChannelsEvent(player::gui::events::ReceiveChannelsEvent* event);
-  virtual void HandleReceiveRuntimeChannelEvent(player::gui::events::ReceiveRuntimeChannelEvent* event);
-  virtual void HandleSendChatMessageEvent(player::gui::events::SendChatMessageEvent* event);
-  virtual void HandleReceiveChatMessageEvent(player::gui::events::ReceiveChatMessageEvent* event);
+  virtual void HandleBandwidthEstimationEvent(events::BandwidthEstimationEvent* event);
+  virtual void HandleClientConnectedEvent(events::ClientConnectedEvent* event);
+  virtual void HandleClientDisconnectedEvent(events::ClientDisconnectedEvent* event);
+  virtual void HandleClientAuthorizedEvent(events::ClientAuthorizedEvent* event);
+  virtual void HandleClientUnAuthorizedEvent(events::ClientUnAuthorizedEvent* event);
+  virtual void HandleClientConfigChangeEvent(events::ClientConfigChangeEvent* event);
+  virtual void HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event);
+  virtual void HandleReceiveRuntimeChannelEvent(events::ReceiveRuntimeChannelEvent* event);
+  virtual void HandleSendChatMessageEvent(events::SendChatMessageEvent* event);
+  virtual void HandleReceiveChatMessageEvent(events::ReceiveChatMessageEvent* event);
 
-  virtual void HandleKeyPressEvent(player::gui::events::KeyPressEvent* event) override;
-  virtual void HandleLircPressEvent(player::gui::events::LircPressEvent* event) override;
+  virtual void HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) override;
+  virtual void HandleLircPressEvent(fastoplayer::gui::events::LircPressEvent* event) override;
 
   virtual void DrawInfo() override;
   virtual void DrawFailedStatus() override;
@@ -88,10 +88,10 @@ class Player : public player::ISimplePlayer {
   virtual void InitWindow(const std::string& title, States status) override;
   virtual void SetStatus(States new_state) override;
 
-  virtual player::media::VideoState* CreateStream(stream_id sid,
-                                                  const common::uri::Url& uri,
-                                                  player::media::AppOptions opt,
-                                                  player::media::ComplexOptions copt) override;
+  virtual fastoplayer::media::VideoState* CreateStream(stream_id sid,
+                                                       const common::uri::Url& uri,
+                                                       fastoplayer::media::AppOptions opt,
+                                                       fastoplayer::media::ComplexOptions copt) override;
 
   virtual void OnWindowCreated(SDL_Window* window, SDL_Renderer* render) override;
 
@@ -133,9 +133,9 @@ class Player : public player::ISimplePlayer {
   void SwitchToAuthorizeMode();
   void SwitchToUnAuthorizeMode();
 
-  player::media::VideoState* CreateNextStream();
-  player::media::VideoState* CreatePrevStream();
-  player::media::VideoState* CreateStreamPos(size_t pos);
+  fastoplayer::media::VideoState* CreateNextStream();
+  fastoplayer::media::VideoState* CreatePrevStream();
+  fastoplayer::media::VideoState* CreateStreamPos(size_t pos);
 
   size_t GenerateNextPosition() const;
   size_t GeneratePrevPosition() const;
@@ -143,35 +143,35 @@ class Player : public player::ISimplePlayer {
   void MoveToNextStream();
   void MoveToPreviousStream();
 
-  player::draw::SurfaceSaver* offline_channel_texture_;
-  player::draw::SurfaceSaver* connection_error_texture_;
+  fastoplayer::draw::SurfaceSaver* offline_channel_texture_;
+  fastoplayer::draw::SurfaceSaver* connection_error_texture_;
 
-  player::draw::SurfaceSaver* right_arrow_button_texture_;
-  player::draw::SurfaceSaver* left_arrow_button_texture_;
-  player::draw::SurfaceSaver* up_arrow_button_texture_;
-  player::draw::SurfaceSaver* down_arrow_button_texture_;
+  fastoplayer::draw::SurfaceSaver* right_arrow_button_texture_;
+  fastoplayer::draw::SurfaceSaver* left_arrow_button_texture_;
+  fastoplayer::draw::SurfaceSaver* up_arrow_button_texture_;
+  fastoplayer::draw::SurfaceSaver* down_arrow_button_texture_;
 
-  player::gui::Button* show_playlist_button_;
-  player::gui::Button* hide_playlist_button_;
+  fastoplayer::gui::Button* show_playlist_button_;
+  fastoplayer::gui::Button* hide_playlist_button_;
 
-  player::gui::Button* show_chat_button_;
-  player::gui::Button* hide_chat_button_;
+  fastoplayer::gui::Button* show_chat_button_;
+  fastoplayer::gui::Button* hide_chat_button_;
 
   IoService* controller_;
 
   size_t current_stream_pos_;
   std::vector<PlaylistEntry> play_list_;
 
-  player::gui::IconLabel* description_label_;
-  player::media::msec_t footer_last_shown_;
+  fastoplayer::gui::IconLabel* description_label_;
+  fastoplayer::media::msec_t footer_last_shown_;
 
-  const player::media::AppOptions opt_;
-  const player::media::ComplexOptions copt_;
+  const fastoplayer::media::AppOptions opt_;
+  const fastoplayer::media::ComplexOptions copt_;
 
   const std::string app_directory_absolute_path_;
 
-  player::gui::Label* keypad_label_;
-  player::media::msec_t keypad_last_shown_;
+  fastoplayer::gui::Label* keypad_label_;
+  fastoplayer::media::msec_t keypad_last_shown_;
 
   PlaylistWindow* plailist_window_;
   ChatWindow* chat_window_;

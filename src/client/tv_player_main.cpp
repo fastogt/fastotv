@@ -28,11 +28,11 @@ extern "C" {
 #include <common/file_system.h>  // for File, create_directory
 #include <common/system/system.h>
 
+#include <player/ffmpeg_application.h>
+
 #include "client/cmdutils.h"  // for DictionaryOptions, show_...
 #include "client/load_config.h"
 #include "client/player.h"  // for Player
-#include "client/player/ffmpeg_application.h"
-#include "client/simple_player.h"
 
 void init_ffmpeg() {
   init_dynload();
@@ -48,7 +48,7 @@ void init_ffmpeg() {
 }
 
 int main_application(int argc, char** argv, const std::string& app_directory_absolute_path) {
-  int res = fastotv::client::player::prepare_to_start(app_directory_absolute_path);
+  int res = fastoplayer::prepare_to_start(app_directory_absolute_path);
   if (res == EXIT_FAILURE) {
     return EXIT_FAILURE;
   }
@@ -60,7 +60,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
     return EXIT_FAILURE;
   }
 
-  fastotv::client::player::TVConfig main_options;
+  fastoplayer::TVConfig main_options;
   common::ErrnoError err = fastotv::client::load_config_file(config_absolute_path, &main_options);
   if (err) {
     return EXIT_FAILURE;
@@ -73,7 +73,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   INIT_LOGGER(PROJECT_NAME_TITLE, main_options.loglevel);
 #endif
 
-  fastotv::client::player::FFmpegApplication app(argc, argv);
+  fastoplayer::FFmpegApplication app(argc, argv);
 
   AVDictionary* sws_dict = NULL;
   AVDictionary* swr_opts = NULL;
@@ -81,7 +81,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   AVDictionary* codec_opts = NULL;
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
-  fastotv::client::player::media::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
+  fastoplayer::media::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
   auto player = new fastotv::client::Player(app_directory_absolute_path, main_options.player_options,
                                             main_options.app_options, copt);
   res = app.Exec();

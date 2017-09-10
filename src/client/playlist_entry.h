@@ -23,15 +23,16 @@
 #include "channels_info.h"
 #include "runtime_channel_info.h"
 
-namespace fastotv {
-namespace client {
-namespace player {
+namespace fastoplayer {
 namespace draw {
 class SurfaceSaver;
 }
 }  // namespace player
 
-typedef std::shared_ptr<player::draw::SurfaceSaver> channel_icon_t;
+namespace fastotv {
+namespace client {
+
+typedef std::shared_ptr<fastoplayer::draw::SurfaceSaver> channel_icon_t;
 
 struct ChannelDescription {
   std::string title;

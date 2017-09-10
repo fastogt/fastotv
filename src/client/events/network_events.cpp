@@ -16,27 +16,21 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/player/media/frames/base_frame.h"
+#include "client/events/network_events.h"
 
 namespace fastotv {
 namespace client {
-namespace player {
-namespace media {
-namespace frames {
+namespace events {
 
-BaseFrame::BaseFrame() : frame(av_frame_alloc()), pts(0), duration(0), pos(0) {}
+BandwidtInfo::BandwidtInfo() : host(), bandwidth(0), host_type(UNKNOWN_SERVER) {}
 
-BaseFrame::~BaseFrame() {
-  ClearFrame();
-  av_frame_free(&frame);
-}
+BandwidtInfo::BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandwidthHostType hs)
+    : host(host), bandwidth(band), host_type(hs) {}
 
-void BaseFrame::ClearFrame() {
-  av_frame_unref(frame);
-}
+ConnectInfo::ConnectInfo() {}
 
-}  // namespace frames
-}  // namespace media
-}  // namespace player
+ConnectInfo::ConnectInfo(const common::net::HostAndPort& host) : host(host) {}
+
+}  // namespace events
 }  // namespace client
 }  // namespace fastotv

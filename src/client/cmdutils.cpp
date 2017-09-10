@@ -66,7 +66,8 @@ extern "C" {
 #include <common/log_levels.h>  // for LOG_LEVEL::LOG_LEVEL_INFO, etc
 #include <common/sprintf.h>     // for MemSPrintf
 
-#include "client/player/media/ffmpeg_internal.h"
+#include <player/media/ffmpeg_internal.h>  // for HWAccelID
+#include <player/ffmpeg_config.h>          // for CONFIG_AVFILTER
 
 #if CONFIG_AVDEVICE
 #define HELP_AVDEVICE                                         \
@@ -294,17 +295,16 @@ void print_codecs_for_id(enum AVCodecID id, bool encoder) {
 }
 
 void print_codecs(bool encoder) {
-  std::cout << (encoder ? "Encoders" : "Decoders")
-            << ":\n"
-               " V..... = Video\n"
-               " A..... = Audio\n"
-               " S..... = Subtitle\n"
-               " .F.... = Frame-level multithreading\n"
-               " ..S... = Slice-level multithreading\n"
-               " ...X.. = Codec is experimental\n"
-               " ....B. = Supports draw_horiz_band\n"
-               " .....D = Supports direct rendering method 1\n"
-               " ------"
+  std::cout << (encoder ? "Encoders" : "Decoders") << ":\n"
+                                                      " V..... = Video\n"
+                                                      " A..... = Audio\n"
+                                                      " S..... = Subtitle\n"
+                                                      " .F.... = Frame-level multithreading\n"
+                                                      " ..S... = Slice-level multithreading\n"
+                                                      " ...X.. = Codec is experimental\n"
+                                                      " ....B. = Supports draw_horiz_band\n"
+                                                      " .....D = Supports direct rendering method 1\n"
+                                                      " ------"
             << std::endl;
 
   std::vector<const AVCodecDescriptor*> codecs;
@@ -336,11 +336,10 @@ void print_codecs(bool encoder) {
 void show_formats_devices(bool device_only) {
   AVInputFormat* ifmt = NULL;
   AVOutputFormat* ofmt = NULL;
-  std::cout << (device_only ? "Devices:" : "File formats:")
-            << "\n"
-               " D. = Demuxing supported\n"
-               " .E = Muxing supported\n"
-               " --"
+  std::cout << (device_only ? "Devices:" : "File formats:") << "\n"
+                                                               " D. = Demuxing supported\n"
+                                                               " .E = Muxing supported\n"
+                                                               " --"
             << std::endl;
 
   const char* last_name = "000";
@@ -762,8 +761,8 @@ void show_bsfs() {
 
 void show_hwaccels() {
   std::cout << "Hardware acceleration methods:" << std::endl;
-  for (size_t i = 0; i < fastotv::client::player::media::hwaccel_count(); i++) {
-    std::cout << fastotv::client::player::media::hwaccels[i].name << std::endl;
+  for (size_t i = 0; i < fastoplayer::media::hwaccel_count(); i++) {
+    std::cout << fastoplayer::media::hwaccels[i].name << std::endl;
   }
 }
 
