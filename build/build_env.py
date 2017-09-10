@@ -401,6 +401,33 @@ class BuildRequest(object):
             os.chdir(self.build_dir_path_)
             raise ex
 
+    def build_fastoplayer(self):
+        pwd = os.getcwd()
+        cmake_project_root_abs_path = '..'
+        if not os.path.exists(cmake_project_root_abs_path):
+            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
+
+        # project static options
+        prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
+
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
+                      prefix_args]
+        try:
+            cloned_dir = utils.git_clone('https://github.com/fastogt/fastoplayer.git', pwd)
+            os.chdir(cloned_dir)
+
+            os.mkdir('build_cmake_release')
+            os.chdir('build_cmake_release')
+            fastoplayer_cmake_line = list(cmake_line)
+            fastoplayer_cmake_line.append('-DBUILD_PLAYER=OFF')
+            subprocess.call(fastoplayer_cmake_line)
+            subprocess.call(['make', 'install'])
+            os.chdir(self.build_dir_path_)
+            shutil.rmtree(cloned_dir)
+        except Exception as ex:
+            os.chdir(self.build_dir_path_)
+            raise ex
+
     def build_jsonc(self):
         pwd = os.getcwd()
         cmake_project_root_abs_path = '..'
@@ -516,6 +543,15 @@ if __name__ == "__main__":
     common_grp.add_argument('--without-common', help='build without common', dest='with_common', action='store_false',
                             default=False)
 
+    # fastoplayer
+    fastoplayer_grp = parser.add_mutually_exclusive_group()
+    fastoplayer_grp.add_argument('--with-fastoplayer', help='build fastoplayer (default, version: git master)',
+                                 dest='with_fastoplayer',
+                                 action='store_true', default=True)
+    fastoplayer_grp.add_argument('--without-fastoplayer', help='build without fastoplayer', dest='with_fastoplayer',
+                                 action='store_false',
+                                 default=False)
+
     # sdl2
     sdl2_grp = parser.add_mutually_exclusive_group()
     sdl2_grp.add_argument('--with-sdl2', help='build sdl2 (default, version:{0})'.format(sdl2_default_version),
@@ -596,6 +632,8 @@ if __name__ == "__main__":
         request.build_jsonc()
     if argv.with_common:
         request.build_common()
+    if argv.with_common:
+        request.build_fastoplayer()
 
     if argv.with_sdl2:
         request.build_sdl2(argv.sdl2_version)
@@ -606,6 +644,6 @@ if __name__ == "__main__":
 
     if argv.with_openssl:
         request.build_openssl(argv.openssl_version)
-        
+
     if argv.with_ffmpeg:
         request.build_ffmpeg()
