@@ -22,7 +22,7 @@
 #include <stdio.h>     // for snprintf
 #include <string>      // for string
 
-#include <player/ffmpeg_config.h>  // for CONFIG_AVDEVICE
+#include <player/media/ffmpeg_config.h>  // for CONFIG_AVDEVICE
 
 extern "C" {
 #include <libavutil/avutil.h>          // for av_get_media_type_string

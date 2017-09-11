@@ -24,7 +24,6 @@
 #include <common/utils.h>
 
 #include <player/media/ffmpeg_internal.h>  // for HWAccelID
-#include <player/ffmpeg_config.h>          // for CONFIG_AVFILTER
 
 #include "inih/ini.h"  // for ini_parse
 

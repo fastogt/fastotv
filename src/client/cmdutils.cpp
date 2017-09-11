@@ -67,7 +67,6 @@ extern "C" {
 #include <common/sprintf.h>     // for MemSPrintf
 
 #include <player/media/ffmpeg_internal.h>  // for HWAccelID
-#include <player/ffmpeg_config.h>          // for CONFIG_AVFILTER
 
 #if CONFIG_AVDEVICE
 #define HELP_AVDEVICE                                         \
