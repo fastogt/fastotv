@@ -20,15 +20,15 @@
 
 #include <player/isimple_player.h>
 
-#include "client/playlist_entry.h"
 #include "client/events/network_events.h"  // for BandwidthEstimationEvent
+#include "client/playlist_entry.h"
 
 namespace fastoplayer {
 namespace gui {
 class IconLabel;
 class Button;
 }  // namespace gui
-}  // namespace player
+}  // namespace fastoplayer
 
 namespace fastotv {
 namespace client {

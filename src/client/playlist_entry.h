@@ -27,7 +27,7 @@ namespace fastoplayer {
 namespace draw {
 class SurfaceSaver;
 }
-}  // namespace player
+}  // namespace fastoplayer
 
 namespace fastotv {
 namespace client {

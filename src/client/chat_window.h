@@ -28,7 +28,7 @@ namespace gui {
 class Button;
 class LineEdit;
 }  // namespace gui
-}  // namespace player
+}  // namespace fastoplayer
 
 namespace fastotv {
 namespace client {

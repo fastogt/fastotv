@@ -24,13 +24,13 @@
 #include <common/threads/thread_manager.h>
 #include <common/utils.h>
 
-#include <player/sdl_utils.h>  // for IMG_LoadPNG, SurfaceSaver
 #include <player/draw/surface_saver.h>
+#include <player/sdl_utils.h>  // for IMG_LoadPNG, SurfaceSaver
 
 // widgets
+#include <player/draw/draw.h>
 #include <player/gui/widgets/button.h>
 #include <player/gui/widgets/icon_label.h>
-#include <player/draw/draw.h>
 
 #include "client/ioservice.h"  // for IoService
 #include "client/utils.h"
@@ -937,9 +937,9 @@ void Player::DrawInitStatus() {
 }
 
 fastoplayer::media::VideoState* Player::CreateStream(stream_id sid,
-                                                const common::uri::Url& uri,
-                                                fastoplayer::media::AppOptions opt,
-                                                fastoplayer::media::ComplexOptions copt) {
+                                                     const common::uri::Url& uri,
+                                                     fastoplayer::media::AppOptions opt,
+                                                     fastoplayer::media::ComplexOptions copt) {
   controller_->RequesRuntimeChannelInfo(sid);
   return base_class::CreateStream(sid, uri, opt, copt);
 }

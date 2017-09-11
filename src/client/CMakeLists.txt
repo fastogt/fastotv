@@ -617,7 +617,6 @@ INSTALL_RUNTIME_LIBRARIES()
 IF(DEVELOPER_CHECK_STYLE)
   SET(CHECK_SOURCES_CLIENT
     ${TV_PLAYER_SOURCES}
-    ${SOURCE_ROOT}/client/player_main.cpp
     ${SOURCE_ROOT}/client/tv_player_main.cpp
   )
   REGISTER_CHECK_STYLE_TARGET(check_style_client "${CHECK_SOURCES_CLIENT}")
