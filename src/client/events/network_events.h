@@ -27,7 +27,6 @@
 #include "runtime_channel_info.h"
 
 #include "client/types.h"         // for BandwidthHostType
-#include "client_server_types.h"  // for bandwidth_t
 
 #define CLIENT_DISCONNECT_EVENT static_cast<EventsType>(USER_EVENTS + 1)
 #define CLIENT_CONNECT_EVENT static_cast<EventsType>(USER_EVENTS + 2)
