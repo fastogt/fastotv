@@ -111,7 +111,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   }
 
   ProcessRequest(id, argc, argv);
-  INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->FormatedName() << "] seq: " << CmdIdToString(seq)
+  INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->GetFormatedName() << "] seq: " << CmdIdToString(seq)
              << ", id:" << id << ", cmd: " << cmd_str;
   if (seq == REQUEST_COMMAND) {
     HandleInnerRequestCommand(connection, id, argc, argv);

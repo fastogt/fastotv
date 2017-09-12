@@ -115,8 +115,8 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
           client->Close();
           delete client;
         } else {
-          INFO_LOG() << "Pinged to client[" << client->FormatedName() << "], from server[" << server->FormatedName()
-                     << "], " << online_clients.size() << " client(s) connected.";
+          INFO_LOG() << "Pinged to client[" << client->GetFormatedName() << "], from server["
+                     << server->GetFormatedName() << "], " << online_clients.size() << " client(s) connected.";
         }
       }
     }
