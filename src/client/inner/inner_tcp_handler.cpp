@@ -340,7 +340,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO)) {
     const common::system_info::CpuInfo& c1 = common::system_info::CurrentCpuInfo();
-    std::string brand = c1.BrandName();
+    std::string brand = c1.GetBrandName();
 
     int64_t ram_total = common::system_info::AmountOfPhysicalMemory();
     int64_t ram_free = common::system_info::AmountOfAvailablePhysicalMemory();
