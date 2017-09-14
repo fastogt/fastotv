@@ -21,6 +21,7 @@
 #include <common/application/application.h>
 
 #include <common/convert2string.h>
+#include <common/sprintf.h>
 
 #include <player/draw/draw.h>
 #include <player/draw/surface_saver.h>

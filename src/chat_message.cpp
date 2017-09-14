@@ -18,6 +18,8 @@
 
 #include "chat_message.h"
 
+#include <common/sprintf.h>
+
 #define CHAT_MESSAGE_CHANNEL_ID_FIELD "channel_id"
 #define CHAT_MESSAGE_LOGIN_FIELD "login"
 #define CHAT_MESSAGE_MESSAGE_FIELD "message"

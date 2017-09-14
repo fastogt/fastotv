@@ -25,6 +25,7 @@
 
 #include <common/error.h>
 #include <common/net/types.h>  // for HostAndPort
+#include <common/sprintf.h>
 
 namespace fastotv {
 namespace server {
