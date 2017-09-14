@@ -22,7 +22,7 @@
 
 #include <lirc/lirc_client.h>  // for lirc_code2char, lirc_deinit
 
-#include <common/file_system.h>
+#include <common/file_system/string_path_utils.h>
 #include <common/net/net.h>            // for set_blocking_socket
 #include <common/string_util_posix.h>  // for strdup
 #include <common/utils.h>              // for freeifnotnull

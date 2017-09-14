@@ -20,7 +20,9 @@
 
 #include <common/application/application.h>
 #include <common/convert2string.h>
-#include <common/file_system.h>
+#include <common/file_system/file.h>
+#include <common/file_system/file_system.h>
+#include <common/file_system/string_path_utils.h>
 #include <common/threads/thread_manager.h>
 #include <common/utils.h>
 
