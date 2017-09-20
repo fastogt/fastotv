@@ -18,9 +18,6 @@
 
 #include "commands/commands.h"
 
-#include <common/convert2string.h>
-#include <common/utils.h>
-
 namespace fastotv {
 
 std::string CmdIdToString(cmd_id_t id) {

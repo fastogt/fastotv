@@ -19,6 +19,7 @@
 #include "client/playlist_entry.h"
 
 #include <common/file_system/string_path_utils.h>
+#include <common/time.h>
 
 #define IMG_UNKNOWN_CHANNEL_PATH_RELATIVE "share/resources/unknown_channel.png"
 

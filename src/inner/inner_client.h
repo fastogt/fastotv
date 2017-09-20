@@ -20,18 +20,11 @@
 
 #include <common/libev/tcp/tcp_client.h>  // for TcpClient
 
-#include "commands/commands.h"  // for cmd_approve_t, cmd_request_t
+#include "commands/commands.h"
 
 namespace common {
 class IEDcoder;
-namespace libev {
-class IoLoop;
 }
-
-namespace net {
-class socket_info;
-}
-}  // namespace common
 
 namespace fastotv {
 namespace inner {

@@ -18,11 +18,8 @@
 
 #pragma once
 
-#include <stdint.h>  // for uintmax_t
-
+#include <functional>
 #include <atomic>
-#include <functional>  // for function
-#include <string>      // for string
 
 #include "commands/commands.h"  // for cmd_seq_t
 

@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <common/error.h>      // for Error
-#include <common/macros.h>     // for WARN_UNUSED_RESULT
 #include <common/net/types.h>  // for HostAndPort
 
 #include "serializer/json_serializer.h"

@@ -18,10 +18,8 @@
 
 #pragma once
 
-#include <common/error.h>   // for Error
-#include <common/macros.h>  // for WARN_UNUSED_RESULT
-
 #include "channel_info.h"
+
 #include "serializer/json_serializer.h"
 
 namespace fastotv {

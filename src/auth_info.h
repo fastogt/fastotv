@@ -18,10 +18,7 @@
 
 #pragma once
 
-#include <string>  // for string
 
-#include <common/error.h>   // for Error
-#include <common/macros.h>  // for WARN_UNUSED_RESULT
 
 #include "client_server_types.h"  // for login_t
 

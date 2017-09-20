@@ -19,7 +19,6 @@
 #pragma once
 
 #include <inttypes.h>
-#include <string>
 
 #include <common/error.h>
 #include <common/sprintf.h>

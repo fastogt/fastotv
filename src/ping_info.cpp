@@ -18,9 +18,7 @@
 
 #include "ping_info.h"
 
-#include <string>
-
-#include <common/convert2string.h>
+#include <common/time.h>
 
 namespace fastotv {
 

@@ -18,13 +18,8 @@
 
 #pragma once
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
-
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>  // for json_tokener_parse
-
-#include <common/error.h>  // for Error
 
 #include "serializer/iserializer.h"  // for ISerializer
 
@@ -37,7 +32,7 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
   typedef typename base_class::value_type value_type;
   typedef typename base_class::serialize_type serialize_type;
 
-  virtual common::Error SerializeToString(std::string* deserialized) const override final {
+  virtual common::Error SerializeToString(std::string* deserialized) const override final WARN_UNUSED_RESULT {
     serialize_type des = NULL;
     common::Error err = base_class::Serialize(&des);
     if (err) {
@@ -49,7 +44,8 @@ class JsonSerializer : public ISerializer<T, struct json_object*> {
     return common::Error();
   }
 
-  virtual common::Error SerializeFromString(const std::string& data, serialize_type* out) const override final {
+  virtual common::Error SerializeFromString(const std::string& data,
+                                            serialize_type* out) const override final WARN_UNUSED_RESULT {
     const char* data_ptr = data.c_str();
     serialize_type res = json_tokener_parse(data_ptr);
     if (!res) {

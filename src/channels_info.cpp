@@ -18,9 +18,6 @@
 
 #include "channels_info.h"
 
-#include <stddef.h>  // for NULL
-
-#include <common/convert2string.h>
 #include <common/sprintf.h>
 
 namespace fastotv {

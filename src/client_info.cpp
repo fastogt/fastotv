@@ -18,11 +18,6 @@
 
 #include "client_info.h"
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
-
-#include <common/convert2string.h>
-
 #define CLIENT_INFO_LOGIN_FIELD "login"
 #define CLIENT_INFO_BANDWIDTH_FIELD "bandwidth"
 #define CLIENT_INFO_OS_FIELD "os"

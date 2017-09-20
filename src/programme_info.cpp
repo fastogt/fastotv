@@ -31,12 +31,6 @@ have everyone listening!</desc>
 </programme>
 */
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
-
-#include <common/convert2string.h>
-#include <common/sprintf.h>
-
 #define PROGRAMME_INFO_CHANNEL_FIELD "channel"
 #define PROGRAMME_INFO_START_FIELD "start"
 #define PROGRAMME_INFO_STOP_FIELD "stop"

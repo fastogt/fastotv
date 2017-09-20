@@ -18,10 +18,6 @@
 
 #include "server_info.h"
 
-#include <string>
-
-#include <common/convert2string.h>
-
 namespace fastotv {
 
 ServerInfo::ServerInfo() : bandwidth_host_() {}
