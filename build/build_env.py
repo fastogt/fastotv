@@ -632,7 +632,7 @@ if __name__ == "__main__":
         request.build_jsonc()
     if argv.with_common:
         request.build_common()
-    if argv.with_common:
+    if argv.with_fastoplayer:
         request.build_fastoplayer()
 
     if argv.with_sdl2:
