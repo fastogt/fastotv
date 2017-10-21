@@ -20,6 +20,8 @@
 
 #include <string.h>  // for strcmp
 
+#include <limits>
+
 #include <common/file_system/file.h>
 #include <common/file_system/string_path_utils.h>
 #include <common/utils.h>

@@ -22,6 +22,8 @@
 #include <stdint.h>  // for int64_t
 #include <string>    // for string
 
+#include <algorithm>
+
 #include <json-c/json.h>
 
 #include <common/application/application.h>  // for fApp

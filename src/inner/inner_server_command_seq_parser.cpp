@@ -18,6 +18,8 @@
 
 #include "inner/inner_server_command_seq_parser.h"
 
+#include <algorithm>
+
 #include <common/convert2string.h>
 #include <common/sys_byteorder.h>
 
