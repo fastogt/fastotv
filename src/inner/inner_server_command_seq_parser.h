@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <functional>
 #include <atomic>
+#include <functional>
 
 #include "commands/commands.h"  // for cmd_seq_t
 

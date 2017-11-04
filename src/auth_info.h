@@ -18,8 +18,6 @@
 
 #pragma once
 
-
-
 #include "client_server_types.h"  // for login_t
 
 #include "serializer/json_serializer.h"
