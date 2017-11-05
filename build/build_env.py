@@ -270,8 +270,9 @@ class BuildRequest(object):
         if platform_name == 'linux':
             distribution = system_info.linux_get_dist()
             if distribution == 'DEBIAN':
-                dep_libs = ['git', 'gcc', 'g++', 'yasm', 'ninja-build', 'pkg-config', 'libtool', 'rpm', 'make',
+                dep_libs = ['git', 'gcc', 'g++', 'yasm', 'pkg-config', 'libtool', 'rpm',
                             'autogen', 'autoconf',
+                            'make', 'ninja-build',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
                             'freetype-dev', 'libfreetype6-dev',
@@ -279,9 +280,9 @@ class BuildRequest(object):
                             'libdrm-dev', 'libdri2-dev', 'libump-dev', 'libudev-dev',
                             'liblircclient-dev']
             elif distribution == 'RHEL':
-                dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'ninja-build', 'pkgconfig', 'libtoolize', 'rpm-build',
+                dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'pkgconfig', 'libtoolize', 'rpm-build',
                             'autogen', 'autoconf',
-                            'make',
+                            'make', 'ninja-build',
                             'zlib-devel', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
                             'freetype-devel', 'libfreetype6-devel',
@@ -293,10 +294,10 @@ class BuildRequest(object):
                 # Debian 8.7 no packages: libdri2-dev, libump-dev,
         elif platform_name == 'windows':
             if arch.name() == 'x86_64':
-                dep_libs = ['git', 'make', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm',
+                dep_libs = ['git', 'make', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm', 'mingw-w64-x86_64-ninja',
                             'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja', 'mingw-w64-x86_64-freetype']
             elif arch.name() == 'i386':
-                dep_libs = ['git', 'make', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm',
+                dep_libs = ['git', 'make', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm', 'mingw-w64-i686-ninja',
                             'mingw-w64-i686-make', 'mingw-w64-i686-ninja', 'mingw-w64-i686-freetype']
         elif platform_name == 'macosx':
             dep_libs = ['git', 'yasm', 'make', 'ninja', 'freetype']
@@ -383,7 +384,7 @@ class BuildRequest(object):
         # project static options
         prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
 
-        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GNinja', '-DCMAKE_BUILD_TYPE=RELEASE',
                       prefix_args]
         try:
             cloned_dir = utils.git_clone('https://github.com/fastogt/common.git', pwd)
@@ -394,7 +395,7 @@ class BuildRequest(object):
             common_cmake_line = list(cmake_line)
             common_cmake_line.append('-DQT_ENABLED=OFF')
             subprocess.call(common_cmake_line)
-            subprocess.call(['make', 'install'])
+            subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
             shutil.rmtree(cloned_dir)
         except Exception as ex:
@@ -410,7 +411,7 @@ class BuildRequest(object):
         # project static options
         prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
 
-        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GNinja', '-DCMAKE_BUILD_TYPE=RELEASE',
                       prefix_args]
         try:
             cloned_dir = utils.git_clone('https://github.com/fastogt/fastoplayer.git', pwd)
@@ -421,7 +422,7 @@ class BuildRequest(object):
             fastoplayer_cmake_line = list(cmake_line)
             fastoplayer_cmake_line.append('-DBUILD_PLAYER=OFF')
             subprocess.call(fastoplayer_cmake_line)
-            subprocess.call(['make', 'install'])
+            subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
             shutil.rmtree(cloned_dir)
         except Exception as ex:
@@ -437,7 +438,7 @@ class BuildRequest(object):
         # project static options
         prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
 
-        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GNinja', '-DCMAKE_BUILD_TYPE=RELEASE',
                       prefix_args]
         try:
             cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git', pwd)
@@ -447,7 +448,7 @@ class BuildRequest(object):
             os.chdir('build_cmake_release')
             jsonc_cmake_line = list(cmake_line)
             subprocess.call(jsonc_cmake_line)
-            subprocess.call(['make', 'install'])
+            subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
             shutil.rmtree(cloned_dir)
         except Exception as ex:
@@ -463,7 +464,7 @@ class BuildRequest(object):
         # project static options
         prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
 
-        cmake_line = ['cmake', cmake_project_root_abs_path, '-GUnix Makefiles', '-DCMAKE_BUILD_TYPE=RELEASE',
+        cmake_line = ['cmake', cmake_project_root_abs_path, '-GNinja', '-DCMAKE_BUILD_TYPE=RELEASE',
                       prefix_args]
         try:
             cloned_dir = utils.git_clone('https://github.com/fastogt/snappy.git', pwd)
@@ -473,7 +474,7 @@ class BuildRequest(object):
             os.chdir('build_cmake_release')
             snappy_cmake_line = list(cmake_line)
             subprocess.call(snappy_cmake_line)
-            subprocess.call(['make', 'install'])
+            subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
             shutil.rmtree(cloned_dir)
         except Exception as ex:
@@ -482,8 +483,8 @@ class BuildRequest(object):
 
 
 if __name__ == "__main__":
-    sdl2_default_version = '2.0.5'
-    sdl2_image_default_version = '2.0.1'
+    sdl2_default_version = '2.0.7'
+    sdl2_image_default_version = '2.0.2'
     sdl2_ttf_default_version = '2.0.14'
     openssl_default_version = '1.0.2l'
     cmake_default_version = '3.9.0'
@@ -632,8 +633,6 @@ if __name__ == "__main__":
         request.build_jsonc()
     if argv.with_common:
         request.build_common()
-    if argv.with_fastoplayer:
-        request.build_fastoplayer()
 
     if argv.with_sdl2:
         request.build_sdl2(argv.sdl2_version)
@@ -647,3 +646,6 @@ if __name__ == "__main__":
 
     if argv.with_ffmpeg:
         request.build_ffmpeg()
+
+    if argv.with_fastoplayer:
+        request.build_fastoplayer()
