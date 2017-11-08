@@ -165,7 +165,7 @@ class BuildRequest(object):
         in_file = open('CPackConfig.cmake', 'r')
         for line in in_file.readlines():
             res = re.search(r'SET\(CPACK_PACKAGE_FILE_NAME "(.+)"\)', line)
-            if res != None:
+            if res:
                 filename = res.group(1)
                 break
         in_file.close()

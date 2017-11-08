@@ -73,6 +73,7 @@ class BuildRpcServer(object):
         self.setup_queue(self.routing_key_)
 
     def setup_queue(self, queue_name):
+        print("setup_queue: {0}".format(queue_name))
         self.channel_.queue_declare(self.on_queue_declareok, queue_name)
 
     def on_queue_declareok(self, method_frame):
