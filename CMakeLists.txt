@@ -274,9 +274,9 @@ IF(CPACK_SUPPORT)
     # CPACK_DEBIAN_PACKAGE_HOMEPAGE The URL of the web site for this package
     # SET(CPACK_DEBIAN_PACKAGE_DEBUG ON)
     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.11), libstdc++6 (>= 4.9),
-      libva-drm1 (>= 1.1.0), libva-x11-1 (>= 1.0.3), libvdpau1 (>= 0.2),
+      #libva-drm1 (>= 1.1.0), libva-x11-1 (>= 1.0.3), libvdpau1 (>= 0.2),
       libxext6, libfreetype6 (>= 2.2.1), libpng12-0 (>= 1.2),
-      libasound2 (>= 1.0.16), xinit"
+      libasound2 (>= 1.0.16)#, xinit"
     )
     SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
     SET(CPACK_DEBIAN_PACKAGE_SECTION "video")  #input our section
