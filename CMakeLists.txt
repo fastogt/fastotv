@@ -276,7 +276,7 @@ IF(CPACK_SUPPORT)
     # libva-drm1 (>= 1.1.0), libva-x11-1 (>= 1.0.3), libvdpau1 (>= 0.2), xinit
     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.11), libstdc++6 (>= 4.9),
       libxext6, libfreetype6 (>= 2.2.1), libpng12-0 (>= 1.2),
-      libasound2 (>= 1.0.16)
+      libasound2 (>= 1.0.16)"
     )
     SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
     SET(CPACK_DEBIAN_PACKAGE_SECTION "video")  #input our section
