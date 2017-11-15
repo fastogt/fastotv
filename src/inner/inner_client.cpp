@@ -36,15 +36,15 @@ const char* InnerClient::ClassName() const {
   return "InnerClient";
 }
 
-common::Error InnerClient::Write(const cmd_request_t& request) {
+common::Error InnerClient::Write(const common::protocols::three_way_handshake::cmd_request_t& request) {
   return WriteMessage(request.GetCmd());
 }
 
-common::Error InnerClient::Write(const cmd_responce_t& responce) {
+common::Error InnerClient::Write(const common::protocols::three_way_handshake::cmd_responce_t& responce) {
   return WriteMessage(responce.GetCmd());
 }
 
-common::Error InnerClient::Write(const cmd_approve_t& approve) {
+common::Error InnerClient::Write(const common::protocols::three_way_handshake::cmd_approve_t& approve) {
   return WriteMessage(approve.GetCmd());
 }
 

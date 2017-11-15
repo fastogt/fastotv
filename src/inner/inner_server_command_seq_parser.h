@@ -21,7 +21,7 @@
 #include <atomic>
 #include <functional>
 
-#include "commands/commands.h"  // for cmd_seq_t
+#include "commands/commands.h"
 
 namespace fastotv {
 namespace inner {
@@ -34,13 +34,14 @@ namespace inner {
 
 class RequestCallback {
  public:
-  typedef std::function<void(cmd_seq_t request_id, int argc, char* argv[])> callback_t;
-  RequestCallback(cmd_seq_t request_id, callback_t cb);
-  cmd_seq_t GetRequestID() const;
+  typedef std::function<void(common::protocols::three_way_handshake::cmd_seq_t request_id, int argc, char* argv[])>
+      callback_t;
+  RequestCallback(common::protocols::three_way_handshake::cmd_seq_t request_id, callback_t cb);
+  common::protocols::three_way_handshake::cmd_seq_t GetRequestID() const;
   void Execute(int argc, char* argv[]);
 
  private:
-  cmd_seq_t request_id_;
+  common::protocols::three_way_handshake::cmd_seq_t request_id_;
   callback_t cb_;
 };
 
@@ -56,22 +57,22 @@ class InnerServerCommandSeqParser {
  protected:
   void HandleInnerDataReceived(InnerClient* connection, const std::string& input_command);
 
-  cmd_seq_t NextRequestID();  // for requests
+  common::protocols::three_way_handshake::cmd_seq_t NextRequestID();  // for requests
 
  private:
-  void ProcessRequest(cmd_seq_t request_id, int argc, char* argv[]);
+  void ProcessRequest(common::protocols::three_way_handshake::cmd_seq_t request_id, int argc, char* argv[]);
 
   virtual void HandleInnerRequestCommand(InnerClient* connection,
-                                         cmd_seq_t id,
+                                         common::protocols::three_way_handshake::cmd_seq_t id,
                                          int argc,
                                          char* argv[]) = 0;  // called when argv not NULL and argc > 0 , only responce
   virtual void HandleInnerResponceCommand(
       InnerClient* connection,
-      cmd_seq_t id,
+      common::protocols::three_way_handshake::cmd_seq_t id,
       int argc,
       char* argv[]) = 0;  // called when argv not NULL and argc > 0, only approve responce
   virtual void HandleInnerApproveCommand(InnerClient* connection,
-                                         cmd_seq_t id,
+                                         common::protocols::three_way_handshake::cmd_seq_t id,
                                          int argc,
                                          char* argv[]) = 0;  // called when argv not NULL and argc > 0
 

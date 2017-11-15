@@ -20,52 +20,90 @@
 
 #include <string>  // for string
 
-#include "commands/commands.h"  // for cmd_seq_t, cmd_approve_t, cmd_responce_t
+#include "client_server_types.h"
+
+#include "commands/commands.h"
 
 namespace fastotv {
 namespace server {
 
 // requests
 // ping server
-cmd_request_t PingRequest(cmd_seq_t id);
-cmd_approve_t PingApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t PingApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+common::protocols::three_way_handshake::cmd_request_t PingRequest(common::protocols::three_way_handshake::cmd_seq_t id);
+common::protocols::three_way_handshake::cmd_approve_t PingApproveResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id);
+common::protocols::three_way_handshake::cmd_approve_t PingApproveResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);  // escaped
 
 // who_are_you
-cmd_request_t WhoAreYouRequest(cmd_seq_t id);
-cmd_approve_t WhoAreYouApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t WhoAreYouApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+common::protocols::three_way_handshake::cmd_request_t WhoAreYouRequest(
+    common::protocols::three_way_handshake::cmd_seq_t id);
+common::protocols::three_way_handshake::cmd_approve_t WhoAreYouApproveResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id);
+common::protocols::three_way_handshake::cmd_approve_t WhoAreYouApproveResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);  // escaped
 
 // system_info
-cmd_request_t SystemInfoRequest(cmd_seq_t id);
-cmd_approve_t SystemInfoApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t SystemInfoApproveResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+common::protocols::three_way_handshake::cmd_request_t SystemInfoRequest(
+    common::protocols::three_way_handshake::cmd_seq_t id);
+common::protocols::three_way_handshake::cmd_approve_t SystemInfoApproveResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id);
+common::protocols::three_way_handshake::cmd_approve_t SystemInfoApproveResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);  // escaped
 
 // send_chat_message server
-cmd_request_t ServerSendChatMessageRequest(cmd_seq_t id, const serializet_t& msg);
-cmd_approve_t ServerSendChatMessageApproveResponceSuccsess(cmd_seq_t id);
-cmd_approve_t ServerSendChatMessageApproveResponceFail(cmd_seq_t id, const std::string& error_text);
+common::protocols::three_way_handshake::cmd_request_t ServerSendChatMessageRequest(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const serializet_t& msg);
+common::protocols::three_way_handshake::cmd_approve_t ServerSendChatMessageApproveResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id);
+common::protocols::three_way_handshake::cmd_approve_t ServerSendChatMessageApproveResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);
 
 // responces
 // get_server_info
-cmd_responce_t GetServerInfoResponceSuccsess(cmd_seq_t id, const serializet_t& server_info);
-cmd_responce_t GetServerInfoResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+common::protocols::three_way_handshake::cmd_responce_t GetServerInfoResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const serializet_t& server_info);
+common::protocols::three_way_handshake::cmd_responce_t GetServerInfoResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);  // escaped
 
 // get_channels
-cmd_responce_t GetChannelsResponceSuccsess(cmd_seq_t id, const serializet_t& channels_info);
-cmd_responce_t GetChannelsResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+common::protocols::three_way_handshake::cmd_responce_t GetChannelsResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const serializet_t& channels_info);
+common::protocols::three_way_handshake::cmd_responce_t GetChannelsResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);  // escaped
 
 // get_runtime_channel_info
-cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(cmd_seq_t id, const serializet_t& rchannel_info);
-cmd_responce_t GetRuntimeChannelInfoResponceFail(cmd_seq_t id, const std::string& error_text);
+common::protocols::three_way_handshake::cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const serializet_t& rchannel_info);
+common::protocols::three_way_handshake::cmd_responce_t GetRuntimeChannelInfoResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);
 
 // send_chat_message client
-cmd_responce_t SendChatMessageResponceSuccsess(cmd_seq_t id, const serializet_t& message);
-cmd_responce_t SendChatMessageResponceFail(cmd_seq_t id, const std::string& error_text);
+common::protocols::three_way_handshake::cmd_responce_t SendChatMessageResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const serializet_t& message);
+common::protocols::three_way_handshake::cmd_responce_t SendChatMessageResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);
 
 // ping client
-cmd_responce_t PingResponceSuccsess(cmd_seq_t id, const serializet_t& ping_info);
-cmd_responce_t PingResponceFail(cmd_seq_t id, const std::string& error_text);  // escaped
+common::protocols::three_way_handshake::cmd_responce_t PingResponceSuccsess(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const serializet_t& ping_info);
+common::protocols::three_way_handshake::cmd_responce_t PingResponceFail(
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    const std::string& error_text);  // escaped
 
 }  // namespace server
 }  // namespace fastotv

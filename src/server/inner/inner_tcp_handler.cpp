@@ -108,7 +108,7 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
       common::libev::IoClient* client = online_clients[i];
       InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
       if (iclient) {
-        const cmd_request_t ping_request = PingRequest(NextRequestID());
+        const common::protocols::three_way_handshake::cmd_request_t ping_request = PingRequest(NextRequestID());
         common::Error err = iclient->Write(ping_request);
         if (err) {
           DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -126,7 +126,7 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
 }
 
 void InnerTcpHandlerHost::Accepted(common::libev::IoClient* client) {
-  cmd_request_t whoareyou = WhoAreYouRequest(NextRequestID());
+  common::protocols::three_way_handshake::cmd_request_t whoareyou = WhoAreYouRequest(NextRequestID());
   InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
   if (iclient) {
     common::Error err = iclient->Write(whoareyou);
@@ -208,7 +208,7 @@ inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByUserIDAndDevice
 }
 
 void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                                    cmd_seq_t id,
+                                                    common::protocols::three_way_handshake::cmd_seq_t id,
                                                     int argc,
                                                     char* argv[]) {
   UNUSED(argc);
@@ -218,7 +218,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     json_object* jping_info = NULL;
     common::Error err = ping.Serialize(&jping_info);
     if (err) {
-      cmd_responce_t resp = PingResponceFail(id, err->GetDescription());
+      common::protocols::three_way_handshake::cmd_responce_t resp = PingResponceFail(id, err->GetDescription());
       common::Error err = connection->Write(resp);
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -230,7 +230,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     serializet_t ping_info_str = json_object_get_string(jping_info);
     json_object_put(jping_info);
 
-    cmd_responce_t pong = PingResponceSuccsess(id, ping_info_str);
+    common::protocols::three_way_handshake::cmd_responce_t pong = PingResponceSuccsess(id, ping_info_str);
     err = connection->Write(pong);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -243,7 +243,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     user_id_t uid;
     common::Error err = parent_->FindUser(hinf, &uid, &user);
     if (err) {
-      cmd_responce_t resp = GetServerInfoResponceFail(id, err->GetDescription());
+      common::protocols::three_way_handshake::cmd_responce_t resp =
+          GetServerInfoResponceFail(id, err->GetDescription());
       common::Error err = connection->Write(resp);
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -263,7 +264,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     serializet_t server_info_str = json_object_get_string(jserver_info);
     json_object_put(jserver_info);
 
-    cmd_responce_t server_info_responce = GetServerInfoResponceSuccsess(id, server_info_str);
+    common::protocols::three_way_handshake::cmd_responce_t server_info_responce =
+        GetServerInfoResponceSuccsess(id, server_info_str);
     err = connection->Write(server_info_responce);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -276,7 +278,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     user_id_t uid;
     common::Error err = parent_->FindUser(hinf, &uid, &user);
     if (err) {
-      cmd_responce_t resp = GetChannelsResponceFail(id, err->GetDescription());
+      common::protocols::three_way_handshake::cmd_responce_t resp = GetChannelsResponceFail(id, err->GetDescription());
       common::Error err = connection->Write(resp);
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -294,7 +296,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     }
 
-    cmd_responce_t channels_responce = GetChannelsResponceSuccsess(id, channels_str);
+    common::protocols::three_way_handshake::cmd_responce_t channels_responce =
+        GetChannelsResponceSuccsess(id, channels_str);
     err = connection->Write(channels_responce);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -342,7 +345,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
         return;
       }
 
-      cmd_responce_t channels_responce = GetRuntimeChannelInfoResponceSuccsess(id, rchannel_str);
+      common::protocols::three_way_handshake::cmd_responce_t channels_responce =
+          GetRuntimeChannelInfoResponceSuccsess(id, rchannel_str);
       err = connection->Write(channels_responce);
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -357,7 +361,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     } else {
       common::Error err = common::make_error_inval();
-      cmd_responce_t resp = GetRuntimeChannelInfoResponceFail(id, err->GetDescription());
+      common::protocols::three_way_handshake::cmd_responce_t resp =
+          GetRuntimeChannelInfoResponceFail(id, err->GetDescription());
       err = connection->Write(resp);
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -373,7 +378,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       json_object* jmsg = json_tokener_parse(argv[1]);
       if (!jmsg) {
         common::Error err = common::make_error_inval();
-        cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
+        common::protocols::three_way_handshake::cmd_responce_t resp =
+            SendChatMessageResponceFail(id, err->GetDescription());
         err = connection->Write(resp);
         if (err) {
           DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -387,7 +393,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       common::Error err = ChatMessage::DeSerialize(jmsg, &msg);
       json_object_put(jmsg);
       if (err) {
-        cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
+        common::protocols::three_way_handshake::cmd_responce_t resp =
+            SendChatMessageResponceFail(id, err->GetDescription());
         err = connection->Write(resp);
         if (err) {
           DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -398,7 +405,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       }
 
       BrodcastChatMessage(client->GetServer(), msg);
-      cmd_responce_t resp = SendChatMessageResponceSuccsess(id, msg_str);
+      common::protocols::three_way_handshake::cmd_responce_t resp = SendChatMessageResponceSuccsess(id, msg_str);
       err = connection->Write(resp);
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -406,7 +413,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       return;
     } else {
       common::Error err = common::make_error_inval();
-      cmd_responce_t resp = SendChatMessageResponceFail(id, err->GetDescription());
+      common::protocols::three_way_handshake::cmd_responce_t resp =
+          SendChatMessageResponceFail(id, err->GetDescription());
       err = connection->Write(resp);
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -421,7 +429,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
 }
 
 void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                                     cmd_seq_t id,
+                                                     common::protocols::three_way_handshake::cmd_seq_t id,
                                                      int argc,
                                                      char* argv[]) {
   char* state_command = argv[0];
@@ -451,16 +459,18 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
   delete connection;
 }
 
-common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
-                                                                      cmd_seq_t id,
-                                                                      int argc,
-                                                                      char* argv[]) {
+common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
+    fastotv::inner::InnerClient* connection,
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    int argc,
+    char* argv[]) {
   char* command = argv[1];
   if (IS_EQUAL_COMMAND(command, SERVER_PING)) {
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
-      cmd_approve_t resp = PingApproveResponceFail(id, parse_err->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          PingApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return parse_err;
@@ -470,13 +480,14 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     common::Error err = ServerPingInfo::DeSerialize(obj, &ping_info);
     json_object_put(obj);
     if (err) {
-      cmd_approve_t resp = PingApproveResponceFail(id, parse_err->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          PingApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return err;
     }
 
-    cmd_approve_t resp = PingApproveResponceSuccsess(id);
+    common::protocols::three_way_handshake::cmd_approve_t resp = PingApproveResponceSuccsess(id);
     err = connection->Write(resp);
     if (err) {
       return err;
@@ -486,7 +497,8 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, parse_err->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          WhoAreYouApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return parse_err;
@@ -497,7 +509,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     json_object_put(obj);
     if (err) {
       const std::string error_str = err->GetDescription();
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::protocols::three_way_handshake::cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return err;
@@ -505,7 +517,8 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
 
     if (!uauth.IsValid()) {
       common::Error lerr = common::make_error_inval();
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, lerr->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          WhoAreYouApproveResponceFail(id, lerr->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return lerr;
@@ -515,7 +528,8 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     UserInfo registered_user;
     err = parent_->FindUser(uauth, &uid, &registered_user);
     if (err) {
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, err->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          WhoAreYouApproveResponceFail(id, err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return err;
@@ -524,14 +538,14 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     const device_id_t dev = uauth.GetDeviceID();
     if (!registered_user.HaveDevice(dev)) {
       const std::string error_str = "Unknown device reject";
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::protocols::three_way_handshake::cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return err;
     }
 
     if (uauth == InnerTcpClient::anonim_user) {  // anonim user
-      cmd_approve_t resp = WhoAreYouApproveResponceSuccsess(id);
+      common::protocols::three_way_handshake::cmd_approve_t resp = WhoAreYouApproveResponceSuccsess(id);
       err = connection->Write(resp);
       if (err) {
         return err;
@@ -547,13 +561,13 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(uid, dev);
     if (fclient) {
       const std::string error_str = "Double connection reject";
-      cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
+      common::protocols::three_way_handshake::cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return err;
     }
 
-    cmd_approve_t resp = WhoAreYouApproveResponceSuccsess(id);
+    common::protocols::three_way_handshake::cmd_approve_t resp = WhoAreYouApproveResponceSuccsess(id);
     err = connection->Write(resp);
     if (err) {
       return err;
@@ -571,7 +585,8 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
-      cmd_approve_t resp = SystemInfoApproveResponceFail(id, parse_err->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          SystemInfoApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return parse_err;
@@ -582,7 +597,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     json_object_put(obj);
     if (err) {
       const std::string error_str = err->GetDescription();
-      cmd_approve_t resp = SystemInfoApproveResponceFail(id, error_str);
+      common::protocols::three_way_handshake::cmd_approve_t resp = SystemInfoApproveResponceFail(id, error_str);
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return err;
@@ -590,13 +605,14 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
 
     if (!cinf.IsValid()) {
       common::Error lerr = common::make_error_inval();
-      cmd_approve_t resp = SystemInfoApproveResponceFail(id, lerr->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          SystemInfoApproveResponceFail(id, lerr->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return lerr;
     }
 
-    cmd_approve_t resp = SystemInfoApproveResponceSuccsess(id);
+    common::protocols::three_way_handshake::cmd_approve_t resp = SystemInfoApproveResponceSuccsess(id);
     err = connection->Write(resp);
     if (err) {
       return err;
@@ -606,7 +622,8 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     json_object* obj = NULL;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
-      cmd_approve_t resp = ServerSendChatMessageApproveResponceFail(id, parse_err->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          ServerSendChatMessageApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return parse_err;
@@ -616,13 +633,14 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
     common::Error err = ChatMessage::DeSerialize(obj, &msg);
     json_object_put(obj);
     if (err) {
-      cmd_approve_t resp = ServerSendChatMessageApproveResponceFail(id, parse_err->GetDescription());
+      common::protocols::three_way_handshake::cmd_approve_t resp =
+          ServerSendChatMessageApproveResponceFail(id, parse_err->GetDescription());
       common::Error write_err = connection->Write(resp);
       UNUSED(write_err);
       return err;
     }
 
-    cmd_approve_t resp = ServerSendChatMessageApproveResponceSuccsess(id);
+    common::protocols::three_way_handshake::cmd_approve_t resp = ServerSendChatMessageApproveResponceSuccsess(id);
     err = connection->Write(resp);
     if (err) {
       return err;
@@ -634,10 +652,11 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(fastotv::i
   return common::make_error(error_str);
 }
 
-common::Error InnerTcpHandlerHost::HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
-                                                                    cmd_seq_t id,
-                                                                    int argc,
-                                                                    char* argv[]) {
+common::Error InnerTcpHandlerHost::HandleInnerFailedResponceCommand(
+    fastotv::inner::InnerClient* connection,
+    common::protocols::three_way_handshake::cmd_seq_t id,
+    int argc,
+    char* argv[]) {
   UNUSED(connection);
   UNUSED(id);
   UNUSED(argc);
@@ -649,7 +668,7 @@ common::Error InnerTcpHandlerHost::HandleInnerFailedResponceCommand(fastotv::inn
 }
 
 void InnerTcpHandlerHost::HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                                    cmd_seq_t id,
+                                                    common::protocols::three_way_handshake::cmd_seq_t id,
                                                     int argc,
                                                     char* argv[]) {
   UNUSED(connection);
@@ -723,7 +742,8 @@ void InnerTcpHandlerHost::BrodcastChatMessage(common::libev::IoLoop* server, con
     common::libev::IoClient* client = online_clients[i];
     InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
     if (iclient && iclient->GetCurrentStreamId() == msg.GetChannelId()) {
-      const cmd_request_t message_request = ServerSendChatMessageRequest(NextRequestID(), msg_ser);
+      const common::protocols::three_way_handshake::cmd_request_t message_request =
+          ServerSendChatMessageRequest(NextRequestID(), msg_ser);
       err = iclient->Write(message_request);
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);

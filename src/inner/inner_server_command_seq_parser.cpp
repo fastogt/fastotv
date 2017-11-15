@@ -35,9 +35,10 @@ extern "C" {
 namespace fastotv {
 namespace inner {
 
-RequestCallback::RequestCallback(cmd_seq_t request_id, callback_t cb) : request_id_(request_id), cb_(cb) {}
+RequestCallback::RequestCallback(common::protocols::three_way_handshake::cmd_seq_t request_id, callback_t cb)
+    : request_id_(request_id), cb_(cb) {}
 
-cmd_seq_t RequestCallback::GetRequestID() const {
+common::protocols::three_way_handshake::cmd_seq_t RequestCallback::GetRequestID() const {
   return request_id_;
 }
 
@@ -53,18 +54,22 @@ InnerServerCommandSeqParser::InnerServerCommandSeqParser() : id_() {}
 
 InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
 
-cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
+common::protocols::three_way_handshake::cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
   const id_t next_id = id_++;
   char bytes[sizeof(id_t)];
   const id_t stabled = common::NetToHost64(next_id);  // for human readable hex
   memcpy(&bytes, &stabled, sizeof(id_t));
-  cmd_seq_t hexed = common::utils::hex::encode(std::string(bytes, sizeof(id_t)), true);
+  common::protocols::three_way_handshake::cmd_seq_t hexed =
+      common::utils::hex::encode(std::string(bytes, sizeof(id_t)), true);
   return hexed;
 }
 
 namespace {
 
-bool exec_reqest(RequestCallback req, cmd_seq_t request_id, int argc, char* argv[]) {
+bool exec_reqest(RequestCallback req,
+                 common::protocols::three_way_handshake::cmd_seq_t request_id,
+                 int argc,
+                 char* argv[]) {
   if (request_id == req.GetRequestID()) {
     req.Execute(argc, argv);
     return true;
@@ -75,7 +80,9 @@ bool exec_reqest(RequestCallback req, cmd_seq_t request_id, int argc, char* argv
 
 }  // namespace
 
-void InnerServerCommandSeqParser::ProcessRequest(cmd_seq_t request_id, int argc, char* argv[]) {
+void InnerServerCommandSeqParser::ProcessRequest(common::protocols::three_way_handshake::cmd_seq_t request_id,
+                                                 int argc,
+                                                 char* argv[]) {
   subscribed_requests_.erase(std::remove_if(subscribed_requests_.begin(), subscribed_requests_.end(),
                                             std::bind(&exec_reqest, std::placeholders::_1, request_id, argc, argv)),
                              subscribed_requests_.end());
@@ -86,11 +93,11 @@ void InnerServerCommandSeqParser::SubscribeRequest(const RequestCallback& req) {
 }
 
 void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connection, const std::string& input_command) {
-  cmd_id_t seq;
-  cmd_seq_t id;
+  common::protocols::three_way_handshake::cmd_id_t seq;
+  common::protocols::three_way_handshake::cmd_seq_t id;
   std::string cmd_str;
 
-  common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
+  common::Error err = common::protocols::three_way_handshake::ParseCommand(input_command, &seq, &id, &cmd_str);
   if (err) {
     WARNING_LOG() << err->GetDescription();
     connection->Close();
@@ -109,8 +116,9 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   }
 
   ProcessRequest(id, argc, argv);
-  INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->GetFormatedName() << "] seq: " << CmdIdToString(seq)
-             << ", id:" << id << ", cmd: " << cmd_str;
+  INFO_LOG() << "HANDLE INNER COMMAND client[" << connection->GetFormatedName()
+             << "] seq: " << common::protocols::three_way_handshake::CmdIdToString(seq) << ", id:" << id
+             << ", cmd: " << cmd_str;
   if (seq == REQUEST_COMMAND) {
     HandleInnerRequestCommand(connection, id, argc, argv);
   } else if (seq == RESPONCE_COMMAND) {

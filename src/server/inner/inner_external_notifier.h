@@ -20,7 +20,7 @@
 
 #include <string>  // for string
 
-#include "commands/commands.h"  // for cmd_seq_t
+#include "commands/commands.h"
 
 #include "server/redis/redis_pub_sub_handler.h"
 
@@ -40,7 +40,7 @@ class InnerSubHandler : public redis::RedisSubHandler {
   virtual void HandleMessage(const std::string& channel, const std::string& msg) override;
 
  private:
-  void ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]);
+  void ProcessSubscribed(common::protocols::three_way_handshake::cmd_seq_t request_id, int argc, char* argv[]);
 
   void PublishResponce(const ResponceInfo& resp);
 

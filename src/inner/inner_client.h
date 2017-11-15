@@ -37,9 +37,9 @@ class InnerClient : public common::libev::tcp::TcpClient {
 
   const char* ClassName() const override;
 
-  common::Error Write(const cmd_request_t& request) WARN_UNUSED_RESULT;
-  common::Error Write(const cmd_responce_t& responce) WARN_UNUSED_RESULT;
-  common::Error Write(const cmd_approve_t& approve) WARN_UNUSED_RESULT;
+  common::Error Write(const common::protocols::three_way_handshake::cmd_request_t& request) WARN_UNUSED_RESULT;
+  common::Error Write(const common::protocols::three_way_handshake::cmd_responce_t& responce) WARN_UNUSED_RESULT;
+  common::Error Write(const common::protocols::three_way_handshake::cmd_approve_t& approve) WARN_UNUSED_RESULT;
 
   common::Error ReadCommand(std::string* out) WARN_UNUSED_RESULT;
 

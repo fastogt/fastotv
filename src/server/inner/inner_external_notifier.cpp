@@ -46,10 +46,12 @@ InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) 
 
 InnerSubHandler::~InnerSubHandler() {}
 
-void InnerSubHandler::ProcessSubscribed(cmd_seq_t request_id, int argc, char* argv[]) {  // incoming responce
-  const char* state_command = argc > 0 ? argv[0] : FAIL_COMMAND;                         // [OK|FAIL]
-  const char* command = argc > 1 ? argv[1] : "null";                                     // command
-  const std::string json = argc > 2 ? argv[2] : "{}";                                    // encoded args
+void InnerSubHandler::ProcessSubscribed(common::protocols::three_way_handshake::cmd_seq_t request_id,
+                                        int argc,
+                                        char* argv[]) {           // incoming responce
+  const char* state_command = argc > 0 ? argv[0] : FAIL_COMMAND;  // [OK|FAIL]
+  const char* command = argc > 1 ? argv[1] : "null";              // command
+  const std::string json = argc > 2 ? argv[2] : "{}";             // encoded args
 
   ResponceInfo resp(request_id, state_command, command, json);
   PublishResponce(resp);
@@ -78,10 +80,10 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
   const device_id_t dev = device_and_cmd.substr(0, next_space_pos);
   const std::string cmd = device_and_cmd.substr(next_space_pos + 1);
   const std::string input_command = common::MemSPrintf(STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND, cmd);
-  cmd_id_t seq;
-  cmd_seq_t id;
+  common::protocols::three_way_handshake::cmd_id_t seq;
+  common::protocols::three_way_handshake::cmd_seq_t id;
   std::string cmd_str;
-  common::Error err = ParseCommand(input_command, &seq, &id, &cmd_str);
+  common::Error err = common::protocols::three_way_handshake::ParseCommand(input_command, &seq, &id, &cmd_str);
   if (err) {
     std::string resp = err->GetDescription();
     WARNING_LOG() << resp;
@@ -109,7 +111,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  cmd_request_t req(id, input_command);
+  common::protocols::three_way_handshake::cmd_request_t req(id, input_command);
   err = fclient->Write(req);
   if (err) {
     int argc;

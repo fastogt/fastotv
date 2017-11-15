@@ -28,7 +28,7 @@
 #include <common/libev/types.h>             // for timer_id_t
 #include <common/macros.h>                  // for WARN_UNUSED_RESULT
 
-#include "commands/commands.h"                      // for cmd_seq_t
+#include "commands/commands.h"
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
 #include "server/config.h"  // for Config
@@ -99,25 +99,25 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
   void PublishUserStateInfo(const UserStateInfo& state);
 
   virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                         cmd_seq_t id,
+                                         common::protocols::three_way_handshake::cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
   virtual void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                          cmd_seq_t id,
+                                          common::protocols::three_way_handshake::cmd_seq_t id,
                                           int argc,
                                           char* argv[]) override;
   virtual void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                         cmd_seq_t id,
+                                         common::protocols::three_way_handshake::cmd_seq_t id,
                                          int argc,
                                          char* argv[]) override;
 
   // inner handlers
   common::Error HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
-                                                   cmd_seq_t id,
+                                                   common::protocols::three_way_handshake::cmd_seq_t id,
                                                    int argc,
                                                    char* argv[]) WARN_UNUSED_RESULT;
   common::Error HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
-                                                 cmd_seq_t id,
+                                                 common::protocols::three_way_handshake::cmd_seq_t id,
                                                  int argc,
                                                  char* argv[]) WARN_UNUSED_RESULT;
 
