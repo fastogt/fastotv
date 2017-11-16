@@ -429,6 +429,21 @@ class BuildRequest(object):
             os.chdir(self.build_dir_path_)
             raise ex
 
+    def build_libev(self):
+        libev_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
+
+        pwd = os.getcwd()
+        cloned_dir = utils.git_clone('https://github.com/fastogt/libev.git', pwd)
+        os.chdir(cloned_dir)
+
+        autogen_libev = ['sh', 'autogen.sh']
+        subprocess.call(autogen_libev)
+
+
+        utils.build_command_configure(libev_compiler_flags, g_script_path, self.prefix_path_)
+        os.chdir(pwd)
+        shutil.rmtree(cloned_dir)
+
     def build_jsonc(self):
         pwd = os.getcwd()
         cmake_project_root_abs_path = '..'
@@ -488,6 +503,7 @@ if __name__ == "__main__":
     sdl2_ttf_default_version = '2.0.14'
     openssl_default_version = '1.0.2l'
     cmake_default_version = '3.9.0'
+    libev_default_version = '3.9.0'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
@@ -535,6 +551,13 @@ if __name__ == "__main__":
     jsonc_grp.add_argument('--with-json-c', help='build json-c (default, version: git master)', dest='with_jsonc',
                            action='store_true', default=True)
     jsonc_grp.add_argument('--without-json-c', help='build without json-c', dest='with_jsonc', action='store_false',
+                           default=False)
+
+    # libev
+    libev_grp = parser.add_mutually_exclusive_group()
+    libev_grp.add_argument('--with-libev-c', help='build libev (default, version: git master)', dest='with_libev',
+                           action='store_true', default=True)
+    libev_grp.add_argument('--without-libev-c', help='build without libev', dest='with_libev', action='store_false',
                            default=False)
 
     # common
@@ -629,6 +652,8 @@ if __name__ == "__main__":
         request.build_cmake(argv.cmake_version)
     if argv.with_snappy:
         request.build_snappy()
+    if argv.with_libev:
+        request.build_libev()
     if argv.with_jsonc:
         request.build_jsonc()
     if argv.with_common:
