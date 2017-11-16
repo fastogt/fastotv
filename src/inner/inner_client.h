@@ -32,6 +32,7 @@ namespace inner {
 class InnerClient : public common::libev::tcp::TcpClient {
  public:
   typedef uint32_t protocoled_size_t;  // sizeof 4 byte
+  enum { MAX_COMMAND_SIZE = 1024 * 8 };
   InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info);
   virtual ~InnerClient();
 
