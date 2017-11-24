@@ -136,13 +136,13 @@ class BuildRequest(object):
 
         saver.update_progress_message_range(10.0, 19.0, 'Generate project build')
 
-        def store(cb):
+        def store_closure(cb):
             def closure(progress, message):
                 return cb(progress, message)
 
             return closure
 
-        store = store(saver.on_update_progress_message)
+        store = store_closure(saver.on_update_progress_message)
 
         try:
             cmake_policy = run_command.CmakePolicy(store)
@@ -257,9 +257,9 @@ if __name__ == "__main__":
     request = BuildRequest(platform_str, arch_name_str)
     if branding_file_path != dev_null:
         abs_branding_file = os.path.abspath(branding_file_path)
-        branding_options = utils.read_file_line_by_line(abs_branding_file)
+        args_branding_options = utils.read_file_line_by_line(abs_branding_file)
     else:
-        branding_options = []
+        args_branding_options = []
 
     saver = ProgressSaver(print_message)
-    request.build(cmake_root, branding_options, 'build_' + platform_str, bs, packages, saver)
+    request.build(cmake_root, args_branding_options, 'build_' + platform_str, bs, packages, saver)

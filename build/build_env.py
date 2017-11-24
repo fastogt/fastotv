@@ -439,7 +439,6 @@ class BuildRequest(object):
         autogen_libev = ['sh', 'autogen.sh']
         subprocess.call(autogen_libev)
 
-
         utils.build_command_configure(libev_compiler_flags, g_script_path, self.prefix_path_)
         os.chdir(pwd)
         shutil.rmtree(cloned_dir)
