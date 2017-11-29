@@ -21,14 +21,14 @@
 #include <json-c/json_object.h>
 #include <json-c/json_tokener.h>  // for json_tokener_parse
 
-#include "serializer/iserializer.h"  // for ISerializer
+#include <common/serializer/iserializer.h>
 
 namespace fastotv {
 
 template <typename T>
-class JsonSerializer : public ISerializer<T, struct json_object*> {
+class JsonSerializer : public common::serializer::ISerializer<T, struct json_object*> {
  public:
-  typedef ISerializer<T, struct json_object*> base_class;
+  typedef common::serializer::ISerializer<T, struct json_object*> base_class;
   typedef typename base_class::value_type value_type;
   typedef typename base_class::serialize_type serialize_type;
 

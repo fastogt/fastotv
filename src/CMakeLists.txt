@@ -46,12 +46,10 @@ SET(SOURCES_INNER
 )
 
 SET(HEADERS_SERIALIZER
-  ${SOURCE_ROOT}/serializer/iserializer.h
   ${SOURCE_ROOT}/serializer/json_serializer.h
 )
 
 SET(SOURCES_SERIALIZER
-  ${SOURCE_ROOT}/serializer/iserializer.cpp
   ${SOURCE_ROOT}/serializer/json_serializer.cpp
 )
 
