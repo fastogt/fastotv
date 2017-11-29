@@ -54,7 +54,9 @@ class LircInputClient : public common::libev::IoClient {
   virtual common::Error CloseImpl() override;
 
   virtual common::Error Write(const char* data, size_t size, size_t* nwrite) override final WARN_UNUSED_RESULT;
+  virtual common::Error Write(const unsigned char* data, size_t size, size_t* nwrite) override final WARN_UNUSED_RESULT;
   virtual common::Error Read(char* out, size_t max_size, size_t* nread) override final WARN_UNUSED_RESULT;
+  virtual common::Error Read(unsigned char* out, size_t max_size, size_t* nread) override final WARN_UNUSED_RESULT;
 
   common::net::SocketHolder sock_;
   struct lirc_config* cfg_;

@@ -121,7 +121,28 @@ common::Error LircInputClient::Write(const char* data, size_t size, size_t* nwri
   return common::Error();
 }
 
+common::Error LircInputClient::Write(const unsigned char* data, size_t size, size_t* nwrite) {
+  common::ErrnoError err = sock_.Write(data, size, nwrite);
+  if (err) {
+    return common::ErrorValue(err->GetDescription());
+  }
+
+  return common::Error();
+}
+
 common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
+  if (!out || !nread) {
+    return common::make_error_inval();
+  }
+
+  common::ErrnoError err = sock_.Read(out, max_size, nread);
+  if (err) {
+    return common::make_error(err->GetDescription());
+  }
+  return common::Error();
+}
+
+common::Error LircInputClient::Read(unsigned char* out, size_t max_size, size_t* nread) {
   if (!out || !nread) {
     return common::make_error_inval();
   }
