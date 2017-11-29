@@ -35,7 +35,7 @@ namespace client {
 
 class IoService;
 class ChatWindow;
-class PlaylistWindow;
+class ProgramsWindow;
 
 class Player : public fastoplayer::ISimplePlayer {
  public:
@@ -173,7 +173,7 @@ class Player : public fastoplayer::ISimplePlayer {
   fastoplayer::gui::Label* keypad_label_;
   fastoplayer::media::msec_t keypad_last_shown_;
 
-  PlaylistWindow* plailist_window_;
+  ProgramsWindow* programs_window_;
   ChatWindow* chat_window_;
 
   AuthInfo auth_;

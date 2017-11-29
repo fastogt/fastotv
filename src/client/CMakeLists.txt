@@ -385,6 +385,8 @@ SET(TV_PLAYER_SOURCES
   ${SOURCE_ROOT}/client/chat_list_window.cpp
   ${SOURCE_ROOT}/client/playlist_window.h
   ${SOURCE_ROOT}/client/playlist_window.cpp
+  ${SOURCE_ROOT}/client/programs_window.h
+  ${SOURCE_ROOT}/client/programs_window.cpp
 
   ${BUILD_PLAYER_SOURCES}
   ${HEADERS_INNER_CLIENT} ${SOURCES_INNER_CLIENT}

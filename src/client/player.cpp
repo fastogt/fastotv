@@ -38,7 +38,7 @@
 #include "client/utils.h"
 
 #include "client/chat_window.h"
-#include "client/playlist_window.h"
+#include "client/programs_window.h"
 
 #define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "share/resources/offline_channel.png"
 #define IMG_CONNECTION_ERROR_PATH_RELATIVE "share/resources/connection_error.png"
@@ -98,7 +98,7 @@ Player::Player(const std::string& app_directory_absolute_path,
       app_directory_absolute_path_(app_directory_absolute_path),
       keypad_label_(nullptr),
       keypad_last_shown_(0),
-      plailist_window_(nullptr),
+      programs_window_(nullptr),
       chat_window_(nullptr),
       auth_() {
   fApp->Subscribe(this, events::BandwidthEstimationEvent::EventType);
@@ -168,19 +168,19 @@ Player::Player(const std::string& app_directory_absolute_path,
   keypad_label_->SetDrawType(fastoplayer::gui::Label::CENTER_TEXT);
 
   // playlist window
-  plailist_window_ = new PlaylistWindow(playlist_color);
-  plailist_window_->SetSelection(PlaylistWindow::SINGLE_ROW_SELECT);
-  plailist_window_->SetSelectionColor(playlist_item_preselect_color);
-  plailist_window_->SetDrawType(fastoplayer::gui::Label::WRAPPED_TEXT);
-  plailist_window_->SetTextColor(text_color);
-  plailist_window_->SetCurrentPositionSelectionColor(failed_color);
+  programs_window_ = new ProgramsWindow(playlist_color);
+  programs_window_->SetSelection(PlaylistWindow::SINGLE_ROW_SELECT);
+  programs_window_->SetSelectionColor(playlist_item_preselect_color);
+  programs_window_->SetDrawType(fastoplayer::gui::Label::WRAPPED_TEXT);
+  programs_window_->SetTextColor(text_color);
+  programs_window_->SetCurrentPositionSelectionColor(failed_color);
   auto channel_clicked_cb = [this](Uint8 button, size_t row) {
     if (button == SDL_BUTTON_LEFT && row != current_stream_pos_) {
       fastoplayer::media::VideoState* stream = CreateStreamPos(row);
       SetStream(stream);
     }
   };
-  plailist_window_->SetMouseClickedRowCallback(channel_clicked_cb);
+  programs_window_->SetMouseClickedRowCallback(channel_clicked_cb);
 
   show_playlist_button_ = new fastoplayer::gui::Button;
   auto show_playlist_cb = [this](Uint8 button, const SDL_Point& position) {
@@ -206,7 +206,7 @@ Player::Player(const std::string& app_directory_absolute_path,
 Player::~Player() {
   destroy(&show_playlist_button_);
   destroy(&hide_playlist_button_);
-  destroy(&plailist_window_);
+  destroy(&programs_window_);
   destroy(&keypad_label_);
   destroy(&description_label_);
   destroy(&show_chat_button_);
@@ -299,12 +299,12 @@ void Player::HandlePreExecEvent(fastoplayer::gui::events::PreExecEvent* event) {
 
   description_label_->SetFont(font);
   keypad_label_->SetFont(font);
-  plailist_window_->SetFont(font);
-  plailist_window_->SetRowHeight(h);
+  programs_window_->SetFont(font);
+  programs_window_->SetRowHeight(h);
 
   int pmin_size_width = keypad_width + h + space_width + h;  // number + icon + text
   common::draw::Size playlist_minsize = {pmin_size_width, h};
-  plailist_window_->SetMinimalSize(playlist_minsize);
+  programs_window_->SetMinimalSize(playlist_minsize);
 
   show_playlist_button_->SetIconSize(icon_size);
   hide_playlist_button_->SetIconSize(icon_size);
@@ -516,7 +516,7 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
   }
 
   SetVisiblePlaylist(true);
-  plailist_window_->SetPlaylist(&play_list_);
+  programs_window_->SetPlaylist(&play_list_);
   SwitchToPlayingMode();
 }
 
@@ -636,7 +636,7 @@ SDL_Rect Player::GetFooterRect() const {
 }
 
 void Player::ToggleShowProgramsList() {
-  SetVisiblePlaylist(!plailist_window_->IsVisible());
+  SetVisiblePlaylist(!programs_window_->IsVisible());
 }
 
 void Player::ToggleShowChat() {
@@ -652,7 +652,7 @@ SDL_Rect Player::GetChatRect() const {
   const SDL_Rect display_rect = GetDisplayRect();
   int height = display_rect.h / 4;
   int width = display_rect.w;
-  if (plailist_window_->IsVisible()) {
+  if (programs_window_->IsVisible()) {
     width = display_rect.w * 3 / 4;
   }
   return {0, display_rect.h - height, width, height};
@@ -687,7 +687,7 @@ SDL_Rect Player::GetShowButtonChatRect() const {
 }
 
 void Player::SetVisiblePlaylist(bool visible) {
-  plailist_window_->SetVisible(visible);
+  programs_window_->SetVisible(visible);
   hide_playlist_button_->SetVisible(visible);
   show_playlist_button_->SetVisible(!visible);
 }
@@ -784,10 +784,10 @@ void Player::DrawProgramsList() {
   }
 
   const SDL_Rect programms_list_rect = GetProgramsListRect();
-  plailist_window_->SetRect(programms_list_rect);
-  plailist_window_->Draw(render);
+  programs_window_->SetRect(programms_list_rect);
+  programs_window_->Draw(render);
 
-  if (fApp->IsCursorVisible() && plailist_window_->IsSizeEnough()) {
+  if (fApp->IsCursorVisible() && programs_window_->IsSizeEnough()) {
     hide_playlist_button_->SetRect(GetHideButtonPlayListRect());
     hide_playlist_button_->Draw(render);
     show_playlist_button_->SetRect(GetShowButtonPlayListRect());
@@ -1006,7 +1006,7 @@ fastoplayer::media::VideoState* Player::CreateStreamPos(size_t pos) {
   copy.enable_audio = url.IsEnableVideo();
   copy.enable_video = url.IsEnableAudio();
 
-  plailist_window_->SetCurrentPositionInPlaylist(current_stream_pos_);
+  programs_window_->SetCurrentPositionInPlaylist(current_stream_pos_);
   fastoplayer::media::VideoState* stream = CreateStream(sid, url.GetUrl(), copy, copt_);
   return stream;
 }
