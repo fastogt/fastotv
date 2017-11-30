@@ -20,18 +20,19 @@
 
 #include <common/time.h>
 
+#define SERVER_INFO_TIMESTAMP_FIELD "timestamp"
+#define CLIENT_INFO_TIMESTAMP_FIELD "timestamp"
+
 namespace fastotv {
 
 ServerPingInfo::ServerPingInfo() : timestamp_(common::time::current_utc_mstime()) {}
 
-common::Error ServerPingInfo::SerializeImpl(serialize_type* deserialized) const {
-  json_object* obj = json_object_new_object();
+common::Error ServerPingInfo::SerializeFields(json_object* obj) const {
   json_object_object_add(obj, SERVER_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp_));
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error ServerPingInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error ServerPingInfo::DeSerialize(const serialize_type& serialized, ServerPingInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }
@@ -53,14 +54,12 @@ timestamp_t ServerPingInfo::GetTimeStamp() const {
 
 ClientPingInfo::ClientPingInfo() : timestamp_(common::time::current_utc_mstime()) {}
 
-common::Error ClientPingInfo::SerializeImpl(serialize_type* deserialized) const {
-  json_object* obj = json_object_new_object();
+common::Error ClientPingInfo::SerializeFields(json_object* obj) const {
   json_object_object_add(obj, CLIENT_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp_));
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error ClientPingInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error ClientPingInfo::DeSerialize(const serialize_type& serialized, ClientPingInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

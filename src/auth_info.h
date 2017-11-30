@@ -24,14 +24,14 @@
 
 namespace fastotv {
 
-class AuthInfo : public JsonSerializer<AuthInfo> {
+class AuthInfo : public JsonSerializerEx {
  public:
   AuthInfo();
   AuthInfo(const login_t& login, const std::string& password, device_id_t dev);
 
   bool IsValid() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, AuthInfo* obj) WARN_UNUSED_RESULT;
 
   device_id_t GetDeviceID() const;
   login_t GetLogin() const;
@@ -39,7 +39,7 @@ class AuthInfo : public JsonSerializer<AuthInfo> {
   bool Equals(const AuthInfo& auth) const;
 
  protected:
-  common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   login_t login_;  // unique

@@ -57,12 +57,11 @@ bool ChannelInfo::IsEnableVideo() const {
   return enable_video_;
 }
 
-common::Error ChannelInfo::SerializeImpl(serialize_type* deserialized) const {
+common::Error ChannelInfo::SerializeFields(json_object* obj) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object* obj = json_object_new_object();
   json_object* jepg = NULL;
   common::Error err = epg_.Serialize(&jepg);
   if (err) {
@@ -72,11 +71,10 @@ common::Error ChannelInfo::SerializeImpl(serialize_type* deserialized) const {
   json_object_object_add(obj, CHANNEL_INFO_EPG_FIELD, jepg);
   json_object_object_add(obj, CHANNEL_INFO_AUDIO_ENABLE_FIELD, json_object_new_boolean(enable_audio_));
   json_object_object_add(obj, CHANNEL_INFO_VIDEO_ENABLE_FIELD, json_object_new_boolean(enable_video_));
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error ChannelInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error ChannelInfo::DeSerialize(const serialize_type& serialized, ChannelInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

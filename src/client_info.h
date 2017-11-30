@@ -24,7 +24,7 @@
 
 namespace fastotv {
 
-class ClientInfo : public JsonSerializer<ClientInfo> {
+class ClientInfo : public JsonSerializerEx {
  public:
   ClientInfo();
   ClientInfo(const login_t& login,
@@ -36,7 +36,7 @@ class ClientInfo : public JsonSerializer<ClientInfo> {
 
   bool IsValid() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, ClientInfo* obj) WARN_UNUSED_RESULT;
 
   login_t GetLogin() const;
   std::string GetOs() const;
@@ -46,7 +46,7 @@ class ClientInfo : public JsonSerializer<ClientInfo> {
   bandwidth_t GetBandwidth() const;
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   login_t login_;

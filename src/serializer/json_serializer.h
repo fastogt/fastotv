@@ -25,11 +25,9 @@
 
 namespace fastotv {
 
-template <typename T>
-class JsonSerializer : public common::serializer::ISerializer<T, struct json_object*> {
+class JsonSerializer : public common::serializer::ISerializer<struct json_object*> {
  public:
-  typedef common::serializer::ISerializer<T, struct json_object*> base_class;
-  typedef typename base_class::value_type value_type;
+  typedef common::serializer::ISerializer<struct json_object*> base_class;
   typedef typename base_class::serialize_type serialize_type;
 
   virtual common::Error SerializeToString(std::string* deserialized) const override final WARN_UNUSED_RESULT {
@@ -57,7 +55,24 @@ class JsonSerializer : public common::serializer::ISerializer<T, struct json_obj
   }
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const override = 0;
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const = 0;
+};
+
+class JsonSerializerEx : public JsonSerializer {
+ protected:
+  virtual common::Error SerializeFields(json_object* obj) const = 0;
+
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const final {
+    json_object* obj = json_object_new_object();
+    common::Error err = SerializeFields(obj);
+    if (err) {
+      json_object_put(obj);
+      return err;
+    }
+
+    *deserialized = obj;
+    return common::Error();
+  }
 };
 
 }  // namespace fastotv

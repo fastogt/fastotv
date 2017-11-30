@@ -18,21 +18,21 @@
 
 #include "server_info.h"
 
+#define BANDWIDTH_HOST_FIELD "bandwidth_host"
+
 namespace fastotv {
 
 ServerInfo::ServerInfo() : bandwidth_host_() {}
 
 ServerInfo::ServerInfo(const common::net::HostAndPort& bandwidth_host) : bandwidth_host_(bandwidth_host) {}
 
-common::Error ServerInfo::SerializeImpl(serialize_type* deserialized) const {
-  json_object* obj = json_object_new_object();
+common::Error ServerInfo::SerializeFields(json_object* obj) const {
   const std::string host_str = common::ConvertToString(bandwidth_host_);
   json_object_object_add(obj, BANDWIDTH_HOST_FIELD, json_object_new_string(host_str.c_str()));
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error ServerInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error ServerInfo::DeSerialize(const serialize_type& serialized, ServerInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

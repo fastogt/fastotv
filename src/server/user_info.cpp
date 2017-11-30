@@ -40,12 +40,10 @@ bool UserInfo::IsValid() const {
   return !login_.empty() && !password_.empty();
 }
 
-common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
+common::Error UserInfo::SerializeFields(json_object* obj) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
-
-  json_object* obj = json_object_new_object();
 
   json_object_object_add(obj, USER_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(obj, USER_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
@@ -63,12 +61,10 @@ common::Error UserInfo::SerializeImpl(serialize_type* deserialized) const {
     json_object_array_add(jdevices, jdevice);
   }
   json_object_object_add(obj, USER_INFO_DEVICES_FIELD, jdevices);
-
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error UserInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error UserInfo::DeSerialize(const serialize_type& serialized, UserInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

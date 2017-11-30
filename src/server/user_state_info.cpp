@@ -24,6 +24,10 @@
 
 #include <json-c/json_object.h>  // for json_object, json...
 
+#define USER_STATE_INFO_USER_ID_FIELD "user_id"
+#define USER_STATE_INFO_DEVICE_ID_FIELD "device_id"
+#define USER_STATE_INFO_CONNECTED_FIELD "connected"
+
 namespace fastotv {
 namespace server {
 
@@ -48,17 +52,14 @@ bool UserStateInfo::Equals(const UserStateInfo& state) const {
   return user_id_ == state.user_id_ && connected_ == state.connected_ && device_id_ == state.device_id_;
 }
 
-common::Error UserStateInfo::SerializeImpl(serialize_type* deserialized) const {
-  json_object* obj = json_object_new_object();
+common::Error UserStateInfo::SerializeFields(json_object* obj) const {
   json_object_object_add(obj, USER_STATE_INFO_USER_ID_FIELD, json_object_new_string(user_id_.c_str()));
   json_object_object_add(obj, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(connected_));
   json_object_object_add(obj, USER_STATE_INFO_DEVICE_ID_FIELD, json_object_new_string(device_id_.c_str()));
-
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, UserStateInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

@@ -59,7 +59,7 @@ common::Error ChannelsInfo::SerializeImpl(serialize_type* deserialized) const {
   return common::Error();
 }
 
-common::Error ChannelsInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error ChannelsInfo::DeSerialize(const serialize_type& serialized, ChannelsInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

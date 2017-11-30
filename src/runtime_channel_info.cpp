@@ -102,12 +102,11 @@ ChannelType RuntimeChannelInfo::GetChannelType() const {
   return type_;
 }
 
-common::Error RuntimeChannelInfo::SerializeImpl(serialize_type* deserialized) const {
+common::Error RuntimeChannelInfo::SerializeFields(json_object* obj) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object* obj = json_object_new_object();
   json_object* jmsgs = json_object_new_array();
   for (size_t i = 0; i < messages_.size(); ++i) {
     serialize_type jmsg = NULL;
@@ -124,11 +123,10 @@ common::Error RuntimeChannelInfo::SerializeImpl(serialize_type* deserialized) co
   json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD, json_object_new_boolean(chat_enabled_));
   json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD, json_object_new_boolean(chat_read_only_));
   json_object_object_add(obj, RUNTIME_CHANNEL_INFO_MESSAGES_FIELD, jmsgs);
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, RuntimeChannelInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

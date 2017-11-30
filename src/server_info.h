@@ -22,21 +22,19 @@
 
 #include "serializer/json_serializer.h"
 
-#define BANDWIDTH_HOST_FIELD "bandwidth_host"
-
 namespace fastotv {
 
-class ServerInfo : public JsonSerializer<ServerInfo> {
+class ServerInfo : public JsonSerializerEx {
  public:
   ServerInfo();
   ServerInfo(const common::net::HostAndPort& bandwidth_host);
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, ServerInfo* obj) WARN_UNUSED_RESULT;
 
   common::net::HostAndPort GetBandwidthHost() const;
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   common::net::HostAndPort bandwidth_host_;

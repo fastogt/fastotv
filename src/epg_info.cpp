@@ -100,12 +100,11 @@ common::uri::Url EpgInfo::GetIconUrl() const {
   return icon_src_;
 }
 
-common::Error EpgInfo::SerializeImpl(serialize_type* deserialized) const {
+common::Error EpgInfo::SerializeFields(json_object* obj) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object* obj = json_object_new_object();
   json_object_object_add(obj, EPG_INFO_ID_FIELD, json_object_new_string(channel_id_.c_str()));
   const std::string url_str = uri_.GetUrl();
   json_object_object_add(obj, EPG_INFO_URL_FIELD, json_object_new_string(url_str.c_str()));
@@ -123,12 +122,10 @@ common::Error EpgInfo::SerializeImpl(serialize_type* deserialized) const {
     json_object_array_add(jprograms, jprog);
   }
   json_object_object_add(obj, EPG_INFO_PROGRAMS_FIELD, jprograms);
-
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error EpgInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error EpgInfo::DeSerialize(const serialize_type& serialized, EpgInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

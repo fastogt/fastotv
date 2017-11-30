@@ -25,15 +25,10 @@
 
 #include "serializer/json_serializer.h"
 
-#define RESPONCE_INFO_REQUEST_ID_FIELD "request_id"
-#define RESPONCE_INFO_STATE_FIELD "state"
-#define RESPONCE_INFO_COMMAND_FIELD "command"
-#define RESPONCE_INFO_RESPONCE_FIELD "responce_json"
-
 namespace fastotv {
 namespace server {
 
-class ResponceInfo : public JsonSerializer<ResponceInfo> {
+class ResponceInfo : public JsonSerializerEx {
  public:
   ResponceInfo();
   ResponceInfo(const std::string& request_id,
@@ -41,7 +36,7 @@ class ResponceInfo : public JsonSerializer<ResponceInfo> {
                const std::string& command,
                const std::string& responce);
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, ResponceInfo* obj) WARN_UNUSED_RESULT;
 
   std::string GetRequestId() const;
   std::string GetState() const;
@@ -51,7 +46,7 @@ class ResponceInfo : public JsonSerializer<ResponceInfo> {
   bool Equals(const ResponceInfo& inf) const;
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   std::string request_id_;

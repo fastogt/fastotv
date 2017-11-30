@@ -39,21 +39,18 @@ bool AuthInfo::IsValid() const {
   return !login_.empty() && !password_.empty() && !device_id_.empty();
 }
 
-common::Error AuthInfo::SerializeImpl(serialize_type* deserialized) const {
+common::Error AuthInfo::SerializeFields(json_object* obj) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object* obj = json_object_new_object();
   json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
   json_object_object_add(obj, AUTH_INFO_DEVICE_ID_FIELD, json_object_new_string(device_id_.c_str()));
-
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error AuthInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error AuthInfo::DeSerialize(const serialize_type& serialized, AuthInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

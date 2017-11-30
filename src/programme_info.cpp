@@ -47,22 +47,19 @@ bool ProgrammeInfo::IsValid() const {
   return channel_ != invalid_stream_id && !title_.empty();
 }
 
-common::Error ProgrammeInfo::SerializeImpl(serialize_type* deserialized) const {
+common::Error ProgrammeInfo::SerializeFields(json_object* obj) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object* obj = json_object_new_object();
   json_object_object_add(obj, PROGRAMME_INFO_CHANNEL_FIELD, json_object_new_string(channel_.c_str()));
   json_object_object_add(obj, PROGRAMME_INFO_START_FIELD, json_object_new_int64(start_time_));
   json_object_object_add(obj, PROGRAMME_INFO_STOP_FIELD, json_object_new_int64(stop_time_));
   json_object_object_add(obj, PROGRAMME_INFO_TITLE_FIELD, json_object_new_string(title_.c_str()));
-
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error ProgrammeInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error ProgrammeInfo::DeSerialize(const serialize_type& serialized, ProgrammeInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

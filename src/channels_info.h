@@ -24,12 +24,12 @@
 
 namespace fastotv {
 
-class ChannelsInfo : public JsonSerializer<ChannelsInfo> {
+class ChannelsInfo : public JsonSerializer {
  public:
   typedef std::vector<ChannelInfo> channels_t;
   ChannelsInfo();
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, ChannelsInfo* obj) WARN_UNUSED_RESULT;
 
   void AddChannel(const ChannelInfo& channel);
   channels_t GetChannels() const;

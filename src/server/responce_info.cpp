@@ -23,6 +23,11 @@
 
 #include <json-c/json_object.h>  // for json_object, json...
 
+#define RESPONCE_INFO_REQUEST_ID_FIELD "request_id"
+#define RESPONCE_INFO_STATE_FIELD "state"
+#define RESPONCE_INFO_COMMAND_FIELD "command"
+#define RESPONCE_INFO_RESPONCE_FIELD "responce_json"
+
 namespace fastotv {
 namespace server {
 
@@ -34,19 +39,15 @@ ResponceInfo::ResponceInfo(const std::string& request_id,
                            const std::string& responce)
     : request_id_(request_id), state_(state_command), command_(command), responce_json_(responce) {}
 
-common::Error ResponceInfo::SerializeImpl(serialize_type* deserialized) const {
-  json_object* obj = json_object_new_object();
-
+common::Error ResponceInfo::SerializeFields(json_object* obj) const {
   json_object_object_add(obj, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(request_id_.c_str()));
   json_object_object_add(obj, RESPONCE_INFO_STATE_FIELD, json_object_new_string(state_.c_str()));
   json_object_object_add(obj, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(command_.c_str()));
   json_object_object_add(obj, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(responce_json_.c_str()));
-
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error ResponceInfo::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error ResponceInfo::DeSerialize(const serialize_type& serialized, ResponceInfo* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

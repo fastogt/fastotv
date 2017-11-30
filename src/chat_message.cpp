@@ -70,21 +70,19 @@ ChatMessage::Type ChatMessage::GetType() const {
   return type_;
 }
 
-common::Error ChatMessage::SerializeImpl(serialize_type* deserialized) const {
+common::Error ChatMessage::SerializeFields(json_object* obj) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object* obj = json_object_new_object();
   json_object_object_add(obj, CHAT_MESSAGE_CHANNEL_ID_FIELD, json_object_new_string(channel_id_.c_str()));
   json_object_object_add(obj, CHAT_MESSAGE_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(obj, CHAT_MESSAGE_MESSAGE_FIELD, json_object_new_string(message_.c_str()));
   json_object_object_add(obj, CHAT_MESSAGE_TYPE_FIELD, json_object_new_int(type_));
-  *deserialized = obj;
   return common::Error();
 }
 
-common::Error ChatMessage::DeSerialize(const serialize_type& serialized, value_type* obj) {
+common::Error ChatMessage::DeSerialize(const serialize_type& serialized, ChatMessage* obj) {
   if (!serialized || !obj) {
     return common::make_error_inval();
   }

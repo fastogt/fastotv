@@ -27,7 +27,7 @@
 
 namespace fastotv {
 
-class ChatMessage : public JsonSerializer<ChatMessage> {
+class ChatMessage : public JsonSerializerEx {
  public:
   enum Type { CONTROL = 0, MESSAGE };
   ChatMessage();
@@ -46,12 +46,12 @@ class ChatMessage : public JsonSerializer<ChatMessage> {
 
   Type GetType() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, ChatMessage* obj) WARN_UNUSED_RESULT;
 
   bool Equals(const ChatMessage& inf) const;
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   stream_id channel_id_;

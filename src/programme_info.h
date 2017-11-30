@@ -24,7 +24,7 @@
 
 namespace fastotv {
 
-class ProgrammeInfo : public JsonSerializer<ProgrammeInfo> {
+class ProgrammeInfo : public JsonSerializerEx {
  public:
   ProgrammeInfo();
   ProgrammeInfo(stream_id id, timestamp_t start_time, timestamp_t stop_time, const std::string& title);
@@ -43,12 +43,12 @@ class ProgrammeInfo : public JsonSerializer<ProgrammeInfo> {
   void SetTitle(const std::string& title);
   std::string GetTitle() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, ProgrammeInfo* obj) WARN_UNUSED_RESULT;
 
   bool Equals(const ProgrammeInfo& prog) const;
 
  protected:
-  common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   stream_id channel_;

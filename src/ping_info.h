@@ -22,36 +22,33 @@
 
 #include "serializer/json_serializer.h"
 
-#define SERVER_INFO_TIMESTAMP_FIELD "timestamp"
-#define CLIENT_INFO_TIMESTAMP_FIELD "timestamp"
-
 namespace fastotv {
 
-class ServerPingInfo : public JsonSerializer<ServerPingInfo> {
+class ServerPingInfo : public JsonSerializerEx {
  public:
   ServerPingInfo();
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, ServerPingInfo* obj) WARN_UNUSED_RESULT;
 
   timestamp_t GetTimeStamp() const;
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   timestamp_t timestamp_;  // utc time
 };
 
-class ClientPingInfo : public JsonSerializer<ClientPingInfo> {
+class ClientPingInfo : public JsonSerializerEx {
  public:
   ClientPingInfo();
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, ClientPingInfo* obj) WARN_UNUSED_RESULT;
 
   timestamp_t GetTimeStamp() const;
 
  protected:
-  common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   timestamp_t timestamp_;  // utc time

@@ -26,7 +26,7 @@
 
 namespace fastotv {
 
-class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
+class RuntimeChannelInfo : public JsonSerializerEx {
  public:
   typedef std::vector<ChatMessage> messages_t;
   RuntimeChannelInfo();
@@ -40,7 +40,7 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
 
   bool IsValid() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, value_type* obj) WARN_UNUSED_RESULT;
+  static common::Error DeSerialize(const serialize_type& serialized, RuntimeChannelInfo* obj) WARN_UNUSED_RESULT;
 
   void SetChannelId(stream_id sid);
   stream_id GetChannelId() const;
@@ -63,7 +63,7 @@ class RuntimeChannelInfo : public JsonSerializer<RuntimeChannelInfo> {
   bool Equals(const RuntimeChannelInfo& inf) const;
 
  protected:
-  common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error SerializeFields(json_object* obj) const override;
 
  private:
   stream_id channel_id_;
