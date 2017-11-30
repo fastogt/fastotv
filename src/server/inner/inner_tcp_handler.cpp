@@ -112,7 +112,8 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
         common::Error err = iclient->Write(ping_request);
         if (err) {
           DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-          client->Close();
+          err = client->Close();
+          DCHECK(!err);
           delete client;
         } else {
           INFO_LOG() << "Pinged to client[" << client->GetFormatedName() << "], from server["
@@ -164,7 +165,8 @@ void InnerTcpHandlerHost::DataReceived(common::libev::IoClient* client) {
   common::Error err = iclient->ReadCommand(&buff);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    client->Close();
+    err = client->Close();
+    DCHECK(!err);
     delete client;
     return;
   }
@@ -182,7 +184,10 @@ common::Error InnerTcpHandlerHost::PublishToChannelOut(const std::string& msg) {
 
 void InnerTcpHandlerHost::UpdateCache() {
   std::vector<stream_id> channels;
-  parent_->GetChatChannels(&channels);
+  common::Error err = parent_->GetChatChannels(&channels);
+  if (err) {
+    return;
+  }
   chat_channels_ = channels;
 }
 

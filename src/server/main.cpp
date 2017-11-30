@@ -53,7 +53,10 @@ int main(int argc, char* argv[]) {
 #endif
 
   fastotv::server::Config config;
-  fastotv::server::load_config_file(config_path, &config);
+  common::Error err = fastotv::server::load_config_file(config_path, &config);
+  if (err) {
+    return EXIT_FAILURE;
+  }
   fastotv::server::ServerHost server(config);
   return server.Exec();
 }
