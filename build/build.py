@@ -121,7 +121,7 @@ class BuildRequest(object):
 
         # project static options
         log_to_file_args = '-DLOG_TO_FILE=ON'
-        openssl_args = '-DOPENSSL_USE_STATIC=ON'
+        openssl_args = '-DOPENSSL_USE_STATIC_LIBS=ON'
         jsonc_args = '-DJSONC_USE_STATIC=ON'
 
         cmake_line = ['cmake', cmake_project_root_abs_path, generator, '-DCMAKE_BUILD_TYPE=RELEASE', openssl_args,

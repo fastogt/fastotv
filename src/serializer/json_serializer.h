@@ -55,14 +55,14 @@ class JsonSerializer : public common::serializer::ISerializer<struct json_object
   }
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const = 0;
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override = 0;
 };
 
 class JsonSerializerEx : public JsonSerializer {
  protected:
   virtual common::Error SerializeFields(json_object* obj) const = 0;
 
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const final {
+  virtual common::Error SerializeImpl(serialize_type* deserialized) const override final {
     json_object* obj = json_object_new_object();
     common::Error err = SerializeFields(obj);
     if (err) {
