@@ -18,13 +18,9 @@
 
 #pragma once
 
-#include <functional>  // for function
-#include <string>      // for string
+#include <functional>
 
-#include <common/error.h>            // for Error
-#include <common/libev/io_client.h>  // for IoClient
-#include <common/macros.h>           // for WARN_UNUSED_RESULT
-#include <common/net/socket_tcp.h>   // for SocketHolder
+#include <common/libev/descriptor_client.h>
 
 struct lirc_config;
 
@@ -41,24 +37,20 @@ namespace inputs {
 common::Error LircInit(int* fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
 common::Error LircDeinit(int fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
 
-class LircInputClient : public common::libev::IoClient {
+class LircInputClient : public common::libev::DescriptorClient {
  public:
+  typedef common::libev::DescriptorClient base_class;
   typedef std::function<void(const std::string&)> read_callback_t;
   LircInputClient(common::libev::IoLoop* server, int fd, struct lirc_config* cfg);
-
-  virtual int GetFd() const override;
 
   common::Error ReadWithCallback(read_callback_t cb) WARN_UNUSED_RESULT;
 
  private:
   virtual common::Error CloseImpl() override;
 
-  virtual common::Error Write(const char* data, size_t size, size_t* nwrite) override final WARN_UNUSED_RESULT;
-  virtual common::Error Write(const unsigned char* data, size_t size, size_t* nwrite) override final WARN_UNUSED_RESULT;
-  virtual common::Error Read(char* out, size_t max_size, size_t* nread) override final WARN_UNUSED_RESULT;
-  virtual common::Error Read(unsigned char* out, size_t max_size, size_t* nread) override final WARN_UNUSED_RESULT;
+  using base_class::Write;
+  using base_class::Read;
 
-  common::net::SocketHolder sock_;
   struct lirc_config* cfg_;
 };
 }  // namespace inputs

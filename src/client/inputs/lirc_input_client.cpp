@@ -18,12 +18,10 @@
 
 #include "client/inputs/lirc_input_client.h"
 
-#include <stdlib.h>  // for NULL, free
-
 #include <lirc/lirc_client.h>  // for lirc_code2char, lirc_deinit
 
 #include <common/file_system/string_path_utils.h>
-#include <common/net/net.h>  // for set_blocking_socket
+#include <common/file_system/file_system.h>
 #include <common/sprintf.h>
 #include <common/string_util.h>  // for strdup
 #include <common/utils.h>        // for freeifnotnull
@@ -44,7 +42,7 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
     return common::make_error("Lirc init failed!");
   }
 
-  common::ErrnoError err = common::net::set_blocking_socket(lfd, false);
+  common::ErrnoError err = common::file_system::set_blocking_descriptor(lfd, false);
   if (err) {
     return common::ErrorValue(err->GetDescription());
   }
@@ -87,7 +85,7 @@ common::Error LircDeinit(int fd, struct lirc_config** cfg) {
 }
 
 LircInputClient::LircInputClient(common::libev::IoLoop* server, int fd, struct lirc_config* cfg)
-    : common::libev::IoClient(server), sock_(fd), cfg_(cfg) {}
+    : base_class(server, fd), cfg_(cfg) {}
 
 common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
   char* code = NULL;
@@ -108,58 +106,8 @@ common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
   return common::Error();
 }
 
-int LircInputClient::GetFd() const {
-  return sock_.GetFd();
-}
-
-common::Error LircInputClient::Write(const char* data, size_t size, size_t* nwrite) {
-  common::ErrnoError err = sock_.Write(data, size, nwrite);
-  if (err) {
-    return common::ErrorValue(err->GetDescription());
-  }
-
-  return common::Error();
-}
-
-common::Error LircInputClient::Write(const unsigned char* data, size_t size, size_t* nwrite) {
-  common::ErrnoError err = sock_.Write(data, size, nwrite);
-  if (err) {
-    return common::ErrorValue(err->GetDescription());
-  }
-
-  return common::Error();
-}
-
-common::Error LircInputClient::Read(char* out, size_t max_size, size_t* nread) {
-  if (!out || !nread) {
-    return common::make_error_inval();
-  }
-
-  common::ErrnoError err = sock_.Read(out, max_size, nread);
-  if (err) {
-    return common::make_error(err->GetDescription());
-  }
-  return common::Error();
-}
-
-common::Error LircInputClient::Read(unsigned char* out, size_t max_size, size_t* nread) {
-  if (!out || !nread) {
-    return common::make_error_inval();
-  }
-
-  common::ErrnoError err = sock_.Read(out, max_size, nread);
-  if (err) {
-    return common::make_error(err->GetDescription());
-  }
-  return common::Error();
-}
-
 common::Error LircInputClient::CloseImpl() {
-  common::Error err = LircDeinit(sock_.GetFd(), &cfg_);
-  if (err) {
-    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-  }
-  return err;
+  return LircDeinit(GetFd(), &cfg_);
 }
 
 }  // namespace inputs
