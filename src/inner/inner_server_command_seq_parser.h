@@ -47,7 +47,7 @@ class RequestCallback {
 
 class InnerServerCommandSeqParser {
  public:
-  typedef uint64_t id_t;
+  typedef uint64_t seq_id_t;
 
   InnerServerCommandSeqParser();
   virtual ~InnerServerCommandSeqParser();
@@ -76,7 +76,7 @@ class InnerServerCommandSeqParser {
                                          int argc,
                                          char* argv[]) = 0;  // called when argv not NULL and argc > 0
 
-  std::atomic<id_t> id_;
+  std::atomic<seq_id_t> id_;
   std::vector<RequestCallback> subscribed_requests_;
 };
 

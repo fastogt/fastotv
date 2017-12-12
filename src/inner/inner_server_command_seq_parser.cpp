@@ -55,12 +55,12 @@ InnerServerCommandSeqParser::InnerServerCommandSeqParser() : id_() {}
 InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
 
 common::protocols::three_way_handshake::cmd_seq_t InnerServerCommandSeqParser::NextRequestID() {
-  const id_t next_id = id_++;
-  char bytes[sizeof(id_t)];
-  const id_t stabled = common::NetToHost64(next_id);  // for human readable hex
-  memcpy(&bytes, &stabled, sizeof(id_t));
+  const seq_id_t next_id = id_++;
+  char bytes[sizeof(seq_id_t)];
+  const seq_id_t stabled = common::NetToHost64(next_id);  // for human readable hex
+  memcpy(&bytes, &stabled, sizeof(seq_id_t));
   common::protocols::three_way_handshake::cmd_seq_t hexed =
-      common::utils::hex::encode(std::string(bytes, sizeof(id_t)), true);
+      common::utils::hex::encode(std::string(bytes, sizeof(seq_id_t)), true);
   return hexed;
 }
 

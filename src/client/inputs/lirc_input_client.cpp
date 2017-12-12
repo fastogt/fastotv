@@ -20,8 +20,8 @@
 
 #include <lirc/lirc_client.h>  // for lirc_code2char, lirc_deinit
 
-#include <common/file_system/string_path_utils.h>
 #include <common/file_system/file_system.h>
+#include <common/file_system/string_path_utils.h>
 #include <common/sprintf.h>
 #include <common/string_util.h>  // for strdup
 #include <common/utils.h>        // for freeifnotnull
