@@ -257,7 +257,7 @@ if __name__ == "__main__":
     request = BuildRequest(platform_str, arch_name_str)
     if branding_file_path != dev_null:
         abs_branding_file = os.path.abspath(branding_file_path)
-        args_branding_options = utils.read_file_line_by_line(abs_branding_file)
+        args_branding_options = utils.read_file_line_by_line_to_list(abs_branding_file)
     else:
         args_branding_options = []
 
