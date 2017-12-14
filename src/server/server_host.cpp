@@ -78,7 +78,7 @@ void ServerHost::Stop() {
 }
 
 int ServerHost::Exec() {
-  std::shared_ptr<common::threads::Thread<int> > connection_thread =
+  std::shared_ptr<common::threads::Thread<int>> connection_thread =
       THREAD_MANAGER()->CreateThread(&exec_server, server_);
   bool result = connection_thread->Start();
   if (!result) {

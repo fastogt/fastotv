@@ -61,7 +61,7 @@ class IoService : public common::libev::ILoopController {
   virtual void HandleStarted() override;
   virtual void HandleStoped() override;
 
-  std::shared_ptr<common::threads::Thread<int> > loop_thread_;
+  std::shared_ptr<common::threads::Thread<int>> loop_thread_;
 };
 
 }  // namespace client

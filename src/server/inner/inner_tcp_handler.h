@@ -132,7 +132,7 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
 
   redis::RedisPubSub* sub_commands_in_;
   InnerSubHandler* handler_;
-  std::shared_ptr<common::threads::Thread<void> > redis_subscribe_command_in_thread_;
+  std::shared_ptr<common::threads::Thread<void>> redis_subscribe_command_in_thread_;
   common::libev::timer_id_t ping_client_id_timer_;
   common::libev::timer_id_t reread_cache_id_timer_;
   const Config config_;
