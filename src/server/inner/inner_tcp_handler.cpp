@@ -126,6 +126,12 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
   }
 }
 
+void InnerTcpHandlerHost::ChildStatusChanged(common::libev::IoLoop* server, pid_t id, int status) {
+  UNUSED(server);
+  UNUSED(id);
+  UNUSED(status);
+}
+
 void InnerTcpHandlerHost::Accepted(common::libev::IoClient* client) {
   common::protocols::three_way_handshake::cmd_request_t whoareyou = WhoAreYouRequest(NextRequestID());
   InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);

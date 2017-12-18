@@ -86,6 +86,9 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
   virtual void DataReadyToWrite(common::libev::IoClient* client) override;
   virtual void PostLooped(common::libev::IoLoop* server) override;
   virtual void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
+#if LIBEV_CHILD_ENABLE
+  virtual void ChildStatusChanged(common::libev::IoLoop* server, pid_t id, int status) override;
+#endif
 
  private:
   common::Error CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,

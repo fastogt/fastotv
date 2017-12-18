@@ -176,6 +176,14 @@ void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::
   }
 }
 
+#if LIBEV_CHILD_ENABLE
+void InnerTcpHandler::ChildStatusChanged(common::libev::IoLoop* server, pid_t id, int status) {
+  UNUSED(server);
+  UNUSED(id);
+  UNUSED(status);
+}
+#endif
+
 void InnerTcpHandler::RequestServerInfo() {
   if (!inner_connection_) {
     return;
