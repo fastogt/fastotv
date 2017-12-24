@@ -175,9 +175,11 @@ Player::Player(const std::string& app_directory_absolute_path,
   programs_window_->SetTextColor(text_color);
   programs_window_->SetCurrentPositionSelectionColor(failed_color);
   auto channel_clicked_cb = [this](Uint8 button, size_t row) {
-    if (button == SDL_BUTTON_LEFT && row != current_stream_pos_) {
-      fastoplayer::media::VideoState* stream = CreateStreamPos(row);
-      SetStream(stream);
+    if (button == SDL_BUTTON_LEFT) {
+      if (row != current_stream_pos_) {
+        fastoplayer::media::VideoState* stream = CreateStreamPos(row);
+        SetStream(stream);
+      }
     }
   };
   programs_window_->SetMouseClickedRowCallback(channel_clicked_cb);
@@ -560,6 +562,10 @@ void Player::HandleReceiveChatMessageEvent(events::ReceiveChatMessageEvent* even
 
 void Player::HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) {
   if (chat_window_->IsActived()) {
+    return;
+  }
+
+  if (programs_window_->IsActived()) {
     return;
   }
 

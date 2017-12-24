@@ -40,6 +40,8 @@ class ProgramsWindow : public fastoplayer::gui::Window {
   ProgramsWindow(const SDL_Color& back_ground_color);
   ~ProgramsWindow();
 
+  bool IsActived() const;
+
   void SetMouseClickedRowCallback(PlaylistWindow::mouse_clicked_row_callback_t cb);
 
   void SetPlaylist(const PlaylistWindow::playlist_t* pl);
@@ -71,6 +73,10 @@ class ProgramsWindow : public fastoplayer::gui::Window {
 
   TTF_Font* font_;
   SDL_Color text_color_;
+  // filters
+  PlaylistWindow::mouse_clicked_row_callback_t proxy_clicked_cb_;
+  const PlaylistWindow::playlist_t* origin_;
+  PlaylistWindow::playlist_t filtered_origin_;
 };
 
 }  // namespace client

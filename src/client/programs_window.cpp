@@ -28,12 +28,20 @@ namespace client {
 const SDL_Color ProgramsWindow::text_background_color = fastoplayer::draw::white_color;
 
 ProgramsWindow::ProgramsWindow(const SDL_Color& back_ground_color)
-    : base_class(), plailist_window_(nullptr), text_input_box_(nullptr), font_(nullptr), text_color_() {
+    : base_class(),
+      plailist_window_(nullptr),
+      text_input_box_(nullptr),
+      font_(nullptr),
+      text_color_(),
+      proxy_clicked_cb_(),
+      origin_(nullptr),
+      filtered_origin_() {
   SetTransparent(true);
 
   // playlist window
   plailist_window_ = new PlaylistWindow(back_ground_color);
   plailist_window_->SetVisible(true);
+  plailist_window_->SetPlaylist(&filtered_origin_);
 
   text_input_box_ = new fastoplayer::gui::LineEdit(text_background_color);
   text_input_box_->SetTextColor(fastoplayer::draw::black_color);
@@ -42,6 +50,41 @@ ProgramsWindow::ProgramsWindow(const SDL_Color& back_ground_color)
   text_input_box_->SetBorderColor(fastoplayer::draw::black_color);
   text_input_box_->SetBordered(true);
   text_input_box_->SetEnabled(true);
+  auto search_text_changed_cb = [this](const std::string& text) {
+    filtered_origin_.clear();
+    if (!origin_) {
+      return;
+    }
+
+    for (size_t i = 0; i < origin_->size(); ++i) {
+      PlaylistEntry ent = origin_->operator[](i);
+      ChannelInfo cinf = ent.GetChannelInfo();
+      std::string name = cinf.GetName();
+      if (text.empty() || name.find(text) != std::string::npos) {
+        filtered_origin_.push_back(ent);
+      }
+    }
+  };
+  text_input_box_->SetTextChangedCallback(search_text_changed_cb);
+
+  auto mouse_clicked_cb = [this](Uint8 button, size_t row) {
+    if (proxy_clicked_cb_) {
+      if (!origin_) {
+        return;
+      }
+
+      PlaylistEntry ent = filtered_origin_[row];
+      ChannelInfo ent_inf = ent.GetChannelInfo();
+      for (size_t i = 0; i < origin_->size(); ++i) {
+        PlaylistEntry cent = origin_->operator[](i);
+        if (cent.GetChannelInfo() == ent_inf) {
+          proxy_clicked_cb_(button, i);
+          return;
+        }
+      }
+    }
+  };
+  plailist_window_->SetMouseClickedRowCallback(mouse_clicked_cb);
 }
 
 ProgramsWindow::~ProgramsWindow() {
@@ -49,8 +92,13 @@ ProgramsWindow::~ProgramsWindow() {
   destroy(&plailist_window_);
 }
 
+bool ProgramsWindow::IsActived() const {
+  return text_input_box_->IsActived();
+}
+
 void ProgramsWindow::SetPlaylist(const PlaylistWindow::playlist_t* pl) {
-  plailist_window_->SetPlaylist(pl);
+  origin_ = pl;
+  text_input_box_->ClearText();
 }
 
 void ProgramsWindow::SetTextColor(const SDL_Color& color) {
@@ -89,7 +137,7 @@ void ProgramsWindow::SetCurrentPositionInPlaylist(size_t pos) {
 }
 
 void ProgramsWindow::SetMouseClickedRowCallback(PlaylistWindow::mouse_clicked_row_callback_t cb) {
-  plailist_window_->SetMouseClickedRowCallback(cb);
+  proxy_clicked_cb_ = cb;
 }
 
 void ProgramsWindow::Draw(SDL_Renderer* render) {
