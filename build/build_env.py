@@ -356,7 +356,10 @@ class BuildRequest(object):
         self.build('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_sdl2_image(self, version):
-        compiler_flags = utils.CompileInfo([], ['--disable-svg'])
+        compiler_flags = utils.CompileInfo([], ['--disable-svg', '--disable-sdltest', '--disable-bmp', '--disable-gif',
+                                                '--disable-jpg', '--disable-lbm', '--disable-pcx', '--disable-pnm',
+                                                '--disable-tga', '--disable-tif', '--disable-xcf', '--disable-xpm',
+                                                '--disable-xv', '-disable-webp'])
         self.build('{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_sdl2_ttf(self, version):
