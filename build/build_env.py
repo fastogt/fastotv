@@ -82,7 +82,7 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
         SupportedDevice.__init__(self, 'pc', {'linux': [
             'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
-        ]}, utils.CompileInfo(['--disable-video-mir', '--disable-video-wayland'], []), utils.CompileInfo([], []))
+        ]}, utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland']), utils.CompileInfo([], []))
 
     def install_specific(self):
         return
@@ -367,7 +367,7 @@ class BuildRequest(object):
         self.build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_openssl(self, version):
-        compiler_flags = utils.CompileInfo([], [])
+        compiler_flags = utils.CompileInfo([], ['no-shared'])
         url = '{0}openssl-{1}.{2}'.format(OPENSSL_SRC_ROOT, version, ARCH_OPENSSL_EXT)
         self.build(url, compiler_flags, './config')
 
