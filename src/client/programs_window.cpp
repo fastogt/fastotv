@@ -22,6 +22,8 @@
 
 #include "client/playlist_window.h"
 
+#define SEARCH_PLACEHOLDER "Search..."
+
 namespace fastotv {
 namespace client {
 
@@ -50,6 +52,7 @@ ProgramsWindow::ProgramsWindow(const SDL_Color& back_ground_color)
   text_input_box_->SetBorderColor(fastoplayer::draw::black_color);
   text_input_box_->SetBordered(true);
   text_input_box_->SetEnabled(true);
+  text_input_box_->SetPlaceHolder(SEARCH_PLACEHOLDER);
   auto search_text_changed_cb = [this](const std::string& text) {
     filtered_origin_.clear();
     if (!origin_) {

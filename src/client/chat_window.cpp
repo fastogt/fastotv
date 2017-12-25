@@ -27,6 +27,8 @@
 
 #include "client/chat_list_window.h"
 
+#define MESSAGE_PLACEHOLDER "Type a message"
+
 namespace fastotv {
 namespace client {
 
@@ -59,6 +61,7 @@ ChatWindow::ChatWindow(const SDL_Color& back_ground_color)
   text_input_box_->SetVisible(true);
   text_input_box_->SetBorderColor(fastoplayer::draw::black_color);
   text_input_box_->SetBordered(true);
+  text_input_box_->SetPlaceHolder(MESSAGE_PLACEHOLDER);
 }
 
 ChatWindow::~ChatWindow() {
