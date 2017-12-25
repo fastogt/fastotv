@@ -123,9 +123,10 @@ class BuildRequest(object):
         log_to_file_args = '-DLOG_TO_FILE=ON'
         openssl_args = '-DOPENSSL_USE_STATIC_LIBS=ON'
         jsonc_args = '-DJSONC_USE_STATIC=ON'
+        libev_args = '-DLIBEV_USE_STATIC=ON'
 
         cmake_line = ['cmake', cmake_project_root_abs_path, generator, '-DCMAKE_BUILD_TYPE=RELEASE', openssl_args,
-                      jsonc_args, log_to_file_args]
+                      jsonc_args, log_to_file_args, libev_args]
 
         if is_android:
             toolchain_path = os.path.join(cmake_project_root_abs_path, 'cmake/android.toolchain.cmake')
