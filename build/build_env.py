@@ -82,7 +82,7 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
         SupportedDevice.__init__(self, 'pc', {'linux': [
             'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
-        ]}, utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland']), utils.CompileInfo([], []))
+        ]}, utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']), utils.CompileInfo([], []))
 
     def install_specific(self):
         return
@@ -98,7 +98,7 @@ class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
                                                     '--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2',
                                                     '--disable-video-mir', '--disable-video-wayland',
-                                                    '--disable-video-x11']),
+                                                    '--disable-video-x11', '--disable-sdltest']),
                                  utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                                         '--enable-omx-rpi']))
 
@@ -150,7 +150,7 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                                    ['--disable-pulseaudio', '--disable-esd',
                                                     '--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2',
-                                                    '--disable-video-mir', '--disable-video-wayland']),
+                                                    '--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']),
                                  utils.CompileInfo([], []))
         linux_libs = self.system_platform_libs_.get('linux')
         platform_name = system_info.get_os()
@@ -193,7 +193,7 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
                                                         '--disable-video-opengl', '--disable-video-opengles1',
                                                         '--enable-video-opengles2',
                                                         '--disable-video-mir', '--disable-video-wayland',
-                                                        '--disable-video-x11']),
+                                                        '--disable-video-x11', '--disable-sdltest']),
                                  utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -363,7 +363,7 @@ class BuildRequest(object):
         self.build('{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_sdl2_ttf(self, version):
-        compiler_flags = utils.CompileInfo([], [])
+        compiler_flags = utils.CompileInfo([], ['--disable-sdltest'])
         self.build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_openssl(self, version):
