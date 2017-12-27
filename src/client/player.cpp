@@ -77,7 +77,7 @@ Player::Player(const std::string& app_directory_absolute_path,
                const fastoplayer::PlayerOptions& options,
                const fastoplayer::media::AppOptions& opt,
                const fastoplayer::media::ComplexOptions& copt)
-    : ISimplePlayer(options),
+    : ISimplePlayer(options, RELATIVE_SOURCE_DIR),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
       right_arrow_button_texture_(nullptr),
