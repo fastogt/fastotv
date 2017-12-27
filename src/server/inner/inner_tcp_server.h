@@ -43,7 +43,7 @@ namespace inner {
 
 class InnerTcpServer : public common::libev::tcp::TcpServer {
  public:
-  InnerTcpServer(const common::net::HostAndPort& host, common::libev::IoLoopObserver* observer);
+  InnerTcpServer(const common::net::HostAndPort& host, bool is_default, common::libev::IoLoopObserver* observer);
   virtual const char* ClassName() const override;
 
  private:

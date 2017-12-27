@@ -59,7 +59,7 @@ namespace server {
 ServerHost::ServerHost(const Config& config)
     : stop_(false), handler_(nullptr), server_(nullptr), rstorage_(), config_(config) {
   handler_ = new inner::InnerTcpHandlerHost(this, config);
-  server_ = new inner::InnerTcpServer(config.server.host, handler_);
+  server_ = new inner::InnerTcpServer(config.server.host, false, handler_);
   server_->SetName("inner_server");
 
   rstorage_.SetConfig(config.server.redis);
