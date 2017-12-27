@@ -1,9 +1,9 @@
 About FastoTV
 ===============
 [![Travis Build Status](https://travis-ci.org/fastogt/gpu_player.svg?branch=master)](https://travis-ci.org/fastogt/fastotv)
-[![GitHub license](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://github.com/fastogt/fastotv/blob/master/LICENSE)
+[![GitHub license](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://raw.githubusercontent.com/fastogt/fastotv/master/COPYRIGHT)
 
-FastoTV &mdash; is a crossplatform free iptv/stream player. <br />
+FastoTV - is a crossplatform free iptv/stream player. <br />
 
 Visit our site: [FastoTV](https://www.fastotv.com)
 
