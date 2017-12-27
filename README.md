@@ -1,7 +1,7 @@
 About FastoTV
 ===============
-[![Travis Build Status](https://travis-ci.org/fastogt/gpu_player.svg?branch=master)](https://travis-ci.org/fastogt/gpu_player)
-[![GitHub license](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://raw.githubusercontent.com/fastogt/fastonosql/gpu_player/COPYRIGHT)
+[![Travis Build Status](https://travis-ci.org/fastogt/gpu_player.svg?branch=master)](https://travis-ci.org/fastogt/fastotv)
+[![GitHub license](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://github.com/fastogt/fastotv/blob/master/LICENSE)
 
 FastoTV &mdash; is a crossplatform free iptv/stream player. <br />
 
@@ -15,7 +15,7 @@ You can download compiled version (for Mac OS X, Windows, FreeBSD and Linux) fro
 
 Contribute
 ==========
-Contributions are always welcome! Just try to follow our coding style: [FastoGT Coding Style](https://github.com/fasto/fastonosql/wiki/Coding-Style)
+Contributions are always welcome! Just try to follow our coding style: [FastoGT Coding Style](https://github.com/fastogt/fastonosql/wiki/Coding-Style)
 
 Build
 =====
