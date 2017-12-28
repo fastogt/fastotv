@@ -67,8 +67,8 @@ extern "C" {
 #include <common/config.h>
 #include <common/sprintf.h>  // for MemSPrintf
 
+#include <player/config.h>
 #include <player/media/ffmpeg_internal.h>  // for HWAccelID
-#include <player/player_config.h>
 
 #if CONFIG_AVDEVICE
 #define HELP_AVDEVICE                                         \
@@ -243,7 +243,7 @@ void print_all_libs_info(int flags) {
 void print_program_info(int flags) {
   const char* indent = (flags & INDENT) ? "  " : "";
   std::cout << PROJECT_VERSION_HUMAN << std::endl;
-  std::cout << PLAYER_LIB_VERSION_HUMAN << std::endl;
+  std::cout << PLAYER_VERSION_HUMAN << std::endl;
   std::cout << COMMON_VERSION_HUMAN << std::endl;
   if (flags & SHOW_COPYRIGHT) {
     std::cout << " " PROJECT_COPYRIGHT << std::endl;
