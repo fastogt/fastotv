@@ -68,14 +68,6 @@ extern "C" {
 
 #include <player/media/ffmpeg_internal.h>  // for HWAccelID
 
-#if defined(PROJECT_BUILD_TYPE_VERSION) && defined(PROJECT_BUILD_RELEASE)
-#define PROJECT_NAME_VERSION_BREF PROJECT_NAME_TITLE " " PROJECT_VERSION " Revision:" PROJECT_GIT_VERSION
-#else
-#define PROJECT_NAME_VERSION_BREF \
-  PROJECT_NAME_TITLE              \
-  " " PROJECT_VERSION " " PROJECT_BUILD_TYPE_VERSION STRINGIZE(PROJECT_VERSION_TWEAK) " Revision:" PROJECT_GIT_VERSION
-#endif
-
 #if CONFIG_AVDEVICE
 #define HELP_AVDEVICE                                         \
   "    -sources [device]  list sources of the input device\n" \
@@ -248,7 +240,7 @@ void print_all_libs_info(int flags) {
 
 void print_program_info(int flags) {
   const char* indent = (flags & INDENT) ? "  " : "";
-  std::cout << PROJECT_NAME_VERSION_BREF << std::endl;
+  std::cout << PROJECT_VERSION_HUMAN << std::endl;
   if (flags & SHOW_COPYRIGHT) {
     std::cout << " " PROJECT_COPYRIGHT << std::endl;
   }
