@@ -69,9 +69,6 @@ class ServerHost {
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ServerHost);
-  std::mutex stop_mutex_;
-  std::condition_variable stop_cond_;
-  bool stop_;
 
   inner::InnerTcpHandlerHost* handler_;
   inner::InnerTcpServer* server_;

@@ -37,29 +37,12 @@
 #define UNKNOWN_CLIENT_NAME "Unknown"
 
 namespace fastotv {
-namespace {
-int exec_server(common::libev::tcp::TcpServer* server) {
-  common::ErrnoError err = server->Bind(true);
-  if (err) {
-    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    return EXIT_FAILURE;
-  }
-
-  err = server->Listen(5);
-  if (err) {
-    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    return EXIT_FAILURE;
-  }
-
-  return server->Exec();
-}
-}  // namespace
 namespace server {
 
 ServerHost::ServerHost(const Config& config)
-    : stop_(false), handler_(nullptr), server_(nullptr), rstorage_(), config_(config) {
+    : handler_(nullptr), server_(nullptr), rstorage_(), config_(config) {
   handler_ = new inner::InnerTcpHandlerHost(this, config);
-  server_ = new inner::InnerTcpServer(config.server.host, false, handler_);
+  server_ = new inner::InnerTcpServer(config.server.host, true, handler_);
   server_->SetName("inner_server");
 
   rstorage_.SetConfig(config.server.redis);
@@ -71,33 +54,23 @@ ServerHost::~ServerHost() {
 }
 
 void ServerHost::Stop() {
-  std::unique_lock<std::mutex> lock(stop_mutex_);
-  stop_ = true;
   server_->Stop();
-  stop_cond_.notify_all();
 }
 
 int ServerHost::Exec() {
-  std::shared_ptr<common::threads::Thread<int>> connection_thread =
-      THREAD_MANAGER()->CreateThread(&exec_server, server_);
-  bool result = connection_thread->Start();
-  if (!result) {
-    NOTREACHED();
+  common::ErrnoError err = server_->Bind(true);
+  if (err) {
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return EXIT_FAILURE;
   }
 
-  while (!stop_) {
-    std::unique_lock<std::mutex> lock(stop_mutex_);
-    std::cv_status interrupt_status = stop_cond_.wait_for(lock, std::chrono::seconds(timeout_seconds));
-    if (interrupt_status == std::cv_status::no_timeout) {  // if notify
-      if (stop_) {
-        break;
-      }
-    } else {  // timeout
-    }
+  err = server_->Listen(5);
+  if (err) {
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
+    return EXIT_FAILURE;
   }
 
-  return connection_thread->JoinAndGet();
+  return server_->Exec();
 }
 
 common::Error ServerHost::UnRegisterInnerConnectionByHost(common::libev::IoClient* connection) {
