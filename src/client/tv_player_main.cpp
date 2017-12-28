@@ -57,7 +57,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   const std::string config_absolute_path =
       common::file_system::make_path(app_directory_absolute_path, CONFIG_FILE_NAME);
   if (!common::file_system::is_valid_path(config_absolute_path)) {
-    std::cout << "Can't config file path: " << config_absolute_path << std::endl;
+    std::cout << "Invalid config file path: " << config_absolute_path << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -108,8 +108,6 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
 /* Called from the main */
 int main(int argc, char** argv) {
   init_ffmpeg();
-
-  common::uri::Url url;
 
   for (int i = 1; i < argc; ++i) {
     const bool lastarg = i == argc - 1;

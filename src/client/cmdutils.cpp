@@ -64,10 +64,17 @@ extern "C" {
 #include <libswscale/version.h>        // for LIBSWSCALE_VERSION_MAJOR, etc
 }
 
-#include <common/log_levels.h>  // for LOG_LEVEL::LOG_LEVEL_INFO, etc
-#include <common/sprintf.h>     // for MemSPrintf
+#include <common/sprintf.h>  // for MemSPrintf
 
 #include <player/media/ffmpeg_internal.h>  // for HWAccelID
+
+#if defined(PROJECT_BUILD_TYPE_VERSION) && defined(PROJECT_BUILD_RELEASE)
+#define PROJECT_NAME_VERSION_BREF PROJECT_NAME_TITLE " " PROJECT_VERSION " Revision:" PROJECT_GIT_VERSION
+#else
+#define PROJECT_NAME_VERSION_BREF \
+  PROJECT_NAME_TITLE              \
+  " " PROJECT_VERSION " " PROJECT_BUILD_TYPE_VERSION STRINGIZE(PROJECT_VERSION_TWEAK) " Revision:" PROJECT_GIT_VERSION
+#endif
 
 #if CONFIG_AVDEVICE
 #define HELP_AVDEVICE                                         \
@@ -204,48 +211,49 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
 #define SHOW_CONFIG 4
 #define SHOW_COPYRIGHT 8
 
-#define PRINT_LIB_INFO(libname, LIBNAME, flags, level)                                                          \
-  if (CONFIG_##LIBNAME) {                                                                                       \
-    const char* indent = (flags & INDENT) ? "  " : "";                                                          \
-    if (flags & SHOW_VERSION) {                                                                                 \
-      unsigned int version = libname##_version();                                                               \
-      RUNTIME_LOG(level) << common::MemSPrintf("%slib%-11s %2d.%3d.%3d / %2d.%3d.%3d", indent, #libname,        \
-                                               LIB##LIBNAME##_VERSION_MAJOR, LIB##LIBNAME##_VERSION_MINOR,      \
-                                               LIB##LIBNAME##_VERSION_MICRO, AV_VERSION_MAJOR(version),         \
-                                               AV_VERSION_MINOR(version), AV_VERSION_MICRO(version));           \
-    }                                                                                                           \
-    if (flags & SHOW_CONFIG) {                                                                                  \
-      const char* cfg = libname##_configuration();                                                              \
-      if (strcmp(FFMPEG_CONFIGURATION, cfg)) {                                                                  \
-        if (!warned_cfg) {                                                                                      \
-          RUNTIME_LOG(level) << common::MemSPrintf("%sWARNING: library configuration mismatch", indent);        \
-          warned_cfg = true;                                                                                    \
-        }                                                                                                       \
-        RUNTIME_LOG(level) << indent << common::MemSPrintf("%s%-11s configuration: %s", indent, #libname, cfg); \
-      }                                                                                                         \
-    }                                                                                                           \
+#define PRINT_LIB_INFO(libname, LIBNAME, flags)                                                                     \
+  if (CONFIG_##LIBNAME) {                                                                                           \
+    const char* indent = (flags & INDENT) ? "  " : "";                                                              \
+    if (flags & SHOW_VERSION) {                                                                                     \
+      unsigned int version = libname##_version();                                                                   \
+      std::cout << common::MemSPrintf("%slib%-11s %2d.%3d.%3d / %2d.%3d.%3d", indent, #libname,                     \
+                                      LIB##LIBNAME##_VERSION_MAJOR, LIB##LIBNAME##_VERSION_MINOR,                   \
+                                      LIB##LIBNAME##_VERSION_MICRO, AV_VERSION_MAJOR(version),                      \
+                                      AV_VERSION_MINOR(version), AV_VERSION_MICRO(version))                         \
+                << std::endl;                                                                                       \
+    }                                                                                                               \
+    if (flags & SHOW_CONFIG) {                                                                                      \
+      const char* cfg = libname##_configuration();                                                                  \
+      if (strcmp(FFMPEG_CONFIGURATION, cfg)) {                                                                      \
+        if (!warned_cfg) {                                                                                          \
+          std::cout << common::MemSPrintf("%sWARNING: library configuration mismatch", indent) << std::endl;        \
+          warned_cfg = true;                                                                                        \
+        }                                                                                                           \
+        std::cout << indent << common::MemSPrintf("%s%-11s configuration: %s", indent, #libname, cfg) << std::endl; \
+      }                                                                                                             \
+    }                                                                                                               \
   }
 
-void print_all_libs_info(int flags, common::logging::LOG_LEVEL level) {
-  PRINT_LIB_INFO(avutil, AVUTIL, flags, level);
-  PRINT_LIB_INFO(avcodec, AVCODEC, flags, level);
-  PRINT_LIB_INFO(avformat, AVFORMAT, flags, level);
-  PRINT_LIB_INFO(avdevice, AVDEVICE, flags, level);
-  PRINT_LIB_INFO(avfilter, AVFILTER, flags, level);
+void print_all_libs_info(int flags) {
+  PRINT_LIB_INFO(avutil, AVUTIL, flags);
+  PRINT_LIB_INFO(avcodec, AVCODEC, flags);
+  PRINT_LIB_INFO(avformat, AVFORMAT, flags);
+  PRINT_LIB_INFO(avdevice, AVDEVICE, flags);
+  PRINT_LIB_INFO(avfilter, AVFILTER, flags);
   //    PRINT_LIB_INFO(avresample, AVRESAMPLE, flags, level);
-  PRINT_LIB_INFO(swscale, SWSCALE, flags, level);
-  PRINT_LIB_INFO(swresample, SWRESAMPLE, flags, level);
+  PRINT_LIB_INFO(swscale, SWSCALE, flags);
+  PRINT_LIB_INFO(swresample, SWRESAMPLE, flags);
   //    PRINT_LIB_INFO(postproc,   POSTPROC,   flags, level);
 }
 
-void print_program_info(int flags, common::logging::LOG_LEVEL level) {
+void print_program_info(int flags) {
   const char* indent = (flags & INDENT) ? "  " : "";
-  RUNTIME_LOG(level) << PROJECT_NAME_TITLE " version: " PROJECT_VERSION;
+  std::cout << PROJECT_NAME_VERSION_BREF << std::endl;
   if (flags & SHOW_COPYRIGHT) {
-    RUNTIME_LOG(level) << " " PROJECT_COPYRIGHT;
+    std::cout << " " PROJECT_COPYRIGHT << std::endl;
   }
-  RUNTIME_LOG(level) << indent << "built with " << CC_IDENT;
-  RUNTIME_LOG(level) << indent << "FFMPEG version " FFMPEG_VERSION ", configuration: " FFMPEG_CONFIGURATION;
+  std::cout << indent << "built with " << CC_IDENT << std::endl;
+  std::cout << indent << "FFMPEG version " FFMPEG_VERSION ", configuration: " FFMPEG_CONFIGURATION << std::endl;
 }
 
 void print_buildconf(int flags) {
@@ -670,8 +678,8 @@ void show_license() {
 }
 
 void show_version() {
-  print_program_info(SHOW_COPYRIGHT, common::logging::LOG_LEVEL_INFO);
-  print_all_libs_info(SHOW_VERSION, common::logging::LOG_LEVEL_INFO);
+  print_program_info(SHOW_COPYRIGHT);
+  print_all_libs_info(SHOW_VERSION);
 }
 
 void show_buildconf() {
