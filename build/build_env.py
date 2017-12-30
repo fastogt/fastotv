@@ -501,7 +501,7 @@ class BuildRequest(object):
 
 if __name__ == "__main__":
     sdl2_default_version = '2.0.7'
-    sdl2_image_default_version = '2.0.2'
+    sdl2_image_default_version = '2.0.1'
     sdl2_ttf_default_version = '2.0.14'
     openssl_default_version = '1.0.2l'
     cmake_default_version = '3.9.0'
