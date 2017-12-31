@@ -1,5 +1,7 @@
-0.8.5 /
+0.8.5 / December 31, 2015
 [Alexandr Topilski]
+- Version fixes
+- libpng fix for Linux
 
 0.8.4 / December 28, 2015
 [Alexandr Topilski]
