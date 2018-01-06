@@ -485,7 +485,7 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
       }
 
       struct DownloadLimit {
-        enum { timeout = 10 };
+        enum { timeout = 2 };
         DownloadLimit(IoService* controller) : controller_(controller), first_time_exec_(0) {}
         bool operator()() {
           if (!controller_->IsRunning()) {
