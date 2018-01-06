@@ -18,13 +18,16 @@
 
 #pragma once
 
+#include <functional>
+
 #include <common/types.h>
 #include <common/uri/url.h>
 
 namespace fastotv {
 namespace client {
 
-bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff);
+typedef std::function<bool()> quit_callback_t;
+bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff, quit_callback_t cb);
 
 }  // namespace client
 }  // namespace fastotv

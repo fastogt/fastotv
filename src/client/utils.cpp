@@ -26,9 +26,27 @@ extern "C" {
 
 namespace fastotv {
 namespace client {
+namespace {
+class CallbackHolder {
+ public:
+  CallbackHolder(quit_callback_t cb) : is_quit(cb) {}
+  static int download_interrupt_callback(void* user_data) {
+    CallbackHolder* holder = static_cast<CallbackHolder*>(user_data);
+    if (holder->is_quit()) {
+      delete holder;
+      return 1;
+    }
 
-bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff) {
-  if (!uri.IsValid() || !buff) {
+    return 0;
+  }
+
+ private:
+  const quit_callback_t is_quit;
+};
+}
+
+bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff, quit_callback_t cb) {
+  if (!uri.IsValid() || !buff || !cb) {
     return false;
   }
 
@@ -43,6 +61,9 @@ bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff) {
   }
 
   const char* in_filename = url_str.c_str();
+  CallbackHolder* holder = new CallbackHolder(cb);
+  ic->interrupt_callback.callback = CallbackHolder::download_interrupt_callback;
+  ic->interrupt_callback.opaque = holder;
   int open_result = avformat_open_input(&ic, in_filename, NULL, NULL);
   if (open_result < 0) {
     avformat_free_context(ic);

@@ -42,6 +42,7 @@ class IoService : public common::libev::ILoopController {
   IoService();
   virtual ~IoService();
 
+  bool IsRunning() const;
   void Start();
   void Stop();
 

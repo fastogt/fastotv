@@ -484,11 +484,36 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
         continue;
       }
 
-      auto load_image_cb = [entry, uri, channel_dir]() {
+      struct DownloadLimit {
+        enum { timeout = 10 };
+        DownloadLimit(IoService* controller) : controller_(controller), first_time_exec_(0) {}
+        bool operator()() {
+          if (!controller_->IsRunning()) {
+            return true;
+          }
+
+          fastoplayer::media::msec_t cur_time = fastoplayer::media::GetCurrentMsec();
+          if (first_time_exec_ == 0) {
+            first_time_exec_ = cur_time;
+          }
+          fastoplayer::media::msec_t diff = cur_time - first_time_exec_;
+          if (diff > timeout * 1000) {
+            return true;
+          }
+          return false;
+        }
+
+       private:
+        IoService* controller_;
+        fastoplayer::media::msec_t first_time_exec_;
+      };
+
+      DownloadLimit download_interrupt_cb(controller_);
+      auto load_image_cb = [download_interrupt_cb, entry, uri, channel_dir]() {
         const std::string channel_icon_path = entry.GetIconPath();
         if (!common::file_system::is_file_exist(channel_icon_path)) {  // if not exist trying to download
           common::buffer_t buff;
-          bool is_file_downloaded = DownloadFileToBuffer(uri, &buff);
+          bool is_file_downloaded = DownloadFileToBuffer(uri, &buff, download_interrupt_cb);
           if (!is_file_downloaded) {
             return;
           }

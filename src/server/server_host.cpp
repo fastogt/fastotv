@@ -20,8 +20,6 @@
 
 #include <stdlib.h>  // for EXIT_FAILURE
 
-#include <condition_variable>  // for cv_status, cv_status::no...
-#include <mutex>               // for mutex, unique_lock
 #include <string>              // for string
 
 #include <common/libev/tcp/tcp_server.h>    // for TcpServer

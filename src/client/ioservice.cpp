@@ -125,6 +125,10 @@ class PrivateHandler : public inner::InnerTcpHandler {
 
 IoService::IoService() : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
 
+bool IoService::IsRunning() const {
+  return loop_->IsRunning();
+}
+
 void IoService::Start() {
   ILoopController::Start();
 }
