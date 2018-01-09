@@ -20,7 +20,7 @@
 
 #include <stdlib.h>  // for EXIT_FAILURE
 
-#include <string>              // for string
+#include <string>  // for string
 
 #include <common/libev/tcp/tcp_server.h>    // for TcpServer
 #include <common/logger.h>                  // for COMPACT_LOG_FILE_CRIT
@@ -37,8 +37,7 @@
 namespace fastotv {
 namespace server {
 
-ServerHost::ServerHost(const Config& config)
-    : handler_(nullptr), server_(nullptr), rstorage_(), config_(config) {
+ServerHost::ServerHost(const Config& config) : handler_(nullptr), server_(nullptr), rstorage_(), config_(config) {
   handler_ = new inner::InnerTcpHandlerHost(this, config);
   server_ = new inner::InnerTcpServer(config.server.host, true, handler_);
   server_->SetName("inner_server");
