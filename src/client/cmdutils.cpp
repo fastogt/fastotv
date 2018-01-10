@@ -20,7 +20,6 @@
 
 #ifdef _WIN32
 #include <windef.h>
-
 #include <winbase.h>
 #endif
 
