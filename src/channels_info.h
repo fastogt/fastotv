@@ -40,7 +40,7 @@ class ChannelsInfo : public JsonSerializer {
   bool Equals(const ChannelsInfo& chan) const;
 
  protected:
-  virtual common::Error SerializeImpl(serialize_type* deserialized) const override;
+  virtual common::Error DoSerialize(serialize_type* deserialized) const override;
 
  private:
   channels_t channels_;

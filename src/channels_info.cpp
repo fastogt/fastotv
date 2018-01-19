@@ -44,7 +44,7 @@ bool ChannelsInfo::Equals(const ChannelsInfo& chan) const {
   return channels_ == chan.channels_;
 }
 
-common::Error ChannelsInfo::SerializeImpl(serialize_type* deserialized) const {
+common::Error ChannelsInfo::DoSerialize(serialize_type* deserialized) const {
   json_object* jchannels = json_object_new_array();
   for (ChannelInfo url : channels_) {
     json_object* jurl = NULL;

@@ -82,7 +82,8 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
         SupportedDevice.__init__(self, 'pc', {'linux': [
             'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
-        ]}, utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']), utils.CompileInfo([], []))
+        ]}, utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']),
+                                 utils.CompileInfo([], []))
 
     def install_specific(self):
         return
@@ -150,7 +151,8 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                                    ['--disable-pulseaudio', '--disable-esd',
                                                     '--disable-video-opengl', '--disable-video-opengles1',
                                                     '--enable-video-opengles2',
-                                                    '--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']),
+                                                    '--disable-video-mir', '--disable-video-wayland',
+                                                    '--disable-sdltest']),
                                  utils.CompileInfo([], []))
         linux_libs = self.system_platform_libs_.get('linux')
         platform_name = system_info.get_os()
@@ -482,6 +484,7 @@ class BuildRequest(object):
         prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
 
         cmake_line = ['cmake', cmake_project_root_abs_path, '-GNinja', '-DCMAKE_BUILD_TYPE=RELEASE',
+                      '-DBUILD_SHARED_LIBS=OFF',
                       prefix_args]
         try:
             cloned_dir = utils.git_clone('https://github.com/fastogt/snappy.git', pwd)
