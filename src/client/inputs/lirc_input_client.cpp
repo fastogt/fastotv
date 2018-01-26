@@ -106,7 +106,7 @@ common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
   return common::Error();
 }
 
-common::Error LircInputClient::CloseImpl() {
+common::Error LircInputClient::DoClose() {
   return LircDeinit(GetFd(), &cfg_);
 }
 

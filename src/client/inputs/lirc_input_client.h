@@ -46,7 +46,7 @@ class LircInputClient : public common::libev::DescriptorClient {
   common::Error ReadWithCallback(read_callback_t cb) WARN_UNUSED_RESULT;
 
  private:
-  virtual common::Error CloseImpl() override;
+  virtual common::Error DoClose() override;
 
   using base_class::Write;
   using base_class::Read;
