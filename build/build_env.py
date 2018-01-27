@@ -347,7 +347,7 @@ class BuildRequest(object):
         pwd = os.getcwd()
         compiler_flags = self.device_.ffmpeg_compile_info()
         compiler_flags.extend_flags(ffmpeg_platform_args)
-        cloned_dir = utils.git_clone('https://github.com/ffmpeg/ffmpeg.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/ffmpeg.git', pwd)
         os.chdir(cloned_dir)
         utils.build_command_configure(compiler_flags, g_script_path, self.prefix_path_)
         os.chdir(pwd)
