@@ -21,7 +21,6 @@
 #include <common/uri/url.h>  // for Uri
 
 #include "epg_info.h"
-#include "serializer/json_serializer.h"
 
 namespace fastotv {
 

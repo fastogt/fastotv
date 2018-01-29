@@ -20,8 +20,6 @@
 
 #include "channel_info.h"
 
-#include "serializer/json_serializer.h"
-
 namespace fastotv {
 
 class ChannelsInfo : public JsonSerializer {

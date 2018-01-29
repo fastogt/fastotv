@@ -18,27 +18,11 @@
 
 #pragma once
 
-#include <stdint.h>  // for uint16_t
-
-#include <common/error.h>                 // for Error
 #include <common/libev/tcp/tcp_client.h>  // for TcpClient
-#include <common/macros.h>                // for WARN_UNUSED_RESULT
-#include <common/types.h>                 // for time64_t
 
 #include "client/types.h"  // for BandwidthHostType
 
 #include "client_server_types.h"  // for bandwidth_t
-
-namespace common {
-namespace libev {
-class IoLoop;
-}
-}  // namespace common
-namespace common {
-namespace net {
-class socket_info;
-}
-}  // namespace common
 
 namespace fastotv {
 namespace client {

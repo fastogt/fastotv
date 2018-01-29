@@ -49,8 +49,8 @@ class InnerClient : public common::libev::tcp::TcpClient {
   common::Error ReadMessage(char* out, protocoled_size_t size) WARN_UNUSED_RESULT;
 
   common::Error WriteMessage(const std::string& message) WARN_UNUSED_RESULT;
-  using common::libev::tcp::TcpClient::Write;
   using common::libev::tcp::TcpClient::Read;
+  using common::libev::tcp::TcpClient::Write;
 
  private:
   common::IEDcoder* compressor_;

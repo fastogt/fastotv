@@ -23,8 +23,6 @@
 #include "client_server_types.h"
 #include "programme_info.h"
 
-#include "serializer/json_serializer.h"
-
 namespace fastotv {
 
 class EpgInfo : public JsonSerializerEx {

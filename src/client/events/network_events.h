@@ -44,6 +44,7 @@ namespace client {
 namespace events {
 
 class TvConfig {};
+
 struct BandwidtInfo {
   BandwidtInfo();
   explicit BandwidtInfo(const common::net::HostAndPort& host, bandwidth_t band, BandwidthHostType hs);
@@ -52,6 +53,7 @@ struct BandwidtInfo {
   bandwidth_t bandwidth;
   BandwidthHostType host_type;
 };
+
 struct ConnectInfo {
   ConnectInfo();
   explicit ConnectInfo(const common::net::HostAndPort& host);

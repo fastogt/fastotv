@@ -18,19 +18,10 @@
 
 #include "client/inner/inner_tcp_handler.h"
 
-#include <stddef.h>  // for NULL
-#include <stdint.h>  // for int64_t
-#include <string>    // for string
-
 #include <algorithm>
 
-#include <json-c/json.h>
-
 #include <common/application/application.h>  // for fApp
-#include <common/error.h>                    // for DEBUG_MSG_ERROR
-#include <common/libev/io_client.h>          // for IoClient
 #include <common/libev/io_loop.h>            // for IoLoop
-#include <common/logger.h>                   // for COMPACT_LOG_WARNING
 #include <common/net/net.h>                  // for connect
 #include <common/system_info/cpu_info.h>     // for CurrentCpuInfo
 #include <common/system_info/system_info.h>  // for AmountOfAvailable...
@@ -38,14 +29,14 @@
 #include "client/bandwidth/tcp_bandwidth_client.h"  // for TcpBandwidthClient
 #include "client/commands.h"
 #include "client/events/network_events.h"  // for BandwidtInfo, Con...
-#include "client_info.h"                   // for ClientInfo
-#include "runtime_channel_info.h"
 
 #include "inner/inner_client.h"  // for InnerClient
 
 #include "channels_info.h"  // for ChannelsInfo
+#include "client_info.h"    // for ClientInfo
 #include "ping_info.h"      // for ClientPingInfo
-#include "server_info.h"    // for ServerInfo
+#include "runtime_channel_info.h"
+#include "server_info.h"  // for ServerInfo
 
 namespace fastotv {
 namespace client {

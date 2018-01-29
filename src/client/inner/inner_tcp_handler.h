@@ -18,10 +18,7 @@
 
 #pragma once
 
-#include <common/error.h>                   // for Error
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
-#include <common/libev/types.h>             // for timer_id_t
-#include <common/macros.h>                  // for WARN_UNUSED_RESULT
 #include <common/net/types.h>               // for HostAndPort
 
 #include "auth_info.h"  // for AuthInfo
@@ -30,32 +27,15 @@
 #include "client/types.h"         // for BandwidthHostType
 #include "client_server_types.h"  // for bandwidth_t
 
-#include "commands/commands.h"
-
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
-#include <json-c/json_object.h>  // for json_object
-
-namespace common {
-namespace libev {
-class IoClient;
-}
-}  // namespace common
-namespace common {
-namespace libev {
-class IoLoop;
-}
-}  // namespace common
-
 namespace fastotv {
-namespace inner {
-class InnerClient;
-}
 namespace client {
 namespace bandwidth {
 class TcpBandwidthClient;
 }
 namespace inner {
+class InnerClient;
 
 struct StartConfig {
   common::net::HostAndPort inner_host;

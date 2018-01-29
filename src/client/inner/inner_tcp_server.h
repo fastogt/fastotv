@@ -18,17 +18,11 @@
 
 #pragma once
 
-#include <common/libev/io_loop.h>         // for IoLoop
-#include <common/libev/tcp/tcp_client.h>  // for TcpClient
+#include <common/libev/io_loop.h>  // for IoLoop
 
 namespace common {
 namespace libev {
-class IoLoopObserver;
-}
-}  // namespace common
-namespace common {
-namespace net {
-class socket_info;
+class IoClient;
 }
 }  // namespace common
 
@@ -42,7 +36,7 @@ class InnerTcpServer : public common::libev::IoLoop {
   virtual const char* ClassName() const override;
 
  protected:
-  virtual common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
+  virtual common::libev::IoClient* CreateClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner

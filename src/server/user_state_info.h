@@ -18,11 +18,6 @@
 
 #pragma once
 
-#include "serializer/json_serializer.h"
-
-#include <common/error.h>   // for Error
-#include <common/macros.h>  // for WARN_UNUSED_RESULT
-
 #include "server/user_info.h"  // for user_id_t
 
 namespace fastotv {
