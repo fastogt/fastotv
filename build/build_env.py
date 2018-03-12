@@ -373,13 +373,6 @@ class BuildRequest(object):
         url = '{0}openssl-{1}.{2}'.format(OPENSSL_SRC_ROOT, version, ARCH_OPENSSL_EXT)
         self.build(url, compiler_flags, './config')
 
-    def build_cmake(self, version):
-        stabled_version_array = version.split(".")
-        stabled_version = 'v{0}.{1}'.format(stabled_version_array[0], stabled_version_array[1])
-        compiler_flags = utils.CompileInfo([], [])
-        self.build('{0}{1}/cmake-{2}.{3}'.format(CMAKE_SRC_ROOT, stabled_version, version, ARCH_CMAKE_EXT, []),
-                   compiler_flags)
-
     def build_common(self):
         pwd = os.getcwd()
         cmake_project_root_abs_path = '..'
@@ -399,6 +392,7 @@ class BuildRequest(object):
             os.chdir('build_cmake_release')
             common_cmake_line = list(cmake_line)
             common_cmake_line.append('-DQT_ENABLED=OFF')
+            common_cmake_line.append('-DJSON_ENABLED=ON')
             subprocess.call(common_cmake_line)
             subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
@@ -435,7 +429,7 @@ class BuildRequest(object):
             raise ex
 
     def build_libev(self):
-        libev_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
+        libev_compiler_flags = utils.CompileInfo([], ['--with-pic', '--disable-shared', '--enable-static'])
 
         pwd = os.getcwd()
         cloned_dir = utils.git_clone('https://github.com/fastogt/libev.git', pwd)
@@ -507,8 +501,6 @@ if __name__ == "__main__":
     sdl2_image_default_version = '2.0.1'
     sdl2_ttf_default_version = '2.0.14'
     openssl_default_version = '1.0.2l'
-    cmake_default_version = '3.9.0'
-    libev_default_version = '3.9.0'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
@@ -534,15 +526,6 @@ if __name__ == "__main__":
     parser.add_argument('--device',
                         help='device (default: {0}, available: {1})'.format(default_device, availible_devices),
                         default=default_device)
-
-    # cmake
-    cmake_grp = parser.add_mutually_exclusive_group()
-    cmake_grp.add_argument('--with-cmake', help='build cmake (default, version:{0})'.format(cmake_default_version),
-                           dest='with_cmake', action='store_true', default=True)
-    cmake_grp.add_argument('--without-cmake', help='build without cmake', dest='with_cmake', action='store_false',
-                           default=False)
-    parser.add_argument('--cmake-version', help='cmake version (default: {0})'.format(cmake_default_version),
-                        default=cmake_default_version)
 
     # snappy
     snappy_grp = parser.add_mutually_exclusive_group()
@@ -653,8 +636,6 @@ if __name__ == "__main__":
     if argv.with_device:
         request.install_device_specific()
 
-    if argv.with_cmake:
-        request.build_cmake(argv.cmake_version)
     if argv.with_snappy:
         request.build_snappy()
     if argv.with_libev:
