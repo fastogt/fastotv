@@ -327,7 +327,7 @@ class BuildRequest(object):
         utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_, executable)
 
     def build_ffmpeg(self):
-        ffmpeg_platform_args = ['--disable-doc',
+        ffmpeg_platform_args = ['--disable-doc', '--pkg-config-flags=--static',
                                 '--disable-programs', '--enable-openssl',
                                 '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
