@@ -342,7 +342,7 @@ class BuildRequest(object):
         elif platform_name == 'windows':
             ffmpeg_platform_args = ffmpeg_platform_args
         elif platform_name == 'macosx':
-            ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++'])
+            ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++', '--disable-libxcb'])
 
         pwd = os.getcwd()
         compiler_flags = self.device_.ffmpeg_compile_info()
