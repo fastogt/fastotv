@@ -45,7 +45,9 @@ void init_ffmpeg() {
 #if CONFIG_AVFILTER
   avfilter_register_all();
 #endif
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
   av_register_all();
+#endif
 }
 
 int main_application(int argc, char** argv, const std::string& app_directory_absolute_path) {
