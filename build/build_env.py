@@ -28,6 +28,7 @@ ARCH_OPENSSL_COMP = "gz"
 ARCH_OPENSSL_EXT = "tar." + ARCH_OPENSSL_COMP
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
+FFMPEG_BRANCH = 'n3.4.2'
 
 g_script_path = os.path.realpath(sys.argv[0])
 
@@ -273,8 +274,8 @@ class BuildRequest(object):
             distribution = system_info.linux_get_dist()
             if distribution == 'DEBIAN':
                 dep_libs = ['git', 'gcc', 'g++', 'yasm', 'pkg-config', 'libtool', 'rpm',
-                            'autogen', 'autoconf',
-                            'make', 'ninja-build',
+                            'git', 'autogen', 'autoconf',
+                            'cmake', 'make', 'ninja-build',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
                             'freetype-dev', 'libfreetype6-dev',
@@ -283,8 +284,8 @@ class BuildRequest(object):
                             'liblircclient-dev']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'pkgconfig', 'libtoolize', 'rpm-build',
-                            'autogen', 'autoconf',
-                            'make', 'ninja-build',
+                            'git', 'autogen', 'autoconf',
+                            'cmake', 'make', 'ninja-build',
                             'zlib-devel', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
                             'freetype-devel', 'libfreetype6-devel',
@@ -297,10 +298,10 @@ class BuildRequest(object):
         elif platform_name == 'windows':
             if arch.name() == 'x86_64':
                 dep_libs = ['git', 'make', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm', 'mingw-w64-x86_64-ninja',
-                            'mingw-w64-x86_64-make', 'mingw-w64-x86_64-ninja', 'mingw-w64-x86_64-freetype']
+                            'mingw-w64-x86_64-make', 'mingw-w64-x86_64-cmake', 'mingw-w64-x86_64-freetype']
             elif arch.name() == 'i386':
                 dep_libs = ['git', 'make', 'mingw-w64-i686-gcc', 'mingw-w64-i686-yasm', 'mingw-w64-i686-ninja',
-                            'mingw-w64-i686-make', 'mingw-w64-i686-ninja', 'mingw-w64-i686-freetype']
+                            'mingw-w64-i686-make', 'mingw-w64-i686-cmake', 'mingw-w64-i686-freetype']
         elif platform_name == 'macosx':
             dep_libs = ['git', 'yasm', 'make', 'ninja', 'freetype']
         else:
@@ -328,7 +329,7 @@ class BuildRequest(object):
 
     def build_ffmpeg(self):
         ffmpeg_platform_args = ['--disable-doc', '--pkg-config-flags=--static',
-                                '--disable-programs', '--enable-openssl',
+                                '--disable-programs', #'--enable-openssl',
                                 '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
@@ -500,7 +501,7 @@ if __name__ == "__main__":
     sdl2_default_version = '2.0.7'
     sdl2_image_default_version = '2.0.1'
     sdl2_ttf_default_version = '2.0.14'
-    openssl_default_version = '1.0.2l'
+    openssl_default_version = '1.1.0g'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
