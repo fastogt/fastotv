@@ -309,9 +309,8 @@ common::ErrnoError save_config_file(const std::string& config_absolute_path, fas
     return common::make_errno_error_inval();
   }
 
-  common::file_system::ascii_string_path config_path(config_absolute_path);
-  common::file_system::ANSIFile config_save_file(config_path);
-  common::ErrnoError err = config_save_file.Open("w");
+  common::file_system::ANSIFile config_save_file;
+  common::ErrnoError err = config_save_file.Open(config_absolute_path, "w");
   if (err) {
     return err;
   }
