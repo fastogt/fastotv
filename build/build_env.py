@@ -329,7 +329,7 @@ class BuildRequest(object):
 
     def build_ffmpeg(self):
         ffmpeg_platform_args = ['--disable-doc', '--pkg-config-flags=--static',
-                                '--disable-programs', #'--enable-openssl',
+                                '--disable-programs', '--enable-openssl',
                                 '--disable-opencl', '--disable-encoders',
                                 '--disable-lzma', '--disable-iconv',
                                 '--disable-shared', '--enable-static',
@@ -498,10 +498,10 @@ class BuildRequest(object):
 
 
 if __name__ == "__main__":
-    sdl2_default_version = '2.0.7'
+    sdl2_default_version = '2.0.8'
     sdl2_image_default_version = '2.0.1'
     sdl2_ttf_default_version = '2.0.14'
-    openssl_default_version = '1.1.0g'
+    openssl_default_version = '1.1.0h'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
