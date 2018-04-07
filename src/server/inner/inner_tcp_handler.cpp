@@ -127,9 +127,17 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
 }
 
 #if LIBEV_CHILD_ENABLE
-void InnerTcpHandlerHost::ChildStatusChanged(common::libev::IoLoop* server, pid_t id, int status) {
+void InnerTcpHandlerHost::Accepted(common::libev::IoChild* child) {
+  UNUSED(child);
+}
+
+void InnerTcpHandlerHost::Moved(common::libev::IoLoop* server, common::libev::IoChild* child) {
   UNUSED(server);
-  UNUSED(id);
+  UNUSED(child);
+}
+
+void InnerTcpHandlerHost::ChildStatusChanged(common::libev::IoChild* client, int status) {
+  UNUSED(client);
   UNUSED(status);
 }
 #endif

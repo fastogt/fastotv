@@ -35,6 +35,13 @@ common::libev::IoClient* InnerTcpServer::CreateClient(const common::net::socket_
   return new common::libev::tcp::TcpClient(this, info);
 }
 
+#if LIBEV_CHILD_ENABLE
+common::libev::IoChild* InnerTcpServer::CreateChild() {
+  NOTREACHED();
+  return nullptr;
+}
+#endif
+
 }  // namespace inner
 }  // namespace client
 }  // namespace fastotv

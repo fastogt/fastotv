@@ -37,6 +37,9 @@ class InnerTcpServer : public common::libev::IoLoop {
 
  protected:
   virtual common::libev::IoClient* CreateClient(const common::net::socket_info& info) override;
+#if LIBEV_CHILD_ENABLE
+  virtual common::libev::IoChild* CreateChild() override;
+#endif
 };
 
 }  // namespace inner

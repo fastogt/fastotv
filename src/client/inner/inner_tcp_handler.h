@@ -67,7 +67,9 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
   virtual void PostLooped(common::libev::IoLoop* server) override;
   virtual void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
 #if LIBEV_CHILD_ENABLE
-  virtual void ChildStatusChanged(common::libev::IoLoop* server, pid_t id, int status) override;
+  virtual void Accepted(common::libev::IoChild* child) override;
+  virtual void Moved(common::libev::IoLoop* server, common::libev::IoChild* child) override;
+  virtual void ChildStatusChanged(common::libev::IoChild* child, int status) override;
 #endif
 
  private:
