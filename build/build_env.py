@@ -444,30 +444,18 @@ class BuildRequest(object):
         shutil.rmtree(cloned_dir)
 
     def build_jsonc(self):
+        jsonc_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
+
         pwd = os.getcwd()
-        cmake_project_root_abs_path = '..'
-        if not os.path.exists(cmake_project_root_abs_path):
-            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git', pwd)
+        os.chdir(cloned_dir)
 
-        # project static options
-        prefix_args = '-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)
+        autogen_jsonc = ['sh', 'autogen.sh']
+        subprocess.call(autogen_jsonc)
 
-        cmake_line = ['cmake', cmake_project_root_abs_path, '-GNinja', '-DCMAKE_BUILD_TYPE=RELEASE',
-                      prefix_args]
-        try:
-            cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git', pwd)
-            os.chdir(cloned_dir)
-
-            os.mkdir('build_cmake_release')
-            os.chdir('build_cmake_release')
-            jsonc_cmake_line = list(cmake_line)
-            subprocess.call(jsonc_cmake_line)
-            subprocess.call(['ninja', 'install'])
-            os.chdir(self.build_dir_path_)
-            shutil.rmtree(cloned_dir)
-        except Exception as ex:
-            os.chdir(self.build_dir_path_)
-            raise ex
+        utils.build_command_configure(jsonc_compiler_flags, g_script_path, self.prefix_path_)
+        os.chdir(pwd)
+        shutil.rmtree(cloned_dir)
 
     def build_snappy(self):
         pwd = os.getcwd()
