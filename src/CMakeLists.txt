@@ -55,6 +55,7 @@ SET(SOURCES_SERIALIZER
 
 SET(SOURCES_SDS
   ${SOURCE_ROOT}/third-party/sds/sds.c
+  ${SOURCE_ROOT}/third-party/sds/sds_fasto.c
 )
 
 SET(CLIENT_SERVER_SOURCES

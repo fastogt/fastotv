@@ -26,7 +26,7 @@
 #include "inner/inner_client.h"  // for InnerClient
 
 extern "C" {
-#include "sds.h"  // for sdsfreesplitres, sds
+#include "sds_fasto.h"  // for sdsfreesplitres, sds
 }
 
 #define GB (1024 * 1024 * 1024)
