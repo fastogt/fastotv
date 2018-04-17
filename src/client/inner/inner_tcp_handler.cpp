@@ -109,7 +109,8 @@ void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
     common::Error err = iclient->ReadCommand(&buff);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-      client->Close();
+      err = client->Close();
+      DCHECK(!err) << "Close client error: " << err->GetDescription();
       delete client;
       return;
     }
@@ -128,7 +129,8 @@ void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
     if (e_code != common::COMMON_EINTR) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
-    client->Close();
+    err = client->Close();
+    DCHECK(!err) << "Close client error: " << err->GetDescription();
     delete client;
   }
 }
@@ -145,7 +147,8 @@ void InnerTcpHandler::PostLooped(common::libev::IoLoop* server) {
   }
   std::vector<bandwidth::TcpBandwidthClient*> copy = bandwidth_requests_;
   for (bandwidth::TcpBandwidthClient* ban : copy) {
-    ban->Close();
+    common::Error err = ban->Close();
+    DCHECK(!err) << "Close client error: " << err->GetDescription();
     delete ban;
   }
   CHECK(bandwidth_requests_.empty());
@@ -161,7 +164,8 @@ void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::
     common::Error err = client->Write(ping_request);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-      client->Close();
+      err = client->Close();
+      DCHECK(!err) << "Close client error: " << err->GetDescription();
       delete client;
     }
   }
@@ -193,7 +197,8 @@ void InnerTcpHandler::RequestServerInfo() {
   common::Error err = client->Write(channels_request);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    client->Close();
+    err = client->Close();
+    DCHECK(!err) << "Close client error: " << err->GetDescription();
     delete client;
   }
 }
@@ -208,7 +213,8 @@ void InnerTcpHandler::RequestChannels() {
   common::Error err = client->Write(channels_request);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    client->Close();
+    err = client->Close();
+    DCHECK(!err) << "Close client error: " << err->GetDescription();
     delete client;
   }
 }
@@ -231,7 +237,8 @@ void InnerTcpHandler::PostMessageToChat(const ChatMessage& msg) {
   err = client->Write(channels_request);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    client->Close();
+    err = client->Close();
+    DCHECK(!err) << "Close client error: " << err->GetDescription();
     delete client;
   }
 }
@@ -247,7 +254,8 @@ void InnerTcpHandler::RequesRuntimeChannelInfo(stream_id sid) {
   common::Error err = client->Write(channels_request);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    client->Close();
+    err = client->Close();
+    DCHECK(!err) << "Close client error: " << err->GetDescription();
     delete client;
   }
 }
@@ -280,7 +288,8 @@ void InnerTcpHandler::DisConnect(common::Error err) {
   UNUSED(err);
   if (inner_connection_) {
     fastotv::inner::InnerClient* connection = inner_connection_;
-    connection->Close();
+    err = connection->Close();
+    DCHECK(!err) << "Close connection error: " << err->GetDescription();
     delete connection;
   }
 }
@@ -302,7 +311,8 @@ common::Error InnerTcpHandler::CreateAndConnectTcpBandwidthClient(common::libev:
   bandwidth::TcpBandwidthClient* connection = new bandwidth::TcpBandwidthClient(server, client_info, hs);
   common::Error err2 = connection->StartSession(0, 1000);
   if (err2) {
-    connection->Close();
+    common::Error err_close = connection->Close();
+    DCHECK(!err_close) << "Close connection error: " << err_close->GetDescription();
     delete connection;
     return err2;
   }
@@ -391,7 +401,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     }
 
     ChatMessage msg;
-    common::Error err = ChatMessage::DeSerialize(jmsg, &msg);
+    common::Error err = msg.DeSerialize(jmsg);
     std::string msg_str = json_object_get_string(jmsg);
     json_object_put(jmsg);
     if (err) {
@@ -487,7 +497,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     }
 
     ClientPingInfo ping_info;
-    common::Error err = ClientPingInfo::DeSerialize(obj, &ping_info);
+    common::Error err = ping_info.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       return err;
@@ -506,7 +516,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     }
 
     ServerInfo sinf;
-    common::Error err = ServerInfo::DeSerialize(obj, &sinf);
+    common::Error err = sinf.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       return err;
@@ -540,7 +550,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     }
 
     ChannelsInfo chan;
-    common::Error err = ChannelsInfo::DeSerialize(obj, &chan);
+    common::Error err = chan.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       return err;
@@ -561,7 +571,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     }
 
     RuntimeChannelInfo chan;
-    common::Error err = RuntimeChannelInfo::DeSerialize(obj, &chan);
+    common::Error err = chan.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       return err;
@@ -582,7 +592,7 @@ common::Error InnerTcpHandler::HandleInnerSuccsessResponceCommand(fastotv::inner
     }
 
     ChatMessage msg;
-    common::Error err = ChatMessage::DeSerialize(obj, &msg);
+    common::Error err = msg.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       return err;

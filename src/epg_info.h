@@ -25,7 +25,7 @@
 
 namespace fastotv {
 
-class EpgInfo : public JsonSerializerEx {
+class EpgInfo : public common::serializer::JsonSerializer<EpgInfo> {
  public:
   typedef std::vector<ProgrammeInfo> programs_t;
   EpgInfo();
@@ -49,15 +49,14 @@ class EpgInfo : public JsonSerializerEx {
   void SetPrograms(const programs_t& progs);
   programs_t GetPrograms() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, EpgInfo* obj) WARN_UNUSED_RESULT;
-
   bool Equals(const EpgInfo& url) const;
 
   static const common::uri::Url& GetUnknownIconUrl();
   static bool IsUnknownIconUrl(const common::uri::Url& url);
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   stream_id channel_id_;

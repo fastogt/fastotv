@@ -45,14 +45,6 @@ SET(SOURCES_INNER
   ${SOURCE_ROOT}/inner/inner_client.cpp
 )
 
-SET(HEADERS_SERIALIZER
-  ${SOURCE_ROOT}/serializer/json_serializer.h
-)
-
-SET(SOURCES_SERIALIZER
-  ${SOURCE_ROOT}/serializer/json_serializer.cpp
-)
-
 SET(SOURCES_SDS
   ${SOURCE_ROOT}/third-party/sds/sds.c
   ${SOURCE_ROOT}/third-party/sds/sds_fasto.c

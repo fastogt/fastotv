@@ -102,7 +102,7 @@ ChannelType RuntimeChannelInfo::GetChannelType() const {
   return type_;
 }
 
-common::Error RuntimeChannelInfo::SerializeFields(json_object* obj) const {
+common::Error RuntimeChannelInfo::SerializeFields(json_object* deserialized) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
@@ -117,20 +117,16 @@ common::Error RuntimeChannelInfo::SerializeFields(json_object* obj) const {
     json_object_array_add(jmsgs, jmsg);
   }
 
-  json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD, json_object_new_string(channel_id_.c_str()));
-  json_object_object_add(obj, RUNTIME_CHANNEL_INFO_WATCHERS_FIELD, json_object_new_int(watchers_));
-  json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD, json_object_new_int(type_));
-  json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD, json_object_new_boolean(chat_enabled_));
-  json_object_object_add(obj, RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD, json_object_new_boolean(chat_read_only_));
-  json_object_object_add(obj, RUNTIME_CHANNEL_INFO_MESSAGES_FIELD, jmsgs);
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD, json_object_new_string(channel_id_.c_str()));
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_WATCHERS_FIELD, json_object_new_int(watchers_));
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD, json_object_new_int(type_));
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD, json_object_new_boolean(chat_enabled_));
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD, json_object_new_boolean(chat_read_only_));
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_MESSAGES_FIELD, jmsgs);
   return common::Error();
 }
 
-common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, RuntimeChannelInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error RuntimeChannelInfo::DoDeSerialize(json_object* serialized) {
   RuntimeChannelInfo inf;
 
   json_object* jwatchers = NULL;
@@ -179,7 +175,7 @@ common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, 
     for (size_t i = 0; i < len; ++i) {
       json_object* jmess = json_object_array_get_idx(jmsgs, i);
       ChatMessage msg;
-      common::Error err = ChatMessage::DeSerialize(jmess, &msg);
+      common::Error err = msg.DeSerialize(jmess);
       if (err) {
         continue;
       }
@@ -188,7 +184,7 @@ common::Error RuntimeChannelInfo::DeSerialize(const serialize_type& serialized, 
     inf.messages_ = msgs;
   }
 
-  *obj = inf;
+  *this = inf;
   return common::Error();
 }
 

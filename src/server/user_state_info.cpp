@@ -52,18 +52,14 @@ bool UserStateInfo::Equals(const UserStateInfo& state) const {
   return user_id_ == state.user_id_ && connected_ == state.connected_ && device_id_ == state.device_id_;
 }
 
-common::Error UserStateInfo::SerializeFields(json_object* obj) const {
-  json_object_object_add(obj, USER_STATE_INFO_USER_ID_FIELD, json_object_new_string(user_id_.c_str()));
-  json_object_object_add(obj, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(connected_));
-  json_object_object_add(obj, USER_STATE_INFO_DEVICE_ID_FIELD, json_object_new_string(device_id_.c_str()));
+common::Error UserStateInfo::SerializeFields(json_object* deserialized) const {
+  json_object_object_add(deserialized, USER_STATE_INFO_USER_ID_FIELD, json_object_new_string(user_id_.c_str()));
+  json_object_object_add(deserialized, USER_STATE_INFO_CONNECTED_FIELD, json_object_new_boolean(connected_));
+  json_object_object_add(deserialized, USER_STATE_INFO_DEVICE_ID_FIELD, json_object_new_string(device_id_.c_str()));
   return common::Error();
 }
 
-common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, UserStateInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error UserStateInfo::DoDeSerialize(json_object* serialized) {
   UserStateInfo inf;
   json_object* jid = NULL;
   json_bool jid_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_USER_ID_FIELD, &jid);
@@ -83,7 +79,7 @@ common::Error UserStateInfo::DeSerialize(const serialize_type& serialized, UserS
     inf.device_id_ = json_object_get_string(jdevice);
   }
 
-  *obj = inf;
+  *this = inf;
   return common::Error();
 }
 

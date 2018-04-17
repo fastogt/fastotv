@@ -70,23 +70,19 @@ ChatMessage::Type ChatMessage::GetType() const {
   return type_;
 }
 
-common::Error ChatMessage::SerializeFields(json_object* obj) const {
+common::Error ChatMessage::SerializeFields(json_object* deserialized) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object_object_add(obj, CHAT_MESSAGE_CHANNEL_ID_FIELD, json_object_new_string(channel_id_.c_str()));
-  json_object_object_add(obj, CHAT_MESSAGE_LOGIN_FIELD, json_object_new_string(login_.c_str()));
-  json_object_object_add(obj, CHAT_MESSAGE_MESSAGE_FIELD, json_object_new_string(message_.c_str()));
-  json_object_object_add(obj, CHAT_MESSAGE_TYPE_FIELD, json_object_new_int(type_));
+  json_object_object_add(deserialized, CHAT_MESSAGE_CHANNEL_ID_FIELD, json_object_new_string(channel_id_.c_str()));
+  json_object_object_add(deserialized, CHAT_MESSAGE_LOGIN_FIELD, json_object_new_string(login_.c_str()));
+  json_object_object_add(deserialized, CHAT_MESSAGE_MESSAGE_FIELD, json_object_new_string(message_.c_str()));
+  json_object_object_add(deserialized, CHAT_MESSAGE_TYPE_FIELD, json_object_new_int(type_));
   return common::Error();
 }
 
-common::Error ChatMessage::DeSerialize(const serialize_type& serialized, ChatMessage* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error ChatMessage::DoDeSerialize(json_object* serialized) {
   ChatMessage msg;
   json_object* jchan = NULL;
   json_bool jchan_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_CHANNEL_ID_FIELD, &jchan);
@@ -127,7 +123,7 @@ common::Error ChatMessage::DeSerialize(const serialize_type& serialized, ChatMes
     msg.type_ = static_cast<Type>(json_object_get_int(jtype));
   }
 
-  *obj = msg;
+  *this = msg;
   return common::Error();
 }
 

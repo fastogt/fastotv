@@ -100,17 +100,17 @@ common::uri::Url EpgInfo::GetIconUrl() const {
   return icon_src_;
 }
 
-common::Error EpgInfo::SerializeFields(json_object* obj) const {
+common::Error EpgInfo::SerializeFields(json_object* deserialized) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object_object_add(obj, EPG_INFO_ID_FIELD, json_object_new_string(channel_id_.c_str()));
+  json_object_object_add(deserialized, EPG_INFO_ID_FIELD, json_object_new_string(channel_id_.c_str()));
   const std::string url_str = uri_.GetUrl();
-  json_object_object_add(obj, EPG_INFO_URL_FIELD, json_object_new_string(url_str.c_str()));
-  json_object_object_add(obj, EPG_INFO_NAME_FIELD, json_object_new_string(display_name_.c_str()));
+  json_object_object_add(deserialized, EPG_INFO_URL_FIELD, json_object_new_string(url_str.c_str()));
+  json_object_object_add(deserialized, EPG_INFO_NAME_FIELD, json_object_new_string(display_name_.c_str()));
   const std::string icon_url_str = icon_src_.GetUrl();
-  json_object_object_add(obj, EPG_INFO_ICON_FIELD, json_object_new_string(icon_url_str.c_str()));
+  json_object_object_add(deserialized, EPG_INFO_ICON_FIELD, json_object_new_string(icon_url_str.c_str()));
 
   json_object* jprograms = json_object_new_array();
   for (ProgrammeInfo prog : programs_) {
@@ -121,15 +121,11 @@ common::Error EpgInfo::SerializeFields(json_object* obj) const {
     }
     json_object_array_add(jprograms, jprog);
   }
-  json_object_object_add(obj, EPG_INFO_PROGRAMS_FIELD, jprograms);
+  json_object_object_add(deserialized, EPG_INFO_PROGRAMS_FIELD, jprograms);
   return common::Error();
 }
 
-common::Error EpgInfo::DeSerialize(const serialize_type& serialized, EpgInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error EpgInfo::DoDeSerialize(json_object* serialized) {
   json_object* jid = NULL;
   json_bool jid_exists = json_object_object_get_ex(serialized, EPG_INFO_ID_FIELD, &jid);
   if (!jid_exists) {
@@ -181,7 +177,7 @@ common::Error EpgInfo::DeSerialize(const serialize_type& serialized, EpgInfo* ob
     for (size_t i = 0; i < len; ++i) {
       json_object* jprog = json_object_array_get_idx(jprogs, i);
       ProgrammeInfo prog;
-      common::Error err = ProgrammeInfo::DeSerialize(jprog, &prog);
+      common::Error err = prog.DeSerialize(jprog);
       if (err) {
         continue;
       }
@@ -190,7 +186,7 @@ common::Error EpgInfo::DeSerialize(const serialize_type& serialized, EpgInfo* ob
     url.programs_ = progs;
   }
 
-  *obj = url;
+  *this = url;
   return common::Error();
 }
 

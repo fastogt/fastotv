@@ -46,25 +46,21 @@ bool ClientInfo::IsValid() const {
   return !login_.empty();
 }
 
-common::Error ClientInfo::SerializeFields(json_object* obj) const {
+common::Error ClientInfo::SerializeFields(json_object* deserialized) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object_object_add(obj, CLIENT_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
-  json_object_object_add(obj, CLIENT_INFO_OS_FIELD, json_object_new_string(os_.c_str()));
-  json_object_object_add(obj, CLIENT_INFO_CPU_FIELD, json_object_new_string(cpu_brand_.c_str()));
-  json_object_object_add(obj, CLIENT_INFO_RAM_TOTAL_FIELD, json_object_new_int64(ram_total_));
-  json_object_object_add(obj, CLIENT_INFO_RAM_FREE_FIELD, json_object_new_int64(ram_free_));
-  json_object_object_add(obj, CLIENT_INFO_BANDWIDTH_FIELD, json_object_new_int64(bandwidth_));
+  json_object_object_add(deserialized, CLIENT_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
+  json_object_object_add(deserialized, CLIENT_INFO_OS_FIELD, json_object_new_string(os_.c_str()));
+  json_object_object_add(deserialized, CLIENT_INFO_CPU_FIELD, json_object_new_string(cpu_brand_.c_str()));
+  json_object_object_add(deserialized, CLIENT_INFO_RAM_TOTAL_FIELD, json_object_new_int64(ram_total_));
+  json_object_object_add(deserialized, CLIENT_INFO_RAM_FREE_FIELD, json_object_new_int64(ram_free_));
+  json_object_object_add(deserialized, CLIENT_INFO_BANDWIDTH_FIELD, json_object_new_int64(bandwidth_));
   return common::Error();
 }
 
-common::Error ClientInfo::DeSerialize(const serialize_type& serialized, ClientInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error ClientInfo::DoDeSerialize(json_object* serialized) {
   ClientInfo inf;
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, CLIENT_INFO_LOGIN_FIELD, &jlogin);
@@ -109,7 +105,7 @@ common::Error ClientInfo::DeSerialize(const serialize_type& serialized, ClientIn
     inf.bandwidth_ = json_object_get_int64(jband);
   }
 
-  *obj = inf;
+  *this = inf;
   return common::Error();
 }
 

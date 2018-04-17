@@ -25,7 +25,7 @@ namespace server {
 
 typedef std::string user_id_t;  // mongodb/redis id
 
-class UserInfo : public JsonSerializerEx {
+class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
  public:
   typedef std::vector<device_id_t> devices_t;
 
@@ -37,8 +37,6 @@ class UserInfo : public JsonSerializerEx {
 
   bool IsValid() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, UserInfo* obj) WARN_UNUSED_RESULT;
-
   bool HaveDevice(device_id_t dev) const;
   devices_t GetDevices() const;
   login_t GetLogin() const;
@@ -48,7 +46,8 @@ class UserInfo : public JsonSerializerEx {
   bool Equals(const UserInfo& inf) const;
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   login_t login_;  // unique

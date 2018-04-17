@@ -47,23 +47,19 @@ bool ProgrammeInfo::IsValid() const {
   return channel_ != invalid_stream_id && !title_.empty();
 }
 
-common::Error ProgrammeInfo::SerializeFields(json_object* obj) const {
+common::Error ProgrammeInfo::SerializeFields(json_object* deserialized) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object_object_add(obj, PROGRAMME_INFO_CHANNEL_FIELD, json_object_new_string(channel_.c_str()));
-  json_object_object_add(obj, PROGRAMME_INFO_START_FIELD, json_object_new_int64(start_time_));
-  json_object_object_add(obj, PROGRAMME_INFO_STOP_FIELD, json_object_new_int64(stop_time_));
-  json_object_object_add(obj, PROGRAMME_INFO_TITLE_FIELD, json_object_new_string(title_.c_str()));
+  json_object_object_add(deserialized, PROGRAMME_INFO_CHANNEL_FIELD, json_object_new_string(channel_.c_str()));
+  json_object_object_add(deserialized, PROGRAMME_INFO_START_FIELD, json_object_new_int64(start_time_));
+  json_object_object_add(deserialized, PROGRAMME_INFO_STOP_FIELD, json_object_new_int64(stop_time_));
+  json_object_object_add(deserialized, PROGRAMME_INFO_TITLE_FIELD, json_object_new_string(title_.c_str()));
   return common::Error();
 }
 
-common::Error ProgrammeInfo::DeSerialize(const serialize_type& serialized, ProgrammeInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error ProgrammeInfo::DoDeSerialize(json_object* serialized) {
   json_object* jchannel = NULL;
   json_bool jchannel_exists = json_object_object_get_ex(serialized, PROGRAMME_INFO_CHANNEL_FIELD, &jchannel);
   if (!jchannel_exists) {
@@ -90,7 +86,7 @@ common::Error ProgrammeInfo::DeSerialize(const serialize_type& serialized, Progr
 
   fastotv::ProgrammeInfo prog(json_object_get_string(jchannel), json_object_get_int64(jstart),
                               json_object_get_int64(jstop), json_object_get_string(jtitle));
-  *obj = prog;
+  *this = prog;
   return common::Error();
 }
 

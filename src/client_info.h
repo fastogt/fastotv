@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include "client_server_types.h"  // for bandwidth_t, login_t
+#include <common/serializer/json_serializer.h>
 
-#include "serializer/json_serializer.h"
+#include "client_server_types.h"  // for bandwidth_t, login_t
 
 namespace fastotv {
 
-class ClientInfo : public JsonSerializerEx {
+class ClientInfo : public common::serializer::JsonSerializer<ClientInfo> {
  public:
   ClientInfo();
   ClientInfo(const login_t& login,
@@ -36,8 +36,6 @@ class ClientInfo : public JsonSerializerEx {
 
   bool IsValid() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, ClientInfo* obj) WARN_UNUSED_RESULT;
-
   login_t GetLogin() const;
   std::string GetOs() const;
   std::string GetCpuBrand() const;
@@ -46,7 +44,8 @@ class ClientInfo : public JsonSerializerEx {
   bandwidth_t GetBandwidth() const;
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   login_t login_;

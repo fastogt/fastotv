@@ -26,17 +26,13 @@ ServerInfo::ServerInfo() : bandwidth_host_() {}
 
 ServerInfo::ServerInfo(const common::net::HostAndPort& bandwidth_host) : bandwidth_host_(bandwidth_host) {}
 
-common::Error ServerInfo::SerializeFields(json_object* obj) const {
+common::Error ServerInfo::SerializeFields(json_object* deserialized) const {
   const std::string host_str = common::ConvertToString(bandwidth_host_);
-  json_object_object_add(obj, BANDWIDTH_HOST_FIELD, json_object_new_string(host_str.c_str()));
+  json_object_object_add(deserialized, BANDWIDTH_HOST_FIELD, json_object_new_string(host_str.c_str()));
   return common::Error();
 }
 
-common::Error ServerInfo::DeSerialize(const serialize_type& serialized, ServerInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error ServerInfo::DoDeSerialize(json_object* serialized) {
   json_object* jband = NULL;
   json_bool jband_exists = json_object_object_get_ex(serialized, BANDWIDTH_HOST_FIELD, &jband);
   ServerInfo inf;
@@ -47,7 +43,8 @@ common::Error ServerInfo::DeSerialize(const serialize_type& serialized, ServerIn
       inf.bandwidth_host_ = hs;
     }
   }
-  *obj = inf;
+
+  *this = inf;
   return common::Error();
 }
 

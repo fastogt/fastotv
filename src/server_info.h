@@ -20,21 +20,20 @@
 
 #include <common/net/types.h>  // for HostAndPort
 
-#include "serializer/json_serializer.h"
+#include <common/serializer/json_serializer.h>
 
 namespace fastotv {
 
-class ServerInfo : public JsonSerializerEx {
+class ServerInfo : public common::serializer::JsonSerializer<ServerInfo> {
  public:
   ServerInfo();
   ServerInfo(const common::net::HostAndPort& bandwidth_host);
 
-  static common::Error DeSerialize(const serialize_type& serialized, ServerInfo* obj) WARN_UNUSED_RESULT;
-
   common::net::HostAndPort GetBandwidthHost() const;
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   common::net::HostAndPort bandwidth_host_;

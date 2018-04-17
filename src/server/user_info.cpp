@@ -40,40 +40,36 @@ bool UserInfo::IsValid() const {
   return !login_.empty() && !password_.empty();
 }
 
-common::Error UserInfo::SerializeFields(json_object* obj) const {
+common::Error UserInfo::SerializeFields(json_object* deserialized) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object_object_add(obj, USER_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
-  json_object_object_add(obj, USER_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
+  json_object_object_add(deserialized, USER_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
+  json_object_object_add(deserialized, USER_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
 
   json_object* jchannels = NULL;
   common::Error err = ch_.Serialize(&jchannels);
   if (err) {
     return err;
   }
-  json_object_object_add(obj, USER_INFO_CHANNELS_FIELD, jchannels);
+  json_object_object_add(deserialized, USER_INFO_CHANNELS_FIELD, jchannels);
 
   json_object* jdevices = json_object_new_array();
   for (size_t i = 0; i < devices_.size(); ++i) {
     json_object* jdevice = json_object_new_string(devices_[i].c_str());
     json_object_array_add(jdevices, jdevice);
   }
-  json_object_object_add(obj, USER_INFO_DEVICES_FIELD, jdevices);
+  json_object_object_add(deserialized, USER_INFO_DEVICES_FIELD, jdevices);
   return common::Error();
 }
 
-common::Error UserInfo::DeSerialize(const serialize_type& serialized, UserInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error UserInfo::DoDeSerialize(json_object* serialized) {
   ChannelsInfo chan;
   json_object* jchan = NULL;
   json_bool jchan_exists = json_object_object_get_ex(serialized, USER_INFO_CHANNELS_FIELD, &jchan);
   if (jchan_exists) {
-    common::Error err = ChannelsInfo::DeSerialize(jchan, &chan);
+    common::Error err = chan.DeSerialize(jchan);
     if (err) {
       return err;
     }
@@ -105,7 +101,7 @@ common::Error UserInfo::DeSerialize(const serialize_type& serialized, UserInfo* 
       devices.push_back(json_object_get_string(jdevice));
     }
   }
-  *obj = UserInfo(login, password, chan, devices);
+  *this = UserInfo(login, password, chan, devices);
   return common::Error();
 }
 

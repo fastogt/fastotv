@@ -18,16 +18,16 @@
 
 #pragma once
 
-#include "client_server_types.h"
+#include <common/serializer/json_serializer.h>
 
-#include "serializer/json_serializer.h"
+#include "client_server_types.h"
 
 // {"channel" : "1234", "login" : "atopilski@gmail.com", "message" : "leave the channel test", "type" : 0}
 // {"channel" : "1234", "login" : "atopilski@gmail.com", "message" : "Hello", "type" : 1}
 
 namespace fastotv {
 
-class ChatMessage : public JsonSerializerEx {
+class ChatMessage : public common::serializer::JsonSerializer<ChatMessage> {
  public:
   enum Type { CONTROL = 0, MESSAGE };
   ChatMessage();
@@ -46,12 +46,11 @@ class ChatMessage : public JsonSerializerEx {
 
   Type GetType() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, ChatMessage* obj) WARN_UNUSED_RESULT;
-
   bool Equals(const ChatMessage& inf) const;
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   stream_id channel_id_;

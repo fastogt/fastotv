@@ -39,22 +39,18 @@ bool AuthInfo::IsValid() const {
   return !login_.empty() && !password_.empty() && !device_id_.empty();
 }
 
-common::Error AuthInfo::SerializeFields(json_object* obj) const {
+common::Error AuthInfo::SerializeFields(json_object* deserialized) const {
   if (!IsValid()) {
     return common::make_error_inval();
   }
 
-  json_object_object_add(obj, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
-  json_object_object_add(obj, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
-  json_object_object_add(obj, AUTH_INFO_DEVICE_ID_FIELD, json_object_new_string(device_id_.c_str()));
+  json_object_object_add(deserialized, AUTH_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
+  json_object_object_add(deserialized, AUTH_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
+  json_object_object_add(deserialized, AUTH_INFO_DEVICE_ID_FIELD, json_object_new_string(device_id_.c_str()));
   return common::Error();
 }
 
-common::Error AuthInfo::DeSerialize(const serialize_type& serialized, AuthInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error AuthInfo::DoDeSerialize(json_object* serialized) {
   json_object* jlogin = NULL;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, AUTH_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
@@ -74,7 +70,7 @@ common::Error AuthInfo::DeSerialize(const serialize_type& serialized, AuthInfo* 
   }
 
   fastotv::AuthInfo ainf(json_object_get_string(jlogin), json_object_get_string(jpass), json_object_get_string(jdevid));
-  *obj = ainf;
+  *this = ainf;
   return common::Error();
 }
 

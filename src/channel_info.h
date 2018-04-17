@@ -24,7 +24,7 @@
 
 namespace fastotv {
 
-class ChannelInfo : public JsonSerializerEx {
+class ChannelInfo : public common::serializer::JsonSerializer<ChannelInfo> {
  public:
   ChannelInfo();
   ChannelInfo(const EpgInfo& epg, bool enable_audio, bool enable_video);
@@ -38,12 +38,11 @@ class ChannelInfo : public JsonSerializerEx {
   bool IsEnableAudio() const;
   bool IsEnableVideo() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, ChannelInfo* obj) WARN_UNUSED_RESULT;
-
   bool Equals(const ChannelInfo& url) const;
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   EpgInfo epg_;

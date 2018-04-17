@@ -23,12 +23,10 @@
 namespace fastotv {
 namespace server {
 
-class UserStateInfo : public JsonSerializerEx {
+class UserStateInfo : public common::serializer::JsonSerializer<UserStateInfo> {
  public:
   UserStateInfo();
   UserStateInfo(const user_id_t& uid, const device_id_t& device_id, bool connected);
-
-  static common::Error DeSerialize(const serialize_type& serialized, UserStateInfo* obj) WARN_UNUSED_RESULT;
 
   device_id_t GetDeviceId() const;
   user_id_t GetUserId() const;
@@ -37,7 +35,8 @@ class UserStateInfo : public JsonSerializerEx {
   bool Equals(const UserStateInfo& state) const;
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   user_id_t user_id_;

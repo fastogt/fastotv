@@ -20,23 +20,18 @@
 
 #include <string>  // for string
 
-#include <common/error.h>   // for Error
-#include <common/macros.h>  // for WARN_UNUSED_RESULT
-
-#include "serializer/json_serializer.h"
+#include <common/serializer/json_serializer.h>
 
 namespace fastotv {
 namespace server {
 
-class ResponceInfo : public JsonSerializerEx {
+class ResponceInfo : public common::serializer::JsonSerializer<ResponceInfo> {
  public:
   ResponceInfo();
   ResponceInfo(const std::string& request_id,
                const std::string& state_command,
                const std::string& command,
                const std::string& responce);
-
-  static common::Error DeSerialize(const serialize_type& serialized, ResponceInfo* obj) WARN_UNUSED_RESULT;
 
   std::string GetRequestId() const;
   std::string GetState() const;
@@ -46,7 +41,8 @@ class ResponceInfo : public JsonSerializerEx {
   bool Equals(const ResponceInfo& inf) const;
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   std::string request_id_;

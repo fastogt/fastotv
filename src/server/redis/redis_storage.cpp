@@ -60,7 +60,7 @@ common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInf
   }
 
   UserInfo uinf;
-  common::Error err = UserInfo::DeSerialize(obj, &uinf);
+  common::Error err = uinf.DeSerialize(obj);
   if (err) {
     json_object_put(obj);
     return err;

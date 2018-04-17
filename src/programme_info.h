@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include "client_server_types.h"
+#include <common/serializer/json_serializer.h>
 
-#include "serializer/json_serializer.h"
+#include "client_server_types.h"
 
 namespace fastotv {
 
-class ProgrammeInfo : public JsonSerializerEx {
+class ProgrammeInfo : public common::serializer::JsonSerializer<ProgrammeInfo> {
  public:
   ProgrammeInfo();
   ProgrammeInfo(stream_id id, timestamp_t start_time, timestamp_t stop_time, const std::string& title);
@@ -43,12 +43,11 @@ class ProgrammeInfo : public JsonSerializerEx {
   void SetTitle(const std::string& title);
   std::string GetTitle() const;
 
-  static common::Error DeSerialize(const serialize_type& serialized, ProgrammeInfo* obj) WARN_UNUSED_RESULT;
-
   bool Equals(const ProgrammeInfo& prog) const;
 
  protected:
-  virtual common::Error SerializeFields(json_object* obj) const override;
+  virtual common::Error DoDeSerialize(json_object* serialized) override;
+  virtual common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   stream_id channel_;

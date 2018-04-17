@@ -27,16 +27,12 @@ namespace fastotv {
 
 ServerPingInfo::ServerPingInfo() : timestamp_(common::time::current_utc_mstime()) {}
 
-common::Error ServerPingInfo::SerializeFields(json_object* obj) const {
-  json_object_object_add(obj, SERVER_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp_));
+common::Error ServerPingInfo::SerializeFields(json_object* deserialized) const {
+  json_object_object_add(deserialized, SERVER_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp_));
   return common::Error();
 }
 
-common::Error ServerPingInfo::DeSerialize(const serialize_type& serialized, ServerPingInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error ServerPingInfo::DoDeSerialize(json_object* serialized) {
   json_object* jtimestamp = NULL;
   json_bool jtimestamp_exists = json_object_object_get_ex(serialized, SERVER_INFO_TIMESTAMP_FIELD, &jtimestamp);
   ServerPingInfo inf;
@@ -44,7 +40,7 @@ common::Error ServerPingInfo::DeSerialize(const serialize_type& serialized, Serv
     inf.timestamp_ = json_object_get_int64(jtimestamp);
   }
 
-  *obj = inf;
+  *this = inf;
   return common::Error();
 }
 
@@ -54,16 +50,12 @@ timestamp_t ServerPingInfo::GetTimeStamp() const {
 
 ClientPingInfo::ClientPingInfo() : timestamp_(common::time::current_utc_mstime()) {}
 
-common::Error ClientPingInfo::SerializeFields(json_object* obj) const {
-  json_object_object_add(obj, CLIENT_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp_));
+common::Error ClientPingInfo::SerializeFields(json_object* deserialized) const {
+  json_object_object_add(deserialized, CLIENT_INFO_TIMESTAMP_FIELD, json_object_new_int64(timestamp_));
   return common::Error();
 }
 
-common::Error ClientPingInfo::DeSerialize(const serialize_type& serialized, ClientPingInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error ClientPingInfo::DoDeSerialize(json_object* serialized) {
   json_object* jtimestamp = NULL;
   json_bool jtimestamp_exists = json_object_object_get_ex(serialized, CLIENT_INFO_TIMESTAMP_FIELD, &jtimestamp);
   ClientPingInfo inf;
@@ -71,7 +63,7 @@ common::Error ClientPingInfo::DeSerialize(const serialize_type& serialized, Clie
     inf.timestamp_ = json_object_get_int64(jtimestamp);
   }
 
-  *obj = inf;
+  *this = inf;
   return common::Error();
 }
 

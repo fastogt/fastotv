@@ -19,7 +19,7 @@
 #include "server/inner/inner_external_notifier.h"
 
 extern "C" {
-#include "sds.h"
+#include "sds_fasto.h"
 }
 
 #include <common/error.h>   // for Error, DEBUG_MSG_...

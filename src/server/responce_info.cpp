@@ -39,19 +39,15 @@ ResponceInfo::ResponceInfo(const std::string& request_id,
                            const std::string& responce)
     : request_id_(request_id), state_(state_command), command_(command), responce_json_(responce) {}
 
-common::Error ResponceInfo::SerializeFields(json_object* obj) const {
-  json_object_object_add(obj, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(request_id_.c_str()));
-  json_object_object_add(obj, RESPONCE_INFO_STATE_FIELD, json_object_new_string(state_.c_str()));
-  json_object_object_add(obj, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(command_.c_str()));
-  json_object_object_add(obj, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(responce_json_.c_str()));
+common::Error ResponceInfo::SerializeFields(json_object* deserialized) const {
+  json_object_object_add(deserialized, RESPONCE_INFO_REQUEST_ID_FIELD, json_object_new_string(request_id_.c_str()));
+  json_object_object_add(deserialized, RESPONCE_INFO_STATE_FIELD, json_object_new_string(state_.c_str()));
+  json_object_object_add(deserialized, RESPONCE_INFO_COMMAND_FIELD, json_object_new_string(command_.c_str()));
+  json_object_object_add(deserialized, RESPONCE_INFO_RESPONCE_FIELD, json_object_new_string(responce_json_.c_str()));
   return common::Error();
 }
 
-common::Error ResponceInfo::DeSerialize(const serialize_type& serialized, ResponceInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error ResponceInfo::DoDeSerialize(json_object* serialized) {
   ResponceInfo inf;
   json_object* jrequest_id = NULL;
   json_bool jrequest_id_exists = json_object_object_get_ex(serialized, RESPONCE_INFO_REQUEST_ID_FIELD, &jrequest_id);
@@ -77,7 +73,7 @@ common::Error ResponceInfo::DeSerialize(const serialize_type& serialized, Respon
     inf.responce_json_ = json_object_get_string(jresponce);
   }
 
-  *obj = inf;
+  *this = inf;
   return common::Error();
 }
 

@@ -44,39 +44,33 @@ bool ChannelsInfo::Equals(const ChannelsInfo& chan) const {
   return channels_ == chan.channels_;
 }
 
-common::Error ChannelsInfo::DoSerialize(serialize_type* deserialized) const {
-  json_object* jchannels = json_object_new_array();
+common::Error ChannelsInfo::SerializeArray(json_object* deserialized_array) const {
   for (ChannelInfo url : channels_) {
     json_object* jurl = NULL;
     common::Error err = url.Serialize(&jurl);
     if (err) {
       continue;
     }
-    json_object_array_add(jchannels, jurl);
+    json_object_array_add(deserialized_array, jurl);
   }
 
-  *deserialized = jchannels;
   return common::Error();
 }
 
-common::Error ChannelsInfo::DeSerialize(const serialize_type& serialized, ChannelsInfo* obj) {
-  if (!serialized || !obj) {
-    return common::make_error_inval();
-  }
-
+common::Error ChannelsInfo::DoDeSerialize(json_object* serialized) {
   channels_t chan;
   size_t len = json_object_array_length(serialized);
   for (size_t i = 0; i < len; ++i) {
     json_object* jurl = json_object_array_get_idx(serialized, i);
     ChannelInfo url;
-    common::Error err = ChannelInfo::DeSerialize(jurl, &url);
+    common::Error err = url.DeSerialize(jurl);
     if (err) {
       continue;
     }
     chan.push_back(url);
   }
 
-  (*obj).channels_ = chan;
+  (*this).channels_ = chan;
   return common::Error();
 }
 

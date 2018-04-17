@@ -244,7 +244,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       }
-      connection->Close();
+      err = connection->Close();
+      DCHECK(!err) << "Close connection error: " << err->GetDescription();
       delete connection;
       return;
     }
@@ -270,7 +271,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       }
-      connection->Close();
+      err = connection->Close();
+      DCHECK(!err) << "Close connection error: " << err->GetDescription();
       delete connection;
       return;
     }
@@ -304,7 +306,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       }
-      connection->Close();
+      err = connection->Close();
+      DCHECK(!err) << "Close connection error: " << err->GetDescription();
       delete connection;
       return;
     }
@@ -388,7 +391,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       }
-      connection->Close();
+      err = connection->Close();
+      DCHECK(!err) << "Close connection error: " << err->GetDescription();
       delete connection;
       return;
     }
@@ -405,13 +409,14 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
         if (err) {
           DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
         }
-        connection->Close();
+        err = connection->Close();
+        DCHECK(!err) << "Close connection error: " << err->GetDescription();
         delete connection;
         return;
       }
 
       ChatMessage msg;
-      common::Error err = ChatMessage::DeSerialize(jmsg, &msg);
+      common::Error err = msg.DeSerialize(jmsg);
       json_object_put(jmsg);
       if (err) {
         common::protocols::three_way_handshake::cmd_responce_t resp =
@@ -420,7 +425,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
         if (err) {
           DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
         }
-        connection->Close();
+        err = connection->Close();
+        DCHECK(!err) << "Close connection error: " << err->GetDescription();
         delete connection;
         return;
       }
@@ -440,7 +446,8 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
       if (err) {
         DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       }
-      connection->Close();
+      err = connection->Close();
+      DCHECK(!err) << "Close connection error: " << err->GetDescription();
       delete connection;
       return;
     }
@@ -459,7 +466,8 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
     common::Error err = HandleInnerSuccsessResponceCommand(connection, id, argc, argv);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-      connection->Close();
+      err = connection->Close();
+      DCHECK(!err) << "Close connection error: " << err->GetDescription();
       delete connection;
     }
     return;
@@ -467,7 +475,8 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
     common::Error err = HandleInnerFailedResponceCommand(connection, id, argc, argv);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-      connection->Close();
+      err = connection->Close();
+      DCHECK(!err) << "Close connection error: " << err->GetDescription();
       delete connection;
     }
     return;
@@ -476,7 +485,8 @@ void InnerTcpHandlerHost::HandleInnerResponceCommand(fastotv::inner::InnerClient
   const std::string error_str = common::MemSPrintf("UNKNOWN STATE COMMAND: %s", state_command);
   common::Error err = common::make_error(error_str);
   DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-  connection->Close();
+  err = connection->Close();
+  DCHECK(!err) << "Close connection error: " << err->GetDescription();
   delete connection;
 }
 
@@ -498,7 +508,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     }
 
     ServerPingInfo ping_info;
-    common::Error err = ServerPingInfo::DeSerialize(obj, &ping_info);
+    common::Error err = ping_info.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
@@ -526,7 +536,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     }
 
     AuthInfo uauth;
-    common::Error err = AuthInfo::DeSerialize(obj, &uauth);
+    common::Error err = uauth.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       const std::string error_str = err->GetDescription();
@@ -614,7 +624,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     }
 
     ClientInfo cinf;
-    common::Error err = ClientInfo::DeSerialize(obj, &cinf);
+    common::Error err = cinf.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       const std::string error_str = err->GetDescription();
@@ -651,7 +661,7 @@ common::Error InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     }
 
     ChatMessage msg;
-    common::Error err = ChatMessage::DeSerialize(obj, &msg);
+    common::Error err = msg.DeSerialize(obj);
     json_object_put(obj);
     if (err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
