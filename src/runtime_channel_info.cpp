@@ -117,11 +117,13 @@ common::Error RuntimeChannelInfo::SerializeFields(json_object* deserialized) con
     json_object_array_add(jmsgs, jmsg);
   }
 
-  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD, json_object_new_string(channel_id_.c_str()));
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD,
+                         json_object_new_string(channel_id_.c_str()));
   json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_WATCHERS_FIELD, json_object_new_int(watchers_));
   json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD, json_object_new_int(type_));
   json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD, json_object_new_boolean(chat_enabled_));
-  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD, json_object_new_boolean(chat_read_only_));
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD,
+                         json_object_new_boolean(chat_read_only_));
   json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_MESSAGES_FIELD, jmsgs);
   return common::Error();
 }

@@ -19,8 +19,8 @@
 #include "client/cmdutils.h"
 
 #ifdef _WIN32
-#include <windef.h>
 #include <winbase.h>
+#include <windef.h>
 #endif
 
 #include <errno.h>   // for EINVAL, ENOMEM, ENOSYS

@@ -29,7 +29,7 @@ TEST(UserInfo, serialize_deserialize) {
   common::Error err = uinf.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::server::UserInfo duinf;
-  err = uinf.DeSerialize(ser, &duinf);
+  err = duinf.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(uinf, duinf);
@@ -82,7 +82,7 @@ TEST(UserInfo, serialize_deserialize) {
   err = uinf.SerializeFromString(json_channel, &ser);
   ASSERT_TRUE(!err);
 
-  err = uinf.DeSerialize(ser, &duinf);
+  err = duinf.DeSerialize(ser);
   ASSERT_TRUE(!err);
   fastotv::ChannelsInfo ch = duinf.GetChannelInfo();
   ASSERT_EQ(duinf.GetLogin(), "atopilski@gmail.com");
@@ -102,7 +102,7 @@ TEST(UserStateInfo, serialize_deserialize) {
   common::Error err = ust.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::server::UserStateInfo dust;
-  err = ust.DeSerialize(ser, &dust);
+  err = dust.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(ust.GetUserId(), dust.GetUserId());
@@ -126,7 +126,7 @@ TEST(ResponceInfo, serialize_deserialize) {
   common::Error err = ust.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::server::ResponceInfo dust;
-  err = ust.DeSerialize(ser, &dust);
+  err = dust.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(ust, dust);

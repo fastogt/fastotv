@@ -48,8 +48,8 @@ class LircInputClient : public common::libev::DescriptorClient {
  private:
   virtual common::Error DoClose() override;
 
-  using base_class::Write;
   using base_class::Read;
+  using base_class::Write;
 
   struct lirc_config* cfg_;
 };

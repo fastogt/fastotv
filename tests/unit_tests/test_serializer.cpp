@@ -26,7 +26,7 @@ TEST(ChannelInfo, serialize_deserialize) {
   common::Error err = epg_info.Serialize(&user);
   ASSERT_TRUE(!err);
   fastotv::EpgInfo depg;
-  err = epg_info.DeSerialize(user, &depg);
+  err = depg.DeSerialize(user);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(epg_info, depg);
@@ -42,7 +42,7 @@ TEST(ChannelInfo, serialize_deserialize) {
   err = http_uri.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::ChannelInfo dhttp_uri;
-  err = http_uri.DeSerialize(ser, &dhttp_uri);
+  err = dhttp_uri.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(http_uri, dhttp_uri);
@@ -58,7 +58,7 @@ TEST(ServerInfo, serialize_deserialize) {
   common::Error err = serv_info.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::ServerInfo dser;
-  err = serv_info.DeSerialize(ser, &dser);
+  err = dser.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(serv_info.GetBandwidthHost(), dser.GetBandwidthHost());
@@ -70,7 +70,7 @@ TEST(ServerPingInfo, serialize_deserialize) {
   common::Error err = ping_info.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::ServerPingInfo dser;
-  err = ping_info.DeSerialize(ser, &dser);
+  err = dser.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(ping_info.GetTimeStamp(), dser.GetTimeStamp());
@@ -82,7 +82,7 @@ TEST(ClientPingInfo, serialize_deserialize) {
   common::Error err = ping_info.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::ClientPingInfo dser;
-  err = ping_info.DeSerialize(ser, &dser);
+  err = dser.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(ping_info.GetTimeStamp(), dser.GetTimeStamp());
@@ -108,7 +108,7 @@ TEST(ClientInfo, serialize_deserialize) {
   common::Error err = cinf.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::ClientInfo dcinf;
-  err = cinf.DeSerialize(ser, &dcinf);
+  err = dcinf.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(cinf.GetLogin(), dcinf.GetLogin());
@@ -135,7 +135,7 @@ TEST(channels_t, serialize_deserialize) {
   common::Error err = channels.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::ChannelsInfo dchannels;
-  err = channels.DeSerialize(ser, &dchannels);
+  err = dchannels.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(channels, dchannels);
@@ -153,7 +153,7 @@ TEST(AuthInfo, serialize_deserialize) {
   common::Error err = auth_info.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::AuthInfo dser;
-  err = auth_info.DeSerialize(ser, &dser);
+  err = dser.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(auth_info, dser);
@@ -177,7 +177,7 @@ TEST(RuntimeChannelInfo, serialize_deserialize) {
   common::Error err = rinf_info.Serialize(&ser);
   ASSERT_TRUE(!err);
   fastotv::RuntimeChannelInfo dser;
-  err = rinf_info.DeSerialize(ser, &dser);
+  err = dser.DeSerialize(ser);
   ASSERT_TRUE(!err);
 
   ASSERT_EQ(rinf_info, dser);
