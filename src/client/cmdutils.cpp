@@ -18,11 +18,6 @@
 
 #include "client/cmdutils.h"
 
-#ifdef _WIN32
-#include <winbase.h>
-#include <windef.h>
-#endif
-
 #include <errno.h>   // for EINVAL, ENOMEM, ENOSYS
 #include <stddef.h>  // for size_t
 #include <stdint.h>  // for int64_t, uint64_t, uint8_t, etc
@@ -918,13 +913,7 @@ void show_help_player(const std::string& topic) {
   show_help(topic, true);
 }
 
-void init_dynload(void) {
-#ifdef _WIN32
-  /* Calling SetDllDirectory with the empty string (but not NULL) removes the
-   * current working directory from the DLL search path as a security pre-caution. */
-  SetDllDirectory("");
-#endif
-}
+void init_dynload(void) {}
 
 bool parse_bool(const std::string& bool_str, bool* result) {
   if (bool_str.empty()) {
