@@ -4,7 +4,7 @@ import os
 import shutil
 import subprocess
 
-from pybuild_utils.base import utils
+from pyfastogt import utils
 
 
 def install_orange_pi_h3():

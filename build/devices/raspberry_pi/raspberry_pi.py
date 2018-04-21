@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 
-from pybuild_utils.base import utils
+from pyfastogt import utils
 
 
 def install_raspberry_pi(gpu_mem_size: int):

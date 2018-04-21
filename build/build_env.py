@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import argparse
 import os
 import shutil
@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 
 from devices.orange_pi import orange_pi
 from devices.raspberry_pi import raspberry_pi
-from pybuild_utils.base import system_info, utils
+from pyfastogt import system_info, utils
 
 # Script for building environment on clean machine
 

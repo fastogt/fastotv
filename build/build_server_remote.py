@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import json
 import shlex
 import sys
@@ -6,7 +6,7 @@ import sys
 import build
 import config
 import pika
-from pybuild_utils.base import system_info, utils
+from pyfastogt import system_info, utils
 
 
 def gen_routing_key(device, platform, arch) -> str:
