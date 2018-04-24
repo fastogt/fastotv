@@ -16,14 +16,11 @@ from pyfastogt import system_info, utils
 # For windows 32 please specify architecture 32
 
 # defines
-CMAKE_SRC_ROOT = "https://cmake.org/files/"
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 SDL_IMAGE_SRC_ROOT = "https://www.libsdl.org/projects/SDL_image/release/"
 SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
 OPENSSL_SRC_ROOT = "https://www.openssl.org/source/"
 
-ARCH_CMAKE_COMP = "gz"
-ARCH_CMAKE_EXT = "tar." + ARCH_CMAKE_COMP
 ARCH_OPENSSL_COMP = "gz"
 ARCH_OPENSSL_EXT = "tar." + ARCH_OPENSSL_COMP
 ARCH_SDL_COMP = "gz"
