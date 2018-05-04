@@ -43,6 +43,8 @@ void show_help_player(const std::string& topic);
 void show_buildconf();
 void show_formats();
 void show_devices();
+void show_muxers();
+void show_demuxers();
 void show_codecs();
 void show_hwaccels();
 void show_decoders();

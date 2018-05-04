@@ -135,6 +135,12 @@ int main(int argc, char** argv) {
     } else if (strcmp(argv[i], "-devices") == 0) {
       show_devices();
       return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "-muxers") == 0) {
+      show_muxers();
+      return EXIT_SUCCESS;
+    } else if (strcmp(argv[i], "-demuxers") == 0) {
+      show_demuxers();
+      return EXIT_SUCCESS;
     } else if (strcmp(argv[i], "-codecs") == 0) {
       show_codecs();
       return EXIT_SUCCESS;

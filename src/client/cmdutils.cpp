@@ -148,6 +148,12 @@ extern "C" {
 namespace {
 bool warned_cfg = false;
 
+enum show_muxdemuxers {
+  SHOW_DEFAULT,
+  SHOW_DEMUXERS,
+  SHOW_MUXERS,
+};
+
 bool compare_codec_desc(const AVCodecDescriptor* da, const AVCodecDescriptor* db) {
   if ((da)->type == (db)->type) {
     return strcmp((da)->name, (db)->name) < 0;
@@ -332,50 +338,57 @@ void print_codecs(bool encoder) {
   }
 }
 
-void show_formats_devices(bool device_only) {
-  AVInputFormat* ifmt = NULL;
-  AVOutputFormat* ofmt = NULL;
-  std::cout << (device_only ? "Devices:" : "File formats:")
-            << "\n"
-               " D. = Demuxing supported\n"
-               " .E = Muxing supported\n"
-               " --"
-            << std::endl;
+void show_formats_devices(bool device_only, show_muxdemuxers muxdemuxers) {
+  void* ifmt_opaque = NULL;
+  const AVInputFormat* ifmt = NULL;
+  void* ofmt_opaque = NULL;
+  const AVOutputFormat* ofmt = NULL;
+  const char* last_name;
+  int is_dev;
 
-  const char* last_name = "000";
+  printf(
+      "%s\n"
+      " D. = Demuxing supported\n"
+      " .E = Muxing supported\n"
+      " --\n",
+      device_only ? "Devices:" : "File formats:");
+  last_name = "000";
   for (;;) {
-    bool decode = false;
-    bool encode = false;
+    int decode = 0;
+    int encode = 0;
     const char* name = NULL;
     const char* long_name = NULL;
 
-    while ((ofmt = av_oformat_next(ofmt))) {
-      bool is_dev = is_device(ofmt->priv_class);
-      if (!is_dev && device_only)
-        continue;
-      if ((!name || strcmp(ofmt->name, name) < 0) && strcmp(ofmt->name, last_name) > 0) {
-        name = ofmt->name;
-        long_name = ofmt->long_name;
-        encode = true;
+    if (muxdemuxers != SHOW_DEMUXERS) {
+      ofmt_opaque = NULL;
+      while ((ofmt = av_muxer_iterate(&ofmt_opaque))) {
+        is_dev = is_device(ofmt->priv_class);
+        if (!is_dev && device_only)
+          continue;
+        if ((!name || strcmp(ofmt->name, name) < 0) && strcmp(ofmt->name, last_name) > 0) {
+          name = ofmt->name;
+          long_name = ofmt->long_name;
+          encode = 1;
+        }
       }
     }
-    while ((ifmt = av_iformat_next(ifmt))) {
-      bool is_dev = is_device(ifmt->priv_class);
-      if (!is_dev && device_only) {
-        continue;
-      }
-      if ((!name || strcmp(ifmt->name, name) < 0) && strcmp(ifmt->name, last_name) > 0) {
-        name = ifmt->name;
-        long_name = ifmt->long_name;
-        encode = false;
-      }
-      if (name && strcmp(ifmt->name, name) == 0) {
-        decode = true;
+    if (muxdemuxers != SHOW_MUXERS) {
+      ifmt_opaque = NULL;
+      while ((ifmt = av_demuxer_iterate(&ifmt_opaque))) {
+        is_dev = is_device(ifmt->priv_class);
+        if (!is_dev && device_only)
+          continue;
+        if ((!name || strcmp(ifmt->name, name) < 0) && strcmp(ifmt->name, last_name) > 0) {
+          name = ifmt->name;
+          long_name = ifmt->long_name;
+          encode = 0;
+        }
+        if (name && strcmp(ifmt->name, name) == 0)
+          decode = 1;
       }
     }
-    if (!name) {
+    if (!name)
       break;
-    }
     last_name = name;
 
     printf(" %s%s %-15s %s\n", decode ? "D" : " ", encode ? "E" : " ", name, long_name ? long_name : " ");
@@ -677,11 +690,19 @@ void show_buildconf() {
 }
 
 void show_formats() {
-  show_formats_devices(false);
+  show_formats_devices(false, SHOW_DEFAULT);
 }
 
 void show_devices() {
-  show_formats_devices(true);
+  show_formats_devices(true, SHOW_DEFAULT);
+}
+
+void show_muxers() {
+  show_formats_devices(false, SHOW_MUXERS);
+}
+
+void show_demuxers() {
+  show_formats_devices(false, SHOW_DEMUXERS);
 }
 
 void show_codecs() {
