@@ -24,8 +24,8 @@
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/libev/loop_controller.h>   // for ILoopController
 
-#include "commands_info/chat_message.h"
 #include "client_server_types.h"
+#include "commands_info/chat_message.h"
 
 namespace common {
 namespace threads {

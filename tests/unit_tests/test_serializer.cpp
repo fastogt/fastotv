@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
-#include "auth_info.h"
-#include "channel_info.h"
-#include "channels_info.h"
-#include "client_info.h"
-#include "ping_info.h"
-#include "runtime_channel_info.h"
-#include "server_info.h"
+#include "commands_info/auth_info.h"
+#include "commands_info/channel_info.h"
+#include "commands_info/channels_info.h"
+#include "commands_info/client_info.h"
+#include "commands_info/ping_info.h"
+#include "commands_info/runtime_channel_info.h"
+#include "commands_info/server_info.h"
 
 typedef fastotv::AuthInfo::serialize_type serialize_t;
 

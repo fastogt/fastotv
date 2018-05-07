@@ -23,9 +23,9 @@
 
 #include "commands_info/auth_info.h"  // for AuthInfo
 
-#include "commands_info/chat_message.h"
 #include "client/types.h"         // for BandwidthHostType
 #include "client_server_types.h"  // for bandwidth_t
+#include "commands_info/chat_message.h"
 
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
