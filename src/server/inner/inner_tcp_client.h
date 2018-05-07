@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include "auth_info.h"  // for AuthInfo
+#include "commands_info/auth_info.h"  // for AuthInfo
 
 #include "inner/inner_client.h"  // for InnerClient
 
 #include "server/user_info.h"  // for user_id_t
 
-#include "chat_message.h"
+#include "commands_info/chat_message.h"
 
 namespace common {
 namespace libev {

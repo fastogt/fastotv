@@ -21,9 +21,9 @@
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/net/types.h>               // for HostAndPort
 
-#include "auth_info.h"  // for AuthInfo
+#include "commands_info/auth_info.h"  // for AuthInfo
 
-#include "chat_message.h"
+#include "commands_info/chat_message.h"
 #include "client/types.h"         // for BandwidthHostType
 #include "client_server_types.h"  // for bandwidth_t
 

@@ -21,8 +21,6 @@
 #include <memory>  // for shared_ptr
 #include <string>  // for string
 
-#include <json-c/json_object.h>  // for json_object
-
 #include <common/error.h>                   // for Error
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/libev/types.h>             // for timer_id_t
@@ -34,7 +32,7 @@
 #include "server/config.h"  // for Config
 #include "server/user_info.h"
 
-#include "chat_message.h"
+#include "commands_info/chat_message.h"
 
 namespace common {
 namespace libev {

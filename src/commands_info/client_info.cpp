@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client_info.h"
+#include "commands_info/client_info.h"
 
 #define CLIENT_INFO_LOGIN_FIELD "login"
 #define CLIENT_INFO_BANDWIDTH_FIELD "bandwidth"

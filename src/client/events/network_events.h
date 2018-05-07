@@ -22,9 +22,9 @@
 
 #include <player/gui/events_base.h>  // for EventBase, EventsType::C...
 
-#include "auth_info.h"
-#include "channels_info.h"
-#include "runtime_channel_info.h"
+#include "commands_info/auth_info.h"
+#include "commands_info/channels_info.h"
+#include "commands_info/runtime_channel_info.h"
 
 #include "client/types.h"  // for BandwidthHostType
 

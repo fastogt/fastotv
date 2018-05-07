@@ -20,8 +20,8 @@
 
 #include <memory>
 
-#include "channels_info.h"
-#include "runtime_channel_info.h"
+#include "commands_info/channels_info.h"
+#include "commands_info/runtime_channel_info.h"
 
 namespace fastoplayer {
 namespace draw {

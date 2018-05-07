@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "epg_info.h"
+#include "commands_info/epg_info.h"
 
 /*
 <channel id="id">

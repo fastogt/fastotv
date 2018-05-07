@@ -23,7 +23,7 @@
 #include <common/error.h>      // for Error
 #include <common/net/types.h>  // for HostAndPort
 
-#include "auth_info.h"
+#include "commands_info/auth_info.h"
 #include "server/user_info.h"  // for user_id_t, UserInfo (ptr only)
 
 #include "server/redis/redis_config.h"

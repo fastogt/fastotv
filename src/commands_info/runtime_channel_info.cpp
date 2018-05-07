@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "runtime_channel_info.h"
+#include "commands_info/runtime_channel_info.h"
 
 #define RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD "channel_id"
 #define RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD "channel_type"

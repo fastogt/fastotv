@@ -32,11 +32,11 @@
 
 #include "inner/inner_client.h"  // for InnerClient
 
-#include "channels_info.h"  // for ChannelsInfo
-#include "client_info.h"    // for ClientInfo
-#include "ping_info.h"      // for ClientPingInfo
-#include "runtime_channel_info.h"
-#include "server_info.h"  // for ServerInfo
+#include "commands_info/channels_info.h"  // for ChannelsInfo
+#include "commands_info/client_info.h"    // for ClientInfo
+#include "commands_info/ping_info.h"      // for ClientPingInfo
+#include "commands_info/runtime_channel_info.h"
+#include "commands_info/server_info.h"  // for ServerInfo
 
 namespace fastotv {
 namespace client {

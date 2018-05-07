@@ -50,27 +50,32 @@ SET(SOURCES_SDS
   ${SOURCE_ROOT}/third-party/sds/sds_fasto.c
 )
 
+SET(CLIENT_SERVER_COMMANDS_INFO_HEADERS
+  ${SOURCE_ROOT}/commands_info/auth_info.h
+  ${SOURCE_ROOT}/commands_info/server_info.h
+  ${SOURCE_ROOT}/commands_info/client_info.h
+  ${SOURCE_ROOT}/commands_info/channel_info.h
+  ${SOURCE_ROOT}/commands_info/epg_info.h
+  ${SOURCE_ROOT}/commands_info/programme_info.h
+  ${SOURCE_ROOT}/commands_info/ping_info.h
+  ${SOURCE_ROOT}/commands_info/channels_info.h
+  ${SOURCE_ROOT}/commands_info/runtime_channel_info.h
+  ${SOURCE_ROOT}/commands_info/chat_message.h
+)
+SET(CLIENT_SERVER_COMMANDS_INFO_SOURCES
+  ${SOURCE_ROOT}/commands_info/auth_info.cpp
+  ${SOURCE_ROOT}/commands_info/server_info.cpp
+  ${SOURCE_ROOT}/commands_info/client_info.cpp
+  ${SOURCE_ROOT}/commands_info/channel_info.cpp
+  ${SOURCE_ROOT}/commands_info/epg_info.cpp
+  ${SOURCE_ROOT}/commands_info/programme_info.cpp
+  ${SOURCE_ROOT}/commands_info/ping_info.cpp
+  ${SOURCE_ROOT}/commands_info/channels_info.cpp
+  ${SOURCE_ROOT}/commands_info/runtime_channel_info.cpp
+  ${SOURCE_ROOT}/commands_info/chat_message.cpp
+)
+
 SET(CLIENT_SERVER_SOURCES
-  ${SOURCE_ROOT}/ping_info.h
-  ${SOURCE_ROOT}/ping_info.cpp
-  ${SOURCE_ROOT}/channels_info.h
-  ${SOURCE_ROOT}/channels_info.cpp
-  ${SOURCE_ROOT}/runtime_channel_info.h
-  ${SOURCE_ROOT}/runtime_channel_info.cpp
-  ${SOURCE_ROOT}/chat_message.h
-  ${SOURCE_ROOT}/chat_message.cpp
-  ${SOURCE_ROOT}/auth_info.h
-  ${SOURCE_ROOT}/auth_info.cpp
-  ${SOURCE_ROOT}/server_info.h
-  ${SOURCE_ROOT}/server_info.cpp
-  ${SOURCE_ROOT}/client_info.h
-  ${SOURCE_ROOT}/client_info.cpp
-  ${SOURCE_ROOT}/channel_info.h
-  ${SOURCE_ROOT}/channel_info.cpp
-  ${SOURCE_ROOT}/epg_info.h
-  ${SOURCE_ROOT}/epg_info.cpp
-  ${SOURCE_ROOT}/programme_info.h
-  ${SOURCE_ROOT}/programme_info.cpp
   ${SOURCE_ROOT}/client_server_types.h
   ${SOURCE_ROOT}/client_server_types.cpp
 ) # server and client common sources
@@ -80,6 +85,9 @@ SET(CLIENT_SERVER_SOURCES
   ${HEADERS_INNER} ${SOURCES_INNER}
   ${HEADERS_SERIALIZER} ${SOURCES_SERIALIZER}
   ${CLIENT_SERVER_SOURCES}
+
+  ${CLIENT_SERVER_COMMANDS_INFO_HEADERS}
+  ${CLIENT_SERVER_COMMANDS_INFO_SOURCES}
 )
 
 SET(PRIVATE_INCLUDE_DIRECTORIES_CLIENT_SERVER

@@ -26,7 +26,7 @@
 #include <common/logger.h>  // for COMPACT_LOG_ERROR
 #include <common/utils.h>
 
-#include "auth_info.h"  // for AuthInfo
+#include "commands_info/auth_info.h"  // for AuthInfo
 
 #include <json-c/json_object.h>   // for json_object_put
 #include <json-c/json_tokener.h>  // for json_tokener_parse

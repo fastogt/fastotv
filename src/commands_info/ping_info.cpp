@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ping_info.h"
+#include "commands_info/ping_info.h"
 
 #include <common/time.h>
 

@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server_info.h"
+#include "commands_info/server_info.h"
 
 #define BANDWIDTH_HOST_FIELD "bandwidth_host"
 

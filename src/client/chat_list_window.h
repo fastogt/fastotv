@@ -20,7 +20,7 @@
 
 #include <player/gui/widgets/list_box.h>
 
-#include "chat_message.h"
+#include "commands_info/chat_message.h"
 
 namespace fastotv {
 namespace client {

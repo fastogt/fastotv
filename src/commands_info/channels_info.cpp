@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "channels_info.h"
+#include "commands_info/channels_info.h"
 
 #include <common/sprintf.h>
 

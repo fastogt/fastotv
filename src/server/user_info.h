@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "channels_info.h"  // for ChannelsInfo
+#include "commands_info/channels_info.h"  // for ChannelsInfo
 
 namespace fastotv {
 namespace server {

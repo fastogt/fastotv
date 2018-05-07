@@ -21,7 +21,7 @@
 #include <player/draw/font.h>
 #include <player/gui/widgets/window.h>
 
-#include "chat_message.h"
+#include "commands_info/chat_message.h"
 
 namespace fastoplayer {
 namespace gui {

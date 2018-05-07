@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "channel_info.h"
+#include "commands_info/channel_info.h"
 
 #define CHANNEL_INFO_EPG_FIELD "epg"
 #define CHANNEL_INFO_VIDEO_ENABLE_FIELD "video"

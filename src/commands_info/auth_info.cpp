@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "auth_info.h"
+#include "commands_info/auth_info.h"
 
 #include <stddef.h>  // for NULL
 #include <string>    // for string

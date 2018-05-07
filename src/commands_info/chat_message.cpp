@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "chat_message.h"
+#include "commands_info/chat_message.h"
 
 #include <common/sprintf.h>
 

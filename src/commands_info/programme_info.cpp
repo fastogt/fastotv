@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "programme_info.h"
+#include "commands_info/programme_info.h"
 
 /*
 <programme start="20170613010000 +0000" stop="20170613020000 +0000" channel="FoxNews.us">

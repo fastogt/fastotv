@@ -28,12 +28,12 @@
 #include <common/logger.h>                  // for COMPACT_LOG_WARNING
 #include <common/threads/thread_manager.h>  // for THREAD_MANAGER
 
-#include "auth_info.h"            // for AuthInfo
-#include "channels_info.h"        // for ChannelsInfo
-#include "client_info.h"          // for ClientInfo
-#include "client_server_types.h"  // for Encode
-#include "inner/inner_client.h"   // for InnerClient
-#include "ping_info.h"            // for ClientPingInfo
+#include "client_server_types.h"          // for Encode
+#include "commands_info/auth_info.h"      // for AuthInfo
+#include "commands_info/channels_info.h"  // for ChannelsInfo
+#include "commands_info/client_info.h"    // for ClientInfo
+#include "commands_info/ping_info.h"      // for ClientPingInfo
+#include "inner/inner_client.h"           // for InnerClient
 
 #include "server/commands.h"
 
@@ -42,11 +42,11 @@
 #include "server/inner/inner_external_notifier.h"  // for InnerSubHandler
 #include "server/inner/inner_tcp_client.h"         // for InnerTcpClient
 
-#include "runtime_channel_info.h"
-#include "server/server_host.h"      // for ServerHost
-#include "server/user_info.h"        // for user_id_t, UserInfo
-#include "server/user_state_info.h"  // for UserStateInfo
-#include "server_info.h"             // for ServerInfo
+#include "commands_info/runtime_channel_info.h"
+#include "commands_info/server_info.h"  // for ServerInfo
+#include "server/server_host.h"         // for ServerHost
+#include "server/user_info.h"           // for user_id_t, UserInfo
+#include "server/user_state_info.h"     // for UserStateInfo
 
 namespace fastotv {
 namespace server {
