@@ -143,17 +143,16 @@ common::Error InnerClient::WriteMessage(const std::string& message) {
   const char* data_ptr = compressed.data();
   const size_t size = compressed.size();
 
-  const protocoled_size_t data_size = size;
-  if (data_size > MAX_COMMAND_SIZE) {
-    return common::make_error(common::MemSPrintf("Reached limit of command size: %u", data_size));
+  if (size > MAX_COMMAND_SIZE) {
+    return common::make_error(common::MemSPrintf("Reached limit of command size: %u", size));
   }
 
-  const protocoled_size_t message_size = common::HostToNet32(data_size);  // stable
+  const protocoled_size_t message_size = common::HostToNet32(size);  // stable
   const size_t protocoled_data_len = size + sizeof(protocoled_size_t);
 
   char* protocoled_data = static_cast<char*>(malloc(protocoled_data_len));
   memcpy(protocoled_data, &message_size, sizeof(protocoled_size_t));
-  memcpy(protocoled_data + sizeof(protocoled_size_t), data_ptr, data_size);
+  memcpy(protocoled_data + sizeof(protocoled_size_t), data_ptr, size);
   size_t nwrite = 0;
   err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);
   if (nwrite != protocoled_data_len) {  // connection closed
