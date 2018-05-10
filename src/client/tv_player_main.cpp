@@ -36,16 +36,14 @@ extern "C" {
 #include "client/player.h"  // for Player
 
 void init_ffmpeg() {
-  init_dynload();
-
 /* register all codecs, demux and protocols */
 #if CONFIG_AVDEVICE
   avdevice_register_all();
 #endif
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 #if CONFIG_AVFILTER
   avfilter_register_all();
 #endif
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
   av_register_all();
 #endif
 }

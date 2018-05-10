@@ -934,8 +934,6 @@ void show_help_player(const std::string& topic) {
   show_help(topic, true);
 }
 
-void init_dynload(void) {}
-
 bool parse_bool(const std::string& bool_str, bool* result) {
   if (bool_str.empty()) {
     WARNING_LOG() << "Can't parse value(bool) invalid arguments!";

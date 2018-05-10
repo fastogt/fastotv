@@ -62,11 +62,6 @@ void show_sinks(const std::string& device);
 void show_sources(const std::string& device);
 #endif
 
-/**
- * Initialize dynamic library loading
- */
-void init_dynload(void);
-
 bool parse_bool(const std::string& bool_str, bool* result);
 
 template <typename T>

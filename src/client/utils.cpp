@@ -33,7 +33,6 @@ class CallbackHolder {
   static int download_interrupt_callback(void* user_data) {
     CallbackHolder* holder = static_cast<CallbackHolder*>(user_data);
     if (holder->is_quit()) {
-      delete holder;
       return 1;
     }
 
@@ -61,9 +60,9 @@ bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff, q
   }
 
   const char* in_filename = url_str.c_str();
-  CallbackHolder* holder = new CallbackHolder(cb);
+  CallbackHolder holder(cb);
   ic->interrupt_callback.callback = CallbackHolder::download_interrupt_callback;
-  ic->interrupt_callback.opaque = holder;
+  ic->interrupt_callback.opaque = &holder;
   int open_result = avformat_open_input(&ic, in_filename, NULL, NULL);
   if (open_result < 0) {
     avformat_free_context(ic);

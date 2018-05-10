@@ -207,7 +207,7 @@ void IoService::HandleStarted() {
   DCHECK(result);
 }
 
-void IoService::HandleStoped() {
+void IoService::HandleStopped() {
   loop_thread_->JoinAndGet();
 }
 
