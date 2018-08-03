@@ -1,3 +1,5 @@
+![512 px_horizontal-01](https://user-images.githubusercontent.com/36637989/43616278-a089589e-96b3-11e8-8bc2-60615366e442.png)
+
 About FastoTV
 ===============
 [![Travis Build Status](https://travis-ci.org/fastogt/gpu_player.svg?branch=master)](https://travis-ci.org/fastogt/fastotv)
