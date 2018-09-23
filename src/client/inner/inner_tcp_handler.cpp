@@ -490,8 +490,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
           PingApproveResponceFail(id, parse_err->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(parse_err->GetDescription(), EINVAL);
     }
 
@@ -509,8 +508,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
           GetServerInfoApproveResponceFail(id, parse_err->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(parse_err->GetDescription(), EINVAL);
     }
 
@@ -544,8 +542,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
           GetChannelsApproveResponceFail(id, parse_err->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(parse_err->GetDescription(), EINVAL);
     }
 
@@ -565,8 +562,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
           GetRuntimeChannelInfoApproveResponceFail(id, parse_err->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(parse_err->GetDescription(), EINVAL);
     }
 
@@ -586,8 +582,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
           SendChatMessageApproveResponceFail(id, parse_err->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(parse_err->GetDescription(), EINVAL);
     }
 

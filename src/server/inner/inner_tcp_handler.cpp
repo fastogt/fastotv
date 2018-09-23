@@ -500,8 +500,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (parse_err) {
       const std::string error_str = parse_err->GetDescription();
       common::protocols::three_way_handshake::cmd_approve_t resp = PingApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
@@ -511,8 +510,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (err_des) {
       const std::string error_str = parse_err->GetDescription();
       common::protocols::three_way_handshake::cmd_approve_t resp = PingApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
@@ -524,8 +522,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
           WhoAreYouApproveResponceFail(id, parse_err->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(parse_err->GetDescription(), EINVAL);
     }
 
@@ -535,8 +532,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (err_des) {
       const std::string error_str = err_des->GetDescription();
       common::protocols::three_way_handshake::cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
@@ -544,8 +540,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       common::ErrnoError lerr = common::make_errno_error_inval();
       common::protocols::three_way_handshake::cmd_approve_t resp =
           WhoAreYouApproveResponceFail(id, lerr->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return lerr;
     }
 
@@ -555,8 +550,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (err_find) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
           WhoAreYouApproveResponceFail(id, err_find->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(err_find->GetDescription(), EINVAL);
     }
 
@@ -564,8 +558,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (!registered_user.HaveDevice(dev)) {
       const std::string error_str = "Unknown device reject";
       common::protocols::three_way_handshake::cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
@@ -587,8 +580,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (fclient) {
       const std::string error_str = "Double connection reject";
       common::protocols::three_way_handshake::cmd_approve_t resp = WhoAreYouApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
@@ -610,8 +602,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (parse_err) {
       const std::string error_str = parse_err->GetDescription();
       common::protocols::three_way_handshake::cmd_approve_t resp = SystemInfoApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
@@ -621,8 +612,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     if (err_des) {
       const std::string error_str = err_des->GetDescription();
       common::protocols::three_way_handshake::cmd_approve_t resp = SystemInfoApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
@@ -630,8 +620,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       common::ErrnoError lerr = common::make_errno_error_inval();
       common::protocols::three_way_handshake::cmd_approve_t resp =
           SystemInfoApproveResponceFail(id, lerr->GetDescription());
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return lerr;
     }
 
@@ -644,8 +633,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       const std::string error_str = parse_err->GetDescription();
       common::protocols::three_way_handshake::cmd_approve_t resp =
           ServerSendChatMessageApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
@@ -656,8 +644,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
       const std::string error_str = err_des->GetDescription();
       common::protocols::three_way_handshake::cmd_approve_t resp =
           ServerSendChatMessageApproveResponceFail(id, error_str);
-      common::ErrnoError write_err = connection->Write(resp);
-      UNUSED(write_err);
+      ignore_result(connection->Write(resp));
       return common::make_errno_error(error_str, EINVAL);
     }
 
