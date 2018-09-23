@@ -36,78 +36,79 @@ const char* InnerClient::ClassName() const {
   return "InnerClient";
 }
 
-common::Error InnerClient::Write(const common::protocols::three_way_handshake::cmd_request_t& request) {
+common::ErrnoError InnerClient::Write(const common::protocols::three_way_handshake::cmd_request_t& request) {
   return WriteMessage(request.GetCmd());
 }
 
-common::Error InnerClient::Write(const common::protocols::three_way_handshake::cmd_responce_t& responce) {
+common::ErrnoError InnerClient::Write(const common::protocols::three_way_handshake::cmd_responce_t& responce) {
   return WriteMessage(responce.GetCmd());
 }
 
-common::Error InnerClient::Write(const common::protocols::three_way_handshake::cmd_approve_t& approve) {
+common::ErrnoError InnerClient::Write(const common::protocols::three_way_handshake::cmd_approve_t& approve) {
   return WriteMessage(approve.GetCmd());
 }
 
-common::Error InnerClient::ReadDataSize(protocoled_size_t* sz) {
+common::ErrnoError InnerClient::ReadDataSize(protocoled_size_t* sz) {
   if (!sz) {
-    return common::make_error_inval();
+    return common::make_errno_error_inval();
   }
 
   protocoled_size_t lsz = 0;
   size_t nread = 0;
-  common::Error err = Read(reinterpret_cast<char*>(&lsz), sizeof(protocoled_size_t), &nread);
+  common::ErrnoError err = Read(reinterpret_cast<char*>(&lsz), sizeof(protocoled_size_t), &nread);
   if (err) {
     return err;
   }
 
   if (nread != sizeof(protocoled_size_t)) {  // connection closed
     if (nread == 0) {
-      return common::make_error("Connection closed");
+      return common::make_errno_error("Connection closed", ECONNRESET);
     }
-    return common::make_error(common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
-                                                 sizeof(protocoled_size_t), nread));
+    return common::make_errno_error(common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu",
+                                                       sizeof(protocoled_size_t), nread),
+                                    EINVAL);
   }
 
   *sz = lsz;
-  return common::Error();
+  return common::ErrnoError();
 }
 
-common::Error InnerClient::ReadMessage(char* out, protocoled_size_t size) {
+common::ErrnoError InnerClient::ReadMessage(char* out, protocoled_size_t size) {
   if (!out || size == 0) {
-    return common::make_error_inval();
+    return common::make_errno_error_inval();
   }
 
   size_t nread;
-  common::Error err = Read(out, size, &nread);
+  common::ErrnoError err = Read(out, size, &nread);
   if (err) {
     return err;
   }
 
   if (nread != size) {  // connection closed
     if (nread == 0) {
-      return common::make_error("Connection closed");
+      return common::make_errno_error("Connection closed", ECONNRESET);
     }
-    return common::make_error(
-        common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu", size, nread));
+    return common::make_errno_error(
+        common::MemSPrintf("Error when reading needed to read: %lu bytes, but readed: %lu", size, nread), EINVAL);
   }
 
-  return common::Error();
+  return common::ErrnoError();
 }
 
-common::Error InnerClient::ReadCommand(std::string* out) {
+common::ErrnoError InnerClient::ReadCommand(std::string* out) {
   if (!out) {
-    return common::make_error_inval();
+    return common::make_errno_error_inval();
   }
 
   protocoled_size_t message_size;
-  common::Error err = ReadDataSize(&message_size);
+  common::ErrnoError err = ReadDataSize(&message_size);
   if (err) {
     return err;
   }
 
   message_size = common::NetToHost32(message_size);  // stable
   if (message_size > MAX_COMMAND_SIZE) {
-    return common::make_error(common::MemSPrintf("Reached limit of command size: %u", message_size));
+    return common::make_errno_error(common::MemSPrintf("Reached limit of command size: %u", message_size), EINVAL);
   }
 
   char* msg = static_cast<char*>(malloc(message_size));
@@ -119,32 +120,32 @@ common::Error InnerClient::ReadCommand(std::string* out) {
 
   const common::StringPiece compressed(msg, message_size);
   std::string un_compressed;
-  err = compressor_->Decode(compressed, &un_compressed);
+  common::Error dec_err = compressor_->Decode(compressed, &un_compressed);
   free(msg);
-  if (err) {
-    return err;
+  if (dec_err) {
+    return common::make_errno_error(dec_err->GetDescription(), EINVAL);
   }
 
   *out = un_compressed;
-  return common::Error();
+  return common::ErrnoError();
 }
 
-common::Error InnerClient::WriteMessage(const std::string& message) {
+common::ErrnoError InnerClient::WriteMessage(const std::string& message) {
   if (message.empty()) {
-    return common::make_error_inval();
+    return common::make_errno_error_inval();
   }
 
   std::string compressed;
-  common::Error err = compressor_->Encode(message, &compressed);
-  if (err) {
-    return err;
+  common::Error enc_err = compressor_->Encode(message, &compressed);
+  if (enc_err) {
+    return common::make_errno_error(enc_err->GetDescription(), EINVAL);
   }
 
   const char* data_ptr = compressed.data();
   const size_t size = compressed.size();
 
   if (size > MAX_COMMAND_SIZE) {
-    return common::make_error(common::MemSPrintf("Reached limit of command size: %u", size));
+    return common::make_errno_error(common::MemSPrintf("Reached limit of command size: %u", size), EINVAL);
   }
 
   const protocoled_size_t message_size = common::HostToNet32(size);  // stable
@@ -154,11 +155,12 @@ common::Error InnerClient::WriteMessage(const std::string& message) {
   memcpy(protocoled_data, &message_size, sizeof(protocoled_size_t));
   memcpy(protocoled_data + sizeof(protocoled_size_t), data_ptr, size);
   size_t nwrite = 0;
-  err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);
+  common::ErrnoError err = TcpClient::Write(protocoled_data, protocoled_data_len, &nwrite);
   if (nwrite != protocoled_data_len) {  // connection closed
     free(protocoled_data);
-    return common::make_error(
-        common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu", protocoled_data_len, nwrite));
+    return common::make_errno_error(
+        common::MemSPrintf("Error when writing needed to write: %lu, but writed: %lu", protocoled_data_len, nwrite),
+        EINVAL);
   }
 
   free(protocoled_data);

@@ -38,17 +38,17 @@ class InnerClient : public common::libev::tcp::TcpClient {
 
   const char* ClassName() const override;
 
-  common::Error Write(const common::protocols::three_way_handshake::cmd_request_t& request) WARN_UNUSED_RESULT;
-  common::Error Write(const common::protocols::three_way_handshake::cmd_responce_t& responce) WARN_UNUSED_RESULT;
-  common::Error Write(const common::protocols::three_way_handshake::cmd_approve_t& approve) WARN_UNUSED_RESULT;
+  common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_request_t& request) WARN_UNUSED_RESULT;
+  common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_responce_t& responce) WARN_UNUSED_RESULT;
+  common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_approve_t& approve) WARN_UNUSED_RESULT;
 
-  common::Error ReadCommand(std::string* out) WARN_UNUSED_RESULT;
+  common::ErrnoError ReadCommand(std::string* out) WARN_UNUSED_RESULT;
 
  private:
-  common::Error ReadDataSize(protocoled_size_t* sz) WARN_UNUSED_RESULT;
-  common::Error ReadMessage(char* out, protocoled_size_t size) WARN_UNUSED_RESULT;
+  common::ErrnoError ReadDataSize(protocoled_size_t* sz) WARN_UNUSED_RESULT;
+  common::ErrnoError ReadMessage(char* out, protocoled_size_t size) WARN_UNUSED_RESULT;
 
-  common::Error WriteMessage(const std::string& message) WARN_UNUSED_RESULT;
+  common::ErrnoError WriteMessage(const std::string& message) WARN_UNUSED_RESULT;
   using common::libev::tcp::TcpClient::Read;
   using common::libev::tcp::TcpClient::Write;
 

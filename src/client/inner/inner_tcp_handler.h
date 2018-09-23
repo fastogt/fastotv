@@ -73,10 +73,10 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
 #endif
 
  private:
-  common::Error CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,
-                                                   const common::net::HostAndPort& host,
-                                                   BandwidthHostType hs,
-                                                   bandwidth::TcpBandwidthClient** out_band) WARN_UNUSED_RESULT;
+  common::ErrnoError CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,
+                                                        const common::net::HostAndPort& host,
+                                                        BandwidthHostType hs,
+                                                        bandwidth::TcpBandwidthClient** out_band) WARN_UNUSED_RESULT;
 
   virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
                                          common::protocols::three_way_handshake::cmd_seq_t id,
@@ -92,11 +92,11 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
                                          char* argv[]) override;
 
   // inner handlers
-  common::Error HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
-                                                   common::protocols::three_way_handshake::cmd_seq_t id,
-                                                   int argc,
-                                                   char* argv[]) WARN_UNUSED_RESULT;
-  common::Error HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
+  common::ErrnoError HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
+                                                        common::protocols::three_way_handshake::cmd_seq_t id,
+                                                        int argc,
+                                                        char* argv[]) WARN_UNUSED_RESULT;
+  common::ErrnoError HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
                                                  common::protocols::three_way_handshake::cmd_seq_t id,
                                                  int argc,
                                                  char* argv[]) WARN_UNUSED_RESULT;

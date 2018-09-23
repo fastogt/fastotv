@@ -50,19 +50,19 @@ const char* TcpBandwidthClient::ClassName() const {
   return "TcpBandwidthClient";
 }
 
-common::Error TcpBandwidthClient::StartSession(uint16_t ms_betwen_send, common::time64_t duration) {
+common::ErrnoError TcpBandwidthClient::StartSession(uint16_t ms_betwen_send, common::time64_t duration) {
   static const size_t buff_size = sizeof(struct new_session_pkt);
   char bytes[buff_size] = {0};
   struct new_session_pkt* session_pkt = reinterpret_cast<struct new_session_pkt*>(bytes);
   session_pkt->iat = ms_betwen_send;
   size_t writed = 0;
-  common::Error err = Write(bytes, buff_size, &writed);
+  common::ErrnoError err = Write(bytes, buff_size, &writed);
   if (err) {
     return err;
   }
 
   duration_ = duration;
-  return common::Error();
+  return common::ErrnoError();
 }
 
 size_t TcpBandwidthClient::GetTotalDownloadedBytes() const {
@@ -77,8 +77,8 @@ BandwidthHostType TcpBandwidthClient::GetHostType() const {
   return host_type_;
 }
 
-common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
-  common::Error err = base_class::Read(out, size, nread);
+common::ErrnoError TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
+  common::ErrnoError err = base_class::Read(out, size, nread);
   if (err) {
     return err;
   }
@@ -91,9 +91,9 @@ common::Error TcpBandwidthClient::Read(char* out, size_t size, size_t* nread) {
   const common::time64_t data_interval = cur_ts - start_ts_;
   if (duration_ && data_interval >= duration_) {
     downloaded_bytes_per_sec_ = fastoplayer::media::CalculateBandwidth(total_downloaded_bytes_, data_interval);
-    return common::ErrorValue(common::COMMON_EINTR);
+    return common::make_errno_error(EINTR);
   }
-  return common::Error();
+  return common::ErrnoError();
 }
 
 }  // namespace bandwidth

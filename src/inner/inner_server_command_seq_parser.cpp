@@ -100,8 +100,8 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   common::Error err = common::protocols::three_way_handshake::ParseCommand(input_command, &seq, &id, &cmd_str);
   if (err) {
     WARNING_LOG() << err->GetDescription();
-    err = connection->Close();
-    DCHECK(!err);
+    common::ErrnoError errn = connection->Close();
+    DCHECK(!errn);
     delete connection;
     return;
   }
@@ -111,8 +111,8 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
   if (argv == NULL) {
     const std::string error_str = "PROBLEM PARSING INNER COMMAND: " + input_command;
     WARNING_LOG() << error_str;
-    err = connection->Close();
-    DCHECK(!err);
+    common::ErrnoError errn = connection->Close();
+    DCHECK(!errn);
     delete connection;
     return;
   }
@@ -129,8 +129,8 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
     HandleInnerApproveCommand(connection, id, argc, argv);
   } else {
     DNOTREACHED();
-    err = connection->Close();
-    DCHECK(!err);
+    common::ErrnoError errn = connection->Close();
+    DCHECK(!errn);
     delete connection;
   }
   sdsfreesplitres(argv, argc);

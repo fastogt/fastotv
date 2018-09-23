@@ -112,8 +112,8 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
   }
 
   common::protocols::three_way_handshake::cmd_request_t req(id, input_command);
-  err = fclient->Write(req);
-  if (err) {
+  common::ErrnoError errn = fclient->Write(req);
+  if (errn) {
     int argc;
     sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
     char* command = argv[0];

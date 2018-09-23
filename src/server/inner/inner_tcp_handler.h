@@ -115,14 +115,14 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
                                          char* argv[]) override;
 
   // inner handlers
-  common::Error HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
-                                                   common::protocols::three_way_handshake::cmd_seq_t id,
-                                                   int argc,
-                                                   char* argv[]) WARN_UNUSED_RESULT;
-  common::Error HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
-                                                 common::protocols::three_way_handshake::cmd_seq_t id,
-                                                 int argc,
-                                                 char* argv[]) WARN_UNUSED_RESULT;
+  common::ErrnoError HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
+                                                        common::protocols::three_way_handshake::cmd_seq_t id,
+                                                        int argc,
+                                                        char* argv[]) WARN_UNUSED_RESULT;
+  common::ErrnoError HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
+                                                      common::protocols::three_way_handshake::cmd_seq_t id,
+                                                      int argc,
+                                                      char* argv[]) WARN_UNUSED_RESULT;
 
   common::Error ParserResponceResponceCommand(int argc, char* argv[], json_object** out) WARN_UNUSED_RESULT;
 
