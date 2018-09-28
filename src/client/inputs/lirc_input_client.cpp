@@ -30,28 +30,28 @@ namespace fastotv {
 namespace client {
 namespace inputs {
 
-common::Error LircInit(int* fd, struct lirc_config** cfg) {
+common::ErrnoError LircInit(int* fd, struct lirc_config** cfg) {
   if (!fd || !cfg) {
-    return common::make_error_inval();
+    return common::make_errno_error_inval();
   }
 
   char* copy = common::strdup(PROJECT_NAME_LOWERCASE);  // copy for removing warning
   int lfd = lirc_init(copy, 1);
   common::utils::freeifnotnull(copy);
   if (lfd == -1) {
-    return common::make_error("Lirc init failed!");
+    return common::make_errno_error("Lirc init failed!", EAGAIN);
   }
 
   common::ErrnoError err = common::file_system::set_blocking_descriptor(lfd, false);
   if (err) {
-    return common::ErrorValue(err->GetDescription());
+    return err;
   }
 
   lirc_config* lcfg = NULL;
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string lirc_config_path = common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
   if (lirc_config_path.empty()) {
-    return common::make_error("Lirc invalid config path!");
+    return common::make_errno_error("Lirc invalid config path!", EAGAIN);
   }
 
   const char* lirc_config_path_ptr = lirc_config_path.c_str();
@@ -61,27 +61,27 @@ common::Error LircInit(int* fd, struct lirc_config** cfg) {
   if (res == -1) {
     LircDeinit(lfd, NULL);
     std::string msg_error = common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
-    return common::make_error(msg_error);
+    return common::make_errno_error(msg_error, EAGAIN);
   }
 
   *fd = lfd;
   *cfg = lcfg;
-  return common::Error();
+  return common::ErrnoError();
 }
 
-common::Error LircDeinit(int fd, struct lirc_config** cfg) {
+common::ErrnoError LircDeinit(int fd, struct lirc_config** cfg) {
   if (fd == -1) {
-    return common::Error();
+    return common::ErrnoError();
   }
 
   if (lirc_deinit() == -1) {
-    return common::make_error("Lirc deinit failed!");
+    return common::make_errno_error("Lirc deinit failed!", EAGAIN);
   }
 
   if (cfg) {
     *cfg = NULL;
   }
-  return common::Error();
+  return common::ErrnoError();
 }
 
 LircInputClient::LircInputClient(common::libev::IoLoop* server, int fd, struct lirc_config* cfg)
@@ -106,7 +106,7 @@ common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
   return common::Error();
 }
 
-common::Error LircInputClient::DoClose() {
+common::ErrnoError LircInputClient::DoClose() {
   return LircDeinit(GetFd(), &cfg_);
 }
 

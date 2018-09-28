@@ -63,7 +63,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
 #ifdef HAVE_LIRC
     int fd = INVALID_DESCRIPTOR;
     struct lirc_config* lcd = NULL;
-    common::Error err = inputs::LircInit(&fd, &lcd);
+    common::ErrnoError err = inputs::LircInit(&fd, &lcd);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     } else {

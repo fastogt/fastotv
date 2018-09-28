@@ -34,8 +34,8 @@ namespace fastotv {
 namespace client {
 namespace inputs {
 
-common::Error LircInit(int* fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
-common::Error LircDeinit(int fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
+common::ErrnoError LircInit(int* fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
+common::ErrnoError LircDeinit(int fd, struct lirc_config** cfg) WARN_UNUSED_RESULT;
 
 class LircInputClient : public common::libev::DescriptorClient {
  public:
@@ -46,7 +46,7 @@ class LircInputClient : public common::libev::DescriptorClient {
   common::Error ReadWithCallback(read_callback_t cb) WARN_UNUSED_RESULT;
 
  private:
-  virtual common::Error DoClose() override;
+  virtual common::ErrnoError DoClose() override;
 
   using base_class::Read;
   using base_class::Write;
