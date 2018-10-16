@@ -59,8 +59,8 @@ common::protocols::three_way_handshake::cmd_seq_t InnerServerCommandSeqParser::N
   char bytes[sizeof(seq_id_t)];
   const seq_id_t stabled = common::NetToHost64(next_id);  // for human readable hex
   memcpy(&bytes, &stabled, sizeof(seq_id_t));
-  common::protocols::three_way_handshake::cmd_seq_t hexed =
-      common::utils::hex::encode(std::string(bytes, sizeof(seq_id_t)), true);
+  common::protocols::three_way_handshake::cmd_seq_t hexed;
+  common::utils::hex::encode(std::string(bytes, sizeof(seq_id_t)), true, &hexed);
   return hexed;
 }
 
