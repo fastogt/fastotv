@@ -118,15 +118,15 @@ common::ErrnoError InnerClient::ReadCommand(std::string* out) {
     return err;
   }
 
-  const common::StringPiece compressed(msg, message_size);
-  std::string un_compressed;
+  const common::char_buffer_t compressed = MAKE_CHAR_BUFFER_SIZE(msg, message_size);
+  common::char_buffer_t un_compressed;
   common::Error dec_err = compressor_->Decode(compressed, &un_compressed);
   free(msg);
   if (dec_err) {
     return common::make_errno_error(dec_err->GetDescription(), EINVAL);
   }
 
-  *out = un_compressed;
+  *out = un_compressed.as_string();
   return common::ErrnoError();
 }
 
@@ -135,7 +135,7 @@ common::ErrnoError InnerClient::WriteMessage(const std::string& message) {
     return common::make_errno_error_inval();
   }
 
-  std::string compressed;
+  common::char_buffer_t compressed;
   common::Error enc_err = compressor_->Encode(message, &compressed);
   if (enc_err) {
     return common::make_errno_error(enc_err->GetDescription(), EINVAL);
