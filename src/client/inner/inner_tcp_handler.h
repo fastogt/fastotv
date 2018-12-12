@@ -97,9 +97,9 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
                                                         int argc,
                                                         char* argv[]) WARN_UNUSED_RESULT;
   common::ErrnoError HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
-                                                 common::protocols::three_way_handshake::cmd_seq_t id,
-                                                 int argc,
-                                                 char* argv[]) WARN_UNUSED_RESULT;
+                                                      common::protocols::three_way_handshake::cmd_seq_t id,
+                                                      int argc,
+                                                      char* argv[]) WARN_UNUSED_RESULT;
 
   common::Error ParserResponceResponceCommand(int argc, char* argv[], json_object** out) WARN_UNUSED_RESULT;
 

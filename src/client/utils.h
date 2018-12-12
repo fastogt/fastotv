@@ -27,7 +27,7 @@ namespace fastotv {
 namespace client {
 
 typedef std::function<bool()> quit_callback_t;
-bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff, quit_callback_t cb);
+bool DownloadFileToBuffer(const common::uri::Url& uri, common::char_buffer_t* buff, quit_callback_t cb);
 
 }  // namespace client
 }  // namespace fastotv

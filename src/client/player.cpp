@@ -512,7 +512,7 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
       auto load_image_cb = [download_interrupt_cb, entry, uri, channel_dir]() {
         const std::string channel_icon_path = entry.GetIconPath();
         if (!common::file_system::is_file_exist(channel_icon_path)) {  // if not exist trying to download
-          common::buffer_t buff;
+          common::char_buffer_t buff;
           bool is_file_downloaded = DownloadFileToBuffer(uri, &buff, download_interrupt_cb);
           if (!is_file_downloaded) {
             return;
@@ -528,7 +528,7 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
           }
 
           size_t writed;
-          err = channel_icon_file.Write(buff, &writed);
+          err = channel_icon_file.WriteBuffer(buff, &writed);
           if (err) {
             DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
             err = channel_icon_file.Close();

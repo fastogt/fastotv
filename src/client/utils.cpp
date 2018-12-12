@@ -44,7 +44,7 @@ class CallbackHolder {
 };
 }  // namespace
 
-bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff, quit_callback_t cb) {
+bool DownloadFileToBuffer(const common::uri::Url& uri, common::char_buffer_t* buff, quit_callback_t cb) {
   if (!uri.IsValid() || !buff || !cb) {
     return false;
   }
@@ -77,7 +77,7 @@ bool DownloadFileToBuffer(const common::uri::Url& uri, common::buffer_t* buff, q
     return false;
   }
 
-  *buff = common::buffer_t(pkt.data, pkt.data + pkt.size);
+  *buff = common::char_buffer_t(pkt.data, pkt.data + pkt.size);
   av_packet_unref(&pkt);
   avformat_free_context(ic);
   ic = NULL;

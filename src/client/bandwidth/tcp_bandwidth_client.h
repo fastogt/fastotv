@@ -37,7 +37,7 @@ class TcpBandwidthClient : public common::libev::tcp::TcpClient {
 
   common::ErrnoError StartSession(uint16_t ms_betwen_send, common::time64_t duration) WARN_UNUSED_RESULT;
 
-  virtual common::ErrnoError Read(char* out, size_t size, size_t* nread) override;
+  virtual common::ErrnoError Read(void* out, size_t size, size_t* nread) override;
 
   size_t GetTotalDownloadedBytes() const;
   bandwidth_t GetDownloadBytesPerSecond() const;
