@@ -18,8 +18,8 @@
 
 #include "server/redis/redis_storage.h"
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
+#include <string>  // for string
+#include <vector>
 
 #include <hiredis/hiredis.h>  // for redisFree, freeR...
 
@@ -52,7 +52,7 @@ common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInf
     return common::make_error("Can't parse database field");
   }
 
-  json_object* jid = NULL;
+  json_object* jid = nullptr;
   json_bool jid_exists = json_object_object_get_ex(obj, ID_FIELD, &jid);  // mongodb id
   if (!jid_exists) {
     json_object_put(obj);
@@ -114,7 +114,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
     return common::make_error_inval();
   }
 
-  redisContext* redis = NULL;
+  redisContext* redis = nullptr;
   common::Error err = redis_connect(config_, &redis);
   if (err) {
     return err;
@@ -157,7 +157,7 @@ common::Error RedisStorage::GetChatChannels(std::vector<stream_id>* channels) co
     return common::make_error_inval();
   }
 
-  redisContext* redis = NULL;
+  redisContext* redis = nullptr;
   common::Error err = redis_connect(config_, &redis);
   if (err) {
     return err;

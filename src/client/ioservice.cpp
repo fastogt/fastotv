@@ -18,8 +18,7 @@
 
 #include "client/ioservice.h"
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
+#include <string>  // for string
 
 #include <common/application/application.h>  // for fApp
 #include <common/error.h>                    // for DEBUG_MSG_ERROR, Error
@@ -59,7 +58,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
 
   ~PrivateHandler() override {}
 
-  virtual void PreLooped(common::libev::IoLoop* server) override {
+  void PreLooped(common::libev::IoLoop* server) override {
 #ifdef HAVE_LIRC
     int fd = INVALID_DESCRIPTOR;
     struct lirc_config* lcd = nullptr;
@@ -74,7 +73,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::PreLooped(server);
   }
 
-  virtual void Closed(common::libev::IoClient* client) override {
+  void Closed(common::libev::IoClient* client) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
       client_ = nullptr;
@@ -84,7 +83,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::Closed(client);
   }
 
-  virtual void DataReceived(common::libev::IoClient* client) override {
+  void DataReceived(common::libev::IoClient* client) override {
 #ifdef HAVE_LIRC
     if (client == client_) {
       auto cb = [this](const std::string& code) {
@@ -106,7 +105,7 @@ class PrivateHandler : public inner::InnerTcpHandler {
     base_class::DataReceived(client);
   }
 
-  virtual void PostLooped(common::libev::IoLoop* server) override {
+  void PostLooped(common::libev::IoLoop* server) override {
     UNUSED(server);
 #ifdef HAVE_LIRC
     if (client_) {

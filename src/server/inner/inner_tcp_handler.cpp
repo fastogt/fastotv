@@ -18,8 +18,8 @@
 
 #include "server/inner/inner_tcp_handler.h"
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
+#include <string>  // for string
+#include <vector>
 
 #include <json-c/json_object.h>  // for json_object
 
@@ -54,8 +54,8 @@ namespace inner {
 
 InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent, const Config& config)
     : parent_(parent),
-      sub_commands_in_(NULL),
-      handler_(NULL),
+      sub_commands_in_(nullptr),
+      handler_(nullptr),
       ping_client_id_timer_(INVALID_TIMER_ID),
       reread_cache_id_timer_(INVALID_TIMER_ID),
       config_(config),
@@ -208,7 +208,7 @@ void InnerTcpHandlerHost::UpdateCache() {
 }
 
 void InnerTcpHandlerHost::PublishUserStateInfo(const UserStateInfo& state) {
-  json_object* user_state_json = NULL;
+  json_object* user_state_json = nullptr;
   common::Error err = state.Serialize(&user_state_json);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -236,7 +236,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
   char* command = argv[0];
   if (IS_EQUAL_COMMAND(command, CLIENT_PING)) {
     ClientPingInfo ping;
-    json_object* jping_info = NULL;
+    json_object* jping_info = nullptr;
     common::Error err_ser = ping.Serialize(&jping_info);
     if (err_ser) {
       common::protocols::three_way_handshake::cmd_responce_t resp = PingResponceFail(id, err_ser->GetDescription());
@@ -278,7 +278,7 @@ void InnerTcpHandlerHost::HandleInnerRequestCommand(fastotv::inner::InnerClient*
     }
 
     ServerInfo serv(config_.server.bandwidth_host);
-    json_object* jserver_info = NULL;
+    json_object* jserver_info = nullptr;
     err_ser = serv.Serialize(&jserver_info);
     CHECK(!err_ser) << "Serialize error: " << err_ser->GetDescription();
 
@@ -495,7 +495,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     char* argv[]) {
   char* command = argv[1];
   if (IS_EQUAL_COMMAND(command, SERVER_PING)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       const std::string error_str = parse_err->GetDescription();
@@ -517,7 +517,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     common::protocols::three_way_handshake::cmd_approve_t resp = PingApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
@@ -597,7 +597,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     INFO_LOG() << "Welcome registered user: " << uauth.GetLogin();
     return common::ErrnoError();
   } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       const std::string error_str = parse_err->GetDescription();
@@ -627,7 +627,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleInnerSuccsessResponceCommand(
     common::protocols::three_way_handshake::cmd_approve_t resp = SystemInfoApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       const std::string error_str = parse_err->GetDescription();

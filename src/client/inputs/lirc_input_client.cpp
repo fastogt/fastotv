@@ -47,7 +47,7 @@ common::ErrnoError LircInit(int* fd, struct lirc_config** cfg) {
     return err;
   }
 
-  lirc_config* lcfg = NULL;
+  lirc_config* lcfg = nullptr;
   const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
   const std::string lirc_config_path = common::file_system::make_path(absolute_source_dir, LIRCRC_CONFIG_PATH_RELATIVE);
   if (lirc_config_path.empty()) {
@@ -56,10 +56,10 @@ common::ErrnoError LircInit(int* fd, struct lirc_config** cfg) {
 
   const char* lirc_config_path_ptr = lirc_config_path.c_str();
   char* lirc_config_copy_ptr = common::strdup(lirc_config_path_ptr);  // copy for removing warning
-  int res = lirc_readconfig(lirc_config_copy_ptr, &lcfg, NULL);
+  int res = lirc_readconfig(lirc_config_copy_ptr, &lcfg, nullptr);
   common::utils::freeifnotnull(lirc_config_copy_ptr);
   if (res == -1) {
-    LircDeinit(lfd, NULL);
+    LircDeinit(lfd, nullptr);
     std::string msg_error = common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
     return common::make_errno_error(msg_error, EAGAIN);
   }
@@ -79,7 +79,7 @@ common::ErrnoError LircDeinit(int fd, struct lirc_config** cfg) {
   }
 
   if (cfg) {
-    *cfg = NULL;
+    *cfg = nullptr;
   }
   return common::ErrnoError();
 }
@@ -88,11 +88,11 @@ LircInputClient::LircInputClient(common::libev::IoLoop* server, int fd, struct l
     : base_class(server, fd), cfg_(cfg) {}
 
 common::Error LircInputClient::ReadWithCallback(read_callback_t cb) {
-  char* code = NULL;
+  char* code = nullptr;
   int ret;
-  while ((ret = lirc_nextcode(&code)) == 0 && code != NULL) {
-    char* c = NULL;
-    while ((ret = lirc_code2char(cfg_, code, &c)) == 0 && c != NULL) {
+  while ((ret = lirc_nextcode(&code)) == 0 && code != nullptr) {
+    char* c = nullptr;
+    while ((ret = lirc_code2char(cfg_, code, &c)) == 0 && c != nullptr) {
       if (cb) {
         cb(c);
       }

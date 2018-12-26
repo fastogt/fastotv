@@ -18,8 +18,6 @@
 
 #include "server/user_state_info.h"
 
-#include <stddef.h>  // for NULL
-
 #include "server/user_info.h"  // for user_id_t
 
 #include <json-c/json_object.h>  // for json_object, json...
@@ -61,19 +59,19 @@ common::Error UserStateInfo::SerializeFields(json_object* deserialized) const {
 
 common::Error UserStateInfo::DoDeSerialize(json_object* serialized) {
   UserStateInfo inf;
-  json_object* jid = NULL;
+  json_object* jid = nullptr;
   json_bool jid_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_USER_ID_FIELD, &jid);
   if (jid_exists) {
     inf.user_id_ = json_object_get_string(jid);
   }
 
-  json_object* jcon = NULL;
+  json_object* jcon = nullptr;
   json_bool jcon_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_CONNECTED_FIELD, &jcon);
   if (jcon_exists) {
     inf.connected_ = json_object_get_boolean(jcon);
   }
 
-  json_object* jdevice = NULL;
+  json_object* jdevice = nullptr;
   json_bool jdevice_exists = json_object_object_get_ex(serialized, USER_STATE_INFO_DEVICE_ID_FIELD, &jdevice);
   if (jdevice_exists) {
     inf.device_id_ = json_object_get_string(jdevice);

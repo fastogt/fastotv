@@ -18,8 +18,8 @@
 
 #include "server/redis/redis_connect.h"
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
+#include <string>  // for string
+#include <vector>
 
 #include <hiredis/hiredis.h>  // for redisFree, redisContext
 
@@ -42,7 +42,7 @@ common::Error redis_tcp_connect(const common::net::HostAndPort& host, redisConte
     if (redis) {
       common::Error err = common::make_error(redis->errstr);
       redisFree(redis);
-      redis = NULL;
+      redis = nullptr;
       return err;
     }
 
@@ -64,7 +64,7 @@ common::Error redis_unix_connect(const std::string& unix_path, redisContext** co
     if (redis) {
       common::Error err = common::make_error(redis->errstr);
       redisFree(redis);
-      redis = NULL;
+      redis = nullptr;
       return err;
     }
 
@@ -88,7 +88,7 @@ common::Error redis_connect(const RedisConfig& config, redisContext** conn) {
   }
 
   if (unix_path.empty()) {
-    struct redisContext* redis = NULL;
+    struct redisContext* redis = nullptr;
     common::Error err = redis_tcp_connect(redis_host, &redis);
     if (err) {
       return err;
@@ -98,7 +98,7 @@ common::Error redis_connect(const RedisConfig& config, redisContext** conn) {
     return common::Error();
   }
 
-  struct redisContext* redis = NULL;
+  struct redisContext* redis = nullptr;
   common::Error err = redis_unix_connect(unix_path, &redis);
   if (err) {
     if (!redis_host.IsValid()) {

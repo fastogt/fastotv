@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <string.h>  // for strcmp, NULL
+#include <string.h>
 
 #include <iostream>
 

@@ -18,8 +18,7 @@
 
 #include "server/user_info.h"
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
+#include <string>  // for string
 
 #include <json-c/json_object.h>  // for json_object, json...
 
@@ -48,7 +47,7 @@ common::Error UserInfo::SerializeFields(json_object* deserialized) const {
   json_object_object_add(deserialized, USER_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(deserialized, USER_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
 
-  json_object* jchannels = NULL;
+  json_object* jchannels = nullptr;
   common::Error err = ch_.Serialize(&jchannels);
   if (err) {
     return err;
@@ -66,7 +65,7 @@ common::Error UserInfo::SerializeFields(json_object* deserialized) const {
 
 common::Error UserInfo::DoDeSerialize(json_object* serialized) {
   ChannelsInfo chan;
-  json_object* jchan = NULL;
+  json_object* jchan = nullptr;
   json_bool jchan_exists = json_object_object_get_ex(serialized, USER_INFO_CHANNELS_FIELD, &jchan);
   if (jchan_exists) {
     common::Error err = chan.DeSerialize(jchan);
@@ -76,7 +75,7 @@ common::Error UserInfo::DoDeSerialize(json_object* serialized) {
   }
 
   std::string login;
-  json_object* jlogin = NULL;
+  json_object* jlogin = nullptr;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, USER_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
     return common::make_error_inval();
@@ -84,7 +83,7 @@ common::Error UserInfo::DoDeSerialize(json_object* serialized) {
   login = json_object_get_string(jlogin);
 
   std::string password;
-  json_object* jpassword = NULL;
+  json_object* jpassword = nullptr;
   json_bool jpassword_exists = json_object_object_get_ex(serialized, USER_INFO_PASSWORD_FIELD, &jpassword);
   if (!jpassword_exists) {
     return common::make_error_inval();
@@ -92,7 +91,7 @@ common::Error UserInfo::DoDeSerialize(json_object* serialized) {
   password = json_object_get_string(jpassword);
 
   devices_t devices;
-  json_object* jdevices = NULL;
+  json_object* jdevices = nullptr;
   json_bool jdevices_exists = json_object_object_get_ex(serialized, USER_INFO_DEVICES_FIELD, &jdevices);
   if (jdevices_exists) {
     size_t len = json_object_array_length(jdevices);

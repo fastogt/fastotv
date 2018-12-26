@@ -18,8 +18,7 @@
 
 #include "commands_info/auth_info.h"
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
+#include <string>  // for string
 
 #include <common/convert2string.h>
 #include <common/sprintf.h>

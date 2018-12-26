@@ -18,7 +18,7 @@
 
 #include "server/redis/redis_pub_sub.h"
 
-#include <stddef.h>  // for NULL
+#include <string>
 
 #include <hiredis/hiredis.h>  // for redisFree, freeReplyObject, redisCommand
 
@@ -38,7 +38,7 @@ void RedisPubSub::SetConfig(const RedisSubConfig& config) {
 }
 
 void RedisPubSub::Listen() {
-  redisContext* redis_sub = NULL;
+  redisContext* redis_sub = nullptr;
   common::Error err = redis_connect(config_, &redis_sub);
   if (err) {
     WARNING_LOG() << "REDIS PUB/SUB CONNECTION ERROR: " << err->GetDescription();
@@ -54,7 +54,7 @@ void RedisPubSub::Listen() {
   }
 
   while (!stop_) {
-    redisReply* lreply = NULL;
+    redisReply* lreply = nullptr;
     void** plreply = reinterpret_cast<void**>(&lreply);
     if (redisGetReply(redis_sub, plreply) != REDIS_OK) {
       WARNING_LOG() << "REDIS PUB/SUB GET REPLY ERROR: " << redis_sub->errstr;
@@ -105,7 +105,7 @@ common::Error RedisPubSub::Publish(const std::string& channel, const std::string
     return common::make_error_inval();
   }
 
-  redisContext* redis_sub = NULL;
+  redisContext* redis_sub = nullptr;
   common::Error err = redis_connect(config_, &redis_sub);
   if (err) {
     return err;

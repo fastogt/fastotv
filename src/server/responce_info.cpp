@@ -18,8 +18,7 @@
 
 #include "server/responce_info.h"
 
-#include <stddef.h>  // for NULL
-#include <string>    // for string
+#include <string>  // for string
 
 #include <json-c/json_object.h>  // for json_object, json...
 
@@ -49,25 +48,25 @@ common::Error ResponceInfo::SerializeFields(json_object* deserialized) const {
 
 common::Error ResponceInfo::DoDeSerialize(json_object* serialized) {
   ResponceInfo inf;
-  json_object* jrequest_id = NULL;
+  json_object* jrequest_id = nullptr;
   json_bool jrequest_id_exists = json_object_object_get_ex(serialized, RESPONCE_INFO_REQUEST_ID_FIELD, &jrequest_id);
   if (jrequest_id_exists) {
     inf.request_id_ = json_object_get_string(jrequest_id);
   }
 
-  json_object* jstate = NULL;
+  json_object* jstate = nullptr;
   json_bool jstate_exists = json_object_object_get_ex(serialized, RESPONCE_INFO_STATE_FIELD, &jstate);
   if (jstate_exists) {
     inf.state_ = json_object_get_string(jstate);
   }
 
-  json_object* jcommand = NULL;
+  json_object* jcommand = nullptr;
   json_bool jcommand_exists = json_object_object_get_ex(serialized, RESPONCE_INFO_COMMAND_FIELD, &jcommand);
   if (jcommand_exists) {
     inf.command_ = json_object_get_string(jcommand);
   }
 
-  json_object* jresponce = NULL;
+  json_object* jresponce = nullptr;
   json_bool jresponce_exists = json_object_object_get_ex(serialized, RESPONCE_INFO_RESPONCE_FIELD, &jresponce);
   if (jresponce_exists) {
     inf.responce_json_ = json_object_get_string(jresponce);
