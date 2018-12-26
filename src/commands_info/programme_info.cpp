@@ -60,25 +60,25 @@ common::Error ProgrammeInfo::SerializeFields(json_object* deserialized) const {
 }
 
 common::Error ProgrammeInfo::DoDeSerialize(json_object* serialized) {
-  json_object* jchannel = NULL;
+  json_object* jchannel = nullptr;
   json_bool jchannel_exists = json_object_object_get_ex(serialized, PROGRAMME_INFO_CHANNEL_FIELD, &jchannel);
   if (!jchannel_exists) {
     return common::make_error_inval();
   }
 
-  json_object* jstart = NULL;
+  json_object* jstart = nullptr;
   json_bool jstart_exists = json_object_object_get_ex(serialized, PROGRAMME_INFO_START_FIELD, &jstart);
   if (!jstart_exists) {
     return common::make_error_inval();
   }
 
-  json_object* jstop = NULL;
+  json_object* jstop = nullptr;
   json_bool jstop_exists = json_object_object_get_ex(serialized, PROGRAMME_INFO_STOP_FIELD, &jstop);
   if (!jstop_exists) {
     return common::make_error_inval();
   }
 
-  json_object* jtitle = NULL;
+  json_object* jtitle = nullptr;
   json_bool jtitle_exists = json_object_object_get_ex(serialized, PROGRAMME_INFO_TITLE_FIELD, &jtitle);
   if (!jtitle_exists) {
     return common::make_error_inval();

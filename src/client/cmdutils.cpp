@@ -190,7 +190,7 @@ bool get_codecs_sorted(std::vector<const AVCodecDescriptor*>* rcodecs) {
   }
 
   std::vector<const AVCodecDescriptor*> lcodecs;
-  const AVCodecDescriptor* desc = NULL;
+  const AVCodecDescriptor* desc = nullptr;
   while ((desc = avcodec_descriptor_next(desc))) {
     lcodecs.push_back(desc);
   }
@@ -259,21 +259,21 @@ void print_buildconf(int flags) {
 
   // Change all the ' --' strings to '~--' so that
   // they can be identified as tokens.
-  while ((conflist = strstr(str, " --")) != NULL) {
+  while ((conflist = strstr(str, " --")) != nullptr) {
     strncpy(conflist, "~--", 3);
   }
 
   // Compensate for the weirdness this would cause
   // when passing 'pkg-config --static'.
-  while ((remove_tilde = strstr(str, "pkg-config~")) != NULL) {
+  while ((remove_tilde = strstr(str, "pkg-config~")) != nullptr) {
     strncpy(remove_tilde, "pkg-config ", 11);
   }
 
   splitconf = strtok(str, "~");
   std::cout << "\n" << indent << " FFMPEG configuration:";
-  while (splitconf != NULL) {
+  while (splitconf != nullptr) {
     std::cout << indent << indent << splitconf;
-    splitconf = strtok(NULL, "~");
+    splitconf = strtok(nullptr, "~");
   }
 }
 
@@ -283,11 +283,11 @@ const AVCodec* next_codec_for_id(enum AVCodecID id, const AVCodec* prev, bool en
       return prev;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 void print_codecs_for_id(enum AVCodecID id, bool encoder) {
-  const AVCodec* codec = NULL;
+  const AVCodec* codec = nullptr;
 
   printf(" (%s: ", encoder ? "encoders" : "decoders");
 
@@ -318,7 +318,7 @@ void print_codecs(bool encoder) {
     return;
   }
   for (const AVCodecDescriptor* desc : codecs) {
-    const AVCodec* codec = NULL;
+    const AVCodec* codec = nullptr;
 
     while ((codec = next_codec_for_id(desc->id, codec, encoder))) {
       printf(" %c", get_media_type_char(desc->type));
@@ -339,10 +339,10 @@ void print_codecs(bool encoder) {
 }
 
 void show_formats_devices(bool device_only, show_muxdemuxers muxdemuxers) {
-  void* ifmt_opaque = NULL;
-  const AVInputFormat* ifmt = NULL;
-  void* ofmt_opaque = NULL;
-  const AVOutputFormat* ofmt = NULL;
+  void* ifmt_opaque = nullptr;
+  const AVInputFormat* ifmt = nullptr;
+  void* ofmt_opaque = nullptr;
+  const AVOutputFormat* ofmt = nullptr;
   const char* last_name;
   int is_dev;
 
@@ -356,11 +356,11 @@ void show_formats_devices(bool device_only, show_muxdemuxers muxdemuxers) {
   for (;;) {
     int decode = 0;
     int encode = 0;
-    const char* name = NULL;
-    const char* long_name = NULL;
+    const char* name = nullptr;
+    const char* long_name = nullptr;
 
     if (muxdemuxers != SHOW_DEMUXERS) {
-      ofmt_opaque = NULL;
+      ofmt_opaque = nullptr;
       while ((ofmt = av_muxer_iterate(&ofmt_opaque))) {
         is_dev = is_device(ofmt->priv_class);
         if (!is_dev && device_only)
@@ -373,7 +373,7 @@ void show_formats_devices(bool device_only, show_muxdemuxers muxdemuxers) {
       }
     }
     if (muxdemuxers != SHOW_MUXERS) {
-      ifmt_opaque = NULL;
+      ifmt_opaque = nullptr;
       while ((ifmt = av_demuxer_iterate(&ifmt_opaque))) {
         is_dev = is_device(ifmt->priv_class);
         if (!is_dev && device_only)
@@ -542,7 +542,7 @@ void show_help_demuxer(const std::string& name) {
 
 void show_help_muxer(const std::string& name) {
   const AVCodecDescriptor* desc;
-  const AVOutputFormat* fmt = av_guess_format(name.c_str(), NULL, NULL);
+  const AVOutputFormat* fmt = av_guess_format(name.c_str(), nullptr, nullptr);
 
   if (!fmt) {
     std::cout << "Unknown format '" << name << "'." << std::endl;
@@ -725,7 +725,7 @@ void show_codecs() {
   }
 
   for (const AVCodecDescriptor* desc : codecs) {
-    const AVCodec* codec = NULL;
+    const AVCodec* codec = nullptr;
 
     if (strstr(desc->name, "_deprecated")) {
       continue;
@@ -750,7 +750,7 @@ void show_codecs() {
         break;
       }
     }
-    codec = NULL;
+    codec = nullptr;
     while ((codec = next_codec_for_id(desc->id, codec, 1))) {
       if (strcmp(codec->name, desc->name)) {
         print_codecs_for_id(desc->id, 1);
@@ -771,8 +771,8 @@ void show_encoders() {
 }
 
 void show_bsfs() {
-  const AVBitStreamFilter* bsf = NULL;
-  void* opaque = NULL;
+  const AVBitStreamFilter* bsf = nullptr;
+  void* opaque = nullptr;
 
   std::cout << "Bitstream filters:" << std::endl;
   while ((bsf = av_bsf_next(&opaque))) {
@@ -788,7 +788,7 @@ void show_hwaccels() {
 }
 
 void show_protocols() {
-  void* opaque = NULL;
+  void* opaque = nullptr;
   const char* name;
 
   std::cout << "Supported file protocols:\n"
@@ -805,7 +805,7 @@ void show_protocols() {
 
 void show_filters() {
 #if CONFIG_AVFILTER
-  const AVFilter* filter = NULL;
+  const AVFilter* filter = nullptr;
   char descr[64];
   const AVFilterPad* pad;
 
@@ -850,7 +850,7 @@ void show_filters() {
 }
 
 void show_pix_fmts() {
-  const AVPixFmtDescriptor* pix_desc = NULL;
+  const AVPixFmtDescriptor* pix_desc = nullptr;
 
   std::cout << "Pixel formats:\n"
                "I.... = Supported Input  format for conversion\n"
@@ -878,7 +878,7 @@ void show_pix_fmts() {
 }
 
 void show_layouts() {
-  const char* name = NULL;
+  const char* name = nullptr;
 
   std::cout << "Individual channels:\n"
                "NAME           DESCRIPTION"
@@ -955,7 +955,7 @@ int print_device_sources(AVInputFormat* fmt, AVDictionary* opts) {
     return AVERROR(EINVAL);
   }
 
-  AVDeviceInfoList* device_list = NULL;
+  AVDeviceInfoList* device_list = nullptr;
   printf("Auto-detected sources for %s:\n", fmt->name);
   if (!fmt->get_device_list) {
     printf("Cannot list sources. Not implemented.\n");
@@ -963,7 +963,7 @@ int print_device_sources(AVInputFormat* fmt, AVDictionary* opts) {
     return AVERROR(ENOSYS);
   }
 
-  int ret = avdevice_list_input_sources(fmt, NULL, opts, &device_list);
+  int ret = avdevice_list_input_sources(fmt, nullptr, opts, &device_list);
   if (ret < 0) {
     printf("Cannot list sources.\n");
     avdevice_free_list_devices(&device_list);
@@ -984,14 +984,14 @@ int print_device_sinks(AVOutputFormat* fmt, AVDictionary* opts) {
     return AVERROR(EINVAL);
   }
 
-  AVDeviceInfoList* device_list = NULL;
+  AVDeviceInfoList* device_list = nullptr;
   printf("Auto-detected sinks for %s:\n", fmt->name);
   if (!fmt->get_device_list) {
     printf("Cannot list sinks. Not implemented.\n");
     return AVERROR(ENOSYS);
   }
 
-  int ret = avdevice_list_output_sinks(fmt, NULL, opts, &device_list);
+  int ret = avdevice_list_output_sinks(fmt, nullptr, opts, &device_list);
   if (ret < 0) {
     printf("Cannot list sinks.\n");
     avdevice_free_list_devices(&device_list);
@@ -1015,7 +1015,7 @@ int show_sinks_sources_parse_arg(const char* arg, char** dev, AVDictionary** opt
     return 0;
   }
 
-  char* opts_str = NULL;
+  char* opts_str = nullptr;
   CHECK(dev && opts);
   *dev = av_strdup(arg);
   if (!*dev) {
@@ -1035,9 +1035,9 @@ int show_sinks_sources_parse_arg(const char* arg, char** dev, AVDictionary** opt
 
 void show_sources(const std::string& device) {
   const char* arg = device.c_str();
-  AVInputFormat* fmt = NULL;
-  char* dev = NULL;
-  AVDictionary* opts = NULL;
+  AVInputFormat* fmt = nullptr;
+  char* dev = nullptr;
+  AVDictionary* opts = nullptr;
   int ret = show_sinks_sources_parse_arg(arg, &dev, &opts);
   if (ret < 0) {
     av_dict_free(&opts);
@@ -1072,9 +1072,9 @@ void show_sources(const std::string& device) {
 
 void show_sinks(const std::string& device) {
   const char* arg = device.c_str();
-  AVOutputFormat* fmt = NULL;
-  char* dev = NULL;
-  AVDictionary* opts = NULL;
+  AVOutputFormat* fmt = nullptr;
+  char* dev = nullptr;
+  AVDictionary* opts = nullptr;
   int ret = show_sinks_sources_parse_arg(arg, &dev, &opts);
   if (ret < 0) {
     av_dict_free(&opts);

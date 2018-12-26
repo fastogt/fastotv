@@ -63,24 +63,24 @@ bool DownloadFileToBuffer(const common::uri::Url& uri, common::char_buffer_t* bu
   CallbackHolder holder(cb);
   ic->interrupt_callback.callback = CallbackHolder::download_interrupt_callback;
   ic->interrupt_callback.opaque = &holder;
-  int open_result = avformat_open_input(&ic, in_filename, NULL, NULL);
+  int open_result = avformat_open_input(&ic, in_filename, nullptr, nullptr);
   if (open_result < 0) {
     avformat_free_context(ic);
-    ic = NULL;
+    ic = nullptr;
     return false;
   }
   AVPacket pkt;
   int ret = av_read_frame(ic, &pkt);
   if (ret < 0) {
     avformat_free_context(ic);
-    ic = NULL;
+    ic = nullptr;
     return false;
   }
 
   *buff = common::char_buffer_t(pkt.data, pkt.data + pkt.size);
   av_packet_unref(&pkt);
   avformat_free_context(ic);
-  ic = NULL;
+  ic = nullptr;
   return true;
 }
 

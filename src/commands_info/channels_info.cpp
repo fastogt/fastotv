@@ -46,7 +46,7 @@ bool ChannelsInfo::Equals(const ChannelsInfo& chan) const {
 
 common::Error ChannelsInfo::SerializeArray(json_object* deserialized_array) const {
   for (ChannelInfo url : channels_) {
-    json_object* jurl = NULL;
+    json_object* jurl = nullptr;
     common::Error err = url.Serialize(&jurl);
     if (err) {
       continue;

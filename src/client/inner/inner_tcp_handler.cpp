@@ -269,7 +269,7 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
 
   common::net::HostAndPort host = config_.inner_host;
   common::net::socket_info client_info;
-  common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, 0, &client_info);
+  common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, nullptr, &client_info);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     events::ConnectInfo cinf(host);
@@ -303,7 +303,7 @@ common::ErrnoError InnerTcpHandler::CreateAndConnectTcpBandwidthClient(common::l
   }
 
   common::net::socket_info client_info;
-  common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, 0, &client_info);
+  common::ErrnoError err = common::net::connect(host, common::net::ST_SOCK_STREAM, nullptr, &client_info);
   if (err) {
     return err;
   }
@@ -330,7 +330,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
 
   if (IS_EQUAL_COMMAND(command, SERVER_PING)) {
     ServerPingInfo ping;
-    json_object* jping = NULL;
+    json_object* jping = nullptr;
     common::Error err_ser = ping.Serialize(&jping);
     CHECK(!err_ser) << "Serialize error: " << err_ser->GetDescription();
     std::string ping_str = json_object_get_string(jping);
@@ -342,7 +342,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     }
     return;
   } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU)) {
-    json_object* jauth = NULL;
+    json_object* jauth = nullptr;
     common::Error err_ser = config_.ainf.Serialize(&jauth);
     if (err_ser) {
       DEBUG_MSG_ERROR(err_ser, common::logging::LOG_LEVEL_ERR);
@@ -485,7 +485,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     char* argv[]) {
   char* command = argv[1];
   if (IS_EQUAL_COMMAND(command, CLIENT_PING)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
@@ -503,7 +503,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     common::protocols::three_way_handshake::cmd_approve_t resp = PingApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_SERVER_INFO)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
@@ -520,7 +520,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     }
 
     common::net::HostAndPort host = sinf.GetBandwidthHost();
-    bandwidth::TcpBandwidthClient* band_connection = NULL;
+    bandwidth::TcpBandwidthClient* band_connection = nullptr;
     common::libev::IoLoop* server = connection->GetServer();
     const BandwidthHostType hs = MAIN_SERVER;
     common::ErrnoError errn = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
@@ -537,7 +537,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     server->RegisterClient(band_connection);
     return common::ErrnoError();
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
@@ -557,7 +557,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     const common::protocols::three_way_handshake::cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =
@@ -577,7 +577,7 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     const common::protocols::three_way_handshake::cmd_approve_t resp = GetRuntimeChannelInfoApproveResponceSuccsess(id);
     return connection->Write(resp);
   } else if (IS_EQUAL_COMMAND(command, CLIENT_SEND_CHAT_MESSAGE)) {
-    json_object* obj = NULL;
+    json_object* obj = nullptr;
     common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
     if (parse_err) {
       common::protocols::three_way_handshake::cmd_approve_t resp =

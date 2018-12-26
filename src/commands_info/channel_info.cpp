@@ -62,7 +62,7 @@ common::Error ChannelInfo::SerializeFields(json_object* deserialized) const {
     return common::make_error_inval();
   }
 
-  json_object* jepg = NULL;
+  json_object* jepg = nullptr;
   common::Error err = epg_.Serialize(&jepg);
   if (err) {
     return err;
@@ -75,7 +75,7 @@ common::Error ChannelInfo::SerializeFields(json_object* deserialized) const {
 }
 
 common::Error ChannelInfo::DoDeSerialize(json_object* serialized) {
-  json_object* jepg = NULL;
+  json_object* jepg = nullptr;
   json_bool jepg_exists = json_object_object_get_ex(serialized, CHANNEL_INFO_EPG_FIELD, &jepg);
   if (!jepg_exists) {
     return common::make_error_inval();
@@ -88,7 +88,7 @@ common::Error ChannelInfo::DoDeSerialize(json_object* serialized) {
   }
 
   bool enable_audio = true;
-  json_object* jenable_audio = NULL;
+  json_object* jenable_audio = nullptr;
   json_bool jenable_audio_exists =
       json_object_object_get_ex(serialized, CHANNEL_INFO_AUDIO_ENABLE_FIELD, &jenable_audio);
   if (jenable_audio_exists) {
@@ -96,7 +96,7 @@ common::Error ChannelInfo::DoDeSerialize(json_object* serialized) {
   }
 
   bool enable_video = true;
-  json_object* jdisable_video = NULL;
+  json_object* jdisable_video = nullptr;
   json_bool jdisable_video_exists =
       json_object_object_get_ex(serialized, CHANNEL_INFO_VIDEO_ENABLE_FIELD, &jdisable_video);
   if (jdisable_video_exists) {

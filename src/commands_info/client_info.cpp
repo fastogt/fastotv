@@ -62,7 +62,7 @@ common::Error ClientInfo::SerializeFields(json_object* deserialized) const {
 
 common::Error ClientInfo::DoDeSerialize(json_object* serialized) {
   ClientInfo inf;
-  json_object* jlogin = NULL;
+  json_object* jlogin = nullptr;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, CLIENT_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
     return common::make_error_inval();
@@ -75,31 +75,31 @@ common::Error ClientInfo::DoDeSerialize(json_object* serialized) {
 
   inf.login_ = login;
 
-  json_object* jos = NULL;
+  json_object* jos = nullptr;
   json_bool jos_exists = json_object_object_get_ex(serialized, CLIENT_INFO_OS_FIELD, &jos);
   if (jos_exists) {
     inf.os_ = json_object_get_string(jos);
   }
 
-  json_object* jcpu = NULL;
+  json_object* jcpu = nullptr;
   json_bool jcpu_exists = json_object_object_get_ex(serialized, CLIENT_INFO_CPU_FIELD, &jcpu);
   if (jcpu_exists) {
     inf.cpu_brand_ = json_object_get_string(jcpu);
   }
 
-  json_object* jram_total = NULL;
+  json_object* jram_total = nullptr;
   json_bool jram_total_exists = json_object_object_get_ex(serialized, CLIENT_INFO_RAM_TOTAL_FIELD, &jram_total);
   if (jram_total_exists) {
     inf.ram_total_ = json_object_get_int64(jram_total);
   }
 
-  json_object* jram_free = NULL;
+  json_object* jram_free = nullptr;
   json_bool jram_free_exists = json_object_object_get_ex(serialized, CLIENT_INFO_RAM_FREE_FIELD, &jram_free);
   if (jram_free_exists) {
     inf.ram_free_ = json_object_get_int64(jram_free);
   }
 
-  json_object* jband = NULL;
+  json_object* jband = nullptr;
   json_bool jband_exists = json_object_object_get_ex(serialized, CLIENT_INFO_BANDWIDTH_FIELD, &jband);
   if (jband_exists) {
     inf.bandwidth_ = json_object_get_int64(jband);

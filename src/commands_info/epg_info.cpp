@@ -114,7 +114,7 @@ common::Error EpgInfo::SerializeFields(json_object* deserialized) const {
 
   json_object* jprograms = json_object_new_array();
   for (ProgrammeInfo prog : programs_) {
-    json_object* jprog = NULL;
+    json_object* jprog = nullptr;
     common::Error err = prog.Serialize(&jprog);
     if (err) {
       continue;
@@ -126,7 +126,7 @@ common::Error EpgInfo::SerializeFields(json_object* deserialized) const {
 }
 
 common::Error EpgInfo::DoDeSerialize(json_object* serialized) {
-  json_object* jid = NULL;
+  json_object* jid = nullptr;
   json_bool jid_exists = json_object_object_get_ex(serialized, EPG_INFO_ID_FIELD, &jid);
   if (!jid_exists) {
     return common::make_error_inval();
@@ -136,7 +136,7 @@ common::Error EpgInfo::DoDeSerialize(json_object* serialized) {
     return common::make_error_inval();
   }
 
-  json_object* jurl = NULL;
+  json_object* jurl = nullptr;
   json_bool jurls_exists = json_object_object_get_ex(serialized, EPG_INFO_URL_FIELD, &jurl);
   if (!jurls_exists) {
     return common::make_error_inval();
@@ -147,7 +147,7 @@ common::Error EpgInfo::DoDeSerialize(json_object* serialized) {
     return common::make_error_inval();
   }
 
-  json_object* jname = NULL;
+  json_object* jname = nullptr;
   json_bool jname_exists = json_object_object_get_ex(serialized, EPG_INFO_NAME_FIELD, &jname);
   if (!jname_exists) {
     return common::make_error_inval();
@@ -163,13 +163,13 @@ common::Error EpgInfo::DoDeSerialize(json_object* serialized) {
     return common::make_error_inval();
   }
 
-  json_object* jurl_icon = NULL;
+  json_object* jurl_icon = nullptr;
   json_bool jurl_icon_exists = json_object_object_get_ex(serialized, EPG_INFO_ICON_FIELD, &jurl_icon);
   if (jurl_icon_exists) {
     url.icon_src_ = common::uri::Url(json_object_get_string(jurl_icon));
   }
 
-  json_object* jprogs = NULL;
+  json_object* jprogs = nullptr;
   json_bool jprogs_exists = json_object_object_get_ex(serialized, EPG_INFO_PROGRAMS_FIELD, &jprogs);
   if (jprogs_exists) {
     programs_t progs;

@@ -893,7 +893,7 @@ void Player::DrawFailedStatus() {
   if (offline_channel_texture_) {
     SDL_Texture* img = offline_channel_texture_->GetTexture(render);
     if (img) {
-      SDL_RenderCopy(render, img, NULL, NULL);
+      SDL_RenderCopy(render, img, nullptr, nullptr);
     }
   }
   DrawInfo();
@@ -912,11 +912,11 @@ void Player::InitWindow(const std::string& title, States status) {
 void Player::SetStatus(States new_state) {
   if (new_state == INIT_STATE) {
     description_label_->SetDrawType(fastoplayer::gui::Label::CENTER_TEXT);
-    description_label_->SetIconTexture(NULL);
+    description_label_->SetIconTexture(nullptr);
     description_label_->SetBackGroundColor(failed_color);
   } else if (new_state == FAILED_STATE) {
     description_label_->SetDrawType(fastoplayer::gui::Label::CENTER_TEXT);
-    description_label_->SetIconTexture(NULL);
+    description_label_->SetIconTexture(nullptr);
     description_label_->SetBackGroundColor(failed_color);
   } else if (new_state == PLAYING_STATE) {
     ChannelDescription descr;
@@ -939,7 +939,7 @@ void Player::SetStatus(States new_state) {
         }
         description_label_->SetIconSize(common::draw::Size(h, h));
       } else {
-        description_label_->SetIconTexture(NULL);
+        description_label_->SetIconTexture(nullptr);
       }
       description_label_->SetDrawType(fastoplayer::gui::Label::WRAPPED_TEXT);
       description_label_->SetText(footer_text);
@@ -962,7 +962,7 @@ void Player::DrawInitStatus() {
   if (connection_error_texture_) {
     SDL_Texture* img = connection_error_texture_->GetTexture(render);
     if (img) {
-      SDL_RenderCopy(render, img, NULL, NULL);
+      SDL_RenderCopy(render, img, nullptr, nullptr);
     }
   }
   DrawInfo();

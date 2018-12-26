@@ -51,19 +51,19 @@ common::Error AuthInfo::SerializeFields(json_object* deserialized) const {
 }
 
 common::Error AuthInfo::DoDeSerialize(json_object* serialized) {
-  json_object* jlogin = NULL;
+  json_object* jlogin = nullptr;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, AUTH_INFO_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
     return common::make_error_inval();
   }
 
-  json_object* jpass = NULL;
+  json_object* jpass = nullptr;
   json_bool jpass_exists = json_object_object_get_ex(serialized, AUTH_INFO_PASSWORD_FIELD, &jpass);
   if (!jpass_exists) {
     return common::make_error_inval();
   }
 
-  json_object* jdevid = NULL;
+  json_object* jdevid = nullptr;
   json_bool jdevid_exists = json_object_object_get_ex(serialized, AUTH_INFO_DEVICE_ID_FIELD, &jdevid);
   if (!jdevid_exists) {
     return common::make_error_inval();

@@ -109,7 +109,7 @@ common::Error RuntimeChannelInfo::SerializeFields(json_object* deserialized) con
 
   json_object* jmsgs = json_object_new_array();
   for (size_t i = 0; i < messages_.size(); ++i) {
-    serialize_type jmsg = NULL;
+    serialize_type jmsg = nullptr;
     common::Error err = messages_[i].Serialize(&jmsg);
     if (err) {
       continue;
@@ -131,13 +131,13 @@ common::Error RuntimeChannelInfo::SerializeFields(json_object* deserialized) con
 common::Error RuntimeChannelInfo::DoDeSerialize(json_object* serialized) {
   RuntimeChannelInfo inf;
 
-  json_object* jwatchers = NULL;
+  json_object* jwatchers = nullptr;
   json_bool jwatchers_exists = json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_WATCHERS_FIELD, &jwatchers);
   if (jwatchers_exists) {
     inf.watchers_ = json_object_get_int64(jwatchers);
   }
 
-  json_object* jcid = NULL;
+  json_object* jcid = nullptr;
   json_bool jcid_exists = json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD, &jcid);
   if (!jcid_exists) {
     return common::make_error_inval();
@@ -148,28 +148,28 @@ common::Error RuntimeChannelInfo::DoDeSerialize(json_object* serialized) {
   }
   inf.channel_id_ = cid;
 
-  json_object* jchat_type = NULL;
+  json_object* jchat_type = nullptr;
   json_bool jchat_type_exists =
       json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD, &jchat_type);
   if (jchat_type_exists) {
     inf.type_ = static_cast<ChannelType>(json_object_get_int(jchat_type));
   }
 
-  json_object* jchat_enabled = NULL;
+  json_object* jchat_enabled = nullptr;
   json_bool jchat_enabled_exists =
       json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD, &jchat_enabled);
   if (jchat_enabled_exists) {
     inf.chat_enabled_ = json_object_get_boolean(jchat_enabled);
   }
 
-  json_object* jchat_readonly = NULL;
+  json_object* jchat_readonly = nullptr;
   json_bool jchat_readonly_exists =
       json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHAT_READONLY_FIELD, &jchat_readonly);
   if (jchat_readonly_exists) {
     inf.chat_read_only_ = json_object_get_boolean(jchat_readonly);
   }
 
-  json_object* jmsgs = NULL;
+  json_object* jmsgs = nullptr;
   json_bool jmsgs_exists = json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_MESSAGES_FIELD, &jmsgs);
   if (jmsgs_exists) {
     messages_t msgs;

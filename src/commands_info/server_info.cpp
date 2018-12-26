@@ -33,7 +33,7 @@ common::Error ServerInfo::SerializeFields(json_object* deserialized) const {
 }
 
 common::Error ServerInfo::DoDeSerialize(json_object* serialized) {
-  json_object* jband = NULL;
+  json_object* jband = nullptr;
   json_bool jband_exists = json_object_object_get_ex(serialized, BANDWIDTH_HOST_FIELD, &jband);
   ServerInfo inf;
   if (jband_exists) {

@@ -57,12 +57,12 @@ class PrivateHandler : public inner::InnerTcpHandler {
   {
   }
 
-  virtual ~PrivateHandler() {}
+  ~PrivateHandler() override {}
 
   virtual void PreLooped(common::libev::IoLoop* server) override {
 #ifdef HAVE_LIRC
     int fd = INVALID_DESCRIPTOR;
-    struct lirc_config* lcd = NULL;
+    struct lirc_config* lcd = nullptr;
     common::ErrnoError err = inputs::LircInit(&fd, &lcd);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);

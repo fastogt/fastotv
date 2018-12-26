@@ -108,7 +108,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
 
   int argc;
   sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
-  if (argv == NULL) {
+  if (argv == nullptr) {
     const std::string error_str = "PROBLEM PARSING INNER COMMAND: " + input_command;
     WARNING_LOG() << error_str;
     common::ErrnoError errn = connection->Close();

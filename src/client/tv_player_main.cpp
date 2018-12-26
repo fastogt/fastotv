@@ -76,10 +76,10 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
 
   fastoplayer::FFmpegApplication app(argc, argv);
 
-  AVDictionary* sws_dict = NULL;
-  AVDictionary* swr_opts = NULL;
-  AVDictionary* format_opts = NULL;
-  AVDictionary* codec_opts = NULL;
+  AVDictionary* sws_dict = nullptr;
+  AVDictionary* swr_opts = nullptr;
+  AVDictionary* format_opts = nullptr;
+  AVDictionary* codec_opts = nullptr;
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
   fastoplayer::media::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
