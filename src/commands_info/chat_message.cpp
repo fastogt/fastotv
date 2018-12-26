@@ -84,7 +84,7 @@ common::Error ChatMessage::SerializeFields(json_object* deserialized) const {
 
 common::Error ChatMessage::DoDeSerialize(json_object* serialized) {
   ChatMessage msg;
-  json_object* jchan = NULL;
+  json_object* jchan = nullptr;
   json_bool jchan_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_CHANNEL_ID_FIELD, &jchan);
   if (!jchan_exists) {
     return common::make_error_inval();
@@ -95,7 +95,7 @@ common::Error ChatMessage::DoDeSerialize(json_object* serialized) {
   }
   msg.channel_id_ = chan;
 
-  json_object* jlogin = NULL;
+  json_object* jlogin = nullptr;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_LOGIN_FIELD, &jlogin);
   if (!jlogin_exists) {
     return common::make_error_inval();
@@ -106,7 +106,7 @@ common::Error ChatMessage::DoDeSerialize(json_object* serialized) {
   }
   msg.login_ = login;
 
-  json_object* jmessage = NULL;
+  json_object* jmessage = nullptr;
   json_bool jmessage_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_MESSAGE_FIELD, &jmessage);
   if (!jmessage_exists) {
     return common::make_error_inval();
@@ -117,7 +117,7 @@ common::Error ChatMessage::DoDeSerialize(json_object* serialized) {
   }
   msg.message_ = message;
 
-  json_object* jtype = NULL;
+  json_object* jtype = nullptr;
   json_bool jtype_exists = json_object_object_get_ex(serialized, CHAT_MESSAGE_TYPE_FIELD, &jtype);
   if (jtype_exists) {
     msg.type_ = static_cast<Type>(json_object_get_int(jtype));

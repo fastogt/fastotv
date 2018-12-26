@@ -30,7 +30,7 @@ class ChatListWindow : public fastoplayer::gui::IListBox {
   enum { login_field_width = 240, space_width = 10 };
   typedef fastoplayer::gui::IListBox base_class;
   typedef std::vector<ChatMessage> messages_t;
-  ChatListWindow(const SDL_Color& back_ground_color);
+  explicit ChatListWindow(const SDL_Color& back_ground_color);
 
   virtual size_t GetRowCount() const override;
 

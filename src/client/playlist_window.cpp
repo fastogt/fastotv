@@ -82,7 +82,7 @@ void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
     SDL_Texture* img = icon->GetTexture(render);
     if (img) {
       SDL_Rect icon_rect = {row_rect.x + shift, row_rect.y, row_rect.h, row_rect.h};
-      SDL_RenderCopy(render, img, NULL, &icon_rect);
+      SDL_RenderCopy(render, img, nullptr, &icon_rect);
     }
   }
   shift += row_rect.h + space_width;  // in any case shift should be

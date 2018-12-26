@@ -42,8 +42,8 @@ class ChatWindow : public fastoplayer::gui::Window {
   enum { login_field_width = 240, space_width = 10, post_button_width = 100 };
   static const SDL_Color text_background_color;
 
-  ChatWindow(const SDL_Color& back_ground_color);
-  ~ChatWindow();
+  explicit ChatWindow(const SDL_Color& back_ground_color);
+  ~ChatWindow() override;
 
   std::string GetInputText() const;
   void ClearInputText() const;
