@@ -7,6 +7,10 @@ About FastoTV
 
 FastoTV - is a crossplatform free iptv/stream player. <br />
 
+### Offical channels:
+![](https://fastotv.com/images/many_chan.png)
+
+### Private channels:
 ![](https://fastotv.com/images/tv.png)
 
 Visit our site: [FastoTV](https://www.fastotv.com)
