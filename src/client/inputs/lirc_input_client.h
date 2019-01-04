@@ -19,6 +19,7 @@
 #pragma once
 
 #include <functional>
+#include <string>
 
 #include <common/libev/descriptor_client.h>
 
@@ -46,7 +47,7 @@ class LircInputClient : public common::libev::DescriptorClient {
   common::Error ReadWithCallback(read_callback_t cb) WARN_UNUSED_RESULT;
 
  private:
-  virtual common::ErrnoError DoClose() override;
+  common::ErrnoError DoClose() override;
 
   using base_class::Read;
   using base_class::Write;

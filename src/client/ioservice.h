@@ -56,11 +56,11 @@ class IoService : public common::libev::ILoopController {
  private:
   using ILoopController::Exec;
 
-  virtual common::libev::IoLoopObserver* CreateHandler() override;
-  virtual common::libev::IoLoop* CreateServer(common::libev::IoLoopObserver* handler) override;
+  common::libev::IoLoopObserver* CreateHandler() override;
+  common::libev::IoLoop* CreateServer(common::libev::IoLoopObserver* handler) override;
 
-  virtual void HandleStarted() override;
-  virtual void HandleStopped() override;
+  void HandleStarted() override;
+  void HandleStopped() override;
 
   std::shared_ptr<common::threads::Thread<int>> loop_thread_;
 };

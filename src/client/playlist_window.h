@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <player/gui/widgets/list_box.h>
 
 #include "client/playlist_entry.h"
@@ -30,13 +32,13 @@ class PlaylistWindow : public fastoplayer::gui::IListBox {
   typedef fastoplayer::gui::IListBox base_class;
   typedef std::vector<PlaylistEntry> playlist_t;
   enum { channel_number_width = 60, space_width = 10 };
-  PlaylistWindow(const SDL_Color& back_ground_color);
+  explicit PlaylistWindow(const SDL_Color& back_ground_color);
   ~PlaylistWindow();
 
   void SetPlaylist(const playlist_t* pl);
   const playlist_t* GetPlaylist() const;
 
-  virtual size_t GetRowCount() const override;
+  size_t GetRowCount() const override;
 
   void SetCurrentPositionInPlaylist(size_t pos);
 
@@ -44,7 +46,7 @@ class PlaylistWindow : public fastoplayer::gui::IListBox {
   SDL_Color GetCurrentPositionSelectionColor() const;
 
  protected:
-  virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
+  void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
 
  private:
   const playlist_t* play_list_;  // pointer

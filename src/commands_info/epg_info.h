@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <common/uri/url.h>  // for Uri
 
 #include "client_server_types.h"
@@ -55,8 +58,8 @@ class EpgInfo : public common::serializer::JsonSerializer<EpgInfo> {
   static bool IsUnknownIconUrl(const common::uri::Url& url);
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   stream_id channel_id_;

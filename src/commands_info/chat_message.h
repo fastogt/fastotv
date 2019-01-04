@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <common/serializer/json_serializer.h>
 
 #include "client_server_types.h"
@@ -49,8 +51,8 @@ class ChatMessage : public common::serializer::JsonSerializer<ChatMessage> {
   bool Equals(const ChatMessage& inf) const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   stream_id channel_id_;

@@ -27,13 +27,13 @@ namespace fastotv {
 class ServerInfo : public common::serializer::JsonSerializer<ServerInfo> {
  public:
   ServerInfo();
-  ServerInfo(const common::net::HostAndPort& bandwidth_host);
+  explicit ServerInfo(const common::net::HostAndPort& bandwidth_host);
 
   common::net::HostAndPort GetBandwidthHost() const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   common::net::HostAndPort bandwidth_host_;

@@ -50,7 +50,7 @@ class InnerTcpClient : public fastotv::inner::InnerClient {
   InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info);
   ~InnerTcpClient();
 
-  virtual const char* ClassName() const override;
+  const char* ClassName() const override;
 
   void SetServerHostInfo(const AuthInfo& info);
   AuthInfo GetServerHostInfo() const;

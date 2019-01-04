@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <common/serializer/json_serializer.h>
 
 #include "client_server_types.h"  // for login_t
@@ -37,8 +39,8 @@ class AuthInfo : public common::serializer::JsonSerializer<AuthInfo> {
   bool Equals(const AuthInfo& auth) const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   login_t login_;  // unique

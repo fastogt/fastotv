@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <player/isimple_player.h>
 
 #include "client/events/network_events.h"  // for BandwidthEstimationEvent
@@ -55,17 +58,17 @@ class Player : public fastoplayer::ISimplePlayer {
 
   ~Player();
 
-  virtual std::string GetCurrentUrlName() const override;  // return Unknown if not found
+  std::string GetCurrentUrlName() const override;  // return Unknown if not found
   fastoplayer::media::AppOptions GetStreamOptions() const;
 
  protected:
-  virtual void HandleEvent(event_t* event) override;
-  virtual void HandleExceptionEvent(event_t* event, common::Error err) override;
+  void HandleEvent(event_t* event) override;
+  void HandleExceptionEvent(event_t* event, common::Error err) override;
 
-  virtual void HandlePreExecEvent(fastoplayer::gui::events::PreExecEvent* event) override;
-  virtual void HandlePostExecEvent(fastoplayer::gui::events::PostExecEvent* event) override;
+  void HandlePreExecEvent(fastoplayer::gui::events::PreExecEvent* event) override;
+  void HandlePostExecEvent(fastoplayer::gui::events::PostExecEvent* event) override;
 
-  virtual void HandleTimerEvent(fastoplayer::gui::events::TimerEvent* event) override;
+  void HandleTimerEvent(fastoplayer::gui::events::TimerEvent* event) override;
 
   virtual void HandleBandwidthEstimationEvent(events::BandwidthEstimationEvent* event);
   virtual void HandleClientConnectedEvent(events::ClientConnectedEvent* event);
@@ -78,22 +81,22 @@ class Player : public fastoplayer::ISimplePlayer {
   virtual void HandleSendChatMessageEvent(events::SendChatMessageEvent* event);
   virtual void HandleReceiveChatMessageEvent(events::ReceiveChatMessageEvent* event);
 
-  virtual void HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) override;
-  virtual void HandleLircPressEvent(fastoplayer::gui::events::LircPressEvent* event) override;
+  void HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) override;
+  void HandleLircPressEvent(fastoplayer::gui::events::LircPressEvent* event) override;
 
-  virtual void DrawInfo() override;
-  virtual void DrawFailedStatus() override;
-  virtual void DrawInitStatus() override;
+  void DrawInfo() override;
+  void DrawFailedStatus() override;
+  void DrawInitStatus() override;
 
-  virtual void InitWindow(const std::string& title, States status) override;
-  virtual void SetStatus(States new_state) override;
+  void InitWindow(const std::string& title, States status) override;
+  void SetStatus(States new_state) override;
 
-  virtual fastoplayer::media::VideoState* CreateStream(stream_id sid,
-                                                       const common::uri::Url& uri,
-                                                       fastoplayer::media::AppOptions opt,
-                                                       fastoplayer::media::ComplexOptions copt) override;
+  fastoplayer::media::VideoState* CreateStream(stream_id sid,
+                                               const common::uri::Url& uri,
+                                               fastoplayer::media::AppOptions opt,
+                                               fastoplayer::media::ComplexOptions copt) override;
 
-  virtual void OnWindowCreated(SDL_Window* window, SDL_Renderer* render) override;
+  void OnWindowCreated(SDL_Window* window, SDL_Renderer* render) override;
 
  private:
   void SetVisiblePlaylist(bool visible);

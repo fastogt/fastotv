@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "client_server_types.h"
 
 #include "chat_message.h"
@@ -59,8 +61,8 @@ class RuntimeChannelInfo : public common::serializer::JsonSerializer<RuntimeChan
   bool Equals(const RuntimeChannelInfo& inf) const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   stream_id channel_id_;

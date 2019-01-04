@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/net/types.h>               // for HostAndPort
 
@@ -58,18 +60,18 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
   void Connect(common::libev::IoLoop* server);     // should be execute in network thread
   void DisConnect(common::Error err);              // should be execute in network thread
 
-  virtual void PreLooped(common::libev::IoLoop* server) override;
-  virtual void Accepted(common::libev::IoClient* client) override;
-  virtual void Moved(common::libev::IoLoop* server, common::libev::IoClient* client) override;
-  virtual void Closed(common::libev::IoClient* client) override;
-  virtual void DataReceived(common::libev::IoClient* client) override;
-  virtual void DataReadyToWrite(common::libev::IoClient* client) override;
-  virtual void PostLooped(common::libev::IoLoop* server) override;
-  virtual void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
+  void PreLooped(common::libev::IoLoop* server) override;
+  void Accepted(common::libev::IoClient* client) override;
+  void Moved(common::libev::IoLoop* server, common::libev::IoClient* client) override;
+  void Closed(common::libev::IoClient* client) override;
+  void DataReceived(common::libev::IoClient* client) override;
+  void DataReadyToWrite(common::libev::IoClient* client) override;
+  void PostLooped(common::libev::IoLoop* server) override;
+  void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
 #if LIBEV_CHILD_ENABLE
-  virtual void Accepted(common::libev::IoChild* child) override;
-  virtual void Moved(common::libev::IoLoop* server, common::libev::IoChild* child) override;
-  virtual void ChildStatusChanged(common::libev::IoChild* child, int status) override;
+  void Accepted(common::libev::IoChild* child) override;
+  void Moved(common::libev::IoLoop* server, common::libev::IoChild* child) override;
+  void ChildStatusChanged(common::libev::IoChild* child, int status) override;
 #endif
 
  private:
@@ -78,18 +80,18 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
                                                         BandwidthHostType hs,
                                                         bandwidth::TcpBandwidthClient** out_band) WARN_UNUSED_RESULT;
 
-  virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                         common::protocols::three_way_handshake::cmd_seq_t id,
-                                         int argc,
-                                         char* argv[]) override;
-  virtual void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                          common::protocols::three_way_handshake::cmd_seq_t id,
-                                          int argc,
-                                          char* argv[]) override;
-  virtual void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                         common::protocols::three_way_handshake::cmd_seq_t id,
-                                         int argc,
-                                         char* argv[]) override;
+  void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
+                                 common::protocols::three_way_handshake::cmd_seq_t id,
+                                 int argc,
+                                 char* argv[]) override;
+  void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
+                                  common::protocols::three_way_handshake::cmd_seq_t id,
+                                  int argc,
+                                  char* argv[]) override;
+  void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
+                                 common::protocols::three_way_handshake::cmd_seq_t id,
+                                 int argc,
+                                 char* argv[]) override;
 
   // inner handlers
   common::ErrnoError HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,

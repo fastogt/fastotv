@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "commands_info/channels_info.h"  // for ChannelsInfo
 
 namespace fastotv {
@@ -46,8 +49,8 @@ class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
   bool Equals(const UserInfo& inf) const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   login_t login_;  // unique

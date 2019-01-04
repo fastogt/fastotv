@@ -33,12 +33,12 @@ namespace inner {
 class InnerTcpServer : public common::libev::IoLoop {
  public:
   explicit InnerTcpServer(common::libev::IoLoopObserver* observer);
-  virtual const char* ClassName() const override;
+  const char* ClassName() const override;
 
  protected:
-  virtual common::libev::IoClient* CreateClient(const common::net::socket_info& info) override;
+  common::libev::IoClient* CreateClient(const common::net::socket_info& info) override;
 #if LIBEV_CHILD_ENABLE
-  virtual common::libev::IoChild* CreateChild() override;
+  common::libev::IoChild* CreateChild() override;
 #endif
 };
 

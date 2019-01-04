@@ -20,6 +20,7 @@
 
 #include <memory>  // for shared_ptr
 #include <string>  // for string
+#include <vector>
 
 #include <common/error.h>                   // for Error
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
@@ -75,20 +76,20 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
 
   explicit InnerTcpHandlerHost(ServerHost* parent, const Config& config);
 
-  virtual void PreLooped(common::libev::IoLoop* server) override;
+  void PreLooped(common::libev::IoLoop* server) override;
 
-  virtual void Accepted(common::libev::IoClient* client) override;
-  virtual void Moved(common::libev::IoLoop* server, common::libev::IoClient* client) override;
-  virtual void Closed(common::libev::IoClient* client) override;
+  void Accepted(common::libev::IoClient* client) override;
+  void Moved(common::libev::IoLoop* server, common::libev::IoClient* client) override;
+  void Closed(common::libev::IoClient* client) override;
 
-  virtual void DataReceived(common::libev::IoClient* client) override;
-  virtual void DataReadyToWrite(common::libev::IoClient* client) override;
-  virtual void PostLooped(common::libev::IoLoop* server) override;
-  virtual void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
+  void DataReceived(common::libev::IoClient* client) override;
+  void DataReadyToWrite(common::libev::IoClient* client) override;
+  void PostLooped(common::libev::IoLoop* server) override;
+  void TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) override;
 #if LIBEV_CHILD_ENABLE
-  virtual void Accepted(common::libev::IoChild* child) override;
-  virtual void Moved(common::libev::IoLoop* server, common::libev::IoChild* child) override;
-  virtual void ChildStatusChanged(common::libev::IoChild* client, int status) override;
+  void Accepted(common::libev::IoChild* child) override;
+  void Moved(common::libev::IoLoop* server, common::libev::IoChild* child) override;
+  void ChildStatusChanged(common::libev::IoChild* client, int status) override;
 #endif
 
   virtual ~InnerTcpHandlerHost();
@@ -101,18 +102,18 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
 
   void PublishUserStateInfo(const UserStateInfo& state);
 
-  virtual void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                         common::protocols::three_way_handshake::cmd_seq_t id,
-                                         int argc,
-                                         char* argv[]) override;
-  virtual void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                          common::protocols::three_way_handshake::cmd_seq_t id,
-                                          int argc,
-                                          char* argv[]) override;
-  virtual void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                         common::protocols::three_way_handshake::cmd_seq_t id,
-                                         int argc,
-                                         char* argv[]) override;
+  void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
+                                 common::protocols::three_way_handshake::cmd_seq_t id,
+                                 int argc,
+                                 char* argv[]) override;
+  void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
+                                  common::protocols::three_way_handshake::cmd_seq_t id,
+                                  int argc,
+                                  char* argv[]) override;
+  void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
+                                 common::protocols::three_way_handshake::cmd_seq_t id,
+                                 int argc,
+                                 char* argv[]) override;
 
   // inner handlers
   common::ErrnoError HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,

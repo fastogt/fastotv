@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <player/draw/font.h>
 #include <player/gui/widgets/window.h>
 
@@ -64,7 +67,7 @@ class ChatWindow : public fastoplayer::gui::Window {
 
   void SetRowHeight(int row_height);
 
-  virtual void Draw(SDL_Renderer* render) override;
+  void Draw(SDL_Renderer* render) override;
 
  private:
   SDL_Rect GetWatcherRect() const;

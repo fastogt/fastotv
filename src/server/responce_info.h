@@ -41,8 +41,8 @@ class ResponceInfo : public common::serializer::JsonSerializer<ResponceInfo> {
   bool Equals(const ResponceInfo& inf) const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   std::string request_id_;

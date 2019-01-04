@@ -37,7 +37,7 @@ class ProgramsWindow : public fastoplayer::gui::Window {
   typedef fastoplayer::gui::Window base_class;
   static const SDL_Color text_background_color;
 
-  ProgramsWindow(const SDL_Color& back_ground_color);
+  explicit ProgramsWindow(const SDL_Color& back_ground_color);
   ~ProgramsWindow();
 
   bool IsActived() const;
@@ -62,7 +62,7 @@ class ProgramsWindow : public fastoplayer::gui::Window {
 
   void SetCurrentPositionInPlaylist(size_t pos);
 
-  virtual void Draw(SDL_Renderer* render) override;
+  void Draw(SDL_Renderer* render) override;
 
  private:
   SDL_Rect GetPlaylistRect() const;

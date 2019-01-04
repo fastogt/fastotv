@@ -35,8 +35,8 @@ class UserStateInfo : public common::serializer::JsonSerializer<UserStateInfo> {
   bool Equals(const UserStateInfo& state) const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   user_id_t user_id_;

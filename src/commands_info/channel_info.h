@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <common/uri/url.h>  // for Uri
 
 #include "epg_info.h"
@@ -41,8 +43,8 @@ class ChannelInfo : public common::serializer::JsonSerializer<ChannelInfo> {
   bool Equals(const ChannelInfo& url) const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeFields(json_object* deserialized) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
   EpgInfo epg_;

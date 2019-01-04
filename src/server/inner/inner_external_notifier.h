@@ -37,7 +37,7 @@ class InnerSubHandler : public redis::RedisSubHandler {
   virtual ~InnerSubHandler();
 
  protected:
-  virtual void HandleMessage(const std::string& channel, const std::string& msg) override;
+  void HandleMessage(const std::string& channel, const std::string& msg) override;
 
  private:
   void ProcessSubscribed(common::protocols::three_way_handshake::cmd_seq_t request_id, int argc, char* argv[]);

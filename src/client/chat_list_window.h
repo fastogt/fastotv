@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <player/gui/widgets/list_box.h>
 
 #include "commands_info/chat_message.h"
@@ -32,13 +34,13 @@ class ChatListWindow : public fastoplayer::gui::IListBox {
   typedef std::vector<ChatMessage> messages_t;
   explicit ChatListWindow(const SDL_Color& back_ground_color);
 
-  virtual size_t GetRowCount() const override;
+  size_t GetRowCount() const override;
 
   void SetMessages(const messages_t& msgs);
   messages_t GetMessages() const;
 
  protected:
-  virtual void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
+  void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
 
  private:
   messages_t msgs_;

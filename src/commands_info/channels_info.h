@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "channel_info.h"
 
 namespace fastotv {
@@ -36,8 +38,8 @@ class ChannelsInfo : public common::serializer::JsonSerializerArray<ChannelsInfo
   bool Equals(const ChannelsInfo& chan) const;
 
  protected:
-  virtual common::Error DoDeSerialize(json_object* serialized) override;
-  virtual common::Error SerializeArray(json_object* deserialized_array) const override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeArray(json_object* deserialized_array) const override;
 
  private:
   channels_t channels_;

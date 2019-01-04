@@ -44,10 +44,10 @@ namespace inner {
 class InnerTcpServer : public common::libev::tcp::TcpServer {
  public:
   InnerTcpServer(const common::net::HostAndPort& host, bool is_default, common::libev::IoLoopObserver* observer);
-  virtual const char* ClassName() const override;
+  const char* ClassName() const override;
 
  private:
-  virtual common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
+  common::libev::tcp::TcpClient* CreateClient(const common::net::socket_info& info) override;
 };
 
 }  // namespace inner
