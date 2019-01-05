@@ -1,5 +1,6 @@
-0.9.5 /
+0.9.5 / January 5, 2019
 [Alexandr Topilski]
+- Fixed deb package for Ubuntu 18
 - Stabiliztion
 
 0.9.4 / May 24, 2018
