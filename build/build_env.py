@@ -280,7 +280,7 @@ class BuildRequest(object):
                             'libdrm-dev', 'libdri2-dev', 'libump-dev', 'libudev-dev',
                             'liblircclient-dev']
             elif distribution == 'RHEL':
-                dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'pkgconfig', 'libtoolize', 'rpm-build',
+                dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'pkgconfig', 'libtool', 'rpm-build',
                             'git', 'autogen', 'autoconf',
                             'cmake', 'make', 'ninja-build',
                             'zlib-devel', 'bzip2-devel', 'pcre-devel',
@@ -315,11 +315,6 @@ class BuildRequest(object):
             platform.install_package(lib)
 
         # post install step
-        platform_name = platform.name()
-        if platform_name == 'linux':
-            distribution = system_info.linux_get_dist()
-            if distribution == 'RHEL':
-                subprocess.call(['ln', '-sf', '/usr/bin/ninja-build', '/usr/bin/ninja'])
 
     def build(self, url, compiler_flags: utils.CompileInfo, executable='./configure'):
         utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_, executable)
