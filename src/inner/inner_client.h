@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <common/libev/tcp/tcp_client.h>  // for TcpClient
 
 #include "commands/commands.h"
@@ -39,7 +41,7 @@ class InnerClient : public common::libev::tcp::TcpClient {
   const char* ClassName() const override;
 
   common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_request_t& request) WARN_UNUSED_RESULT;
-  common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_responce_t& responce) WARN_UNUSED_RESULT;
+  common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_response_t& responce) WARN_UNUSED_RESULT;
   common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_approve_t& approve) WARN_UNUSED_RESULT;
 
   common::ErrnoError ReadCommand(std::string* out) WARN_UNUSED_RESULT;

@@ -66,42 +66,42 @@ common::protocols::three_way_handshake::cmd_approve_t ServerSendChatMessageAppro
 
 // responces
 // get_server_info
-common::protocols::three_way_handshake::cmd_responce_t GetServerInfoResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t GetServerInfoResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& server_info);
-common::protocols::three_way_handshake::cmd_responce_t GetServerInfoResponceFail(
+common::protocols::three_way_handshake::cmd_response_t GetServerInfoResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text);  // escaped
 
 // get_channels
-common::protocols::three_way_handshake::cmd_responce_t GetChannelsResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t GetChannelsResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& channels_info);
-common::protocols::three_way_handshake::cmd_responce_t GetChannelsResponceFail(
+common::protocols::three_way_handshake::cmd_response_t GetChannelsResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text);  // escaped
 
 // get_runtime_channel_info
-common::protocols::three_way_handshake::cmd_responce_t GetRuntimeChannelInfoResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t GetRuntimeChannelInfoResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& rchannel_info);
-common::protocols::three_way_handshake::cmd_responce_t GetRuntimeChannelInfoResponceFail(
+common::protocols::three_way_handshake::cmd_response_t GetRuntimeChannelInfoResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text);
 
 // send_chat_message client
-common::protocols::three_way_handshake::cmd_responce_t SendChatMessageResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t SendChatMessageResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& message);
-common::protocols::three_way_handshake::cmd_responce_t SendChatMessageResponceFail(
+common::protocols::three_way_handshake::cmd_response_t SendChatMessageResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text);
 
 // ping client
-common::protocols::three_way_handshake::cmd_responce_t PingResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t PingResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& ping_info);
-common::protocols::three_way_handshake::cmd_responce_t PingResponceFail(
+common::protocols::three_way_handshake::cmd_response_t PingResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text);  // escaped
 

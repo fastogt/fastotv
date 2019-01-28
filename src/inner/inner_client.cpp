@@ -18,6 +18,8 @@
 
 #include "inner/inner_client.h"
 
+#include <string>
+
 #include <common/sys_byteorder.h>
 
 #include <common/text_decoders/compress_snappy_edcoder.h>
@@ -40,7 +42,7 @@ common::ErrnoError InnerClient::Write(const common::protocols::three_way_handsha
   return WriteMessage(request.GetCmd());
 }
 
-common::ErrnoError InnerClient::Write(const common::protocols::three_way_handshake::cmd_responce_t& responce) {
+common::ErrnoError InnerClient::Write(const common::protocols::three_way_handshake::cmd_response_t& responce) {
   return WriteMessage(responce.GetCmd());
 }
 

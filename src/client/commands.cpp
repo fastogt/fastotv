@@ -71,13 +71,13 @@ common::protocols::three_way_handshake::cmd_request_t PingRequest(
 
 common::protocols::three_way_handshake::cmd_approve_t PingApproveResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id, CLIENT_PING_APPROVE_SUCCESS);
+  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_PING_APPROVE_SUCCESS);
 }
 
 common::protocols::three_way_handshake::cmd_approve_t PingApproveResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id, CLIENT_PING_APPROVE_FAIL_1E, error_text);
+  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_PING_APPROVE_FAIL_1E, error_text);
 }
 
 common::protocols::three_way_handshake::cmd_request_t GetServerInfoRequest(
@@ -87,13 +87,13 @@ common::protocols::three_way_handshake::cmd_request_t GetServerInfoRequest(
 
 common::protocols::three_way_handshake::cmd_approve_t GetServerInfoApproveResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS);
+  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS);
 }
 
 common::protocols::three_way_handshake::cmd_approve_t GetServerInfoApproveResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E,
+  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E,
                                                                      error_text);
 }
 
@@ -104,13 +104,13 @@ common::protocols::three_way_handshake::cmd_request_t GetChannelsRequest(
 
 common::protocols::three_way_handshake::cmd_approve_t GetChannelsApproveResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id, CLIENT_GET_CHANNELS_APPROVE_SUCCESS);
+  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_CHANNELS_APPROVE_SUCCESS);
 }
 
 common::protocols::three_way_handshake::cmd_approve_t GetChannelsApproveResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1E,
+  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1E,
                                                                      error_text);
 }
 
@@ -122,14 +122,14 @@ common::protocols::three_way_handshake::cmd_request_t GetRuntimeChannelInfoReque
 
 common::protocols::three_way_handshake::cmd_approve_t GetRuntimeChannelInfoApproveResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id,
+  return common::protocols::three_way_handshake::MakeApproveResponse(id,
                                                                      CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_SUCCESS);
 }
 
 common::protocols::three_way_handshake::cmd_approve_t GetRuntimeChannelInfoApproveResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(
+  return common::protocols::three_way_handshake::MakeApproveResponse(
       id, CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_FAIL_1E, error_text);
 }
 
@@ -141,39 +141,39 @@ common::protocols::three_way_handshake::cmd_request_t SendChatMessageRequest(
 
 common::protocols::three_way_handshake::cmd_approve_t SendChatMessageApproveResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS);
+  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS);
 }
 
 common::protocols::three_way_handshake::cmd_approve_t SendChatMessageApproveResponceFail(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponce(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E,
+  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E,
                                                                      error_text);
 }
 
-common::protocols::three_way_handshake::cmd_responce_t WhoAreYouResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t WhoAreYouResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& auth_serialized) {
-  return common::protocols::three_way_handshake::MakeResponce(id, CLIENT_WHO_ARE_YOU_RESP_SUCCSESS_1E, auth_serialized);
+  return common::protocols::three_way_handshake::MakeResponse(id, CLIENT_WHO_ARE_YOU_RESP_SUCCSESS_1E, auth_serialized);
 }
 
-common::protocols::three_way_handshake::cmd_responce_t SystemInfoResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t SystemInfoResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& system_info) {
-  return common::protocols::three_way_handshake::MakeResponce(id, CLIENT_PLEASE_SYSTEM_INFO_RESP_SUCCSESS_1E,
+  return common::protocols::three_way_handshake::MakeResponse(id, CLIENT_PLEASE_SYSTEM_INFO_RESP_SUCCSESS_1E,
                                                               system_info);
 }
 
-common::protocols::three_way_handshake::cmd_responce_t PingResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t PingResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& ping_info_serialized) {
-  return common::protocols::three_way_handshake::MakeResponce(id, CLIENT_PING_RESP_SUCCSESS_1E, ping_info_serialized);
+  return common::protocols::three_way_handshake::MakeResponse(id, CLIENT_PING_RESP_SUCCSESS_1E, ping_info_serialized);
 }
 
-common::protocols::three_way_handshake::cmd_responce_t SendChatMessageResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t SendChatMessageResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& chat_message_serialized) {
-  return common::protocols::three_way_handshake::MakeResponce(id, CLIENT_SEND_CHAT_MESSAGE_RESP_SUCCSESS_1E,
+  return common::protocols::three_way_handshake::MakeResponse(id, CLIENT_SEND_CHAT_MESSAGE_RESP_SUCCSESS_1E,
                                                               chat_message_serialized);
 }
 

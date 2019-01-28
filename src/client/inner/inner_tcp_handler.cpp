@@ -19,6 +19,7 @@
 #include "client/inner/inner_tcp_handler.h"
 
 #include <algorithm>
+#include <string>
 
 #include <common/application/application.h>  // for fApp
 #include <common/libev/io_loop.h>            // for IoLoop
@@ -335,7 +336,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     CHECK(!err_ser) << "Serialize error: " << err_ser->GetDescription();
     std::string ping_str = json_object_get_string(jping);
     json_object_put(jping);
-    const common::protocols::three_way_handshake::cmd_responce_t pong = PingResponceSuccsess(id, ping_str);
+    const common::protocols::three_way_handshake::cmd_response_t pong = PingResponceSuccsess(id, ping_str);
     common::ErrnoError err = connection->Write(pong);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -351,7 +352,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
 
     std::string auth_str = json_object_get_string(jauth);
     json_object_put(jauth);
-    common::protocols::three_way_handshake::cmd_responce_t iAm = WhoAreYouResponceSuccsess(id, auth_str);
+    common::protocols::three_way_handshake::cmd_response_t iAm = WhoAreYouResponceSuccsess(id, auth_str);
     common::ErrnoError err = connection->Write(iAm);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -378,7 +379,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
       return;
     }
 
-    common::protocols::three_way_handshake::cmd_responce_t resp = SystemInfoResponceSuccsess(id, info_json_string);
+    common::protocols::three_way_handshake::cmd_response_t resp = SystemInfoResponceSuccsess(id, info_json_string);
     common::ErrnoError err = connection->Write(resp);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -407,7 +408,7 @@ void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* con
     }
 
     fApp->PostEvent(new events::ReceiveChatMessageEvent(this, msg));
-    common::protocols::three_way_handshake::cmd_responce_t resp = SystemInfoResponceSuccsess(id, msg_str);
+    common::protocols::three_way_handshake::cmd_response_t resp = SystemInfoResponceSuccsess(id, msg_str);
     common::ErrnoError err = connection->Write(resp);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);

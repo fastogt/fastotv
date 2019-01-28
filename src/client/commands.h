@@ -76,19 +76,19 @@ common::protocols::three_way_handshake::cmd_approve_t SendChatMessageApproveResp
 
 // responces
 // who are you
-common::protocols::three_way_handshake::cmd_responce_t WhoAreYouResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t WhoAreYouResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& auth_serialized);
 // system info
-common::protocols::three_way_handshake::cmd_responce_t SystemInfoResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t SystemInfoResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& system_info);
 // ping
-common::protocols::three_way_handshake::cmd_responce_t PingResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t PingResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& ping_info_serialized);
 // send_chat_message
-common::protocols::three_way_handshake::cmd_responce_t SendChatMessageResponceSuccsess(
+common::protocols::three_way_handshake::cmd_response_t SendChatMessageResponceSuccsess(
     common::protocols::three_way_handshake::cmd_seq_t id,
     const serializet_t& chat_message_serialized);
 

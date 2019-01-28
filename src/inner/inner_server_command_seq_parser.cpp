@@ -19,6 +19,7 @@
 #include "inner/inner_server_command_seq_parser.h"
 
 #include <algorithm>
+#include <string>
 
 #include <common/convert2string.h>
 #include <common/sys_byteorder.h>
@@ -123,7 +124,7 @@ void InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* connectio
              << ", cmd: " << cmd_str;
   if (seq == REQUEST_COMMAND) {
     HandleInnerRequestCommand(connection, id, argc, argv);
-  } else if (seq == RESPONCE_COMMAND) {
+  } else if (seq == RESPONSE_COMMAND) {
     HandleInnerResponceCommand(connection, id, argc, argv);
   } else if (seq == APPROVE_COMMAND) {
     HandleInnerApproveCommand(connection, id, argc, argv);
