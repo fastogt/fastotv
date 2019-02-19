@@ -486,7 +486,7 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
 
       struct DownloadLimit {
         enum { timeout = 2 };
-        DownloadLimit(IoService* controller) : controller_(controller), first_time_exec_(0) {}
+        explicit DownloadLimit(IoService* controller) : controller_(controller), first_time_exec_(0) {}
         bool operator()() {
           if (!controller_->IsRunning()) {
             return true;
@@ -520,7 +520,7 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
 
           const uint32_t fl = common::file_system::File::FLAG_CREATE | common::file_system::File::FLAG_WRITE |
                               common::file_system::File::FLAG_OPEN_BINARY;
-          common::file_system::File channel_icon_file;
+          common::file_system::FileGuard<common::file_system::File> channel_icon_file;
           common::ErrnoError err = channel_icon_file.Open(channel_icon_path, fl);
           if (err) {
             DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -531,11 +531,8 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
           err = channel_icon_file.WriteBuffer(buff, &writed);
           if (err) {
             DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-            err = channel_icon_file.Close();
             return;
           }
-
-          err = channel_icon_file.Close();
         }
       };
       controller_->ExecInLoopThread(load_image_cb);

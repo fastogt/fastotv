@@ -21,6 +21,8 @@
 #include <string.h>  // for strcmp
 
 #include <limits>
+#include <string>
+#include <vector>
 
 #include <common/file_system/file.h>
 #include <common/file_system/string_path_utils.h>
@@ -309,7 +311,7 @@ common::ErrnoError save_config_file(const std::string& config_absolute_path, fas
     return common::make_errno_error_inval();
   }
 
-  common::file_system::ANSIFile config_save_file;
+  common::file_system::FileGuard<common::file_system::ANSIFile> config_save_file;
   common::ErrnoError err = config_save_file.Open(config_absolute_path, "w");
   if (err) {
     return err;
@@ -368,8 +370,6 @@ common::ErrnoError save_config_file(const std::string& config_absolute_path, fas
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "=%d\n", options->player_options.audio_volume);
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_LAST_SHOWED_CHANNEL_ID_FIELD "=%s\n",
                                  options->player_options.last_showed_channel_id);
-
-  config_save_file.Close();
   return common::ErrnoError();
 }
 }  // namespace client
