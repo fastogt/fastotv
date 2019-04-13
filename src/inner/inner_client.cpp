@@ -154,6 +154,9 @@ common::ErrnoError InnerClient::WriteMessage(const std::string& message) {
   const size_t protocoled_data_len = size + sizeof(protocoled_size_t);
 
   char* protocoled_data = static_cast<char*>(malloc(protocoled_data_len));
+  if (!protocoled_data) {
+    return common::make_errno_error(ENOMEM);
+  }
   memcpy(protocoled_data, &message_size, sizeof(protocoled_size_t));
   memcpy(protocoled_data + sizeof(protocoled_size_t), data_ptr, size);
   size_t nwrite = 0;

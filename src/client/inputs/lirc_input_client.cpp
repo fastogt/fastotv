@@ -59,7 +59,8 @@ common::ErrnoError LircInit(int* fd, struct lirc_config** cfg) {
   int res = lirc_readconfig(lirc_config_copy_ptr, &lcfg, nullptr);
   common::utils::freeifnotnull(lirc_config_copy_ptr);
   if (res == -1) {
-    LircDeinit(lfd, nullptr);
+    err = LircDeinit(lfd, nullptr);
+    UNUSED(err);
     std::string msg_error = common::MemSPrintf("Could not read LIRC config file: %s", lirc_config_path);
     return common::make_errno_error(msg_error, EAGAIN);
   }
