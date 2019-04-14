@@ -34,6 +34,9 @@ protocol::request_t PingRequest(protocol::sequance_id_t id, protocol::serializet
 protocol::request_t ServerSendChatMessageRequest(protocol::sequance_id_t id, protocol::serializet_params_t params);
 
 // responces
+protocol::response_t ActivateResponseSuccess(protocol::sequance_id_t id);
+protocol::response_t ActivateResponseFail(protocol::sequance_id_t id, const std::string& error_text);
+
 protocol::response_t PingResponseSuccess(protocol::sequance_id_t id);
 
 protocol::response_t GetServerInfoResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params);

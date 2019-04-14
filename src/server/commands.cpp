@@ -37,6 +37,14 @@ protocol::request_t ServerSendChatMessageRequest(protocol::sequance_id_t id, pro
   return req;
 }
 
+protocol::response_t ActivateResponseSuccess(protocol::sequance_id_t id) {
+  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage());
+}
+
+protocol::response_t ActivateResponseFail(protocol::sequance_id_t id, const std::string& error_text) {
+  return protocol::response_t::MakeError(id, protocol::MakeInternalErrorFromText(error_text));
+}
+
 protocol::response_t PingResponseSuccess(protocol::sequance_id_t id) {
   return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage());
 }

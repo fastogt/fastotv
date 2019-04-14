@@ -4,9 +4,3 @@
 [submodule "src/third-party/ini/inih"]
 	path = src/third-party/ini/inih
 	url = https://github.com/benhoyt/inih.git
-[submodule "src/third-party/libev/src"]
-	path = src/third-party/libev/src
-	url = https://github.com/fastogt/libev.git
-[submodule "src/third-party/sds"]
-	path = src/third-party/sds
-	url = https://github.com/fastogt/sds

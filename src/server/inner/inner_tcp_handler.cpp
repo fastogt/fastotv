@@ -285,6 +285,8 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
     json_object_put(jauth);
     if (err_des) {
       const std::string err_str = err_des->GetDescription();
+      protocol::response_t resp = ActivateResponseFail(req->id, err_str);
+      client->WriteResponce(resp);
       return common::make_errno_error(err_str, EAGAIN);
     }
 
@@ -302,11 +304,13 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
     const device_id_t dev = uauth.GetDeviceID();
     if (!registered_user.HaveDevice(dev)) {
       const std::string error_str = "Unknown device reject";
+      protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      client->WriteResponce(resp);
       return common::make_errno_error(error_str, EINVAL);
     }
 
     if (uauth == InnerTcpClient::anonim_user) {  // anonim user
-      const protocol::response_t resp = WhoAreYouApproveResponceSuccsess(resp->id);
+      const protocol::response_t resp = ActivateResponseSuccess(req->id);
       common::ErrnoError err = client->WriteResponce(resp);
       if (err) {
         return err;
@@ -321,10 +325,12 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
     InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(uid, dev);
     if (fclient) {
       const std::string error_str = "Double connection reject";
+      protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      client->WriteResponce(resp);
       return common::make_errno_error(error_str, EINVAL);
     }
 
-    const protocol::response_t resp = WhoAreYouApproveResponceSuccsess(id);
+    const protocol::response_t resp = ActivateResponseSuccess(req->id);
     common::ErrnoError errn = client->WriteResponce(resp);
     if (errn) {
       return errn;
