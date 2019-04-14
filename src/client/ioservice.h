@@ -47,6 +47,7 @@ class IoService : public common::libev::ILoopController {
   void Stop();
 
   void ConnectToServer() const;
+  void ActivateRequest() const;
   void DisconnectFromServer() const;
   void RequestServerInfo() const;
   void RequestChannels() const;

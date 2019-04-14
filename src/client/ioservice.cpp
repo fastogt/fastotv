@@ -147,6 +147,14 @@ void IoService::ConnectToServer() const {
   }
 }
 
+void IoService::ActivateRequest() const {
+  PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
+  if (handler) {
+    auto cb = [handler]() { handler->ActivateRequest(); };
+    ExecInLoopThread(cb);
+  }
+}
+
 void IoService::DisconnectFromServer() const {
   PrivateHandler* handler = static_cast<PrivateHandler*>(handler_);
   if (handler) {

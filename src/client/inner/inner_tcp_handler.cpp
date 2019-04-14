@@ -326,6 +326,8 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
   InnerSTBClient* connection = new InnerSTBClient(server, client_info);
   inner_connection_ = connection;
   server->RegisterClient(connection);
+  events::ConnectInfo cinf(host);
+  fApp->PostEvent(new events::ClientConnectedEvent(this, cinf));
 }
 
 void InnerTcpHandler::DisConnect(common::Error err) {

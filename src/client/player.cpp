@@ -412,6 +412,7 @@ void Player::HandleBandwidthEstimationEvent(events::BandwidthEstimationEvent* ev
 void Player::HandleClientConnectedEvent(events::ClientConnectedEvent* event) {
   UNUSED(event);
   SwitchToAuthorizeMode();
+  controller_->ActivateRequest();
 }
 
 void Player::HandleClientDisconnectedEvent(events::ClientDisconnectedEvent* event) {
