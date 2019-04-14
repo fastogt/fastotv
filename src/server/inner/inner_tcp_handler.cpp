@@ -166,7 +166,6 @@ void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
 
   common::Error unreg_err = parent_->UnRegisterInnerConnectionByHost(client);
   if (unreg_err) {
-    DNOTREACHED();
     return;
   }
 

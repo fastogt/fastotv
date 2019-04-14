@@ -1,7 +1,7 @@
 SET(SOURCE_ROOT ${CMAKE_SOURCE_DIR}/src)
 
 SET(SERVICE_HOST_NAME fastotv.com CACHE STRING "Service host name")
-SET(SERVICE_HOST_PORT 7040 CACHE STRING "Service port")
+SET(SERVICE_HOST_PORT 7041 CACHE STRING "Service port")
 
 # User specific
 SET(USER_LOGIN anon@fastogt.com CACHE STRING "User login")
