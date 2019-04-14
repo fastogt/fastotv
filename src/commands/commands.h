@@ -18,9 +18,10 @@
 
 #pragma once
 
-#include <common/protocols/three_way_handshake/commands.h>
+#include <common/protocols/json_rpc/json_rpc.h>
 
 // client commands
+#define CLIENT_ACTIVATE "client_active"
 #define CLIENT_PING "client_ping"  // ping server
 #define CLIENT_GET_SERVER_INFO "get_server_info"
 #define CLIENT_GET_CHANNELS "get_channels"
@@ -29,17 +30,13 @@
 
 // server commands
 #define SERVER_PING "server_ping"  // ping client
-#define SERVER_WHO_ARE_YOU "who_are_you"
 #define SERVER_GET_CLIENT_INFO "get_client_info"
 #define SERVER_SEND_CHAT_MESSAGE "server_send_chat_message"
 
 // request
-// [uint8_t](0) [hex_string]seq [std::string]command
+// {"jsonrpc": "2.0", "method": "activate_request", "id": 11, "params": {"license_key":"%s"}}
 
 // responce
-// [uint8_t](1) [hex_string]seq [OK|FAIL] [std::string]command args ...
-
-// approve
-// [uint8_t](2) [hex_string]seq [OK|FAIL] [std::string]command args ...
+// {"jsonrpc": "2.0", "result": 11, "id": 11}
 
 namespace fastotv {}  // namespace fastotv

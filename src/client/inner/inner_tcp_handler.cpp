@@ -43,6 +43,12 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
+class InnerTcpHandler::InnerSTBClient : public fastotv::inner::ProtocoledInnerClient {
+ public:
+  typedef fastotv::inner::ProtocoledInnerClient base_class;
+  InnerSTBClient(common::libev::IoLoop* server, const common::net::socket_info& info) : base_class(server, info) {}
+};
+
 InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
     : fastotv::inner::InnerServerCommandSeqParser(),
       common::libev::IoLoopObserver(),
@@ -106,7 +112,7 @@ void InnerTcpHandler::Closed(common::libev::IoClient* client) {
 void InnerTcpHandler::DataReceived(common::libev::IoClient* client) {
   if (client == inner_connection_) {
     std::string buff;
-    fastotv::inner::InnerClient* iclient = static_cast<fastotv::inner::InnerClient*>(client);
+    InnerSTBClient* iclient = static_cast<InnerSTBClient*>(client);
     common::ErrnoError err = iclient->ReadCommand(&buff);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -160,9 +166,16 @@ void InnerTcpHandler::PostLooped(common::libev::IoLoop* server) {
 void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::timer_id_t id) {
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
-    const common::protocols::three_way_handshake::cmd_request_t ping_request = PingRequest(NextRequestID());
-    fastotv::inner::InnerClient* client = inner_connection_;
-    common::ErrnoError err = client->Write(ping_request);
+    std::string ping_server_json;
+    ServerPingInfo server_ping_info;
+    common::Error err_ser = server_ping_info.SerializeToString(&ping_server_json);
+    if (err_ser) {
+      return;
+    }
+
+    const protocol::request_t ping_request = PingRequest(NextRequestID(), ping_server_json);
+    InnerSTBClient* client = inner_connection_;
+    common::ErrnoError err = client->WriteRequest(ping_request);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
       err = client->Close();
@@ -188,14 +201,38 @@ void InnerTcpHandler::ChildStatusChanged(common::libev::IoChild* child, int stat
 }
 #endif
 
+void InnerTcpHandler::ActivateRequest() {
+  if (!inner_connection_) {
+    return;
+  }
+
+  std::string auth_str;
+  common::Error err_ser = config_.ainf.SerializeToString(&auth_str);
+  if (err_ser) {
+    // const std::string err_str = err_ser->GetDescription();
+    // return common::make_errno_error(err_str, EAGAIN);
+    return;
+  }
+
+  InnerSTBClient* client = inner_connection_;
+  const protocol::request_t channels_request = ActiveRequest(NextRequestID(), auth_str);
+  common::ErrnoError err = client->WriteRequest(channels_request);
+  if (err) {
+    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
+    err = client->Close();
+    DCHECK(!err) << "Close client error: " << err->GetDescription();
+    delete client;
+  }
+}
+
 void InnerTcpHandler::RequestServerInfo() {
   if (!inner_connection_) {
     return;
   }
 
-  const common::protocols::three_way_handshake::cmd_request_t channels_request = GetServerInfoRequest(NextRequestID());
-  fastotv::inner::InnerClient* client = inner_connection_;
-  common::ErrnoError err = client->Write(channels_request);
+  const protocol::request_t channels_request = GetServerInfoRequest(NextRequestID());
+  InnerSTBClient* client = inner_connection_;
+  common::ErrnoError err = client->WriteRequest(channels_request);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     err = client->Close();
@@ -209,9 +246,9 @@ void InnerTcpHandler::RequestChannels() {
     return;
   }
 
-  const common::protocols::three_way_handshake::cmd_request_t channels_request = GetChannelsRequest(NextRequestID());
-  fastotv::inner::InnerClient* client = inner_connection_;
-  common::ErrnoError err = client->Write(channels_request);
+  const protocol::request_t channels_request = GetChannelsRequest(NextRequestID());
+  InnerSTBClient* client = inner_connection_;
+  common::ErrnoError err = client->WriteRequest(channels_request);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     err = client->Close();
@@ -232,10 +269,9 @@ void InnerTcpHandler::PostMessageToChat(const ChatMessage& msg) {
     return;
   }
 
-  const common::protocols::three_way_handshake::cmd_request_t channels_request =
-      SendChatMessageRequest(NextRequestID(), msg_ser);
-  fastotv::inner::InnerClient* client = inner_connection_;
-  common::ErrnoError err = client->Write(channels_request);
+  const protocol::request_t channels_request = SendChatMessageRequest(NextRequestID(), msg_ser);
+  InnerSTBClient* client = inner_connection_;
+  common::ErrnoError err = client->WriteRequest(channels_request);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     err = client->Close();
@@ -249,10 +285,17 @@ void InnerTcpHandler::RequesRuntimeChannelInfo(stream_id sid) {
     return;
   }
 
-  const common::protocols::three_way_handshake::cmd_request_t channels_request =
-      GetRuntimeChannelInfoRequest(NextRequestID(), sid);
-  fastotv::inner::InnerClient* client = inner_connection_;
-  common::ErrnoError err = client->Write(channels_request);
+  serializet_t run_str;
+  RuntimeChannelLiteInfo run(sid);
+  common::Error err_ser = run.SerializeToString(&run_str);
+  if (err_ser) {
+    DEBUG_MSG_ERROR(err_ser, common::logging::LOG_LEVEL_ERR);
+    return;
+  }
+
+  const protocol::request_t channels_request = GetRuntimeChannelInfoRequest(NextRequestID(), run_str);
+  InnerSTBClient* client = inner_connection_;
+  common::ErrnoError err = client->WriteRequest(channels_request);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     err = client->Close();
@@ -280,7 +323,7 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
     return;
   }
 
-  fastotv::inner::InnerClient* connection = new fastotv::inner::InnerClient(server, client_info);
+  InnerSTBClient* connection = new InnerSTBClient(server, client_info);
   inner_connection_ = connection;
   server->RegisterClient(connection);
 }
@@ -322,207 +365,148 @@ common::ErrnoError InnerTcpHandler::CreateAndConnectTcpBandwidthClient(common::l
   return common::ErrnoError();
 }
 
-void InnerTcpHandler::HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                                common::protocols::three_way_handshake::cmd_seq_t id,
-                                                int argc,
-                                                char* argv[]) {
-  UNUSED(argc);
-  char* command = argv[0];
-
-  if (IS_EQUAL_COMMAND(command, SERVER_PING)) {
-    ServerPingInfo ping;
-    json_object* jping = nullptr;
-    common::Error err_ser = ping.Serialize(&jping);
-    CHECK(!err_ser) << "Serialize error: " << err_ser->GetDescription();
-    std::string ping_str = json_object_get_string(jping);
-    json_object_put(jping);
-    const common::protocols::three_way_handshake::cmd_response_t pong = PingResponceSuccsess(id, ping_str);
-    common::ErrnoError err = connection->Write(pong);
-    if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    }
-    return;
-  } else if (IS_EQUAL_COMMAND(command, SERVER_WHO_ARE_YOU)) {
-    json_object* jauth = nullptr;
-    common::Error err_ser = config_.ainf.Serialize(&jauth);
-    if (err_ser) {
-      DEBUG_MSG_ERROR(err_ser, common::logging::LOG_LEVEL_ERR);
-      return;
+common::ErrnoError InnerTcpHandler::HandleRequestServerPing(InnerSTBClient* client, protocol::request_t* req) {
+  if (req->params) {
+    const char* params_ptr = req->params->c_str();
+    json_object* jstop = json_tokener_parse(params_ptr);
+    if (!jstop) {
+      return common::make_errno_error_inval();
     }
 
-    std::string auth_str = json_object_get_string(jauth);
-    json_object_put(jauth);
-    common::protocols::three_way_handshake::cmd_response_t iAm = WhoAreYouResponceSuccsess(id, auth_str);
-    common::ErrnoError err = connection->Write(iAm);
-    if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    }
-    return;
-  } else if (IS_EQUAL_COMMAND(command, SERVER_GET_CLIENT_INFO)) {
-    const common::system_info::CpuInfo& c1 = common::system_info::CurrentCpuInfo();
-    std::string brand = c1.GetBrandName();
-
-    int64_t ram_total = common::system_info::AmountOfPhysicalMemory();
-    int64_t ram_free = common::system_info::AmountOfAvailablePhysicalMemory();
-
-    std::string os_name = common::system_info::OperatingSystemName();
-    std::string os_version = common::system_info::OperatingSystemVersion();
-    std::string os_arch = common::system_info::OperatingSystemArchitecture();
-
-    std::string os = common::MemSPrintf("%s %s(%s)", os_name, os_version, os_arch);
-
-    ClientInfo info(config_.ainf.GetLogin(), os, brand, ram_total, ram_free, current_bandwidth_);
-    serializet_t info_json_string;
-    common::Error err_ser = info.SerializeToString(&info_json_string);
-    if (err_ser) {
-      DEBUG_MSG_ERROR(err_ser, common::logging::LOG_LEVEL_ERR);
-      return;
+    ServerPingInfo server_ping_info;
+    common::Error err_des = server_ping_info.DeSerialize(jstop);
+    json_object_put(jstop);
+    if (err_des) {
+      const std::string err_str = err_des->GetDescription();
+      return common::make_errno_error(err_str, EAGAIN);
     }
 
-    common::protocols::three_way_handshake::cmd_response_t resp = SystemInfoResponceSuccsess(id, info_json_string);
-    common::ErrnoError err = connection->Write(resp);
-    if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    }
-    return;
-  } else if (IS_EQUAL_COMMAND(command, SERVER_SEND_CHAT_MESSAGE)) {
-    if (argc < 2 || !argv[1]) {
-      common::Error parse_err = common::make_error_inval();
-      DEBUG_MSG_ERROR(parse_err, common::logging::LOG_LEVEL_ERR);
-      return;
-    }
+    protocol::response_t resp = PingResponseSuccess(req->id);
+    return client->WriteResponce(resp);
+  }
 
-    json_object* jmsg = json_tokener_parse(argv[1]);
+  return common::make_errno_error_inval();
+}
+
+common::ErrnoError InnerTcpHandler::HandleRequestServerClientInfo(InnerSTBClient* client, protocol::request_t* req) {
+  const common::system_info::CpuInfo& c1 = common::system_info::CurrentCpuInfo();
+  std::string brand = c1.GetBrandName();
+
+  int64_t ram_total = common::system_info::AmountOfPhysicalMemory();
+  int64_t ram_free = common::system_info::AmountOfAvailablePhysicalMemory();
+
+  std::string os_name = common::system_info::OperatingSystemName();
+  std::string os_version = common::system_info::OperatingSystemVersion();
+  std::string os_arch = common::system_info::OperatingSystemArchitecture();
+
+  std::string os = common::MemSPrintf("%s %s(%s)", os_name, os_version, os_arch);
+
+  ClientInfo info(config_.ainf.GetLogin(), os, brand, ram_total, ram_free, current_bandwidth_);
+  std::string info_json_string;
+  common::Error err_ser = info.SerializeToString(&info_json_string);
+  if (err_ser) {
+    const std::string err_str = err_ser->GetDescription();
+    return common::make_errno_error(err_str, EAGAIN);
+  }
+
+  const protocol::response_t resp = SystemInfoResponceSuccsess(req->id, info_json_string);
+  return client->WriteResponce(resp);
+}
+
+common::ErrnoError InnerTcpHandler::HandleRequestServerSendChatMessage(InnerSTBClient* client,
+                                                                       protocol::request_t* req) {
+  if (req->params) {
+    const char* params_ptr = req->params->c_str();
+    json_object* jmsg = json_tokener_parse(params_ptr);
     if (!jmsg) {
-      common::Error parse_err = common::make_error_inval();
-      DEBUG_MSG_ERROR(parse_err, common::logging::LOG_LEVEL_ERR);
-      return;
+      return common::make_errno_error_inval();
     }
 
     ChatMessage msg;
-    common::Error err_ser = msg.DeSerialize(jmsg);
-    std::string msg_str = json_object_get_string(jmsg);
+    common::Error err_des = msg.DeSerialize(jmsg);
     json_object_put(jmsg);
-    if (err_ser) {
-      return;
+    if (err_des) {
+      const std::string err_str = err_des->GetDescription();
+      return common::make_errno_error(err_str, EAGAIN);
     }
 
     fApp->PostEvent(new events::ReceiveChatMessageEvent(this, msg));
-    common::protocols::three_way_handshake::cmd_response_t resp = SystemInfoResponceSuccsess(id, msg_str);
-    common::ErrnoError err = connection->Write(resp);
-    if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    }
-    return;
+    const protocol::response_t resp = ServerSendChatMessageSuccsess(req->id);
+    return client->WriteResponce(resp);
   }
 
-  WARNING_LOG() << "UNKNOWN REQUEST COMMAND: " << command;
+  return common::make_errno_error_inval();
 }
 
-void InnerTcpHandler::HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                                 common::protocols::three_way_handshake::cmd_seq_t id,
-                                                 int argc,
-                                                 char* argv[]) {
-  char* state_command = argv[0];
-
-  if (IS_EQUAL_COMMAND(state_command, SUCCESS_COMMAND) && argc > 1) {
-    common::ErrnoError err = HandleInnerSuccsessResponceCommand(connection, id, argc, argv);
-    if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    }
-    return;
-  } else if (IS_EQUAL_COMMAND(state_command, FAIL_COMMAND) && argc > 1) {
-    common::ErrnoError err = HandleInnerFailedResponceCommand(connection, id, argc, argv);
-    if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    }
-    return;
+common::ErrnoError InnerTcpHandler::HandleRequestCommand(fastotv::inner::InnerClient* client,
+                                                         protocol::request_t* req) {
+  InnerSTBClient* sclient = static_cast<InnerSTBClient*>(client);
+  if (req->method == SERVER_PING) {
+    return HandleRequestServerPing(sclient, req);
+  } else if (req->method == SERVER_GET_CLIENT_INFO) {
+    return HandleRequestServerClientInfo(sclient, req);
+  } else if (req->method == SERVER_SEND_CHAT_MESSAGE) {
+    return HandleRequestServerSendChatMessage(sclient, req);
   }
 
-  WARNING_LOG() << "UNKNOWN STATE COMMAND: " << state_command;
+  WARNING_LOG() << "Received unknown command: " << req->method;
+  return common::ErrnoError();
 }
 
-void InnerTcpHandler::HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                                common::protocols::three_way_handshake::cmd_seq_t id,
-                                                int argc,
-                                                char* argv[]) {
-  UNUSED(id);
-  char* command = argv[0];
-
-  if (IS_EQUAL_COMMAND(command, SUCCESS_COMMAND)) {
-    if (argc > 1) {
-      const char* okrespcommand = argv[1];
-      if (IS_EQUAL_COMMAND(okrespcommand, SERVER_PING)) {
-      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_WHO_ARE_YOU)) {
-        connection->SetName(config_.ainf.GetLogin());
-        fApp->PostEvent(new events::ClientAuthorizedEvent(this, config_.ainf));
-      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_GET_CLIENT_INFO)) {
-      } else if (IS_EQUAL_COMMAND(okrespcommand, SERVER_SEND_CHAT_MESSAGE)) {
-      }
-    }
-    return;
-  } else if (IS_EQUAL_COMMAND(command, FAIL_COMMAND)) {
-    if (argc > 1) {
-      const char* failed_resp_command = argv[1];
-      if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_PING)) {
-      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_WHO_ARE_YOU)) {
-        common::Error err = common::make_error(argc > 2 ? argv[2] : "Unknown");
-        auto ex_event = common::make_exception_event(new events::ClientAuthorizedEvent(this, config_.ainf), err);
-        fApp->PostEvent(ex_event);
-      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_GET_CLIENT_INFO)) {
-      } else if (IS_EQUAL_COMMAND(failed_resp_command, SERVER_SEND_CHAT_MESSAGE)) {
-      }
-    }
-    return;
+common::ErrnoError InnerTcpHandler::HandleResponceClientActivate(InnerSTBClient* client, protocol::response_t* resp) {
+  if (resp->IsMessage()) {
+    client->SetName(config_.ainf.GetLogin());
+    fApp->PostEvent(new events::ClientAuthorizedEvent(this, config_.ainf));
+    return common::ErrnoError();
   }
 
-  WARNING_LOG() << "UNKNOWN COMMAND: " << command;
+  common::Error err = common::make_error(resp->error->message);
+  auto ex_event = common::make_exception_event(new events::ClientAuthorizedEvent(this, config_.ainf), err);
+  fApp->PostEvent(ex_event);
+  return common::ErrnoError();
 }
 
-common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
-    fastotv::inner::InnerClient* connection,
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    int argc,
-    char* argv[]) {
-  char* command = argv[1];
-  if (IS_EQUAL_COMMAND(command, CLIENT_PING)) {
-    json_object* obj = nullptr;
-    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
-    if (parse_err) {
-      common::protocols::three_way_handshake::cmd_approve_t resp =
-          PingApproveResponceFail(id, parse_err->GetDescription());
-      ignore_result(connection->Write(resp));
-      return common::make_errno_error(parse_err->GetDescription(), EINVAL);
+common::ErrnoError InnerTcpHandler::HandleResponceClientPing(InnerSTBClient* client, protocol::response_t* resp) {
+  UNUSED(client);
+  if (resp->IsMessage()) {
+    const char* params_ptr = resp->message->result.c_str();
+    json_object* jclient_ping = json_tokener_parse(params_ptr);
+    if (!jclient_ping) {
+      return common::make_errno_error_inval();
     }
 
-    ClientPingInfo ping_info;
-    common::Error err = ping_info.DeSerialize(obj);
-    json_object_put(obj);
-    if (err) {
-      return common::make_errno_error(err->GetDescription(), EINVAL);
+    ClientPingInfo client_ping_info;
+    common::Error err_des = client_ping_info.DeSerialize(jclient_ping);
+    json_object_put(jclient_ping);
+    if (err_des) {
+      const std::string err_str = err_des->GetDescription();
+      return common::make_errno_error(err_str, EAGAIN);
     }
-    common::protocols::three_way_handshake::cmd_approve_t resp = PingApproveResponceSuccsess(id);
-    return connection->Write(resp);
-  } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_SERVER_INFO)) {
-    json_object* obj = nullptr;
-    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
-    if (parse_err) {
-      common::protocols::three_way_handshake::cmd_approve_t resp =
-          GetServerInfoApproveResponceFail(id, parse_err->GetDescription());
-      ignore_result(connection->Write(resp));
-      return common::make_errno_error(parse_err->GetDescription(), EINVAL);
+    return common::ErrnoError();
+  }
+  return common::ErrnoError();
+}
+
+common::ErrnoError InnerTcpHandler::HandleResponceClientGetServerInfo(InnerSTBClient* client,
+                                                                      protocol::response_t* resp) {
+  if (resp->IsMessage()) {
+    const char* params_ptr = resp->message->result.c_str();
+    json_object* jserver_info = json_tokener_parse(params_ptr);
+    if (!jserver_info) {
+      return common::make_errno_error_inval();
     }
 
     ServerInfo sinf;
-    common::Error err = sinf.DeSerialize(obj);
-    json_object_put(obj);
-    if (err) {
-      return common::make_errno_error(err->GetDescription(), EINVAL);
+    common::Error err_des = sinf.DeSerialize(jserver_info);
+    json_object_put(jserver_info);
+    if (err_des) {
+      const std::string err_str = err_des->GetDescription();
+      return common::make_errno_error(err_str, EAGAIN);
     }
 
     common::net::HostAndPort host = sinf.GetBandwidthHost();
     bandwidth::TcpBandwidthClient* band_connection = nullptr;
-    common::libev::IoLoop* server = connection->GetServer();
+    common::libev::IoLoop* server = client->GetServer();
     const BandwidthHostType hs = MAIN_SERVER;
     common::ErrnoError errn = CreateAndConnectTcpBandwidthClient(server, host, hs, &band_connection);
     if (errn) {
@@ -537,104 +521,104 @@ common::ErrnoError InnerTcpHandler::HandleInnerSuccsessResponceCommand(
     bandwidth_requests_.push_back(band_connection);
     server->RegisterClient(band_connection);
     return common::ErrnoError();
-  } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_CHANNELS)) {
-    json_object* obj = nullptr;
-    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
-    if (parse_err) {
-      common::protocols::three_way_handshake::cmd_approve_t resp =
-          GetChannelsApproveResponceFail(id, parse_err->GetDescription());
-      ignore_result(connection->Write(resp));
-      return common::make_errno_error(parse_err->GetDescription(), EINVAL);
+  }
+  return common::ErrnoError();
+}
+
+common::ErrnoError InnerTcpHandler::HandleResponceClientGetChannels(InnerSTBClient* client,
+                                                                    protocol::response_t* resp) {
+  if (resp->IsMessage()) {
+    const char* params_ptr = resp->message->result.c_str();
+    json_object* jchannels_info = json_tokener_parse(params_ptr);
+    if (!jchannels_info) {
+      return common::make_errno_error_inval();
     }
 
     ChannelsInfo chan;
-    common::Error err = chan.DeSerialize(obj);
-    json_object_put(obj);
-    if (err) {
-      return common::make_errno_error(err->GetDescription(), EINVAL);
+    common::Error err_des = chan.DeSerialize(jchannels_info);
+    json_object_put(jchannels_info);
+    if (err_des) {
+      const std::string err_str = err_des->GetDescription();
+      return common::make_errno_error(err_str, EAGAIN);
     }
 
     fApp->PostEvent(new events::ReceiveChannelsEvent(this, chan));
-    const common::protocols::three_way_handshake::cmd_approve_t resp = GetChannelsApproveResponceSuccsess(id);
-    return connection->Write(resp);
-  } else if (IS_EQUAL_COMMAND(command, CLIENT_GET_RUNTIME_CHANNEL_INFO)) {
-    json_object* obj = nullptr;
-    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
-    if (parse_err) {
-      common::protocols::three_way_handshake::cmd_approve_t resp =
-          GetRuntimeChannelInfoApproveResponceFail(id, parse_err->GetDescription());
-      ignore_result(connection->Write(resp));
-      return common::make_errno_error(parse_err->GetDescription(), EINVAL);
+    return common::ErrnoError();
+  }
+  return common::ErrnoError();
+}
+
+common::ErrnoError InnerTcpHandler::HandleResponceClientGetruntimeChannelInfo(InnerSTBClient* client,
+                                                                              protocol::response_t* resp) {
+  UNUSED(client);
+  if (resp->IsMessage()) {
+    const char* params_ptr = resp->message->result.c_str();
+    json_object* jchannels_info = json_tokener_parse(params_ptr);
+    if (!jchannels_info) {
+      return common::make_errno_error_inval();
     }
 
     RuntimeChannelInfo chan;
-    common::Error err = chan.DeSerialize(obj);
-    json_object_put(obj);
-    if (err) {
-      return common::make_errno_error(err->GetDescription(), EINVAL);
+    common::Error err_des = chan.DeSerialize(jchannels_info);
+    json_object_put(jchannels_info);
+    if (err_des) {
+      const std::string err_str = err_des->GetDescription();
+      return common::make_errno_error(err_str, EAGAIN);
     }
 
     fApp->PostEvent(new events::ReceiveRuntimeChannelEvent(this, chan));
-    const common::protocols::three_way_handshake::cmd_approve_t resp = GetRuntimeChannelInfoApproveResponceSuccsess(id);
-    return connection->Write(resp);
-  } else if (IS_EQUAL_COMMAND(command, CLIENT_SEND_CHAT_MESSAGE)) {
-    json_object* obj = nullptr;
-    common::Error parse_err = ParserResponceResponceCommand(argc, argv, &obj);
-    if (parse_err) {
-      common::protocols::three_way_handshake::cmd_approve_t resp =
-          SendChatMessageApproveResponceFail(id, parse_err->GetDescription());
-      ignore_result(connection->Write(resp));
-      return common::make_errno_error(parse_err->GetDescription(), EINVAL);
+    return common::ErrnoError();
+  }
+  return common::ErrnoError();
+}
+
+common::ErrnoError InnerTcpHandler::HandleResponceClientSendChatMessage(InnerSTBClient* client,
+                                                                        protocol::response_t* resp) {
+  UNUSED(client);
+  if (resp->IsMessage()) {
+    const char* params_ptr = resp->message->result.c_str();
+    json_object* jmsg_info = json_tokener_parse(params_ptr);
+    if (!jmsg_info) {
+      return common::make_errno_error_inval();
     }
 
     ChatMessage msg;
-    common::Error err = msg.DeSerialize(obj);
-    json_object_put(obj);
-    if (err) {
-      return common::make_errno_error(err->GetDescription(), EINVAL);
+    common::Error err_des = msg.DeSerialize(jmsg_info);
+    json_object_put(jmsg_info);
+    if (err_des) {
+      const std::string err_str = err_des->GetDescription();
+      return common::make_errno_error(err_str, EAGAIN);
     }
 
     fApp->PostEvent(new events::SendChatMessageEvent(this, msg));
-    const common::protocols::three_way_handshake::cmd_approve_t resp = SendChatMessageApproveResponceSuccsess(id);
-    return connection->Write(resp);
+    return common::ErrnoError();
   }
-
-  const std::string error_str = common::MemSPrintf("UNKNOWN RESPONCE COMMAND: %s", command);
-  return common::make_errno_error(error_str, EINVAL);
+  return common::ErrnoError();
 }
 
-common::ErrnoError InnerTcpHandler::HandleInnerFailedResponceCommand(
-    fastotv::inner::InnerClient* connection,
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    int argc,
-    char* argv[]) {
-  UNUSED(connection);
-  UNUSED(id);
-  UNUSED(argc);
-
-  char* command = argv[1];
-  const std::string error_str =
-      common::MemSPrintf("Sorry now we can't handle failed pesponce for command: %s", command);
-  return common::make_errno_error(error_str, EINVAL);
-}
-
-common::Error InnerTcpHandler::ParserResponceResponceCommand(int argc, char* argv[], json_object** out) {
-  if (argc < 2) {
-    return common::make_error_inval();
+common::ErrnoError InnerTcpHandler::HandleResponceCommand(fastotv::inner::InnerClient* client,
+                                                          protocol::response_t* resp) {
+  protocol::request_t req;
+  InnerSTBClient* sclient = static_cast<InnerSTBClient*>(client);
+  if (sclient->PopRequestByID(resp->id, &req)) {
+    if (req.method == CLIENT_ACTIVATE) {
+      return HandleResponceClientActivate(sclient, resp);
+    } else if (req.method == CLIENT_PING) {
+      return HandleResponceClientPing(sclient, resp);
+    } else if (req.method == CLIENT_GET_SERVER_INFO) {
+      return HandleResponceClientGetServerInfo(sclient, resp);
+    } else if (req.method == CLIENT_GET_CHANNELS) {
+      return HandleResponceClientGetChannels(sclient, resp);
+    } else if (req.method == CLIENT_GET_RUNTIME_CHANNEL_INFO) {
+      return HandleResponceClientGetruntimeChannelInfo(sclient, resp);
+    } else if (req.method == CLIENT_SEND_CHAT_MESSAGE) {
+      return HandleResponceClientSendChatMessage(sclient, resp);
+    } else {
+      WARNING_LOG() << "HandleResponceServiceCommand not handled command: " << req.method;
+    }
   }
 
-  const char* arg_2_str = argv[2];
-  if (!arg_2_str) {
-    return common::make_error_inval();
-  }
-
-  json_object* obj = json_tokener_parse(arg_2_str);
-  if (!obj) {
-    return common::make_error_inval();
-  }
-
-  *out = obj;
-  return common::Error();
+  return common::ErrnoError();
 }
 
 }  // namespace inner

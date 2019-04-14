@@ -22,88 +22,30 @@
 
 #include "client_server_types.h"
 
+#include "protocol/protocol.h"
+
 #include "commands/commands.h"
 
 namespace fastotv {
 namespace server {
 
 // requests
-// ping server
-common::protocols::three_way_handshake::cmd_request_t PingRequest(common::protocols::three_way_handshake::cmd_seq_t id);
-common::protocols::three_way_handshake::cmd_approve_t PingApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id);
-common::protocols::three_way_handshake::cmd_approve_t PingApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);  // escaped
-
-// who_are_you
-common::protocols::three_way_handshake::cmd_request_t WhoAreYouRequest(
-    common::protocols::three_way_handshake::cmd_seq_t id);
-common::protocols::three_way_handshake::cmd_approve_t WhoAreYouApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id);
-common::protocols::three_way_handshake::cmd_approve_t WhoAreYouApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);  // escaped
-
-// system_info
-common::protocols::three_way_handshake::cmd_request_t SystemInfoRequest(
-    common::protocols::three_way_handshake::cmd_seq_t id);
-common::protocols::three_way_handshake::cmd_approve_t SystemInfoApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id);
-common::protocols::three_way_handshake::cmd_approve_t SystemInfoApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);  // escaped
-
-// send_chat_message server
-common::protocols::three_way_handshake::cmd_request_t ServerSendChatMessageRequest(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& msg);
-common::protocols::three_way_handshake::cmd_approve_t ServerSendChatMessageApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id);
-common::protocols::three_way_handshake::cmd_approve_t ServerSendChatMessageApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);
+protocol::request_t PingRequest(protocol::sequance_id_t id, protocol::serializet_params_t params);
+protocol::request_t ServerSendChatMessageRequest(protocol::sequance_id_t id, protocol::serializet_params_t params);
 
 // responces
-// get_server_info
-common::protocols::three_way_handshake::cmd_response_t GetServerInfoResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& server_info);
-common::protocols::three_way_handshake::cmd_response_t GetServerInfoResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);  // escaped
+protocol::response_t PingResponseSuccess(protocol::sequance_id_t id);
 
-// get_channels
-common::protocols::three_way_handshake::cmd_response_t GetChannelsResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& channels_info);
-common::protocols::three_way_handshake::cmd_response_t GetChannelsResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);  // escaped
+protocol::response_t GetServerInfoResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params);
+protocol::response_t GetServerInfoResponceFail(protocol::sequance_id_t id, const std::string& error_text);
 
-// get_runtime_channel_info
-common::protocols::three_way_handshake::cmd_response_t GetRuntimeChannelInfoResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& rchannel_info);
-common::protocols::three_way_handshake::cmd_response_t GetRuntimeChannelInfoResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);
+protocol::response_t GetChannelsResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params);
+protocol::response_t GetChannelsResponceFail(protocol::sequance_id_t id, const std::string& error_text);
 
-// send_chat_message client
-common::protocols::three_way_handshake::cmd_response_t SendChatMessageResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& message);
-common::protocols::three_way_handshake::cmd_response_t SendChatMessageResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);
+protocol::response_t GetRuntimeChannelInfoResponceSuccsess(protocol::sequance_id_t id,
+                                                           protocol::serializet_params_t params);
 
-// ping client
-common::protocols::three_way_handshake::cmd_response_t PingResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& ping_info);
-common::protocols::three_way_handshake::cmd_response_t PingResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text);  // escaped
+protocol::response_t SendChatMessageResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params);
 
 }  // namespace server
 }  // namespace fastotv

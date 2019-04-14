@@ -18,163 +18,69 @@
 
 #include "client/commands.h"
 
-// requests
-// ping
-#define CLIENT_PING_REQ GENERATE_REQUEST_FMT(CLIENT_PING)
-#define CLIENT_PING_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_PING, "'%s'")
-#define CLIENT_PING_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_PING, "")
-
-// get_server_info
-#define CLIENT_GET_SERVER_INFO_REQ GENERATE_REQUEST_FMT(CLIENT_GET_SERVER_INFO)
-#define CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_SERVER_INFO, "'%s'")
-#define CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_GET_SERVER_INFO, "")
-
-// get_channels
-#define CLIENT_GET_CHANNELS_REQ GENERATE_REQUEST_FMT(CLIENT_GET_CHANNELS)
-#define CLIENT_GET_CHANNELS_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_CHANNELS, "'%s'")
-#define CLIENT_GET_CHANNELS_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_GET_CHANNELS, "")
-
-// get_runtime_channel_info
-#define CLIENT_GET_RUNTIME_CHANNEL_INFO_REQ_1E GENERATE_REQUEST_FMT_ARGS(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
-#define CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "'%s'")
-#define CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_GET_RUNTIME_CHANNEL_INFO, "")
-
-// send_chat_message
-#define CLIENT_SEND_CHAT_MESSAGE_REQ_1E GENERATE_REQUEST_FMT_ARGS(CLIENT_SEND_CHAT_MESSAGE, "'%s'")
-#define CLIENT_SEND_CHAT_MESSAGE_APPROVE_FAIL_1E GENEATATE_FAIL_FMT(CLIENT_SEND_CHAT_MESSAGE, "'%s'")
-#define CLIENT_SEND_CHAT_MESSAGE_APPROVE_SUCCESS GENEATATE_SUCCESS_FMT(CLIENT_SEND_CHAT_MESSAGE, "")
-
-// responces
-// who are you
-#define CLIENT_WHO_ARE_YOU_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_WHO_ARE_YOU, "'%s'")
-#define CLIENT_WHO_ARE_YOU_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_WHO_ARE_YOU, "'%s'")
-
-// system info
-#define CLIENT_PLEASE_SYSTEM_INFO_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_GET_CLIENT_INFO, "'%s'")
-#define CLIENT_PLEASE_SYSTEM_INFO_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_GET_CLIENT_INFO, "'%s'")
-
-// ping
-#define CLIENT_PING_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_PING, "'%s'")
-#define CLIENT_PING_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_PING, "'%s'")
-
-// server_send_chat_message
-#define CLIENT_SEND_CHAT_MESSAGE_RESP_FAIL_1E GENEATATE_FAIL_FMT(SERVER_SEND_CHAT_MESSAGE, "'%s'")
-#define CLIENT_SEND_CHAT_MESSAGE_RESP_SUCCSESS_1E GENEATATE_SUCCESS_FMT(SERVER_SEND_CHAT_MESSAGE, "'%s'")
-
 namespace fastotv {
 namespace client {
 
-common::protocols::three_way_handshake::cmd_request_t PingRequest(
-    common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeRequest(id, CLIENT_PING_REQ);
+protocol::request_t ActiveRequest(protocol::sequance_id_t id, protocol::serializet_params_t params) {
+  protocol::request_t req;
+  req.id = id;
+  req.method = CLIENT_ACTIVATE;
+  req.params = params;
+  return req;
 }
 
-common::protocols::three_way_handshake::cmd_approve_t PingApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_PING_APPROVE_SUCCESS);
+protocol::request_t PingRequest(protocol::sequance_id_t id, protocol::serializet_params_t params) {
+  protocol::request_t req;
+  req.id = id;
+  req.method = CLIENT_PING;
+  req.params = params;
+  return req;
 }
 
-common::protocols::three_way_handshake::cmd_approve_t PingApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_PING_APPROVE_FAIL_1E, error_text);
+protocol::request_t GetServerInfoRequest(protocol::sequance_id_t id) {
+  protocol::request_t req;
+  req.id = id;
+  req.method = CLIENT_GET_SERVER_INFO;
+  return req;
 }
 
-common::protocols::three_way_handshake::cmd_request_t GetServerInfoRequest(
-    common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeRequest(id, CLIENT_GET_SERVER_INFO_REQ);
+protocol::request_t GetChannelsRequest(protocol::sequance_id_t id) {
+  protocol::request_t req;
+  req.id = id;
+  req.method = CLIENT_GET_CHANNELS;
+  return req;
 }
 
-common::protocols::three_way_handshake::cmd_approve_t GetServerInfoApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS);
+protocol::request_t SendChatMessageRequest(protocol::sequance_id_t id, protocol::serializet_params_t params) {
+  protocol::request_t req;
+  req.id = id;
+  req.method = CLIENT_SEND_CHAT_MESSAGE;
+  req.params = params;
+  return req;
 }
 
-common::protocols::three_way_handshake::cmd_approve_t GetServerInfoApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E,
-                                                                     error_text);
+protocol::request_t GetRuntimeChannelInfoRequest(protocol::sequance_id_t id, protocol::serializet_params_t params) {
+  protocol::request_t req;
+  req.id = id;
+  req.method = CLIENT_GET_RUNTIME_CHANNEL_INFO;
+  req.params = params;
+  return req;
 }
 
-common::protocols::three_way_handshake::cmd_request_t GetChannelsRequest(
-    common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeRequest(id, CLIENT_GET_CHANNELS_REQ);
+protocol::response_t PingResponseSuccess(protocol::sequance_id_t id) {
+  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage());
 }
 
-common::protocols::three_way_handshake::cmd_approve_t GetChannelsApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_CHANNELS_APPROVE_SUCCESS);
+protocol::response_t WhoAreYouResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params) {
+  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage(*params));
 }
 
-common::protocols::three_way_handshake::cmd_approve_t GetChannelsApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_CHANNELS_APPROVE_FAIL_1E,
-                                                                     error_text);
+protocol::response_t SystemInfoResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params) {
+  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage(*params));
 }
 
-common::protocols::three_way_handshake::cmd_request_t GetRuntimeChannelInfoRequest(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    stream_id sid) {
-  return common::protocols::three_way_handshake::MakeRequest(id, CLIENT_GET_RUNTIME_CHANNEL_INFO_REQ_1E, sid);
-}
-
-common::protocols::three_way_handshake::cmd_approve_t GetRuntimeChannelInfoApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id,
-                                                                     CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_SUCCESS);
-}
-
-common::protocols::three_way_handshake::cmd_approve_t GetRuntimeChannelInfoApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(
-      id, CLIENT_GET_RUNTIME_CHANNEL_INFO_APPROVE_FAIL_1E, error_text);
-}
-
-common::protocols::three_way_handshake::cmd_request_t SendChatMessageRequest(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& msg) {
-  return common::protocols::three_way_handshake::MakeRequest(id, CLIENT_SEND_CHAT_MESSAGE_REQ_1E, msg);
-}
-
-common::protocols::three_way_handshake::cmd_approve_t SendChatMessageApproveResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_SERVER_INFO_APPROVE_SUCCESS);
-}
-
-common::protocols::three_way_handshake::cmd_approve_t SendChatMessageApproveResponceFail(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const std::string& error_text) {
-  return common::protocols::three_way_handshake::MakeApproveResponse(id, CLIENT_GET_SERVER_INFO_APPROVE_FAIL_1E,
-                                                                     error_text);
-}
-
-common::protocols::three_way_handshake::cmd_response_t WhoAreYouResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& auth_serialized) {
-  return common::protocols::three_way_handshake::MakeResponse(id, CLIENT_WHO_ARE_YOU_RESP_SUCCSESS_1E, auth_serialized);
-}
-
-common::protocols::three_way_handshake::cmd_response_t SystemInfoResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& system_info) {
-  return common::protocols::three_way_handshake::MakeResponse(id, CLIENT_PLEASE_SYSTEM_INFO_RESP_SUCCSESS_1E,
-                                                              system_info);
-}
-
-common::protocols::three_way_handshake::cmd_response_t PingResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& ping_info_serialized) {
-  return common::protocols::three_way_handshake::MakeResponse(id, CLIENT_PING_RESP_SUCCSESS_1E, ping_info_serialized);
-}
-
-common::protocols::three_way_handshake::cmd_response_t SendChatMessageResponceSuccsess(
-    common::protocols::three_way_handshake::cmd_seq_t id,
-    const serializet_t& chat_message_serialized) {
-  return common::protocols::three_way_handshake::MakeResponse(id, CLIENT_SEND_CHAT_MESSAGE_RESP_SUCCSESS_1E,
-                                                              chat_message_serialized);
+protocol::response_t ServerSendChatMessageSuccsess(protocol::sequance_id_t id) {
+  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage());
 }
 
 }  // namespace client

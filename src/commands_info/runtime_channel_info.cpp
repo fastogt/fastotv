@@ -27,6 +27,51 @@
 
 namespace fastotv {
 
+RuntimeChannelLiteInfo::RuntimeChannelLiteInfo() : RuntimeChannelLiteInfo(invalid_stream_id) {}
+
+RuntimeChannelLiteInfo::RuntimeChannelLiteInfo(stream_id channel_id) : channel_id_(channel_id) {}
+
+RuntimeChannelLiteInfo::~RuntimeChannelLiteInfo() {}
+
+bool RuntimeChannelLiteInfo::IsValid() const {
+  return channel_id_ != invalid_stream_id;
+}
+
+void RuntimeChannelLiteInfo::SetChannelId(stream_id sid) {
+  channel_id_ = sid;
+}
+
+stream_id RuntimeChannelLiteInfo::GetChannelId() const {
+  return channel_id_;
+}
+
+common::Error RuntimeChannelLiteInfo::DoDeSerialize(json_object* serialized) {
+  RuntimeChannelLiteInfo inf;
+  json_object* jcid = nullptr;
+  json_bool jcid_exists = json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD, &jcid);
+  if (!jcid_exists) {
+    return common::make_error_inval();
+  }
+  stream_id cid = json_object_get_string(jcid);
+  if (cid == invalid_stream_id) {
+    return common::make_error_inval();
+  }
+  inf.channel_id_ = cid;
+
+  *this = inf;
+  return common::Error();
+}
+
+common::Error RuntimeChannelLiteInfo::SerializeFields(json_object* deserialized) const {
+  if (!IsValid()) {
+    return common::make_error_inval();
+  }
+
+  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD,
+                         json_object_new_string(channel_id_.c_str()));
+  return common::Error();
+}
+
 RuntimeChannelInfo::RuntimeChannelInfo()
     : channel_id_(invalid_stream_id),
       watchers_(0),

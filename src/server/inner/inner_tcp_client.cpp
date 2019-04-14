@@ -27,7 +27,7 @@ namespace inner {
 const AuthInfo InnerTcpClient::anonim_user(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
 
 InnerTcpClient::InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info)
-    : InnerClient(server, info), hinfo_(), uid_(), current_stream_id_(invalid_stream_id) {}
+    : base_class(server, info), hinfo_(), uid_(), current_stream_id_(invalid_stream_id) {}
 
 bool InnerTcpClient::IsAnonimUser() const {
   return anonim_user == hinfo_;

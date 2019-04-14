@@ -43,8 +43,9 @@ namespace fastotv {
 namespace server {
 namespace inner {
 
-class InnerTcpClient : public fastotv::inner::InnerClient {
+class InnerTcpClient : public fastotv::inner::ProtocoledInnerClient {
  public:
+  typedef fastotv::inner::ProtocoledInnerClient base_class;
   static const AuthInfo anonim_user;
 
   InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info);

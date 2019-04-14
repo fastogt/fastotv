@@ -35,6 +35,16 @@ SET(SOURCES_COMMANDS
   ${SOURCE_ROOT}/commands/commands.cpp
 )
 
+SET(HEADERS_PROTOCOL
+  ${SOURCE_ROOT}/protocol/protocol.h
+  ${SOURCE_ROOT}/protocol/types.h
+)
+
+SET(SOURCES_PROTOCOL
+  ${SOURCE_ROOT}/protocol/protocol.cpp
+  ${SOURCE_ROOT}/protocol/types.cpp
+)
+
 SET(HEADERS_INNER
   ${SOURCE_ROOT}/inner/inner_server_command_seq_parser.h
   ${SOURCE_ROOT}/inner/inner_client.h
@@ -81,7 +91,7 @@ SET(CLIENT_SERVER_SOURCES
 ) # server and client common sources
 
 SET(CLIENT_SERVER_SOURCES
-  ${HEADERS_COMMANDS} ${SOURCES_COMMANDS}
+  ${HEADERS_COMMANDS} ${SOURCES_COMMANDS} ${HEADERS_PROTOCOL} ${SOURCES_PROTOCOL}
   ${HEADERS_INNER} ${SOURCES_INNER}
   ${HEADERS_SERIALIZER} ${SOURCES_SERIALIZER}
   ${CLIENT_SERVER_SOURCES}

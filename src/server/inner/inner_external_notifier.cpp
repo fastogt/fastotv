@@ -18,10 +18,6 @@
 
 #include "server/inner/inner_external_notifier.h"
 
-extern "C" {
-#include "sds_fasto.h"
-}
-
 #include <common/error.h>   // for Error, DEBUG_MSG_...
 #include <common/logger.h>  // for COMPACT_LOG_WARNING
 #include <common/macros.h>  // for STRINGIZE
@@ -46,21 +42,24 @@ InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) 
 
 InnerSubHandler::~InnerSubHandler() {}
 
-void InnerSubHandler::ProcessSubscribed(common::protocols::three_way_handshake::cmd_seq_t request_id,
+void InnerSubHandler::ProcessSubscribed(protocol::sequance_id_t request_id,
                                         int argc,
-                                        char* argv[]) {           // incoming responce
+                                        char* argv[]) {  // incoming responce
+#if 0
   const char* state_command = argc > 0 ? argv[0] : FAIL_COMMAND;  // [OK|FAIL]
   const char* command = argc > 1 ? argv[1] : "null";              // command
   const std::string json = argc > 2 ? argv[2] : "{}";             // encoded args
 
   ResponceInfo resp(request_id, state_command, command, json);
   PublishResponce(resp);
+#endif
 }
 
 void InnerSubHandler::HandleMessage(const std::string& channel, const std::string& msg) {
   // [user_id_t]login [device_id_t]device_id [cmd_id_t]seq [std::string]command args ...
   // [cmd_id_t]seq OK/FAIL [std::string]command args ..
   INFO_LOG() << "InnerSubHandler channel: " << channel << ", msg: " << msg;
+#if 0
   size_t space_pos = msg.find_first_of(' ');
   if (space_pos == std::string::npos) {
     const std::string resp = common::MemSPrintf("UNKNOWN COMMAND: %s", msg);
@@ -137,6 +136,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
                       std::placeholders::_3);
   fastotv::inner::RequestCallback rc(id, cb);
   parent_->SubscribeRequest(rc);
+#endif
 }
 
 void InnerSubHandler::PublishResponce(const ResponceInfo& resp) {

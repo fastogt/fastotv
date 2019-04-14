@@ -37,7 +37,6 @@ namespace bandwidth {
 class TcpBandwidthClient;
 }
 namespace inner {
-class InnerClient;
 
 struct StartConfig {
   common::net::HostAndPort inner_host;
@@ -45,6 +44,8 @@ struct StartConfig {
 };
 
 class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, public common::libev::IoLoopObserver {
+  class InnerSTBClient;
+
  public:
   enum {
     ping_timeout_server = 30  // sec
@@ -53,6 +54,7 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
   explicit InnerTcpHandler(const StartConfig& config);
   virtual ~InnerTcpHandler();
 
+  void ActivateRequest();                          // should be execute in network thread
   void RequestServerInfo();                        // should be execute in network thread
   void RequestChannels();                          // should be execute in network thread
   void RequesRuntimeChannelInfo(stream_id sid);    // should be execute in network thread
@@ -74,38 +76,28 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
   void ChildStatusChanged(common::libev::IoChild* child, int status) override;
 #endif
 
+ protected:
+  common::ErrnoError HandleRequestCommand(fastotv::inner::InnerClient* client, protocol::request_t* req) override;
+  common::ErrnoError HandleResponceCommand(fastotv::inner::InnerClient* client, protocol::response_t* resp) override;
+
  private:
+  common::ErrnoError HandleRequestServerPing(InnerSTBClient* client, protocol::request_t* req);
+  common::ErrnoError HandleRequestServerClientInfo(InnerSTBClient* client, protocol::request_t* req);
+  common::ErrnoError HandleRequestServerSendChatMessage(InnerSTBClient* client, protocol::request_t* req);
+
+  common::ErrnoError HandleResponceClientActivate(InnerSTBClient* client, protocol::response_t* resp);
+  common::ErrnoError HandleResponceClientPing(InnerSTBClient* client, protocol::response_t* resp);
+  common::ErrnoError HandleResponceClientGetServerInfo(InnerSTBClient* client, protocol::response_t* resp);
+  common::ErrnoError HandleResponceClientGetChannels(InnerSTBClient* client, protocol::response_t* resp);
+  common::ErrnoError HandleResponceClientGetruntimeChannelInfo(InnerSTBClient* client, protocol::response_t* resp);
+  common::ErrnoError HandleResponceClientSendChatMessage(InnerSTBClient* client, protocol::response_t* resp);
+
   common::ErrnoError CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,
                                                         const common::net::HostAndPort& host,
                                                         BandwidthHostType hs,
                                                         bandwidth::TcpBandwidthClient** out_band) WARN_UNUSED_RESULT;
 
-  void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                 common::protocols::three_way_handshake::cmd_seq_t id,
-                                 int argc,
-                                 char* argv[]) override;
-  void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                  common::protocols::three_way_handshake::cmd_seq_t id,
-                                  int argc,
-                                  char* argv[]) override;
-  void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                 common::protocols::three_way_handshake::cmd_seq_t id,
-                                 int argc,
-                                 char* argv[]) override;
-
-  // inner handlers
-  common::ErrnoError HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
-                                                        common::protocols::three_way_handshake::cmd_seq_t id,
-                                                        int argc,
-                                                        char* argv[]) WARN_UNUSED_RESULT;
-  common::ErrnoError HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
-                                                      common::protocols::three_way_handshake::cmd_seq_t id,
-                                                      int argc,
-                                                      char* argv[]) WARN_UNUSED_RESULT;
-
-  common::Error ParserResponceResponceCommand(int argc, char* argv[], json_object** out) WARN_UNUSED_RESULT;
-
-  fastotv::inner::InnerClient* inner_connection_;
+  InnerSTBClient* inner_connection_;
   std::vector<bandwidth::TcpBandwidthClient*> bandwidth_requests_;
   common::libev::timer_id_t ping_server_id_timer_;
 

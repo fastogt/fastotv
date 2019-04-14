@@ -99,33 +99,21 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
 
  private:
   void UpdateCache();
-
   void PublishUserStateInfo(const UserStateInfo& state);
 
-  void HandleInnerRequestCommand(fastotv::inner::InnerClient* connection,
-                                 common::protocols::three_way_handshake::cmd_seq_t id,
-                                 int argc,
-                                 char* argv[]) override;
-  void HandleInnerResponceCommand(fastotv::inner::InnerClient* connection,
-                                  common::protocols::three_way_handshake::cmd_seq_t id,
-                                  int argc,
-                                  char* argv[]) override;
-  void HandleInnerApproveCommand(fastotv::inner::InnerClient* connection,
-                                 common::protocols::three_way_handshake::cmd_seq_t id,
-                                 int argc,
-                                 char* argv[]) override;
+  common::ErrnoError HandleRequestCommand(fastotv::inner::InnerClient* client, protocol::request_t* req) override;
+  common::ErrnoError HandleResponceCommand(fastotv::inner::InnerClient* client, protocol::response_t* resp) override;
 
-  // inner handlers
-  common::ErrnoError HandleInnerSuccsessResponceCommand(fastotv::inner::InnerClient* connection,
-                                                        common::protocols::three_way_handshake::cmd_seq_t id,
-                                                        int argc,
-                                                        char* argv[]) WARN_UNUSED_RESULT;
-  common::ErrnoError HandleInnerFailedResponceCommand(fastotv::inner::InnerClient* connection,
-                                                      common::protocols::three_way_handshake::cmd_seq_t id,
-                                                      int argc,
-                                                      char* argv[]) WARN_UNUSED_RESULT;
+  common::ErrnoError HandleRequestClientActivate(InnerTcpClient* client, protocol::request_t* req);
+  common::ErrnoError HandleRequestClientPing(InnerTcpClient* client, protocol::request_t* req);
+  common::ErrnoError HandleRequestClientGetServerInfo(InnerTcpClient* client, protocol::request_t* req);
+  common::ErrnoError HandleRequestClientGetChannels(InnerTcpClient* client, protocol::request_t* req);
+  common::ErrnoError HandleRequestClientGetRuntimeChannelInfo(InnerTcpClient* client, protocol::request_t* req);
+  common::ErrnoError HandleRequestClientSendChatMessage(InnerTcpClient* client, protocol::request_t* req);
 
-  common::Error ParserResponceResponceCommand(int argc, char* argv[], json_object** out) WARN_UNUSED_RESULT;
+  common::ErrnoError HandleResponceServerPing(InnerTcpClient* client, protocol::response_t* resp);
+  common::ErrnoError HandleResponceServerGetClientInfo(InnerTcpClient* client, protocol::response_t* resp);
+  common::ErrnoError HandleResponceServerSendChatMessage(InnerTcpClient* client, protocol::response_t* resp);
 
   void SendEnterChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login);
   void SendLeaveChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login);

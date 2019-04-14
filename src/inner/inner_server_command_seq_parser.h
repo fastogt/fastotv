@@ -21,63 +21,26 @@
 #include <atomic>
 #include <functional>
 
-#include "commands/commands.h"
+#include "protocol/types.h"
 
 namespace fastotv {
 namespace inner {
 class InnerClient;
-}
-}  // namespace fastotv
-
-namespace fastotv {
-namespace inner {
-
-class RequestCallback {
- public:
-  typedef std::function<void(common::protocols::three_way_handshake::cmd_seq_t request_id, int argc, char* argv[])>
-      callback_t;
-  RequestCallback(common::protocols::three_way_handshake::cmd_seq_t request_id, callback_t cb);
-  common::protocols::three_way_handshake::cmd_seq_t GetRequestID() const;
-  void Execute(int argc, char* argv[]);
-
- private:
-  common::protocols::three_way_handshake::cmd_seq_t request_id_;
-  callback_t cb_;
-};
 
 class InnerServerCommandSeqParser {
  public:
-  typedef uint64_t seq_id_t;
-
   InnerServerCommandSeqParser();
   virtual ~InnerServerCommandSeqParser();
 
-  void SubscribeRequest(const RequestCallback& req);
-
  protected:
-  void HandleInnerDataReceived(InnerClient* connection, const std::string& input_command);
+  common::ErrnoError HandleInnerDataReceived(InnerClient* client, const std::string& input_command);
+  virtual common::ErrnoError HandleRequestCommand(InnerClient* client, protocol::request_t* req) = 0;
+  virtual common::ErrnoError HandleResponceCommand(InnerClient* client, protocol::response_t* resp) = 0;
 
-  common::protocols::three_way_handshake::cmd_seq_t NextRequestID();  // for requests
+  protocol::sequance_id_t NextRequestID();  // for requests
 
  private:
-  void ProcessRequest(common::protocols::three_way_handshake::cmd_seq_t request_id, int argc, char* argv[]);
-
-  virtual void HandleInnerRequestCommand(InnerClient* connection,
-                                         common::protocols::three_way_handshake::cmd_seq_t id,
-                                         int argc,
-                                         char* argv[]) = 0;  // called when argv not NULL and argc > 0 , only responce
-  virtual void HandleInnerResponceCommand(
-      InnerClient* connection,
-      common::protocols::three_way_handshake::cmd_seq_t id,
-      int argc,
-      char* argv[]) = 0;  // called when argv not NULL and argc > 0, only approve responce
-  virtual void HandleInnerApproveCommand(InnerClient* connection,
-                                         common::protocols::three_way_handshake::cmd_seq_t id,
-                                         int argc,
-                                         char* argv[]) = 0;  // called when argv not NULL and argc > 0
-
-  std::atomic<seq_id_t> id_;
-  std::vector<RequestCallback> subscribed_requests_;
+  std::atomic<protocol::seq_id_t> id_;
 };
 
 }  // namespace inner

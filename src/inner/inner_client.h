@@ -18,44 +18,25 @@
 
 #pragma once
 
-#include <string>
-
 #include <common/libev/tcp/tcp_client.h>  // for TcpClient
 
-#include "commands/commands.h"
-
-namespace common {
-class IEDcoder;
-}
+#include "protocol/protocol.h"
 
 namespace fastotv {
 namespace inner {
 
 class InnerClient : public common::libev::tcp::TcpClient {
  public:
-  typedef uint32_t protocoled_size_t;  // sizeof 4 byte
-  enum { MAX_COMMAND_SIZE = 1024 * 8 };
   InnerClient(common::libev::IoLoop* server, const common::net::socket_info& info);
   virtual ~InnerClient();
 
   const char* ClassName() const override;
+};
 
-  common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_request_t& request) WARN_UNUSED_RESULT;
-  common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_response_t& responce) WARN_UNUSED_RESULT;
-  common::ErrnoError Write(const common::protocols::three_way_handshake::cmd_approve_t& approve) WARN_UNUSED_RESULT;
-
-  common::ErrnoError ReadCommand(std::string* out) WARN_UNUSED_RESULT;
-
- private:
-  common::ErrnoError ReadDataSize(protocoled_size_t* sz) WARN_UNUSED_RESULT;
-  common::ErrnoError ReadMessage(char* out, protocoled_size_t size) WARN_UNUSED_RESULT;
-
-  common::ErrnoError WriteMessage(const std::string& message) WARN_UNUSED_RESULT;
-  using common::libev::tcp::TcpClient::Read;
-  using common::libev::tcp::TcpClient::Write;
-
- private:
-  common::IEDcoder* compressor_;
+class ProtocoledInnerClient : public protocol::ProtocolClient<InnerClient> {
+ public:
+  typedef protocol::ProtocolClient<InnerClient> base_class;
+  ProtocoledInnerClient(common::libev::IoLoop* server, const common::net::socket_info& info);
 };
 
 }  // namespace inner
