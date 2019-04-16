@@ -68,13 +68,14 @@ common::ErrnoError InnerSubHandler::HandleRequest(const UserRequestInfo& request
     return not_found_user_error;
   }
 
+  const protocol::request_t req = request.GetRequest();
   auto cb = std::bind(&InnerSubHandler::PublishResponse, this, request, std::placeholders::_1);
-  return fclient->WriteRequest(request.GetRequest(), cb);
+  return fclient->WriteRequest(req, cb);
 }
 
-void InnerSubHandler::PublishResponse(const UserRpcInfo& uinf, const protocol::response_t* resp) {
+void InnerSubHandler::PublishResponse(const UserRequestInfo& uinf, const protocol::response_t* resp) {
   std::string msg;
-  UserResponseInfo response(uinf.GetUserId(), uinf.GetDeviceId(), *resp);
+  UserResponseInfo response(uinf.GetUserId(), uinf.GetDeviceId(), uinf.GetRequest(), *resp);
   common::Error err = response.SerializeToString(&msg);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);

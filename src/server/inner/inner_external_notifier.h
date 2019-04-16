@@ -43,7 +43,7 @@ class InnerSubHandler : public redis::RedisSubHandler {
  private:
   common::ErrnoError HandleRequest(const UserRequestInfo& request);
 
-  void PublishResponse(const UserRpcInfo& uinf, const protocol::response_t* resp);
+  void PublishResponse(const UserRequestInfo& uinf, const protocol::response_t* resp);
 
   InnerTcpHandlerHost* parent_;
 };

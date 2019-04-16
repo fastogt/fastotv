@@ -19,14 +19,18 @@
 #include "server/user_response_info.h"
 
 #define USER_REQUEST_INFO_RESPONSE_FIELD "response"
+#define USER_REQUEST_INFO_REQUEST_FIELD "request"
 
 namespace fastotv {
 namespace server {
 
 UserResponseInfo::UserResponseInfo() : base_class(), resp_() {}
 
-UserResponseInfo::UserResponseInfo(const user_id_t& uid, const device_id_t& device_id, const protocol::response_t& resp)
-    : base_class(uid, device_id), resp_(resp) {}
+UserResponseInfo::UserResponseInfo(const user_id_t& uid,
+                                   const device_id_t& device_id,
+                                   const protocol::request_t& req,
+                                   const protocol::response_t& resp)
+    : base_class(uid, device_id, req), resp_(resp) {}
 
 protocol::response_t UserResponseInfo::GetResponse() const {
   return resp_;
@@ -47,6 +51,7 @@ common::Error UserResponseInfo::SerializeFields(json_object* deserialized) const
   if (err) {
     return err;
   }
+
   json_object_object_add(deserialized, USER_REQUEST_INFO_RESPONSE_FIELD, resp_json);
   return common::Error();
 }

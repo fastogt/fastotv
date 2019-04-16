@@ -18,19 +18,22 @@
 
 #pragma once
 
-#include "server/user_rpc_info.h"
+#include "server/user_request_info.h"
 
 #include "protocol/protocol.h"
 
 namespace fastotv {
 namespace server {
 
-class UserResponseInfo : public UserRpcInfo {
+class UserResponseInfo : public UserRequestInfo {
  public:
-  typedef UserRpcInfo base_class;
+  typedef UserRequestInfo base_class;
 
   UserResponseInfo();
-  UserResponseInfo(const user_id_t& uid, const device_id_t& device_id, const protocol::response_t& resp);
+  UserResponseInfo(const user_id_t& uid,
+                   const device_id_t& device_id,
+                   const protocol::request_t& req,
+                   const protocol::response_t& resp);
 
   protocol::response_t GetResponse() const;
 
