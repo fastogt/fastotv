@@ -43,21 +43,21 @@ common::ErrnoError InnerServerCommandSeqParser::HandleInnerDataReceived(InnerCli
   }
 
   if (req) {
-    INFO_LOG() << "Received daemon request: " << input_command;
+    INFO_LOG() << "Received request: " << input_command;
     common::ErrnoError err = HandleRequestCommand(client, req);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     delete req;
   } else if (resp) {
-    INFO_LOG() << "Received daemon responce: " << input_command;
+    INFO_LOG() << "Received responce: " << input_command;
     common::ErrnoError err = HandleResponceCommand(client, resp);
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     }
     delete resp;
   } else {
-    NOTREACHED();
+    DNOTREACHED();
     return common::make_errno_error("Invalid command type.", EINVAL);
   }
 

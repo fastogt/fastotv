@@ -21,18 +21,15 @@
 #include <common/error.h>   // for Error, DEBUG_MSG_...
 #include <common/logger.h>  // for COMPACT_LOG_WARNING
 #include <common/macros.h>  // for STRINGIZE
+#include <common/protocols/json_rpc/json_rpc.h>
 
 #include "inner/inner_server_command_seq_parser.h"  // for RequestCallback
 
 #include "server/inner/inner_tcp_client.h"
 #include "server/inner/inner_tcp_handler.h"
+#include "server/user_response_info.h"
 
-#include "server/responce_info.h"  // for ResponceInfo
-#include "server/user_info.h"      // for user_id_t
-
-// publish COMMANDS_IN 'user_id 0 1 ping' 0 => request
-// publish COMMANDS_OUT '1 [OK|FAIL] ping args...'
-// id cmd cause
+// publish COMMANDS_IN '{user_id:'', device_id:'', request : {JSONRPC}} => request
 
 namespace fastotv {
 namespace server {
@@ -42,114 +39,51 @@ InnerSubHandler::InnerSubHandler(InnerTcpHandlerHost* parent) : parent_(parent) 
 
 InnerSubHandler::~InnerSubHandler() {}
 
-void InnerSubHandler::ProcessSubscribed(protocol::sequance_id_t request_id,
-                                        int argc,
-                                        char* argv[]) {  // incoming responce
-#if 0
-  const char* state_command = argc > 0 ? argv[0] : FAIL_COMMAND;  // [OK|FAIL]
-  const char* command = argc > 1 ? argv[1] : "null";              // command
-  const std::string json = argc > 2 ? argv[2] : "{}";             // encoded args
-
-  ResponceInfo resp(request_id, state_command, command, json);
-  PublishResponce(resp);
-#endif
-}
-
 void InnerSubHandler::HandleMessage(const std::string& channel, const std::string& msg) {
-  // [user_id_t]login [device_id_t]device_id [cmd_id_t]seq [std::string]command args ...
-  // [cmd_id_t]seq OK/FAIL [std::string]command args ..
   INFO_LOG() << "InnerSubHandler channel: " << channel << ", msg: " << msg;
-#if 0
-  size_t space_pos = msg.find_first_of(' ');
-  if (space_pos == std::string::npos) {
-    const std::string resp = common::MemSPrintf("UNKNOWN COMMAND: %s", msg);
-    WARNING_LOG() << resp;
+  json_object* jmsg = json_tokener_parse(msg.c_str());
+  if (!jmsg) {
     return;
   }
 
-  const user_id_t uid = msg.substr(0, space_pos);
-  const std::string device_and_cmd = msg.substr(space_pos + 1);
-  size_t next_space_pos = device_and_cmd.find_first_of(' ');
-  if (next_space_pos == std::string::npos) {
-    const std::string resp = common::MemSPrintf("UNKNOWN COMMAND: %s", msg);
-    WARNING_LOG() << resp;
-    return;
-  }
-
-  const device_id_t dev = device_and_cmd.substr(0, next_space_pos);
-  const std::string cmd = device_and_cmd.substr(next_space_pos + 1);
-  const std::string input_command = common::MemSPrintf(STRINGIZE(REQUEST_COMMAND) " %s" END_OF_COMMAND, cmd);
-  common::protocols::three_way_handshake::cmd_id_t seq;
-  common::protocols::three_way_handshake::cmd_seq_t id;
-  std::string cmd_str;
-  common::Error err = common::protocols::three_way_handshake::ParseCommand(input_command, &seq, &id, &cmd_str);
+  UserRequestInfo ureq;
+  common::Error err = ureq.DeSerialize(jmsg);
   if (err) {
-    std::string resp = err->GetDescription();
-    WARNING_LOG() << resp;
     return;
   }
 
-  InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(uid, dev);
-  if (!fclient) {
-    int argc;
-    sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
-    char* command = argv[0];
-
-    ResponceInfo resp(id, FAIL_COMMAND, command, "{\"cause\": \"not connected\"}");
-    std::string resp_str;
-    common::Error err = resp.SerializeToString(&resp_str);
-    if (err) {
-      PublishResponce(resp);
-      sdsfreesplitres(argv, argc);
-      return;
-    }
-
-    WARNING_LOG() << resp_str;
-    PublishResponce(resp);
-    sdsfreesplitres(argv, argc);
-    return;
-  }
-
-  common::protocols::three_way_handshake::cmd_request_t req(id, input_command);
-  common::ErrnoError errn = fclient->Write(req);
+  common::ErrnoError errn = HandleRequest(ureq);
   if (errn) {
-    int argc;
-    sds* argv = sdssplitargslong(cmd_str.c_str(), &argc);
-    char* command = argv[0];
-
-    ResponceInfo resp(id, FAIL_COMMAND, command, "{\"cause\": \"not handled\"}");
-    std::string resp_str;
-    common::Error err = resp.SerializeToString(&resp_str);
-    if (err) {
-      PublishResponce(resp);
-      sdsfreesplitres(argv, argc);
-      return;
-    }
-
-    WARNING_LOG() << resp_str;
-    PublishResponce(resp);
-    sdsfreesplitres(argv, argc);
-    return;
+    const protocol::request_t req = ureq.GetRequest();
+    const protocol::response_t resp =
+        protocol::response_t::MakeError(req.id, protocol::MakeInternalErrorFromText(errn->GetDescription()));
+    PublishResponse(ureq, &resp);
   }
-
-  auto cb = std::bind(&InnerSubHandler::ProcessSubscribed, this, std::placeholders::_1, std::placeholders::_2,
-                      std::placeholders::_3);
-  fastotv::inner::RequestCallback rc(id, cb);
-  parent_->SubscribeRequest(rc);
-#endif
 }
 
-void InnerSubHandler::PublishResponce(const ResponceInfo& resp) {
-  std::string resp_str;
-  common::Error err = resp.SerializeToString(&resp_str);
+common::ErrnoError InnerSubHandler::HandleRequest(const UserRequestInfo& request) {
+  InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(request.GetUserId(), request.GetDeviceId());
+  if (!fclient) {
+    common::ErrnoError not_found_user_error = common::make_errno_error("User not found.", EINVAL);
+    return not_found_user_error;
+  }
+
+  auto cb = std::bind(&InnerSubHandler::PublishResponse, this, request, std::placeholders::_1);
+  return fclient->WriteRequest(request.GetRequest(), cb);
+}
+
+void InnerSubHandler::PublishResponse(const UserRpcInfo& uinf, const protocol::response_t* resp) {
+  std::string msg;
+  UserResponseInfo response(uinf.GetUserId(), uinf.GetDeviceId(), *resp);
+  common::Error err = response.SerializeToString(&msg);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return;
   }
 
-  err = parent_->PublishToChannelOut(resp_str);
+  err = parent_->PublishToChannelOut(msg);
   if (err) {
-    WARNING_LOG() << "Publish message: " << resp_str << " to channel out failed.";
+    WARNING_LOG() << "Publish message: " << msg << " to channel out failed.";
   }
 }
 

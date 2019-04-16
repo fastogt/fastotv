@@ -38,13 +38,16 @@ class ProtocolClient : public Client {
  public:
   typedef Client base_class;
 
+  typedef std::function<void(const response_t* responce)> callback_t;
+  typedef std::pair<request_t, callback_t> request_save_entry_t;
+
   template <typename... Args>
   ProtocolClient(Args... args) : base_class(args...) {}
 
-  common::ErrnoError WriteRequest(const request_t& request) WARN_UNUSED_RESULT {
+  common::ErrnoError WriteRequest(const request_t& request, callback_t cb = callback_t()) WARN_UNUSED_RESULT {
     common::ErrnoError err = detail::WriteRequest(this, request);
     if (!err && !request.IsNotification()) {
-      requests_queue_[request.id] = request;
+      requests_queue_[request.id] = std::make_pair(request, cb);
     }
     return err;
   }
@@ -55,7 +58,7 @@ class ProtocolClient : public Client {
 
   common::ErrnoError ReadCommand(std::string* out) WARN_UNUSED_RESULT { return detail::ReadCommand(this, out); }
 
-  bool PopRequestByID(sequance_id_t sid, request_t* req) {
+  bool PopRequestByID(sequance_id_t sid, request_t* req, callback_t* cb = nullptr) {
     if (!req || !sid) {
       return false;
     }
@@ -65,13 +68,17 @@ class ProtocolClient : public Client {
       return false;
     }
 
-    *req = found_it->second;
+    request_save_entry_t it = found_it->second;
+    *req = it.first;
+    if (cb) {
+      *cb = it.second;
+    }
     requests_queue_.erase(found_it);
     return true;
   }
 
  private:
-  std::map<sequance_id_t, request_t> requests_queue_;
+  std::map<sequance_id_t, request_save_entry_t> requests_queue_;
   using Client::Read;
   using Client::Write;
 };

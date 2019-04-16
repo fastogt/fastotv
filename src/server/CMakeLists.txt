@@ -65,10 +65,12 @@ SET(BUILD_SERVER_SOURCES
   ${SOURCE_ROOT}/server/server_host.h
   ${SOURCE_ROOT}/server/user_info.h
   ${SOURCE_ROOT}/server/user_info.cpp
-  ${SOURCE_ROOT}/server/user_state_info.h
-  ${SOURCE_ROOT}/server/user_state_info.cpp
-  ${SOURCE_ROOT}/server/responce_info.h
-  ${SOURCE_ROOT}/server/responce_info.cpp
+  ${SOURCE_ROOT}/server/user_rpc_info.h
+  ${SOURCE_ROOT}/server/user_rpc_info.cpp
+  ${SOURCE_ROOT}/server/user_request_info.h
+  ${SOURCE_ROOT}/server/user_request_info.cpp
+  ${SOURCE_ROOT}/server/user_response_info.h
+  ${SOURCE_ROOT}/server/user_response_info.cpp
   ${SOURCE_ROOT}/server/config.h
   ${SOURCE_ROOT}/server/config.cpp
   ${HEADERS_REDIS} ${SOURCES_REDIS}

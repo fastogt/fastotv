@@ -18,45 +18,29 @@
 
 #pragma once
 
-#include <string>  // for string
-
-#include <common/serializer/json_serializer.h>
+#include "server/user_info.h"  // for user_id_t
 
 namespace fastotv {
 namespace server {
 
-class ResponceInfo : public common::serializer::JsonSerializer<ResponceInfo> {
+class UserRpcInfo : public common::serializer::JsonSerializer<UserRpcInfo> {
  public:
-  ResponceInfo();
-  ResponceInfo(const std::string& request_id,
-               const std::string& state_command,
-               const std::string& command,
-               const std::string& responce);
+  UserRpcInfo();
+  UserRpcInfo(const user_id_t& uid, const device_id_t& device_id);
 
-  std::string GetRequestId() const;
-  std::string GetState() const;
-  std::string GetCommand() const;
-  std::string GetResponceJson() const;
+  device_id_t GetDeviceId() const;
+  user_id_t GetUserId() const;
 
-  bool Equals(const ResponceInfo& inf) const;
+  bool Equals(const UserRpcInfo& state) const;
 
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;
   common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
-  std::string request_id_;
-  std::string state_;
-  std::string command_;
-  std::string responce_json_;
+  user_id_t user_id_;
+  device_id_t device_id_;
 };
 
-inline bool operator==(const ResponceInfo& lhs, const ResponceInfo& rhs) {
-  return lhs.Equals(rhs);
-}
-
-inline bool operator!=(const ResponceInfo& x, const ResponceInfo& y) {
-  return !(x == y);
-}
 }  // namespace server
 }  // namespace fastotv

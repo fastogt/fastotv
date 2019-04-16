@@ -21,8 +21,6 @@
 #include <string>  // for string
 #include <vector>
 
-#include <json-c/json_object.h>  // for json_object
-
 #include <common/libev/io_client.h>         // for IoClient
 #include <common/libev/io_loop.h>           // for IoLoop
 #include <common/logger.h>                  // for COMPACT_LOG_WARNING
@@ -46,11 +44,24 @@
 #include "commands_info/server_info.h"  // for ServerInfo
 #include "server/server_host.h"         // for ServerHost
 #include "server/user_info.h"           // for user_id_t, UserInfo
-#include "server/user_state_info.h"     // for UserStateInfo
+
+// ui notifications
+#define CLIENT_STATE "client_state"
+#define CLIENT_CONNECTED_STATE "connected"
 
 namespace fastotv {
 namespace server {
 namespace inner {
+
+namespace {
+protocol::request_t MakeClientStateNotification(bool connected) {
+  json_object* obj = json_object_new_object();
+  json_object_object_add(obj, CLIENT_CONNECTED_STATE, json_object_new_boolean(connected));
+  const std::string state_str = json_object_get_string(obj);
+  json_object_put(obj);
+  return protocol::request_t::MakeNotification(CLIENT_STATE, state_str);
+}
+}  // namespace
 
 InnerTcpHandlerHost::InnerTcpHandlerHost(ServerHost* parent, const Config& config)
     : parent_(parent),
@@ -170,7 +181,7 @@ void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
   }
 
   user_id_t uid = iconnection->GetUid();
-  PublishUserStateInfo(UserStateInfo(uid, auth.GetDeviceID(), false));
+  PublishUserStateInfo(UserRpcInfo(uid, auth.GetDeviceID()), false);
   INFO_LOG() << "Byu registered user: " << auth.GetLogin();
 }
 
@@ -206,19 +217,18 @@ void InnerTcpHandlerHost::UpdateCache() {
   chat_channels_ = channels;
 }
 
-void InnerTcpHandlerHost::PublishUserStateInfo(const UserStateInfo& state) {
-  json_object* user_state_json = nullptr;
-  common::Error err = state.Serialize(&user_state_json);
+void InnerTcpHandlerHost::PublishUserStateInfo(const UserRpcInfo& user, bool connected) {
+  std::string user_state_str;
+  UserRequestInfo req(user.GetUserId(), user.GetDeviceId(), MakeClientStateNotification(connected));
+  common::Error err = req.SerializeToString(&user_state_str);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     return;
   }
 
-  std::string connected_resp = json_object_get_string(user_state_json);
-  json_object_put(user_state_json);
-  err = sub_commands_in_->PublishStateToChannel(connected_resp);
+  err = sub_commands_in_->PublishStateToChannel(user_state_str);
   if (err) {
-    WARNING_LOG() << "Publish message: " << connected_resp << " to channel clients state failed.";
+    WARNING_LOG() << "Publish message: " << user_state_str << " to channel clients state failed.";
   }
 }
 
@@ -236,7 +246,7 @@ void InnerTcpHandlerHost::SendLeaveChatMessage(common::libev::IoLoop* server, st
 }
 
 void InnerTcpHandlerHost::BrodcastChatMessage(common::libev::IoLoop* server, const ChatMessage& msg) {
-  serializet_t msg_ser;
+  std::string msg_ser;
   common::Error err = msg.SerializeToString(&msg_ser);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -338,7 +348,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
     common::Error err = parent_->RegisterInnerConnectionByUser(uid, uauth, client);
     CHECK(!err) << "Register inner connection error: " << err->GetDescription();
 
-    PublishUserStateInfo(UserStateInfo(uid, dev, true));
+    PublishUserStateInfo(UserRpcInfo(uid, dev), true);
     INFO_LOG() << "Welcome registered user: " << uauth.GetLogin();
     return common::ErrnoError();
   }
@@ -411,7 +421,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientGetChannels(InnerTcpC
     return common::make_errno_error(err_str, EAGAIN);
   }
 
-  serializet_t channels_str;
+  std::string channels_str;
   ChannelsInfo chan = user.GetChannelInfo();
   common::Error err_ser = chan.SerializeToString(&channels_str);
   if (err_ser) {
@@ -472,7 +482,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientGetRuntimeChannelInfo
       rinf.SetChatReadOnly(true);
     }
 
-    serializet_t rchannel_str;
+    std::string rchannel_str;
     common::Error err_ser = rinf.SerializeToString(&rchannel_str);
     if (err_ser) {
       const std::string err_str = err_ser->GetDescription();
@@ -482,17 +492,16 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientGetRuntimeChannelInfo
     const protocol::response_t channels_responce = GetRuntimeChannelInfoResponceSuccsess(req->id, rchannel_str);
     common::ErrnoError err = client->WriteResponce(channels_responce);
     if (err) {
-      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    } else {
-      if (prev_channel == invalid_stream_id) {  // first channel
-        SendEnterChatMessage(server, channel, login);
-      } else {
-        SendLeaveChatMessage(server, prev_channel, login);
-        SendEnterChatMessage(server, channel, login);
-      }
+      return err;
     }
 
-    return err;
+    if (prev_channel == invalid_stream_id) {  // first channel
+      SendEnterChatMessage(server, channel, login);
+    } else {
+      SendLeaveChatMessage(server, prev_channel, login);
+      SendEnterChatMessage(server, channel, login);
+    }
+    return common::ErrnoError();
   }
 
   return common::make_errno_error_inval();
@@ -613,7 +622,8 @@ common::ErrnoError InnerTcpHandlerHost::HandleResponceCommand(fastotv::inner::In
                                                               protocol::response_t* resp) {
   protocol::request_t req;
   InnerTcpClient* sclient = static_cast<InnerTcpClient*>(client);
-  if (sclient->PopRequestByID(resp->id, &req)) {
+  InnerTcpClient::callback_t cb;
+  if (sclient->PopRequestByID(resp->id, &req, &cb)) {
     if (req.method == SERVER_PING) {
       return HandleResponceServerPing(sclient, resp);
     } else if (req.method == SERVER_GET_CLIENT_INFO) {
@@ -622,6 +632,9 @@ common::ErrnoError InnerTcpHandlerHost::HandleResponceCommand(fastotv::inner::In
       return HandleResponceServerSendChatMessage(sclient, resp);
     } else {
       WARNING_LOG() << "HandleResponceServiceCommand not handled command: " << req.method;
+    }
+    if (cb) {
+      cb(resp);
     }
   }
 

@@ -19,6 +19,7 @@
 #include "commands_info/runtime_channel_info.h"
 
 #define RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD "channel_id"
+
 #define RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD "channel_type"
 #define RUNTIME_CHANNEL_INFO_WATCHERS_FIELD "watchers"
 #define RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD "chat_enabled"
@@ -43,6 +44,10 @@ void RuntimeChannelLiteInfo::SetChannelId(stream_id sid) {
 
 stream_id RuntimeChannelLiteInfo::GetChannelId() const {
   return channel_id_;
+}
+
+bool RuntimeChannelLiteInfo::Equals(const RuntimeChannelLiteInfo& inf) const {
+  return channel_id_ == inf.channel_id_;
 }
 
 common::Error RuntimeChannelLiteInfo::DoDeSerialize(json_object* serialized) {
@@ -73,12 +78,7 @@ common::Error RuntimeChannelLiteInfo::SerializeFields(json_object* deserialized)
 }
 
 RuntimeChannelInfo::RuntimeChannelInfo()
-    : channel_id_(invalid_stream_id),
-      watchers_(0),
-      type_(UNKNOWN_CHANNEL),
-      chat_enabled_(false),
-      chat_read_only_(false),
-      messages_() {}
+    : base_class(), watchers_(0), type_(UNKNOWN_CHANNEL), chat_enabled_(false), chat_read_only_(false), messages_() {}
 
 RuntimeChannelInfo::RuntimeChannelInfo(stream_id channel_id,
                                        size_t watchers,
@@ -86,7 +86,7 @@ RuntimeChannelInfo::RuntimeChannelInfo(stream_id channel_id,
                                        bool chat_enabled,
                                        bool read_only,
                                        const messages_t& msgs)
-    : channel_id_(channel_id),
+    : base_class(channel_id),
       watchers_(watchers),
       type_(type),
       chat_enabled_(chat_enabled),
@@ -94,18 +94,6 @@ RuntimeChannelInfo::RuntimeChannelInfo(stream_id channel_id,
       messages_(msgs) {}
 
 RuntimeChannelInfo::~RuntimeChannelInfo() {}
-
-bool RuntimeChannelInfo::IsValid() const {
-  return channel_id_ != invalid_stream_id;
-}
-
-void RuntimeChannelInfo::SetChannelId(stream_id sid) {
-  channel_id_ = sid;
-}
-
-stream_id RuntimeChannelInfo::GetChannelId() const {
-  return channel_id_;
-}
 
 void RuntimeChannelInfo::SetWatchersCount(size_t count) {
   watchers_ = count;
@@ -148,8 +136,9 @@ ChannelType RuntimeChannelInfo::GetChannelType() const {
 }
 
 common::Error RuntimeChannelInfo::SerializeFields(json_object* deserialized) const {
-  if (!IsValid()) {
-    return common::make_error_inval();
+  common::Error err = base_class::SerializeFields(deserialized);
+  if (err) {
+    return err;
   }
 
   json_object* jmsgs = json_object_new_array();
@@ -162,8 +151,6 @@ common::Error RuntimeChannelInfo::SerializeFields(json_object* deserialized) con
     json_object_array_add(jmsgs, jmsg);
   }
 
-  json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD,
-                         json_object_new_string(channel_id_.c_str()));
   json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_WATCHERS_FIELD, json_object_new_int(watchers_));
   json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHANNEL_TYPE_FIELD, json_object_new_int(type_));
   json_object_object_add(deserialized, RUNTIME_CHANNEL_INFO_CHAT_ENABLED_FIELD, json_object_new_boolean(chat_enabled_));
@@ -175,23 +162,16 @@ common::Error RuntimeChannelInfo::SerializeFields(json_object* deserialized) con
 
 common::Error RuntimeChannelInfo::DoDeSerialize(json_object* serialized) {
   RuntimeChannelInfo inf;
+  common::Error err = inf.base_class::DoDeSerialize(serialized);
+  if (err) {
+    return err;
+  }
 
   json_object* jwatchers = nullptr;
   json_bool jwatchers_exists = json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_WATCHERS_FIELD, &jwatchers);
   if (jwatchers_exists) {
     inf.watchers_ = json_object_get_int64(jwatchers);
   }
-
-  json_object* jcid = nullptr;
-  json_bool jcid_exists = json_object_object_get_ex(serialized, RUNTIME_CHANNEL_INFO_CHANNEL_ID_FIELD, &jcid);
-  if (!jcid_exists) {
-    return common::make_error_inval();
-  }
-  stream_id cid = json_object_get_string(jcid);
-  if (cid == invalid_stream_id) {
-    return common::make_error_inval();
-  }
-  inf.channel_id_ = cid;
 
   json_object* jchat_type = nullptr;
   json_bool jchat_type_exists =
@@ -236,7 +216,7 @@ common::Error RuntimeChannelInfo::DoDeSerialize(json_object* serialized) {
 }
 
 bool RuntimeChannelInfo::Equals(const RuntimeChannelInfo& inf) const {
-  return channel_id_ == inf.channel_id_ && watchers_ == inf.watchers_ && chat_enabled_ == inf.chat_enabled_ &&
+  return base_class::Equals(inf) && watchers_ == inf.watchers_ && chat_enabled_ == inf.chat_enabled_ &&
          messages_ == inf.messages_;
 }
 

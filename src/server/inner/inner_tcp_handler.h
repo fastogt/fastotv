@@ -20,7 +20,6 @@
 
 #include <memory>  // for shared_ptr
 #include <string>  // for string
-#include <vector>
 
 #include <common/error.h>                   // for Error
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
@@ -31,7 +30,7 @@
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
 #include "server/config.h"  // for Config
-#include "server/user_info.h"
+#include "server/user_rpc_info.h"
 
 #include "commands_info/chat_message.h"
 
@@ -57,7 +56,6 @@ namespace inner {
 class InnerClient;
 }
 namespace server {
-class UserStateInfo;
 class ServerHost;
 namespace redis {
 class RedisPubSub;
@@ -99,7 +97,7 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
 
  private:
   void UpdateCache();
-  void PublishUserStateInfo(const UserStateInfo& state);
+  void PublishUserStateInfo(const UserRpcInfo& user, bool connected);
 
   common::ErrnoError HandleRequestCommand(fastotv::inner::InnerClient* client, protocol::request_t* req) override;
   common::ErrnoError HandleResponceCommand(fastotv::inner::InnerClient* client, protocol::response_t* resp) override;

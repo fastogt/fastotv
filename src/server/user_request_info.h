@@ -18,38 +18,31 @@
 
 #pragma once
 
-#include "server/user_info.h"  // for user_id_t
+#include "server/user_rpc_info.h"
+
+#include "protocol/protocol.h"
 
 namespace fastotv {
 namespace server {
 
-class UserStateInfo : public common::serializer::JsonSerializer<UserStateInfo> {
+class UserRequestInfo : public UserRpcInfo {
  public:
-  UserStateInfo();
-  UserStateInfo(const user_id_t& uid, const device_id_t& device_id, bool connected);
+  typedef UserRpcInfo base_class;
 
-  device_id_t GetDeviceId() const;
-  user_id_t GetUserId() const;
-  bool IsConnected() const;
+  UserRequestInfo();
+  UserRequestInfo(const user_id_t& uid, const device_id_t& device_id, const protocol::request_t& req);
 
-  bool Equals(const UserStateInfo& state) const;
+  protocol::request_t GetRequest() const;
+
+  bool Equals(const UserRequestInfo& state) const;
 
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;
   common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
-  user_id_t user_id_;
-  device_id_t device_id_;
-  bool connected_;
+  protocol::request_t req_;
 };
 
-inline bool operator==(const UserStateInfo& lhs, const UserStateInfo& rhs) {
-  return lhs.Equals(rhs);
-}
-
-inline bool operator!=(const UserStateInfo& x, const UserStateInfo& y) {
-  return !(x == y);
-}
 }  // namespace server
 }  // namespace fastotv

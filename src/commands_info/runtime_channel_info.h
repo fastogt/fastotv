@@ -37,6 +37,8 @@ class RuntimeChannelLiteInfo : public common::serializer::JsonSerializer<Runtime
   void SetChannelId(stream_id sid);
   stream_id GetChannelId() const;
 
+  bool Equals(const RuntimeChannelLiteInfo& inf) const;
+
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;
   common::Error SerializeFields(json_object* deserialized) const override;
@@ -45,8 +47,13 @@ class RuntimeChannelLiteInfo : public common::serializer::JsonSerializer<Runtime
   stream_id channel_id_;
 };
 
-class RuntimeChannelInfo : public common::serializer::JsonSerializer<RuntimeChannelInfo> {
+inline bool operator==(const RuntimeChannelLiteInfo& left, const RuntimeChannelLiteInfo& right) {
+  return left.Equals(right);
+}
+
+class RuntimeChannelInfo : public RuntimeChannelLiteInfo {
  public:
+  typedef RuntimeChannelLiteInfo base_class;
   typedef std::vector<ChatMessage> messages_t;
   RuntimeChannelInfo();
   RuntimeChannelInfo(stream_id channel_id,
@@ -56,11 +63,6 @@ class RuntimeChannelInfo : public common::serializer::JsonSerializer<RuntimeChan
                      bool read_only,
                      const messages_t& msgs = messages_t());
   ~RuntimeChannelInfo();
-
-  bool IsValid() const;
-
-  void SetChannelId(stream_id sid);
-  stream_id GetChannelId() const;
 
   void SetWatchersCount(size_t count);
   size_t GetWatchersCount() const;
@@ -84,7 +86,6 @@ class RuntimeChannelInfo : public common::serializer::JsonSerializer<RuntimeChan
   common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
-  stream_id channel_id_;
   size_t watchers_;
   ChannelType type_;
   bool chat_enabled_;

@@ -262,7 +262,7 @@ void InnerTcpHandler::PostMessageToChat(const ChatMessage& msg) {
     return;
   }
 
-  serializet_t msg_ser;
+  std::string msg_ser;
   common::Error err_ser = msg.SerializeToString(&msg_ser);
   if (err_ser) {
     DEBUG_MSG_ERROR(err_ser, common::logging::LOG_LEVEL_ERR);
@@ -285,7 +285,7 @@ void InnerTcpHandler::RequesRuntimeChannelInfo(stream_id sid) {
     return;
   }
 
-  serializet_t run_str;
+  std::string run_str;
   RuntimeChannelLiteInfo run(sid);
   common::Error err_ser = run.SerializeToString(&run_str);
   if (err_ser) {
@@ -529,6 +529,7 @@ common::ErrnoError InnerTcpHandler::HandleResponceClientGetServerInfo(InnerSTBCl
 
 common::ErrnoError InnerTcpHandler::HandleResponceClientGetChannels(InnerSTBClient* client,
                                                                     protocol::response_t* resp) {
+  UNUSED(client);
   if (resp->IsMessage()) {
     const char* params_ptr = resp->message->result.c_str();
     json_object* jchannels_info = json_tokener_parse(params_ptr);

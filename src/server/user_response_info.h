@@ -18,21 +18,31 @@
 
 #pragma once
 
-#include <common/bounded_value.h>
-#include <common/types.h>  // for time64_t
+#include "server/user_rpc_info.h"
+
+#include "protocol/protocol.h"
 
 namespace fastotv {
+namespace server {
 
-typedef std::string stream_id;  // must be unique
-static const stream_id invalid_stream_id = stream_id();
+class UserResponseInfo : public UserRpcInfo {
+ public:
+  typedef UserRpcInfo base_class;
 
-typedef std::string login_t;      // unique, user email now
-typedef std::string device_id_t;  // unique, mongodb id, registered by user
-typedef size_t bandwidth_t;       // bytes/s
-typedef common::time64_t timestamp_t;
+  UserResponseInfo();
+  UserResponseInfo(const user_id_t& uid, const device_id_t& device_id, const protocol::response_t& resp);
 
-typedef common::BoundedValue<int8_t, 0, 100> audio_volume_t;
+  protocol::response_t GetResponse() const;
 
-enum ChannelType { UNKNOWN_CHANNEL, OFFICAL_CHANNEL, PRIVATE_CHANNEL };
+  bool Equals(const UserResponseInfo& state) const;
 
+ protected:
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
+
+ private:
+  protocol::response_t resp_;
+};
+
+}  // namespace server
 }  // namespace fastotv
