@@ -134,7 +134,7 @@ void InnerTcpHandlerHost::TimerEmited(common::libev::IoLoop* server, common::lib
           DCHECK(!err) << "Close client error: " << err->GetDescription();
           delete client;
         } else {
-          INFO_LOG() << "Pinged to client[" << client->GetFormatedName() << "], from server["
+          INFO_LOG() << "Sent ping to client[" << client->GetFormatedName() << "], from server["
                      << server->GetFormatedName() << "], " << online_clients.size() << " client(s) connected.";
         }
       }
