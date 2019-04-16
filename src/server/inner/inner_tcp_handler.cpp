@@ -624,6 +624,9 @@ common::ErrnoError InnerTcpHandlerHost::HandleResponceCommand(fastotv::inner::In
   InnerTcpClient* sclient = static_cast<InnerTcpClient*>(client);
   InnerTcpClient::callback_t cb;
   if (sclient->PopRequestByID(resp->id, &req, &cb)) {
+    if (cb) {
+      cb(resp);
+    }
     if (req.method == SERVER_PING) {
       return HandleResponceServerPing(sclient, resp);
     } else if (req.method == SERVER_GET_CLIENT_INFO) {
@@ -632,9 +635,6 @@ common::ErrnoError InnerTcpHandlerHost::HandleResponceCommand(fastotv::inner::In
       return HandleResponceServerSendChatMessage(sclient, resp);
     } else {
       WARNING_LOG() << "HandleResponceServiceCommand not handled command: " << req.method;
-    }
-    if (cb) {
-      cb(resp);
     }
   }
 
