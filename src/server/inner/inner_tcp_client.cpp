@@ -27,7 +27,7 @@ namespace inner {
 const AuthInfo InnerTcpClient::anonim_user(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
 
 InnerTcpClient::InnerTcpClient(common::libev::tcp::TcpServer* server, const common::net::socket_info& info)
-    : base_class(server, info), hinfo_(), uid_(), current_stream_id_(invalid_stream_id) {}
+    : base_class(server, info), hinfo_(), current_stream_id_(invalid_stream_id) {}
 
 bool InnerTcpClient::IsAnonimUser() const {
   return anonim_user == hinfo_;
@@ -39,27 +39,19 @@ const char* InnerTcpClient::ClassName() const {
 
 InnerTcpClient::~InnerTcpClient() {}
 
-void InnerTcpClient::SetServerHostInfo(const AuthInfo& info) {
+void InnerTcpClient::SetServerHostInfo(const host_info_t& info) {
   hinfo_ = info;
 }
 
-AuthInfo InnerTcpClient::GetServerHostInfo() const {
+InnerTcpClient::host_info_t InnerTcpClient::GetServerHostInfo() const {
   return hinfo_;
-}
-
-void InnerTcpClient::SetUid(user_id_t id) {
-  uid_ = id;
-}
-
-user_id_t InnerTcpClient::GetUid() const {
-  return uid_;
 }
 
 void InnerTcpClient::SetCurrentStreamId(stream_id sid) {
   current_stream_id_ = sid;
 }
 
-user_id_t InnerTcpClient::GetCurrentStreamId() const {
+stream_id InnerTcpClient::GetCurrentStreamId() const {
   return current_stream_id_;
 }
 

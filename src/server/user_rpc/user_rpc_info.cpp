@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/user_rpc_info.h"
+#include "server/user_rpc/user_rpc_info.h"
 
 #define USER_STATE_INFO_USER_ID_FIELD "user_id"
 #define USER_STATE_INFO_DEVICE_ID_FIELD "device_id"
@@ -28,11 +28,15 @@ UserRpcInfo::UserRpcInfo() : user_id_(), device_id_() {}
 
 UserRpcInfo::UserRpcInfo(const user_id_t& uid, const device_id_t& device_id) : user_id_(uid), device_id_(device_id) {}
 
-device_id_t UserRpcInfo::GetDeviceId() const {
+bool UserRpcInfo::IsValid() const {
+  return !user_id_.empty() && !device_id_.empty();
+}
+
+device_id_t UserRpcInfo::GetDeviceID() const {
   return device_id_;
 }
 
-user_id_t UserRpcInfo::GetUserId() const {
+user_id_t UserRpcInfo::GetUserID() const {
   return user_id_;
 }
 

@@ -25,17 +25,10 @@
 
 #include "redis/redis_storage.h"
 
-#include "server/config.h"     // for Config
-#include "server/user_info.h"  // for user_id_t, UserInfo (ptr only)
-
-namespace common {
-namespace libev {
-class IoClient;
-}
-}  // namespace common
+#include "server/config.h"  // for Config
+#include "server/server_auth_info.h"
 
 namespace fastotv {
-class AuthInfo;
 namespace server {
 namespace inner {
 class InnerTcpClient;
@@ -46,7 +39,8 @@ class InnerTcpServer;
 class ServerHost {
  public:
   enum { timeout_seconds = 1 };
-  typedef std::unordered_map<user_id_t, std::vector<inner::InnerTcpClient*>> inner_connections_type;
+  typedef inner::InnerTcpClient client_t;
+  typedef std::unordered_map<user_id_t, std::vector<client_t*>> inner_connections_t;
 
   explicit ServerHost(const Config& config);
   ~ServerHost();
@@ -54,16 +48,13 @@ class ServerHost {
   void Stop();
   int Exec();
 
-  common::Error UnRegisterInnerConnectionByHost(common::libev::IoClient* connection) WARN_UNUSED_RESULT;
-  common::Error RegisterInnerConnectionByUser(user_id_t user_id,
-                                              const AuthInfo& user,
-                                              common::libev::IoClient* connection) WARN_UNUSED_RESULT;
-  common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;
-  common::Error FindUser(const AuthInfo& auth, user_id_t* uid, UserInfo* uinf) const WARN_UNUSED_RESULT;
+  common::Error UnRegisterInnerConnectionByHost(client_t* client) WARN_UNUSED_RESULT;
+  common::Error RegisterInnerConnectionByUser(const ServerAuthInfo& user, client_t* client) WARN_UNUSED_RESULT;
+  common::Error FindUser(const AuthInfo& auth, UserInfo* uinf) const WARN_UNUSED_RESULT;
 
   common::Error GetChatChannels(std::vector<stream_id>* channels) const WARN_UNUSED_RESULT;
 
-  inner::InnerTcpClient* FindInnerConnectionByUserIDAndDeviceID(user_id_t user_id, device_id_t dev) const;
+  inner::InnerTcpClient* FindInnerConnectionByUser(const UserRpcInfo& user) const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ServerHost);
@@ -71,7 +62,7 @@ class ServerHost {
   inner::InnerTcpHandlerHost* handler_;
   inner::InnerTcpServer* server_;
 
-  inner_connections_type connections_;
+  inner_connections_t connections_;
   redis::RedisStorage rstorage_;
   const Config config_;
 };

@@ -26,14 +26,13 @@
 namespace fastotv {
 namespace server {
 
-typedef std::string user_id_t;  // mongodb/redis id
-
 class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
  public:
   typedef std::vector<device_id_t> devices_t;
 
   UserInfo();
-  explicit UserInfo(const login_t& login,
+  explicit UserInfo(const user_id_t& uid,
+                    const login_t& login,
                     const std::string& password,
                     const ChannelsInfo& ch,
                     const devices_t& devices);
@@ -45,6 +44,7 @@ class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
   login_t GetLogin() const;
   std::string GetPassword() const;
   ChannelsInfo GetChannelInfo() const;
+  user_id_t GetUserID() const;
 
   bool Equals(const UserInfo& inf) const;
 
@@ -53,6 +53,7 @@ class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
   common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
+  user_id_t uid_;
   login_t login_;  // unique
   std::string password_;
   ChannelsInfo ch_;

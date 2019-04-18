@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/user_request_info.h"
+#include "server/user_rpc/user_request_info.h"
 
 #define USER_REQUEST_INFO_REQUEST_FIELD "request"
 

@@ -43,7 +43,7 @@
 #include "commands_info/runtime_channel_info.h"
 #include "commands_info/server_info.h"  // for ServerInfo
 #include "server/server_host.h"         // for ServerHost
-#include "server/user_info.h"           // for user_id_t, UserInfo
+#include "server/user_info.h"
 
 // ui notifications
 #define CLIENT_STATE "client_state"
@@ -165,24 +165,24 @@ void InnerTcpHandlerHost::Accepted(common::libev::IoClient* client) {
 }
 
 void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
-  InnerTcpClient* iconnection = static_cast<InnerTcpClient*>(client);
-  AuthInfo auth = iconnection->GetServerHostInfo();
+  InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
   common::libev::IoLoop* server = client->GetServer();
-  SendLeaveChatMessage(server, iconnection->GetCurrentStreamId(), auth.GetLogin());
+  const ServerAuthInfo server_user_auth = iclient->GetServerHostInfo();
+  SendLeaveChatMessage(server, iclient->GetCurrentStreamId(), server_user_auth.GetLogin());
 
-  if (iconnection->IsAnonimUser()) {  // anonim user
-    INFO_LOG() << "Byu anonim user: " << auth.GetLogin();
+  if (iclient->IsAnonimUser()) {  // anonim user
+    INFO_LOG() << "Byu anonim user: " << server_user_auth.GetLogin();
     return;
   }
 
-  common::Error unreg_err = parent_->UnRegisterInnerConnectionByHost(client);
+  common::Error unreg_err = parent_->UnRegisterInnerConnectionByHost(iclient);
   if (unreg_err) {
     return;
   }
 
-  user_id_t uid = iconnection->GetUid();
-  PublishUserStateInfo(UserRpcInfo(uid, auth.GetDeviceID()), false);
-  INFO_LOG() << "Byu registered user: " << auth.GetLogin();
+  const UserRpcInfo user_rpc = server_user_auth.MakeUserRpc();
+  PublishUserStateInfo(user_rpc, false);
+  INFO_LOG() << "Byu registered user: " << server_user_auth.GetLogin();
 }
 
 void InnerTcpHandlerHost::DataReceived(common::libev::IoClient* client) {
@@ -219,7 +219,7 @@ void InnerTcpHandlerHost::UpdateCache() {
 
 void InnerTcpHandlerHost::PublishUserStateInfo(const UserRpcInfo& user, bool connected) {
   std::string user_state_str;
-  UserRequestInfo req(user.GetUserId(), user.GetDeviceId(), MakeClientStateNotification(connected));
+  UserRequestInfo req(user.GetUserID(), user.GetDeviceID(), MakeClientStateNotification(connected));
   common::Error err = req.SerializeToString(&user_state_str);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -232,9 +232,8 @@ void InnerTcpHandlerHost::PublishUserStateInfo(const UserRpcInfo& user, bool con
   }
 }
 
-inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByUserIDAndDeviceID(user_id_t user,
-                                                                                   device_id_t dev) const {
-  return parent_->FindInnerConnectionByUserIDAndDeviceID(user, dev);
+inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByUser(const UserRpcInfo& user) const {
+  return parent_->FindInnerConnectionByUser(user);
 }
 
 void InnerTcpHandlerHost::SendEnterChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login) {
@@ -303,9 +302,8 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
       return common::make_errno_error(EAGAIN);
     }
 
-    user_id_t uid;
     UserInfo registered_user;
-    common::Error err_find = parent_->FindUser(uauth, &uid, &registered_user);
+    common::Error err_find = parent_->FindUser(uauth, &registered_user);
     if (err_find) {
       return common::make_errno_error(EAGAIN);
     }
@@ -318,20 +316,22 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
       return common::make_errno_error(error_str, EINVAL);
     }
 
-    if (uauth == InnerTcpClient::anonim_user) {  // anonim user
+    const ServerAuthInfo server_user_auth(registered_user.GetUserID(), uauth);
+    if (server_user_auth == InnerTcpClient::anonim_user) {  // anonim user
       const protocol::response_t resp = ActivateResponseSuccess(req->id);
       common::ErrnoError err = client->WriteResponce(resp);
       if (err) {
         return err;
       }
 
-      client->SetServerHostInfo(uauth);
+      client->SetServerHostInfo(server_user_auth);
       INFO_LOG() << "Welcome anonim user: " << uauth.GetLogin();
       return common::ErrnoError();
     }
 
     // registered user
-    InnerTcpClient* fclient = parent_->FindInnerConnectionByUserIDAndDeviceID(uid, dev);
+    const UserRpcInfo user_rpc = server_user_auth.MakeUserRpc();
+    InnerTcpClient* fclient = parent_->FindInnerConnectionByUser(user_rpc);
     if (fclient) {
       const std::string error_str = "Double connection reject";
       protocol::response_t resp = ActivateResponseFail(req->id, error_str);
@@ -345,10 +345,10 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
       return errn;
     }
 
-    common::Error err = parent_->RegisterInnerConnectionByUser(uid, uauth, client);
+    common::Error err = parent_->RegisterInnerConnectionByUser(server_user_auth, client);
     CHECK(!err) << "Register inner connection error: " << err->GetDescription();
 
-    PublishUserStateInfo(UserRpcInfo(uid, dev), true);
+    PublishUserStateInfo(user_rpc, true);
     INFO_LOG() << "Welcome registered user: " << uauth.GetLogin();
     return common::ErrnoError();
   }
@@ -383,20 +383,19 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientGetServerInfo(InnerTc
                                                                          protocol::request_t* req) {
   AuthInfo hinf = client->GetServerHostInfo();
   UserInfo user;
-  user_id_t uid;
-  common::Error err_ser = parent_->FindUser(hinf, &uid, &user);
-  if (err_ser) {
-    const protocol::response_t resp = GetServerInfoResponceFail(req->id, err_ser->GetDescription());
+  common::Error err = parent_->FindUser(hinf, &user);
+  if (err) {
+    const protocol::response_t resp = GetServerInfoResponceFail(req->id, err->GetDescription());
     ignore_result(client->WriteResponce(resp));
     ignore_result(client->Close());
     delete client;
-    const std::string err_str = err_ser->GetDescription();
+    const std::string err_str = err->GetDescription();
     return common::make_errno_error(err_str, EAGAIN);
   }
 
   ServerInfo serv(config_.server.bandwidth_host);
   std::string server_info_str;
-  err_ser = serv.SerializeToString(&server_info_str);
+  common::Error err_ser = serv.SerializeToString(&server_info_str);
   if (err_ser) {
     const std::string err_str = err_ser->GetDescription();
     return common::make_errno_error(err_str, EAGAIN);
@@ -410,8 +409,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientGetChannels(InnerTcpC
                                                                        protocol::request_t* req) {
   AuthInfo hinf = client->GetServerHostInfo();
   UserInfo user;
-  user_id_t uid;
-  common::Error err = parent_->FindUser(hinf, &uid, &user);
+  common::Error err = parent_->FindUser(hinf, &user);
   if (err) {
     const std::string err_str = err->GetDescription();
     const protocol::response_t resp = GetServerInfoResponceFail(req->id, err_str);

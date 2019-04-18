@@ -22,6 +22,7 @@
 
 #include <json-c/json_object.h>  // for json_object, json...
 
+#define USER_INFO_ID_FIELD "id"
 #define USER_INFO_DEVICES_FIELD "devices"
 #define USER_INFO_CHANNELS_FIELD "channels"
 #define USER_INFO_LOGIN_FIELD "login"
@@ -32,11 +33,15 @@ namespace server {
 
 UserInfo::UserInfo() : login_(), password_(), ch_() {}
 
-UserInfo::UserInfo(const login_t& login, const std::string& password, const ChannelsInfo& ch, const devices_t& devices)
-    : login_(login), password_(password), ch_(ch), devices_(devices) {}
+UserInfo::UserInfo(const user_id_t& uid,
+                   const login_t& login,
+                   const std::string& password,
+                   const ChannelsInfo& ch,
+                   const devices_t& devices)
+    : uid_(uid), login_(login), password_(password), ch_(ch), devices_(devices) {}
 
 bool UserInfo::IsValid() const {
-  return !login_.empty() && !password_.empty();
+  return !uid_.empty() && !login_.empty() && !password_.empty();
 }
 
 common::Error UserInfo::SerializeFields(json_object* deserialized) const {
@@ -44,6 +49,7 @@ common::Error UserInfo::SerializeFields(json_object* deserialized) const {
     return common::make_error_inval();
   }
 
+  json_object_object_add(deserialized, USER_INFO_ID_FIELD, json_object_new_string(uid_.c_str()));
   json_object_object_add(deserialized, USER_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(deserialized, USER_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
 
@@ -74,6 +80,14 @@ common::Error UserInfo::DoDeSerialize(json_object* serialized) {
     }
   }
 
+  user_id_t uid;
+  json_object* juid = nullptr;
+  json_bool juid_exists = json_object_object_get_ex(serialized, USER_INFO_ID_FIELD, &juid);
+  if (!juid_exists) {
+    return common::make_error_inval();
+  }
+  uid = json_object_get_string(juid);
+
   std::string login;
   json_object* jlogin = nullptr;
   json_bool jlogin_exists = json_object_object_get_ex(serialized, USER_INFO_LOGIN_FIELD, &jlogin);
@@ -100,7 +114,8 @@ common::Error UserInfo::DoDeSerialize(json_object* serialized) {
       devices.push_back(json_object_get_string(jdevice));
     }
   }
-  *this = UserInfo(login, password, chan, devices);
+
+  *this = UserInfo(uid, login, password, chan, devices);
   return common::Error();
 }
 
@@ -130,8 +145,12 @@ ChannelsInfo UserInfo::GetChannelInfo() const {
   return ch_;
 }
 
+user_id_t UserInfo::GetUserID() const {
+  return uid_;
+}
+
 bool UserInfo::Equals(const UserInfo& uinf) const {
-  return login_ == uinf.login_ && password_ == uinf.password_ && ch_ == uinf.ch_;
+  return uid_ == uinf.uid_ && login_ == uinf.login_ && password_ == uinf.password_ && ch_ == uinf.ch_;
 }
 
 }  // namespace server

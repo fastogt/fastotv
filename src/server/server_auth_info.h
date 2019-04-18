@@ -18,34 +18,41 @@
 
 #pragma once
 
-#include "server/user_request_info.h"
+#include "commands_info/auth_info.h"
 
-#include "protocol/protocol.h"
+#include "server/user_rpc/user_rpc_info.h"
 
 namespace fastotv {
 namespace server {
 
-class UserResponseInfo : public UserRequestInfo {
+class ServerAuthInfo : public AuthInfo {
  public:
-  typedef UserRequestInfo base_class;
+  typedef AuthInfo base_class;
 
-  UserResponseInfo();
-  UserResponseInfo(const user_id_t& uid,
-                   const device_id_t& device_id,
-                   const protocol::request_t& req,
-                   const protocol::response_t& resp);
+  ServerAuthInfo();
+  ServerAuthInfo(const user_id_t& uid, const AuthInfo& auth);
 
-  protocol::response_t GetResponse() const;
+  bool IsValid() const;
+  user_id_t GetUserID() const;
+  bool Equals(const ServerAuthInfo& auth) const;
 
-  bool Equals(const UserResponseInfo& state) const;
+  UserRpcInfo MakeUserRpc() const;
 
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;
   common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
-  protocol::response_t resp_;
+  user_id_t uid_;
 };
+
+inline bool operator==(const ServerAuthInfo& lhs, const ServerAuthInfo& rhs) {
+  return lhs.Equals(rhs);
+}
+
+inline bool operator!=(const ServerAuthInfo& x, const ServerAuthInfo& y) {
+  return !(x == y);
+}
 
 }  // namespace server
 }  // namespace fastotv

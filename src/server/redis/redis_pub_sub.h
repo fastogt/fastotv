@@ -37,9 +37,10 @@ class RedisPubSub {
 
   common::Error PublishStateToChannel(const std::string& msg) WARN_UNUSED_RESULT;
   common::Error PublishToChannelOut(const std::string& msg) WARN_UNUSED_RESULT;
-  common::Error Publish(const std::string& channel, const std::string& msg) WARN_UNUSED_RESULT;
 
  private:
+  common::Error Publish(const std::string& channel, const std::string& msg) WARN_UNUSED_RESULT;
+
   RedisSubHandler* const handler_;
   RedisSubConfig config_;
   bool stop_;

@@ -60,20 +60,29 @@ SET(SOURCES_INNER_SERVER
   ${SOURCE_ROOT}/server/commands.cpp
 )
 
+SET(HEADERS_USER_RPC_SERVER
+  ${SOURCE_ROOT}/server/user_rpc/user_rpc_info.h
+  ${SOURCE_ROOT}/server/user_rpc/user_request_info.h
+  ${SOURCE_ROOT}/server/user_rpc/user_response_info.h
+)
+
+SET(SOURCES_USER_RPC_SERVER
+  ${SOURCE_ROOT}/server/user_rpc/user_rpc_info.cpp
+  ${SOURCE_ROOT}/server/user_rpc/user_request_info.cpp
+  ${SOURCE_ROOT}/server/user_rpc/user_response_info.cpp
+)
+
 SET(BUILD_SERVER_SOURCES
-  ${SOURCE_ROOT}/server/server_host.cpp
-  ${SOURCE_ROOT}/server/server_host.h
   ${SOURCE_ROOT}/server/user_info.h
   ${SOURCE_ROOT}/server/user_info.cpp
-  ${SOURCE_ROOT}/server/user_rpc_info.h
-  ${SOURCE_ROOT}/server/user_rpc_info.cpp
-  ${SOURCE_ROOT}/server/user_request_info.h
-  ${SOURCE_ROOT}/server/user_request_info.cpp
-  ${SOURCE_ROOT}/server/user_response_info.h
-  ${SOURCE_ROOT}/server/user_response_info.cpp
+  ${SOURCE_ROOT}/server/server_host.cpp
+  ${SOURCE_ROOT}/server/server_host.h
   ${SOURCE_ROOT}/server/config.h
   ${SOURCE_ROOT}/server/config.cpp
+  ${SOURCE_ROOT}/server/server_auth_info.h
+  ${SOURCE_ROOT}/server/server_auth_info.cpp
   ${HEADERS_REDIS} ${SOURCES_REDIS}
+  ${HEADERS_USER_RPC_SERVER} ${SOURCES_USER_RPC_SERVER}
 
   ${HEADERS_INNER_SERVER} ${SOURCES_INNER_SERVER}
   ${HEADERS_PARSE_COMMANDS} ${SOURCES_PARSE_COMMANDS}

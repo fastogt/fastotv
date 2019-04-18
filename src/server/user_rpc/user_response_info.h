@@ -18,36 +18,34 @@
 
 #pragma once
 
-#include <string>  // for string
-
-#include "commands/commands.h"
-#include "protocol/types.h"
-
-#include "server/redis/redis_pub_sub_handler.h"
 #include "server/user_rpc/user_request_info.h"
+
+#include "protocol/protocol.h"
 
 namespace fastotv {
 namespace server {
-namespace inner {
 
-class InnerTcpHandlerHost;
-
-class InnerSubHandler : public redis::RedisSubHandler {
+class UserResponseInfo : public UserRequestInfo {
  public:
-  explicit InnerSubHandler(InnerTcpHandlerHost* parent);
-  virtual ~InnerSubHandler();
+  typedef UserRequestInfo base_class;
+
+  UserResponseInfo();
+  UserResponseInfo(const user_id_t& uid,
+                   const device_id_t& device_id,
+                   const protocol::request_t& req,
+                   const protocol::response_t& resp);
+
+  protocol::response_t GetResponse() const;
+
+  bool Equals(const UserResponseInfo& state) const;
 
  protected:
-  void HandleMessage(const std::string& channel, const std::string& msg) override;
+  common::Error DoDeSerialize(json_object* serialized) override;
+  common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
-  common::ErrnoError HandleRequest(const UserRequestInfo& request);
-
-  void PublishResponse(const UserRequestInfo& uinf, const protocol::response_t* resp);
-
-  InnerTcpHandlerHost* parent_;
+  protocol::response_t resp_;
 };
 
-}  // namespace inner
 }  // namespace server
 }  // namespace fastotv

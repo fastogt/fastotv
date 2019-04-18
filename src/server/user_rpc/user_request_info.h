@@ -18,28 +18,30 @@
 
 #pragma once
 
-#include "server/user_info.h"  // for user_id_t
+#include "server/user_rpc/user_rpc_info.h"
+
+#include "protocol/protocol.h"
 
 namespace fastotv {
 namespace server {
 
-class UserRpcInfo : public common::serializer::JsonSerializer<UserRpcInfo> {
+class UserRequestInfo : public UserRpcInfo {
  public:
-  UserRpcInfo();
-  UserRpcInfo(const user_id_t& uid, const device_id_t& device_id);
+  typedef UserRpcInfo base_class;
 
-  device_id_t GetDeviceId() const;
-  user_id_t GetUserId() const;
+  UserRequestInfo();
+  UserRequestInfo(const user_id_t& uid, const device_id_t& device_id, const protocol::request_t& req);
 
-  bool Equals(const UserRpcInfo& state) const;
+  protocol::request_t GetRequest() const;
+
+  bool Equals(const UserRequestInfo& state) const;
 
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;
   common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
-  user_id_t user_id_;
-  device_id_t device_id_;
+  protocol::request_t req_;
 };
 
 }  // namespace server

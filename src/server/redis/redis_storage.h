@@ -24,7 +24,7 @@
 #include <common/net/types.h>  // for HostAndPort
 
 #include "commands_info/auth_info.h"
-#include "server/user_info.h"  // for user_id_t, UserInfo (ptr only)
+#include "server/user_info.h"
 
 #include "server/redis/redis_config.h"
 
@@ -37,9 +37,7 @@ class RedisStorage {
   RedisStorage();
   void SetConfig(const RedisConfig& config);
 
-  common::Error FindUserAuth(const AuthInfo& user, user_id_t* uid) const WARN_UNUSED_RESULT;  // check password
   common::Error FindUser(const AuthInfo& user,
-                         user_id_t* uid,
                          UserInfo* uinf) const WARN_UNUSED_RESULT;  // check password
 
   common::Error GetChatChannels(std::vector<stream_id>* channels) const;

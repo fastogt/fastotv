@@ -30,7 +30,7 @@
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
 #include "server/config.h"  // for Config
-#include "server/user_rpc_info.h"
+#include "server/user_rpc/user_rpc_info.h"
 
 #include "commands_info/chat_message.h"
 
@@ -93,7 +93,7 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
   virtual ~InnerTcpHandlerHost();
 
   common::Error PublishToChannelOut(const std::string& msg);
-  inner::InnerTcpClient* FindInnerConnectionByUserIDAndDeviceID(user_id_t user, device_id_t dev) const;
+  inner::InnerTcpClient* FindInnerConnectionByUser(const UserRpcInfo& user) const;
 
  private:
   void UpdateCache();

@@ -70,63 +70,66 @@ int ServerHost::Exec() {
   return server_->Exec();
 }
 
-common::Error ServerHost::UnRegisterInnerConnectionByHost(common::libev::IoClient* connection) {
-  inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
-  if (!iconnection) {
+common::Error ServerHost::UnRegisterInnerConnectionByHost(client_t* client) {
+  if (!client) {
     DNOTREACHED();
     return common::make_error_inval();
   }
 
-  user_id_t uid = iconnection->GetUid();
-  if (uid.empty()) {
+  const auto sinf = client->GetServerHostInfo();
+  if (!sinf.IsValid()) {
     return common::make_error_inval();
   }
 
-  connections_.erase(uid);
+  auto hs = connections_.find(sinf.GetUserID());
+  if (hs == connections_.end()) {
+    return common::Error();
+  }
+
+  for (auto it = hs->second.begin(); it != hs->second.end(); ++it) {
+    if (*it == client) {
+      hs->second.erase(it);
+      break;
+    }
+  }
+
+  if (hs->second.empty()) {
+    connections_.erase(hs);
+  }
   return common::Error();
 }
 
-common::Error ServerHost::RegisterInnerConnectionByUser(user_id_t user_id,
-                                                        const AuthInfo& user,
-                                                        common::libev::IoClient* connection) {
+common::Error ServerHost::RegisterInnerConnectionByUser(const ServerAuthInfo& user, client_t* client) {
   CHECK(user.IsValid());
-  inner::InnerTcpClient* iconnection = static_cast<inner::InnerTcpClient*>(connection);
-  if (!iconnection) {
+  if (!client) {
     DNOTREACHED();
     return common::make_error_inval();
   }
 
-  iconnection->SetServerHostInfo(user);
-  iconnection->SetUid(user_id);
-
-  login_t login = user.GetLogin();
-  connections_[user_id].push_back(iconnection);
-  connection->SetName(login);
+  client->SetServerHostInfo(user);
+  connections_[user.GetUserID()].push_back(client);
+  client->SetName(user.GetLogin());
   return common::Error();
 }
 
-common::Error ServerHost::FindUserAuth(const AuthInfo& user, user_id_t* uid) const {
-  return rstorage_.FindUserAuth(user, uid);
-}
-
-common::Error ServerHost::FindUser(const AuthInfo& auth, user_id_t* uid, UserInfo* uinf) const {
-  return rstorage_.FindUser(auth, uid, uinf);
+common::Error ServerHost::FindUser(const AuthInfo& auth, UserInfo* uinf) const {
+  return rstorage_.FindUser(auth, uinf);
 }
 
 common::Error ServerHost::GetChatChannels(std::vector<stream_id>* channels) const {
   return rstorage_.GetChatChannels(channels);
 }
 
-inner::InnerTcpClient* ServerHost::FindInnerConnectionByUserIDAndDeviceID(user_id_t user_id, device_id_t dev) const {
-  inner_connections_type::const_iterator hs = connections_.find(user_id);
+inner::InnerTcpClient* ServerHost::FindInnerConnectionByUser(const UserRpcInfo& user) const {
+  const auto hs = connections_.find(user.GetUserID());
   if (hs == connections_.end()) {
     return nullptr;
   }
 
-  auto devices = (*hs).second;
-  for (inner::InnerTcpClient* connected_device : devices) {
-    AuthInfo uinf = connected_device->GetServerHostInfo();
-    if (uinf.GetDeviceID() == dev) {
+  auto devices = hs->second;
+  for (client_t* connected_device : devices) {
+    auto uinf = connected_device->GetServerHostInfo();
+    if (uinf.MakeUserRpc() == user) {
       return connected_device;
     }
   }

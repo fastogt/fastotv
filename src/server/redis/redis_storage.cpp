@@ -35,27 +35,19 @@
 
 #define GET_USER_1E "GET %s"
 #define GET_CHAT_CHANNELS "GET chat_channels"
-#define ID_FIELD "id"
 
 namespace fastotv {
 namespace server {
 
 namespace {
 
-common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInfo* out_info) {
-  if (!user_json || !out_uid || !out_info) {
+common::Error parse_user_json(const char* user_json, UserInfo* out_info) {
+  if (!user_json || !out_info) {
     return common::make_error_inval();
   }
 
   json_object* obj = json_tokener_parse(user_json);
   if (!obj) {
-    return common::make_error("Can't parse database field");
-  }
-
-  json_object* jid = nullptr;
-  json_bool jid_exists = json_object_object_get_ex(obj, ID_FIELD, &jid);  // mongodb id
-  if (!jid_exists) {
-    json_object_put(obj);
     return common::make_error("Can't parse database field");
   }
 
@@ -66,7 +58,6 @@ common::Error parse_user_json(const char* user_json, user_id_t* out_uid, UserInf
     return err;
   }
 
-  *out_uid = json_object_get_string(jid);
   *out_info = uinf;
   json_object_put(obj);
   return common::Error();
@@ -104,13 +95,8 @@ void RedisStorage::SetConfig(const RedisConfig& config) {
   config_ = config;
 }
 
-common::Error RedisStorage::FindUserAuth(const AuthInfo& user, user_id_t* uid) const {
-  UserInfo uinf;
-  return FindUser(user, uid, &uinf);
-}
-
-common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserInfo* uinf) const {
-  if (!user.IsValid() || !uid || !uinf) {
+common::Error RedisStorage::FindUser(const AuthInfo& user, UserInfo* uinf) const {
+  if (!user.IsValid() || !uinf) {
     return common::make_error_inval();
   }
 
@@ -130,8 +116,7 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
 
   const char* user_json = reply->str;
   UserInfo linfo;
-  user_id_t luid;
-  err = parse_user_json(user_json, &luid, &linfo);
+  err = parse_user_json(user_json, &linfo);
   if (err) {
     freeReplyObject(reply);
     redisFree(redis);
@@ -145,7 +130,6 @@ common::Error RedisStorage::FindUser(const AuthInfo& user, user_id_t* uid, UserI
     return common::make_error("Password missmatch");
   }
 
-  *uid = luid;
   *uinf = linfo;
   freeReplyObject(reply);
   redisFree(redis);
