@@ -38,11 +38,11 @@ bool RuntimeChannelLiteInfo::IsValid() const {
   return channel_id_ != invalid_stream_id;
 }
 
-void RuntimeChannelLiteInfo::SetChannelId(stream_id sid) {
+void RuntimeChannelLiteInfo::SetChannelID(stream_id sid) {
   channel_id_ = sid;
 }
 
-stream_id RuntimeChannelLiteInfo::GetChannelId() const {
+stream_id RuntimeChannelLiteInfo::GetChannelID() const {
   return channel_id_;
 }
 

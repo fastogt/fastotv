@@ -20,7 +20,7 @@
 
 #include "commands_info/auth_info.h"
 
-#include "server/user_rpc/user_rpc_info.h"
+#include "server/rpc/user_rpc_info.h"
 
 namespace fastotv {
 namespace server {
@@ -36,7 +36,7 @@ class ServerAuthInfo : public AuthInfo {
   user_id_t GetUserID() const;
   bool Equals(const ServerAuthInfo& auth) const;
 
-  UserRpcInfo MakeUserRpc() const;
+  rpc::UserRpcInfo MakeUserRpc() const;
 
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;

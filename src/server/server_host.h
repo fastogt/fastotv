@@ -54,7 +54,7 @@ class ServerHost {
 
   common::Error GetChatChannels(std::vector<stream_id>* channels) const WARN_UNUSED_RESULT;
 
-  inner::InnerTcpClient* FindInnerConnectionByUser(const UserRpcInfo& user) const;
+  inner::InnerTcpClient* FindInnerConnectionByUser(const rpc::UserRpcInfo& user) const;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ServerHost);

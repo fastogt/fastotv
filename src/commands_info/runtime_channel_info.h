@@ -34,8 +34,8 @@ class RuntimeChannelLiteInfo : public common::serializer::JsonSerializer<Runtime
 
   bool IsValid() const;
 
-  void SetChannelId(stream_id sid);
-  stream_id GetChannelId() const;
+  void SetChannelID(stream_id sid);
+  stream_id GetChannelID() const;
 
   bool Equals(const RuntimeChannelLiteInfo& inf) const;
 
@@ -95,6 +95,10 @@ class RuntimeChannelInfo : public RuntimeChannelLiteInfo {
 
 inline bool operator==(const RuntimeChannelInfo& left, const RuntimeChannelInfo& right) {
   return left.Equals(right);
+}
+
+inline bool operator!=(const RuntimeChannelInfo& x, const RuntimeChannelInfo& y) {
+  return !(x == y);
 }
 
 }  // namespace fastotv

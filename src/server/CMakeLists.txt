@@ -61,15 +61,15 @@ SET(SOURCES_INNER_SERVER
 )
 
 SET(HEADERS_USER_RPC_SERVER
-  ${SOURCE_ROOT}/server/user_rpc/user_rpc_info.h
-  ${SOURCE_ROOT}/server/user_rpc/user_request_info.h
-  ${SOURCE_ROOT}/server/user_rpc/user_response_info.h
+  ${SOURCE_ROOT}/server/rpc/user_rpc_info.h
+  ${SOURCE_ROOT}/server/rpc/user_request_info.h
+  ${SOURCE_ROOT}/server/rpc/user_response_info.h
 )
 
 SET(SOURCES_USER_RPC_SERVER
-  ${SOURCE_ROOT}/server/user_rpc/user_rpc_info.cpp
-  ${SOURCE_ROOT}/server/user_rpc/user_request_info.cpp
-  ${SOURCE_ROOT}/server/user_rpc/user_response_info.cpp
+  ${SOURCE_ROOT}/server/rpc/user_rpc_info.cpp
+  ${SOURCE_ROOT}/server/rpc/user_request_info.cpp
+  ${SOURCE_ROOT}/server/rpc/user_response_info.cpp
 )
 
 SET(BUILD_SERVER_SOURCES

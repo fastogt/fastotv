@@ -47,11 +47,11 @@ InnerTcpClient::host_info_t InnerTcpClient::GetServerHostInfo() const {
   return hinfo_;
 }
 
-void InnerTcpClient::SetCurrentStreamId(stream_id sid) {
+void InnerTcpClient::SetCurrentStreamID(stream_id sid) {
   current_stream_id_ = sid;
 }
 
-stream_id InnerTcpClient::GetCurrentStreamId() const {
+stream_id InnerTcpClient::GetCurrentStreamID() const {
   return current_stream_id_;
 }
 

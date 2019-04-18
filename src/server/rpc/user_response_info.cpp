@@ -16,12 +16,13 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/user_rpc/user_response_info.h"
+#include "server/rpc/user_response_info.h"
 
 #define USER_REQUEST_INFO_RESPONSE_FIELD "response"
 
 namespace fastotv {
 namespace server {
+namespace rpc {
 
 UserResponseInfo::UserResponseInfo() : base_class(), resp_() {}
 
@@ -76,5 +77,6 @@ common::Error UserResponseInfo::DoDeSerialize(json_object* serialized) {
   return common::Error();
 }
 
+}  // namespace rpc
 }  // namespace server
 }  // namespace fastotv

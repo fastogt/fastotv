@@ -16,8 +16,6 @@
 
 #include <string.h>
 
-#include <string>
-
 #include <common/convert2string.h>
 #include <common/sys_byteorder.h>
 

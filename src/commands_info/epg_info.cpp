@@ -76,11 +76,11 @@ std::string EpgInfo::GetDisplayName() const {
   return display_name_;
 }
 
-void EpgInfo::SetChannelId(stream_id ch) {
+void EpgInfo::SetChannelID(stream_id ch) {
   channel_id_ = ch;
 }
 
-stream_id EpgInfo::GetChannelId() const {
+stream_id EpgInfo::GetChannelID() const {
   return channel_id_;
 }
 

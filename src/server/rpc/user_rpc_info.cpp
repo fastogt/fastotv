@@ -16,13 +16,14 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/user_rpc/user_rpc_info.h"
+#include "server/rpc/user_rpc_info.h"
 
 #define USER_STATE_INFO_USER_ID_FIELD "user_id"
 #define USER_STATE_INFO_DEVICE_ID_FIELD "device_id"
 
 namespace fastotv {
 namespace server {
+namespace rpc {
 
 UserRpcInfo::UserRpcInfo() : user_id_(), device_id_() {}
 
@@ -68,5 +69,6 @@ common::Error UserRpcInfo::DoDeSerialize(json_object* serialized) {
   return common::Error();
 }
 
+}  // namespace rpc
 }  // namespace server
 }  // namespace fastotv

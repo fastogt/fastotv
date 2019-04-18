@@ -120,7 +120,7 @@ common::Error ServerHost::GetChatChannels(std::vector<stream_id>* channels) cons
   return rstorage_.GetChatChannels(channels);
 }
 
-inner::InnerTcpClient* ServerHost::FindInnerConnectionByUser(const UserRpcInfo& user) const {
+inner::InnerTcpClient* ServerHost::FindInnerConnectionByUser(const rpc::UserRpcInfo& user) const {
   const auto hs = connections_.find(user.GetUserID());
   if (hs == connections_.end()) {
     return nullptr;

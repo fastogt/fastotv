@@ -32,7 +32,7 @@ PlaylistEntry::PlaylistEntry() : info_(), icon_(), cache_dir_() {}
 
 PlaylistEntry::PlaylistEntry(const std::string& cache_root_dir, const ChannelInfo& info)
     : info_(info), rinfo_(), icon_(), cache_dir_() {
-  std::string id = info_.GetId();
+  stream_id id = info_.GetID();
   cache_dir_ = common::file_system::make_path(cache_root_dir, id);
 }
 

@@ -25,16 +25,10 @@ namespace common {
 namespace libev {
 class IoLoopObserver;
 }
-}  // namespace common
-namespace common {
 namespace net {
 class socket_info;
-}
-}  // namespace common
-namespace common {
-namespace net {
 struct HostAndPort;
-}
+}  // namespace net
 }  // namespace common
 
 namespace fastotv {

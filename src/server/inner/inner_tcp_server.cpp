@@ -34,8 +34,7 @@ const char* InnerTcpServer::ClassName() const {
 }
 
 common::libev::tcp::TcpClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
-  InnerTcpClient* client = new InnerTcpClient(this, info);
-  return client;
+  return new InnerTcpClient(this, info);
 }
 
 }  // namespace inner

@@ -30,8 +30,6 @@ namespace tcp {
 class TcpServer;
 }
 }  // namespace libev
-}  // namespace common
-namespace common {
 namespace net {
 class socket_info;
 }
@@ -55,8 +53,8 @@ class InnerTcpClient : public fastotv::inner::ProtocoledInnerClient {
   void SetServerHostInfo(const host_info_t& info);
   host_info_t GetServerHostInfo() const;
 
-  void SetCurrentStreamId(stream_id sid);
-  stream_id GetCurrentStreamId() const;
+  void SetCurrentStreamID(stream_id sid);
+  stream_id GetCurrentStreamID() const;
 
   bool IsAnonimUser() const;
 

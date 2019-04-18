@@ -18,10 +18,6 @@
 
 #include "server/user_info.h"
 
-#include <string>  // for string
-
-#include <json-c/json_object.h>  // for json_object, json...
-
 #define USER_INFO_ID_FIELD "id"
 #define USER_INFO_DEVICES_FIELD "devices"
 #define USER_INFO_CHANNELS_FIELD "channels"

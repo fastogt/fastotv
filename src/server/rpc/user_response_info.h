@@ -18,12 +18,13 @@
 
 #pragma once
 
-#include "server/user_rpc/user_request_info.h"
+#include "server/rpc/user_request_info.h"
 
 #include "protocol/protocol.h"
 
 namespace fastotv {
 namespace server {
+namespace rpc {
 
 class UserResponseInfo : public UserRequestInfo {
  public:
@@ -47,5 +48,6 @@ class UserResponseInfo : public UserRequestInfo {
   protocol::response_t resp_;
 };
 
+}  // namespace rpc
 }  // namespace server
 }  // namespace fastotv

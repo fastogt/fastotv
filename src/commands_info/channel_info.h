@@ -34,7 +34,7 @@ class ChannelInfo : public common::serializer::JsonSerializer<ChannelInfo> {
   bool IsValid() const;
   common::uri::Url GetUrl() const;
   std::string GetName() const;
-  stream_id GetId() const;
+  stream_id GetID() const;
   EpgInfo GetEpg() const;
 
   bool IsEnableAudio() const;
@@ -55,6 +55,10 @@ class ChannelInfo : public common::serializer::JsonSerializer<ChannelInfo> {
 
 inline bool operator==(const ChannelInfo& left, const ChannelInfo& right) {
   return left.Equals(right);
+}
+
+inline bool operator!=(const ChannelInfo& x, const ChannelInfo& y) {
+  return !(x == y);
 }
 
 }  // namespace fastotv

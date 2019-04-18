@@ -25,14 +25,16 @@
 #include "server/config.h"  // for Config
 #include "server_host.h"    // for ServerHost
 
-const char* config_path = SERVER_CONFIG_FILE_PATH;
+namespace {
+const char* kConfigPath = SERVER_CONFIG_FILE_PATH;
+}
 
 int main(int argc, char* argv[]) {
   int opt;
   while ((opt = getopt(argc, argv, "cd:")) != -1) {
     switch (opt) {
       case 'c':
-        config_path = argv[optind];
+        kConfigPath = argv[optind];
         break;
       default: /* '?' */
         fprintf(stderr, "Usage: %s [-c] config path\n", argv[0]);
@@ -53,7 +55,7 @@ int main(int argc, char* argv[]) {
 #endif
 
   fastotv::server::Config config;
-  common::Error err = fastotv::server::load_config_file(config_path, &config);
+  common::Error err = fastotv::server::load_config_file(kConfigPath, &config);
   if (err) {
     return EXIT_FAILURE;
   }

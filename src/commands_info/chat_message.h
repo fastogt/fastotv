@@ -40,8 +40,8 @@ class ChatMessage : public common::serializer::JsonSerializer<ChatMessage> {
   void SetMessage(const std::string& msg);
   std::string GetMessage() const;
 
-  void SetChannelId(stream_id sid);
-  stream_id GetChannelId() const;
+  void SetChannelID(stream_id sid);
+  stream_id GetChannelID() const;
 
   void SetLogin(login_t login);
   login_t GetLogin() const;
@@ -69,6 +69,10 @@ bool IsLeaveMessage(const ChatMessage& msg);
 
 inline bool operator==(const ChatMessage& left, const ChatMessage& right) {
   return left.Equals(right);
+}
+
+inline bool operator!=(const ChatMessage& x, const ChatMessage& y) {
+  return !(x == y);
 }
 
 }  // namespace fastotv

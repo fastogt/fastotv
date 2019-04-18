@@ -54,8 +54,8 @@ class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
 
  private:
   user_id_t uid_;
-  login_t login_;  // unique
-  std::string password_;
+  login_t login_;         // unique
+  std::string password_;  // hash
   ChannelsInfo ch_;
   devices_t devices_;
 };

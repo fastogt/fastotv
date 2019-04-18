@@ -127,7 +127,7 @@ Player::Player(const std::string& app_directory_absolute_path,
         std::string text = chat_window_->GetInputText();
         if (!text.empty()) {
           chat_window_->ClearInputText();
-          ChatMessage msg(ch.GetId(), auth_.GetLogin(), text, ChatMessage::MESSAGE);
+          ChatMessage msg(ch.GetID(), auth_.GetLogin(), text, ChatMessage::MESSAGE);
           controller_->PostMessageToChat(msg);
         }
       }
@@ -376,7 +376,7 @@ void Player::SwitchToPlayingMode() {
   for (size_t i = 0; i < play_list_.size() && opt.last_showed_channel_id != invalid_stream_id; ++i) {
     PlaylistEntry ent = play_list_[i];
     ChannelInfo ch = ent.GetChannelInfo();
-    if (ch.GetId() == opt.last_showed_channel_id) {
+    if (ch.GetID() == opt.last_showed_channel_id) {
       pos = i;
       break;
     }
@@ -549,7 +549,7 @@ void Player::HandleReceiveRuntimeChannelEvent(events::ReceiveRuntimeChannelEvent
   RuntimeChannelInfo inf = event->GetInfo();
   for (size_t i = 0; i < play_list_.size(); ++i) {
     ChannelInfo cinf = play_list_[i].GetChannelInfo();
-    if (inf.GetChannelId() == cinf.GetId()) {
+    if (inf.GetChannelID() == cinf.GetID()) {
       play_list_[i].SetRuntimeChannelInfo(inf);
       break;
     }
@@ -564,7 +564,7 @@ void Player::HandleReceiveChatMessageEvent(events::ReceiveChatMessageEvent* even
   ChatMessage message = event->GetInfo();
   for (size_t i = 0; i < play_list_.size(); ++i) {
     ChannelInfo cinfo = play_list_[i].GetChannelInfo();
-    if (cinfo.GetId() == message.GetChannelId()) {
+    if (cinfo.GetID() == message.GetChannelID()) {
       RuntimeChannelInfo rinfo = play_list_[i].GetRuntimeChannelInfo();
       rinfo.AddMessage(message);
       size_t watchers = rinfo.GetWatchersCount();
@@ -1030,7 +1030,7 @@ fastoplayer::media::VideoState* Player::CreateStreamPos(size_t pos) {
 
   PlaylistEntry entry = play_list_[current_stream_pos_];
   ChannelInfo url = entry.GetChannelInfo();
-  stream_id sid = url.GetId();
+  stream_id sid = url.GetID();
   fastoplayer::media::AppOptions copy = GetStreamOptions();
   copy.enable_audio = url.IsEnableVideo();
   copy.enable_video = url.IsEnableAudio();

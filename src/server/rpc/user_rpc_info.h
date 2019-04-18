@@ -18,31 +18,43 @@
 
 #pragma once
 
-#include "server/user_rpc/user_rpc_info.h"
+#include <common/serializer/json_serializer.h>
 
-#include "protocol/protocol.h"
+#include "client_server_types.h"
 
 namespace fastotv {
 namespace server {
+namespace rpc {
 
-class UserRequestInfo : public UserRpcInfo {
+class UserRpcInfo : public common::serializer::JsonSerializer<UserRpcInfo> {
  public:
-  typedef UserRpcInfo base_class;
+  UserRpcInfo();
+  UserRpcInfo(const user_id_t& uid, const device_id_t& device_id);
 
-  UserRequestInfo();
-  UserRequestInfo(const user_id_t& uid, const device_id_t& device_id, const protocol::request_t& req);
+  bool IsValid() const;
 
-  protocol::request_t GetRequest() const;
+  device_id_t GetDeviceID() const;
+  user_id_t GetUserID() const;
 
-  bool Equals(const UserRequestInfo& state) const;
+  bool Equals(const UserRpcInfo& state) const;
 
  protected:
   common::Error DoDeSerialize(json_object* serialized) override;
   common::Error SerializeFields(json_object* deserialized) const override;
 
  private:
-  protocol::request_t req_;
+  user_id_t user_id_;
+  device_id_t device_id_;
 };
 
+inline bool operator==(const UserRpcInfo& lhs, const UserRpcInfo& rhs) {
+  return lhs.Equals(rhs);
+}
+
+inline bool operator!=(const UserRpcInfo& x, const UserRpcInfo& y) {
+  return !(x == y);
+}
+
+}  // namespace rpc
 }  // namespace server
 }  // namespace fastotv

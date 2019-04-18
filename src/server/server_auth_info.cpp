@@ -66,8 +66,8 @@ bool ServerAuthInfo::Equals(const ServerAuthInfo& auth) const {
   return uid_ == auth.uid_ && base_class::Equals(auth);
 }
 
-UserRpcInfo ServerAuthInfo::MakeUserRpc() const {
-  return UserRpcInfo(uid_, GetDeviceID());
+rpc::UserRpcInfo ServerAuthInfo::MakeUserRpc() const {
+  return rpc::UserRpcInfo(uid_, GetDeviceID());
 }
 
 }  // namespace server

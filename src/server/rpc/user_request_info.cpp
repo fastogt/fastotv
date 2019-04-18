@@ -16,12 +16,13 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "server/user_rpc/user_request_info.h"
+#include "server/rpc/user_request_info.h"
 
 #define USER_REQUEST_INFO_REQUEST_FIELD "request"
 
 namespace fastotv {
 namespace server {
+namespace rpc {
 
 UserRequestInfo::UserRequestInfo() : base_class(), req_() {}
 
@@ -72,5 +73,6 @@ common::Error UserRequestInfo::DoDeSerialize(json_object* serialized) {
   return common::Error();
 }
 
+}  // namespace rpc
 }  // namespace server
 }  // namespace fastotv

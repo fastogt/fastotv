@@ -168,7 +168,7 @@ void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
   InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
   common::libev::IoLoop* server = client->GetServer();
   const ServerAuthInfo server_user_auth = iclient->GetServerHostInfo();
-  SendLeaveChatMessage(server, iclient->GetCurrentStreamId(), server_user_auth.GetLogin());
+  SendLeaveChatMessage(server, iclient->GetCurrentStreamID(), server_user_auth.GetLogin());
 
   if (iclient->IsAnonimUser()) {  // anonim user
     INFO_LOG() << "Byu anonim user: " << server_user_auth.GetLogin();
@@ -180,7 +180,7 @@ void InnerTcpHandlerHost::Closed(common::libev::IoClient* client) {
     return;
   }
 
-  const UserRpcInfo user_rpc = server_user_auth.MakeUserRpc();
+  const rpc::UserRpcInfo user_rpc = server_user_auth.MakeUserRpc();
   PublishUserStateInfo(user_rpc, false);
   INFO_LOG() << "Byu registered user: " << server_user_auth.GetLogin();
 }
@@ -217,9 +217,9 @@ void InnerTcpHandlerHost::UpdateCache() {
   chat_channels_ = channels;
 }
 
-void InnerTcpHandlerHost::PublishUserStateInfo(const UserRpcInfo& user, bool connected) {
+void InnerTcpHandlerHost::PublishUserStateInfo(const rpc::UserRpcInfo& user, bool connected) {
   std::string user_state_str;
-  UserRequestInfo req(user.GetUserID(), user.GetDeviceID(), MakeClientStateNotification(connected));
+  rpc::UserRequestInfo req(user.GetUserID(), user.GetDeviceID(), MakeClientStateNotification(connected));
   common::Error err = req.SerializeToString(&user_state_str);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
@@ -232,7 +232,7 @@ void InnerTcpHandlerHost::PublishUserStateInfo(const UserRpcInfo& user, bool con
   }
 }
 
-inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByUser(const UserRpcInfo& user) const {
+inner::InnerTcpClient* InnerTcpHandlerHost::FindInnerConnectionByUser(const rpc::UserRpcInfo& user) const {
   return parent_->FindInnerConnectionByUser(user);
 }
 
@@ -256,7 +256,7 @@ void InnerTcpHandlerHost::BrodcastChatMessage(common::libev::IoLoop* server, con
   for (size_t i = 0; i < online_clients.size(); ++i) {
     common::libev::IoClient* client = online_clients[i];
     InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
-    if (iclient && iclient->GetCurrentStreamId() == msg.GetChannelId()) {
+    if (iclient && iclient->GetCurrentStreamID() == msg.GetChannelID()) {
       const protocol::request_t message_request = ServerSendChatMessageRequest(NextRequestID(), msg_ser);
       common::ErrnoError errn = iclient->WriteRequest(message_request);
       if (errn) {
@@ -266,13 +266,13 @@ void InnerTcpHandlerHost::BrodcastChatMessage(common::libev::IoLoop* server, con
   }
 }
 
-size_t InnerTcpHandlerHost::GetOnlineUserByStreamId(common::libev::IoLoop* server, stream_id sid) const {
+size_t InnerTcpHandlerHost::GetOnlineUserByStreamID(common::libev::IoLoop* server, stream_id sid) const {
   size_t total = 0;
   std::vector<common::libev::IoClient*> online_clients = server->GetClients();
   for (size_t i = 0; i < online_clients.size(); ++i) {
     common::libev::IoClient* client = online_clients[i];
     InnerTcpClient* iclient = static_cast<InnerTcpClient*>(client);
-    if (iclient && iclient->GetCurrentStreamId() == sid) {
+    if (iclient && iclient->GetCurrentStreamID() == sid) {
       total++;
     }
   }
@@ -330,7 +330,7 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
     }
 
     // registered user
-    const UserRpcInfo user_rpc = server_user_auth.MakeUserRpc();
+    const rpc::UserRpcInfo user_rpc = server_user_auth.MakeUserRpc();
     InnerTcpClient* fclient = parent_->FindInnerConnectionByUser(user_rpc);
     if (fclient) {
       const std::string error_str = "Double connection reject";
@@ -452,14 +452,14 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientGetRuntimeChannelInfo
     bool is_anonim = client->IsAnonimUser();
     AuthInfo ainf = client->GetServerHostInfo();
     const login_t login = ainf.GetLogin();
-    const stream_id channel = run.GetChannelId();
-    const stream_id prev_channel = client->GetCurrentStreamId();
+    const stream_id channel = run.GetChannelID();
+    const stream_id prev_channel = client->GetCurrentStreamID();
 
-    size_t watchers = GetOnlineUserByStreamId(server, channel);  // calc watchers
-    client->SetCurrentStreamId(channel);                         // add to watcher
+    size_t watchers = GetOnlineUserByStreamID(server, channel);  // calc watchers
+    client->SetCurrentStreamID(channel);                         // add to watcher
 
     RuntimeChannelInfo rinf;
-    rinf.SetChannelId(channel);
+    rinf.SetChannelID(channel);
     rinf.SetWatchersCount(watchers);
     if (!is_anonim) {  // registered user
       rinf.SetChatEnabled(false);

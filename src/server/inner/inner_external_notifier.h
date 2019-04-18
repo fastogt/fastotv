@@ -24,7 +24,7 @@
 #include "protocol/types.h"
 
 #include "server/redis/redis_pub_sub_handler.h"
-#include "server/user_rpc/user_request_info.h"
+#include "server/rpc/user_request_info.h"
 
 namespace fastotv {
 namespace server {
@@ -41,9 +41,9 @@ class InnerSubHandler : public redis::RedisSubHandler {
   void HandleMessage(const std::string& channel, const std::string& msg) override;
 
  private:
-  common::ErrnoError HandleRequest(const UserRequestInfo& request);
+  common::ErrnoError HandleRequest(const rpc::UserRequestInfo& request);
 
-  void PublishResponse(const UserRequestInfo& uinf, const protocol::response_t* resp);
+  void PublishResponse(const rpc::UserRequestInfo& uinf, const protocol::response_t* resp);
 
   InnerTcpHandlerHost* parent_;
 };

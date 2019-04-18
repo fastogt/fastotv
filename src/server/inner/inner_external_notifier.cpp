@@ -27,7 +27,7 @@
 
 #include "server/inner/inner_tcp_client.h"
 #include "server/inner/inner_tcp_handler.h"
-#include "server/user_rpc/user_response_info.h"
+#include "server/rpc/user_response_info.h"
 
 // publish COMMANDS_IN '{user_id:'', device_id:'', request : {JSONRPC}} => request
 
@@ -46,7 +46,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
     return;
   }
 
-  UserRequestInfo ureq;
+  rpc::UserRequestInfo ureq;
   common::Error err = ureq.DeSerialize(jmsg);
   if (err) {
     return;
@@ -61,7 +61,7 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
   }
 }
 
-common::ErrnoError InnerSubHandler::HandleRequest(const UserRequestInfo& request) {
+common::ErrnoError InnerSubHandler::HandleRequest(const rpc::UserRequestInfo& request) {
   InnerTcpClient* fclient = parent_->FindInnerConnectionByUser(request);
   if (!fclient) {
     common::ErrnoError not_found_user_error = common::make_errno_error("User not found.", EINVAL);
@@ -73,9 +73,9 @@ common::ErrnoError InnerSubHandler::HandleRequest(const UserRequestInfo& request
   return fclient->WriteRequest(req, cb);
 }
 
-void InnerSubHandler::PublishResponse(const UserRequestInfo& uinf, const protocol::response_t* resp) {
+void InnerSubHandler::PublishResponse(const rpc::UserRequestInfo& uinf, const protocol::response_t* resp) {
   std::string msg;
-  UserResponseInfo response(uinf.GetUserID(), uinf.GetDeviceID(), uinf.GetRequest(), *resp);
+  rpc::UserResponseInfo response(uinf.GetUserID(), uinf.GetDeviceID(), uinf.GetRequest(), *resp);
   common::Error err = response.SerializeToString(&msg);
   if (err) {
     DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);

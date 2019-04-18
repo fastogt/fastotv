@@ -43,8 +43,8 @@ class EpgInfo : public common::serializer::JsonSerializer<EpgInfo> {
   void SetDisplayName(const std::string& name);
   std::string GetDisplayName() const;
 
-  void SetChannelId(stream_id ch);
-  stream_id GetChannelId() const;
+  void SetChannelID(stream_id ch);
+  stream_id GetChannelID() const;
 
   void SetIconUrl(const common::uri::Url& url);
   common::uri::Url GetIconUrl() const;
@@ -71,6 +71,10 @@ class EpgInfo : public common::serializer::JsonSerializer<EpgInfo> {
 
 inline bool operator==(const EpgInfo& left, const EpgInfo& right) {
   return left.Equals(right);
+}
+
+inline bool operator!=(const EpgInfo& x, const EpgInfo& y) {
+  return !(x == y);
 }
 
 }  // namespace fastotv

@@ -30,21 +30,15 @@
 #include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
 
 #include "server/config.h"  // for Config
-#include "server/user_rpc/user_rpc_info.h"
+#include "server/rpc/user_rpc_info.h"
 
 #include "commands_info/chat_message.h"
 
 namespace common {
 namespace libev {
 class IoClient;
-}
-}  // namespace common
-namespace common {
-namespace libev {
 class IoLoop;
-}
-}  // namespace common
-namespace common {
+}  // namespace libev
 namespace threads {
 template <typename RT>
 class Thread;
@@ -93,11 +87,11 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
   virtual ~InnerTcpHandlerHost();
 
   common::Error PublishToChannelOut(const std::string& msg);
-  inner::InnerTcpClient* FindInnerConnectionByUser(const UserRpcInfo& user) const;
+  inner::InnerTcpClient* FindInnerConnectionByUser(const rpc::UserRpcInfo& user) const;
 
  private:
   void UpdateCache();
-  void PublishUserStateInfo(const UserRpcInfo& user, bool connected);
+  void PublishUserStateInfo(const rpc::UserRpcInfo& user, bool connected);
 
   common::ErrnoError HandleRequestCommand(fastotv::inner::InnerClient* client, protocol::request_t* req) override;
   common::ErrnoError HandleResponceCommand(fastotv::inner::InnerClient* client, protocol::response_t* resp) override;
@@ -116,7 +110,7 @@ class InnerTcpHandlerHost : public fastotv::inner::InnerServerCommandSeqParser, 
   void SendEnterChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login);
   void SendLeaveChatMessage(common::libev::IoLoop* server, stream_id sid, login_t login);
   void BrodcastChatMessage(common::libev::IoLoop* server, const ChatMessage& msg);
-  size_t GetOnlineUserByStreamId(common::libev::IoLoop* server, stream_id sid) const;
+  size_t GetOnlineUserByStreamID(common::libev::IoLoop* server, stream_id sid) const;
 
   ServerHost* const parent_;
 

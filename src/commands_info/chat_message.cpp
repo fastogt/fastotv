@@ -50,11 +50,11 @@ std::string ChatMessage::GetMessage() const {
   return message_;
 }
 
-void ChatMessage::SetChannelId(stream_id sid) {
+void ChatMessage::SetChannelID(stream_id sid) {
   channel_id_ = sid;
 }
 
-stream_id ChatMessage::GetChannelId() const {
+stream_id ChatMessage::GetChannelID() const {
   return channel_id_;
 }
 
