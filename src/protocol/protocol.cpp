@@ -18,12 +18,15 @@
 
 #include <common/sprintf.h>
 #include <common/sys_byteorder.h>
+#include <common/text_decoders/compress_snappy_edcoder.h>
 
 namespace fastotv {
 namespace protocol {
 
 namespace {
-common::ErrnoError GenerateProtocoledMessage(const std::string& message, char** data, size_t* data_len) {
+common::CompressSnappyEDcoder kCompressor;
+
+common::ErrnoError GenerateProtocoledMessage(const common::char_buffer_t& message, char** data, size_t* data_len) {
   if (message.empty() || !data || !data_len) {
     return common::make_errno_error_inval();
   }
@@ -126,17 +129,32 @@ common::ErrnoError ReadCommand(common::libev::IoClient* client, std::string* out
     return err;
   }
 
-  std::string un_compressed(msg, message_size);
+  const common::char_buffer_t compressed = MAKE_CHAR_BUFFER_SIZE(msg, message_size);
+  common::char_buffer_t un_compressed;
+  common::Error dec_err = kCompressor.Decode(compressed, &un_compressed);
   free(msg);
+  if (dec_err) {
+    return common::make_errno_error(dec_err->GetDescription(), EINVAL);
+  }
 
-  *out = un_compressed;
+  *out = un_compressed.as_string();
   return common::ErrnoError();
 }
 
 common::ErrnoError WriteMessage(common::libev::IoClient* client, const std::string& message) {
+  if (!client || message.empty()) {
+    return common::make_errno_error_inval();
+  }
+
+  common::char_buffer_t compressed;
+  common::Error enc_err = kCompressor.Encode(message, &compressed);
+  if (enc_err) {
+    return common::make_errno_error(enc_err->GetDescription(), EINVAL);
+  }
+
   char* protocoled_data = nullptr;
   size_t protocoled_data_len = 0;
-  common::ErrnoError err = protocol::GenerateProtocoledMessage(message, &protocoled_data, &protocoled_data_len);
+  common::ErrnoError err = protocol::GenerateProtocoledMessage(compressed, &protocoled_data, &protocoled_data_len);
   if (err) {
     return err;
   }

@@ -16,6 +16,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 
 #include <common/libev/io_client.h>
 
@@ -25,7 +26,7 @@ namespace fastotv {
 namespace protocol {
 
 typedef uint32_t protocoled_size_t;  // sizeof 4 byte
-enum { MAX_COMMAND_SIZE = 1024 * 8 };
+enum { MAX_COMMAND_SIZE = 1024 * 32 };
 
 namespace detail {
 common::ErrnoError WriteRequest(common::libev::IoClient* client, const request_t& request) WARN_UNUSED_RESULT;
@@ -42,7 +43,7 @@ class ProtocolClient : public Client {
   typedef std::pair<request_t, callback_t> request_save_entry_t;
 
   template <typename... Args>
-  ProtocolClient(Args... args) : base_class(args...) {}
+  explicit ProtocolClient(Args... args) : base_class(args...) {}
 
   common::ErrnoError WriteRequest(const request_t& request, callback_t cb = callback_t()) WARN_UNUSED_RESULT {
     common::ErrnoError err = detail::WriteRequest(this, request);
