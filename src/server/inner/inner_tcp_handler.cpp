@@ -316,6 +316,13 @@ common::ErrnoError InnerTcpHandlerHost::HandleRequestClientActivate(InnerTcpClie
       return common::make_errno_error(error_str, EINVAL);
     }
 
+    if (registered_user.IsBanned()) {
+      const std::string error_str = "Banned user";
+      protocol::response_t resp = ActivateResponseFail(req->id, error_str);
+      client->WriteResponce(resp);
+      return common::make_errno_error(error_str, EINVAL);
+    }
+
     const ServerAuthInfo server_user_auth(registered_user.GetUserID(), uauth);
     if (server_user_auth == InnerTcpClient::anonim_user) {  // anonim user
       const protocol::response_t resp = ActivateResponseSuccess(req->id);

@@ -23,21 +23,27 @@
 #define USER_INFO_CHANNELS_FIELD "channels"
 #define USER_INFO_LOGIN_FIELD "login"
 #define USER_INFO_PASSWORD_FIELD "password"
+#define USER_INFO_STATUS_FIELD "status"
 
 namespace fastotv {
 namespace server {
 
-UserInfo::UserInfo() : login_(), password_(), ch_() {}
+UserInfo::UserInfo() : login_(), password_(), ch_(), devices_(), status_(BANNED) {}
 
 UserInfo::UserInfo(const user_id_t& uid,
                    const login_t& login,
                    const std::string& password,
                    const ChannelsInfo& ch,
-                   const devices_t& devices)
-    : uid_(uid), login_(login), password_(password), ch_(ch), devices_(devices) {}
+                   const devices_t& devices,
+                   Status state)
+    : uid_(uid), login_(login), password_(password), ch_(ch), devices_(devices), status_(state) {}
 
 bool UserInfo::IsValid() const {
   return !uid_.empty() && !login_.empty() && !password_.empty();
+}
+
+bool UserInfo::IsBanned() const {
+  return status_ == BANNED;
 }
 
 common::Error UserInfo::SerializeFields(json_object* deserialized) const {
@@ -48,6 +54,7 @@ common::Error UserInfo::SerializeFields(json_object* deserialized) const {
   json_object_object_add(deserialized, USER_INFO_ID_FIELD, json_object_new_string(uid_.c_str()));
   json_object_object_add(deserialized, USER_INFO_LOGIN_FIELD, json_object_new_string(login_.c_str()));
   json_object_object_add(deserialized, USER_INFO_PASSWORD_FIELD, json_object_new_string(password_.c_str()));
+  json_object_object_add(deserialized, USER_INFO_STATUS_FIELD, json_object_new_int(status_));
 
   json_object* jchannels = nullptr;
   common::Error err = ch_.Serialize(&jchannels);
@@ -100,6 +107,14 @@ common::Error UserInfo::DoDeSerialize(json_object* serialized) {
   }
   password = json_object_get_string(jpassword);
 
+  Status state;
+  json_object* jstate = nullptr;
+  json_bool jstate_exists = json_object_object_get_ex(serialized, USER_INFO_STATUS_FIELD, &jstate);
+  if (!jstate_exists) {
+    return common::make_error_inval();
+  }
+  state = static_cast<Status>(json_object_get_int(jstate));
+
   devices_t devices;
   json_object* jdevices = nullptr;
   json_bool jdevices_exists = json_object_object_get_ex(serialized, USER_INFO_DEVICES_FIELD, &jdevices);
@@ -111,7 +126,7 @@ common::Error UserInfo::DoDeSerialize(json_object* serialized) {
     }
   }
 
-  *this = UserInfo(uid, login, password, chan, devices);
+  *this = UserInfo(uid, login, password, chan, devices, state);
   return common::Error();
 }
 

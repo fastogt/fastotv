@@ -71,10 +71,6 @@ protocol::response_t PingResponseSuccess(protocol::sequance_id_t id) {
   return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage());
 }
 
-protocol::response_t WhoAreYouResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params) {
-  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage(*params));
-}
-
 protocol::response_t SystemInfoResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params) {
   return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage(*params));
 }

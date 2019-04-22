@@ -39,7 +39,6 @@ protocol::request_t GetRuntimeChannelInfoRequest(protocol::sequance_id_t id, pro
 
 // responce
 protocol::response_t PingResponseSuccess(protocol::sequance_id_t id);
-protocol::response_t WhoAreYouResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params);
 protocol::response_t SystemInfoResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params);
 protocol::response_t ServerSendChatMessageSuccsess(protocol::sequance_id_t id);
 

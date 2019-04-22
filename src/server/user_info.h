@@ -26,6 +26,8 @@
 namespace fastotv {
 namespace server {
 
+enum Status { BANNED = 0, ACTIVE = 1 };
+
 class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
  public:
   typedef std::vector<device_id_t> devices_t;
@@ -35,9 +37,11 @@ class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
                     const login_t& login,
                     const std::string& password,
                     const ChannelsInfo& ch,
-                    const devices_t& devices);
+                    const devices_t& devices,
+                    Status state);
 
   bool IsValid() const;
+  bool IsBanned() const;
 
   bool HaveDevice(device_id_t dev) const;
   devices_t GetDevices() const;
@@ -58,6 +62,7 @@ class UserInfo : public common::serializer::JsonSerializer<UserInfo> {
   std::string password_;  // hash
   ChannelsInfo ch_;
   devices_t devices_;
+  Status status_;
 };
 
 inline bool operator==(const UserInfo& lhs, const UserInfo& rhs) {
