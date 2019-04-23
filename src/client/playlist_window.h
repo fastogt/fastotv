@@ -32,8 +32,8 @@ class PlaylistWindow : public fastoplayer::gui::IListBox {
   typedef fastoplayer::gui::IListBox base_class;
   typedef std::vector<PlaylistEntry> playlist_t;
   enum { channel_number_width = 60, space_width = 10 };
-  explicit PlaylistWindow(const SDL_Color& back_ground_color);
-  ~PlaylistWindow();
+  explicit PlaylistWindow(const SDL_Color& back_ground_color, Window* parent = nullptr);
+  ~PlaylistWindow() override;
 
   void SetPlaylist(const playlist_t* pl);
   const playlist_t* GetPlaylist() const;

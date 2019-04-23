@@ -29,8 +29,8 @@
 namespace fastotv {
 namespace client {
 
-PlaylistWindow::PlaylistWindow(const SDL_Color& back_ground_color)
-    : base_class(back_ground_color),
+PlaylistWindow::PlaylistWindow(const SDL_Color& back_ground_color, Window* parent)
+    : base_class(back_ground_color, parent),
       play_list_(nullptr),
       current_position_in_playlist_(fastoplayer::draw::invalid_row_position),
       select_cur_color_() {}

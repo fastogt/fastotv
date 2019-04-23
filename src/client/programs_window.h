@@ -38,7 +38,7 @@ class ProgramsWindow : public fastoplayer::gui::Window {
   static const SDL_Color text_background_color;
 
   explicit ProgramsWindow(const SDL_Color& back_ground_color);
-  ~ProgramsWindow();
+  ~ProgramsWindow() override;
 
   bool IsActived() const;
 

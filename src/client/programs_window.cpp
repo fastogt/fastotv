@@ -41,11 +41,11 @@ ProgramsWindow::ProgramsWindow(const SDL_Color& back_ground_color)
   SetTransparent(true);
 
   // playlist window
-  plailist_window_ = new PlaylistWindow(back_ground_color);
+  plailist_window_ = new PlaylistWindow(back_ground_color, this);
   plailist_window_->SetVisible(true);
   plailist_window_->SetPlaylist(&filtered_origin_);
 
-  text_input_box_ = new fastoplayer::gui::LineEdit(text_background_color);
+  text_input_box_ = new fastoplayer::gui::LineEdit(text_background_color, this);
   text_input_box_->SetTextColor(fastoplayer::draw::black_color);
   text_input_box_->SetDrawType(fastoplayer::gui::Label::WRAPPED_TEXT);
   text_input_box_->SetVisible(true);
