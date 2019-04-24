@@ -344,7 +344,7 @@ class BuildRequest(object):
         os.chdir(cloned_dir)
         utils.build_command_configure(compiler_flags, g_script_path, self.prefix_path_)
         os.chdir(pwd)
-        shutil.rmtree(cloned_dir)
+        # shutil.rmtree(cloned_dir)
 
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
@@ -362,7 +362,7 @@ class BuildRequest(object):
         self.build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
 
     def build_openssl(self, version):
-        compiler_flags = utils.CompileInfo([], ['no-shared'])
+        compiler_flags = utils.CompileInfo([], ['no-shared', 'no-unit-test'])
         url = '{0}openssl-{1}.{2}'.format(OPENSSL_SRC_ROOT, version, ARCH_OPENSSL_EXT)
         self.build(url, compiler_flags, './config')
 
@@ -389,7 +389,7 @@ class BuildRequest(object):
             subprocess.call(common_cmake_line)
             subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
-            shutil.rmtree(cloned_dir)
+            # shutil.rmtree(cloned_dir)
         except Exception as ex:
             os.chdir(self.build_dir_path_)
             raise ex
@@ -416,7 +416,7 @@ class BuildRequest(object):
             subprocess.call(fastoplayer_cmake_line)
             subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
-            shutil.rmtree(cloned_dir)
+            # shutil.rmtree(cloned_dir)
         except Exception as ex:
             os.chdir(self.build_dir_path_)
             raise ex
@@ -433,7 +433,7 @@ class BuildRequest(object):
 
         utils.build_command_configure(libev_compiler_flags, g_script_path, self.prefix_path_)
         os.chdir(pwd)
-        shutil.rmtree(cloned_dir)
+        # shutil.rmtree(cloned_dir)
 
     def build_jsonc(self):
         jsonc_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
@@ -447,7 +447,7 @@ class BuildRequest(object):
 
         utils.build_command_configure(jsonc_compiler_flags, g_script_path, self.prefix_path_)
         os.chdir(pwd)
-        shutil.rmtree(cloned_dir)
+        # shutil.rmtree(cloned_dir)
 
     def build_snappy(self):
         pwd = os.getcwd()
@@ -471,17 +471,17 @@ class BuildRequest(object):
             subprocess.call(snappy_cmake_line)
             subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
-            shutil.rmtree(cloned_dir)
+            # shutil.rmtree(cloned_dir)
         except Exception as ex:
             os.chdir(self.build_dir_path_)
             raise ex
 
 
 if __name__ == "__main__":
-    sdl2_default_version = '2.0.8'
-    sdl2_image_default_version = '2.0.1'
-    sdl2_ttf_default_version = '2.0.14'
-    openssl_default_version = '1.1.1'
+    sdl2_default_version = '2.0.9'
+    sdl2_image_default_version = '2.0.4'
+    sdl2_ttf_default_version = '2.0.15'
+    openssl_default_version = '1.1.1b'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
