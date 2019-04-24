@@ -271,7 +271,7 @@ class BuildRequest(object):
             distribution = system_info.linux_get_dist()
             if distribution == 'DEBIAN':
                 dep_libs = ['git', 'gcc', 'g++', 'yasm', 'pkg-config', 'libtool', 'rpm',
-                            'git', 'autogen', 'autoconf',
+                            'git', 'autogen', 'autoconf', 'automake',
                             'cmake', 'make', 'ninja-build',
                             'libz-dev', 'libbz2-dev', 'libpcre3-dev',
                             'libasound2-dev',
@@ -281,7 +281,7 @@ class BuildRequest(object):
                             'liblircclient-dev']
             elif distribution == 'RHEL':
                 dep_libs = ['git', 'gcc', 'gcc-c++', 'yasm', 'pkgconfig', 'libtool', 'rpm-build',
-                            'git', 'autogen', 'autoconf',
+                            'git', 'autogen', 'autoconf', 'automake',
                             'cmake', 'make', 'ninja-build',
                             'zlib-devel', 'bzip2-devel', 'pcre-devel',
                             'alsa-lib-devel',
