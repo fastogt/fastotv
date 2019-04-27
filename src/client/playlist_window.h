@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include <player/gui/widgets/list_box.h>
@@ -40,19 +41,11 @@ class PlaylistWindow : public fastoplayer::gui::IListBox {
 
   size_t GetRowCount() const override;
 
-  void SetCurrentPositionInPlaylist(size_t pos);
-
-  void SetCurrentPositionSelectionColor(const SDL_Color& sel);
-  SDL_Color GetCurrentPositionSelectionColor() const;
-
  protected:
-  void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
+  void DrawRow(SDL_Renderer* render, size_t pos, bool active, bool hover, const SDL_Rect& row_rect) override;
 
  private:
   const playlist_t* play_list_;  // pointer
-
-  size_t current_position_in_playlist_;
-  SDL_Color select_cur_color_;
 };
 
 }  // namespace client

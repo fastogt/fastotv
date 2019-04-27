@@ -18,6 +18,8 @@
 
 #include "client/programs_window.h"
 
+#include <string>
+
 #include <player/gui/widgets/line_edit.h>
 
 #include "client/playlist_window.h"
@@ -132,11 +134,11 @@ void ProgramsWindow::SetDrawType(fastoplayer::gui::FontWindow::DrawType dt) {
 }
 
 void ProgramsWindow::SetCurrentPositionSelectionColor(const SDL_Color& sel) {
-  plailist_window_->SetCurrentPositionSelectionColor(sel);
+  plailist_window_->SetActiveRowColor(sel);
 }
 
 void ProgramsWindow::SetCurrentPositionInPlaylist(size_t pos) {
-  plailist_window_->SetCurrentPositionInPlaylist(pos);
+  plailist_window_->SetActiveRow(pos);
 }
 
 void ProgramsWindow::SetMouseClickedRowCallback(PlaylistWindow::mouse_clicked_row_callback_t cb) {

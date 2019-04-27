@@ -18,6 +18,8 @@
 
 #include "client/chat_list_window.h"
 
+#include <string>
+
 namespace fastotv {
 namespace client {
 
@@ -35,8 +37,8 @@ size_t ChatListWindow::GetRowCount() const {
   return msgs_.size();
 }
 
-void ChatListWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) {
-  UNUSED(is_active_row);
+void ChatListWindow::DrawRow(SDL_Renderer* render, size_t pos, bool active, bool hover, const SDL_Rect& row_rect) {
+  UNUSED(active);
 
   ChatMessage msg = msgs_[pos];
   std::string login = msg.GetLogin();

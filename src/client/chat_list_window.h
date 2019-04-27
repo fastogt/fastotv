@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include <player/gui/widgets/list_box.h>
@@ -40,7 +41,7 @@ class ChatListWindow : public fastoplayer::gui::IListBox {
   messages_t GetMessages() const;
 
  protected:
-  void DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) override;
+  void DrawRow(SDL_Renderer* render, size_t pos, bool active, bool hover, const SDL_Rect& row_rect) override;
 
  private:
   messages_t msgs_;

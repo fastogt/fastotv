@@ -18,6 +18,8 @@
 
 #include "client/playlist_window.h"
 
+#include <string>
+
 #include <common/application/application.h>
 
 #include <common/convert2string.h>
@@ -30,10 +32,7 @@ namespace fastotv {
 namespace client {
 
 PlaylistWindow::PlaylistWindow(const SDL_Color& back_ground_color, Window* parent)
-    : base_class(back_ground_color, parent),
-      play_list_(nullptr),
-      current_position_in_playlist_(fastoplayer::draw::invalid_row_position),
-      select_cur_color_() {}
+    : base_class(back_ground_color, parent), play_list_(nullptr) {}
 
 PlaylistWindow::~PlaylistWindow() {}
 
@@ -52,21 +51,7 @@ size_t PlaylistWindow::GetRowCount() const {
   return play_list_->size();
 }
 
-void PlaylistWindow::SetCurrentPositionInPlaylist(size_t pos) {
-  current_position_in_playlist_ = pos;
-}
-
-void PlaylistWindow::SetCurrentPositionSelectionColor(const SDL_Color& sel) {
-  select_cur_color_ = sel;
-}
-
-SDL_Color PlaylistWindow::GetCurrentPositionSelectionColor() const {
-  return select_cur_color_;
-}
-
-void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_row, const SDL_Rect& row_rect) {
-  UNUSED(is_active_row);
-
+void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool active, bool hover, const SDL_Rect& row_rect) {
   if (!play_list_) {
     return;
   }
@@ -99,10 +84,6 @@ void PlaylistWindow::DrawRow(SDL_Renderer* render, size_t pos, bool is_active_ro
       title_line, description_line);
   SDL_Rect text_rect = {row_rect.x + shift, row_rect.y, text_width, row_rect.h};
   DrawText(render, line_text, text_rect, GetDrawType());
-
-  if (pos == current_position_in_playlist_) {
-    fastoplayer::draw::FillRectColor(render, row_rect, select_cur_color_);
-  }
 }
 
 }  // namespace client
