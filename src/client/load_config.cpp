@@ -301,7 +301,10 @@ common::ErrnoError load_config_file(const std::string& config_absolute_path, fas
   }
 
   if (!copy_config_absolute_path.empty()) {
-    ini_parse(copy_config_absolute_path.c_str(), ini_handler_fasto, options);
+    int res = ini_parse(copy_config_absolute_path.c_str(), ini_handler_fasto, options);
+    if (res == -1) {
+      WARNING_LOG() << "Can't open config file path: " << copy_config_absolute_path;
+    }
   }
   return common::ErrnoError();
 }

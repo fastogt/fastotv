@@ -195,6 +195,6 @@ int main(int argc, char** argv) {
   const std::string app_directory_absolute_path =
       common::file_system::is_absolute_path(app_directory_path)
           ? app_directory_path
-          : common::file_system::absolute_path_from_relative(app_directory_path);
+          : common::file_system::absolute_path_from_relative(app_directory_path);  // +
   return main_application(argc, argv, app_directory_absolute_path);
 }

@@ -58,8 +58,12 @@ namespace client {
 
 namespace {
 
+std::string MakeAbsoluteSourceDir() {
+  return common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR, common::file_system::app_pwd());  // +
+}
+
 fastoplayer::draw::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
-  const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+  const std::string absolute_source_dir = MakeAbsoluteSourceDir();
   const std::string img_full_path = common::file_system::make_path(absolute_source_dir, relative_path);
   return fastoplayer::draw::MakeSurfaceFromPath(img_full_path);
 }
@@ -77,7 +81,7 @@ Player::Player(const std::string& app_directory_absolute_path,
                const fastoplayer::PlayerOptions& options,
                const fastoplayer::media::AppOptions& opt,
                const fastoplayer::media::ComplexOptions& copt)
-    : ISimplePlayer(options, RELATIVE_SOURCE_DIR),
+    : ISimplePlayer(options, MakeAbsoluteSourceDir()),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
       right_arrow_button_texture_(nullptr),
