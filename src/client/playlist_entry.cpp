@@ -45,7 +45,8 @@ std::string PlaylistEntry::GetIconPath() const {
   common::uri::Url uri = epg.GetIconUrl();
   bool is_unknown_icon = EpgInfo::IsUnknownIconUrl(uri);
   if (is_unknown_icon) {
-    const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+    const std::string absolute_source_dir =
+        common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR, common::file_system::app_pwd());  // +
     return common::file_system::make_path(absolute_source_dir, IMG_UNKNOWN_CHANNEL_PATH_RELATIVE);
   }
   std::string dir = GetCacheDir();

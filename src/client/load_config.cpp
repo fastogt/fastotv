@@ -296,7 +296,8 @@ common::ErrnoError load_config_file(const std::string& config_absolute_path, fas
 
   std::string copy_config_absolute_path = config_absolute_path;
   if (!common::file_system::is_file_exist(config_absolute_path)) {
-    const std::string absolute_source_dir = common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR);
+    const std::string absolute_source_dir =
+        common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR, common::file_system::app_pwd());  // +
     copy_config_absolute_path = common::file_system::make_path(absolute_source_dir, CONFIG_FILE_PATH_RELATIVE);
   }
 

@@ -48,6 +48,8 @@
 #define IMG_UP_BUTTON_PATH_RELATIVE "share/resources/up_arrow.png"
 #define IMG_DOWN_BUTTON_PATH_RELATIVE "share/resources/down_arrow.png"
 
+#define FONT_DIR "/share/fonts/"
+
 #define CACHE_FOLDER_NAME "cache"
 
 #define FOOTER_HIDE_DELAY_MSEC 2000  // 2 sec
@@ -60,6 +62,12 @@ namespace {
 
 std::string MakeAbsoluteSourceDir() {
   return common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR, common::file_system::app_pwd());  // +
+}
+
+fastoplayer::ISimplePlayer::file_string_path_t MakeFontPath() {
+  static const common::file_system::ascii_directory_string_path font_dir(MakeAbsoluteSourceDir() + FONT_DIR);
+  const auto path = font_dir.MakeFileStringPath("FreeSans.ttf");
+  return path;
 }
 
 fastoplayer::draw::SurfaceSaver* MakeSurfaceFromImageRelativePath(const std::string& relative_path) {
@@ -81,7 +89,7 @@ Player::Player(const std::string& app_directory_absolute_path,
                const fastoplayer::PlayerOptions& options,
                const fastoplayer::media::AppOptions& opt,
                const fastoplayer::media::ComplexOptions& copt)
-    : ISimplePlayer(options, MakeAbsoluteSourceDir()),
+    : ISimplePlayer(options, MakeFontPath()),
       offline_channel_texture_(nullptr),
       connection_error_texture_(nullptr),
       right_arrow_button_texture_(nullptr),
