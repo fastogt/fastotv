@@ -2,8 +2,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.3.0) # deb package fix in 3.3.0
 ###################### Branding ##########################
 
 SET(BRANDING_PROJECT_NAME "FastoTV" CACHE STRING "Branding for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_VERSION "1.2.3.0" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "release" CACHE STRING "Build version type for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_VERSION "1.3.0.0" CACHE STRING "Branding version for ${BRANDING_PROJECT_NAME}") #default
+SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "alfa" CACHE STRING "Build version type for ${BRANDING_PROJECT_NAME}") #default
   #possible variables: alfa, beta, rc, release
 
 SET(BRANDING_PROJECT_DOMAIN "http://www.fastogt.com" CACHE STRING "Branding domain url for ${BRANDING_PROJECT_NAME}") #default
@@ -25,7 +25,7 @@ SET(BRANDING_PROJECT_SUMMARY "Cross-platform open source tv player."
   CACHE STRING "Short description of ${BRANDING_PROJECT_NAME}")
 SET(BRANDING_PROJECT_DESCRIPTION "${BRANDING_PROJECT_NAME} it is tv player."
   CACHE STRING "Description of ${BRANDING_PROJECT_NAME}")
-SET(BRANDING_PROJECT_COPYRIGHT "Copyright (C) 2014-2018 ${BRANDING_PROJECT_COMPANYNAME} All Rights Reserved."
+SET(BRANDING_PROJECT_COPYRIGHT "Copyright (C) 2014-2019 ${BRANDING_PROJECT_COMPANYNAME} All Rights Reserved."
   CACHE STRING "Copyright notice for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_CHANGELOG_FILE CHANGELOG
   CACHE STRING "Branding for changelog file ${BRANDING_PROJECT_NAME}

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014-2018 FastoGT. All right reserved.
+/*  Copyright (C) 2014-2019 FastoGT. All right reserved.
 
     This file is part of FastoTV.
 
@@ -20,6 +20,7 @@
 
 #include <memory>  // for shared_ptr
 #include <string>  // for string
+#include <vector>
 
 #include <common/error.h>                   // for Error
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver

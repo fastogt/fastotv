@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014-2018 FastoGT. All right reserved.
+/*  Copyright (C) 2014-2019 FastoGT. All right reserved.
 
     This file is part of FastoTV.
 
@@ -19,6 +19,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <vector>
 
 #include <common/error.h>   // for Error
 #include <common/macros.h>  // for WARN_UNUSED_RESULT, DISALLOW_COPY_...
@@ -57,14 +58,13 @@ class ServerHost {
   inner::InnerTcpClient* FindInnerConnectionByUser(const rpc::UserRpcInfo& user) const;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(ServerHost);
-
   inner::InnerTcpHandlerHost* handler_;
   inner::InnerTcpServer* server_;
 
   inner_connections_t connections_;
   redis::RedisStorage rstorage_;
   const Config config_;
+  DISALLOW_COPY_AND_ASSIGN(ServerHost);
 };
 
 }  // namespace server
