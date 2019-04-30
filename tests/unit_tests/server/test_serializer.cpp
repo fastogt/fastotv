@@ -18,9 +18,7 @@
 
 #include <gtest/gtest.h>
 
-#include "server/responce_info.h"
 #include "server/user_info.h"
-#include "server/user_state_info.h"
 
 typedef fastotv::ChannelInfo::serialize_type serialize_t;
 
@@ -38,7 +36,8 @@ TEST(UserInfo, serialize_deserialize) {
   fastotv::ChannelsInfo channel_info;
   channel_info.AddChannel(fastotv::ChannelInfo(epg_info, enable_audio, enable_video));
 
-  fastotv::server::UserInfo uinf(login, password, channel_info, fastotv::server::UserInfo::devices_t());
+  fastotv::server::UserInfo uinf("11", login, password, channel_info, fastotv::server::UserInfo::devices_t(),
+                                 fastotv::server::ACTIVE);
   ASSERT_EQ(uinf.GetLogin(), login);
   ASSERT_EQ(uinf.GetPassword(), password);
   ASSERT_EQ(uinf.GetChannelInfo(), channel_info);
@@ -106,46 +105,4 @@ TEST(UserInfo, serialize_deserialize) {
   ASSERT_EQ(duinf.GetLogin(), "atopilski@gmail.com");
   ASSERT_EQ(duinf.GetPassword(), "1234");
   ASSERT_EQ(ch.GetSize(), 3);
-}
-
-TEST(UserStateInfo, serialize_deserialize) {
-  const fastotv::server::user_id_t user_id = "123fe";
-  const bool connected = false;
-
-  fastotv::server::UserStateInfo ust(user_id, "", connected);
-  ASSERT_EQ(ust.GetUserId(), user_id);
-  ASSERT_EQ(ust.IsConnected(), connected);
-
-  serialize_t ser;
-  common::Error err = ust.Serialize(&ser);
-  ASSERT_TRUE(!err);
-  fastotv::server::UserStateInfo dust;
-  err = dust.DeSerialize(ser);
-  ASSERT_TRUE(!err);
-
-  ASSERT_EQ(ust.GetUserId(), dust.GetUserId());
-  ASSERT_EQ(ust.GetDeviceId(), dust.GetDeviceId());
-  ASSERT_EQ(ust, dust);
-}
-
-TEST(ResponceInfo, serialize_deserialize) {
-  const std::string request_id = "req";
-  const std::string state = "state";
-  const std::string command = "comma";
-  const std::string responce_json = "{}";
-
-  fastotv::server::ResponceInfo ust(request_id, state, command, responce_json);
-  ASSERT_EQ(ust.GetRequestId(), request_id);
-  ASSERT_EQ(ust.GetState(), state);
-  ASSERT_EQ(ust.GetCommand(), command);
-  ASSERT_EQ(ust.GetResponceJson(), responce_json);
-
-  serialize_t ser;
-  common::Error err = ust.Serialize(&ser);
-  ASSERT_TRUE(!err);
-  fastotv::server::ResponceInfo dust;
-  err = dust.DeSerialize(ser);
-  ASSERT_TRUE(!err);
-
-  ASSERT_EQ(ust, dust);
 }
