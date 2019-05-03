@@ -133,13 +133,13 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     return 1;
   } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_WIDTH_FIELD)) {
     int width;
-    if (parse_number(value, 0, std::numeric_limits<int>::max(), &width)) {
+    if (parse_number(value, -1, std::numeric_limits<int>::max(), &width)) {
       pconfig->player_options.screen_size.width = width;
     }
     return 1;
   } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD)) {
     int height;
-    if (parse_number(value, 0, std::numeric_limits<int>::max(), &height)) {
+    if (parse_number(value, -1, std::numeric_limits<int>::max(), &height)) {
       pconfig->player_options.screen_size.height = height;
     }
     return 1;
