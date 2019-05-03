@@ -261,9 +261,12 @@ class BuildRequest(object):
     def install_device_specific(self):
         self.device_.install_specific()
 
+    def get_platform_name(self):
+        return self.platform_.name()
+
     def get_system_libs(self):
         platform = self.platform_
-        platform_name = platform.name()
+        platform_name = self.name()
         arch = platform.arch()
         dep_libs = []
 
@@ -441,7 +444,11 @@ class BuildRequest(object):
         cloned_dir = utils.git_clone('https://github.com/fastogt/libcpuid.git', pwd)
         os.chdir(cloned_dir)
 
-        libtoolize_cpuid = ['libtoolize']
+        platform_name = self.get_platform_name()
+        if platform_name == 'macosx':
+            libtoolize_cpuid = ['glibtoolize']
+        else:
+            libtoolize_cpuid = ['libtoolize']
         subprocess.call(libtoolize_cpuid)
 
         autoreconf_cpuid = ['autoreconf', '--install']
