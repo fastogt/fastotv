@@ -385,7 +385,6 @@ class BuildRequest(object):
             os.chdir('build_cmake_release')
             common_cmake_line = list(cmake_line)
             common_cmake_line.append('-DQT_ENABLED=OFF')
-            common_cmake_line.append('-DJSON_ENABLED=ON')
             subprocess.call(common_cmake_line)
             subprocess.call(['ninja', 'install'])
             os.chdir(self.build_dir_path_)
@@ -432,6 +431,23 @@ class BuildRequest(object):
         subprocess.call(autogen_libev)
 
         utils.build_command_configure(libev_compiler_flags, g_script_path, self.prefix_path_)
+        os.chdir(pwd)
+        # shutil.rmtree(cloned_dir)
+
+    def build_cpuid(self):
+        cpuid_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
+
+        pwd = os.getcwd()
+        cloned_dir = utils.git_clone('https://github.com/fastogt/libcpuid.git', pwd)
+        os.chdir(cloned_dir)
+
+        libtoolize_cpuid = ['libtoolize']
+        subprocess.call(libtoolize_cpuid)
+
+        autoreconf_cpuid = ['autoreconf', '--install']
+        subprocess.call(autoreconf_cpuid)
+
+        utils.build_command_configure(cpuid_compiler_flags, g_script_path, self.prefix_path_)
         os.chdir(pwd)
         # shutil.rmtree(cloned_dir)
 
@@ -514,6 +530,13 @@ if __name__ == "__main__":
                             action='store_true', default=True)
     snappy_grp.add_argument('--without-snappy', help='build without snappy', dest='with_snappy', action='store_false',
                             default=False)
+
+    # cpuid
+    cpuid_grp = parser.add_mutually_exclusive_group()
+    cpuid_grp.add_argument('--with-cpuid', help='build cpuid (default, version: git master)', dest='with_cpuid',
+                           action='store_true', default=True)
+    cpuid_grp.add_argument('--without-cpuid', help='build without cpuid', dest='with_cpuid', action='store_false',
+                           default=False)
 
     # json-c
     jsonc_grp = parser.add_mutually_exclusive_group()
@@ -619,10 +642,12 @@ if __name__ == "__main__":
 
     if argv.with_snappy:
         request.build_snappy()
-    if argv.with_libev:
-        request.build_libev()
     if argv.with_jsonc:
         request.build_jsonc()
+    if argv.with_cpuid:
+        request.build_cpuid()
+    if argv.with_libev:
+        request.build_libev()
     if argv.with_common:
         request.build_common()
 
