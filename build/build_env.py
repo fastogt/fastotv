@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import os
-import shutil
-import subprocess
 import sys
 from abc import ABCMeta, abstractmethod
 
 from devices.orange_pi import orange_pi
 from devices.raspberry_pi import raspberry_pi
-from pyfastogt import system_info, utils
+from pyfastogt import build_utils, system_info
 
 # Script for building environment on clean machine
 
@@ -89,8 +87,8 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
         SupportedDevice.__init__(self, 'pc', {'linux': [
             'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
-        ]}, utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']),
-                                 utils.CompileInfo([], []))
+        ]}, build_utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']),
+                                 build_utils.CompileInfo([], []))
 
     def install_specific(self):
         return
@@ -98,10 +96,10 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
 
 class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
     def __init__(self):
-        SupportedDevice.__init__(self, 'android', {}, utils.CompileInfo([], ['--disable-video-mir',
-                                                                             '--disable-video-wayland',
-                                                                             '--disable-sdltest']),
-                                 utils.CompileInfo([], []),
+        SupportedDevice.__init__(self, 'android', {}, build_utils.CompileInfo([], ['--disable-video-mir',
+                                                                                   '--disable-video-wayland',
+                                                                                   '--disable-sdltest']),
+                                 build_utils.CompileInfo([], []),
                                  ['-DCMAKE_TOOLCHAIN_FILE=~/Android/Sdk/ndk-bundle/build/cmake/android.toolchain.cmake',
                                   '-DANDROID_PLATFORM=android-16'])
 
@@ -113,15 +111,16 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
 class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': ['libgl1-mesa-dev']},
-                                 utils.CompileInfo([],
-                                                   ['--host=arm-raspberry-linux-gnueabihf',
-                                                    '--disable-pulseaudio', '--disable-esd',
-                                                    '--disable-video-opengl', '--disable-video-opengles1',
-                                                    '--enable-video-opengles2',
-                                                    '--disable-video-mir', '--disable-video-wayland',
-                                                    '--disable-video-x11', '--disable-sdltest']),
-                                 utils.CompileInfo([], ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
-                                                        '--enable-omx-rpi']))
+                                 build_utils.CompileInfo([],
+                                                         ['--host=arm-raspberry-linux-gnueabihf',
+                                                          '--disable-pulseaudio', '--disable-esd',
+                                                          '--disable-video-opengl', '--disable-video-opengles1',
+                                                          '--enable-video-opengles2',
+                                                          '--disable-video-mir', '--disable-video-wayland',
+                                                          '--disable-video-x11', '--disable-sdltest']),
+                                 build_utils.CompileInfo([],
+                                                         ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
+                                                          '--enable-omx-rpi']))
 
     @abstractmethod
     def install_specific(self):
@@ -167,13 +166,13 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                  {'linux': ['libgles2-mesa-dev', 'libcedrus1-dev', 'libpixman-1-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy'
                                             ]},
-                                 utils.CompileInfo(['patch/orange-pi/sdl2'],
-                                                   ['--disable-pulseaudio', '--disable-esd',
-                                                    '--disable-video-opengl', '--disable-video-opengles1',
-                                                    '--enable-video-opengles2',
-                                                    '--disable-video-mir', '--disable-video-wayland',
-                                                    '--disable-sdltest']),
-                                 utils.CompileInfo([], []))
+                                 build_utils.CompileInfo(['patch/orange-pi/sdl2'],
+                                                         ['--disable-pulseaudio', '--disable-esd',
+                                                          '--disable-video-opengl', '--disable-video-opengles1',
+                                                          '--enable-video-opengles2',
+                                                          '--disable-video-mir', '--disable-video-wayland',
+                                                          '--disable-sdltest']),
+                                 build_utils.CompileInfo([], []))
         linux_libs = self.system_platform_libs_.get('linux')
         platform_name = system_info.get_os()
         linux_libs.extend(get_x11_libs(platform_name))
@@ -211,12 +210,12 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
     def __init__(self, name='orange-pi-pc2'):
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev']},
-                                 utils.CompileInfo([], ['--disable-pulseaudio', '--disable-esd',
-                                                        '--disable-video-opengl', '--disable-video-opengles1',
-                                                        '--enable-video-opengles2',
-                                                        '--disable-video-mir', '--disable-video-wayland',
-                                                        '--disable-video-x11', '--disable-sdltest']),
-                                 utils.CompileInfo([], []))
+                                 build_utils.CompileInfo([], ['--disable-pulseaudio', '--disable-esd',
+                                                              '--disable-video-opengl', '--disable-video-opengles1',
+                                                              '--enable-video-opengles2',
+                                                              '--disable-video-mir', '--disable-video-wayland',
+                                                              '--disable-video-x11', '--disable-sdltest']),
+                                 build_utils.CompileInfo([], []))
 
     def install_specific(self):
         orange_pi.install_orange_pi_h5()
@@ -248,37 +247,10 @@ def get_available_devices() -> list:
     return result
 
 
-class BuildRequest(object):
+class BuildRequest(build_utils.BuildRequest):
     def __init__(self, device, platform, arch_name, dir_path, prefix_path):
-        platform_or_none = system_info.get_supported_platform_by_name(platform)
-
-        if not platform_or_none:
-            raise utils.BuildError('invalid platform')
-
-        build_arch = platform_or_none.architecture_by_arch_name(arch_name)
-        if not build_arch:
-            raise utils.BuildError('invalid arch')
-
-        if not prefix_path:
-            prefix_path = build_arch.default_install_prefix_path()
-
-        packages_types = platform_or_none.package_types()
-        build_platform = platform_or_none.make_platform_by_arch(build_arch, packages_types)
-
+        build_utils.BuildRequest.__init__(self, platform, arch_name, dir_path, g_script_path, prefix_path)
         self.device_ = device
-        self.platform_ = build_platform
-        build_dir_path = os.path.abspath(dir_path)
-        if os.path.exists(build_dir_path):
-            shutil.rmtree(build_dir_path)
-
-        os.mkdir(build_dir_path)
-        os.chdir(build_dir_path)
-
-        self.build_dir_path_ = build_dir_path
-        self.prefix_path_ = prefix_path
-        print(
-            "Build request for device: {0}, platform: {1}({2}) created".format(device.name(), build_platform.name(),
-                                                                               build_arch.name()))
 
     def install_device_specific(self):
         self.device_.install_specific()
@@ -364,99 +336,32 @@ class BuildRequest(object):
         pwd = os.getcwd()
         compiler_flags = self.device_.ffmpeg_compile_info()
         compiler_flags.extend_flags(ffmpeg_platform_args)
-        cloned_dir = utils.git_clone('https://github.com/fastogt/ffmpeg.git')
-        os.chdir(cloned_dir)
-        self.__build_via_configure(compiler_flags)
+        self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('ffmpeg'))
         os.chdir(pwd)
 
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
         url = '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT)
-        self.__download_and_build_via_configure(url, compiler_flags)
+        self._download_and_build_via_configure(url, compiler_flags)
 
     def build_sdl2_image(self, version):
-        compiler_flags = utils.CompileInfo([], ['--disable-svg', '--disable-sdltest', '--disable-bmp', '--disable-gif',
-                                                '--disable-jpg', '--disable-lbm', '--disable-pcx', '--disable-pnm',
-                                                '--disable-tga', '--disable-tif', '--disable-xcf', '--disable-xpm',
-                                                '--disable-xv', '-disable-webp'])
+        compiler_flags = build_utils.CompileInfo([], ['--disable-svg', '--disable-sdltest', '--disable-bmp',
+                                                      '--disable-gif',
+                                                      '--disable-jpg', '--disable-lbm', '--disable-pcx',
+                                                      '--disable-pnm',
+                                                      '--disable-tga', '--disable-tif', '--disable-xcf',
+                                                      '--disable-xpm',
+                                                      '--disable-xv', '-disable-webp'])
         url = '{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT)
-        self.__download_and_build_via_configure(url, compiler_flags)
+        self._download_and_build_via_configure(url, compiler_flags)
 
     def build_sdl2_ttf(self, version):
-        compiler_flags = utils.CompileInfo([], ['--disable-sdltest'])
+        compiler_flags = build_utils.CompileInfo([], ['--disable-sdltest'])
         url = '{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT)
-        self.__download_and_build_via_configure(url, compiler_flags)
-
-    def build_openssl(self, version):
-        compiler_flags = utils.CompileInfo([], ['no-shared', 'no-unit-test'])
-        url = '{0}openssl-{1}.{2}'.format(OPENSSL_SRC_ROOT, version, ARCH_OPENSSL_EXT)
-        self.__download_and_build_via_configure(url, compiler_flags, './config')
-
-    def build_common(self):
-        cloned_dir = utils.git_clone('https://github.com/fastogt/common.git')
-        self.__build_via_cmake(cloned_dir)
+        self._download_and_build_via_configure(url, compiler_flags)
 
     def build_fastoplayer(self):
-        pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/fastoplayer.git')
-        self.__build_via_cmake(cloned_dir)
-
-    def build_libev(self):
-        libev_compiler_flags = utils.CompileInfo([], ['--with-pic', '--disable-shared', '--enable-static'])
-
-        pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/libev.git')
-        os.chdir(cloned_dir)
-
-        autogen_libev = ['sh', 'autogen.sh']
-        subprocess.call(autogen_libev)
-
-        self.__build_via_configure(libev_compiler_flags)
-        os.chdir(pwd)
-
-    def build_cpuid(self):
-        cpuid_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
-
-        pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/libcpuid.git')
-        os.chdir(cloned_dir)
-
-        platform_name = self.get_platform_name()
-        if platform_name == 'macosx':
-            libtoolize_cpuid = ['glibtoolize']
-        else:
-            libtoolize_cpuid = ['libtoolize']
-        subprocess.call(libtoolize_cpuid)
-
-        autoreconf_cpuid = ['autoreconf', '--install']
-        subprocess.call(autoreconf_cpuid)
-
-        self.__build_via_configure(cpuid_compiler_flags)
-        os.chdir(pwd)
-
-    def build_jsonc(self):
-        cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git')
-        self.__build_via_cmake(cloned_dir, ['-DBUILD_SHARED_LIBS=OFF'])
-
-    def build_snappy(self):
-        cloned_dir = utils.git_clone('https://github.com/fastogt/snappy.git')
-        self.__build_via_cmake(cloned_dir, ['-DBUILD_SHARED_LIBS=OFF', '-DSNAPPY_BUILD_TESTS=OFF'])
-
-    def __download_and_build_via_cmake(self, url, cmake_flags=[]):
-        file_path = utils.download_file(url)
-        extracted_folder = utils.extract_file(file_path)
-        self.__build_via_cmake(extracted_folder, cmake_flags)
-
-    def __download_and_build_via_configure(self, url, compiler_flags: utils.CompileInfo, executable='./configure'):
-        compiler_flags.extend_flags(self.device_.configure_additional_flags())
-        utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_, executable)
-
-    def __build_via_configure(self, compiler_flags: utils.CompileInfo, executable='./configure'):
-        compiler_flags.extend_flags(self.device_.configure_additional_flags())
-        utils.build_command_configure(compiler_flags, g_script_path, self.prefix_path_, executable)
-
-    def __build_via_cmake(self, directory, cmake_flags=[]):
-        utils.build_command_cmake(directory, self.prefix_path_, cmake_flags)
+        self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('fastoplayer'))
 
 
 if __name__ == "__main__":
@@ -596,7 +501,7 @@ if __name__ == "__main__":
     arg_architecture = argv.architecture
     sup_device = get_supported_device_by_name(argv.device)
     if not sup_device:
-        raise utils.BuildError('invalid device')
+        raise build_utils.BuildError('invalid device')
 
     request = BuildRequest(sup_device, arg_platform, arg_architecture, 'build_' + arg_platform + '_env',
                            arg_prefix_path)
