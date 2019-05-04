@@ -87,7 +87,7 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
         SupportedDevice.__init__(self, 'pc', {'linux': [
             'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
-        ]}, build_utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']),
+        ]}, build_utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland']),
                                  build_utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -97,8 +97,8 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
 class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
     def __init__(self):
         SupportedDevice.__init__(self, 'android', {}, build_utils.CompileInfo([], ['--disable-video-mir',
-                                                                                   '--disable-video-wayland',
-                                                                                   '--disable-sdltest']),
+                                                                                   '--disable-video-wayland'
+                                                                                   ]),
                                  build_utils.CompileInfo([], []),
                                  ['-DCMAKE_TOOLCHAIN_FILE=~/Android/Sdk/ndk-bundle/build/cmake/android.toolchain.cmake',
                                   '-DANDROID_PLATFORM=android-16'])
@@ -117,7 +117,7 @@ class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
                                                           '--disable-video-opengl', '--disable-video-opengles1',
                                                           '--enable-video-opengles2',
                                                           '--disable-video-mir', '--disable-video-wayland',
-                                                          '--disable-video-x11', '--disable-sdltest']),
+                                                          '--disable-video-x11']),
                                  build_utils.CompileInfo([],
                                                          ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                                           '--enable-omx-rpi']))
@@ -170,8 +170,8 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                                          ['--disable-pulseaudio', '--disable-esd',
                                                           '--disable-video-opengl', '--disable-video-opengles1',
                                                           '--enable-video-opengles2',
-                                                          '--disable-video-mir', '--disable-video-wayland',
-                                                          '--disable-sdltest']),
+                                                          '--disable-video-mir', '--disable-video-wayland'
+                                                          ]),
                                  build_utils.CompileInfo([], []))
         linux_libs = self.system_platform_libs_.get('linux')
         platform_name = system_info.get_os()
@@ -214,7 +214,7 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
                                                               '--disable-video-opengl', '--disable-video-opengles1',
                                                               '--enable-video-opengles2',
                                                               '--disable-video-mir', '--disable-video-wayland',
-                                                              '--disable-video-x11', '--disable-sdltest']),
+                                                              '--disable-video-x11']),
                                  build_utils.CompileInfo([], []))
 
     def install_specific(self):
@@ -346,7 +346,7 @@ class BuildRequest(build_utils.BuildRequest):
         self._download_and_build_via_configure(url, compiler_flags)
 
     def build_sdl2_image(self, version):
-        compiler_flags = build_utils.CompileInfo([], ['--disable-svg', '--disable-sdltest', '--disable-bmp',
+        compiler_flags = build_utils.CompileInfo([], ['--disable-svg', '--disable-bmp',
                                                       '--disable-gif',
                                                       '--disable-jpg', '--disable-lbm', '--disable-pcx',
                                                       '--disable-pnm',
@@ -357,7 +357,7 @@ class BuildRequest(build_utils.BuildRequest):
         self._download_and_build_via_configure(url, compiler_flags)
 
     def build_sdl2_ttf(self, version):
-        compiler_flags = build_utils.CompileInfo([], ['--disable-sdltest'])
+        compiler_flags = build_utils.CompileInfo([], [])
         url = '{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT)
         self._download_and_build_via_configure(url, compiler_flags)
 
