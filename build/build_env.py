@@ -439,21 +439,10 @@ class BuildRequest(object):
         # shutil.rmtree(cloned_dir)
 
     def build_jsonc(self):
-        jsonc_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
-
-        pwd = os.getcwd()
         cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git')
-        os.chdir(cloned_dir)
-
-        autogen_jsonc = ['sh', 'autogen.sh']
-        subprocess.call(autogen_jsonc)
-
-        self.__build(jsonc_compiler_flags)
-        os.chdir(pwd)
-        # shutil.rmtree(cloned_dir)
+        self.__build_via_cmake(cloned_dir, ['-DBUILD_SHARED_LIBS=OFF'])
 
     def build_snappy(self):
-        pwd = os.getcwd()
         cloned_dir = utils.git_clone('https://github.com/fastogt/snappy.git')
         self.__build_via_cmake(cloned_dir, ['-DBUILD_SHARED_LIBS=OFF', '-DSNAPPY_BUILD_TESTS=OFF'])
 
