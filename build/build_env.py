@@ -249,7 +249,8 @@ def get_available_devices() -> list:
 
 class BuildRequest(build_utils.BuildRequest):
     def __init__(self, device, platform, arch_name, dir_path, prefix_path):
-        build_utils.BuildRequest.__init__(self, platform, arch_name, g_script_path, dir_path, prefix_path)
+        patches_path = os.path.abspath(os.path.join(g_script_path, os.pardir))
+        build_utils.BuildRequest.__init__(self, platform, arch_name, patches_path, dir_path, prefix_path)
         self.device_ = device
 
     def install_device_specific(self):
