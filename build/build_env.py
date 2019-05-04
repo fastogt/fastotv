@@ -102,9 +102,8 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
                                                                              '--disable-video-wayland',
                                                                              '--disable-sdltest']),
                                  utils.CompileInfo([], []),
-                                 ['-DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake'])
-        os.environ['ANDROID_NDK'] = '~/Android/Sdk/ndk-bundle'
-        os.environ['ANDROID_PLATFORM'] = '16'
+                                 ['-DCMAKE_TOOLCHAIN_FILE=~/Android/Sdk/ndk-bundle/build/cmake/android.toolchain.cmake',
+                                  '-DANDROID_PLATFORM=android-16'])
 
     def install_specific(self):
         return
@@ -381,7 +380,7 @@ class BuildRequest(object):
                                                 '--disable-tga', '--disable-tif', '--disable-xcf', '--disable-xpm',
                                                 '--disable-xv', '-disable-webp'])
         self.__download_and_build('{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT),
-                                compiler_flags)
+                                  compiler_flags)
 
     def build_sdl2_ttf(self, version):
         compiler_flags = utils.CompileInfo([], ['--disable-sdltest'])
