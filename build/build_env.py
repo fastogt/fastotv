@@ -48,7 +48,7 @@ def splitext(path):
 
 class SupportedDevice(metaclass=ABCMeta):
     def __init__(self, name, system_platform_libs: dict, sdl2_compile_info, ffmpeg_compile_info,
-                 cmake_additional_flags=[], configure_additional_flags=[]):
+                 cmake_additional_flags, configure_additional_flags):
         self.name_ = name
         self.system_platform_libs_ = system_platform_libs
         self.sdl2_compile_info_ = sdl2_compile_info
@@ -88,7 +88,7 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
             'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
         ]}, build_utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland']),
-                                 build_utils.CompileInfo([], []))
+                                 build_utils.CompileInfo([], []), [], [])
 
     def install_specific(self):
         return
@@ -101,7 +101,7 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
                                                                                    ]),
                                  build_utils.CompileInfo([], []),
                                  ['-DCMAKE_TOOLCHAIN_FILE=~/Android/Sdk/ndk-bundle/build/cmake/android.toolchain.cmake',
-                                  '-DANDROID_PLATFORM=android-16'])
+                                  '-DANDROID_PLATFORM=android-16'], [])
 
     def install_specific(self):
         return
@@ -120,7 +120,7 @@ class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
                                                           '--disable-video-x11']),
                                  build_utils.CompileInfo([],
                                                          ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
-                                                          '--enable-omx-rpi']))
+                                                          '--enable-omx-rpi']), [], [])
 
     @abstractmethod
     def install_specific(self):
@@ -172,7 +172,7 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                                           '--enable-video-opengles2',
                                                           '--disable-video-mir', '--disable-video-wayland'
                                                           ]),
-                                 build_utils.CompileInfo([], []))
+                                 build_utils.CompileInfo([], []), [], [])
         linux_libs = self.system_platform_libs_.get('linux')
         platform_name = system_info.get_os()
         linux_libs.extend(get_x11_libs(platform_name))
@@ -215,7 +215,7 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
                                                               '--enable-video-opengles2',
                                                               '--disable-video-mir', '--disable-video-wayland',
                                                               '--disable-video-x11']),
-                                 build_utils.CompileInfo([], []))
+                                 build_utils.CompileInfo([], []), [], [])
 
     def install_specific(self):
         orange_pi.install_orange_pi_h5()
@@ -334,11 +334,10 @@ class BuildRequest(build_utils.BuildRequest):
         elif platform_name == 'macosx':
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++', '--disable-libxcb'])
 
-        pwd = os.getcwd()
         compiler_flags = self.device_.ffmpeg_compile_info()
         compiler_flags.extend_flags(ffmpeg_platform_args)
-        self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('ffmpeg'))
-        os.chdir(pwd)
+        self._clone_and_build_via_configure(build_utils.generate_fastogt_git_path('ffmpeg'),
+                                            build_utils.CompileInfo([], compiler_flags))
 
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
@@ -362,7 +361,7 @@ class BuildRequest(build_utils.BuildRequest):
         self._download_and_build_via_configure(url, compiler_flags)
 
     def build_fastoplayer(self):
-        self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('fastoplayer'))
+        self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('fastoplayer'), [])
 
 
 if __name__ == "__main__":
