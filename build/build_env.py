@@ -91,8 +91,6 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
         ]}, utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland', '--disable-sdltest']),
                                  utils.CompileInfo([], []))
-        os.environ['ANDROID_NDK'] = '~/Android/Sdk/ndk-bundle'
-        os.environ['ANDROID_PLATFORM'] = 16
 
     def install_specific(self):
         return
@@ -105,6 +103,8 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
                                                                              '--disable-sdltest']),
                                  utils.CompileInfo([], []),
                                  ['-DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake'])
+        os.environ['ANDROID_NDK'] = '~/Android/Sdk/ndk-bundle'
+        os.environ['ANDROID_PLATFORM'] = '16'
 
     def install_specific(self):
         return
