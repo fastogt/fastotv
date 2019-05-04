@@ -318,7 +318,7 @@ class BuildRequest(object):
                 # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
                 # Debian 8.7 no packages: libdri2-dev, libump-dev,
         elif platform_name == 'windows':
-            if arch.name() == 'x86_64':
+            if arch.name() == 'x86_64' or arch.name() == 'AMD64':
                 dep_libs = ['git', 'make', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm', 'mingw-w64-x86_64-ninja',
                             'mingw-w64-x86_64-make', 'mingw-w64-x86_64-cmake', 'mingw-w64-x86_64-freetype']
             elif arch.name() == 'i386':
@@ -366,14 +366,13 @@ class BuildRequest(object):
         compiler_flags.extend_flags(ffmpeg_platform_args)
         cloned_dir = utils.git_clone('https://github.com/fastogt/ffmpeg.git')
         os.chdir(cloned_dir)
-        self.__build(compiler_flags)
+        self.__build_via_configure(compiler_flags)
         os.chdir(pwd)
-        # shutil.rmtree(cloned_dir)
 
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
         url = '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT)
-        self.__download_and_build(url, compiler_flags)
+        self.__download_and_build_via_configure(url, compiler_flags)
 
     def build_sdl2_image(self, version):
         compiler_flags = utils.CompileInfo([], ['--disable-svg', '--disable-sdltest', '--disable-bmp', '--disable-gif',
@@ -381,17 +380,17 @@ class BuildRequest(object):
                                                 '--disable-tga', '--disable-tif', '--disable-xcf', '--disable-xpm',
                                                 '--disable-xv', '-disable-webp'])
         url = '{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT)
-        self.__download_and_build(url, compiler_flags)
+        self.__download_and_build_via_configure(url, compiler_flags)
 
     def build_sdl2_ttf(self, version):
         compiler_flags = utils.CompileInfo([], ['--disable-sdltest'])
         url = '{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT)
-        self.__download_and_build(url, compiler_flags)
+        self.__download_and_build_via_configure(url, compiler_flags)
 
     def build_openssl(self, version):
         compiler_flags = utils.CompileInfo([], ['no-shared', 'no-unit-test'])
         url = '{0}openssl-{1}.{2}'.format(OPENSSL_SRC_ROOT, version, ARCH_OPENSSL_EXT)
-        self.__download_and_build(url, compiler_flags, './config')
+        self.__download_and_build_via_configure(url, compiler_flags, './config')
 
     def build_common(self):
         pwd = os.getcwd()
@@ -413,9 +412,8 @@ class BuildRequest(object):
         autogen_libev = ['sh', 'autogen.sh']
         subprocess.call(autogen_libev)
 
-        self.__build(libev_compiler_flags)
+        self.__build_via_configure(libev_compiler_flags)
         os.chdir(pwd)
-        # shutil.rmtree(cloned_dir)
 
     def build_cpuid(self):
         cpuid_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
@@ -434,9 +432,8 @@ class BuildRequest(object):
         autoreconf_cpuid = ['autoreconf', '--install']
         subprocess.call(autoreconf_cpuid)
 
-        self.__build(cpuid_compiler_flags)
+        self.__build_via_configure(cpuid_compiler_flags)
         os.chdir(pwd)
-        # shutil.rmtree(cloned_dir)
 
     def build_jsonc(self):
         cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git')
@@ -446,34 +443,21 @@ class BuildRequest(object):
         cloned_dir = utils.git_clone('https://github.com/fastogt/snappy.git')
         self.__build_via_cmake(cloned_dir, ['-DBUILD_SHARED_LIBS=OFF', '-DSNAPPY_BUILD_TESTS=OFF'])
 
-    def __build(self, compiler_flags: utils.CompileInfo, executable='./configure'):
-        compiler_flags.extend_flags(self.device_.configure_additional_flags())
-        utils.build_command_configure(compiler_flags, g_script_path, self.prefix_path_, executable)
+    def __download_and_build_via_cmake(self, url, cmake_flags=[]):
+        file_path = utils.download_file(url)
+        extracted_folder = utils.extract_file(file_path)
+        self.__build_via_cmake(extracted_folder, cmake_flags)
 
-    def __download_and_build(self, url, compiler_flags: utils.CompileInfo, executable='./configure'):
+    def __download_and_build_via_configure(self, url, compiler_flags: utils.CompileInfo, executable='./configure'):
         compiler_flags.extend_flags(self.device_.configure_additional_flags())
         utils.build_from_sources(url, compiler_flags, g_script_path, self.prefix_path_, executable)
 
-    def __build_via_cmake(self, directory, cmake_flags=[]):
-        cmake_project_root_abs_path = '..'
-        if not os.path.exists(cmake_project_root_abs_path):
-            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_abs_path)
+    def __build_via_configure(self, compiler_flags: utils.CompileInfo, executable='./configure'):
+        compiler_flags.extend_flags(self.device_.configure_additional_flags())
+        utils.build_command_configure(compiler_flags, g_script_path, self.prefix_path_, executable)
 
-        cmake_line = ['cmake', cmake_project_root_abs_path, '-GNinja', '-DCMAKE_BUILD_TYPE=RELEASE']
-        cmake_line.extend(cmake_flags)
-        cmake_line.extend(self.device_.cmake_additional_flags())
-        cmake_line.extend(['-DCMAKE_INSTALL_PREFIX={0}'.format(self.prefix_path_)])
-        try:
-            os.chdir(directory)
-            os.mkdir('build_cmake_release')
-            os.chdir('build_cmake_release')
-            subprocess.call(cmake_line)
-            subprocess.call(['ninja', 'install'])
-            os.chdir(self.build_dir_path_)
-            # shutil.rmtree(cloned_dir)
-        except Exception as ex:
-            os.chdir(self.build_dir_path_)
-            raise ex
+    def __build_via_cmake(self, directory, cmake_flags=[]):
+        utils.build_command_cmake(directory, self.prefix_path_, cmake_flags)
 
 
 if __name__ == "__main__":
