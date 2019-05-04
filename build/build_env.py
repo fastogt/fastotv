@@ -47,8 +47,9 @@ def splitext(path):
 
 
 class SupportedDevice(metaclass=ABCMeta):
-    def __init__(self, name, system_platform_libs: dict, sdl2_compile_info, ffmpeg_compile_info,
-                 cmake_additional_flags, configure_additional_flags):
+    def __init__(self, name: str, system_platform_libs: dict, sdl2_compile_info: build_utils.CompileInfo,
+                 ffmpeg_compile_info: build_utils.CompileInfo,
+                 cmake_additional_flags: list, configure_additional_flags: list):
         self.name_ = name
         self.system_platform_libs_ = system_platform_libs
         self.sdl2_compile_info_ = sdl2_compile_info
@@ -56,19 +57,19 @@ class SupportedDevice(metaclass=ABCMeta):
         self.cmake_additional_flags_ = cmake_additional_flags
         self.configure_additional_flags_ = configure_additional_flags
 
-    def name(self):
+    def name(self) -> str:
         return self.name_
 
-    def sdl2_compile_info(self):
+    def sdl2_compile_info(self) -> build_utils.CompileInfo:
         return self.sdl2_compile_info_
 
-    def ffmpeg_compile_info(self):
+    def ffmpeg_compile_info(self) -> build_utils.CompileInfo:
         return self.ffmpeg_compile_info_
 
-    def cmake_additional_flags(self):
+    def cmake_additional_flags(self) -> list:
         return self.cmake_additional_flags_
 
-    def configure_additional_flags(self):
+    def configure_additional_flags(self) -> list:
         return self.configure_additional_flags_
 
     def system_libs(self, platform: system_info.Platform) -> list:  # additional system libs
@@ -336,8 +337,7 @@ class BuildRequest(build_utils.BuildRequest):
 
         compiler_flags = self.device_.ffmpeg_compile_info()
         compiler_flags.extend_flags(ffmpeg_platform_args)
-        self._clone_and_build_via_configure(build_utils.generate_fastogt_git_path('ffmpeg'),
-                                            build_utils.CompileInfo([], compiler_flags))
+        self._clone_and_build_via_configure(build_utils.generate_fastogt_git_path('ffmpeg'), compiler_flags)
 
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
