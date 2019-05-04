@@ -393,7 +393,6 @@ class BuildRequest(object):
         self.__download_and_build_via_configure(url, compiler_flags, './config')
 
     def build_common(self):
-        pwd = os.getcwd()
         cloned_dir = utils.git_clone('https://github.com/fastogt/common.git')
         self.__build_via_cmake(cloned_dir)
 
