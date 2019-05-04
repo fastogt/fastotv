@@ -364,7 +364,7 @@ class BuildRequest(object):
         pwd = os.getcwd()
         compiler_flags = self.device_.ffmpeg_compile_info()
         compiler_flags.extend_flags(ffmpeg_platform_args)
-        cloned_dir = utils.git_clone('https://github.com/fastogt/ffmpeg.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/ffmpeg.git')
         os.chdir(cloned_dir)
         self.__build(compiler_flags)
         os.chdir(pwd)
@@ -372,19 +372,21 @@ class BuildRequest(object):
 
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
-        self.__download_and_build('{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
+        url = '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT)
+        self.__download_and_build(url, compiler_flags)
 
     def build_sdl2_image(self, version):
         compiler_flags = utils.CompileInfo([], ['--disable-svg', '--disable-sdltest', '--disable-bmp', '--disable-gif',
                                                 '--disable-jpg', '--disable-lbm', '--disable-pcx', '--disable-pnm',
                                                 '--disable-tga', '--disable-tif', '--disable-xcf', '--disable-xpm',
                                                 '--disable-xv', '-disable-webp'])
-        self.__download_and_build('{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT),
-                                  compiler_flags)
+        url = '{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT)
+        self.__download_and_build(url, compiler_flags)
 
     def build_sdl2_ttf(self, version):
         compiler_flags = utils.CompileInfo([], ['--disable-sdltest'])
-        self.__download_and_build('{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT), compiler_flags)
+        url = '{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT)
+        self.__download_and_build(url, compiler_flags)
 
     def build_openssl(self, version):
         compiler_flags = utils.CompileInfo([], ['no-shared', 'no-unit-test'])
@@ -393,19 +395,19 @@ class BuildRequest(object):
 
     def build_common(self):
         pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/common.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/common.git')
         self.__build_via_cmake(cloned_dir)
 
     def build_fastoplayer(self):
         pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/fastoplayer.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/fastoplayer.git')
         self.__build_via_cmake(cloned_dir)
 
     def build_libev(self):
         libev_compiler_flags = utils.CompileInfo([], ['--with-pic', '--disable-shared', '--enable-static'])
 
         pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/libev.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/libev.git')
         os.chdir(cloned_dir)
 
         autogen_libev = ['sh', 'autogen.sh']
@@ -419,7 +421,7 @@ class BuildRequest(object):
         cpuid_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
 
         pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/libcpuid.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/libcpuid.git')
         os.chdir(cloned_dir)
 
         platform_name = self.get_platform_name()
@@ -440,7 +442,7 @@ class BuildRequest(object):
         jsonc_compiler_flags = utils.CompileInfo([], ['--disable-shared', '--enable-static'])
 
         pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/json-c.git')
         os.chdir(cloned_dir)
 
         autogen_jsonc = ['sh', 'autogen.sh']
@@ -452,7 +454,7 @@ class BuildRequest(object):
 
     def build_snappy(self):
         pwd = os.getcwd()
-        cloned_dir = utils.git_clone('https://github.com/fastogt/snappy.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/snappy.git')
         self.__build_via_cmake(cloned_dir, ['-DBUILD_SHARED_LIBS=OFF', '-DSNAPPY_BUILD_TESTS=OFF'])
 
     def __build(self, compiler_flags: utils.CompileInfo, executable='./configure'):

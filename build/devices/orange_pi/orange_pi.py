@@ -12,7 +12,7 @@ def install_orange_pi_h3():
     pwd = os.getcwd()
     script_dir = os.path.dirname(os.path.realpath(__file__))
     try:
-        cloned_dir = utils.git_clone('https://github.com/linux-sunxi/sunxi-mali.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/linux-sunxi/sunxi-mali.git')
         os.chdir(cloned_dir)
         subprocess.call(['make', 'config'])
         subprocess.call(['make', 'install'])
@@ -23,7 +23,7 @@ def install_orange_pi_h3():
         raise ex
 
     try:
-        cloned_dir = utils.git_clone('https://github.com/fastogt/libvdpau-sunxi.git', pwd)
+        cloned_dir = utils.git_clone('https://github.com/fastogt/libvdpau-sunxi.git')
         os.chdir(cloned_dir)
         subprocess.call(['make', 'install'])
         os.chdir(pwd)
