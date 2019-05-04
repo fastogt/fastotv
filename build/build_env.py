@@ -17,10 +17,7 @@ from pyfastogt import build_utils, system_info
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 SDL_IMAGE_SRC_ROOT = "https://www.libsdl.org/projects/SDL_image/release/"
 SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
-OPENSSL_SRC_ROOT = "https://www.openssl.org/source/"
 
-ARCH_OPENSSL_COMP = "gz"
-ARCH_OPENSSL_EXT = "tar." + ARCH_OPENSSL_COMP
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
 FFMPEG_BRANCH = 'n3.4.2'
