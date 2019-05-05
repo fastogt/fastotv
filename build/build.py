@@ -91,7 +91,9 @@ class BuildRequest(object):
     def platform(self):
         return self.platform_
 
-    def build(self, cmake_project_root_path, branding_options, dir_path, bs, package_types, saver):
+    def build(self, cmake_project_root_path: str, branding_options: list, dir_path: str, bs: BuildSystem,
+              package_types: list,
+              saver: ProgressSaver):
         cmake_project_root_abs_path = os.path.abspath(cmake_project_root_path)
         if not os.path.exists(cmake_project_root_abs_path):
             raise build_utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_path)

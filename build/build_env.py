@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import os
-import sys
 from abc import ABCMeta, abstractmethod
 
 from devices.orange_pi import orange_pi
@@ -21,8 +19,6 @@ SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
 
-g_script_path = os.path.realpath(sys.argv[0])
-
 
 def get_x11_libs(platform_name: str) -> list:
     dep_libs = []
@@ -33,13 +29,6 @@ def get_x11_libs(platform_name: str) -> list:
         elif distribution == 'RHEL':
             dep_libs = ['libX11-devel', 'xorg-x11-server-devel', 'xorg-x11-server-source', 'xorg-x11-xinit']
     return dep_libs
-
-
-def splitext(path):
-    for ext in ['.tar.gz', '.tar.bz2', '.tar.xz']:
-        if path.endswith(ext):
-            return path[:-len(ext)]
-    return os.path.splitext(path)[0]
 
 
 class SupportedDevice(metaclass=ABCMeta):
@@ -222,8 +211,7 @@ def get_available_devices() -> list:
 
 class BuildRequest(build_utils.BuildRequest):
     def __init__(self, device: SupportedDevice, platform, arch_name, dir_path, prefix_path):
-        patches_path = os.path.abspath(os.path.join(g_script_path, os.pardir))
-        build_utils.BuildRequest.__init__(self, platform, arch_name, patches_path, dir_path, prefix_path)
+        build_utils.BuildRequest.__init__(self, platform, arch_name, dir_path, prefix_path)
         print('Device: %s' % device.name())
         self.device_ = device
 
