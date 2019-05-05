@@ -20,7 +20,6 @@ SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
 
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
-FFMPEG_BRANCH = 'n3.4.2'
 
 g_script_path = os.path.realpath(sys.argv[0])
 
@@ -45,14 +44,11 @@ def splitext(path):
 
 class SupportedDevice(metaclass=ABCMeta):
     def __init__(self, name: str, system_platform_libs: dict, sdl2_compile_info: build_utils.CompileInfo,
-                 ffmpeg_compile_info: build_utils.CompileInfo,
-                 cmake_additional_flags: list, configure_additional_flags: list):
+                 ffmpeg_compile_info: build_utils.CompileInfo):
         self.name_ = name
         self.system_platform_libs_ = system_platform_libs
         self.sdl2_compile_info_ = sdl2_compile_info
         self.ffmpeg_compile_info_ = ffmpeg_compile_info
-        self.cmake_additional_flags_ = cmake_additional_flags
-        self.configure_additional_flags_ = configure_additional_flags
 
     def name(self) -> str:
         return self.name_
@@ -62,12 +58,6 @@ class SupportedDevice(metaclass=ABCMeta):
 
     def ffmpeg_compile_info(self) -> build_utils.CompileInfo:
         return self.ffmpeg_compile_info_
-
-    def cmake_additional_flags(self) -> list:
-        return self.cmake_additional_flags_
-
-    def configure_additional_flags(self) -> list:
-        return self.configure_additional_flags_
 
     def system_libs(self, platform: system_info.Platform) -> list:  # additional system libs
         return self.system_platform_libs_.get(platform.name(), [])
@@ -86,7 +76,7 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
             'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
         ]}, build_utils.CompileInfo([], ['--disable-video-mir', '--disable-video-wayland']),
-                                 build_utils.CompileInfo([], []), [], [])
+                                 build_utils.CompileInfo([], []))
 
     def install_specific(self):
         return
@@ -97,9 +87,7 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
         SupportedDevice.__init__(self, 'android', {}, build_utils.CompileInfo([], ['--disable-video-mir',
                                                                                    '--disable-video-wayland'
                                                                                    ]),
-                                 build_utils.CompileInfo([], []),
-                                 ['-DCMAKE_TOOLCHAIN_FILE=~/Android/Sdk/ndk-bundle/build/cmake/android.toolchain.cmake',
-                                  '-DANDROID_PLATFORM=android-16'], [])
+                                 build_utils.CompileInfo([], []))
 
     def install_specific(self):
         return
@@ -118,7 +106,7 @@ class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
                                                           '--disable-video-x11']),
                                  build_utils.CompileInfo([],
                                                          ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
-                                                          '--enable-omx-rpi']), [], [])
+                                                          '--enable-omx-rpi']))
 
     @abstractmethod
     def install_specific(self):
@@ -170,7 +158,7 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                                           '--enable-video-opengles2',
                                                           '--disable-video-mir', '--disable-video-wayland'
                                                           ]),
-                                 build_utils.CompileInfo([], []), [], [])
+                                 build_utils.CompileInfo([], []))
         linux_libs = self.system_platform_libs_.get('linux')
         platform_name = system_info.get_os()
         linux_libs.extend(get_x11_libs(platform_name))
@@ -213,7 +201,7 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
                                                               '--enable-video-opengles2',
                                                               '--disable-video-mir', '--disable-video-wayland',
                                                               '--disable-video-x11']),
-                                 build_utils.CompileInfo([], []), [], [])
+                                 build_utils.CompileInfo([], []))
 
     def install_specific(self):
         orange_pi.install_orange_pi_h5()
@@ -246,9 +234,10 @@ def get_available_devices() -> list:
 
 
 class BuildRequest(build_utils.BuildRequest):
-    def __init__(self, device, platform, arch_name, dir_path, prefix_path):
+    def __init__(self, device: SupportedDevice, platform, arch_name, dir_path, prefix_path):
         patches_path = os.path.abspath(os.path.join(g_script_path, os.pardir))
         build_utils.BuildRequest.__init__(self, platform, arch_name, patches_path, dir_path, prefix_path)
+        print('Device: %s' % device.name())
         self.device_ = device
 
     def install_device_specific(self):
@@ -307,10 +296,9 @@ class BuildRequest(build_utils.BuildRequest):
         return dep_libs
 
     def install_system(self):
-        platform = self.platform_
         dep_libs = self.get_system_libs()
         for lib in dep_libs:
-            platform.install_package(lib)
+            self.platform_.install_package(lib)
 
         # post install step
 
