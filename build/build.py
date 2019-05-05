@@ -6,7 +6,7 @@ import sys
 
 from pyfastogt import run_command
 from pyfastogt import system_info
-from pyfastogt import utils
+from pyfastogt import utils, build_utils
 
 
 def print_usage():
@@ -79,11 +79,11 @@ class BuildRequest(object):
         platform_or_none = system_info.get_supported_platform_by_name(platform)
 
         if not platform_or_none:
-            raise utils.BuildError('invalid platform')
+            raise build_utils.BuildError('invalid platform')
 
-        arch = platform_or_none.architecture_by_arch_name(arch_name)
+        arch = platform_or_none.get_architecture_by_arch_name(arch_name)
         if not arch:
-            raise utils.BuildError('invalid arch')
+            raise build_utils.BuildError('invalid arch')
 
         self.platform_ = platform_or_none.make_platform_by_arch(arch, platform_or_none.package_types())
         print("Build request for platform: {0}, arch: {1} created".format(platform, arch.name()))
@@ -94,7 +94,7 @@ class BuildRequest(object):
     def build(self, cmake_project_root_path, branding_options, dir_path, bs, package_types, saver):
         cmake_project_root_abs_path = os.path.abspath(cmake_project_root_path)
         if not os.path.exists(cmake_project_root_abs_path):
-            raise utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_path)
+            raise build_utils.BuildError('invalid cmake_project_root_path: %s' % cmake_project_root_path)
 
         if not bs:
             bs = SUPPORTED_BUILD_SYSTEMS[0]

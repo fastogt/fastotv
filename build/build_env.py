@@ -249,7 +249,7 @@ class BuildRequest(build_utils.BuildRequest):
     def get_system_libs(self):
         platform = self.platform_
         platform_name = platform.name()
-        arch = platform.arch()
+        arch = platform.architecture()
         dep_libs = []
 
         if platform_name == 'linux':

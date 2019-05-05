@@ -6,7 +6,7 @@ import sys
 import build
 import config
 import pika
-from pyfastogt import system_info, utils
+from pyfastogt import system_info, build_utils
 
 
 def gen_routing_key(device, platform, arch) -> str:
@@ -188,7 +188,7 @@ class BuildRpcServer(object):
                                           props.reply_to)
             print('Build finished for: {0}, platform: {1}, response: {2}'.format(op_id, platform_and_arch, response))
             json_to_send = {'body': response}
-        except utils.BuildError as ex:
+        except build_utils.BuildError as ex:
             print('Build finished for: {0}, platform: {1}, exception: {2}'.format(op_id, platform_and_arch, str(ex)))
             json_to_send = {'error': str(ex)}
         except Exception as ex:
