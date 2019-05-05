@@ -246,7 +246,7 @@ class BuildRequest(build_utils.BuildRequest):
     def get_platform_name(self):
         return self.platform_.name()
 
-    def get_system_libs(sel):
+    def get_system_libs(self):
         platform = self.platform_
         platform_name = platform.name()
         arch = platform.architecture()
