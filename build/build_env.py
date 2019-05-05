@@ -246,7 +246,7 @@ class BuildRequest(build_utils.BuildRequest):
     def get_platform_name(self):
         return self.platform_.name()
 
-    def get_system_libs(self):
+    def get_system_libs(sel):
         platform = self.platform_
         platform_name = platform.name()
         arch = platform.architecture()
@@ -278,7 +278,7 @@ class BuildRequest(build_utils.BuildRequest):
                 # Centos 7 no packages: libtoolize, libdri2-devel, libump-devel
                 # Debian 8.7 no packages: libdri2-dev, libump-dev,
         elif platform_name == 'windows':
-            if arch.name() == 'x86_64' or arch.name() == 'AMD64':
+            if arch.bit() == 64:
                 dep_libs = ['git', 'make', 'mingw-w64-x86_64-gcc', 'mingw-w64-x86_64-yasm', 'mingw-w64-x86_64-ninja',
                             'mingw-w64-x86_64-make', 'mingw-w64-x86_64-cmake', 'mingw-w64-x86_64-freetype']
             elif arch.name() == 'i386':
@@ -289,7 +289,7 @@ class BuildRequest(build_utils.BuildRequest):
         elif platform_name == 'android':
             dep_libs = []
         else:
-            raise NotImplemented("Unknown platform '%s'" % platform_name)
+            raise NotImplemented("Unknown platform: '%s'" % platform_name)
 
         device_specific_libs = self.device_.system_libs(platform)
         dep_libs.extend(device_specific_libs)
@@ -298,7 +298,7 @@ class BuildRequest(build_utils.BuildRequest):
     def install_system(self):
         dep_libs = self.get_system_libs()
         for lib in dep_libs:
-            self.platform_.install_package(lib)
+            self._install_package(lib)
 
         # post install step
 
