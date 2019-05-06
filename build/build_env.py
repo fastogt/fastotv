@@ -316,7 +316,7 @@ class BuildRequest(build_utils.BuildRequest):
                           '--disable-pnm',
                           '--disable-tga', '--disable-tif', '--disable-xcf',
                           '--disable-xpm',
-                          '--disable-xv', '-disable-webp']
+                          '--disable-xv', '-disable-webp', '--disable-sdltest']
         url = '{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT)
         self._download_and_build_via_configure(url, compiler_flags)
 
