@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 from abc import ABCMeta, abstractmethod
 
 from devices.orange_pi import orange_pi
@@ -307,6 +308,12 @@ class BuildRequest(build_utils.BuildRequest):
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++', '--disable-libxcb'])
         elif platform_name == 'android':
             ffmpeg_platform_args = ffmpeg_platform_args
+            arch = platform.architecture()
+            if arch.name() == 'armv7a':
+                sysroot = os.path.abspath(os.path.join(arch.default_install_prefix_path(), os.pardir))
+                ffmpeg_platform_args.extend(
+                    ['--arch=arm', '--target-os=linux', '--cpu=armv7-a',
+                     '--sysroot=%s' % sysroot])
 
         compiler_flags = self.device_.ffmpeg_compile_flags()
         compiler_flags.extend(ffmpeg_platform_args)
