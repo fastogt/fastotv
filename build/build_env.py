@@ -308,13 +308,7 @@ class BuildRequest(build_utils.BuildRequest):
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++', '--disable-libxcb'])
         elif platform_name == 'android':
             ffmpeg_platform_args = ffmpeg_platform_args
-            arch = platform.architecture()
-            if arch.name() == 'armv7a':
-                abs_prefix_path = os.path.expanduser(arch.default_install_prefix_path())
-                sysroot = os.path.abspath(os.path.join(abs_prefix_path, os.pardir))
-                ffmpeg_platform_args.extend(
-                    ['--arch=arm', '--target-os=android', '--cpu=armv7-a',
-                     '--sysroot=%s' % sysroot])
+            ffmpeg_platform_args.extend(['--cc=%s' % os.environ['CC']])
 
         compiler_flags = self.device_.ffmpeg_compile_flags()
         compiler_flags.extend(ffmpeg_platform_args)
