@@ -312,7 +312,7 @@ class BuildRequest(build_utils.BuildRequest):
             if arch.name() == 'armv7a':
                 sysroot = os.path.abspath(os.path.join(arch.default_install_prefix_path(), os.pardir))
                 ffmpeg_platform_args.extend(
-                    ['--arch=arm', '--target-os=linux', '--cpu=armv7-a',
+                    ['--arch=arm', '--target-os=android', '--cpu=armv7-a',
                      '--sysroot=%s' % sysroot])
 
         compiler_flags = self.device_.ffmpeg_compile_flags()
