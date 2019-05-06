@@ -77,7 +77,7 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
                                   '--disable-video-opengl',
                                   '--disable-video-opengles1',
                                   '--disable-video-opengles2', '--disable-video-mir',
-                                  '--disable-video-wayland'], [])
+                                  '--disable-video-wayland'], ['--enable-cross-compile', '--disable-asm'])
 
     def install_specific(self):
         return
@@ -305,11 +305,13 @@ class BuildRequest(build_utils.BuildRequest):
             ffmpeg_platform_args = ffmpeg_platform_args
         elif platform_name == 'macosx':
             ffmpeg_platform_args.extend(['--cc=clang', '--cxx=clang++', '--disable-libxcb'])
+        elif platform_name == 'android':
+            ffmpeg_platform_args = ffmpeg_platform_args
 
         compiler_flags = self.device_.ffmpeg_compile_flags()
         compiler_flags.extend(ffmpeg_platform_args)
-        compiler_flags.extend(platform.configure_specific_flags())
-        self._clone_and_build_via_configure(build_utils.generate_fastogt_git_path('ffmpeg'), compiler_flags)
+        self._clone_and_build_via_configure(build_utils.generate_fastogt_git_path('ffmpeg'), compiler_flags,
+                                            use_platform_flags=False)
 
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
