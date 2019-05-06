@@ -71,7 +71,11 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
 
 class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
     def __init__(self):
-        SupportedDevice.__init__(self, 'android', {}, ['--disable-video-mir', '--disable-video-wayland'], [])
+        SupportedDevice.__init__(self, 'android', {},
+                                 ['--disable-pulseaudio', '--disable-esd', '--disable-video-opengl',
+                                  '--disable-video-opengles1',
+                                  '--enable-video-opengles2', '--disable-video-mir',
+                                  '--disable-video-wayland'], [])
 
     def install_specific(self):
         return
@@ -81,7 +85,7 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
 class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': ['libgl1-mesa-dev']},
-                                 ['--host=arm-raspberry-linux-gnueabihf',
+                                 ['--host=arm-raspberry-linux-gnueabihf',  # FIXME host
                                   '--disable-pulseaudio', '--disable-esd',
                                   '--disable-video-opengl', '--disable-video-opengles1',
                                   '--enable-video-opengles2',
