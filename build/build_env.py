@@ -74,7 +74,7 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
         SupportedDevice.__init__(self, 'android', {},
                                  ['--disable-pulseaudio', '--disable-esd', '--disable-video-opengl',
                                   '--disable-video-opengles1',
-                                  '--enable-video-opengles2', '--disable-video-mir',
+                                  '--disable-video-opengles2', '--disable-video-mir',
                                   '--disable-video-wayland'], [])
 
     def install_specific(self):
