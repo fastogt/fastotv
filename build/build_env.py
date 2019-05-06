@@ -513,7 +513,7 @@ if __name__ == "__main__":
     if argv.with_sdl2_image:
         request.build_sdl2_image(argv.sdl2_image_version)
     if argv.with_freetype:
-        request.build_freetype(argv.freetype)
+        request.build_freetype(argv.freetype_version)
     if argv.with_sdl2_ttf:
         request.build_sdl2_ttf(argv.sdl2_ttf_version)
 
