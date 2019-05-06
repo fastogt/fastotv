@@ -71,7 +71,7 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
 
 class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
     def __init__(self):
-        SupportedDevice.__init__(self, 'android', {}, ['-DVIDEO_WAYLAND=OFF', '-DVIDEO_MIR=OFF'], [])
+        SupportedDevice.__init__(self, 'android', {}, ['--disable-video-mir', '--disable-video-wayland'], [])
 
     def install_specific(self):
         return
@@ -81,11 +81,12 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
 class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': ['libgl1-mesa-dev']},
-                                 [
-                                     '-DPULSEAUDIO=OFF', '-DESD=OFF',
-                                     '-DVIDEO_OPENGL=OFF', '-DVIDEO_OPENGLES=OFF',
-                                     '-DVIDEO_WAYLAND=OFF', '-DVIDEO_MIR=OFF',
-                                     '-DVIDEO_X11=OFF'],
+                                 ['--host=arm-raspberry-linux-gnueabihf',
+                                  '--disable-pulseaudio', '--disable-esd',
+                                  '--disable-video-opengl', '--disable-video-opengles1',
+                                  '--enable-video-opengles2',
+                                  '--disable-video-mir', '--disable-video-wayland',
+                                  '--disable-video-x11'],
                                  ['--enable-mmal', '--enable-decoder=h264_mmal', '--enable-omx',
                                   '--enable-omx-rpi'])
 
@@ -133,9 +134,10 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                  {'linux': ['libgles2-mesa-dev', 'libcedrus1-dev', 'libpixman-1-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy'
                                             ]},
-                                 ['-DPULSEAUDIO=OFF', '-DESD=OFF',
-                                  '-DVIDEO_OPENGL=OFF', '-DVIDEO_OPENGLES=OFF',
-                                  '-DVIDEO_WAYLAND=OFF', '-DVIDEO_MIR=OFF'
+                                 ['--disable-pulseaudio', '--disable-esd',
+                                  '--disable-video-opengl', '--disable-video-opengles1',
+                                  '--enable-video-opengles2',
+                                  '--disable-video-mir', '--disable-video-wayland'
                                   ], [])
         linux_libs = self.system_platform_libs_.get('linux')
         platform_name = system_info.get_os()
@@ -174,10 +176,11 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
     def __init__(self, name='orange-pi-pc2'):
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev']},
-                                 ['-DPULSEAUDIO=OFF', '-DESD=OFF',
-                                  '-DVIDEO_OPENGL=OFF', '-DVIDEO_OPENGLES=OFF',
-                                  '-DVIDEO_WAYLAND=OFF', '-DVIDEO_MIR=OFF',
-                                  '-DVIDEO_X11=OFF'], [])
+                                 ['--disable-pulseaudio', '--disable-esd',
+                                  '--disable-video-opengl', '--disable-video-opengles1',
+                                  '--enable-video-opengles2',
+                                  '--disable-video-mir', '--disable-video-wayland',
+                                  '--disable-video-x11'], [])
 
     def install_specific(self):
         orange_pi.install_orange_pi_h5()
@@ -302,7 +305,7 @@ class BuildRequest(build_utils.BuildRequest):
     def build_sdl2(self, version):
         compiler_flags = self.device_.sdl2_compile_info()
         url = '{0}SDL2-{1}.{2}'.format(SDL_SRC_ROOT, version, ARCH_SDL_EXT)
-        self._download_and_build_via_cmake(url, compiler_flags)
+        self._download_and_build_via_configure(url, compiler_flags)
 
     def build_sdl2_image(self, version):
         compiler_flags = ['--disable-svg', '--disable-bmp',
@@ -317,7 +320,7 @@ class BuildRequest(build_utils.BuildRequest):
 
     def build_sdl2_ttf(self, version):
         url = '{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT)
-        self._download_and_build_via_cmake(url, [])
+        self._download_and_build_via_configure(url, [])
 
     def build_fastoplayer(self):
         self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('fastoplayer'), [])
