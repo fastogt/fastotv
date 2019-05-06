@@ -290,7 +290,8 @@ class BuildRequest(build_utils.BuildRequest):
                                 '--enable-avfilter', '--enable-avcodec', '--enable-avdevice', '--enable-avformat',
                                 '--enable-swscale', '--enable-swresample',
                                 '--extra-version=static']  # '--extra-cflags=--static'
-        platform_name = self.platform_.name()
+        platform = self.platform()
+        platform_name = platform.name()
         if platform_name == 'linux':
             ffmpeg_platform_args.extend(['--disable-libxcb'])
         elif platform_name == 'windows':
@@ -300,6 +301,7 @@ class BuildRequest(build_utils.BuildRequest):
 
         compiler_flags = self.device_.ffmpeg_compile_flags()
         compiler_flags.extend(ffmpeg_platform_args)
+        compiler_flags.extend(platform.configure_specific_flags())
         self._clone_and_build_via_configure(build_utils.generate_fastogt_git_path('ffmpeg'), compiler_flags)
 
     def build_sdl2(self, version):
