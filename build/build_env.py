@@ -442,8 +442,7 @@ if __name__ == "__main__":
                               help='build freetype (default, version:{0})'.format(freetype_default_version),
                               dest='with_freetype', action='store_false', default=False)
     freetype_grp.add_argument('--without-freetype', help='build without freetype', dest='with_freetype',
-                              action='store_true',
-                              default=True)
+                              action='store_true', default=True)
     parser.add_argument('--freetype-version', help='freetype version (default: {0})'.format(freetype_default_version),
                         default=freetype_default_version)
 
@@ -451,7 +450,7 @@ if __name__ == "__main__":
     sdl2_ttf_grp = parser.add_mutually_exclusive_group()
     sdl2_ttf_grp.add_argument('--with-sdl2_ttf',
                               help='build sdl2_ttf (default, version:{0})'.format(sdl2_ttf_default_version),
-                              dest='with_sdl2_ttf', default=True)
+                              dest='with_sdl2_ttf', action='store_true', default=True)
     sdl2_ttf_grp.add_argument('--without-sdl2-ttf', help='build without sdl2 ttf', dest='with_sdl2_ttf',
                               action='store_false',
                               default=False)
