@@ -333,7 +333,8 @@ class BuildRequest(build_utils.BuildRequest):
 
     def build_sdl2_ttf(self, version):
         url = '{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT)
-        self._download_and_build_via_configure(url, ['--disable-shared', '--enable-static'])
+        self._download_and_build_via_configure(url, ['--disable-shared', '--enable-static', '--disable-sdltest',
+                                                     '--disable-freetypetest'])
 
     def build_fastoplayer(self):
         self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('fastoplayer'), [])
