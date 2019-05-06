@@ -15,6 +15,7 @@ from pyfastogt import build_utils, system_info
 SDL_SRC_ROOT = "https://www.libsdl.org/release/"
 SDL_IMAGE_SRC_ROOT = "https://www.libsdl.org/projects/SDL_image/release/"
 SDL_TTF_SRC_ROOT = "https://www.libsdl.org/projects/SDL_ttf/release/"
+FREETYPE_SRC_ROOT = "https://download.savannah.gnu.org/releases/freetype/"
 
 ARCH_SDL_COMP = "gz"
 ARCH_SDL_EXT = "tar." + ARCH_SDL_COMP
@@ -231,7 +232,7 @@ class BuildRequest(build_utils.BuildRequest):
         return self.platform_.name()
 
     def get_system_libs(self):
-        platform = self.platform_
+        platform = self.platform()
         platform_name = platform.name()
         arch = platform.architecture()
         dep_libs = []
@@ -326,6 +327,10 @@ class BuildRequest(build_utils.BuildRequest):
         url = '{0}SDL2_image-{1}.{2}'.format(SDL_IMAGE_SRC_ROOT, version, ARCH_SDL_EXT)
         self._download_and_build_via_configure(url, compiler_flags)
 
+    def build_freetype(self, version):
+        url = '{0}freetype-{1}.{2}'.format(FREETYPE_SRC_ROOT, version, ARCH_SDL_EXT)
+        self._download_and_build_via_configure(url, ['--disable-shared', '--enable-static'])
+
     def build_sdl2_ttf(self, version):
         url = '{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT)
         self._download_and_build_via_configure(url, ['--disable-shared', '--enable-static'])
@@ -339,6 +344,7 @@ if __name__ == "__main__":
     sdl2_image_default_version = '2.0.4'
     sdl2_ttf_default_version = '2.0.15'
     openssl_default_version = '1.1.1b'
+    freetype_default_version = '2.10.0'
 
     host_os = system_info.get_os()
     arch_host_os = system_info.get_arch_name()
@@ -430,6 +436,17 @@ if __name__ == "__main__":
                         help='sdl2 image version (default: {0})'.format(sdl2_image_default_version),
                         default=sdl2_image_default_version)
 
+    # freetype
+    freetype_grp = parser.add_mutually_exclusive_group()
+    freetype_grp.add_argument('--with-freetype',
+                              help='build freetype (default, version:{0})'.format(freetype_default_version),
+                              dest='with_freetype', default=False)
+    freetype_grp.add_argument('--without-freetype', help='build without freetype', dest='with_freetype',
+                              action='store_false',
+                              default=True)
+    parser.add_argument('--freetype-version', help='sdl2 ttf version (default: {0})'.format(freetype_default_version),
+                        default=freetype_default_version)
+
     # sdl2_ttf
     sdl2_ttf_grp = parser.add_mutually_exclusive_group()
     sdl2_ttf_grp.add_argument('--with-sdl2_ttf',
@@ -496,6 +513,8 @@ if __name__ == "__main__":
         request.build_sdl2(argv.sdl2_version)
     if argv.with_sdl2_image:
         request.build_sdl2_image(argv.sdl2_image_version)
+    if argv.with_freetype:
+        request.build_freetype(argv.freetype)
     if argv.with_sdl2_ttf:
         request.build_sdl2_ttf(argv.sdl2_ttf_version)
 
