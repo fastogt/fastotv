@@ -63,7 +63,7 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
         SupportedDevice.__init__(self, 'pc', {'linux': [
             'libgl1-mesa-devel', 'libvdpau-devel', 'libva-devel',  # redhat
             'libgl1-mesa-dev', 'libvdpau-dev', 'libva-dev',  # debian
-        ]}, ['--disable-video-mir', '--disable-video-wayland'], [])
+        ]}, ['--disable-shared', '--enable-static', '--disable-video-mir', '--disable-video-wayland'], [])
 
     def install_specific(self):
         return
@@ -72,7 +72,8 @@ class PcDevice(SupportedDevice):  # Intel/AMD64 (i386/x86_64) Intel/Amd
 class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
     def __init__(self):
         SupportedDevice.__init__(self, 'android', {},
-                                 ['--disable-pulseaudio', '--disable-esd', '--disable-video-opengl',
+                                 ['--disable-shared', '--enable-static', '--disable-pulseaudio', '--disable-esd',
+                                  '--disable-video-opengl',
                                   '--disable-video-opengles1',
                                   '--disable-video-opengles2', '--disable-video-mir',
                                   '--disable-video-wayland'], [])
@@ -85,7 +86,8 @@ class AndroidDevice(SupportedDevice):  # arm, arm64, i386/x86_64
 class RaspberryPiDevice(SupportedDevice):  # gles2, sdl2_ttf --without-x?
     def __init__(self, name):
         SupportedDevice.__init__(self, name, {'linux': ['libgl1-mesa-dev']},
-                                 ['--host=arm-raspberry-linux-gnueabihf',  # FIXME host
+                                 ['--disable-shared', '--enable-static',
+                                  '--host=arm-raspberry-linux-gnueabihf',  # FIXME host
                                   '--disable-pulseaudio', '--disable-esd',
                                   '--disable-video-opengl', '--disable-video-opengles1',
                                   '--enable-video-opengles2',
@@ -138,7 +140,7 @@ class OrangePiH3Device(SupportedDevice):  # gles2
                                  {'linux': ['libgles2-mesa-dev', 'libcedrus1-dev', 'libpixman-1-dev',
                                             'xserver-xorg-video-fbturbo', 'xserver-xorg-legacy'
                                             ]},
-                                 ['--disable-pulseaudio', '--disable-esd',
+                                 ['--disable-shared', '--enable-static', '--disable-pulseaudio', '--disable-esd',
                                   '--disable-video-opengl', '--disable-video-opengles1',
                                   '--enable-video-opengles2',
                                   '--disable-video-mir', '--disable-video-wayland'
@@ -180,7 +182,7 @@ class OrangePiPC2(SupportedDevice):  # ARMv8-A(aarch64) Cortex-A53
     def __init__(self, name='orange-pi-pc2'):
         SupportedDevice.__init__(self, name,
                                  {'linux': ['libgles2-mesa-dev']},
-                                 ['--disable-pulseaudio', '--disable-esd',
+                                 ['--disable-shared', '--enable-static', '--disable-pulseaudio', '--disable-esd',
                                   '--disable-video-opengl', '--disable-video-opengles1',
                                   '--enable-video-opengles2',
                                   '--disable-video-mir', '--disable-video-wayland',
@@ -314,7 +316,7 @@ class BuildRequest(build_utils.BuildRequest):
         self._download_and_build_via_configure(url, compiler_flags)
 
     def build_sdl2_image(self, version):
-        compiler_flags = ['--disable-svg', '--disable-bmp',
+        compiler_flags = ['--disable-shared', '--enable-static', '--disable-svg', '--disable-bmp',
                           '--disable-gif',
                           '--disable-jpg', '--disable-lbm', '--disable-pcx',
                           '--disable-pnm',
@@ -326,7 +328,7 @@ class BuildRequest(build_utils.BuildRequest):
 
     def build_sdl2_ttf(self, version):
         url = '{0}SDL2_ttf-{1}.{2}'.format(SDL_TTF_SRC_ROOT, version, ARCH_SDL_EXT)
-        self._download_and_build_via_configure(url, [])
+        self._download_and_build_via_configure(url, ['--disable-shared', '--enable-static'])
 
     def build_fastoplayer(self):
         self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('fastoplayer'), [])
