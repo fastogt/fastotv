@@ -440,11 +440,11 @@ if __name__ == "__main__":
     freetype_grp = parser.add_mutually_exclusive_group()
     freetype_grp.add_argument('--with-freetype',
                               help='build freetype (default, version:{0})'.format(freetype_default_version),
-                              dest='with_freetype', default=False)
+                              dest='with_freetype', action='store_false', default=False)
     freetype_grp.add_argument('--without-freetype', help='build without freetype', dest='with_freetype',
-                              action='store_false',
+                              action='store_true',
                               default=True)
-    parser.add_argument('--freetype-version', help='sdl2 ttf version (default: {0})'.format(freetype_default_version),
+    parser.add_argument('--freetype-version', help='freetype version (default: {0})'.format(freetype_default_version),
                         default=freetype_default_version)
 
     # sdl2_ttf
