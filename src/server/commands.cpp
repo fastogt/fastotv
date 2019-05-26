@@ -38,40 +38,47 @@ protocol::request_t ServerSendChatMessageRequest(protocol::sequance_id_t id, pro
 }
 
 protocol::response_t ActivateResponseSuccess(protocol::sequance_id_t id) {
-  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage());
+  return protocol::response_t::MakeMessage(id, common::protocols::json_rpc::JsonRPCMessage::MakeSuccessMessage());
 }
 
 protocol::response_t ActivateResponseFail(protocol::sequance_id_t id, const std::string& error_text) {
-  return protocol::response_t::MakeError(id, protocol::MakeInternalErrorFromText(error_text));
+  return protocol::response_t::MakeError(
+      id, common::protocols::json_rpc::JsonRPCError::MakeInternalErrorFromText(error_text));
 }
 
 protocol::response_t PingResponseSuccess(protocol::sequance_id_t id) {
-  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage());
+  return protocol::response_t::MakeMessage(id, common::protocols::json_rpc::JsonRPCMessage::MakeSuccessMessage());
 }
 
 protocol::response_t GetServerInfoResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params) {
-  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage(*params));
+  return protocol::response_t::MakeMessage(id,
+                                           common::protocols::json_rpc::JsonRPCMessage::MakeSuccessMessage(*params));
 }
 
 protocol::response_t GetServerInfoResponceFail(protocol::sequance_id_t id, const std::string& error_text) {
-  return protocol::response_t::MakeError(id, protocol::MakeInternalErrorFromText(error_text));
+  return protocol::response_t::MakeError(
+      id, common::protocols::json_rpc::JsonRPCError::MakeInternalErrorFromText(error_text));
 }
 
 protocol::response_t GetChannelsResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params) {
-  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage(*params));
+  return protocol::response_t::MakeMessage(id,
+                                           common::protocols::json_rpc::JsonRPCMessage::MakeSuccessMessage(*params));
 }
 
 protocol::response_t GetChannelsResponceFail(protocol::sequance_id_t id, const std::string& error_text) {
-  return protocol::response_t::MakeError(id, protocol::MakeInternalErrorFromText(error_text));
+  return protocol::response_t::MakeError(
+      id, common::protocols::json_rpc::JsonRPCError::MakeInternalErrorFromText(error_text));
 }
 
 protocol::response_t GetRuntimeChannelInfoResponceSuccsess(protocol::sequance_id_t id,
                                                            protocol::serializet_params_t params) {
-  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage(*params));
+  return protocol::response_t::MakeMessage(id,
+                                           common::protocols::json_rpc::JsonRPCMessage::MakeSuccessMessage(*params));
 }
 
 protocol::response_t SendChatMessageResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params) {
-  return protocol::response_t::MakeMessage(id, protocol::MakeSuccessMessage(*params));
+  return protocol::response_t::MakeMessage(id,
+                                           common::protocols::json_rpc::JsonRPCMessage::MakeSuccessMessage(*params));
 }
 
 }  // namespace server

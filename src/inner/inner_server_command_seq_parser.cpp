@@ -18,6 +18,8 @@
 
 #include "inner/inner_server_command_seq_parser.h"
 
+#include <string>
+
 #include "inner/inner_client.h"  // for InnerClient
 
 namespace fastotv {
@@ -29,7 +31,7 @@ InnerServerCommandSeqParser::~InnerServerCommandSeqParser() {}
 
 protocol::sequance_id_t InnerServerCommandSeqParser::NextRequestID() {
   const protocol::seq_id_t next_id = id_++;
-  return protocol::MakeRequestID(next_id);
+  return common::protocols::json_rpc::MakeRequestID(next_id);
 }
 
 common::ErrnoError InnerServerCommandSeqParser::HandleInnerDataReceived(InnerClient* client,

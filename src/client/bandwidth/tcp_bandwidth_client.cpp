@@ -77,8 +77,8 @@ BandwidthHostType TcpBandwidthClient::GetHostType() const {
   return host_type_;
 }
 
-common::ErrnoError TcpBandwidthClient::Read(void* out, size_t size, size_t* nread) {
-  common::ErrnoError err = base_class::Read(out, size, nread);
+common::ErrnoError TcpBandwidthClient::SingleRead(void* out, size_t size, size_t* nread) {
+  common::ErrnoError err = base_class::SingleRead(out, size, nread);
   if (err) {
     return err;
   }

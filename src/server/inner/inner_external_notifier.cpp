@@ -55,8 +55,8 @@ void InnerSubHandler::HandleMessage(const std::string& channel, const std::strin
   common::ErrnoError errn = HandleRequest(ureq);
   if (errn) {
     const protocol::request_t req = ureq.GetRequest();
-    const protocol::response_t resp =
-        protocol::response_t::MakeError(req.id, protocol::MakeInternalErrorFromText(errn->GetDescription()));
+    const protocol::response_t resp = protocol::response_t::MakeError(
+        req.id, common::protocols::json_rpc::JsonRPCError::MakeInternalErrorFromText(errn->GetDescription()));
     PublishResponse(ureq, &resp);
   }
 }

@@ -1,15 +1,19 @@
 /*  Copyright (C) 2014-2019 FastoGT. All right reserved.
-    This file is part of iptv_cloud.
-    iptv_cloud is free software: you can redistribute it and/or modify
+
+    This file is part of FastoTV.
+
+    FastoTV is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    iptv_cloud is distributed in the hope that it will be useful,
+
+    FastoTV is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
+
     You should have received a copy of the GNU General Public License
-    along with iptv_cloud.  If not, see <http://www.gnu.org/licenses/>.
+    along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "protocol/protocol.h"
@@ -24,7 +28,6 @@ namespace fastotv {
 namespace protocol {
 
 namespace {
-common::CompressSnappyEDcoder kCompressor;
 
 common::ErrnoError GenerateProtocoledMessage(const common::char_buffer_t& message, char** data, size_t* data_len) {
   if (message.empty() || !data || !data_len) {
@@ -35,7 +38,7 @@ common::ErrnoError GenerateProtocoledMessage(const common::char_buffer_t& messag
   const size_t size = message.size();
 
   const protocoled_size_t data_size = size;
-  if (data_size > MAX_COMMAND_SIZE) {
+  if (data_size > MAX_COMMAND_LENGTH) {
     return common::make_errno_error(common::MemSPrintf("Reached limit of command size: %u", data_size), EAGAIN);
   }
 
@@ -106,8 +109,8 @@ common::ErrnoError ReadMessage(common::libev::IoClient* client, char* out, proto
 }
 }  // namespace
 
-common::ErrnoError ReadCommand(common::libev::IoClient* client, std::string* out) {
-  if (!client || !out) {
+common::ErrnoError ReadCommand(common::libev::IoClient* client, common::IEDcoder* compressor, std::string* out) {
+  if (!client || !compressor || !out) {
     return common::make_errno_error_inval();
   }
 
@@ -118,7 +121,7 @@ common::ErrnoError ReadCommand(common::libev::IoClient* client, std::string* out
   }
 
   message_size = common::NetToHost32(message_size);  // stable
-  if (message_size > MAX_COMMAND_SIZE) {
+  if (message_size > MAX_COMMAND_LENGTH) {
     return common::make_errno_error(common::MemSPrintf("Reached limit of command size: %u", message_size), EAGAIN);
   }
 
@@ -131,7 +134,7 @@ common::ErrnoError ReadCommand(common::libev::IoClient* client, std::string* out
 
   const common::char_buffer_t compressed = MAKE_CHAR_BUFFER_SIZE(msg, message_size);
   common::char_buffer_t un_compressed;
-  common::Error dec_err = kCompressor.Decode(compressed, &un_compressed);
+  common::Error dec_err = compressor->Decode(compressed, &un_compressed);
   free(msg);
   if (dec_err) {
     return common::make_errno_error(dec_err->GetDescription(), EINVAL);
@@ -141,13 +144,15 @@ common::ErrnoError ReadCommand(common::libev::IoClient* client, std::string* out
   return common::ErrnoError();
 }
 
-common::ErrnoError WriteMessage(common::libev::IoClient* client, const std::string& message) {
-  if (!client || message.empty()) {
+common::ErrnoError WriteMessage(common::libev::IoClient* client,
+                                common::IEDcoder* compressor,
+                                const std::string& message) {
+  if (!client || !compressor || message.empty()) {
     return common::make_errno_error_inval();
   }
 
   common::char_buffer_t compressed;
-  common::Error enc_err = kCompressor.Encode(message, &compressed);
+  common::Error enc_err = compressor->Encode(message, &compressed);
   if (enc_err) {
     return common::make_errno_error(enc_err->GetDescription(), EINVAL);
   }
@@ -171,22 +176,30 @@ common::ErrnoError WriteMessage(common::libev::IoClient* client, const std::stri
   return err;
 }
 
-common::ErrnoError WriteRequest(common::libev::IoClient* client, const request_t& request) {
+common::ErrnoError WriteRequest(common::libev::IoClient* client,
+                                common::IEDcoder* compressor,
+                                const request_t& request) {
   std::string request_str;
   common::Error err = common::protocols::json_rpc::MakeJsonRPCRequest(request, &request_str);
   if (err) {
     return common::make_errno_error(err->GetDescription(), err->GetErrorCode());
   }
-  return WriteMessage(client, request_str);
+  return WriteMessage(client, compressor, request_str);
 }
 
-common::ErrnoError WriteResponce(common::libev::IoClient* client, const response_t& responce) {
+common::ErrnoError WriteResponce(common::libev::IoClient* client,
+                                 common::IEDcoder* compressor,
+                                 const response_t& responce) {
   std::string responce_str;
   common::Error err = common::protocols::json_rpc::MakeJsonRPCResponse(responce, &responce_str);
   if (err) {
     return common::make_errno_error(err->GetDescription(), err->GetErrorCode());
   }
-  return WriteMessage(client, responce_str);
+  return WriteMessage(client, compressor, responce_str);
+}
+
+common::IEDcoder* MakeCompressor() {
+  return new common::CompressSnappyEDcoder;
 }
 }  // namespace detail
 
