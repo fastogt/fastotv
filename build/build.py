@@ -234,7 +234,7 @@ if __name__ == "__main__":
     if argc > 2:
         branding_file_path = sys.argv[2]
     else:
-        branding_file_path = 'brands/fastotv.txt'
+        branding_file_path = 'brands/fastotv/fastotv.txt'
 
     if argc > 3:
         platform_str = sys.argv[3]
