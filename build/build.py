@@ -108,8 +108,6 @@ class BuildRequest(object):
         if os.path.exists(abs_dir_path):
             shutil.rmtree(abs_dir_path)
 
-        is_android = self.platform_.name() == 'android'
-
         generator = bs.cmake_generator_arg()
         build_system_args = bs.cmd_line()
         build_system_policy = bs.policy()
@@ -129,10 +127,6 @@ class BuildRequest(object):
 
         cmake_line = ['cmake', cmake_project_root_abs_path, generator, '-DCMAKE_BUILD_TYPE=RELEASE', openssl_args,
                       jsonc_args, log_to_file_args, libev_args]
-
-        if is_android:
-            toolchain_path = os.path.join(cmake_project_root_abs_path, 'cmake/android.toolchain.cmake')
-            cmake_line.append('-DCMAKE_TOOLCHAIN_FILE={0}'.format(toolchain_path))
 
         if branding_options:
             cmake_line.extend(branding_options)
@@ -167,7 +161,7 @@ class BuildRequest(object):
         saver.update_progress_message_range(80.0, 84.0, 'Trying to get package file name')
         in_file = open('CPackConfig.cmake', 'r')
         for line in in_file.readlines():
-            res = re.search(r'SET\(CPACK_PACKAGE_FILE_NAME "(.+)"\)', line)
+            res = re.search(r'(set|SET)\(CPACK_PACKAGE_FILE_NAME "(.+)"\)', line)
             if res:
                 filename = res.group(1)
                 break
@@ -175,44 +169,16 @@ class BuildRequest(object):
 
         saver.update_progress_message_range(85.0, 99.0, 'Start build package')
         file_names = []
-        if is_android:
-            make_apk_release = build_system_args
-            make_apk_release.append('apk_release')
+        for generator in package_types:
+            make_cpack = ['cpack', '-G', generator]
             try:
                 common_policy = run_command.CommonPolicy(store)
-                run_command.run_command_cb(make_apk_release, common_policy)
+                run_command.run_command_cb(make_cpack, common_policy)
+                file_names.append(
+                    os.path.join(abs_dir_path, filename + '.' + system_info.get_extension_by_package(generator)))
             except Exception as ex:
                 os.chdir(pwd)
                 raise ex
-            make_apk_signed = build_system_args
-            make_apk_signed.append('apk_signed')
-            try:
-                common_policy = run_command.CommonPolicy(store)
-                run_command.run_command_cb(make_apk_signed, common_policy)
-            except Exception as ex:
-                os.chdir(pwd)
-                raise ex
-            make_apk_signed_aligned = build_system_args
-            make_apk_signed_aligned.append('apk_signed_aligned')
-            try:
-                common_policy = run_command.CommonPolicy(store)
-                run_command.run_command_cb(make_apk_signed_aligned, common_policy)
-            except Exception as ex:
-                os.chdir(pwd)
-                raise ex
-
-            file_names.append(os.path.join(abs_dir_path, filename + '.' + system_info.get_extension_by_package('APK')))
-        else:
-            for generator in package_types:
-                make_cpack = ['cpack', '-G', generator]
-                try:
-                    common_policy = run_command.CommonPolicy(store)
-                    run_command.run_command_cb(make_cpack, common_policy)
-                    file_names.append(
-                        os.path.join(abs_dir_path, filename + '.' + system_info.get_extension_by_package(generator)))
-                except Exception as ex:
-                    os.chdir(pwd)
-                    raise ex
 
         os.chdir(pwd)
 
