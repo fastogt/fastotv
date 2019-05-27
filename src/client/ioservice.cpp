@@ -47,7 +47,7 @@ namespace {
 class PrivateHandler : public inner::InnerTcpHandler {
  public:
   typedef inner::InnerTcpHandler base_class;
-  PrivateHandler(const inner::StartConfig& conf)
+  explicit PrivateHandler(const inner::StartConfig& conf)
       : base_class(conf)
 #ifdef HAVE_LIRC
         ,
@@ -197,7 +197,7 @@ void IoService::PostMessageToChat(const ChatMessage& msg) const {
 
 common::libev::IoLoopObserver* IoService::CreateHandler() {
   inner::StartConfig conf;
-  conf.inner_host = common::net::HostAndPort(SERVICE_HOST_NAME, SERVICE_HOST_PORT);
+  conf.inner_host = common::net::HostAndPort(PROJECT_SERVER_HOST, PROJECT_SERVER_PORT);
   conf.ainf = AuthInfo(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
   PrivateHandler* handler = new PrivateHandler(conf);
   return handler;
