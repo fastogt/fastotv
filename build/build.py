@@ -234,7 +234,7 @@ if __name__ == "__main__":
     if argc > 2:
         branding_file_path = sys.argv[2]
     else:
-        branding_file_path = dev_null
+        branding_file_path = 'brands/fastotv.txt'
 
     if argc > 3:
         platform_str = sys.argv[3]
@@ -258,11 +258,8 @@ if __name__ == "__main__":
         packages = []
 
     request = BuildRequest(platform_str, arch_name_str)
-    if branding_file_path != dev_null:
-        abs_branding_file = os.path.abspath(branding_file_path)
-        args_branding_options = utils.read_file_line_by_line_to_list(abs_branding_file)
-    else:
-        args_branding_options = []
+    abs_branding_file = os.path.abspath(branding_file_path)
+    args_branding_options = utils.read_file_line_by_line_to_list(abs_branding_file)
 
     saver = ProgressSaver(print_message)
     request.build(cmake_root, args_branding_options, 'build_' + platform_str, bs, packages, saver)

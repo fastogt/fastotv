@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+
+if test -e @EXECUTABLE_PATH@ ; then
+  rm @EXECUTABLE_PATH@
+fi
+
+if test -e /usr/share/applications/@PROJECT_NAME_LOWERCASE@.desktop ; then
+  rm /usr/share/applications/@PROJECT_NAME_LOWERCASE@.desktop
+fi
+
+if test -e /usr/share/icons/@PROJECT_NAME_LOWERCASE@.png ; then
+  rm /usr/share/icons/@PROJECT_NAME_LOWERCASE@.png
+fi

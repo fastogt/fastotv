@@ -1,0 +1,23 @@
+#!/bin/sh -e
+
+#adduser test1 
+#mkpasswd --method=md5
+#hashed
+#Before editing test1:*:16559:0:99999:7:::
+#After editing test1:$hashed:16559:0:99999:7:::
+
+adduser --home /home/@USER_LOGIN@/ --force-badname @USER_LOGIN@
+usermod -a -G video @USER_LOGIN@
+cp xinitrc /home/@USER_LOGIN@/.xinitrc
+chown @USER_LOGIN@ /home/@USER_LOGIN@/.xinitrc
+
+LINE='if [ -z "$DISPLAY" ] && [ -n "$XDG_VTNR" ] && [ "$XDG_VTNR" -eq 1 ]; then exec startx fi'
+FILE=/home/@USER_LOGIN@/.bashrc
+if [ -f "$FILE" ]; then
+  grep -qF "$LINE" "$FILE" || echo "$LINE" >> "$FILE"
+fi
+
+FILE2=/home/@USER_LOGIN@/.bash_profile
+if [ -f "$FILE2" ]; then
+  grep -qF "$LINE" "$FILE2" || echo "$LINE" >> "$FILE2"
+fi

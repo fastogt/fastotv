@@ -1,0 +1,6 @@
+# Please add next line into ~/.bash_profile or ~/.bashrc according system
+#if [ -z "$DISPLAY" ] && [ -n "$XDG_VTNR" ] && [ "$XDG_VTNR" -eq 1 ]; then
+#  exec startx
+#fi
+
+exec @EXECUTABLE_PATH@
