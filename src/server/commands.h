@@ -22,7 +22,7 @@
 
 #include "client_server_types.h"
 
-#include "protocol/protocol.h"
+#include "protocol/types.h"
 
 #include "commands/commands.h"
 
