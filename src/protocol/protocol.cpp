@@ -22,7 +22,7 @@
 
 #include <common/sprintf.h>
 #include <common/sys_byteorder.h>
-#include <common/text_decoders/compress_snappy_edcoder.h>
+#include <common/text_decoders/compress_zlib_edcoder.h>
 
 namespace fastotv {
 namespace protocol {
@@ -199,7 +199,7 @@ common::ErrnoError WriteResponce(common::libev::IoClient* client,
 }
 
 common::IEDcoder* MakeCompressor() {
-  return new common::CompressSnappyEDcoder;
+  return new common::CompressZlibEDcoder(false, common::CompressZlibEDcoder::GZIP_DEFLATE);
 }
 }  // namespace detail
 
