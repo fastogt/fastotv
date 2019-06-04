@@ -376,13 +376,6 @@ if __name__ == "__main__":
                         help='device (default: {0}, available: {1})'.format(default_device, availible_devices),
                         default=default_device)
 
-    # snappy
-    snappy_grp = parser.add_mutually_exclusive_group()
-    snappy_grp.add_argument('--with-snappy', help='build snappy (default, version: git master)', dest='with_snappy',
-                            action='store_true', default=True)
-    snappy_grp.add_argument('--without-snappy', help='build without snappy', dest='with_snappy', action='store_false',
-                            default=False)
-
     # cpuid
     cpuid_grp = parser.add_mutually_exclusive_group()
     cpuid_grp.add_argument('--with-cpuid', help='build cpuid (default, version: git master)', dest='with_cpuid',
@@ -502,8 +495,6 @@ if __name__ == "__main__":
     if argv.with_device:
         request.install_device_specific()
 
-    if argv.with_snappy:
-        request.build_snappy()
     if argv.with_jsonc:
         request.build_jsonc()
     if argv.with_cpuid:
