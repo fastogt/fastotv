@@ -413,6 +413,17 @@ if __name__ == "__main__":
                                  action='store_false',
                                  default=False)
 
+    # fastotv_protocol
+    fastotv_protocol_grp = parser.add_mutually_exclusive_group()
+    fastotv_protocol_grp.add_argument('--with-fastotv-protocol',
+                                      help='build fastotv_protocol (default, version: git master)',
+                                      dest='with_fastotv_protocol',
+                                      action='store_true', default=True)
+    fastotv_protocol_grp.add_argument('--without-fastotv-protocol', help='build without fastotv_protocol',
+                                      dest='with_fastotv_protocol',
+                                      action='store_false',
+                                      default=False)
+
     # sdl2
     sdl2_grp = parser.add_mutually_exclusive_group()
     sdl2_grp.add_argument('--with-sdl2', help='build sdl2 (default, version: {0})'.format(sdl2_default_version),
@@ -503,6 +514,8 @@ if __name__ == "__main__":
         request.build_libev()
     if argv.with_common:
         request.build_common()
+    if argv.with_fastotv_protocol:
+        request.build_fastotv_protocol()
 
     if argv.with_sdl2:
         request.build_sdl2(argv.sdl2_version)
