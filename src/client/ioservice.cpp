@@ -190,7 +190,7 @@ void IoService::RequesRuntimeChannelInfo(stream_id sid) const {
 common::libev::IoLoopObserver* IoService::CreateHandler() {
   inner::StartConfig conf;
   conf.inner_host = common::net::HostAndPort(PROJECT_SERVER_HOST, PROJECT_SERVER_PORT);
-  conf.ainf = AuthInfo(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
+  conf.ainf = commands_info::AuthInfo(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
   PrivateHandler* handler = new PrivateHandler(conf);
   return handler;
 }

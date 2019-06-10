@@ -16,7 +16,7 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "client/commands.h"
+#include "commands.h"
 
 namespace fastotv {
 namespace client {

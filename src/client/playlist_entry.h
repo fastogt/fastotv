@@ -20,8 +20,8 @@
 
 #include <memory>
 
-#include "commands_info/channels_info.h"
-#include "commands_info/runtime_channel_info.h"
+#include <fastotv/commands_info/channels_info.h>
+#include <fastotv/commands_info/runtime_channel_info.h>
 
 namespace fastoplayer {
 namespace draw {
@@ -43,12 +43,12 @@ struct ChannelDescription {
 class PlaylistEntry {
  public:
   PlaylistEntry();
-  PlaylistEntry(const std::string& cache_root_dir, const ChannelInfo& info);
+  PlaylistEntry(const std::string& cache_root_dir, const commands_info::ChannelInfo& info);
 
-  ChannelInfo GetChannelInfo() const;
+  commands_info::ChannelInfo GetChannelInfo() const;
 
-  void SetRuntimeChannelInfo(const RuntimeChannelInfo& rinfo);
-  RuntimeChannelInfo GetRuntimeChannelInfo() const;
+  void SetRuntimeChannelInfo(const commands_info::RuntimeChannelInfo& rinfo);
+  commands_info::RuntimeChannelInfo GetRuntimeChannelInfo() const;
 
   void SetIcon(channel_icon_t icon);
   channel_icon_t GetIcon() const;
@@ -59,8 +59,8 @@ class PlaylistEntry {
   ChannelDescription GetChannelDescription() const;
 
  private:
-  ChannelInfo info_;
-  RuntimeChannelInfo rinfo_;
+  commands_info::ChannelInfo info_;
+  commands_info::RuntimeChannelInfo rinfo_;
 
   channel_icon_t icon_;
   std::string cache_dir_;

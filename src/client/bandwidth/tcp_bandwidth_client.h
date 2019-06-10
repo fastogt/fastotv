@@ -22,7 +22,7 @@
 
 #include "client/types.h"  // for BandwidthHostType
 
-#include "client_server_types.h"  // for bandwidth_t
+#include <fastotv/client_server_types.h>  // for bandwidth_t
 
 namespace fastotv {
 namespace client {

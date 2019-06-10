@@ -285,7 +285,7 @@ void Player::HandlePostExecEvent(fastoplayer::gui::events::PostExecEvent* event)
 std::string Player::GetCurrentUrlName() const {
   PlaylistEntry url;
   if (GetCurrentUrl(&url)) {
-    ChannelInfo ch = url.GetChannelInfo();
+    commands_info::ChannelInfo ch = url.GetChannelInfo();
     return ch.GetName();
   }
 
@@ -315,7 +315,7 @@ void Player::SwitchToPlayingMode() {
   size_t pos = current_stream_pos_;
   for (size_t i = 0; i < play_list_.size() && opt.last_showed_channel_id != invalid_stream_id; ++i) {
     PlaylistEntry ent = play_list_[i];
-    ChannelInfo ch = ent.GetChannelInfo();
+    commands_info::ChannelInfo ch = ent.GetChannelInfo();
     if (ch.GetID() == opt.last_showed_channel_id) {
       pos = i;
       break;
@@ -369,7 +369,7 @@ void Player::HandleClientAuthorizedEvent(events::ClientAuthorizedEvent* event) {
 
 void Player::HandleClientUnAuthorizedEvent(events::ClientUnAuthorizedEvent* event) {
   UNUSED(event);
-  auth_ = AuthInfo();
+  auth_ = commands_info::AuthInfo();
   if (GetCurrentState() == INIT_STATE) {
     SwitchToDisconnectMode();
   }
@@ -380,9 +380,9 @@ void Player::HandleClientConfigChangeEvent(events::ClientConfigChangeEvent* even
 }
 
 void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
-  ChannelsInfo chan = event->GetInfo();
+  commands_info::ChannelsInfo chan = event->GetInfo();
   // prepare cache folders
-  ChannelsInfo::channels_t channels = chan.GetChannels();
+  commands_info::ChannelsInfo::channels_t channels = chan.GetChannels();
   const std::string cache_dir = common::file_system::make_path(app_directory_absolute_path_, CACHE_FOLDER_NAME);
   bool is_exist_cache_root = common::file_system::is_directory_exist(cache_dir);
   if (!is_exist_cache_root) {
@@ -394,7 +394,7 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
     }
   }
 
-  for (const ChannelInfo& ch : channels) {
+  for (const commands_info::ChannelInfo& ch : channels) {
     PlaylistEntry entry = PlaylistEntry(cache_dir, ch);
     const std::string icon_path = entry.GetIconPath();
     fastoplayer::draw::SurfaceSaver* surf = fastoplayer::draw::MakeSurfaceFromPath(icon_path);
@@ -418,9 +418,9 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
         continue;
       }
 
-      EpgInfo epg = ch.GetEpg();
+      commands_info::EpgInfo epg = ch.GetEpg();
       common::uri::Url uri = epg.GetIconUrl();
-      bool is_unknown_icon = EpgInfo::IsUnknownIconUrl(uri);
+      bool is_unknown_icon = commands_info::EpgInfo::IsUnknownIconUrl(uri);
       if (is_unknown_icon) {
         continue;
       }
@@ -486,9 +486,9 @@ void Player::HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event) {
 }
 
 void Player::HandleReceiveRuntimeChannelEvent(events::ReceiveRuntimeChannelEvent* event) {
-  RuntimeChannelInfo inf = event->GetInfo();
+  commands_info::RuntimeChannelInfo inf = event->GetInfo();
   for (size_t i = 0; i < play_list_.size(); ++i) {
-    ChannelInfo cinf = play_list_[i].GetChannelInfo();
+    commands_info::ChannelInfo cinf = play_list_[i].GetChannelInfo();
     if (inf.GetChannelID() == cinf.GetID()) {
       play_list_[i].SetRuntimeChannelInfo(inf);
       break;
@@ -915,7 +915,7 @@ fastoplayer::media::VideoState* Player::CreateStreamPos(size_t pos) {
   current_stream_pos_ = pos;
 
   PlaylistEntry entry = play_list_[current_stream_pos_];
-  ChannelInfo url = entry.GetChannelInfo();
+  commands_info::ChannelInfo url = entry.GetChannelInfo();
   stream_id sid = url.GetID();
   fastoplayer::media::AppOptions copy = GetStreamOptions();
   copy.enable_audio = url.IsEnableVideo();

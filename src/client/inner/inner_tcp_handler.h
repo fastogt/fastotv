@@ -23,12 +23,12 @@
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/net/types.h>               // for HostAndPort
 
-#include "commands_info/auth_info.h"  // for AuthInfo
+#include <fastotv/commands_info/auth_info.h>  // for AuthInfo
 
-#include "client/types.h"         // for BandwidthHostType
-#include "client_server_types.h"  // for bandwidth_t
+#include <fastotv/client_server_types.h>  // for bandwidth_t
+#include "client/types.h"                 // for BandwidthHostType
 
-#include "protocol/types.h"
+#include <fastotv/protocol/types.h>
 
 namespace fastotv {
 namespace client {
@@ -39,7 +39,7 @@ namespace inner {
 
 struct StartConfig {
   common::net::HostAndPort inner_host;
-  AuthInfo ainf;
+  commands_info::AuthInfo ainf;
 };
 
 class InnerTcpHandler : public common::libev::IoLoopObserver {
@@ -53,12 +53,12 @@ class InnerTcpHandler : public common::libev::IoLoopObserver {
   explicit InnerTcpHandler(const StartConfig& config);
   ~InnerTcpHandler() override;
 
-  void ActivateRequest();                          // should be execute in network thread
-  void RequestServerInfo();                        // should be execute in network thread
-  void RequestChannels();                          // should be execute in network thread
-  void RequesRuntimeChannelInfo(stream_id sid);    // should be execute in network thread
-  void Connect(common::libev::IoLoop* server);     // should be execute in network thread
-  void DisConnect(common::Error err);              // should be execute in network thread
+  void ActivateRequest();                        // should be execute in network thread
+  void RequestServerInfo();                      // should be execute in network thread
+  void RequestChannels();                        // should be execute in network thread
+  void RequesRuntimeChannelInfo(stream_id sid);  // should be execute in network thread
+  void Connect(common::libev::IoLoop* server);   // should be execute in network thread
+  void DisConnect(common::Error err);            // should be execute in network thread
 
   void PreLooped(common::libev::IoLoop* server) override;
   void Accepted(common::libev::IoClient* client) override;

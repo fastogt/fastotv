@@ -31,13 +31,13 @@
 #include "client/commands.h"
 #include "client/events/network_events.h"  // for BandwidtInfo, Con...
 
-#include "client.h"  // for Client
+#include <fastotv/client.h>  // for Client
 
-#include "commands_info/channels_info.h"  // for ChannelsInfo
-#include "commands_info/client_info.h"    // for ClientInfo
-#include "commands_info/ping_info.h"      // for ClientPingInfo
-#include "commands_info/runtime_channel_info.h"
-#include "commands_info/server_info.h"  // for ServerInfo
+#include <fastotv/commands_info/channels_info.h>  // for ChannelsInfo
+#include <fastotv/commands_info/client_info.h>    // for ClientInfo
+#include <fastotv/commands_info/ping_info.h>      // for ClientPingInfo
+#include <fastotv/commands_info/runtime_channel_info.h>
+#include <fastotv/commands_info/server_info.h>  // for ServerInfo
 
 namespace fastotv {
 namespace client {
@@ -167,7 +167,7 @@ void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::
   UNUSED(server);
   if (id == ping_server_id_timer_ && inner_connection_) {
     std::string ping_server_json;
-    ServerPingInfo server_ping_info;
+    commands_info::ServerPingInfo server_ping_info;
     common::Error err_ser = server_ping_info.SerializeToString(&ping_server_json);
     if (err_ser) {
       return;
@@ -268,7 +268,7 @@ void InnerTcpHandler::RequesRuntimeChannelInfo(stream_id sid) {
   }
 
   std::string run_str;
-  RuntimeChannelLiteInfo run(sid);
+  commands_info::RuntimeChannelLiteInfo run(sid);
   common::Error err_ser = run.SerializeToString(&run_str);
   if (err_ser) {
     DEBUG_MSG_ERROR(err_ser, common::logging::LOG_LEVEL_ERR);
@@ -357,7 +357,7 @@ common::ErrnoError InnerTcpHandler::HandleRequestServerPing(InnerSTBClient* clie
       return common::make_errno_error_inval();
     }
 
-    ServerPingInfo server_ping_info;
+    commands_info::ServerPingInfo server_ping_info;
     common::Error err_des = server_ping_info.DeSerialize(jstop);
     json_object_put(jstop);
     if (err_des) {
@@ -385,7 +385,7 @@ common::ErrnoError InnerTcpHandler::HandleRequestServerClientInfo(InnerSTBClient
 
   std::string os = common::MemSPrintf("%s %s(%s)", os_name, os_version, os_arch);
 
-  ClientInfo info(config_.ainf.GetLogin(), os, brand, ram_total, ram_free, current_bandwidth_);
+  commands_info::ClientInfo info(config_.ainf.GetLogin(), os, brand, ram_total, ram_free, current_bandwidth_);
   std::string info_json_string;
   common::Error err_ser = info.SerializeToString(&info_json_string);
   if (err_ser) {
@@ -462,7 +462,7 @@ common::ErrnoError InnerTcpHandler::HandleResponceClientPing(InnerSTBClient* cli
       return common::make_errno_error_inval();
     }
 
-    ClientPingInfo client_ping_info;
+    commands_info::ClientPingInfo client_ping_info;
     common::Error err_des = client_ping_info.DeSerialize(jclient_ping);
     json_object_put(jclient_ping);
     if (err_des) {
@@ -483,7 +483,7 @@ common::ErrnoError InnerTcpHandler::HandleResponceClientGetServerInfo(InnerSTBCl
       return common::make_errno_error_inval();
     }
 
-    ServerInfo sinf;
+    commands_info::ServerInfo sinf;
     common::Error err_des = sinf.DeSerialize(jserver_info);
     json_object_put(jserver_info);
     if (err_des) {
@@ -522,7 +522,7 @@ common::ErrnoError InnerTcpHandler::HandleResponceClientGetChannels(InnerSTBClie
       return common::make_errno_error_inval();
     }
 
-    ChannelsInfo chan;
+    commands_info::ChannelsInfo chan;
     common::Error err_des = chan.DeSerialize(jchannels_info);
     json_object_put(jchannels_info);
     if (err_des) {
@@ -546,7 +546,7 @@ common::ErrnoError InnerTcpHandler::HandleResponceClientGetruntimeChannelInfo(In
       return common::make_errno_error_inval();
     }
 
-    RuntimeChannelInfo chan;
+    commands_info::RuntimeChannelInfo chan;
     common::Error err_des = chan.DeSerialize(jchannels_info);
     json_object_put(jchannels_info);
     if (err_des) {

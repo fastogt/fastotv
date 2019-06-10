@@ -30,7 +30,7 @@ namespace client {
 
 PlaylistEntry::PlaylistEntry() : info_(), icon_(), cache_dir_() {}
 
-PlaylistEntry::PlaylistEntry(const std::string& cache_root_dir, const ChannelInfo& info)
+PlaylistEntry::PlaylistEntry(const std::string& cache_root_dir, const commands_info::ChannelInfo& info)
     : info_(info), rinfo_(), icon_(), cache_dir_() {
   stream_id id = info_.GetID();
   cache_dir_ = common::file_system::make_path(cache_root_dir, id);
@@ -41,9 +41,9 @@ std::string PlaylistEntry::GetCacheDir() const {
 }
 
 std::string PlaylistEntry::GetIconPath() const {
-  EpgInfo epg = info_.GetEpg();
+  commands_info::EpgInfo epg = info_.GetEpg();
   common::uri::Url uri = epg.GetIconUrl();
-  bool is_unknown_icon = EpgInfo::IsUnknownIconUrl(uri);
+  bool is_unknown_icon = commands_info::EpgInfo::IsUnknownIconUrl(uri);
   if (is_unknown_icon) {
     const std::string absolute_source_dir =
         common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR, common::file_system::app_pwd());  // +
@@ -55,9 +55,9 @@ std::string PlaylistEntry::GetIconPath() const {
 
 ChannelDescription PlaylistEntry::GetChannelDescription() const {
   std::string decr = "N/A";
-  ChannelInfo url = GetChannelInfo();
-  EpgInfo epg = url.GetEpg();
-  ProgrammeInfo prog;
+  commands_info::ChannelInfo url = GetChannelInfo();
+  commands_info::EpgInfo epg = url.GetEpg();
+  commands_info::ProgrammeInfo prog;
   if (epg.FindProgrammeByTime(common::time::current_mstime(), &prog)) {
     decr = prog.GetTitle();
   }
@@ -73,15 +73,15 @@ channel_icon_t PlaylistEntry::GetIcon() const {
   return icon_;
 }
 
-ChannelInfo PlaylistEntry::GetChannelInfo() const {
+commands_info::ChannelInfo PlaylistEntry::GetChannelInfo() const {
   return info_;
 }
 
-void PlaylistEntry::SetRuntimeChannelInfo(const RuntimeChannelInfo& rinfo) {
+void PlaylistEntry::SetRuntimeChannelInfo(const commands_info::RuntimeChannelInfo& rinfo) {
   rinfo_ = rinfo;
 }
 
-RuntimeChannelInfo PlaylistEntry::GetRuntimeChannelInfo() const {
+commands_info::RuntimeChannelInfo PlaylistEntry::GetRuntimeChannelInfo() const {
   return rinfo_;
 }
 

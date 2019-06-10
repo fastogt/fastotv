@@ -170,7 +170,7 @@ class Player : public fastoplayer::ISimplePlayer {
 
   ProgramsWindow* programs_window_;
 
-  AuthInfo auth_;
+  commands_info::AuthInfo auth_;
 };
 
 }  // namespace client

@@ -22,9 +22,9 @@
 
 #include <player/gui/events_base.h>  // for EventBase, EventsType::C...
 
-#include "commands_info/auth_info.h"
-#include "commands_info/channels_info.h"
-#include "commands_info/runtime_channel_info.h"
+#include <fastotv/commands_info/auth_info.h>
+#include <fastotv/commands_info/channels_info.h>
+#include <fastotv/commands_info/runtime_channel_info.h>
 
 #include "client/types.h"  // for BandwidthHostType
 
@@ -62,11 +62,12 @@ struct ConnectInfo {
 
 typedef fastoplayer::gui::events::EventBase<CLIENT_DISCONNECT_EVENT, ConnectInfo> ClientDisconnectedEvent;
 typedef fastoplayer::gui::events::EventBase<CLIENT_CONNECT_EVENT, ConnectInfo> ClientConnectedEvent;
-typedef fastoplayer::gui::events::EventBase<CLIENT_AUTHORIZED_EVENT, AuthInfo> ClientAuthorizedEvent;
-typedef fastoplayer::gui::events::EventBase<CLIENT_UNAUTHORIZED_EVENT, AuthInfo> ClientUnAuthorizedEvent;
+typedef fastoplayer::gui::events::EventBase<CLIENT_AUTHORIZED_EVENT, commands_info::AuthInfo> ClientAuthorizedEvent;
+typedef fastoplayer::gui::events::EventBase<CLIENT_UNAUTHORIZED_EVENT, commands_info::AuthInfo> ClientUnAuthorizedEvent;
 typedef fastoplayer::gui::events::EventBase<CLIENT_CONFIG_CHANGE_EVENT, TvConfig> ClientConfigChangeEvent;
-typedef fastoplayer::gui::events::EventBase<CLIENT_RECEIVE_CHANNELS_EVENT, ChannelsInfo> ReceiveChannelsEvent;
-typedef fastoplayer::gui::events::EventBase<CLIENT_RECEIVE_RUNTIME_CHANNELS_EVENT, RuntimeChannelInfo>
+typedef fastoplayer::gui::events::EventBase<CLIENT_RECEIVE_CHANNELS_EVENT, commands_info::ChannelsInfo>
+    ReceiveChannelsEvent;
+typedef fastoplayer::gui::events::EventBase<CLIENT_RECEIVE_RUNTIME_CHANNELS_EVENT, commands_info::RuntimeChannelInfo>
     ReceiveRuntimeChannelEvent;
 typedef fastoplayer::gui::events::EventBase<CLIENT_BANDWIDTH_ESTIMATION_EVENT, BandwidtInfo> BandwidthEstimationEvent;
 

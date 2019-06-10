@@ -20,11 +20,11 @@
 
 #include <string>  // for string
 
-#include "client_server_types.h"
+#include <fastotv/client_server_types.h>
 
-#include "protocol/types.h"
+#include <fastotv/protocol/types.h>
 
-#include "commands/commands.h"
+#include <fastotv/commands/commands.h>
 
 namespace fastotv {
 namespace client {

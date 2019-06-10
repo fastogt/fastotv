@@ -63,7 +63,7 @@ ProgramsWindow::ProgramsWindow(const SDL_Color& back_ground_color)
 
     for (size_t i = 0; i < origin_->size(); ++i) {
       PlaylistEntry ent = origin_->operator[](i);
-      ChannelInfo cinf = ent.GetChannelInfo();
+      commands_info::ChannelInfo cinf = ent.GetChannelInfo();
       std::string name = cinf.GetName();
       if (text.empty() || name.find(text) != std::string::npos) {
         filtered_origin_.push_back(ent);
@@ -79,7 +79,7 @@ ProgramsWindow::ProgramsWindow(const SDL_Color& back_ground_color)
       }
 
       PlaylistEntry ent = filtered_origin_[row];
-      ChannelInfo ent_inf = ent.GetChannelInfo();
+      commands_info::ChannelInfo ent_inf = ent.GetChannelInfo();
       for (size_t i = 0; i < origin_->size(); ++i) {
         PlaylistEntry cent = origin_->operator[](i);
         if (cent.GetChannelInfo() == ent_inf) {
