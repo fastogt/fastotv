@@ -16,35 +16,20 @@
     along with FastoTV. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma once
-
-#include <string>  // for string
-
-#include <common/error.h>      // for Error
-#include <common/macros.h>     // for WARN_UNUSED_RESULT
-#include <common/net/types.h>  // for HostAndPort
-
-#include "redis/redis_sub_config.h"
+#include "client.h"
 
 namespace fastotv {
-namespace server {
 
-struct ServerSettings {
-  ServerSettings();
+Client::Client(common::libev::IoLoop* server, const common::net::socket_info& info)
+    : common::libev::tcp::TcpClient(server, info) {}
 
-  common::net::HostAndPort host;
-  redis::RedisSubConfig redis;
-  common::net::HostAndPort bandwidth_host;
-};
+Client::~Client() {}
 
-struct Config {
-  Config();
+const char* Client::ClassName() const {
+  return "Client";
+}
 
-  ServerSettings server;
-};
+ProtocoledClient::ProtocoledClient(common::libev::IoLoop* server, const common::net::socket_info& info)
+    : base_class(server, info) {}
 
-common::Error load_config_file(const std::string& config_absolute_path, Config* options) WARN_UNUSED_RESULT;
-common::Error save_config_file(const std::string& config_absolute_path, Config* options) WARN_UNUSED_RESULT;
-
-}  // namespace server
 }  // namespace fastotv

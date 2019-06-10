@@ -77,10 +77,6 @@ ChannelInfo PlaylistEntry::GetChannelInfo() const {
   return info_;
 }
 
-void PlaylistEntry::AddChatMessage(const ChatMessage& msg) {
-  rinfo_.AddMessage(msg);
-}
-
 void PlaylistEntry::SetRuntimeChannelInfo(const RuntimeChannelInfo& rinfo) {
   rinfo_ = rinfo;
 }

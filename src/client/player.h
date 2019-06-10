@@ -78,8 +78,6 @@ class Player : public fastoplayer::ISimplePlayer {
   virtual void HandleClientConfigChangeEvent(events::ClientConfigChangeEvent* event);
   virtual void HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event);
   virtual void HandleReceiveRuntimeChannelEvent(events::ReceiveRuntimeChannelEvent* event);
-  virtual void HandleSendChatMessageEvent(events::SendChatMessageEvent* event);
-  virtual void HandleReceiveChatMessageEvent(events::ReceiveChatMessageEvent* event);
 
   void HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) override;
   void HandleLircPressEvent(fastoplayer::gui::events::LircPressEvent* event) override;
@@ -100,9 +98,9 @@ class Player : public fastoplayer::ISimplePlayer {
 
  private:
   void SetVisiblePlaylist(bool visible);
-  void SetVisibleChat(bool visible);
 
   bool GetChannelDescription(size_t pos, ChannelDescription* descr) const;
+  bool GetChannelWatchers(size_t* watchers) const;
 
   void HandleKeyPad(uint8_t key);
   void FinishKeyPadInput();
@@ -114,19 +112,18 @@ class Player : public fastoplayer::ISimplePlayer {
   void DrawFooter();
   void DrawKeyPad();
   void DrawProgramsList();
-  void DrawChat();
+  void DrawWatchers();
 
   void StartShowFooter();
   SDL_Rect GetFooterRect() const;
 
+  SDL_Rect GetWatcherRect() const;
+
   void ToggleShowProgramsList();
-  void ToggleShowChat();
   SDL_Rect GetProgramsListRect() const;
   SDL_Rect GetChatRect() const;
   SDL_Rect GetHideButtonPlayListRect() const;
   SDL_Rect GetShowButtonPlayListRect() const;
-  SDL_Rect GetHideButtonChatRect() const;
-  SDL_Rect GetShowButtonChatRect() const;
 
   bool GetCurrentUrl(PlaylistEntry* url) const;
 
@@ -151,14 +148,9 @@ class Player : public fastoplayer::ISimplePlayer {
 
   fastoplayer::draw::SurfaceSaver* right_arrow_button_texture_;
   fastoplayer::draw::SurfaceSaver* left_arrow_button_texture_;
-  fastoplayer::draw::SurfaceSaver* up_arrow_button_texture_;
-  fastoplayer::draw::SurfaceSaver* down_arrow_button_texture_;
 
   fastoplayer::gui::Button* show_playlist_button_;
   fastoplayer::gui::Button* hide_playlist_button_;
-
-  fastoplayer::gui::Button* show_chat_button_;
-  fastoplayer::gui::Button* hide_chat_button_;
 
   IoService* controller_;
 
@@ -177,7 +169,6 @@ class Player : public fastoplayer::ISimplePlayer {
   fastoplayer::media::msec_t keypad_last_shown_;
 
   ProgramsWindow* programs_window_;
-  ChatWindow* chat_window_;
 
   AuthInfo auth_;
 };

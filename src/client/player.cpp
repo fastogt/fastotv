@@ -37,7 +37,6 @@
 #include "client/ioservice.h"  // for IoService
 #include "client/utils.h"
 
-#include "client/chat_window.h"
 #include "client/programs_window.h"
 
 #define IMG_OFFLINE_CHANNEL_PATH_RELATIVE "share/resources/offline_channel.png"
@@ -94,12 +93,8 @@ Player::Player(const std::string& app_directory_absolute_path,
       connection_error_texture_(nullptr),
       right_arrow_button_texture_(nullptr),
       left_arrow_button_texture_(nullptr),
-      up_arrow_button_texture_(nullptr),
-      down_arrow_button_texture_(nullptr),
       show_playlist_button_(nullptr),
       hide_playlist_button_(nullptr),
-      show_chat_button_(nullptr),
-      hide_chat_button_(nullptr),
       controller_(new IoService),
       current_stream_pos_(0),
       play_list_(),
@@ -111,7 +106,6 @@ Player::Player(const std::string& app_directory_absolute_path,
       keypad_label_(nullptr),
       keypad_last_shown_(0),
       programs_window_(nullptr),
-      chat_window_(nullptr),
       auth_() {
   fApp->Subscribe(this, events::BandwidthEstimationEvent::EventType);
 
@@ -124,49 +118,6 @@ Player::Player(const std::string& app_directory_absolute_path,
   fApp->Subscribe(this, events::ClientConfigChangeEvent::EventType);
   fApp->Subscribe(this, events::ReceiveChannelsEvent::EventType);
   fApp->Subscribe(this, events::ReceiveRuntimeChannelEvent::EventType);
-  fApp->Subscribe(this, events::SendChatMessageEvent::EventType);
-  fApp->Subscribe(this, events::ReceiveChatMessageEvent::EventType);
-
-  // chat window
-  chat_window_ = new ChatWindow(chat_color);
-  chat_window_->SetTextColor(text_color);
-  auto post_clicked_cb = [this](Uint8 button, const SDL_Point& position) {
-    UNUSED(position);
-    if (button == SDL_BUTTON_LEFT && auth_.IsValid()) {
-      PlaylistEntry url;
-      if (GetCurrentUrl(&url)) {
-        ChannelInfo ch = url.GetChannelInfo();
-        std::string text = chat_window_->GetInputText();
-        if (!text.empty()) {
-          chat_window_->ClearInputText();
-          ChatMessage msg(ch.GetID(), auth_.GetLogin(), text, ChatMessage::MESSAGE);
-          controller_->PostMessageToChat(msg);
-        }
-      }
-    }
-  };
-  chat_window_->SetPostClickedCallback(post_clicked_cb);
-
-  show_chat_button_ = new fastoplayer::gui::Button;
-  auto show_chat_cb = [this](Uint8 button, const SDL_Point& position) {
-    UNUSED(position);
-    if (button == SDL_BUTTON_LEFT) {
-      SetVisibleChat(true);
-    }
-  };
-  show_chat_button_->SetMouseClickedCallback(show_chat_cb);
-  show_chat_button_->SetTransparent(true);
-
-  hide_chat_button_ = new fastoplayer::gui::Button;
-  auto hide_chat_cb = [this](Uint8 button, const SDL_Point& position) {
-    UNUSED(position);
-    if (button == SDL_BUTTON_LEFT) {
-      SetVisibleChat(false);
-    }
-  };
-  hide_chat_button_->SetMouseClickedCallback(hide_chat_cb);
-  hide_chat_button_->SetTransparent(true);
-  SetVisibleChat(false);
 
   // descr window
   description_label_ = new fastoplayer::gui::IconLabel(failed_color);
@@ -223,9 +174,6 @@ Player::~Player() {
   destroy(&programs_window_);
   destroy(&keypad_label_);
   destroy(&description_label_);
-  destroy(&show_chat_button_);
-  destroy(&hide_chat_button_);
-  destroy(&chat_window_);
   destroy(&controller_);
 }
 
@@ -254,12 +202,6 @@ void Player::HandleEvent(event_t* event) {
   } else if (event->GetEventType() == events::ReceiveRuntimeChannelEvent::EventType) {
     events::ReceiveRuntimeChannelEvent* channel_event = static_cast<events::ReceiveRuntimeChannelEvent*>(event);
     HandleReceiveRuntimeChannelEvent(channel_event);
-  } else if (event->GetEventType() == events::SendChatMessageEvent::EventType) {
-    events::SendChatMessageEvent* chat_msg_event = static_cast<events::SendChatMessageEvent*>(event);
-    HandleSendChatMessageEvent(chat_msg_event);
-  } else if (event->GetEventType() == events::ReceiveChatMessageEvent::EventType) {
-    events::ReceiveChatMessageEvent* chat_msg_event = static_cast<events::ReceiveChatMessageEvent*>(event);
-    HandleReceiveChatMessageEvent(chat_msg_event);
   }
 
   base_class::HandleEvent(event);
@@ -289,8 +231,6 @@ void Player::HandlePreExecEvent(fastoplayer::gui::events::PreExecEvent* event) {
     connection_error_texture_ = MakeSurfaceFromImageRelativePath(IMG_CONNECTION_ERROR_PATH_RELATIVE);
     right_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_RIGHT_BUTTON_PATH_RELATIVE);
     left_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_LEFT_BUTTON_PATH_RELATIVE);
-    up_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_UP_BUTTON_PATH_RELATIVE);
-    down_arrow_button_texture_ = MakeSurfaceFromImageRelativePath(IMG_DOWN_BUTTON_PATH_RELATIVE);
     controller_->Start();
     SwitchToConnectMode();
   }
@@ -299,17 +239,7 @@ void Player::HandlePreExecEvent(fastoplayer::gui::events::PreExecEvent* event) {
   TTF_Font* font = GetFont();
   int h = fastoplayer::draw::CalcHeightFontPlaceByRowCount(font, 2);
 
-  int chat_row_height = h / 2;
-  chat_window_->SetFont(font);
-  chat_window_->SetRowHeight(chat_row_height);
-  int cmin_size_width = ChatWindow::login_field_width + ChatWindow::space_width +
-                        ChatWindow::login_field_width * 2;  // login + space + text
-  common::draw::Size chat_minsize = {cmin_size_width, chat_row_height};
-  chat_window_->SetMinimalSize(chat_minsize);
-
   const common::draw::Size icon_size(h, h);
-  show_chat_button_->SetIconSize(icon_size);
-  hide_chat_button_->SetIconSize(icon_size);
 
   description_label_->SetFont(font);
   keypad_label_->SetFont(font);
@@ -347,8 +277,6 @@ void Player::HandlePostExecEvent(fastoplayer::gui::events::PostExecEvent* event)
     destroy(&connection_error_texture_);
     destroy(&right_arrow_button_texture_);
     destroy(&left_arrow_button_texture_);
-    destroy(&up_arrow_button_texture_);
-    destroy(&down_arrow_button_texture_);
     play_list_.clear();
   }
   base_class::HandlePostExecEvent(event);
@@ -568,38 +496,7 @@ void Player::HandleReceiveRuntimeChannelEvent(events::ReceiveRuntimeChannelEvent
   }
 }
 
-void Player::HandleSendChatMessageEvent(events::SendChatMessageEvent* event) {
-  UNUSED(event);
-}
-
-void Player::HandleReceiveChatMessageEvent(events::ReceiveChatMessageEvent* event) {
-  ChatMessage message = event->GetInfo();
-  for (size_t i = 0; i < play_list_.size(); ++i) {
-    ChannelInfo cinfo = play_list_[i].GetChannelInfo();
-    if (cinfo.GetID() == message.GetChannelID()) {
-      RuntimeChannelInfo rinfo = play_list_[i].GetRuntimeChannelInfo();
-      rinfo.AddMessage(message);
-      size_t watchers = rinfo.GetWatchersCount();
-      if (message.GetType() == ChatMessage::CONTROL) {
-        if (IsEnterMessage(message)) {
-          rinfo.SetWatchersCount(watchers + 1);
-        } else if (IsLeaveMessage(message)) {
-          rinfo.SetWatchersCount(watchers - 1);
-        }
-      }
-      chat_window_->SetMessages(rinfo.GetMessages());
-      chat_window_->SetWatchers(rinfo.GetWatchersCount());
-      play_list_[i].SetRuntimeChannelInfo(rinfo);
-      break;
-    }
-  }
-}
-
 void Player::HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) {
-  if (chat_window_->IsActived()) {
-    return;
-  }
-
   if (programs_window_->IsActived()) {
     return;
   }
@@ -636,8 +533,6 @@ void Player::HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event)
     StartShowFooter();
   } else if (scan_code == SDL_SCANCODE_F5) {
     ToggleShowProgramsList();
-  } else if (scan_code == SDL_SCANCODE_F6) {
-    ToggleShowChat();
   } else if (scan_code == SDL_SCANCODE_UP) {
     if (is_acceptable_mods) {
       MoveToPreviousStream();
@@ -666,7 +561,7 @@ void Player::DrawInfo() {
   DrawFooter();
   DrawKeyPad();
   DrawProgramsList();
-  DrawChat();
+  DrawWatchers();
   base_class::DrawInfo();
 }
 
@@ -676,12 +571,19 @@ SDL_Rect Player::GetFooterRect() const {
           display_rect.w, footer_height};
 }
 
-void Player::ToggleShowProgramsList() {
-  SetVisiblePlaylist(!programs_window_->IsVisible());
+SDL_Rect Player::GetWatcherRect() const {
+  TTF_Font* font = GetFont();
+  if (!font) {
+    return fastoplayer::draw::empty_rect;
+  }
+
+  int font_height_2line = fastoplayer::draw::CalcHeightFontPlaceByRowCount(font, 2);
+  SDL_Rect hide_button_rect = {0, 0, font_height_2line, font_height_2line};
+  return hide_button_rect;
 }
 
-void Player::ToggleShowChat() {
-  SetVisibleChat(!chat_window_->IsVisible());
+void Player::ToggleShowProgramsList() {
+  SetVisiblePlaylist(!programs_window_->IsVisible());
 }
 
 SDL_Rect Player::GetProgramsListRect() const {
@@ -713,30 +615,10 @@ SDL_Rect Player::GetShowButtonPlayListRect() const {
   return show_button_rect;
 }
 
-SDL_Rect Player::GetHideButtonChatRect() const {
-  const common::draw::Size sz = hide_chat_button_->GetIconSize();
-  SDL_Rect chat_rect = GetChatRect();
-  SDL_Rect show_button_rect = {chat_rect.w / 2, chat_rect.y - sz.height, sz.width, sz.height};
-  return show_button_rect;
-}
-
-SDL_Rect Player::GetShowButtonChatRect() const {
-  const common::draw::Size sz = show_chat_button_->GetIconSize();
-  SDL_Rect chat_rect = GetChatRect();
-  SDL_Rect hide_button_rect = {chat_rect.w / 2, chat_rect.y + chat_rect.h - sz.height, sz.width, sz.height};
-  return hide_button_rect;
-}
-
 void Player::SetVisiblePlaylist(bool visible) {
   programs_window_->SetVisible(visible);
   hide_playlist_button_->SetVisible(visible);
   show_playlist_button_->SetVisible(!visible);
-}
-
-void Player::SetVisibleChat(bool visible) {
-  chat_window_->SetVisible(visible);
-  hide_chat_button_->SetVisible(visible);
-  show_chat_button_->SetVisible(!visible);
 }
 
 bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const {
@@ -746,6 +628,16 @@ bool Player::GetChannelDescription(size_t pos, ChannelDescription* descr) const 
   }
 
   *descr = play_list_[pos].GetChannelDescription();
+  return true;
+}
+
+bool Player::GetChannelWatchers(size_t* watchers) const {
+  if (!watchers || current_stream_pos_ >= play_list_.size()) {
+    DNOTREACHED();
+    return false;
+  }
+
+  *watchers = play_list_[current_stream_pos_].GetRuntimeChannelInfo().GetWatchersCount() + 1;
   return true;
 }
 
@@ -836,33 +728,21 @@ void Player::DrawProgramsList() {
   }
 }
 
-void Player::DrawChat() {
+void Player::DrawWatchers() {
   SDL_Renderer* render = GetRenderer();
   TTF_Font* font = GetFont();
   if (!font || !render) {
     return;
   }
 
-  PlaylistEntry url;
-  if (!GetCurrentUrl(&url)) {
-    return;
-  }
-
-  RuntimeChannelInfo rinfo = url.GetRuntimeChannelInfo();
-  if (!rinfo.IsChatEnabled()) {
-    return;
-  }
-
-  chat_window_->SetPostMessageEnabled(!rinfo.IsChatReadOnly());
-  const SDL_Rect chat_rect = GetChatRect();
-  chat_window_->SetRect(chat_rect);
-  chat_window_->Draw(render);
-
-  if (fApp->IsCursorVisible() && chat_window_->IsSizeEnough()) {
-    hide_chat_button_->SetRect(GetHideButtonChatRect());
-    hide_chat_button_->Draw(render);
-    show_chat_button_->SetRect(GetShowButtonChatRect());
-    show_chat_button_->Draw(render);
+  if (fApp->IsCursorVisible()) {
+    size_t watchers;
+    if (GetChannelWatchers(&watchers)) {
+      SDL_Rect watchers_rect = GetWatcherRect();
+      std::string watchers_str = common::ConvertToString(watchers);
+      fastoplayer::draw::FillRectColor(render, watchers_rect, fastoplayer::draw::red_color);
+      fastoplayer::draw::DrawCenterTextInRect(render, watchers_str, font, text_color, watchers_rect);
+    }
   }
 }
 
@@ -993,12 +873,6 @@ void Player::OnWindowCreated(SDL_Window* window, SDL_Renderer* render) {
   }
   if (left_arrow_button_texture_) {
     show_playlist_button_->SetIconTexture(left_arrow_button_texture_->GetTexture(render));
-  }
-  if (up_arrow_button_texture_) {
-    show_chat_button_->SetIconTexture(up_arrow_button_texture_->GetTexture(render));
-  }
-  if (down_arrow_button_texture_) {
-    hide_chat_button_->SetIconTexture(down_arrow_button_texture_->GetTexture(render));
   }
 
   base_class::OnWindowCreated(window, render);

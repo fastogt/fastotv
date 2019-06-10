@@ -42,16 +42,6 @@ SET(SOURCES_PROTOCOL
   ${SOURCE_ROOT}/protocol/types.cpp
 )
 
-SET(HEADERS_INNER
-  ${SOURCE_ROOT}/inner/inner_server_command_seq_parser.h
-  ${SOURCE_ROOT}/inner/inner_client.h
-)
-
-SET(SOURCES_INNER
-  ${SOURCE_ROOT}/inner/inner_server_command_seq_parser.cpp
-  ${SOURCE_ROOT}/inner/inner_client.cpp
-)
-
 SET(CLIENT_SERVER_COMMANDS_INFO_HEADERS
   ${SOURCE_ROOT}/commands_info/auth_info.h
   ${SOURCE_ROOT}/commands_info/server_info.h
@@ -62,7 +52,6 @@ SET(CLIENT_SERVER_COMMANDS_INFO_HEADERS
   ${SOURCE_ROOT}/commands_info/ping_info.h
   ${SOURCE_ROOT}/commands_info/channels_info.h
   ${SOURCE_ROOT}/commands_info/runtime_channel_info.h
-  ${SOURCE_ROOT}/commands_info/chat_message.h
 )
 SET(CLIENT_SERVER_COMMANDS_INFO_SOURCES
   ${SOURCE_ROOT}/commands_info/auth_info.cpp
@@ -74,17 +63,17 @@ SET(CLIENT_SERVER_COMMANDS_INFO_SOURCES
   ${SOURCE_ROOT}/commands_info/ping_info.cpp
   ${SOURCE_ROOT}/commands_info/channels_info.cpp
   ${SOURCE_ROOT}/commands_info/runtime_channel_info.cpp
-  ${SOURCE_ROOT}/commands_info/chat_message.cpp
 )
 
 SET(CLIENT_SERVER_SOURCES
   ${SOURCE_ROOT}/client_server_types.h
   ${SOURCE_ROOT}/client_server_types.cpp
+  ${SOURCE_ROOT}/client.h
+  ${SOURCE_ROOT}/client.cpp
 ) # server and client common sources
 
 SET(CLIENT_SERVER_SOURCES
   ${HEADERS_COMMANDS} ${SOURCES_COMMANDS} ${HEADERS_PROTOCOL} ${SOURCES_PROTOCOL}
-  ${HEADERS_INNER} ${SOURCES_INNER}
   ${HEADERS_SERIALIZER} ${SOURCES_SERIALIZER}
   ${CLIENT_SERVER_SOURCES}
 
@@ -101,13 +90,7 @@ ADD_LIBRARY(${PROJECT_CLIENT_SERVER_LIBRARY} STATIC ${CLIENT_SERVER_SOURCES})
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_CLIENT_SERVER_LIBRARY} PRIVATE ${PRIVATE_INCLUDE_DIRECTORIES_CLIENT_SERVER})
 TARGET_LINK_LIBRARIES(${PROJECT_CLIENT_SERVER_LIBRARY} ${CLIENT_SERVER_LIBRARIES})
 
-IF(BUILD_CLIENT)  # build client
-  ADD_SUBDIRECTORY(client)
-ENDIF(BUILD_CLIENT)
-
-IF(BUILD_SERVER)  # build server
-  ADD_SUBDIRECTORY(server)
-ENDIF(BUILD_SERVER)
+ADD_SUBDIRECTORY(client)
 
 IF (DEVELOPER_CHECK_STYLE)
   SET(CHECK_SOURCES_CLIENT_SERVER
@@ -138,13 +121,5 @@ IF(DEVELOPER_ENABLE_TESTS)
     )
     ADD_TEST_TARGET(${PROJECT_UNIT_TEST})
     SET_PROPERTY(TARGET ${PROJECT_UNIT_TEST} PROPERTY FOLDER "Unit tests")
-
-    #Mock tests
-    #ADD_EXECUTABLE(mock_tests
-      #${CMAKE_SOURCE_DIR}/tests/mock_tests/test_connections.cpp
-    #)
-    #TARGET_LINK_LIBRARIES(mock_tests gmock gmock_main ${CORE_LIBRARY} common)
-    #ADD_TEST_TARGET(mock_tests)
-    #SET_PROPERTY(TARGET mock_tests PROPERTY FOLDER "Mock tests")
   ENDIF(DEVELOPER_ENABLE_UNIT_TESTS)
 ENDIF(DEVELOPER_ENABLE_TESTS)

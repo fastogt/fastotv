@@ -68,8 +68,6 @@ typedef fastoplayer::gui::events::EventBase<CLIENT_CONFIG_CHANGE_EVENT, TvConfig
 typedef fastoplayer::gui::events::EventBase<CLIENT_RECEIVE_CHANNELS_EVENT, ChannelsInfo> ReceiveChannelsEvent;
 typedef fastoplayer::gui::events::EventBase<CLIENT_RECEIVE_RUNTIME_CHANNELS_EVENT, RuntimeChannelInfo>
     ReceiveRuntimeChannelEvent;
-typedef fastoplayer::gui::events::EventBase<CLIENT_CHAT_MESSAGE_SENT_EVENT, ChatMessage> SendChatMessageEvent;
-typedef fastoplayer::gui::events::EventBase<CLIENT_CHAT_MESSAGE_RECEIVE_EVENT, ChatMessage> ReceiveChatMessageEvent;
 typedef fastoplayer::gui::events::EventBase<CLIENT_BANDWIDTH_ESTIMATION_EVENT, BandwidtInfo> BandwidthEstimationEvent;
 
 }  // namespace events

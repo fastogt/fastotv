@@ -20,9 +20,9 @@
 
 #include <vector>
 
-#include "client_server_types.h"
+#include <common/serializer/json_serializer.h>
 
-#include "chat_message.h"
+#include "client_server_types.h"
 
 namespace fastotv {
 
@@ -54,27 +54,12 @@ inline bool operator==(const RuntimeChannelLiteInfo& left, const RuntimeChannelL
 class RuntimeChannelInfo : public RuntimeChannelLiteInfo {
  public:
   typedef RuntimeChannelLiteInfo base_class;
-  typedef std::vector<ChatMessage> messages_t;
   RuntimeChannelInfo();
-  RuntimeChannelInfo(stream_id channel_id,
-                     size_t watchers,
-                     ChannelType type,
-                     bool chat_enabled,
-                     bool read_only,
-                     const messages_t& msgs = messages_t());
-  ~RuntimeChannelInfo();
+  RuntimeChannelInfo(stream_id channel_id, size_t watchers, ChannelType type);
+  ~RuntimeChannelInfo() override;
 
   void SetWatchersCount(size_t count);
   size_t GetWatchersCount() const;
-
-  void SetChatEnabled(bool en);
-  bool IsChatEnabled() const;
-
-  void SetChatReadOnly(bool ro);
-  bool IsChatReadOnly() const;
-
-  void AddMessage(const ChatMessage& msg);
-  messages_t GetMessages() const;
 
   void SetChannelType(ChannelType ct);
   ChannelType GetChannelType() const;
@@ -88,9 +73,6 @@ class RuntimeChannelInfo : public RuntimeChannelLiteInfo {
  private:
   size_t watchers_;
   ChannelType type_;
-  bool chat_enabled_;
-  bool chat_read_only_;
-  messages_t messages_;
 };
 
 inline bool operator==(const RuntimeChannelInfo& left, const RuntimeChannelInfo& right) {

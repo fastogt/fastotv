@@ -18,19 +18,24 @@
 
 #pragma once
 
-#include <string>  // for string
+#include <common/libev/tcp/tcp_client.h>  // for TcpClient
 
-#include <common/net/types.h>  // for HostAndPort
+#include "protocol/protocol.h"
 
 namespace fastotv {
-namespace server {
-namespace redis {
 
-struct RedisConfig {
-  common::net::HostAndPort redis_host;
-  std::string redis_unix_socket;
+class Client : public common::libev::tcp::TcpClient {
+ public:
+  Client(common::libev::IoLoop* server, const common::net::socket_info& info);
+  ~Client() override;
+
+  const char* ClassName() const override;
 };
 
-}  // namespace redis
-}  // namespace server
+class ProtocoledClient : public protocol::ProtocolClient<Client> {
+ public:
+  typedef protocol::ProtocolClient<Client> base_class;
+  ProtocoledClient(common::libev::IoLoop* server, const common::net::socket_info& info);
+};
+
 }  // namespace fastotv

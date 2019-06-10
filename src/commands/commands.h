@@ -26,12 +26,10 @@
 #define CLIENT_GET_SERVER_INFO "get_server_info"
 #define CLIENT_GET_CHANNELS "get_channels"
 #define CLIENT_GET_RUNTIME_CHANNEL_INFO "get_runtime_channel_info"
-#define CLIENT_SEND_CHAT_MESSAGE "client_send_chat_message"
 
 // server commands
 #define SERVER_PING "server_ping"  // ping client
 #define SERVER_GET_CLIENT_INFO "get_client_info"
-#define SERVER_SEND_CHAT_MESSAGE "server_send_chat_message"
 
 // request
 // {"jsonrpc": "2.0", "method": "activate_request", "id": 11, "params": {"license_key":"%s"}}

@@ -27,9 +27,8 @@
 
 #include "client/types.h"         // for BandwidthHostType
 #include "client_server_types.h"  // for bandwidth_t
-#include "commands_info/chat_message.h"
 
-#include "inner/inner_server_command_seq_parser.h"  // for InnerServerComman...
+#include "protocol/types.h"
 
 namespace fastotv {
 namespace client {
@@ -43,7 +42,7 @@ struct StartConfig {
   AuthInfo ainf;
 };
 
-class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, public common::libev::IoLoopObserver {
+class InnerTcpHandler : public common::libev::IoLoopObserver {
   class InnerSTBClient;
 
  public:
@@ -52,13 +51,12 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
   };
 
   explicit InnerTcpHandler(const StartConfig& config);
-  virtual ~InnerTcpHandler();
+  ~InnerTcpHandler() override;
 
   void ActivateRequest();                          // should be execute in network thread
   void RequestServerInfo();                        // should be execute in network thread
   void RequestChannels();                          // should be execute in network thread
   void RequesRuntimeChannelInfo(stream_id sid);    // should be execute in network thread
-  void PostMessageToChat(const ChatMessage& msg);  // should be execute in network thread
   void Connect(common::libev::IoLoop* server);     // should be execute in network thread
   void DisConnect(common::Error err);              // should be execute in network thread
 
@@ -77,20 +75,21 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
 #endif
 
  protected:
-  common::ErrnoError HandleRequestCommand(fastotv::inner::InnerClient* client, protocol::request_t* req) override;
-  common::ErrnoError HandleResponceCommand(fastotv::inner::InnerClient* client, protocol::response_t* resp) override;
+  common::ErrnoError HandleInnerDataReceived(InnerSTBClient* client, const std::string& input_command);
+  common::ErrnoError HandleRequestCommand(InnerSTBClient* client, protocol::request_t* req);
+  common::ErrnoError HandleResponceCommand(InnerSTBClient* client, protocol::response_t* resp);
 
  private:
+  protocol::sequance_id_t NextRequestID();
+
   common::ErrnoError HandleRequestServerPing(InnerSTBClient* client, protocol::request_t* req);
   common::ErrnoError HandleRequestServerClientInfo(InnerSTBClient* client, protocol::request_t* req);
-  common::ErrnoError HandleRequestServerSendChatMessage(InnerSTBClient* client, protocol::request_t* req);
 
   common::ErrnoError HandleResponceClientActivate(InnerSTBClient* client, protocol::response_t* resp);
   common::ErrnoError HandleResponceClientPing(InnerSTBClient* client, protocol::response_t* resp);
   common::ErrnoError HandleResponceClientGetServerInfo(InnerSTBClient* client, protocol::response_t* resp);
   common::ErrnoError HandleResponceClientGetChannels(InnerSTBClient* client, protocol::response_t* resp);
   common::ErrnoError HandleResponceClientGetruntimeChannelInfo(InnerSTBClient* client, protocol::response_t* resp);
-  common::ErrnoError HandleResponceClientSendChatMessage(InnerSTBClient* client, protocol::response_t* resp);
 
   common::ErrnoError CreateAndConnectTcpBandwidthClient(common::libev::IoLoop* server,
                                                         const common::net::HostAndPort& host,
@@ -104,6 +103,7 @@ class InnerTcpHandler : public fastotv::inner::InnerServerCommandSeqParser, publ
   const StartConfig config_;
 
   bandwidth_t current_bandwidth_;
+  std::atomic<protocol::seq_id_t> id_;
 };
 
 }  // namespace inner

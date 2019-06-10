@@ -34,13 +34,11 @@ protocol::request_t ActiveRequest(protocol::sequance_id_t id, protocol::serializ
 protocol::request_t PingRequest(protocol::sequance_id_t id, protocol::serializet_params_t params);
 protocol::request_t GetServerInfoRequest(protocol::sequance_id_t id);
 protocol::request_t GetChannelsRequest(protocol::sequance_id_t id);
-protocol::request_t SendChatMessageRequest(protocol::sequance_id_t id, protocol::serializet_params_t params);
 protocol::request_t GetRuntimeChannelInfoRequest(protocol::sequance_id_t id, protocol::serializet_params_t params);
 
 // responce
 protocol::response_t PingResponseSuccess(protocol::sequance_id_t id);
 protocol::response_t SystemInfoResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params);
-protocol::response_t ServerSendChatMessageSuccsess(protocol::sequance_id_t id);
 
 }  // namespace client
 }  // namespace fastotv

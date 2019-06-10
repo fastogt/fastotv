@@ -1,5 +1,0 @@
-[server]
-host=@PROJECT_SERVER_HOST@:@PROJECT_SERVER_PORT@
-redis_server=localhost:6379
-redis_unix_path=/var/run/redis/redis.sock
-bandwidth_server=@PROJECT_SERVER_HOST@:5544

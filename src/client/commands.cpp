@@ -51,14 +51,6 @@ protocol::request_t GetChannelsRequest(protocol::sequance_id_t id) {
   return req;
 }
 
-protocol::request_t SendChatMessageRequest(protocol::sequance_id_t id, protocol::serializet_params_t params) {
-  protocol::request_t req;
-  req.id = id;
-  req.method = CLIENT_SEND_CHAT_MESSAGE;
-  req.params = params;
-  return req;
-}
-
 protocol::request_t GetRuntimeChannelInfoRequest(protocol::sequance_id_t id, protocol::serializet_params_t params) {
   protocol::request_t req;
   req.id = id;
@@ -74,10 +66,6 @@ protocol::response_t PingResponseSuccess(protocol::sequance_id_t id) {
 protocol::response_t SystemInfoResponceSuccsess(protocol::sequance_id_t id, protocol::serializet_params_t params) {
   return protocol::response_t::MakeMessage(id,
                                            common::protocols::json_rpc::JsonRPCMessage::MakeSuccessMessage(*params));
-}
-
-protocol::response_t ServerSendChatMessageSuccsess(protocol::sequance_id_t id) {
-  return protocol::response_t::MakeMessage(id, common::protocols::json_rpc::JsonRPCMessage::MakeSuccessMessage());
 }
 
 }  // namespace client

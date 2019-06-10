@@ -97,8 +97,6 @@ ENDIF(APPLE AND CMAKE_OSX_SYSROOT)
 
 ########################## Options #########################
 OPTION(CPACK_SUPPORT "Enable package support" ON)
-OPTION(BUILD_CLIENT "Build server for ${PROJECT_NAME_TITLE} project" ON)
-OPTION(BUILD_SERVER "Build server for ${PROJECT_NAME_TITLE} project" OFF)
 OPTION(LOG_TO_FILE "Logging to file" OFF)
 OPTION(DEVELOPER_ENABLE_TESTS "Enable tests for ${PROJECT_NAME_TITLE} project" OFF)
 OPTION(DEVELOPER_CHECK_STYLE "Enable check style for ${PROJECT_NAME_TITLE} project" OFF)

@@ -31,7 +31,7 @@
 #include "client/commands.h"
 #include "client/events/network_events.h"  // for BandwidtInfo, Con...
 
-#include "inner/inner_client.h"  // for InnerClient
+#include "client.h"  // for Client
 
 #include "commands_info/channels_info.h"  // for ChannelsInfo
 #include "commands_info/client_info.h"    // for ClientInfo
@@ -43,20 +43,20 @@ namespace fastotv {
 namespace client {
 namespace inner {
 
-class InnerTcpHandler::InnerSTBClient : public fastotv::inner::ProtocoledInnerClient {
+class InnerTcpHandler::InnerSTBClient : public fastotv::ProtocoledClient {
  public:
-  typedef fastotv::inner::ProtocoledInnerClient base_class;
+  typedef fastotv::ProtocoledClient base_class;
   InnerSTBClient(common::libev::IoLoop* server, const common::net::socket_info& info) : base_class(server, info) {}
 };
 
 InnerTcpHandler::InnerTcpHandler(const StartConfig& config)
-    : fastotv::inner::InnerServerCommandSeqParser(),
-      common::libev::IoLoopObserver(),
+    : common::libev::IoLoopObserver(),
       inner_connection_(nullptr),
       bandwidth_requests_(),
       ping_server_id_timer_(INVALID_TIMER_ID),
       config_(config),
-      current_bandwidth_(0) {}
+      current_bandwidth_(0),
+      id_() {}
 
 InnerTcpHandler::~InnerTcpHandler() {
   CHECK(bandwidth_requests_.empty());
@@ -80,7 +80,7 @@ void InnerTcpHandler::Moved(common::libev::IoLoop* server, common::libev::IoClie
 
 void InnerTcpHandler::Closed(common::libev::IoClient* client) {
   if (client == inner_connection_) {
-    fastotv::inner::InnerClient* iclient = static_cast<fastotv::inner::InnerClient*>(client);
+    InnerSTBClient* iclient = static_cast<InnerSTBClient*>(client);
     common::net::socket_info info = iclient->GetInfo();
     common::net::HostAndPort host(info.host(), info.port());
     events::ConnectInfo cinf(host);
@@ -185,6 +185,11 @@ void InnerTcpHandler::TimerEmited(common::libev::IoLoop* server, common::libev::
   }
 }
 
+protocol::sequance_id_t InnerTcpHandler::NextRequestID() {
+  const protocol::seq_id_t next_id = id_++;
+  return common::protocols::json_rpc::MakeRequestID(next_id);
+}
+
 #if LIBEV_CHILD_ENABLE
 void InnerTcpHandler::Accepted(common::libev::IoChild* child) {
   UNUSED(child);
@@ -257,29 +262,6 @@ void InnerTcpHandler::RequestChannels() {
   }
 }
 
-void InnerTcpHandler::PostMessageToChat(const ChatMessage& msg) {
-  if (!inner_connection_) {
-    return;
-  }
-
-  std::string msg_ser;
-  common::Error err_ser = msg.SerializeToString(&msg_ser);
-  if (err_ser) {
-    DEBUG_MSG_ERROR(err_ser, common::logging::LOG_LEVEL_ERR);
-    return;
-  }
-
-  const protocol::request_t channels_request = SendChatMessageRequest(NextRequestID(), msg_ser);
-  InnerSTBClient* client = inner_connection_;
-  common::ErrnoError err = client->WriteRequest(channels_request);
-  if (err) {
-    DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
-    err = client->Close();
-    DCHECK(!err) << "Close client error: " << err->GetDescription();
-    delete client;
-  }
-}
-
 void InnerTcpHandler::RequesRuntimeChannelInfo(stream_id sid) {
   if (!inner_connection_) {
     return;
@@ -333,7 +315,7 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
 void InnerTcpHandler::DisConnect(common::Error err) {
   UNUSED(err);
   if (inner_connection_) {
-    fastotv::inner::InnerClient* connection = inner_connection_;
+    InnerSTBClient* connection = inner_connection_;
     common::ErrnoError errn = connection->Close();
     DCHECK(!errn) << "Close connection error: " << errn->GetDescription();
     delete connection;
@@ -415,40 +397,43 @@ common::ErrnoError InnerTcpHandler::HandleRequestServerClientInfo(InnerSTBClient
   return client->WriteResponce(resp);
 }
 
-common::ErrnoError InnerTcpHandler::HandleRequestServerSendChatMessage(InnerSTBClient* client,
-                                                                       protocol::request_t* req) {
-  if (req->params) {
-    const char* params_ptr = req->params->c_str();
-    json_object* jmsg = json_tokener_parse(params_ptr);
-    if (!jmsg) {
-      return common::make_errno_error_inval();
-    }
-
-    ChatMessage msg;
-    common::Error err_des = msg.DeSerialize(jmsg);
-    json_object_put(jmsg);
-    if (err_des) {
-      const std::string err_str = err_des->GetDescription();
-      return common::make_errno_error(err_str, EAGAIN);
-    }
-
-    fApp->PostEvent(new events::ReceiveChatMessageEvent(this, msg));
-    const protocol::response_t resp = ServerSendChatMessageSuccsess(req->id);
-    return client->WriteResponce(resp);
+common::ErrnoError InnerTcpHandler::HandleInnerDataReceived(InnerSTBClient* client, const std::string& input_command) {
+  protocol::request_t* req = nullptr;
+  protocol::response_t* resp = nullptr;
+  common::Error err_parse = common::protocols::json_rpc::ParseJsonRPC(input_command, &req, &resp);
+  if (err_parse) {
+    const std::string err_str = err_parse->GetDescription();
+    return common::make_errno_error(err_str, EAGAIN);
   }
 
-  return common::make_errno_error_inval();
+  if (req) {
+    INFO_LOG() << "Received request: " << input_command;
+    common::ErrnoError err = HandleRequestCommand(client, req);
+    if (err) {
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
+    }
+    delete req;
+  } else if (resp) {
+    INFO_LOG() << "Received responce: " << input_command;
+    common::ErrnoError err = HandleResponceCommand(client, resp);
+    if (err) {
+      DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
+    }
+    delete resp;
+  } else {
+    DNOTREACHED();
+    return common::make_errno_error("Invalid command type.", EINVAL);
+  }
+
+  return common::ErrnoError();
 }
 
-common::ErrnoError InnerTcpHandler::HandleRequestCommand(fastotv::inner::InnerClient* client,
-                                                         protocol::request_t* req) {
+common::ErrnoError InnerTcpHandler::HandleRequestCommand(InnerSTBClient* client, protocol::request_t* req) {
   InnerSTBClient* sclient = static_cast<InnerSTBClient*>(client);
   if (req->method == SERVER_PING) {
     return HandleRequestServerPing(sclient, req);
   } else if (req->method == SERVER_GET_CLIENT_INFO) {
     return HandleRequestServerClientInfo(sclient, req);
-  } else if (req->method == SERVER_SEND_CHAT_MESSAGE) {
-    return HandleRequestServerSendChatMessage(sclient, req);
   }
 
   WARNING_LOG() << "Received unknown command: " << req->method;
@@ -575,32 +560,7 @@ common::ErrnoError InnerTcpHandler::HandleResponceClientGetruntimeChannelInfo(In
   return common::ErrnoError();
 }
 
-common::ErrnoError InnerTcpHandler::HandleResponceClientSendChatMessage(InnerSTBClient* client,
-                                                                        protocol::response_t* resp) {
-  UNUSED(client);
-  if (resp->IsMessage()) {
-    const char* params_ptr = resp->message->result.c_str();
-    json_object* jmsg_info = json_tokener_parse(params_ptr);
-    if (!jmsg_info) {
-      return common::make_errno_error_inval();
-    }
-
-    ChatMessage msg;
-    common::Error err_des = msg.DeSerialize(jmsg_info);
-    json_object_put(jmsg_info);
-    if (err_des) {
-      const std::string err_str = err_des->GetDescription();
-      return common::make_errno_error(err_str, EAGAIN);
-    }
-
-    fApp->PostEvent(new events::SendChatMessageEvent(this, msg));
-    return common::ErrnoError();
-  }
-  return common::ErrnoError();
-}
-
-common::ErrnoError InnerTcpHandler::HandleResponceCommand(fastotv::inner::InnerClient* client,
-                                                          protocol::response_t* resp) {
+common::ErrnoError InnerTcpHandler::HandleResponceCommand(InnerSTBClient* client, protocol::response_t* resp) {
   protocol::request_t req;
   InnerSTBClient* sclient = static_cast<InnerSTBClient*>(client);
   if (sclient->PopRequestByID(resp->id, &req)) {
@@ -614,8 +574,6 @@ common::ErrnoError InnerTcpHandler::HandleResponceCommand(fastotv::inner::InnerC
       return HandleResponceClientGetChannels(sclient, resp);
     } else if (req.method == CLIENT_GET_RUNTIME_CHANNEL_INFO) {
       return HandleResponceClientGetruntimeChannelInfo(sclient, resp);
-    } else if (req.method == CLIENT_SEND_CHAT_MESSAGE) {
-      return HandleResponceClientSendChatMessage(sclient, resp);
     } else {
       WARNING_LOG() << "HandleResponceServiceCommand not handled command: " << req.method;
     }
