@@ -52,11 +52,12 @@ class Player : public fastoplayer::ISimplePlayer {
   typedef fastoplayer::ISimplePlayer base_class;
   enum { footer_height = 60, keypad_height = 30, keypad_width = 60, min_key_pad_size = 0, max_keypad_size = 999 };
   Player(const std::string& app_directory_absolute_path,  // for runtime data (cache)
+         const commands_info::AuthInfo& ainf,
          const fastoplayer::PlayerOptions& options,
          const fastoplayer::media::AppOptions& opt,
          const fastoplayer::media::ComplexOptions& copt);
 
-  ~Player();
+  ~Player() override;
 
   std::string GetCurrentUrlName() const override;  // return Unknown if not found
   fastoplayer::media::AppOptions GetStreamOptions() const;

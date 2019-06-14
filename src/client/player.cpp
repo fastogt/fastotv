@@ -85,6 +85,7 @@ const SDL_Color Player::chat_color = fastoplayer::ISimplePlayer::stream_statisti
 const SDL_Color Player::info_channel_color = {98, 118, 217, Uint8(SDL_ALPHA_OPAQUE * 0.5)};
 
 Player::Player(const std::string& app_directory_absolute_path,
+               const commands_info::AuthInfo& ainf,
                const fastoplayer::PlayerOptions& options,
                const fastoplayer::media::AppOptions& opt,
                const fastoplayer::media::ComplexOptions& copt)
@@ -95,7 +96,7 @@ Player::Player(const std::string& app_directory_absolute_path,
       left_arrow_button_texture_(nullptr),
       show_playlist_button_(nullptr),
       hide_playlist_button_(nullptr),
-      controller_(new IoService),
+      controller_(new IoService(ainf)),
       current_stream_pos_(0),
       play_list_(),
       description_label_(nullptr),

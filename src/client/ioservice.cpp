@@ -122,7 +122,8 @@ class PrivateHandler : public inner::InnerTcpHandler {
 };
 }  // namespace
 
-IoService::IoService() : ILoopController(), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
+IoService::IoService(const commands_info::AuthInfo& ainf)
+    : ILoopController(), ainf_(ainf), loop_thread_(THREAD_MANAGER()->CreateThread(&IoService::Exec, this)) {}
 
 bool IoService::IsRunning() const {
   return loop_->IsRunning();
@@ -190,7 +191,7 @@ void IoService::RequesRuntimeChannelInfo(stream_id sid) const {
 common::libev::IoLoopObserver* IoService::CreateHandler() {
   inner::StartConfig conf;
   conf.inner_host = common::net::HostAndPort(PROJECT_SERVER_HOST, PROJECT_SERVER_PORT);
-  conf.ainf = commands_info::AuthInfo(USER_LOGIN, USER_PASSWORD, USER_DEVICE_ID);
+  conf.ainf = ainf_;
   PrivateHandler* handler = new PrivateHandler(conf);
   return handler;
 }

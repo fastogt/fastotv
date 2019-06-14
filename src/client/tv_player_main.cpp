@@ -56,7 +56,7 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
     return EXIT_FAILURE;
   }
 
-  fastoplayer::TVConfig main_options;
+  fastotv::client::FastoTVConfig main_options;
   common::ErrnoError err = fastotv::client::load_config_file(config_absolute_path, &main_options);
   if (err) {
     return EXIT_FAILURE;
@@ -78,8 +78,8 @@ int main_application(int argc, char** argv, const std::string& app_directory_abs
   av_dict_set(&sws_dict, "flags", "bicubic", 0);
 
   fastoplayer::media::ComplexOptions copt(swr_opts, sws_dict, format_opts, codec_opts);
-  auto player = new fastotv::client::Player(app_directory_absolute_path, main_options.player_options,
-                                            main_options.app_options, copt);
+  auto player = new fastotv::client::Player(app_directory_absolute_path, main_options.auth_options,
+                                            main_options.player_options, main_options.app_options, copt);
   res = app.Exec();
   main_options.player_options = player->GetOptions();
   destroy(&player);

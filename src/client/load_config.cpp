@@ -35,6 +35,11 @@
 #include "client/cmdutils.h"
 #include "client/types.h"  // for Size
 
+#define CONFIG_USER_OPTIONS "user_options"
+#define CONFIG_USER_OPTIONS_LOGIN_FIELD "login"
+#define CONFIG_USER_OPTIONS_PASSWORD_FIELD "password"
+#define CONFIG_USER_OPTIONS_DEVICE_ID_FIELD "device_id"
+
 #define CONFIG_MAIN_OPTIONS "main_options"
 #define CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "loglevel"
 #define CONFIG_MAIN_OPTIONS_POWEROFF_ON_EXIT_FIELD "poweroffonexit"
@@ -73,6 +78,11 @@
 // deinterlace output: -vf yadif
 
 /*
+  [user_options]
+  login=anon@fastogt.com
+  password=md5_hash
+  device_id=unique_id
+
   [main_options]
   loglevel=INFO ["EMERG", "ALLERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG"]
   poweroffonexit=false [true,false]
@@ -112,14 +122,23 @@ namespace client {
 namespace {
 
 int ini_handler_fasto(void* user, const char* section, const char* name, const char* value) {
-  fastoplayer::TVConfig* pconfig = reinterpret_cast<fastoplayer::TVConfig*>(user);
+  FastoTVConfig* pconfig = reinterpret_cast<FastoTVConfig*>(user);
   size_t value_len = strlen(value);
   if (value_len == 0) {  // skip empty fields
     return 0;
   }
 
 #define MATCH(s, n) strcmp(section, s) == 0 && strcmp(name, n) == 0
-  if (MATCH(CONFIG_MAIN_OPTIONS, CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD)) {
+  if (MATCH(CONFIG_USER_OPTIONS, CONFIG_USER_OPTIONS_LOGIN_FIELD)) {
+    pconfig->auth_options.SetLogin(value);
+    return 1;
+  } else if (MATCH(CONFIG_USER_OPTIONS, CONFIG_USER_OPTIONS_PASSWORD_FIELD)) {
+    pconfig->auth_options.SetPassword(value);
+    return 1;
+  } else if (MATCH(CONFIG_USER_OPTIONS, CONFIG_USER_OPTIONS_DEVICE_ID_FIELD)) {
+    pconfig->auth_options.SetDeviceID(value);
+    return 1;
+  } else if (MATCH(CONFIG_MAIN_OPTIONS, CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD)) {
     common::logging::LOG_LEVEL lg;
     if (common::logging::text_to_log_level(value, &lg)) {
       pconfig->loglevel = lg;
@@ -289,7 +308,7 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
 }
 }  // namespace
 
-common::ErrnoError load_config_file(const std::string& config_absolute_path, fastoplayer::TVConfig* options) {
+common::ErrnoError load_config_file(const std::string& config_absolute_path, FastoTVConfig* options) {
   if (!options) {
     return common::make_errno_error_inval();
   }
@@ -310,7 +329,7 @@ common::ErrnoError load_config_file(const std::string& config_absolute_path, fas
   return common::ErrnoError();
 }
 
-common::ErrnoError save_config_file(const std::string& config_absolute_path, fastoplayer::TVConfig* options) {
+common::ErrnoError save_config_file(const std::string& config_absolute_path, FastoTVConfig* options) {
   if (!options || config_absolute_path.empty()) {
     return common::make_errno_error_inval();
   }
@@ -320,6 +339,11 @@ common::ErrnoError save_config_file(const std::string& config_absolute_path, fas
   if (err) {
     return err;
   }
+
+  config_save_file.Write("[" CONFIG_USER_OPTIONS "]\n");
+  config_save_file.WriteFormated(CONFIG_USER_OPTIONS_LOGIN_FIELD "=%s\n", options->auth_options.GetLogin());
+  config_save_file.WriteFormated(CONFIG_USER_OPTIONS_PASSWORD_FIELD "=%s\n", options->auth_options.GetPassword());
+  config_save_file.WriteFormated(CONFIG_USER_OPTIONS_DEVICE_ID_FIELD "=%s\n", options->auth_options.GetDeviceID());
 
   config_save_file.Write("[" CONFIG_MAIN_OPTIONS "]\n");
   config_save_file.WriteFormated(CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "=%s\n",

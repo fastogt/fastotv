@@ -25,6 +25,7 @@
 #include <common/libev/loop_controller.h>   // for ILoopController
 
 #include <fastotv/client_server_types.h>
+#include <fastotv/commands_info/auth_info.h>
 
 namespace common {
 namespace threads {
@@ -38,8 +39,8 @@ namespace client {
 
 class IoService : public common::libev::ILoopController {
  public:
-  IoService();
-  virtual ~IoService();
+  IoService(const commands_info::AuthInfo& ainf);
+  ~IoService() override;
 
   bool IsRunning() const;
   void Start();
@@ -61,6 +62,7 @@ class IoService : public common::libev::ILoopController {
   void HandleStarted() override;
   void HandleStopped() override;
 
+  const commands_info::AuthInfo ainf_;
   std::shared_ptr<common::threads::Thread<int>> loop_thread_;
 };
 

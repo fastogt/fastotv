@@ -20,13 +20,17 @@
 
 #include <player/tv_config.h>
 
+#include <fastotv/commands_info/auth_info.h>
+
 namespace fastotv {
 namespace client {
 
-common::ErrnoError load_config_file(const std::string& config_absolute_path,
-                                    fastoplayer::TVConfig* options) WARN_UNUSED_RESULT;
-common::ErrnoError save_config_file(const std::string& config_absolute_path,
-                                    fastoplayer::TVConfig* options) WARN_UNUSED_RESULT;
+struct FastoTVConfig : public fastoplayer::TVConfig {
+  commands_info::AuthInfo auth_options;
+};
+
+common::ErrnoError load_config_file(const std::string& config_absolute_path, FastoTVConfig* options) WARN_UNUSED_RESULT;
+common::ErrnoError save_config_file(const std::string& config_absolute_path, FastoTVConfig* options) WARN_UNUSED_RESULT;
 
 }  // namespace client
 }  // namespace fastotv
