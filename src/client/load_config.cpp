@@ -40,6 +40,9 @@
 #define CONFIG_USER_OPTIONS_PASSWORD_FIELD "password"
 #define CONFIG_USER_OPTIONS_DEVICE_ID_FIELD "device_id"
 
+#define CONFIG_SERVER_OPTIONS "server_options"
+#define CONFIG_SERVER_OPTIONS_SERVER_FIELD "server"
+
 #define CONFIG_MAIN_OPTIONS "main_options"
 #define CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "loglevel"
 #define CONFIG_MAIN_OPTIONS_POWEROFF_ON_EXIT_FIELD "poweroffonexit"
@@ -82,6 +85,9 @@
   login=anon@fastogt.com
   password=md5_hash
   device_id=unique_id
+
+  [server_options]
+  server=fastotv.com:6000
 
   [main_options]
   loglevel=INFO ["EMERG", "ALLERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG"]
@@ -137,6 +143,12 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
     return 1;
   } else if (MATCH(CONFIG_USER_OPTIONS, CONFIG_USER_OPTIONS_DEVICE_ID_FIELD)) {
     pconfig->auth_options.SetDeviceID(value);
+    return 1;
+  } else if (MATCH(CONFIG_SERVER_OPTIONS, CONFIG_SERVER_OPTIONS_SERVER_FIELD)) {
+    common::net::HostAndPort hs;
+    if (common::ConvertFromString(value, &hs)) {
+      pconfig->server = hs;
+    }
     return 1;
   } else if (MATCH(CONFIG_MAIN_OPTIONS, CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD)) {
     common::logging::LOG_LEVEL lg;
@@ -344,6 +356,10 @@ common::ErrnoError save_config_file(const std::string& config_absolute_path, Fas
   config_save_file.WriteFormated(CONFIG_USER_OPTIONS_LOGIN_FIELD "=%s\n", options->auth_options.GetLogin());
   config_save_file.WriteFormated(CONFIG_USER_OPTIONS_PASSWORD_FIELD "=%s\n", options->auth_options.GetPassword());
   config_save_file.WriteFormated(CONFIG_USER_OPTIONS_DEVICE_ID_FIELD "=%s\n", options->auth_options.GetDeviceID());
+
+  config_save_file.Write("[" CONFIG_SERVER_OPTIONS "]\n");
+  const std::string host_and_port_str = common::ConvertToString(options->server);
+  config_save_file.WriteFormated(CONFIG_SERVER_OPTIONS_SERVER_FIELD "=%s\n", host_and_port_str);
 
   config_save_file.Write("[" CONFIG_MAIN_OPTIONS "]\n");
   config_save_file.WriteFormated(CONFIG_MAIN_OPTIONS_LOG_LEVEL_FIELD "=%s\n",

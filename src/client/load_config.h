@@ -17,6 +17,7 @@
 */
 
 #include <common/error.h>  // for Error
+#include <common/net/types.h>
 
 #include <player/tv_config.h>
 
@@ -27,6 +28,7 @@ namespace client {
 
 struct FastoTVConfig : public fastoplayer::TVConfig {
   commands_info::AuthInfo auth_options;
+  common::net::HostAndPort server;
 };
 
 common::ErrnoError load_config_file(const std::string& config_absolute_path, FastoTVConfig* options) WARN_UNUSED_RESULT;

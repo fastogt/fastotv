@@ -23,6 +23,7 @@
 #include <common/libev/io_loop.h>           // for IoLoop
 #include <common/libev/io_loop_observer.h>  // for IoLoopObserver
 #include <common/libev/loop_controller.h>   // for ILoopController
+#include <common/net/types.h>
 
 #include <fastotv/client_server_types.h>
 #include <fastotv/commands_info/auth_info.h>
@@ -63,6 +64,7 @@ class IoService : public common::libev::ILoopController {
   void HandleStopped() override;
 
   const commands_info::AuthInfo ainf_;
+  const common::net::HostAndPort server_host_;
   std::shared_ptr<common::threads::Thread<int>> loop_thread_;
 };
 
