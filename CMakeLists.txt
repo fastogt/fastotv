@@ -7,7 +7,7 @@ SET(BRANDING_PROJECT_BUILD_TYPE_VERSION "rc" CACHE STRING "Build version type fo
   #possible variables: alfa, beta, rc, release
 
 SET(BRANDING_PROJECT_DOMAIN "https://www.fastotv.com" CACHE STRING "Branding domain url for ${BRANDING_PROJECT_NAME}") #default
-SET(BRANDING_PROJECT_DOWNLOAD_LINK "https://fastotv.com/anonim_downloads" CACHE STRING "Branding download root url for ${BRANDING_PROJECT_NAME}")
+SET(BRANDING_PROJECT_DOWNLOAD_LINK "https://fastotv.com/downloads" CACHE STRING "Branding download root url for ${BRANDING_PROJECT_NAME}")
 SET(BRANDING_PROJECT_COMPANYNAME "FastoGT" CACHE STRING "Company name for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_COMPANYNAME_DOMAIN "https://www.fastogt.com" CACHE STRING "Internet domain name company for ${BRANDING_PROJECT_NAME}") #default
 SET(BRANDING_PROJECT_MAINTAINER_MAIL "atopilski@fastogt.com" CACHE STRING "Internet mail address mainteiner of ${BRANDING_PROJECT_NAME}") #default
