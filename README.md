@@ -22,6 +22,7 @@ You can download compiled version (for Mac OS X, Windows, FreeBSD and Linux) fro
 [FastoTV](https://www.fastotv.com)
 
 ### [Android PlayStore](https://play.google.com/store/apps/details?id=com.fastotv)
+### [Apple Store](https://apps.apple.com/us/app/fastotv/id1486741808)
 
 Contribute
 ==========
