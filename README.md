@@ -7,7 +7,7 @@ About FastoTV
 
 FastoTV - is a crossplatform free iptv/stream player. <br />
 
-### Amdroid/iPhone/PC/RaspberryPI/BananaPI/OrangePI:
+### PC/RaspberryPI/BananaPI/OrangePI:
 ![](https://fastotv.com/api/static/images/promo/pc.png)
 
 ### Android Mobile/Tablet:
