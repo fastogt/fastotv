@@ -13,10 +13,14 @@ FastoTV - is a crossplatform free iptv/stream player. <br />
 ### Android Mobile/Tablet:
 ![](https://fastotv.com/api/static/images/promo/android.png)
 
-Visit our site: [FastoTV](https://www.fastotv.com)
+### Android TV:
+![](https://fastotv.com/api/static/images/promo/android_tv.png)
 
-### iPhone/iPad:
-![](https://fastotv.com/api/static/images/promo/iphone.png)
+### iPhone:
+![](https://fastotv.com/api/static/images/promo/iphone.jpeg)
+
+### iPad:
+![](https://fastotv.com/api/static/images/promo/ipad.png)
 
 Visit our site: [FastoTV](https://www.fastotv.com)
 
