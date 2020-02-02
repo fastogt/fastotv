@@ -1,0 +1,8 @@
+[main_options]
+poweroffonexit=@CONFIG_POWER_OFF_ON_EXIT@
+[player_options]
+[app_options]
+hwaccel=@CONFIG_HWACCEL_METHOD@
+[player_options]
+width=@CONFIG_WIDTH@
+height=@CONFIG_HEIGHT@
