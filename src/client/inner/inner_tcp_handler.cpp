@@ -235,7 +235,7 @@ common::ErrnoError InnerTcpHandler::HandleRequestServerPing(Client* client, cons
       return common::make_errno_error_inval();
     }
 
-    commands_info::ServerPingInfo server_ping_info;
+    common::daemon::commands::ServerPingInfo server_ping_info;
     common::Error err_des = server_ping_info.DeSerialize(jstop);
     json_object_put(jstop);
     if (err_des) {
@@ -354,7 +354,7 @@ common::ErrnoError InnerTcpHandler::HandleResponceClientPing(Client* client, con
       return common::make_errno_error_inval();
     }
 
-    commands_info::ServerPingInfo server_ping_info;
+    common::daemon::commands::ServerPingInfo server_ping_info;
     common::Error err_des = server_ping_info.DeSerialize(jserver_ping);
     json_object_put(jserver_ping);
     if (err_des) {
