@@ -315,7 +315,7 @@ class BuildRequest(build_utils.BuildRequest):
 
         compiler_flags = self.device_.ffmpeg_compile_flags()
         compiler_flags.extend(ffmpeg_platform_args)
-        self._clone_and_build_via_configure(build_utils.generate_fastogt_git_path('ffmpeg'), compiler_flags,
+        self._clone_and_build_via_configure(build_utils.generate_fastogt_github_path('ffmpeg'), compiler_flags,
                                             use_platform_flags=False)
 
     def build_sdl2(self, version):
@@ -344,7 +344,7 @@ class BuildRequest(build_utils.BuildRequest):
                                                      '--disable-freetypetest'])
 
     def build_fastoplayer(self):
-        self._clone_and_build_via_cmake(build_utils.generate_fastogt_git_path('fastoplayer'), [])
+        self._clone_and_build_via_cmake(build_utils.generate_fastogt_github_path('fastoplayer'), [])
 
 
 if __name__ == "__main__":
