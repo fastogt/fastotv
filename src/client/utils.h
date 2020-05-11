@@ -21,13 +21,13 @@
 #include <functional>
 
 #include <common/types.h>
-#include <common/uri/url.h>
+#include <common/uri/gurl.h>
 
 namespace fastotv {
 namespace client {
 
 typedef std::function<bool()> quit_callback_t;
-bool DownloadFileToBuffer(const common::uri::Url& uri, common::char_buffer_t* buff, quit_callback_t cb);
+bool DownloadFileToBuffer(const common::uri::GURL& uri, common::char_buffer_t* buff, quit_callback_t cb);
 
 }  // namespace client
 }  // namespace fastotv

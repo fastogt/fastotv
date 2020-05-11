@@ -46,8 +46,8 @@ class CallbackHolder {
 };
 }  // namespace
 
-bool DownloadFileToBuffer(const common::uri::Url& uri, common::char_buffer_t* buff, quit_callback_t cb) {
-  if (!uri.IsValid() || !buff || !cb) {
+bool DownloadFileToBuffer(const common::uri::GURL& uri, common::char_buffer_t* buff, quit_callback_t cb) {
+  if (!uri.is_valid() || !buff || !cb) {
     return false;
   }
 

@@ -488,7 +488,7 @@ void Player::LoadChannelIcon(const PlaylistEntry& entry) {
   }
 
   commands_info::EpgInfo epg = entry.GetChannelInfo().GetEpg();
-  common::uri::Url uri = epg.GetIconUrl();
+  common::uri::GURL uri = epg.GetIconUrl();
   bool is_unknown_icon = commands_info::EpgInfo::IsUnknownIconUrl(uri);
   if (is_unknown_icon) {
     return;
@@ -941,7 +941,7 @@ void Player::DrawInitStatus() {
 }
 
 fastoplayer::media::VideoState* Player::CreateStream(stream_id_t sid,
-                                                     const common::uri::Url& uri,
+                                                     const common::uri::GURL& uri,
                                                      fastoplayer::media::AppOptions opt,
                                                      fastoplayer::media::ComplexOptions copt) {
   controller_->RequesRuntimeChannelInfo(sid);

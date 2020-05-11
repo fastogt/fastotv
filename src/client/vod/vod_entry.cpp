@@ -44,7 +44,7 @@ std::string VodEntry::GetCacheDir() const {
 
 std::string VodEntry::GetIconPath() const {
   commands_info::MovieInfo movie = info_.GetMovieInfo();
-  common::uri::Url uri = movie.GetPreviewIcon();
+  common::uri::GURL uri = movie.GetPreviewIcon();
   bool is_unknown_icon = commands_info::MovieInfo::IsUnknownIconUrl(uri);
   if (is_unknown_icon) {
     const std::string absolute_source_dir =

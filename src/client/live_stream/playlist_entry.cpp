@@ -44,7 +44,7 @@ std::string PlaylistEntry::GetCacheDir() const {
 
 std::string PlaylistEntry::GetIconPath() const {
   commands_info::EpgInfo epg = info_.GetEpg();
-  common::uri::Url uri = epg.GetIconUrl();
+  common::uri::GURL uri = epg.GetIconUrl();
   bool is_unknown_icon = commands_info::EpgInfo::IsUnknownIconUrl(uri);
   if (is_unknown_icon) {
     const std::string absolute_source_dir =

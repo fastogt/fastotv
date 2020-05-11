@@ -93,7 +93,7 @@ class Player : public fastoplayer::ISimplePlayer {
   void SetStatus(States new_state) override;
 
   fastoplayer::media::VideoState* CreateStream(stream_id_t sid,
-                                               const common::uri::Url& uri,
+                                               const common::uri::GURL& uri,
                                                fastoplayer::media::AppOptions opt,
                                                fastoplayer::media::ComplexOptions copt) override;
 
