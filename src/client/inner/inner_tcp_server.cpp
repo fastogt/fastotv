@@ -18,8 +18,6 @@
 
 #include "client/inner/inner_tcp_server.h"
 
-#include <common/libev/tcp/tcp_client.h>
-
 namespace fastotv {
 namespace client {
 namespace inner {
@@ -31,8 +29,11 @@ const char* InnerTcpServer::ClassName() const {
   return "InnerTcpServer";
 }
 
-common::libev::IoClient* InnerTcpServer::CreateClient(const common::net::socket_info& info) {
-  return new common::libev::tcp::TcpClient(this, info);
+bool InnerTcpServer::IsCanBeRegistered(common::libev::IoClient* client) const {
+  if (!client) {
+    return false;
+  }
+  return true;
 }
 
 common::libev::IoChild* InnerTcpServer::CreateChild() {

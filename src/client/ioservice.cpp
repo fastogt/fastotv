@@ -65,8 +65,10 @@ class PrivateHandler : public inner::InnerTcpHandler {
     if (err) {
       DEBUG_MSG_ERROR(err, common::logging::LOG_LEVEL_ERR);
     } else {
-      client_ = new inputs::LircInputClient(server, fd, lcd);
-      server->RegisterClient(client_);
+      inputs::LircInputClient* client = new inputs::LircInputClient(server, fd, lcd);
+      if (server->RegisterClient(client)) {
+        client_ = client;
+      }
     }
 #endif
     base_class::PreLooped(server);

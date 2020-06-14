@@ -20,12 +20,6 @@
 
 #include <common/libev/io_loop.h>  // for IoLoop
 
-namespace common {
-namespace libev {
-class IoClient;
-}
-}  // namespace common
-
 namespace fastotv {
 namespace client {
 namespace inner {
@@ -35,8 +29,9 @@ class InnerTcpServer : public common::libev::IoLoop {
   explicit InnerTcpServer(common::libev::IoLoopObserver* observer);
   const char* ClassName() const override;
 
+  bool IsCanBeRegistered(common::libev::IoClient* client) const override;
+
  protected:
-  common::libev::IoClient* CreateClient(const common::net::socket_info& info) override;
   common::libev::IoChild* CreateChild() override;
 };
 
