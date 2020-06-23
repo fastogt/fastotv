@@ -213,9 +213,10 @@ void InnerTcpHandler::Connect(common::libev::IoLoop* server) {
 
   Client* connection = new Client(server, client_info);
   inner_connection_ = connection;
-  server->RegisterClient(connection);
-  events::ConnectInfo cinf(server_host_);
-  fApp->PostEvent(new events::ClientConnectedEvent(this, cinf));
+  if (server->RegisterClient(connection)) {
+    events::ConnectInfo cinf(server_host_);
+    fApp->PostEvent(new events::ClientConnectedEvent(this, cinf));
+  }
 }
 
 void InnerTcpHandler::DisConnect(common::Error err) {

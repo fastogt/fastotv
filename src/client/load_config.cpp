@@ -164,13 +164,13 @@ int ini_handler_fasto(void* user, const char* section, const char* name, const c
   } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_WIDTH_FIELD)) {
     int width;
     if (parse_number(value, -1, std::numeric_limits<int>::max(), &width)) {
-      pconfig->player_options.screen_size.width = width;
+      pconfig->player_options.screen_size.set_width(width);
     }
     return 1;
   } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD)) {
     int height;
     if (parse_number(value, -1, std::numeric_limits<int>::max(), &height)) {
-      pconfig->player_options.screen_size.height = height;
+      pconfig->player_options.screen_size.set_width(height);
     }
     return 1;
   } else if (MATCH(CONFIG_PLAYER_OPTIONS, CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD)) {
@@ -405,9 +405,10 @@ common::ErrnoError save_config_file(const std::string& config_absolute_path, Fas
                                  common::ConvertToString(options->app_options.autorotate));
 
   config_save_file.Write("[" CONFIG_PLAYER_OPTIONS "]\n");
-  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_WIDTH_FIELD "=%d\n", options->player_options.screen_size.width);
+  config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_WIDTH_FIELD "=%d\n",
+                                 options->player_options.screen_size.width());
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_HEIGHT_FIELD "=%d\n",
-                                 options->player_options.screen_size.height);
+                                 options->player_options.screen_size.height());
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_FULLSCREEN_FIELD "=%s\n",
                                  common::ConvertToString(options->player_options.is_full_screen));
   config_save_file.WriteFormated(CONFIG_PLAYER_OPTIONS_VOLUME_FIELD "=%d\n", options->player_options.audio_volume);

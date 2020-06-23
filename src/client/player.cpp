@@ -670,14 +670,14 @@ SDL_Rect Player::GetProgramsListRect() const {
 SDL_Rect Player::GetHideButtonPlayListRect() const {
   const common::draw::Size sz = hide_playlist_button_->GetIconSize();
   SDL_Rect prog_rect = GetProgramsListRect();
-  SDL_Rect hide_button_rect = {prog_rect.x + prog_rect.w, prog_rect.h / 2 - sz.height / 2, sz.width, sz.height};
+  SDL_Rect hide_button_rect = {prog_rect.x + prog_rect.w, prog_rect.h / 2 - sz.height() / 2, sz.width(), sz.height()};
   return hide_button_rect;
 }
 
 SDL_Rect Player::GetShowButtonPlayListRect() const {
   const common::draw::Size sz = show_playlist_button_->GetIconSize();
   SDL_Rect prog_rect = GetProgramsListRect();
-  SDL_Rect show_button_rect = {0, prog_rect.h / 2 - sz.height / 2, sz.width, sz.height};
+  SDL_Rect show_button_rect = {0, prog_rect.h / 2 - sz.height() / 2, sz.width(), sz.height()};
   return show_button_rect;
 }
 
