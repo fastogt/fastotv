@@ -65,7 +65,7 @@ VodsListWindow::VodsListWindow(const SDL_Color& back_ground_color)
       VodEntry ent = origin_->operator[](i);
       commands_info::VodInfo cinf = ent.GetVodInfo();
       const commands_info::MovieInfo epg = cinf.GetMovieInfo();
-      std::string name = epg.GetDisplayName();
+      std::string name = epg.GetName();
       if (text.empty() || name.find(text) != std::string::npos) {
         filtered_origin_.push_back(ent);
       }

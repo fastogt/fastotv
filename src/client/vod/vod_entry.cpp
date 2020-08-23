@@ -64,7 +64,7 @@ VodDescription VodEntry::GetChannelDescription() const {
     decr = descr_str;
   }
 
-  return {movie.GetDisplayName(), decr, GetIcon()};
+  return {movie.GetName(), decr, GetIcon()};
 }
 
 void VodEntry::SetIcon(channel_icon_t icon) {
