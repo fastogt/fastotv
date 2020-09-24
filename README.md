@@ -22,13 +22,13 @@ FastoTV - is a crossplatform free iptv/stream player. <br />
 ### iPad:
 ![](https://fastotv.com/app/api/static/images/promo/ipad.png)
 
-Visit our site: [FastoTV](https://www.fastotv.com)
+Visit our site: [FastoTV](https://fastotv.com)
 
 Download
 ========
 
 You can download compiled version (for Mac OS X, Windows, FreeBSD and Linux) from our site:<br />
-[FastoTV](https://www.fastotv.com)
+[FastoTV](https://fastotv.com)
 
 ### [Android PlayStore](https://play.google.com/store/apps/details?id=com.fastotv)
 ### [Apple Store](https://apps.apple.com/us/app/fastotv/id1486741808)
@@ -45,7 +45,7 @@ Build documentation: [Build FastoTV](https://github.com/fastogt/fastotv/wiki/Bui
 License
 =======
 
-Copyright (c) 2014-2020 FastoGT (https://www.fastogt.com)
+Copyright (c) 2014-2020 FastoGT (https://fastogt.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 3 as 
