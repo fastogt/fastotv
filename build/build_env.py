@@ -379,13 +379,6 @@ if __name__ == "__main__":
                         help='device (default: {0}, available: {1})'.format(default_device, availible_devices),
                         default=default_device)
 
-    # cpuid
-    cpuid_grp = parser.add_mutually_exclusive_group()
-    cpuid_grp.add_argument('--with-cpuid', help='build cpuid (default, version: git master)', dest='with_cpuid',
-                           action='store_true', default=True)
-    cpuid_grp.add_argument('--without-cpuid', help='build without cpuid', dest='with_cpuid', action='store_false',
-                           default=False)
-
     # json-c
     jsonc_grp = parser.add_mutually_exclusive_group()
     jsonc_grp.add_argument('--with-json-c', help='build json-c (default, version: git master)', dest='with_jsonc',
@@ -511,8 +504,6 @@ if __name__ == "__main__":
 
     if argv.with_jsonc:
         request.build_jsonc()
-    if argv.with_cpuid:
-        request.build_cpuid()
     if argv.with_libev:
         request.build_libev()
     if argv.with_common:
