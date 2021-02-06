@@ -509,7 +509,7 @@ if __name__ == "__main__":
     if argv.with_common:
         request.build_common()
     if argv.with_fastotv_protocol:
-        request.build_fastotv_protocol()
+        request.build_fastotv_cpp()
 
     if argv.with_sdl2:
         request.build_sdl2(argv.sdl2_version)
