@@ -81,6 +81,7 @@ class Player : public fastoplayer::ISimplePlayer {
   virtual void HandleReceiveChannelsEvent(events::ReceiveChannelsEvent* event);
   virtual void HandleReceiveRuntimeChannelEvent(events::ReceiveRuntimeChannelEvent* event);
   virtual void HandleNotificationTextEvent(events::NotificationTextEvent* event);
+  virtual void HandleNotificationShutdownEvent(events::NotificationShutdownEvent *event);
 
   void HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) override;
   void HandleLircPressEvent(fastoplayer::gui::events::LircPressEvent* event) override;

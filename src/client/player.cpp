@@ -129,6 +129,7 @@ Player::Player(const std::string& app_directory_absolute_path,
   fApp->Subscribe(this, events::ReceiveChannelsEvent::EventType);
   fApp->Subscribe(this, events::ReceiveRuntimeChannelEvent::EventType);
   fApp->Subscribe(this, events::NotificationTextEvent::EventType);
+  fApp->Subscribe(this, events::NotificationShutdownEvent::EventType);
 
   // descr window
   description_label_ = new fastoplayer::gui::IconLabel(failed_color);
@@ -236,6 +237,9 @@ void Player::HandleEvent(event_t* event) {
   } else if (event->GetEventType() == events::NotificationTextEvent::EventType) {
     events::NotificationTextEvent* notify_text_event = static_cast<events::NotificationTextEvent*>(event);
     HandleNotificationTextEvent(notify_text_event);
+  } else if (event->GetEventType() == events::NotificationShutdownEvent::EventType) {
+    events::NotificationShutdownEvent* notify_shut_event = static_cast<events::NotificationShutdownEvent*>(event);
+    HandleNotificationShutdownEvent(notify_shut_event);
   }
 
   base_class::HandleEvent(event);
@@ -562,6 +566,11 @@ void Player::HandleReceiveRuntimeChannelEvent(events::ReceiveRuntimeChannelEvent
 void Player::HandleNotificationTextEvent(events::NotificationTextEvent* event) {
   const commands_info::NotificationTextInfo inf = event->GetInfo();
   StartShowAdminMessage(inf.GetText(), inf.GetType(), inf.GetShowTime());
+}
+
+void Player::HandleNotificationShutdownEvent(events::NotificationShutdownEvent* event) {
+  const commands_info::ShutDownInfo inf = event->GetInfo();
+  Quit();
 }
 
 void Player::HandleKeyPressEvent(fastoplayer::gui::events::KeyPressEvent* event) {

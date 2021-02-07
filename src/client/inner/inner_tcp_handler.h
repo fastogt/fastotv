@@ -73,6 +73,7 @@ class InnerTcpHandler : public common::libev::IoLoopObserver {
   common::ErrnoError HandleRequestServerPing(Client* client, const protocol::request_t* req);
   common::ErrnoError HandleRequestServerClientInfo(Client* client, const protocol::request_t* req);
   common::ErrnoError HandleRequestServerTextNotification(Client* client, const protocol::request_t* req);
+  common::ErrnoError HandleRequestServerShutdownNotification(Client* client, const protocol::request_t* req);
 
   common::ErrnoError HandleResponceClientActivateDevice(Client* client, const protocol::response_t* resp);
   common::ErrnoError HandleResponceClientLogin(Client* client, const protocol::response_t* resp);

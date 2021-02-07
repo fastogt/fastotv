@@ -28,6 +28,7 @@
 #include <fastotv/commands_info/runtime_channel_info.h>
 #include <fastotv/commands_info/server_info.h>
 #include <fastotv/commands_info/vods_info.h>
+#include <fastotv/commands_info/shutdown_info.h>
 
 #define CLIENT_DISCONNECT_EVENT static_cast<EventsType>(USER_EVENTS + 1)
 #define CLIENT_CONNECT_EVENT static_cast<EventsType>(USER_EVENTS + 2)
@@ -40,6 +41,7 @@
 #define CLIENT_CHAT_MESSAGE_SENT_EVENT static_cast<EventsType>(USER_EVENTS + 9)
 #define CLIENT_CHAT_MESSAGE_RECEIVE_EVENT static_cast<EventsType>(USER_EVENTS + 10)
 #define CLIENT_NOTIFICATION_TEXT_EVENT static_cast<EventsType>(USER_EVENTS + 11)
+#define CLIENT_NOTIFICATION_SHUTDOWN_EVENT static_cast<EventsType>(USER_EVENTS + 12)
 
 namespace fastotv {
 namespace client {
@@ -71,6 +73,8 @@ typedef fastoplayer::gui::events::EventBase<CLIENT_RECEIVE_RUNTIME_CHANNELS_EVEN
     ReceiveRuntimeChannelEvent;
 typedef fastoplayer::gui::events::EventBase<CLIENT_NOTIFICATION_TEXT_EVENT, commands_info::NotificationTextInfo>
     NotificationTextEvent;
+typedef fastoplayer::gui::events::EventBase<CLIENT_NOTIFICATION_SHUTDOWN_EVENT, commands_info::ShutDownInfo>
+    NotificationShutdownEvent;
 
 }  // namespace events
 }  // namespace client

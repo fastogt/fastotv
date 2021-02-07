@@ -279,6 +279,29 @@ common::ErrnoError InnerTcpHandler::HandleRequestServerTextNotification(Client* 
   return common::make_errno_error_inval();
 }
 
+common::ErrnoError InnerTcpHandler::HandleRequestServerShutdownNotification(Client* client, const protocol::request_t* req) {
+  if (req->params) {
+    const char* params_ptr = req->params->c_str();
+    json_object* jnotify_text = json_tokener_parse(params_ptr);
+    if (!jnotify_text) {
+      return common::make_errno_error_inval();
+    }
+
+    commands_info::ShutDownInfo shutdown_info;
+    common::Error err_des = shutdown_info.DeSerialize(jnotify_text);
+    json_object_put(jnotify_text);
+    if (err_des) {
+      const std::string err_str = err_des->GetDescription();
+      return common::make_errno_error(err_str, EAGAIN);
+    }
+
+    fApp->PostEvent(new events::NotificationShutdownEvent(this, shutdown_info));
+    return client->NotificationTextOK(req->id);
+  }
+
+  return common::make_errno_error_inval();
+}
+
 common::ErrnoError InnerTcpHandler::HandleInnerDataReceived(Client* client, const std::string& input_command) {
   protocol::request_t* req = nullptr;
   protocol::response_t* resp = nullptr;
@@ -318,6 +341,8 @@ common::ErrnoError InnerTcpHandler::HandleRequestCommand(Client* client, const p
     return HandleRequestServerClientInfo(sclient, req);
   } else if (req->method == SERVER_TEXT_NOTIFICATION) {
     return HandleRequestServerTextNotification(sclient, req);
+  } else if (req->method == SERVER_SHUTDOWN_NOTIFICATION) {
+    return HandleRequestServerShutdownNotification(sclient, req);
   }
 
   WARNING_LOG() << "Received unknown command: " << req->method;
