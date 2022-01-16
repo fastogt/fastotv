@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014-2020 FastoGT. All right reserved.
+/*  Copyright (C) 2014-2022 FastoGT. All right reserved.
 
     This file is part of FastoTV.
 
@@ -56,6 +56,7 @@ extern "C" {
 #include <libswresample/version.h>     // for LIBSWRESAMPLE_VERSION_MAJOR, etc
 #include <libswscale/swscale.h>        // for sws_alloc_context, etc
 #include <libswscale/version.h>        // for LIBSWSCALE_VERSION_MAJOR, etc
+#include <libavcodec/bsf.h>
 }
 
 #include <common/config.h>
@@ -277,8 +278,9 @@ void print_buildconf(int flags) {
   }
 }
 
-const AVCodec* next_codec_for_id(enum AVCodecID id, const AVCodec* prev, bool encoder) {
-  while ((prev = av_codec_next(prev))) {
+const AVCodec* next_codec_for_id(enum AVCodecID id, void **iter, bool encoder) {
+  const AVCodec *prev;
+  while ((prev = av_codec_iterate(iter))) {
     if (prev->id == id && (encoder ? av_codec_is_encoder(prev) : av_codec_is_decoder(prev))) {
       return prev;
     }
@@ -287,11 +289,12 @@ const AVCodec* next_codec_for_id(enum AVCodecID id, const AVCodec* prev, bool en
 }
 
 void print_codecs_for_id(enum AVCodecID id, bool encoder) {
+  void *iter = nullptr;
   const AVCodec* codec = nullptr;
 
   printf(" (%s: ", encoder ? "encoders" : "decoders");
 
-  while ((codec = next_codec_for_id(id, codec, encoder))) {
+  while ((codec = next_codec_for_id(id, &iter, encoder))) {
     printf("%s ", codec->name);
   }
 
@@ -319,8 +322,9 @@ void print_codecs(bool encoder) {
   }
   for (const AVCodecDescriptor* desc : codecs) {
     const AVCodec* codec = nullptr;
+    void *iter = nullptr;
 
-    while ((codec = next_codec_for_id(desc->id, codec, encoder))) {
+    while ((codec = next_codec_for_id(desc->id, &iter, encoder))) {
       printf(" %c", get_media_type_char(desc->type));
       printf((codec->capabilities & AV_CODEC_CAP_FRAME_THREADS) ? "F" : ".");
       printf((codec->capabilities & AV_CODEC_CAP_SLICE_THREADS) ? "S" : ".");
@@ -508,7 +512,8 @@ void show_help_codec(const std::string& name, bool encoder) {
   if (desc) {
     bool printed = false;
 
-    while ((codec = next_codec_for_id(desc->id, codec, encoder))) {
+    void *iter = nullptr;
+    while ((codec = next_codec_for_id(desc->id, &iter, encoder))) {
       printed = true;
       print_codec(codec);
     }
@@ -726,6 +731,7 @@ void show_codecs() {
 
   for (const AVCodecDescriptor* desc : codecs) {
     const AVCodec* codec = nullptr;
+    void *iter = nullptr;
 
     if (strstr(desc->name, "_deprecated")) {
       continue;
@@ -744,14 +750,14 @@ void show_codecs() {
 
     /* print decoders/encoders when there's more than one or their
      * names are different from codec name */
-    while ((codec = next_codec_for_id(desc->id, codec, 0))) {
+    while ((codec = next_codec_for_id(desc->id, &iter, 0))) {
       if (strcmp(codec->name, desc->name)) {
         print_codecs_for_id(desc->id, 0);
         break;
       }
     }
     codec = nullptr;
-    while ((codec = next_codec_for_id(desc->id, codec, 1))) {
+    while ((codec = next_codec_for_id(desc->id, &iter, 1))) {
       if (strcmp(codec->name, desc->name)) {
         print_codecs_for_id(desc->id, 1);
         break;
@@ -775,7 +781,7 @@ void show_bsfs() {
   void* opaque = nullptr;
 
   std::cout << "Bitstream filters:" << std::endl;
-  while ((bsf = av_bsf_next(&opaque))) {
+  while ((bsf = av_bsf_iterate(&opaque))) {
     std::cout << bsf->name << std::endl;
   }
 }
@@ -806,6 +812,7 @@ void show_protocols() {
 void show_filters() {
 #if CONFIG_AVFILTER
   const AVFilter* filter = nullptr;
+  void *opaque = nullptr;
   char descr[64];
   const AVFilterPad* pad;
 
@@ -818,7 +825,7 @@ void show_filters() {
                "  N = Dynamic number and/or type of input/output\n"
                "  | = Source or sink filter"
             << std::endl;
-  while ((filter = avfilter_next(filter))) {
+  while ((filter = av_filter_iterate(&opaque))) {
     char* descr_cur = descr;
     for (int i = 0; i < 2; i++) {
       if (i) {
@@ -950,7 +957,7 @@ bool parse_bool(const std::string& bool_str, bool* result) {
 
 #if CONFIG_AVDEVICE
 namespace {
-int print_device_sources(AVInputFormat* fmt, AVDictionary* opts) {
+int print_device_sources(const AVInputFormat* fmt, AVDictionary* opts) {
   if (!fmt || !fmt->priv_class || !AV_IS_INPUT_DEVICE(fmt->priv_class->category)) {
     return AVERROR(EINVAL);
   }
@@ -979,7 +986,7 @@ int print_device_sources(AVInputFormat* fmt, AVDictionary* opts) {
   return ret;
 }
 
-int print_device_sinks(AVOutputFormat* fmt, AVDictionary* opts) {
+int print_device_sinks(const AVOutputFormat* fmt, AVDictionary* opts) {
   if (!fmt || !fmt->priv_class || !AV_IS_OUTPUT_DEVICE(fmt->priv_class->category)) {
     return AVERROR(EINVAL);
   }
@@ -1035,7 +1042,7 @@ int show_sinks_sources_parse_arg(const char* arg, char** dev, AVDictionary** opt
 
 void show_sources(const std::string& device) {
   const char* arg = device.c_str();
-  AVInputFormat* fmt = nullptr;
+  const AVInputFormat* fmt = nullptr;
   char* dev = nullptr;
   AVDictionary* opts = nullptr;
   int ret = show_sinks_sources_parse_arg(arg, &dev, &opts);
@@ -1072,7 +1079,7 @@ void show_sources(const std::string& device) {
 
 void show_sinks(const std::string& device) {
   const char* arg = device.c_str();
-  AVOutputFormat* fmt = nullptr;
+  const AVOutputFormat* fmt = nullptr;
   char* dev = nullptr;
   AVDictionary* opts = nullptr;
   int ret = show_sinks_sources_parse_arg(arg, &dev, &opts);

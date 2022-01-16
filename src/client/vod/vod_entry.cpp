@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014-2020 FastoGT. All right reserved.
+/*  Copyright (C) 2014-2022 FastoGT. All right reserved.
 
     This file is part of FastoTV.
 
@@ -45,7 +45,7 @@ std::string VodEntry::GetCacheDir() const {
 std::string VodEntry::GetIconPath() const {
   commands_info::MovieInfo movie = info_.GetMovieInfo();
   common::uri::GURL uri = movie.GetPreviewIcon();
-  bool is_unknown_icon = commands_info::MovieInfo::IsUnknownIconUrl(uri);
+  bool is_unknown_icon = uri == "https://fastocloud.com/images/unknown_channel.png";
   if (is_unknown_icon) {
     const std::string absolute_source_dir =
         common::file_system::absolute_path_from_relative(RELATIVE_SOURCE_DIR, common::file_system::app_pwd());  // +

@@ -1,4 +1,4 @@
-/*  Copyright (C) 2014-2020 FastoGT. All right reserved.
+/*  Copyright (C) 2014-2022 FastoGT. All right reserved.
 
     This file is part of FastoTV.
 
@@ -358,7 +358,7 @@ void Player::SwitchToPlayingMode() {
   fastoplayer::PlayerOptions opt = GetOptions();
 
   size_t pos = current_stream_pos_;
-  for (size_t i = 0; i < play_list_.size() && opt.last_showed_channel_id != invalid_stream_id; ++i) {
+  for (size_t i = 0; i < play_list_.size() && opt.last_showed_channel_id != fastoplayer::media::invalid_stream_id; ++i) {
     PlaylistEntry ent = play_list_[i];
     commands_info::ChannelInfo ch = ent.GetChannelInfo();
     if (ch.GetStreamID() == opt.last_showed_channel_id) {
@@ -493,7 +493,7 @@ void Player::LoadChannelIcon(const PlaylistEntry& entry) {
 
   commands_info::EpgInfo epg = entry.GetChannelInfo().GetEpg();
   common::uri::GURL uri = epg.GetIconUrl();
-  bool is_unknown_icon = commands_info::EpgInfo::IsUnknownIconUrl(uri);
+  bool is_unknown_icon = uri == "https://fastocloud.com/images/unknown_channel.png";
   if (is_unknown_icon) {
     return;
   }
