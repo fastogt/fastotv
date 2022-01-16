@@ -348,9 +348,9 @@ class BuildRequest(build_utils.BuildRequest):
 
 
 if __name__ == "__main__":
-    sdl2_default_version = '2.0.10'
+    sdl2_default_version = '2.0.20'
     sdl2_image_default_version = '2.0.5'
-    sdl2_ttf_default_version = '2.0.15'
+    sdl2_ttf_default_version = '2.0.18'
     openssl_default_version = '1.1.1b'
     freetype_default_version = '2.10.0'
 
