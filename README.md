@@ -22,7 +22,7 @@ FastoTV - is a crossplatform free iptv/stream player. <br />
 ### iPad:
 ![](https://fastotv.com/app/api/static/images/promo/ipad.png)
 
-Visit our site: [FastoTV](https://fastotv.com)
+Visit our site: [FastoTV](https://crocott.com)
 
 Download
 ========
